@@ -5,7 +5,9 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
+    delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
+    assert_user_has_case)
 from casexml.apps.case import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload, RestoreConfig
@@ -165,14 +167,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def testOwnUpdatesDontSync(self):
         case_id = "own_updates_dont_sync"
         self._createCaseStubs([case_id])
-        case_block = CaseBlock(
-            create=True,
-            case_id=case_id,
-            user_id=USER_ID,
-            version=V2,
-        ).as_xml()
-        check_user_has_case(self, self.user, case_block, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         
         update_block = CaseBlock(
             create=False,
@@ -182,9 +177,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
             update={"greeting": "hello"}
         ).as_xml()
         self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
-        check_user_has_case(self, self.user, update_block, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
-        
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+
         reassign_block = CaseBlock(
             create=False,
             case_id=case_id,
@@ -192,9 +186,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
             version=V2
         ).as_xml()
         self._postFakeWithSyncToken(reassign_block, self.sync_log.get_id)
-        check_user_has_case(self, self.user, reassign_block, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
-        
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+
     def testIndexReferences(self):
         """
         Tests that indices properly get set in the sync log when created. 
@@ -308,12 +301,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
                          {parent_id: []})
         
         # try a clean restore again
-        check_user_has_case(self, self.user, close, should_have=True, 
-                            version=V2, line_by_line=False)
-        check_user_has_case(self, self.user, child, should_have=True, 
-                            version=V2, line_by_line=False)
-        
-        
+        assert_user_has_case(self, self.user, parent_id)
+        assert_user_has_case(self, self.user, child_id)
+
     def testAssignToNewOwner(self):
         # first create the parent case
         parent_id = "mommy"
@@ -353,14 +343,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         """
         case_id = "archive_syncs"
         self._createCaseStubs([case_id])
-        case_block = CaseBlock(
-            create=True,
-            case_id=case_id,
-            user_id=USER_ID,
-            version=V2,
-        ).as_xml()
-        check_user_has_case(self, self.user, case_block, should_have=False,
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
         update_block = CaseBlock(
             create=False,
@@ -370,13 +353,10 @@ class SyncTokenUpdateTest(SyncBaseTest):
             update={"greeting": "hello"}
         ).as_xml()
         form = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
-        check_user_has_case(self, self.user, update_block, should_have=False,
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
         form.archive()
-        check_user_has_case(self, self.user, case_block, should_have=True,
-                            line_by_line=False, restore_id=self.sync_log.get_id,
-                            version=V2)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -500,10 +480,7 @@ class MultiUserSyncTest(SyncBaseTest):
         case_id = "shared_case"
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
         # should sync to the other owner
-        expected = CaseBlock(case_id=case_id, version=V2).as_xml()
-        check_user_has_case(self, self.other_user, expected, should_have=True,
-                            line_by_line=False,
-                            restore_id=self.other_sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
         
     def testOtherUserEdits(self):
         # create a case by one user
@@ -511,10 +488,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
         
         # sync to the other's phone to be able to edit
-        check_user_has_case(self, self.other_user, 
-                            CaseBlock(case_id=case_id, version=V2).as_xml(), 
-                            should_have=True, line_by_line=False,
-                            restore_id=self.other_sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
         
         latest_sync = SyncLog.last_for_user(OTHER_USER_ID)
         # update from another
@@ -525,11 +499,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         # make sure updates take
-        updated_case = CaseBlock(create=False, case_id=case_id, user_id=USER_ID,
-                                 version=V2, update={'greeting': "Hello!"}).as_xml()
-        match = check_user_has_case(self, self.user, updated_case, should_have=True,
-                                    line_by_line=False, restore_id=self.sync_log.get_id,
-                                    version=V2)
+        match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("Hello!" in ElementTree.tostring(match))
     
     def testOtherUserAddsIndex(self):
@@ -540,11 +510,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # sync to the other's phone to be able to edit
-        check_user_has_case(
-            self, self.other_user,
-            CaseBlock(case_id=case_id, version=V2).as_xml(),
-            should_have=True, line_by_line=False,
-            restore_id=self.other_sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
 
         latest_sync = SyncLog.last_for_user(OTHER_USER_ID)
         mother_id = "other_user_adds_index_mother"
@@ -563,8 +529,7 @@ class MultiUserSyncTest(SyncBaseTest):
             latest_sync.get_id
         )
         # the original user should not get the parent case
-        check_user_has_case(self, self.user, parent_case, should_have=False,
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, mother_id, restore_id=self.sync_log.get_id)
 
         # update the original case from another, adding an indexed case
         self._postFakeWithSyncToken(
@@ -593,13 +558,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2)
-        orig = check_user_has_case(
-            self, self.user,
-            CaseBlock(
-                case_id=case_id, version=V2
-            ).as_xml(format_datetime=json_format_datetime),
-            line_by_line=False, restore_id=self.sync_log.get_id,
-            version=V2)
+        orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("index" in ElementTree.tostring(orig))
 
     def testMultiUserEdits(self):
@@ -682,8 +641,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # original user syncs again
         # make sure close block appears
-        check_user_has_case(self, self.user, close_block, line_by_line=False,
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
     def testOtherUserUpdatesUnowned(self):
         # create a case from one user and assign ownership elsewhere
@@ -691,12 +649,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id], owner_id=OTHER_USER_ID)
 
         # sync and update from another user
-        check_user_has_case(
-            self, self.other_user,
-            CaseBlock(case_id=case_id, version=V2).as_xml(
-                format_datetime=json_format_datetime),
-            should_have=True, line_by_line=False,
-            restore_id=self.other_sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
 
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
         update = CaseBlock(
@@ -713,9 +666,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         # make sure there are no new changes
-        # sync and update from another user
-        check_user_has_case(self, self.user, update, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         
                 
     def testIndexesSync(self):
@@ -734,14 +685,9 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
         # make sure the second user doesn't get either
-        parent = CaseBlock(case_id=parent_id, version=V2).as_xml()
-        child = CaseBlock(case_id=case_id, version=V2).as_xml()
-        check_user_has_case(self, self.other_user, parent, should_have=False, 
-                            restore_id=self.other_sync_log.get_id, version=V2)
-        check_user_has_case(self, self.other_user, child, should_have=False, 
-                            restore_id=self.other_sync_log.get_id, version=V2)
-        
-        
+        assert_user_doesnt_have_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+
         # assign just the child case to a second user
         child_update = CaseBlock(
             create=False,
@@ -754,14 +700,9 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
         # second user syncs
         # make sure both cases restore
-        check_user_has_case(self, self.other_user, parent, should_have=True, 
-                            line_by_line=False,
-                            restore_id=self.other_sync_log.get_id, version=V2)
-        check_user_has_case(self, self.other_user, child, should_have=True,
-                            line_by_line=False, 
-                            restore_id=self.other_sync_log.get_id, version=V2)
-        
-        
+        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
+        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
         parent_id = "other_updates_index_parent"
@@ -779,11 +720,8 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
-
-        check_user_has_case(self, self.user, parent, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
-        check_user_has_case(self, self.user, child, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         
         # assign the parent case away from same user
         parent_update = CaseBlock(
@@ -805,15 +743,11 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         # make sure there are no new changes
-        check_user_has_case(self, self.user, parent, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
-        check_user_has_case(self, self.user, child, should_have=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
-        
+        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+
         # update the parent case from another user
-        check_user_has_case(self, self.other_user, parent, should_have=True, 
-                            line_by_line=False,
-                            restore_id=self.other_sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
         other_parent_update = CaseBlock(
             create=False,
@@ -826,9 +760,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # make sure the indexed case syncs again
         self.sync_log = SyncLog.last_for_user(USER_ID)
-        check_user_has_case(self, self.user, parent, should_have=True,
-                            line_by_line=False, 
-                            restore_id=self.sync_log.get_id, version=V2)
+        assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
@@ -882,12 +814,9 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # both cases should sync to original user with updated ownership / edits
-        check_user_has_case(self, self.user, child_reassignment, should_have=True, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        check_user_has_case(self, self.user, other_parent_update, should_have=True, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+
         # Ghetto
         payload = generate_restore_payload(self.user, self.sync_log.get_id, 
                                            version=V2)
@@ -908,13 +837,9 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
-        check_user_has_case(self, self.user, child_reassignment, should_have=False, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        check_user_has_case(self, self.user, other_parent_update, should_have=False, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+
         # change the child again from the second user
         other_child_update = CaseBlock(
             create=False,
@@ -926,17 +851,12 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml()
         self._postFakeWithSyncToken(other_child_update, self.other_sync_log.get_id)
         
-        
         # original user syncs again
         self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
-        check_user_has_case(self, self.user, other_child_update, should_have=False, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        check_user_has_case(self, self.user, other_parent_update, should_have=False, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        
+        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+
         # change owner of child back to orginal user from second user
         child_reassignment = CaseBlock(
             create=False,
@@ -950,12 +870,9 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # both cases should now sync
-        check_user_has_case(self, self.user, child_reassignment, should_have=True, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
-        check_user_has_case(self, self.user, other_parent_update, should_have=True, 
-                            line_by_line=False, restore_id=self.sync_log.get_id, 
-                            version=V2)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+
         # ghetto
         payload = generate_restore_payload(self.user, self.sync_log.get_id, 
                                            version=V2)

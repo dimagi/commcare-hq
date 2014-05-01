@@ -6,6 +6,7 @@ from copy import copy
 EMPTY_HASH = ""
 CASE_STATE_HASH_PREFIX = "ccsh"
 
+
 class CaseStateHash(object):
     
     def __init__(self, hash):
@@ -25,6 +26,7 @@ class CaseStateHash(object):
     def __ne__(self, obj):
         return not self == obj
         
+
 class Checksum(object):
     """
     >>> Checksum(['abc123', '123abc']).hexdigest()

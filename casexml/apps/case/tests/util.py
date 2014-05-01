@@ -82,6 +82,16 @@ def check_xml_line_by_line(test_case, expected, actual):
         raise
 
 
+def assert_user_has_case(testcase, user, case_id, **kwargs):
+    return check_user_has_case(testcase, user, CaseBlock(case_id=case_id, version=V2).as_xml(),
+                               should_have=True, line_by_line=False, version=V2, **kwargs)
+
+
+def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
+    return check_user_has_case(testcase, user, CaseBlock(case_id=case_id).as_xml(),
+                               should_have=False, version=V2, **kwargs)
+
+
 def check_user_has_case(testcase, user, case_block, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
                         caching_enabled=False):
