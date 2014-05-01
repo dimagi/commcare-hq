@@ -148,7 +148,7 @@ class InvoiceTemplate(object):
 
     def draw_from_address(self):
         if self.from_address is not None:
-            self.draw_text(str(self.from_address), inches(3), inches(11))
+            self.draw_text(unicode(self.from_address), inches(3), inches(11))
 
     def draw_to_address(self):
         origin_x = inches(1)
@@ -171,7 +171,7 @@ class InvoiceTemplate(object):
                        middle_horizational + inches(0.1))
 
         if self.to_address is not None:
-            self.draw_text(str(self.to_address), inches(0.1), inches(-0.2))
+            self.draw_text(unicode(self.to_address), inches(0.1), inches(-0.2))
 
         self.canvas.translate(-origin_x, -origin_y)
 
