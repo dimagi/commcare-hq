@@ -2,7 +2,7 @@ from corehq.pillows import cacheinvalidate
 
 cache_pillow = cacheinvalidate.CacheInvalidatePillow()
 
-def invalidate_document(document):
+def invalidate_document(document, deleted=False):
     """
     Invalidates a document in the cached_core caching framework.
     """
@@ -11,4 +11,5 @@ def invalidate_document(document):
     cache_pillow.change_trigger({
         'doc': document.to_json(),
         'id': document._id,
+        'deleted': deleted,
     })
