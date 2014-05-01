@@ -770,7 +770,12 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
 
     @classmethod
     def by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain", key=domain, reduce=False, include_docs=True, wrapper=cls.wrap)
+        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain",
+            key=domain,
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap,
+        )
 
     @classmethod
     def get_for_domain(cls, domain):
