@@ -175,7 +175,7 @@ def create_or_update_locations(domain, location_specs, log):
         except ValidationError:
             log['errors'].append("Username must be a valid email address: %s" % username)
         else:
-            location_code = row.get('location-sms-code')
+            location_code = unicode(row.get('location-sms-code'))
             if username in users:
                 user_mapping = users[username]
             else:
