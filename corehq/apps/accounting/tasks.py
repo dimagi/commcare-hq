@@ -91,7 +91,8 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "domain %s: %s" % (domain.name, e)
                 )
     # And finally...
-    send_bookkeeper_email()
+    if not is_test:
+        send_bookkeeper_email()
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
