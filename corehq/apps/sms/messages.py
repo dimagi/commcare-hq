@@ -49,7 +49,11 @@ _MESSAGES = {
 def get_message(msg_id, verified_number=None, context=None):
     default_msg = _MESSAGES.get(msg_id, "")
 
-    tdoc = StandaloneTranslationDoc.get_obj(verified_number.domain, "sms")
+    if verified_number:
+        tdoc = StandaloneTranslationDoc.get_obj(verified_number.domain, "sms")
+    else:
+        tdoc = None
+
     try:
         user_lang = verified_number.owner.get_language_code()
     except:
@@ -93,7 +97,7 @@ def get_message(msg_id, verified_number=None, context=None):
     )
 
     if context:
-        msg = msg.format(context)
+        msg = msg.format(*context)
 
     return msg
 
