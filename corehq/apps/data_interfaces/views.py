@@ -4,14 +4,15 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group
-from corehq.apps.data_interfaces.forms import (AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-                                               UploadBulkCaseGroupForm)
+from corehq.apps.data_interfaces.forms import (
+    AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -194,7 +195,13 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'bulk_upload_from': UploadBulkCaseGroupForm(),
+            'bulk_upload': {
+                "download_url": static(
+                    'data_interfaces/files/cases_bulk_example.xlsx'),
+                "name": _("case"),
+                "name_pluralized": _("cases"),
+                "post_filename": "bulk_file",
+            },
             'bulk_upload_id': self.bulk_upload_id,
             'update_case_group_form': self.update_case_group_form,
             'group_name': self.case_group.name,

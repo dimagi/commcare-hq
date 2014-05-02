@@ -34,6 +34,7 @@
                 <p>
                     <fieldset>
                         <input id="bulk_upload_file" type="file"{% if bulk_upload.post_filename %} name="{{ bulk_upload.post_filename }}" {% endif %}data-bind="value: file"/>
+                        <input id="id_action" name="action" type="hidden" value="bulk_upload">
                     </fieldset>
                 </p>
                 <p>
