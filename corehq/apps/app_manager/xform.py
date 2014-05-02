@@ -205,7 +205,7 @@ class ItextValue(unicode):
 
     @classmethod
     def from_node(cls, node):
-        parts = [node.text]
+        parts = [node.text or '']
         for sub in node.findall('*'):
             if sub.tag_name == 'output':
                 ref = sub.attrib.get('ref') or sub.attrib.get('value')
