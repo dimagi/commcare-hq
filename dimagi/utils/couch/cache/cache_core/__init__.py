@@ -5,7 +5,7 @@ from django.core.cache import InvalidCacheBackendError
 
 log = logging.getLogger(__name__)
 
-COUCH_CACHE_TIMEOUT = 43200
+COUCH_CACHE_TIMEOUT = 60 * 60 * 12
 MOCK_REDIS_CACHE = None
 
 DEBUG_TRACE = False
