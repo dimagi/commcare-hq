@@ -119,15 +119,11 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
 
-        query_block = {"match_all": {}}
-
-        and_block = {'and': subterms} if subterms else {}
-
         es_query = {
             'query': {
                 'filtered': {
-                    'query': query_block,
-                    'filter': and_block
+                    'query': {"match_all": {}},
+                    'filter': {'and': subterms}
                 }
             },
             'sort': self.get_sorting_block(),
