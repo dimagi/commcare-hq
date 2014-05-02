@@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
@@ -287,12 +288,12 @@ class LocationImportView(BaseLocationView):
                     "location_export", args=(self.domain,)),
                 "name": _("location"),
                 "name_pluralized": _("locations"),
-                "post_filename": "locs",
             },
+            'bulk_upload_form': BulkUploadForm(),
         }
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('locs')
+        upload = request.FILES.get('bulk_upload_file')
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)

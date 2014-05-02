@@ -12,6 +12,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download, get_download_context
@@ -194,8 +195,8 @@ class UploadProductView(BaseCommTrackManageView):
                 "download_url": reverse("product_export", args=(self.domain,)),
                 "name": _("product"),
                 "name_pluralized": _("products"),
-                "post_filename": "products",
             },
+            'bulk_upload_form': BulkUploadForm(),
         }
 
     @property
@@ -206,7 +207,7 @@ class UploadProductView(BaseCommTrackManageView):
         }]
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('products')
+        upload = request.FILES.get('bulk_upload_file')
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)

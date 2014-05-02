@@ -24,6 +24,7 @@ from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
@@ -681,17 +682,18 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "name": _("mobile worker"),
                 "name_pluralized": _("mobile workers"),
             },
+            'bulk_upload_form': BulkUploadForm(),
             'show_secret_settings': self.request.REQUEST.get("secret", False),
         }
 
-    @method_decorator(get_file)
     def post(self, request, *args, **kwargs):
+        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
         try:
-            self.workbook = WorkbookJSONReader(request.file)
+            self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
             try:
-                csv.DictReader(io.StringIO(request.file.read().decode('ascii'),
+                csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))
                 return HttpResponseBadRequest(
                     "CommCare HQ no longer supports CSV upload. "

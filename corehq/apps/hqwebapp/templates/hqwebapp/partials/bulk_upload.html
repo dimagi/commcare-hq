@@ -1,3 +1,4 @@
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -30,6 +31,7 @@
             <p>
                 {% trans "Upload your updated file." %}
             </p>
+            {% crispy bulk_upload_form %}
             <form id="bulk-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
                 <p>
                     <fieldset>

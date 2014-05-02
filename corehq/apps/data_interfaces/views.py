@@ -4,6 +4,7 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
@@ -200,8 +201,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                     'data_interfaces/files/cases_bulk_example.xlsx'),
                 "name": _("case"),
                 "name_pluralized": _("cases"),
-                "post_filename": "bulk_file",
             },
+            'bulk_upload_form': BulkUploadForm(),
             'bulk_upload_id': self.bulk_upload_id,
             'update_case_group_form': self.update_case_group_form,
             'group_name': self.case_group.name,
@@ -286,7 +287,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @memoized
     def uploaded_file(self):
         try:
-            bulk_file = self.request.FILES['bulk_file']
+            bulk_file = self.request.FILES['bulk_upload_file']
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
