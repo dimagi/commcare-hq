@@ -1,9 +1,39 @@
+from couchdbkit import MultipleResultsFound
 from redis_cache.exceptions import ConnectionInterrumped
 import simplejson
 from . import COUCH_CACHE_TIMEOUT, CACHE_DOCS, rcache, key_doc_id, key_doc_prop
 from .const import INTERRUPTED, MISSING
 from .gen import GenerationCache
 from .lib import invalidate_doc_generation, _get_cached_doc_only
+
+
+
+class FakeViewResults(list):
+    """
+    Fake view results that mostly act like a list, but implement a few of the
+    common functions on couchdbkit's ViewResults object.
+    """
+
+    def first(self):
+        try:
+            return self[0]
+        except IndexError:
+            return None
+
+    def one(self):
+        """
+        Return exactly one result or raise an exception.
+        """
+        length = len(self)
+        if length > 1:
+            raise MultipleResultsFound("%s results found." % length)
+
+        return self.first()
+
+    def all(self):
+        """ return list of all results """
+        return self
+
 
 ################################
 # Primary API calls for caching
@@ -20,8 +50,10 @@ def cached_view(db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, f
     else:
         cache_method = GlobalCache.nogen().cached_view
 
-    return cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire, force_invalidate=force_invalidate,
-                        **params)
+    return FakeViewResults(
+        cache_method(db, view_name, wrapper=wrapper, cache_expire=cache_expire,
+                     force_invalidate=force_invalidate, **params)
+    )
 
 
 def do_cache_doc(doc, cache_expire=COUCH_CACHE_TIMEOUT):
