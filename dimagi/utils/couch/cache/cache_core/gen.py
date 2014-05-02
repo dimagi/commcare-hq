@@ -47,7 +47,7 @@ class GenerationCache(object):
     def _get_generation(self):
         genret = rcache().get(self.generation_key, None)
         if not genret:
-            #never seen key before, start from zero
+            # never seen key before, start from zero
             rcache().set(self.generation_key, 0, timeout=0)
             return str(0)
         else:

@@ -1,8 +1,6 @@
 import hashlib
 import logging
-import mimetypes
 import os
-import uuid
 import simplejson
 
 try:
@@ -385,8 +383,3 @@ class CachedImage(CachedObject):
 
                 rcache.set(self.stream_key(size_key), target_handle.read())
                 rcache.set(self.meta_key(size_key), simplejson.dumps(target_meta.to_json()))
-
-
-
-
-
