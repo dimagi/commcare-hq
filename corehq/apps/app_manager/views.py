@@ -1595,9 +1595,9 @@ def get_app_translations(request, domain):
     key = params.get('key', None)
     one = params.get('one', False)
     translations = Translation.get_translations(lang, key, one)
-
-    translations = {k: v for k, v in translations.items()
-                    if not id_strings.is_custom_app_string(k)}
+    if isinstance(translations, dict):
+        translations = {k: v for k, v in translations.items()
+                        if not id_strings.is_custom_app_string(k)}
     return json_response(translations)
 
 
