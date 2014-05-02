@@ -186,17 +186,27 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 product = product_aggregation[state.product_id]
                 product['current_stock'] = self.format_decimal(
                     product['current_stock'] + state.stock_on_hand
-                ),
-                product['total_consumption'] += state.get_consumption()
+                )
+
+                if product['total_consumption'] is None:
+                    product['total_consumption'] = state.get_consumption()
+                elif state.get_consumption() is not None:
+                    product['total_consumption'] += state.get_consumption()
+
                 product['count'] += 1
-                product['consumption'] = product['total_consumption'] / product['count']
+
+                if product['total_consumption'] is not None:
+                    product['consumption'] = product['total_consumption'] / product['count']
+                else:
+                    product['consumption'] = None
+
                 product['category'] = stock_category(
-                    product['total_stock'],
-                    product['avg_consumption'],
+                    product['current_stock'],
+                    product['consumption'],
                     Domain.get_by_name(self.domain)
                 )
                 product['months_remaining'] = months_of_stock_remaining(
-                    product['total_stock'],
+                    product['current_stock'],
                     product['consumption']
                 )
             else:
