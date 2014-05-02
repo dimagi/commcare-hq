@@ -107,6 +107,42 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     def case_es(self):
         return ReportCaseES(self.domain)
 
+    def build_es_query(self, case_type=None, afilter=None, status=None):
+
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
+
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
+
+        query_block = {"match_all": {}}
+
+        and_block = {'and': subterms} if subterms else {}
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': query_block,
+                    'filter': and_block
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+
+        return es_query
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self.build_es_query(case_type=self.case_type, afilter=self.case_filter, status=self.case_status)
+        return self.case_es.run_query(query)
+
     @property
     def headers(self):
         headers = DataTablesHeader(
@@ -187,8 +223,4 @@ class HBNCMotherReport(BaseHNBCReport):
                 filters.append(or_stmt)
 
         return {'and': filters} if filters else {}
-
-    @property
-    def user_filter(self):
-        return super(HBNCMotherReport, self).user_filter
 
