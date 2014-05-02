@@ -41,8 +41,9 @@ class BulkUploadForm(forms.Form):
             StrictButton(
                 ('<i class="icon-cloud-upload"></i> Upload %s'
                  % name_pluralized.title()),
-                css_class='btn btn-primary',
-                data_bind='visible: file()',
+                css_class='btn-primary',
+                data_bind='disable: !file()',
+                onclick='this.disabled=true;this.form.submit();',
                 type='submit',
             ),
         )
