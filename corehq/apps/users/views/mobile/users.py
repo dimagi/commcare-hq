@@ -25,6 +25,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback, 
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
@@ -671,7 +672,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'bulk_upload': {
                 "help_site": {
                     "address": BULK_MOBILE_HELP_SITE,
@@ -682,9 +683,12 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "name": _("mobile worker"),
                 "name_pluralized": _("mobile workers"),
             },
-            'bulk_upload_form': BulkUploadForm(),
             'show_secret_settings': self.request.REQUEST.get("secret", False),
         }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
 
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')

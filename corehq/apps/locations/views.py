@@ -6,6 +6,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
@@ -282,15 +283,18 @@ class LocationImportView(BaseLocationView):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'bulk_upload': {
                 "download_url": reverse(
                     "location_export", args=(self.domain,)),
                 "name": _("location"),
                 "name_pluralized": _("locations"),
             },
-            'bulk_upload_form': BulkUploadForm(),
         }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
 
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')

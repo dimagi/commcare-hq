@@ -13,6 +13,7 @@ from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download, get_download_context
@@ -190,14 +191,17 @@ class UploadProductView(BaseCommTrackManageView):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'bulk_upload': {
                 "download_url": reverse("product_export", args=(self.domain,)),
                 "name": _("product"),
                 "name_pluralized": _("products"),
             },
-            'bulk_upload_form': BulkUploadForm(),
         }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
 
     @property
     def parent_pages(self):

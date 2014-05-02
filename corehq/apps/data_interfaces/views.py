@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
@@ -202,10 +203,12 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 "name": _("case"),
                 "name_pluralized": _("cases"),
             },
-            'bulk_upload_form': BulkUploadForm(),
             'bulk_upload_id': self.bulk_upload_id,
             'update_case_group_form': self.update_case_group_form,
             'group_name': self.case_group.name,
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
         })
         return context
 
