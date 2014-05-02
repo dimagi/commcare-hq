@@ -17,7 +17,7 @@ from corehq.apps.domain.views import (
     EditExistingBillingAccountView, DomainBillingStatementsView,
     BillingStatementPdfView, CommTrackSettingsView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
-    InvoiceStripePaymentView, CreditsStripePaymentView,
+    InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
 )
 
 #
@@ -123,4 +123,5 @@ domain_settings = patterns(
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
 )
