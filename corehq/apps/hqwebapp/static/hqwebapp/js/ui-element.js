@@ -89,7 +89,7 @@ var uiElement;
                 return this;
             }
         },
-        setVisibleValue: function (value) {
+        setVisibleValue: function (value, icon) {
             var translated = langcodeTag.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
@@ -108,6 +108,10 @@ var uiElement;
             } else
                 this.setElemValue(translated.value);
             this.$noedit_view.text(translated.value);
+            if (icon) {
+                this.$noedit_view.text(" " + this.$noedit_view.text());
+                $('<i></i>').addClass(icon).prependTo(this.$noedit_view);
+            }
         },
         setEdit: function (edit) {
             this.edit = edit;

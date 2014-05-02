@@ -149,6 +149,7 @@ var DetailScreenConfig = (function () {
             this.original.model = this.original.model || screen.model;
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
+            this.original.icon = this.original.icon || null;
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
@@ -184,7 +185,7 @@ var DetailScreenConfig = (function () {
                 }
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.ui.find('input').addClass('input-small');
-                that.header.setVisibleValue(visibleVal);
+                that.header.setVisibleValue(visibleVal, that.original.icon);
             }());
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
 
@@ -411,6 +412,17 @@ var DetailScreenConfig = (function () {
                 });
             }
 
+            function getPropertyInfo(property) {
+                // Strip "<prefix>:" before converting to title case.
+                // This is aimed at prefixes like ledger: and attachment:
+                var title = property.replace(/^.*?:/, '');
+                return {
+                    title: toTitleCase(title),
+                    icon: (property.indexOf("attachment:") === 0
+                           ? COMMCAREHQ.icons.PAPERCLIP : null)
+                }
+            }
+
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
 
@@ -452,13 +464,16 @@ var DetailScreenConfig = (function () {
             });
 
             // set up suggestion columns
+            var info;
             for (i = 0; i < this.properties.length; i += 1) {
                 property = this.properties[i];
+                info = getPropertyInfo(property);
                 header = {};
-                header[this.lang] = toTitleCase(property);
+                header[this.lang] = info.title;
                 column = Column.init({
                     model: model,
                     field: property,
+                    icon: info.icon,
                     header: header,
                     includeInShort: false
                 }, this);
