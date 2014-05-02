@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import Document, StringProperty, DecimalProperty
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 
 
 TYPE_DOMAIN = 'domain'
@@ -7,7 +8,7 @@ TYPE_SUPPLY_POINT_TYPE = 'supply-point-type'
 TYPE_SUPPLY_POINT = 'supply-point'
 
 
-class DefaultConsumption(Document):
+class DefaultConsumption(CachedCouchDocumentMixin, Document):
     """
     Model for setting the default consumption value of an entity
     """

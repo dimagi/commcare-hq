@@ -1,5 +1,7 @@
 from django.test import TestCase
-from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_domain, set_default_consumption_for_product, set_default_consumption_for_supply_point
+from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_consumption_for_domain,
+    set_default_consumption_for_product, set_default_consumption_for_supply_point
+)
 from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
 
 domain = 'consumption-test'
@@ -149,5 +151,5 @@ def _count_consumptions():
 
 def _delete_all_consumptions():
     for consumption in DefaultConsumption.view('consumption/consumption_index',
-                                                   reduce=False, include_docs=True):
+                                               reduce=False, include_docs=True):
         consumption.delete()
