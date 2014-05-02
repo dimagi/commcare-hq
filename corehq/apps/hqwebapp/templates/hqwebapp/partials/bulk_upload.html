@@ -32,19 +32,6 @@
                 {% trans "Upload your updated file." %}
             </p>
             {% crispy bulk_upload_form %}
-            <form id="bulk-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
-                <p>
-                    <fieldset>
-                        <input id="bulk_upload_file" type="file"{% if bulk_upload.post_filename %} name="{{ bulk_upload.post_filename }}" {% endif %}data-bind="value: file"/>
-                        <input id="id_action" name="action" type="hidden" value="bulk_upload">
-                    </fieldset>
-                </p>
-                <p>
-                    <button type="submit" class="btn btn-primary" data-bind="visible: file()">
-                        <i class="icon-cloud-upload"></i> {% blocktrans with name_pluralized=bulk_upload.name_pluralized|title %}Upload {{ name_pluralized }}{% endblocktrans %}
-                    </button>
-                </p>
-            </form>
         </li>
     </ol>
 </p>
