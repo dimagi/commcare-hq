@@ -1,13 +1,3 @@
-from couchdbkit import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
-
-def update_value_for_date(datetime, dates):
-    date = datetime.date()
-    if date not in dates:
-        dates[date] = 1
-    else:
-        dates[date] += 1
-
 
 def is_valid_user_by_case(case):
     if hasattr(case, "user_id"):
@@ -15,50 +5,20 @@ def is_valid_user_by_case(case):
     return False
 
 
-def is_user_in_CCT_by_case(case):
-    if is_valid_user_by_case(case):
-        try:
-            user = CommCareUser.get(case.user_id) or None
-            return (user is not None and hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true")
-        except ResourceNotFound:
-            return False
-    return False
-
-
 def get_date_delivery(form):
     return form.form.get("date_delivery", None)
 
 
-def get_date_modified(form):
-    return form.form.get("case", {}).get("@date_modified", None)
-
-
-def get_case_date_delivery(case):
-    return case.date_delivery
-
-
-def get_case_date_modified(case):
-    return case.modified_on.date() if case.modified_on is not None else None
+def get_received_on(form):
+    return form.received_on.date()
 
 
 def form_passes_filter_date_delivery(form, namespaces):
     return (form.xmlns in namespaces and get_date_delivery(form) is not None)
 
 
-def form_passes_filter_date_modified(form, namespaces):
-    return (form.xmlns in namespaces and get_date_modified(form) is not None)
-
-
-def case_passes_filter_date_delivery(case):
-    return (hasattr(case, "date_delivery") and get_case_date_delivery(case) is not None)
-
-
-def case_passes_filter_date_modified(case):
-    return (hasattr(case, "modified_on") and get_case_date_modified(case) is not None)
-
-
-def string_to_int(string):
+def string_to_numeric(string, type=int):
     try:
-        return int(string)
+        return type(string)
     except ValueError:
         return 0
