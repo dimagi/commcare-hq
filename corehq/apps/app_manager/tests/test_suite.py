@@ -118,6 +118,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
+    def test_picture_format(self):
+        self._test_generic_suite('app_picture_format', 'suite-picture-format')
+
 
 class RegexTest(TestCase):
 
