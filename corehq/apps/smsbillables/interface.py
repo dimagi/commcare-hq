@@ -12,9 +12,13 @@ from corehq.apps.sms.models import (
     OUTGOING,
 )
 from corehq.apps.smsbillables.filters import (
+    CountryCodeFilter,
     DateSentFilter,
+    DirectionFilter,
     DomainFilter,
+    GatewayTypeFilter,
     ShowBillablesFilter,
+    SpecificGateway,
 )
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -111,6 +115,10 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     description = "List of all SMS Gateway Fee Criteria"
     slug = "sms_gateway_fee_criteria"
     fields = [
+        'corehq.apps.smsbillables.interface.GatewayTypeFilter',
+        'corehq.apps.smsbillables.interface.SpecificGateway',
+        'corehq.apps.smsbillables.interface.DirectionFilter',
+        'corehq.apps.smsbillables.interface.CountryCodeFilter',
     ]
 
     @property
