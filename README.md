@@ -254,6 +254,15 @@ To run the standard tests for CommCare HQ, simply run
 
     ./manage.py test
 
+To run a particular test or subset of tests
+
+    ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
+
+    # examples
+    ./manage.py test app_manager
+    ./manage.py test app_manager.SuiteTest
+    ./manage.py test app_manager.SuiteTest.test_picture_format
+
 To run the selenium tests, you first need to install the
 [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
 
