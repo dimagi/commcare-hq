@@ -1382,7 +1382,12 @@ class TriggerInvoiceForm(forms.Form):
                 record.delete()
             invoice.subscriptionadjustment_set.all().delete()
             invoice.creditadjustment_set.all().delete()
-            invoice.lineitem_set.all().delete()
+            try:
+                invoice.lineitem_set.all().delete()
+            except ProtectedError:
+                # this will happen if there were any credits generated.
+                # Leave in for now, as it's just for testing purposes.
+                pass
             if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
                 community_sub = invoice.subscription
                 community_sub.subscriptionadjustment_set.all().delete()
