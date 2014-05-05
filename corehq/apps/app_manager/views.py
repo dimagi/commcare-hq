@@ -2338,14 +2338,26 @@ def upload_translations(request, domain, app_id):
 
         app = get_app(domain, app_id)
         trans_dict = defaultdict(dict)
+        error_properties = []
         for row in translations:
             for lang in app.langs:
                 if row.get(lang):
+                    all_parameters = re.findall("\$.*?}", row[lang])
+                    for param in all_parameters:
+                        if not re.match("\$\{[0-9]+}", param):
+                            error_properties.append(row["property"] + ' - ' + row[lang])
                     trans_dict[lang].update({row["property"]: row[lang]})
 
-        app.translations = dict(trans_dict)
-        app.save()
-        success = True
+        if error_properties:
+            message = _("We found problem with following translations:")
+            message += "<br>"
+            for prop in error_properties:
+                message += "<li>%s</li>" % prop
+            messages.error(request, message, extra_tags='html')
+        else:
+            app.translations = dict(trans_dict)
+            app.save()
+            success = True
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
