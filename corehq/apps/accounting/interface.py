@@ -656,3 +656,12 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     slug = "sms_gateway_fee_criteria"
     fields = [
     ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Gateway Type"),
+            DataTablesColumn("Specific Gateway"),
+            DataTablesColumn("Direction"),
+            DataTablesColumn("Country Code"),
+        )
