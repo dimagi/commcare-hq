@@ -16,6 +16,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
 from couchexport.models import Format
+from corehq.apps.smsbillables.models import SmsBillable
 
 
 class AddItemInterface(GenericTabularReport):
@@ -670,3 +671,26 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Is Valid?"),
             DataTablesColumn("Date Created"),
         )
+
+    @property
+    def rows(self):
+        return [
+            [
+                sms_billable.date_sent,
+                sms_billable.domain,
+                sms_billable.direction,
+                (sms_billable.gateway_fee
+                 * sms_billable.gateway_fee_conversion_rate),
+                sms_billable.usage_fee,
+                sms_billable.log_id,
+                sms_billable.phone_number,
+                sms_billable.is_valid,
+                sms_billable.date_created,
+            ]
+            for sms_billable in self.sms_billables
+        ]
+
+    @property
+    def sms_billables(self):
+        selected_billables = SmsBillable.objects.filter()
+        return selected_billables
