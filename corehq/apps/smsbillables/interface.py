@@ -12,11 +12,18 @@ from corehq.apps.sms.models import (
     OUTGOING,
 )
 from corehq.apps.smsbillables.filters import (
+    CountryCodeFilter,
     DateSentFilter,
+    DirectionFilter,
     DomainFilter,
+    GatewayTypeFilter,
     ShowBillablesFilter,
+    SpecificGateway,
 )
-from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFeeCriteria,
+)
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -98,3 +105,66 @@ class SMSBillablesInterface(GenericTabularReport):
                 domain=domain,
             )
         return selected_billables
+
+
+class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
+    base_template = "accounting/report_filter_actions.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "SMS Gateway Fee Criteria"
+    description = "List of all SMS Gateway Fee Criteria"
+    slug = "sms_gateway_fee_criteria"
+    fields = [
+        'corehq.apps.smsbillables.interface.GatewayTypeFilter',
+        'corehq.apps.smsbillables.interface.SpecificGateway',
+        'corehq.apps.smsbillables.interface.DirectionFilter',
+        'corehq.apps.smsbillables.interface.CountryCodeFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Gateway Type"),
+            DataTablesColumn("Specific Gateway"),
+            DataTablesColumn("Direction"),
+            DataTablesColumn("Country Code"),
+        )
+
+    @property
+    def rows(self):
+        return [
+            [
+                criteria.backend_api_id,
+                (criteria.backend_instance
+                 if criteria.backend_instance is not None else "Any"),
+                criteria.direction,
+                (criteria.country_code
+                 if criteria.country_code is not None else "Any"),
+            ]
+            for criteria in self.sms_gateway_fee_criteria
+        ]
+
+    @property
+    def sms_gateway_fee_criteria(self):
+        selected_criteria = SmsGatewayFeeCriteria.objects.filter()
+        gateway_type = GatewayTypeFilter.get_value(self.request, self.domain)
+        if gateway_type:
+            selected_criteria = selected_criteria.filter(
+                backend_api_id=gateway_type,
+            )
+        specific_gateway = SpecificGateway.get_value(self.request, self.domain)
+        if specific_gateway:
+            selected_criteria = selected_criteria.filter(
+                backend_instance=specific_gateway,
+            )
+        direction = DirectionFilter.get_value(self.request, self.domain)
+        if direction:
+            selected_criteria = selected_criteria.filter(
+                direction=direction,
+            )
+        country_code = CountryCodeFilter.get_value(self.request, self.domain)
+        if country_code:
+            selected_criteria = selected_criteria.filter(
+                country_code=int(country_code),
+            )
+        return selected_criteria
