@@ -178,12 +178,13 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     def base_filters(self):
         block = self.request_params.get('block', '')
-
+        individual = self.request_params.get('individual', '')
         filters = []
 
         if block:
             filters.append({'term': {'block.#value': block}})
-
+        if individual:
+            filters.append({'term': {'owner_id': individual}})
         return filters
 
     def date_to_json(self, date):
