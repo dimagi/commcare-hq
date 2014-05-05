@@ -645,3 +645,14 @@ class InvoiceInterface(GenericTabularReport):
                 'rows': self.rows,
             }
         )
+
+
+class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
+    base_template = "accounting/report_filter_actions.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "SMS Gateway Fee Criteria"
+    description = "List of all SMS Gateway Fee Criteria"
+    slug = "sms_gateway_fee_criteria"
+    fields = [
+    ]

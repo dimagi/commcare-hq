@@ -214,6 +214,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
+    SMSGatewayFeeCriteriaInterface,
 )
 
 from corehq.apps.smsbillables.interface import (
@@ -227,6 +228,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         SoftwarePlanInterface,
         InvoiceInterface,
         SMSBillablesInterface,
+        SMSGatewayFeeCriteriaInterface,
     )),
 )
 
