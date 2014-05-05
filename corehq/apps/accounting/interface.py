@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from couchexport.models import Format
 from corehq.apps.smsbillables.models import SmsBillable
 
@@ -682,13 +683,19 @@ class SMSBillablesInterface(GenericTabularReport):
             [
                 sms_billable.date_sent,
                 sms_billable.domain,
-                sms_billable.direction,
-                (sms_billable.gateway_fee
-                 * sms_billable.gateway_fee_conversion_rate)
-                if (sms_billable.gateway_fee is not None
-                    and sms_billable.gateway_fee_conversion_rate is not None)
-                else sms_billable.gateway_fee,
-                sms_billable.usage_fee,
+                ("Incoming"
+                 if sms_billable.direction == INCOMING
+                 else ("Outgoing"
+                       if sms_billable.direction == OUTGOING
+                       else "")),
+                ((sms_billable.gateway_fee.amount
+                  * sms_billable.gateway_fee_conversion_rate)
+                 if (sms_billable.gateway_fee is not None
+                     and sms_billable.gateway_fee_conversion_rate is not None)
+                 else (sms_billable.gateway_fee.amount
+                       if sms_billable.gateway_fee is not None else "")),
+                (sms_billable.usage_fee.amount
+                 if sms_billable.usage_fee is not None else ""),
                 sms_billable.log_id,
                 sms_billable.phone_number,
                 sms_billable.is_valid,
