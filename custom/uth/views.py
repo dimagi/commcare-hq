@@ -7,7 +7,6 @@ from custom.uth.utils import (
     get_case_id,
     get_study_id,
     create_case,
-    get_patient_config_from_zip
 )
 from custom.uth.models import SonositeUpload, VscanUpload
 from custom.uth.tasks import async_create_case, async_find_and_attach

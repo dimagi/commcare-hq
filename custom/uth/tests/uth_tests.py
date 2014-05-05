@@ -112,14 +112,26 @@ class ScanLookupTests(UTHTests):
 
 
 class ImageUploadTests(UTHTests):
+
+    def pack_directory(self, directory):
+        # name of the test directory we're packing
+        packed_directory = {}
+
+        for root, dirs, files in os.walk(directory):
+            for f in files:
+                packed_directory[f] = open(os.path.join(root, f))
+
+        return packed_directory
+
     def setUp(self):
         super(ImageUploadTests, self).setUp()
 
-        fpath = os.path.join(os.path.dirname(__file__), 'data', 'zips', 'create_case.zip')
-        self.zip_file = zipfile.ZipFile(fpath, 'r')
+        path = os.path.join(os.path.dirname(__file__), 'data', 'complete')
+
+        self.files = self.pack_directory(path)
 
     def testRelatedMethods(self):
-        patient_config = utils.get_patient_config_from_zip(self.zip_file)
+        patient_config = self.files['PT_PPS.XML'].read()
         self.assertEqual(
             'JHUYIIYIUIY',
             utils.get_case_id(patient_config)
@@ -130,7 +142,7 @@ class ImageUploadTests(UTHTests):
         )
 
     def testUpload(self):
-        result = utils.create_case(self.case_id, self.zip_file, self.case_id)
+        result = utils.create_case(self.case_id, self.files, self.case_id)
 
         self.assertEqual(len(result), 1)
 

@@ -64,7 +64,7 @@ def render_xform(files, exam_uuid, patient_case_id=None):
 
     def case_attach_block(key, filename):
         return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
-    case_attachments = [case_attach_block(f['identifier'], f['filename']) for f in files]
+    case_attachments = [case_attach_block(identifier(f), f) for f in files]
 
     format_dict = {
         'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -84,31 +84,19 @@ def render_xform(files, exam_uuid, patient_case_id=None):
     return final_xml
 
 
-def create_case(case_id, zip_file, patient_case_id=None):
-    files = []
-    for name in zip_file.namelist():
-        if name[-4:].lower() == '.xml':
-            # we don't need to attach these to the case
-            continue
+def identifier(filename):
+    # TODO fix this
+    return 'attachment' + filename.split('[')[1][:7]
 
-        filename = os.path.basename(name)
 
-        # TODO fix this up so it doesn't rely on the PT_PPS.XML file
-        # having already been filtered
-        scan = os.path.basename(os.path.dirname(name))
-
-        files.append({
-            'identifier': scan,
-            'filename': filename,
-            'data': io.BytesIO(zip_file.read(name))
-        })
-
+def create_case(case_id, files, patient_case_id=None):
+    files.pop('PT_PPS.XML', '')
     xform = render_xform(files, case_id, patient_case_id)
 
     file_dict = {}
 
     for f in files:
-        file_dict[f['filename']] = UploadedFile(f['data'], f['filename'])
+        file_dict[f] = UploadedFile(files[f], f)
 
     # TODO post_xform_to_couch is a test only function
     from couchforms.util import post_xform_to_couch
@@ -118,11 +106,5 @@ def create_case(case_id, zip_file, patient_case_id=None):
     return process_cases(form)
 
 
-def get_patient_config_from_zip(zip_file):
-    return zip_file.read(
-        [f for f in zip_file.namelist() if 'PT_PPS.XML' in f][0]
-    )
-
 def attach_images_to_case(case, upload_doc):
     pass
-
