@@ -931,6 +931,11 @@ class ProBonoForm(forms.Form):
                                                       "groups must reapply to renew their "
                                                       "pro-bono subscription."))
     domain = forms.CharField(label=_("Project Space"))
+    dimagi_contact = forms.CharField(
+        help_text=_("If you have already been in touch with someone from "
+                    "Dimagi, please list their name."),
+        required=False)
+    num_expected_users = forms.CharField(label=_("Number of expected users"))
 
     def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
@@ -950,6 +955,8 @@ class ProBonoForm(forms.Form):
                 'project_overview',
                 'pay_only_features_needed',
                 'duration_of_project',
+                'num_expected_users',
+                'dimagi_contact',
             ),
             FormActions(
                 crispy.ButtonHolder(
