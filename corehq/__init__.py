@@ -214,6 +214,9 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
+)
+
+from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
 )
 

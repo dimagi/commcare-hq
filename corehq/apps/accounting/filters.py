@@ -1,5 +1,4 @@
 import calendar
-from corehq import Domain
 from corehq.apps.accounting.models import *
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
@@ -171,11 +170,6 @@ class DateRangeFilter(BaseReportFilter):
         return datespan
 
 
-class DateSentFilter(DateRangeFilter):
-    slug = 'date_sent'
-    label = _("Date of Message")
-
-
 class OptionalFilterMixin(object):
     @classmethod
     def use_filter(cls, request):
@@ -322,32 +316,5 @@ class BillingContactFilter(BaseSingleOptionFilter):
                 (contact.full_name, contact.full_name)
                 for contact in BillingContactInfo.objects.all()
                 if contact.first_name or contact.last_name
-            ]
-        )
-
-
-class ShowBillablesFilter(BaseSingleOptionFilter):
-    slug = 'show_billables'
-    label = _("Show")
-    default_text = _("All")
-    VALID = "valid"
-    INVALID = "invalid"
-    options = (
-        (VALID, _("Valid Billables")),
-        (INVALID, _("Invalid Billables")),
-    )
-
-
-class DomainFilter(BaseSingleOptionFilter):
-    slug = 'domain'
-    label = _("Project Space")
-    default_text = _("All")
-
-    @property
-    def options(self):
-        return clean_options(
-            [
-                (domain.name, domain.name)
-                for domain in Domain.get_all()
             ]
         )
