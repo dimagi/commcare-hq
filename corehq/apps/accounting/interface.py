@@ -656,3 +656,17 @@ class SMSBillablesInterface(GenericTabularReport):
     slug = "sms_billables"
     fields = [
     ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date of Message"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Direction"),
+            DataTablesColumn("Gateway Fee"),
+            DataTablesColumn("Usage Fee"),
+            DataTablesColumn("Message Log ID"),
+            DataTablesColumn("Phone Number"),
+            DataTablesColumn("Is Valid?"),
+            DataTablesColumn("Date Created"),
+        )
