@@ -656,6 +656,10 @@ class SMSBillablesInterface(GenericTabularReport):
     description = "List of all SMS Billables"
     slug = "sms_billables"
     fields = [
+        'corehq.apps.accounting.interface.DateSentFilter',
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.ShowBillablesFilter',
+        'corehq.apps.accounting.interface.DomainFilter',
     ]
 
     @property
@@ -692,5 +696,25 @@ class SMSBillablesInterface(GenericTabularReport):
 
     @property
     def sms_billables(self):
-        selected_billables = SmsBillable.objects.filter()
+        selected_billables = SmsBillable.objects.filter(
+            date_sent__gte=DateSentFilter.get_start_date(self.request),
+            date_sent__lte=DateSentFilter.get_end_date(self.request),
+        )
+        if DateCreatedFilter.use_filter(self.request):
+            selected_billables = selected_billables.filter(
+                date_created__gte=DateCreatedFilter.get_start_date(
+                    self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        show_billables = ShowBillablesFilter.get_value(
+            self.request, self.domain)
+        if show_billables:
+            selected_billables = selected_billables.filter(
+                is_valid=(show_billables == ShowBillablesFilter.VALID),
+            )
+        domain = DomainFilter.get_value(self.request, self.domain)
+        if domain:
+            selected_billables = selected_billables.filter(
+                domain=domain,
+            )
         return selected_billables
