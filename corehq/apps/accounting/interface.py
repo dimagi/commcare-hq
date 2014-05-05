@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria
 from couchexport.models import Format
 
 
@@ -665,3 +666,23 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
         )
+
+    @property
+    def rows(self):
+        return [
+            [
+                criteria.backend_api_id,
+                (criteria.backend_instance
+                 if criteria.backend_instance is not None else "Any"),
+                criteria.direction,
+                (criteria.country_code
+                 if criteria.country_code is not None else "Any"),
+            ]
+            for criteria in self.sms_gateway_fee_criteria
+        ]
+
+    @property
+    def sms_gateway_fee_criteria(self):
+        selected_criteria = SmsGatewayFeeCriteria.objects
+        selected_criteria = selected_criteria.filter()  # TODO - apply filters
+        return selected_criteria
