@@ -645,3 +645,14 @@ class InvoiceInterface(GenericTabularReport):
                 'rows': self.rows,
             }
         )
+
+
+class SMSBillablesInterface(GenericTabularReport):
+    base_template = "accounting/report_filter_actions.html"
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "SMS Billables"
+    description = "List of all SMS Billables"
+    slug = "sms_billables"
+    fields = [
+    ]
