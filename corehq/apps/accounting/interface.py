@@ -684,7 +684,10 @@ class SMSBillablesInterface(GenericTabularReport):
                 sms_billable.domain,
                 sms_billable.direction,
                 (sms_billable.gateway_fee
-                 * sms_billable.gateway_fee_conversion_rate),
+                 * sms_billable.gateway_fee_conversion_rate)
+                if (sms_billable.gateway_fee is not None
+                    and sms_billable.gateway_fee_conversion_rate is not None)
+                else sms_billable.gateway_fee,
                 sms_billable.usage_fee,
                 sms_billable.log_id,
                 sms_billable.phone_number,
