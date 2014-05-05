@@ -146,6 +146,25 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
 
     @property
     def sms_gateway_fee_criteria(self):
-        selected_criteria = SmsGatewayFeeCriteria.objects
-        selected_criteria = selected_criteria.filter()  # TODO - apply filters
+        selected_criteria = SmsGatewayFeeCriteria.objects.filter()
+        gateway_type = GatewayTypeFilter.get_value(self.request, self.domain)
+        if gateway_type:
+            selected_criteria = selected_criteria.filter(
+                backend_api_id=gateway_type,
+            )
+        specific_gateway = SpecificGateway.get_value(self.request, self.domain)
+        if specific_gateway:
+            selected_criteria = selected_criteria.filter(
+                backend_instance=specific_gateway,
+            )
+        direction = DirectionFilter.get_value(self.request, self.domain)
+        if direction:
+            selected_criteria = selected_criteria.filter(
+                direction=direction,
+            )
+        country_code = CountryCodeFilter.get_value(self.request, self.domain)
+        if country_code:
+            selected_criteria = selected_criteria.filter(
+                country_code=int(country_code),
+            )
         return selected_criteria
