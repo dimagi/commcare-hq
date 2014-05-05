@@ -843,6 +843,7 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
+        PICTURE_FORMAT: 'Picture',
         CALC_XPATH_FORMAT: 'Calculate',
         CALC_XPATH_EXTRA_LABEL: '',
 
@@ -869,7 +870,8 @@ var DetailScreenConfig = (function () {
         {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
-        {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
+        {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
+        {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT}
     ];
 
     if (window.FEATURE_enable_enum_image) {
