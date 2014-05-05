@@ -122,3 +122,7 @@ def get_patient_config_from_zip(zip_file):
     return zip_file.read(
         [f for f in zip_file.namelist() if 'PT_PPS.XML' in f][0]
     )
+
+def attach_images_to_case(case, upload_doc):
+    pass
+

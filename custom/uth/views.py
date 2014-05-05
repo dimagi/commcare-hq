@@ -9,8 +9,8 @@ from custom.uth.utils import (
     create_case,
     get_patient_config_from_zip
 )
-import zipfile
-from custom.uth.models import SonositeUpload
+from custom.uth.models import SonositeUpload, VscanUpload
+from custom.uth.tasks import async_create_case, async_find_and_attach
 
 
 @require_POST
@@ -25,8 +25,20 @@ def vscan_upload(request, domain, **kwargs):
         response_data['result'] = 'failed'
         response_data['message'] = 'Missing required parameters'
     else:
-        case = match_case(scanner_serial, scan_id, date)
-        # attach_images_to_case(case, [])
+        upload = VscanUpload(
+            scanner_serial=scanner_serial,
+            scan_id=scan_id,
+        )
+        upload.save()
+
+        for name, f in request.FILES.iteritems():
+            upload.put_attachment(
+                f,
+                name,
+            )
+
+        # TODO delay
+        async_find_and_attach(upload._id)
 
         response_data = {}
         response_data['result'] = 'success'
@@ -40,11 +52,8 @@ def vscan_upload(request, domain, **kwargs):
 def sonosite_upload(request, domain, **kwargs):
     response_data = {}
 
-    zip_file = zipfile.ZipFile(request.FILES['file'])
-
-    # find patient config
     try:
-        config_file = get_patient_config_from_zip(zip_file)
+        config_file = request.FILES.pop('PT_PPS.XML')[0].read()
     except Exception as e:
         response_data['result'] = 'failed'
         response_data['message'] = 'Could not load config file: %s' % (e.message)
@@ -54,26 +63,19 @@ def sonosite_upload(request, domain, **kwargs):
     study_id = get_study_id(config_file)
 
     upload = SonositeUpload(
-        domain=domain,
         study_id=study_id,
         related_case_id=case_id,
     )
     upload.save()
 
-    # parsing the zip messes with file pointer, so reset
-    # before trying to save
-    zip_file.fp.seek(0)
-    upload.put_attachment(
-        zip_file.fp,
-        'upload.zip',
-        'application/zip'
-    )
+    for name, f in request.FILES.iteritems():
+        upload.put_attachment(
+            f,
+            name,
+        )
 
-    from custom.uth.tasks import async_create_case
+    # TODO delay
     async_create_case(upload._id)
-
-    #zip_file.fp.seek(0)
-    #create_case(case_id, zip_file)
 
     response_data['result'] = 'uploaded'
     response_data['message'] = 'uploaded'
