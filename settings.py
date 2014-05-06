@@ -1086,6 +1086,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
     'uth-rhd-test',
+    'succeed'
 ]
 
 CUSTOM_MODULES = [
