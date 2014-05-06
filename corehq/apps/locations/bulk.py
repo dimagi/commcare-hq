@@ -99,6 +99,10 @@ def import_location(domain, location_type, location_data):
     form_data['name'] = data.pop('name')
     form_data['location_type'] = location_type
 
+    lat, lon = data.pop('latitude', None), data.pop('longitude', None)
+    if lat and lon:
+        form_data['coordinates'] = '%s, %s' % (lat, lon)
+
     properties = {}
     consumption = []
     for k, v in data.iteritems():

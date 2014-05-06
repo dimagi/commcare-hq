@@ -296,6 +296,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'program_id': self.request.GET.get('program'),
             'start_date': self.datespan.startdate_utc,
             'end_date': self.datespan.enddate_utc,
+            'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
 

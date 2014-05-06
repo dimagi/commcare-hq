@@ -9,36 +9,47 @@ QUESTIONS = [
     {
         'tag': 'input',
         'repeat': None,
+        'group': None,
         'value': '/data/question1',
-        'label': 'label en ____ label en'
+        'label': 'label en ____ label en',
+        'type': 'Text',
     },
     {
         'tag': 'input',
         'repeat': None,
+        'group': None,
         'value': '/data/question2',
-        'label': 'label en ____ label en'
+        'label': 'label en ____ label en',
+        'type': 'Text',
     },
     {
         'tag': 'input',
         'repeat': None,
+        'group': None,
         'value': '/data/question3',
-        'label': 'no references here!'
+        'label': 'no references here!',
+        'type': 'Text',
     },
     {
         'tag': 'trigger',
         'repeat': None,
+        'group': None,
         'value': '/data/hi',
-        'label': 'woo'
+        'label': 'woo',
+        'type': 'Trigger',
     },
     {
         'tag': 'input',
         'repeat': '/data/question15',
+        'group': '/data/question15',
         'value': '/data/question15/question16',
-        'label': None
+        'label': None,
+        'type': 'Text',
     },
     {
         'tag': 'select1',
         'repeat': '/data/question15',
+        'group': '/data/question15',
         'options': [
             {
                 'value': 'item22',
@@ -46,30 +57,40 @@ QUESTIONS = [
             }
         ],
         'value': '/data/question15/question21',
-        'label': None
+        'label': None,
+        'type': 'Select',
     },
     {
         'tag': 'input',
         'repeat': '/data/question15',
+        'group': '/data/question15',
         'value': '/data/question15/question25',
-        'label': None
+        'label': None,
+        'type': 'Int',
     },
     {
         'tag': 'input',
         'repeat': None,
+        'group': None,
         'value': '/data/thing',
-        'label': None
+        'label': None,
+        'type': 'Text',
     },
     {
         'tag': 'hidden',
         'repeat': None,
+        'group': None,
         'value': '/data/datanode',
-        'label': '/data/datanode'
+        'label': '/data/datanode',
+        'type': 'DataBindOnly',
     },
 ]
 
+
 class GetFormQuestionsTest(TestCase):
     domain = 'test-domain'
+
+    maxDiff = None
 
     def setUp(self):
         def read(filename):
@@ -106,6 +127,3 @@ class GetFormQuestionsTest(TestCase):
             ['en', 'es'], include_triggers=True)
 
         self.assertEqual(questions, QUESTIONS)
-
-
-        

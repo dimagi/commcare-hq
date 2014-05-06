@@ -17,6 +17,9 @@
             404: "{% trans 'Page not found.' %}",
             500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try back shortly.{% endblocktrans %}"
         });
+        {% if stripe_cards %}
+            paymentHandler.loadCards({{ stripe_cards|JSON }});
+        {% endif %}
         $(function () {
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
         });
@@ -36,7 +39,7 @@
                         paginatedItem: paginatedItem,
                         paginatedList: paginatedListModel
                     }));
-                    paymentHandler.stripeCard().reset();
+                    paymentHandler.newCard(new StripeCard());
                     paymentHandler.reset();
                     e.preventDefault();
                 });
@@ -180,9 +183,16 @@
                 }, visible: paymentIsNotComplete"></div>
 
                 <div data-bind="template: {
-                    data: stripeCard,
-                    name: 'stripe-card-ko-template',
-                }, visible: paymentIsNotComplete"></div>
+                    data: newCard,
+                    name: 'select-new-stripe-card-template',
+                    if: mustCreateNewCard
+                }"></div>
+
+                <div data-bind="template: {
+                    data: $data,
+                    name: 'select-stripe-card-template',
+                    if: canSelectCard
+                }"></div>
 
                 <p class="alert alert-success"
                      data-bind="visible: paymentIsComplete">

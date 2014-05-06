@@ -10,7 +10,7 @@
 .pydevproject
 .idea
 xforms/
-data/
+/data/
 submissions/
 export/
 bad/

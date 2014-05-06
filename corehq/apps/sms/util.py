@@ -206,3 +206,10 @@ def get_contact(contact_id):
             raise Exception("Unkown contact type for contact %s" % contact_id)
     return contact
 
+
+def get_backend_by_class_name(class_name):
+    backends = dict([(d.split('.')[-1], d) for d in settings.SMS_LOADED_BACKENDS])
+    backend_path = backends.get(class_name)
+    if backend_path is not None:
+        return to_function(backend_path)
+    return None

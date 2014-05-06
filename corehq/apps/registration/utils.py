@@ -81,6 +81,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.save() # we need to get the name from the _id
 
     # Create a 30 Day Trial subscription to the Advanced Plan
+    is_trial = False
     if (toggles.ACCOUNTING_PREVIEW.enabled(current_user.username)
         or toggles.ACCOUNTING_PREVIEW.enabled(new_domain.name)
     ):
@@ -102,6 +103,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         )
         trial_subscription.is_active = True
         trial_subscription.save()
+        is_trial = True
 
     dom_req.domain = new_domain.name
 
@@ -121,7 +123,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
                                        dom_req.domain,
                                        dom_req.activation_guid)
     else:
-        send_global_domain_registration_email(request.user, new_domain.name)
+        send_global_domain_registration_email(request.user, new_domain.name, is_trial=is_trial)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
 def send_domain_registration_email(recipient, domain_name, guid):
@@ -181,7 +183,7 @@ The CommCareHQ Team
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
 
-def send_global_domain_registration_email(requesting_user, domain_name):
+def send_global_domain_registration_email(requesting_user, domain_name, is_trial=False):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
     domain_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
     wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
@@ -193,6 +195,29 @@ Hello {name},
 You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
 
 You may access your project by following this link: {domain_link}
+
+Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
+{wiki_link}
+
+If you haven't yet, we also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
+{users_link}
+
+If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
+
+Thank you,
+
+The CommCareHQ Team
+
+"""
+    # will switch to this after the feature flag is lifted
+    message_plaintext_trial = u"""
+Hello {name},
+
+You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
+
+You may access your project by following this link: {domain_link}
+
+Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.
 
 Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
 {wiki_link}
@@ -221,9 +246,23 @@ The CommCareHQ Team
 <p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
 {domain_link}
 """
+    message_html_trial = u"""
+<h1>New project "{domain}" created!</h1>
+<p>Hello {name},</p>
+<p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
+<p>Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.</p>
+
+<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
+<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
+<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
+<p style="margin-top:1em">Thank you,</p>
+<p><strong>The CommCareHQ Team</strong></p>
+<p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
+{domain_link}
+"""
     params = {"name": requesting_user.first_name, "domain": domain_name, "domain_link": domain_link, "username": requesting_user.email, "wiki_link": wiki_link, "users_link": users_link}
-    message_plaintext = message_plaintext.format(**params)
-    message_html = message_html.format(**params)
+    message_plaintext = message_plaintext_trial.format(**params) if is_trial else message_plaintext.format(**params)
+    message_html = message_html_trial.format(**params) if is_trial else message_html.format(**params)
 
     subject = 'CommCare HQ: New project created!'.format(**locals())
 

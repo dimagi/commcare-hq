@@ -84,10 +84,10 @@ class HealthStatus(object):
             ben = 0
             child_num = 0
             mother_num = 0
-            self.beneficiaries_registered = format_percent(0, 0)
+            self.beneficiaries_registered = normal_format(0)
             self.pregnant_women = format_percent(0, 0)
             self.mother = format_percent(0, 0)
-            self.children = format_percent(0, 0)
+            self.children = normal_format(0)
 
         if sql_data:
             self.vhnd_monthly = format_percent(sql_data.get('vhnd_monthly_total', 0), calc_percentage(sql_data.get('vhnd_monthly_total', 0), ben))

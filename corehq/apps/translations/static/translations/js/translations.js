@@ -28,22 +28,26 @@ var mk_translation_ui = function (spec) {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
-                        translation_ui.addTranslation(that);
-                        translation_ui.appendAdder();
+                        var hasError = translation_ui.addTranslation(that);
+                        if (!hasError) {
+                            translation_ui.appendAdder();
+                        }
                     } else {
                         that.key.$edit_view.focus();
                     }
                 }).css({cursor: 'pointer'}).attr('title', "Add Translation").hide();
-
+                this.$error = $('<span></span>').addClass('alert alert-error');
                 this.ui = $('<tr/>');
                 $('<td/>').append(this.key.ui).appendTo(this.ui);
                 $('<td/>').append(this.value.ui).appendTo(this.ui);
                 $('<td/>').append(this.$delete).appendTo(this.ui);
                 $('<td/>').append(this.$add).appendTo(this.ui);
-
+                $('<td/>').append(this.$error).appendTo(this.ui);
+                this.$error.hide()
                 if (!translation_ui.edit) {
                     this.$delete.hide();
                     this.$add.hide();
+                    this.$error.hide();
                 }
 
                 this.value.on('change', function () {
@@ -146,25 +150,35 @@ var mk_translation_ui = function (spec) {
 
     translation_ui.save = function () {
         var key, data = {};
+        var error = false;
         for (key in translation_ui.translations) {
             if (translation_ui.translations.hasOwnProperty(key)) {
-                data[translation_ui.translations[key].key.val()] = translation_ui.translations[key].value.val();
+                if (translation_ui.validate_translation(translation_ui.translations[key])) {
+                    translation_ui.translations[key].$error.text('Parameters formatting problem!');
+                    translation_ui.translations[key].$error.show();
+                    error = true;
+                } else {
+                    translation_ui.translations[key].$error.hide();
+                    data[translation_ui.translations[key].key.val()] = translation_ui.translations[key].value.val();
+                }
             }
         }
-        this.saveButton.ajax({
-            type: "POST",
-            dataType: "json",
-            url: translation_ui.url,
-            data: {
-                doc_id: JSON.stringify(translation_ui.doc_id),
-                lang: JSON.stringify(translation_ui.lang),
-                translations: JSON.stringify(data)
-            },
-            context: this,
-            success: function (data) {
-                COMMCAREHQ.updateDOM(data.update);
-            }
-        });
+        if (!error) {
+            this.saveButton.ajax({
+                type: "POST",
+                dataType: "json",
+                url: translation_ui.url,
+                data: {
+                    doc_id: JSON.stringify(translation_ui.doc_id),
+                    lang: JSON.stringify(translation_ui.lang),
+                    translations: JSON.stringify(data)
+                },
+                context: this,
+                success: function (data) {
+                    COMMCAREHQ.updateDOM(data.update);
+                }
+            });
+        }
     };
 
     translation_ui.deleteTranslation = function (key) {
@@ -176,12 +190,21 @@ var mk_translation_ui = function (spec) {
     };
 
     translation_ui.addTranslation = function (translation) {
-        translation_ui.saveButton.fire('change');
-        translation_ui.translations[translation.key.val()] = translation;
-        translation.ui.detach();
-        translation.setSolid(true);
-        $list_tbody.append(translation.ui.hide());
-        translation.ui.fadeIn();
+        var error = translation_ui.validate_translation(translation);
+        if (!error) {
+            translation.$error.hide();
+            translation_ui.saveButton.fire('change');
+            translation_ui.translations[translation.key.val()] = translation;
+            translation.ui.detach();
+            translation.setSolid(true);
+            $list_tbody.append(translation.ui.hide());
+            translation.ui.fadeIn();
+        } else {
+            translation.$error.text('Parameters formatting problem!');
+            translation.$error.show();
+        }
+
+        return error;
     };
 
     translation_ui.appendAdder = function () {
@@ -217,5 +240,19 @@ var mk_translation_ui = function (spec) {
         }
         $home.append($table);
     };
+    translation_ui.validate_translation = function(translation) {
+        var patt = /\$.*?}/g;
+        var parameters = translation.value.val().match(patt);
+        var error = false;
+        if (parameters !== null && parameters.length !== 0) {
+            var patt2 = /\$\{[0-9]+}/;
+            for (var idx in parameters) {
+                if(!parameters[idx].match(patt2)) {
+                    error = true;
+                }
+            }
+        }
+        return error
+    }
     translation_ui.render();
 };

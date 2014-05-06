@@ -458,6 +458,13 @@ class FixtureReportResult(Document, QueryMixin):
         return cls.view("m4change/fixture_by_composite_key", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
 
     @classmethod
+    def get_report_results_by_key(cls, domain, location_id, start_date, end_date):
+        return cls.view("m4change/fixture_by_composite_key",
+                        startkey=[domain, location_id, start_date, end_date],
+                        endkey=[domain, location_id, start_date, end_date, {}],
+                        include_docs=True).all()
+
+    @classmethod
     def _validate_params(cls, params):
         for param in params:
             if param is None or len(param) == 0:
