@@ -337,10 +337,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
     try:
         xform = form.wrapped_xform()
     except XFormError as e:
-        form_errors.append("Error in form: %s" % e)
+        form_errors.append(u"Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
-        form_errors.append("Unexpected error in form: %s" % e)
+        form_errors.append(u"Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -353,22 +353,22 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form.validate_form()
             xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
-            form_errors.append("Syntax Error: %s" % e)
+            form_errors.append(u"Syntax Error: %s" % e)
         except AppEditingError as e:
-            form_errors.append("Error in application: %s" % e)
+            form_errors.append(u"Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
         except XFormError as e:
-            form_errors.append("Error in form: %s" % e)
+            form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
             notify_exception(request, 'Unexpected Build Error')
-            form_errors.append("Unexpected System Error: %s" % e)
+            form_errors.append(u"Unexpected System Error: %s" % e)
 
         try:
             form_action_errors = form.validate_for_build()
@@ -377,26 +377,22 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                 if settings.DEBUG and False:
                     xform.validate()
         except CaseError as e:
-            messages.error(request, "Error in Case Management: %s" % e)
+            messages.error(request, u"Error in Case Management: %s" % e)
         except XFormValidationError as e:
-            messages.error(request, "%s" % e)
+            messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
-            messages.error(request, "Unexpected Error: %s" % e)
+            logging.exception(unicode(e))
+            messages.error(request, u"Unexpected Error: %s" % e)
 
     try:
         languages = xform.get_languages()
     except Exception:
         languages = []
 
-    for i, err in enumerate(form_errors):
-        if not isinstance(err, basestring):
-            messages.error(request, err[0], **err[1])
-            form_errors[i] = err[0]
-        else:
-            messages.error(request, err)
+    for err in form_errors:
+        messages.error(request, err)
 
     module_case_types = []
     if is_user_registration:
