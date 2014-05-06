@@ -520,15 +520,17 @@ class DefaultProductPlan(models.Model):
         max_length=25,
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
+    is_trial = models.BooleanField(default=False)
 
     @classmethod
-    def get_default_plan_by_domain(cls, domain, edition=None):
+    def get_default_plan_by_domain(cls, domain, edition=None, is_trial=False):
         domain = ensure_domain_instance(domain)
         edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
-            default_product_plan = DefaultProductPlan.objects.get(product_type=product_type,
-                                                                  edition=edition)
+            default_product_plan = DefaultProductPlan.objects.get(
+                product_type=product_type, edition=edition, is_trial=is_trial
+            )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
@@ -589,7 +591,9 @@ class SoftwarePlanVersion(models.Model):
             'name': self.plan.name,
             'description': self.plan.description,
         }
-        if self.plan.visibility == SoftwarePlanVisibility.PUBLIC:
+        if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+        ):
             try:
                 desc = DESC_BY_EDITION[self.plan.edition]
             except KeyError:

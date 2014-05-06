@@ -86,7 +86,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         or toggles.ACCOUNTING_PREVIEW.enabled(new_domain.name)
     ):
         advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-            new_domain, edition=SoftwarePlanEdition.ADVANCED
+            new_domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
         )
         expiration_date = date.today() + timedelta(days=30)
         trial_account = BillingAccount.objects.get_or_create(
