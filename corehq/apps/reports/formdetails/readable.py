@@ -156,7 +156,7 @@ def zip_form_data_and_questions(data, questions, path_context='',
         path_context += '/'
     if not output_context:
         output_context = {
-            '%s%s' % (path_context, '/'.join(map(unicode, key))): value
+            '%s%s' % (path_context, '/'.join(map(unicode, key))): unicode(value)
             for key, value in _flatten_json(data).items()
         }
 
