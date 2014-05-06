@@ -333,8 +333,8 @@ class CommtrackUserForm(forms.Form):
     def save(self, user):
         commtrack_user = CommTrackUser.wrap(user.to_json())
         location_ids = self.cleaned_data['supply_points']
+        commtrack_user.clear_locations()
         if location_ids:
-            commtrack_user.clear_locations()
             for location_id in location_ids:
                 loc = Location.get(location_id)
                 commtrack_user.add_location(loc, create_sp_if_missing=True)
