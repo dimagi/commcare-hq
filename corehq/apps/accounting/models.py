@@ -113,9 +113,11 @@ class SoftwarePlanEdition(object):
 class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
+    TRIAL = "TRIAL"
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
+        (TRIAL, "This is a Trial Plan"),
     )
 
 
