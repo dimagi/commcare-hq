@@ -1,6 +1,7 @@
 from custom.uth.utils import create_case, match_case, attach_images_to_case
 from custom.uth.models import SonositeUpload, VscanUpload
 from celery.task import task
+import io
 
 
 @task
@@ -9,7 +10,7 @@ def async_create_case(upload_id):
 
     files = {}
     for f in upload_doc._attachments.keys():
-        files[f] = upload_doc.fetch_attachment(f)
+        files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
 
     create_case(upload_doc.related_case_id, files)
 
