@@ -89,7 +89,7 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
                 unverified_number = None
         elif isinstance(recipient, CommCareCase):
             unverified_number = recipient.get_case_property("contact_phone_number")
-            unverified_number = apply_leniency(phone_number)
+            unverified_number = apply_leniency(unverified_number)
             if unverified_number:
                 try:
                     CommCareMobileContactMixin.validate_number_format(
