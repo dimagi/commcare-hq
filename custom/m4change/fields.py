@@ -2,13 +2,13 @@ import datetime
 from dimagi.utils.dates import DateSpan
 from django.utils import simplejson
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.dont_use.fields import ReportField
 
 
 class DateRangeField(ReportField):
     name = ugettext_noop("Date Range")
     slug = "datespan"
-    template = "reports/fields/daterange.html"
+    template = "m4change/fields/daterange.html"
     inclusive = True
     default_days = 30
 
@@ -41,11 +41,11 @@ class DateRangeField(ReportField):
 
 
 class CaseSearchField(ReportField):
-    name = ugettext_noop("Search")
+    name = ugettext_noop("Case Search")
     slug = "case_search"
     template = "reports/filters/search.html"
 
     def update_context(self):
         self.search_query = self.request.GET.get("case_search", "")
         self.context["search_query"] = self.search_query
-        self.context["label"] = _("Search")
+        self.context["label"] = _("Case Search")

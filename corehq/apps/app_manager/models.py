@@ -36,7 +36,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate
+from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -69,7 +69,13 @@ from .exceptions import (
     XFormError,
     XFormIdNotUnique,
     XFormValidationError,
-)
+    LocationXpathValidationError)
+from corehq.apps.app_manager import id_strings
+
+AUTO_SELECT_USER = 'user'
+AUTO_SELECT_FIXTURE = 'fixture'
+AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_RAW = 'raw'
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -108,6 +114,11 @@ def partial_escape(xpath):
 
 class ModuleNotFoundException(Exception):
     pass
+
+
+class FormNotFoundException(Exception):
+    pass
+
 
 class IncompatibleFormTypeException(Exception):
     pass
@@ -285,9 +296,28 @@ class AdvancedAction(DocumentSchema):
         return 'case_id_{0}'.format(self.case_tag)
 
 
+class AutoSelectCase(DocumentSchema):
+    """
+    Configuration for auto-selecting a case.
+    Attributes:
+        value_source    Reference to the source of the value. For mode = fixture,
+                        this represents the FixtureDataType ID. For mode = case
+                        this represents the 'case_tag' for the case.
+                        The mode 'user' doesn't require a value_source.
+        value_key       The actual field that contains the case ID. Can be a case
+                        property or a user data key or a fixture field name or the raw
+                        xpath expression.
+
+    """
+    mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
+    value_source = StringProperty()
+    value_key = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     details_module = StringProperty()
     preload = DictProperty()
+    auto_select = SchemaProperty(AutoSelectCase, default=None)
     show_product_stock = BooleanProperty(default=False)
 
     def get_paths(self):
@@ -301,6 +331,10 @@ class LoadUpdateAction(AdvancedAction):
         names = super(LoadUpdateAction, self).get_property_names()
         names.update(self.preload.keys())
         return names
+
+    @property
+    def requires_casedb(self):
+        return not self.auto_select or self.auto_select.mode in [AUTO_SELECT_CASE, AUTO_SELECT_RAW]
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
@@ -353,16 +387,26 @@ class AdvancedFormActions(DocumentSchema):
             if parent:
                 if parent in hierarchy:
                     circular = [a.case_tag for a in hierarchy + [parent]]
-                    raise ValueError("Circular reference in subcase hierarchy: {}".format(circular))
+                    raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
                 hierarchy.append(parent)
 
         return hierarchy
+
+    @property
+    def auto_select_actions(self):
+        return self._action_meta()['by_auto_select_mode']
 
     @memoized
     def _action_meta(self):
         meta = {
             'by_tag': {},
-            'by_parent_tag': {}
+            'by_parent_tag': {},
+            'by_auto_select_mode': {
+                AUTO_SELECT_USER: [],
+                AUTO_SELECT_CASE: [],
+                AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_RAW: [],
+            }
         }
 
         def add_actions(type, action_list):
@@ -376,6 +420,8 @@ class AdvancedFormActions(DocumentSchema):
                         'type': type,
                         'action': action
                     }
+                if type == 'load' and action.auto_select and action.auto_select.mode:
+                    meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
         add_actions('load', self.load_update_cases)
         add_actions('open', self.open_cases)
@@ -634,8 +680,8 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs):
-        return XForm(self.source).get_questions(langs)
+    def get_questions(self, langs, **kwargs):
+        return XForm(self.source).get_questions(langs, **kwargs)
 
     def export_json(self, dump_json=True):
         source = self.to_json()
@@ -1148,6 +1194,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         )
 
     def validate_detail_columns(self, columns):
+        from corehq.apps.app_manager.suite_xml import FIELD_TYPE_LOCATION
+        from corehq.apps.locations.util import parent_child
+        hierarchy = None
         for column in columns:
             if column.format in ('enum', 'enum-image'):
                 for item in column.enum:
@@ -1164,6 +1213,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 except etree.XPathSyntaxError:
                     yield {
                         'type': 'invalid filter xpath',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+            elif column.field_type == FIELD_TYPE_LOCATION:
+                hierarchy = hierarchy or parent_child(self.get_app().domain)
+                try:
+                    LocationXpath('').validate(column.field_property, hierarchy)
+                except LocationXpathValidationError, e:
+                    yield {
+                        'type': 'invalid location xpath',
+                        'details': unicode(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -1408,12 +1468,21 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             except ValueError:
                 errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
 
+            if isinstance(action, LoadUpdateAction) and \
+                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
+                case_tag = action.auto_select.value_source
+                if not self.actions.get_action_from_tag(case_tag):
+                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
+
             errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
                 case_tag=action.case_tag
             ))
 
         for action in self.actions.get_all_actions():
+            if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
+                errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
+
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
                 case_tag=action.case_tag
@@ -2151,6 +2220,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 
         if should_save:
             self.save()
+
         return self
 
     @classmethod
@@ -2283,7 +2353,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             url_name = 'receiver_secure_post_with_app_id'
         else:
             url_name = 'receiver_post_with_app_id'
-        return reverse(url_name, args=[self.domain, self.copy_of or self.get_id])
+        return reverse(url_name, args=[self.domain, self.get_id])
 
     @absolute_url_property
     def key_server_url(self):
@@ -2593,7 +2663,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    translation_strategy = StringProperty(default='dump-known',
+    translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -2710,7 +2780,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = previous_version.fetch_attachment(filename)
-                except (ResourceNotFound, KeyError):
+                except (ResourceNotFound, FormNotFoundException):
                     pass
                 else:
                     previous_hash = _hash(previous_source)
@@ -2875,7 +2945,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_modules():
             if matches(obj):
                 return obj
-        raise KeyError("Module in app '%s' with unique id '%s' not found" % (self.id, unique_id))
+        raise ModuleNotFoundException(
+            ("Module in app '%s' with unique id '%s' not found"
+             % (self.id, unique_id)))
 
     def get_forms(self, bare=True):
         if self.show_user_registration:
@@ -2897,7 +2969,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise FormNotFoundException(
+            ("Form in app '%s' with unique id '%s' not found"
+             % (self.id, unique_form_id)))
 
     def get_form_location(self, unique_form_id):
         for m_index, module in enumerate(self.get_modules()):
@@ -2915,17 +2989,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.modules.append(module)
         return self.get_module(-1)
 
-    @parse_int([1])
-    def delete_module(self, module_id):
-        module = self.get_module(module_id)
+    def delete_module(self, module_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            return None
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
-            module_id=module_id,
+            module_id=module.id,
             module=module,
             datetime=datetime.utcnow()
         )
-        del self.modules[module_id]
+        del self.modules[module.id]
         record.save()
         return record
 
@@ -2933,20 +3009,23 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
-    @parse_int([1, 2])
-    def delete_form(self, module_id, form_id):
-        module = self.get_module(module_id)
-        form = module['forms'][form_id]
+    def delete_form(self, module_unique_id, form_unique_id):
+        try:
+            module = self.get_module_by_unique_id(module_unique_id)
+            form = self.get_form(form_unique_id)
+        except (ModuleNotFoundException, FormNotFoundException):
+            return None
+
         record = DeleteFormRecord(
             domain=self.domain,
             app_id=self.id,
-            module_id=module_id,
-            form_id=form_id,
+            module_unique_id=module_unique_id,
+            form_id=form.id,
             form=form,
-            datetime=datetime.utcnow()
+            datetime=datetime.utcnow(),
         )
         record.save()
-        del module['forms'][form_id]
+        del module['forms'][form.id]
         return record
 
     def rename_lang(self, old_lang, new_lang):
@@ -3050,9 +3129,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_questions(self, xmlns):
+    def get_form_by_xmlns(self, xmlns):
         if xmlns == "http://code.javarosa.org/devicereport":
-            return []
+            return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (
@@ -3061,9 +3140,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 len(forms),
                 xmlns,
             ))
-            return []
+            return None
         else:
             form, = forms
+        return form
+
+    def get_questions(self, xmlns):
+        form = self.get_form_by_xmlns(xmlns)
+        if not form:
+            return []
         return form.get_questions(self.langs)
 
     def validate_app(self):
@@ -3337,6 +3422,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     if name:
         source['name'] = name
     cls = str_to_cls[source['doc_type']]
+    # Allow the wrapper to update to the current default build_spec
+    if 'build_spec' in source:
+        del source['build_spec']
     app = cls.from_source(source, domain)
     app.save()
 
@@ -3380,14 +3468,19 @@ class DeleteFormRecord(DeleteRecord):
 
     app_id = StringProperty()
     module_id = IntegerProperty()
+    module_unique_id = StringProperty()
     form_id = IntegerProperty()
     form = SchemaProperty(FormBase)
 
     def undo(self):
         app = Application.get(self.app_id)
-        forms = app.modules[self.module_id].forms
+        if self.module_unique_id is not None:
+            module = app.get_module_by_unique_id(self.module_unique_id)
+        else:
+            module = app.modules[self.module_id]
+        forms = module.forms
         forms.insert(self.form_id, self.form)
-        app.modules[self.module_id].forms = forms
+        module.forms = forms
         app.save()
 
 
@@ -3420,14 +3513,15 @@ class CareplanConfig(Document):
 
         return result
 
-FormBase.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
-FormBase.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
 
-ModuleBase.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+# backwards compatibility with suite-1.0.xml
+FormBase.get_command_id = lambda self: id_strings.form_command(self)
+FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
 
-ModuleBase.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
-ModuleBase.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+ModuleBase.get_locale_id = lambda self: id_strings.module_locale(self)
 
-Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
-Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
+ModuleBase.get_case_list_command_id = lambda self: id_strings.case_list_command(self)
+ModuleBase.get_case_list_locale_id = lambda self: id_strings.case_list_locale(self)
 
+Module.get_referral_list_command_id = lambda self: id_strings.referral_list_command(self)
+Module.get_referral_list_locale_id = lambda self: id_strings.referral_list_locale(self)

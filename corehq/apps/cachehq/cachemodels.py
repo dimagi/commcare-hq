@@ -90,3 +90,11 @@ class ReportGenerationCache(GenerationCache):
         "reportconfig/daily_notifications",
         'groupexport/by_domain',
     ]
+
+
+class DefaultConsumptionGenerationCache(GenerationCache):
+    generation_key = '#gen#default_consumption#'
+    doc_types = ['DefaultConsumption']
+    views = [
+        'consumption/consumption_index',
+    ]

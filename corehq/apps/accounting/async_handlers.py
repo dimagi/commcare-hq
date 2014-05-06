@@ -176,6 +176,7 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
         'domain',
         'account',
         'plan_version',
+        'new_plan_version',
     ]
 
     @property
@@ -203,6 +204,13 @@ class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
             plan_versions = plan_versions.filter(
                 plan__name__contains=self.search_string)
         return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+
+    @property
+    def new_plan_version_response(self):
+        current_version = int(self.data.get('additionalData[current_version]'))
+        plan_versions = filter(lambda x: x[0] != current_version,
+                               self.plan_version_response)
+        return plan_versions
 
 
 class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):

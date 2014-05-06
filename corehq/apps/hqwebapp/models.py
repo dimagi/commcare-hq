@@ -293,21 +293,66 @@ class CommTrackSetupTab(UITab):
     view = "corehq.apps.commtrack.views.default"
 
     @property
+    def dropdown_items(self):
+        # circular import
+        from corehq.apps.commtrack.views import (
+            ProductListView,
+            DefaultConsumptionView,
+            ProgramListView,
+            SMSSettingsView,
+        )
+        from corehq.apps.locations.views import (
+            LocationsListView,
+            LocationSettingsView,
+        )
+
+        dropdown_items = [
+            (_("Products"), ProductListView),
+            (_("Programs"), ProgramListView),
+            (_("Consumption"), DefaultConsumptionView),
+            (_("SMS"), SMSSettingsView),
+            (_("Locations"), LocationsListView),
+            (_("Locations (Advanced)"), LocationSettingsView),
+        ]
+
+        return [
+            format_submenu_context(
+                item[0],
+                url=reverse(item[1].urlname, args=[self.domain])
+            ) for item in dropdown_items
+        ]
+
+    @property
     def is_viewable(self):
         return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
 
     @property
     def sidebar_items(self):
-        items = []
-
         # circular import
         from corehq.apps.commtrack.views import (
             ProductListView,
             NewProductView,
             EditProductView,
             DefaultConsumptionView,
+            ProgramListView,
+            NewProgramView,
+            EditProgramView,
+            SMSSettingsView,
         )
-        products_section = [
+        from corehq.apps.locations.views import (
+            LocationsListView,
+            NewLocationView,
+            EditLocationView,
+            FacilitySyncView,
+            LocationImportView,
+            LocationImportStatusView,
+            LocationSettingsView,
+        )
+
+        items = []
+
+        items.append([_('CommTrack Setup'), [
+            # products
             {
                 'title': ProductListView.page_title,
                 'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -322,17 +367,7 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            }
-        ]
-        items.append([_("Products"), products_section])
-
-
-        # circular import
-        from corehq.apps.commtrack.views import ProgramListView, NewProgramView, EditProgramView
-        programs_section = [
+            # programs
             {
                 'title': ProgramListView.page_title,
                 'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -347,13 +382,17 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-        ]
-        items.append([_("Programs"), programs_section])
-
-        # circular import
-        from corehq.apps.locations.views import (LocationsListView, NewLocationView, EditLocationView,
-                                                 FacilitySyncView, LocationImportView)
-        locations_section = [
+            # consumption
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            },
+            # sms
+            {
+                'title': SMSSettingsView.page_title,
+                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+            },
+            # locations
             {
                 'title': LocationsListView.page_title,
                 'url': reverse(LocationsListView.urlname, args=[self.domain]),
@@ -366,23 +405,27 @@ class CommTrackSetupTab(UITab):
                         'title': EditLocationView.page_title,
                         'urlname': EditLocationView.urlname,
                     },
+                    {
+                        'title': LocationImportView.page_title,
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': LocationImportStatusView.page_title,
+                        'urlname': LocationImportStatusView.urlname,
+                    },
                 ]
             },
-        ]
-        items.append([_("Locations"), locations_section])
-
-        advanced_locations_section = [
+            # locations (advanced)
+            {
+                'title': LocationSettingsView.page_title,
+                'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # external sync
             {
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
-            {
-                'title': LocationImportView.page_title,
-                'url': reverse(LocationImportView.urlname, args=[self.domain]),
-            },
-        ]
-        items.append([_("Integration (Advanced)"), advanced_locations_section])
-
+        ]])
         return items
 
 
@@ -435,7 +478,7 @@ class ProjectDataTab(UITab):
                 })
 
             items.extend(edit_section)
-
+            
         return items
 
 
@@ -817,8 +860,6 @@ class ProjectUsersTab(UITab):
                       'urlname': 'add_commcare_account'},
                      {'title': _('Bulk Upload'),
                       'urlname': 'upload_commcare_users'},
-                     {'title': _('Transfer Mobile Workers'),
-                      'urlname': 'user_domain_transfer'},
                      {'title': ConfirmBillingAccountForExtraUsersView.page_title,
                       'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                  ]},
@@ -935,20 +976,13 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import (
-                BasicCommTrackSettingsView,
-                AdvancedCommTrackSettingsView,
-            )
+            from corehq.apps.domain.views import CommTrackSettingsView
 
             if self.project.commtrack_enabled:
                 commtrack_settings = [
                     {
-                        'title': _(BasicCommTrackSettingsView.page_title),
-                        'url': reverse(BasicCommTrackSettingsView.urlname, args=[self.domain])
-                    },
-                    {
-                        'title': _(AdvancedCommTrackSettingsView.page_title),
-                        'url': reverse(AdvancedCommTrackSettingsView.urlname, args=[self.domain])
+                        'title': _(CommTrackSettingsView.page_title),
+                        'url': reverse(CommTrackSettingsView.urlname, args=[self.domain])
                     },
                 ]
                 items.append((_('CommTrack'), commtrack_settings))
@@ -980,6 +1014,11 @@ class ProjectSettingsTab(UITab):
                       'urlname': 'add_repeater'}
                  ]}
             ])
+
+            administration.append({
+                    'title': _('Feature Previews'),
+                    'url': reverse('feature_previews', args=[self.domain])
+            })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser
@@ -989,12 +1028,19 @@ class ProjectSettingsTab(UITab):
             if user_is_billing_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
-                    DomainBillingStatementsView,
+                    DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                 )
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
                         'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': ConfirmSubscriptionRenewalView.page_title,
+                                'urlname': ConfirmSubscriptionRenewalView.urlname,
+                                'url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
+                            }
+                        ]
                     },
                 ]
                 if billing_account is not None:
@@ -1004,9 +1050,7 @@ class ProjectSettingsTab(UITab):
                             'url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
                         },
                     )
-                if ((toggles.ACCOUNTING_PREVIEW.enabled(self.couch_user.username)
-                     or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                    and billing_account is not None
+                if (billing_account is not None
                     and Invoice.exists_for_domain(self.domain)
                 ):
                     subscription.append(
@@ -1082,10 +1126,12 @@ class AdminReportsTab(UITab):
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            admin_operations.append(
+            admin_operations.extend([
                 {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')}
-            )
+                 'url': reverse('mass_email')},
+                {'title': _('PillowTop Errors'),
+                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+            ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
@@ -1161,12 +1207,23 @@ class AccountingTab(UITab):
         items = super(AccountingTab, self).sidebar_items
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
-            from corehq.apps.accounting.views import TriggerInvoiceView
+            from corehq.apps.accounting.views import (
+                TriggerInvoiceView, TriggerBookkeeperEmailView,
+                TestRenewalEmailView,
+            )
             items.append(('Other Actions', (
                 {
                     'title': TriggerInvoiceView.page_title,
                     'url': reverse(TriggerInvoiceView.urlname),
                 },
+                {
+                    'title': TriggerBookkeeperEmailView.page_title,
+                    'url': reverse(TriggerBookkeeperEmailView.urlname),
+                },
+                {
+                    'title': TestRenewalEmailView.page_title,
+                    'url': reverse(TestRenewalEmailView.urlname),
+                }
             )))
         return items
 
@@ -1299,9 +1356,9 @@ class OrgReportTab(OrgTab):
     def dropdown_items(self):
         return [
             format_submenu_context(_("Projects Table"), url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(_("Visualize Forms"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            format_submenu_context(_("Visualize Cases"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            format_submenu_context(_("Visualize Users"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
+            format_submenu_context(_("Form Data"), url=reverse("orgs_stats", args=(self.org.name, "forms"))),
+            format_submenu_context(_("Case Data"), url=reverse("orgs_stats", args=(self.org.name, "cases"))),
+            format_submenu_context(_("User Data"), url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
 
 class OrgSettingsTab(OrgTab):

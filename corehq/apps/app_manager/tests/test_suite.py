@@ -1,5 +1,6 @@
-from django.utils.unittest.case import TestCase
-from corehq.apps.app_manager.models import Application
+from django.test import TestCase, SimpleTestCase
+from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -7,7 +8,7 @@ from lxml import etree
 import commcare_translations
 
 
-class SuiteTest(TestCase, TestFileMixin):
+class SuiteTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def assertHasAllStrings(self, app, strings):
@@ -72,6 +73,44 @@ class SuiteTest(TestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.commtrack_enabled = True
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
+
+    def test_advanced_suite_auto_select_user(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_USER,
+            value_key='case_id'
+        )
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-user'), app.create_suite())
+
+    def test_advanced_suite_auto_select_fixture(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_FIXTURE,
+            value_source='table_tag',
+            value_key='field_name'
+        )
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-fixture'), app.create_suite())
+
+    def test_advanced_suite_auto_select_raw(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
+            mode=AUTO_SELECT_RAW,
+            value_key='some xpath expression'
+        )
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
+
+    def test_advanced_suite_auto_select_case(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        load_update_cases = app.get_module(1).get_form(0).actions.load_update_cases
+        load_update_cases.append(LoadUpdateAction(
+            case_tag='auto_selected',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_CASE,
+                value_source=load_update_cases[0].case_tag,
+                value_key='case_id_prop'
+            )
+        ))
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')

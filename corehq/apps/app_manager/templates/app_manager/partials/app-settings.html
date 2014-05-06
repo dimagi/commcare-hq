@@ -128,7 +128,6 @@ todo fix
                     <label class="control-label" data-bind="attr: {for: inputId}">
                         <span data-bind="text: name"></span>
                         <span data-bind="makeHqHelp: {name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
-                        <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
                     </label>
                     <div class="controls">
                         <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
@@ -153,8 +152,11 @@ todo fix
                                 This is not an allowed value for this field
                             {% endblocktrans %}
                         </p>
-                </div>
+                        <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                    </div>
+                <div>
             <div>
         </fieldset>
     </form>
 </div>
+

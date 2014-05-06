@@ -2,7 +2,7 @@ import copy
 from couchdbkit.exceptions import ResourceNotFound
 from django.utils.safestring import mark_safe
 import re
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -715,3 +715,19 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
         return [
             ('submission', _('Submission Time')),
         ]
+
+
+class FormDataFilter(BaseTagsFilter):
+    slug = 'form_data'
+    label = "Form Data"
+    advanced = True
+    help_text = "Filter by the value of a question in the form. Exact matches only."
+    placeholder = ugettext_noop("question id:value")
+
+
+class CustomFieldFilter(BaseTagsFilter):
+    slug = 'custom_field'
+    label = "Columns"
+    advanced = True
+    help_text = "Question ids entered here will appear as additonal columns in the report."
+    placeholder = ugettext_noop("question id")

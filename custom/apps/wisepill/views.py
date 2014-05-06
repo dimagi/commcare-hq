@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
 from custom.apps.wisepill.models import WisePillDeviceEvent
-from corehq.apps.sms.api import handle_structured_sms
+from corehq.apps.sms.handlers.keyword import handle_structured_sms
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.reminders.models import SurveyKeyword, METHOD_STRUCTURED_SMS
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_WISEPILL

@@ -1,8 +1,12 @@
+import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.tropo.api import TropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee
+
+logger = logging.getLogger('accounting')
+
 
 class Command(LabelCommand):
     help = "bootstrap Tropo gateway fees"
@@ -26,4 +30,4 @@ class Command(LabelCommand):
         # Fee for invalid phonenumber
         SmsGatewayFee.create_new(TropoBackend.get_api_id(), OUTGOING, 0.01, country_code=None)
 
-        print "Updated Tropo gateway fees."
+        logger.info("Updated Tropo gateway fees.")

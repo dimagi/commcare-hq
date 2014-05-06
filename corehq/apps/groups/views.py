@@ -10,7 +10,6 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
-from dimagi.utils.couch.resource_conflict import repeat
 
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
@@ -72,7 +71,12 @@ def edit_group(request, domain, group_id):
         name = request.POST.get('name')
         case_sharing = request.POST.get('case_sharing')
         reporting = request.POST.get('reporting')
-        if name is not None and group.name != name:
+        if not name:
+            messages.warning(request, _(
+                "You tried to remove the group's name, "
+                "but every group must have a name so we left it unchanged."
+            ))
+        elif group.name != name:
             dupe = Group.by_name(domain, name, one=False).first()
             if dupe:
                 messages.warning(request, _(

@@ -1,5 +1,12 @@
 import json
-from corehq.apps.accounting.models import BillingAccountAdmin
+from django.contrib import messages
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext
+from corehq import privileges
+from corehq.apps.accounting.models import (
+    BillingAccountAdmin, DefaultProductPlan,
+)
 from django.http import Http404, HttpResponse
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
@@ -35,6 +42,29 @@ def requires_privilege_with_fallback(slug, **assignment):
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
             try:
+                if (hasattr(request, 'subscription')
+                    and request.subscription is not None
+                    and request.subscription.is_trial
+                    and request.subscription.date_end is not None
+                ):
+                    edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
+                        request.domain, [slug]
+                    )
+                    plan_name = request.subscription.plan_version.user_facing_description['name']
+                    feature_name = privileges.Titles.get_name_from_privilege(slug)
+                    messages.info(request, ugettext(mark_safe(
+                        "You are currently on a <strong>Trial Subscription "
+                        "of %(plan_name)s</strong>, expiring on "
+                        "%(date_end)s. <strong>%(feature_name)s</strong> "
+                        "will not be available after this date unless you "
+                        "subscribe to the <strong>%(edition)s "
+                        "Software Plan</strong>." % {
+                            'plan_name': force_unicode(plan_name),
+                            'feature_name': force_unicode(feature_name),
+                            'date_end': request.subscription.date_end.strftime("%B %M %Y"),
+                            'edition': edition_req,
+                        }
+                    )))
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
                 )

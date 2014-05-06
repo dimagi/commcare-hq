@@ -1,4 +1,3 @@
-from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_noop
 from django.utils import html
 from casexml.apps.case.models import CommCareCase
@@ -17,13 +16,31 @@ from dimagi.utils.timezones import utils as tz_utils
 
 
 def visit_completion_counter(case):
-    counter = 0
-
+    mother_counter = 0
+    child_counter = 0
+    case_obj = CommCareCase.get(case['_id'])
+    baby_case = [c for c in case_obj.get_subcases().all() if c.type == 'baby']
     for i in range(1, 8):
-        if "case_pp_%s_done" % i in case and case["case_pp_%s_done" % i].upper() == "YES":
-            counter += 1
+        if "pp_%s_done" % i in case:
+            val = case["pp_%s_done" % i]
+            try:
+                if val.lower() == 'yes':
+                    mother_counter += 1
+                elif int(float(val)) == 1:
+                    mother_counter += 1
+            except ValueError:
+                pass
+        if baby_case and "bb_pp_%s_done" % i in baby_case[0]:
+            val = baby_case[0]["bb_pp_%s_done" % i]
+            try:
+                if val.lower() == 'yes':
+                    child_counter += 1
+                elif int(float(val)) == 1:
+                    child_counter += 1
+            except ValueError:
+                pass
 
-    return counter
+    return mother_counter if mother_counter > child_counter else child_counter
 
 
 class HNBCReportDisplay(CaseDisplay):
@@ -54,7 +71,7 @@ class HNBCReportDisplay(CaseDisplay):
 
     @property
     def case_link(self):
-        case_id, case_name = self.case['_id'], self.case['name']
+        case_id, case_name = self.case['_id'], self.case['mother_name']
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
                 html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
@@ -73,13 +90,6 @@ class HNBCReportDisplay(CaseDisplay):
         else:
             return '---'
 
-    @property
-    def pnc_status(self):
-        if visit_completion_counter(self.case) == 7:
-            return _("On Time")
-        else:
-            return _("Late")
-
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
@@ -97,16 +107,47 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     def case_es(self):
         return ReportCaseES(self.domain)
 
+    def build_es_query(self, case_type=None, afilter=None, status=None):
+
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
+
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': {"match_all": {}},
+                    'filter': {'and': subterms}
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+
+        return es_query
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self.build_es_query(case_type=self.case_type, afilter=self.case_filter, status=self.case_status)
+        return self.case_es.run_query(query)
+
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Mother Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Mother Name"), prop_name="mother_name.#value"),
             DataTablesColumn(_("Baby Name"), sortable=False),
             DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth"),
+            DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth.#value"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
             DataTablesColumn(_("Delivery"), prop_name="place_birth"),
-            DataTablesColumn(_("Case/PNC Status"), sortable=False)
         )
         return headers
 
@@ -123,7 +164,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
                 disp.dob,
                 disp.visit_completion,
                 disp.delivery,
-                disp.pnc_status,
             ]
 
     @property
@@ -138,12 +178,13 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     def base_filters(self):
         block = self.request_params.get('block', '')
-
+        individual = self.request_params.get('individual', '')
         filters = []
 
         if block:
             filters.append({'term': {'block.#value': block}})
-
+        if individual:
+            filters.append({'term': {'owner_id': individual}})
         return filters
 
     def date_to_json(self, date):
@@ -179,8 +220,4 @@ class HBNCMotherReport(BaseHNBCReport):
                 filters.append(or_stmt)
 
         return {'and': filters} if filters else {}
-
-    @property
-    def user_filter(self):
-        return super(HBNCMotherReport, self).user_filter
 

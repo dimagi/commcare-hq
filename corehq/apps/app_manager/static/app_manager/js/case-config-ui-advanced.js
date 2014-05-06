@@ -62,6 +62,31 @@ var AdvancedCase = (function () {
             return moduleCaseType.case_type;
         }));
 
+        self.getAutoSelectModes = function(action) {
+            var index = self.caseConfigViewModel.load_update_cases.indexOf(action);
+            var modes = [
+                {
+                    label: 'Raw',
+                    value: 'raw'
+                },
+                {
+                    label: 'User Data',
+                    value: 'user'
+                },
+                {
+                    label: 'Lookup Table',
+                    value: 'fixture'
+                }
+            ];
+            if (index > 0) {
+                modes.push({
+                    label: 'Case property',
+                    value: 'case'
+                });
+            }
+            return modes;
+        };
+
         self.case_supports_products = function (case_type) {
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {
                 if (self.moduleCaseTypes[i].case_type === case_type &&
@@ -146,6 +171,10 @@ var AdvancedCase = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a:not(.header)', self.change)
                      .on('change', 'input[type="checkbox"]', self.change);
+
+                // https://gist.github.com/mkelly12/424774/#comment-92080
+                $('#case-config-ko input').on('textchange', self.change);
+
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
                     // re-apply accordion settings
@@ -176,6 +205,14 @@ var AdvancedCase = (function () {
                     actions = actions.concat(self.open_cases.slice(0, index));
                 }
             }
+            if (type === 'auto-select') {
+                // only allow auto-selecting based off loaded actions before this one
+                var index = self.load_update_cases.indexOf(action);
+                if (index > 0) {
+                    actions = actions.concat(self.load_update_cases.slice(0, index));
+                }
+            }
+
             for (var i = 0; i < actions.length; i++) {
                 var tag = actions[i].case_tag();
                 if (tag) {
@@ -242,6 +279,14 @@ var AdvancedCase = (function () {
                     display: 'Load / Update / Close a case',
                     value: 'load'
                 });
+                options.push({
+                    display: 'Automatic Case Selection',
+                    value: 'auto_select'
+                });
+                options.push({
+                    display: '---',
+                    value: 'separator'
+                });
             }
             options.push({
                 display: 'Open a Case',
@@ -294,19 +339,29 @@ var AdvancedCase = (function () {
         };
 
         self.addFormAction = function (action) {
-            if (action.value === 'load') {
+            if (action.value === 'load' || action.value === 'auto_select') {
                 $('#case-open-accordion').accordion({active: false});
                 var index = self.load_update_cases().length;
-                self.load_update_cases.push(LoadUpdateAction.wrap({
+                var tag_prefix = action.value === 'auto_select'? 'auto' : '';
+                var action_data = {
                     case_type: config.caseType,
                     details_module: null,
-                    case_tag: 'load_' + config.caseType + index,
+                    case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
-                    show_product_stock: false
-                }, self.config));
+                    show_product_stock: false,
+                    auto_select: null
+                };
+                if (action.value === 'auto_select') {
+                    action_data.auto_select = {
+                        mode: '',
+                        value_source: '',
+                        value_key: ''
+                    };
+                }
+                self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 if (index > 0) {
                     self.config.applyAccordion('open', index);
                 }
@@ -437,7 +492,13 @@ var AdvancedCase = (function () {
     var LoadUpdateAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'details_module', 'case_tag', 'parent_tag', 'close_condition', 'show_product_stock'],
+                include: [
+                    'case_type',
+                    'details_module',
+                    'case_tag',
+                    'parent_tag',
+                    'close_condition',
+                    'show_product_stock'],
                 preload: {
                     create: function (options) {
                         return CasePreloadProperty.wrap(options.data,  self);
@@ -446,6 +507,15 @@ var AdvancedCase = (function () {
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
+                    }
+                },
+                auto_select: {
+                    create: function (options) {
+                        if (options.data) {
+                            return AutoSelect.wrap(options.data, self);
+                        } else {
+                            return null;
+                        }
                     }
                 }
             };
@@ -513,7 +583,28 @@ var AdvancedCase = (function () {
             self.close_case = ko.computed(ActionBase.close_case(self));
 
             self.validate = ko.computed(function () {
-                return ActionBase.validate(self, self.case_type(), self.case_tag());
+                if (self.auto_select){
+                    if (!self.config.caseConfigViewModel) {
+                        return;
+                    }
+                    var mode = self.auto_select.mode();
+                    var value_source = self.auto_select.value_source();
+                    var value_key = self.auto_select.value_key();
+                    if (!mode) {
+                        return "Autoselect mode required";
+                    } else if (!value_key) {
+                        return 'Property required';
+                    } else if (!value_source) {
+                        if (mode === 'case') {
+                            return 'Case required';
+                        } else if (mode === 'fixture') {
+                            return 'Lookup table tag required';
+                        }
+                    }
+                    return null;
+                } else {
+                    return ActionBase.validate(self, self.case_type(), self.case_tag());
+                }
             });
 
             // for compatibility with common templates
@@ -585,6 +676,10 @@ var AdvancedCase = (function () {
 
                 self.disable_tag = ko.computed(function () {
                     return self.show_product_stock() && self.allow_product_stock();
+                });
+
+                self.auto_select_modes = ko.computed(function () {
+                    return config.getAutoSelectModes(self);
                 });
             };
 
@@ -756,6 +851,25 @@ var AdvancedCase = (function () {
             action.name_path = x[1].name;
             action.repeat_context = self.repeat_context();
             return action;
+        }
+    };
+
+    var AutoSelect = {
+        mapping: {
+            include: ['mode', 'value_source', 'value_key']
+        },
+        wrap: function (data, action) {
+            var self = ko.mapping.fromJS(data, AutoSelect.mapping);
+            self.action = action;
+            self.isBlank = ko.computed(function () {
+                return !self.value_source() && !self.value_key();
+            });
+
+            self.mode.subscribe(function(value) {
+                self.value_source('');
+                self.value_key('');
+            });
+            return self;
         }
     };
 

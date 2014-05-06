@@ -6,9 +6,12 @@ libevent-dev
 python-setuptools
 postgresql
 memcached
-nodejs
 gdebi-core
 apache2
+
+# dependencies for the pip modules
+libxml2-dev
+libxslt-dev 
 
 # dependencies for couchdb and building it (as done in install.sh)
 g++
@@ -23,27 +26,25 @@ libicu-dev
 libcurl4-gnutls-dev
 libtool
 
+# nodejs
+python-software-properties
+python
+make
+nodejs
+
 # old stale content of this file:
 python-all-dev
-python-setuptools
 libcairo2-dev
-libevent-1.4-2
 libevent-core-1.4-2
 libevent-extra-1.4-2
-libevent-dev
 libpq-dev
-memcached
 libjpeg62
 libjpeg62-dev
 zlib1g-dev
 supervisor
 postfix
-nodejs
-npm
-python-software-properties
 dpkg-dev
 wget
-build-essential
 git-core
 subversion
 mercurial

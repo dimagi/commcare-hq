@@ -76,7 +76,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
                         "match" : {
                             "_all" : {
                                 "query" : search_query,
-                                "operator" : "or", }}}}}
+                                "operator" : "and", }}}}}
 
         q["facets"] = {}
 
@@ -115,7 +115,7 @@ class AdminUserReport(AdminFacetedReport):
     es_url = USER_INDEX + '/user/_search'
 
     es_facet_list = [
-        "is_active",
+        "is_active", # this is NOT "has submitted a form in the last 30 days"
         "is_staff",
         "is_superuser",
         "domain",
@@ -124,7 +124,7 @@ class AdminUserReport(AdminFacetedReport):
 
     es_facet_mapping = [
         ("", True, [
-            {"facet": "is_active", "name": "Active?", "expanded": True },
+            {"facet": "is_active", "name": "Can Log In?", "expanded": True },
             {"facet": "is_superuser", "name": "SuperUser?", "expanded": True },
             {"facet": "is_staff", "name": "Staff?", "expanded": True },
             {"facet": "domain", "name": "Domain", "expanded": True },

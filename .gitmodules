@@ -37,9 +37,6 @@
 [submodule "submodules/python-digest"]
 	path = submodules/python-digest
 	url = git://github.com/dimagi/python-digest.git
-[submodule "submodules/phonelog"]
-	path = submodules/phonelog
-	url = git://github.com/dimagi/phonelog.git
 [submodule "submodules/formdesigner"]
 	path = submodules/formdesigner
 	url = git://github.com/dimagi/Vellum.git

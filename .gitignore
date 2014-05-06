@@ -1,5 +1,6 @@
 *.pyc
 *~
+*.swp
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
@@ -9,7 +10,7 @@
 .pydevproject
 .idea
 xforms/
-data/
+/data/
 submissions/
 export/
 bad/

@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -11,6 +12,7 @@ class Location(Document):
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
+    metadata = DictProperty()
 
     latitude = FloatProperty()
     longitude = FloatProperty()
@@ -62,6 +64,17 @@ class Location(Document):
     @classmethod
     def root_locations(cls, domain):
         return root_locations(domain)
+
+    @classmethod
+    def get_in_domain(cls, domain, id):
+        if id:
+            try:
+                loc = Location.get(id)
+                assert domain == loc.domain
+                return loc
+            except (ResourceNotFound, AssertionError):
+                pass
+        return None
 
     @property
     def is_root(self):

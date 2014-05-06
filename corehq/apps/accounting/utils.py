@@ -1,8 +1,9 @@
 import calendar
 import datetime
-import json
-from django.utils.encoding import force_unicode
-from django.utils.functional import Promise
+from decimal import Decimal
+from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
@@ -12,15 +13,18 @@ from django_prbac.models import Role
 EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
+def get_first_last_days(year, month):
+    last_day = calendar.monthrange(year, month)[1]
+    date_start = datetime.date(year, month, 1)
+    date_end = datetime.date(year, month, last_day)
+    return date_start, date_end
+
+
 def get_previous_month_date_range(reference_date=None):
     reference_date = reference_date or datetime.date.today()
 
     last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
-    _, last_day = calendar.monthrange(last_month_year, last_month)
-    date_start = datetime.date(last_month_year, last_month, 1)
-    date_end = datetime.date(last_month_year, last_month, last_day)
-
-    return date_start, date_end
+    return get_first_last_days(last_month_year, last_month)
 
 
 def months_from_date(reference_date, months_from_date):
@@ -108,13 +112,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 
 def is_active_subscription(date_start, date_end):
     today = datetime.date.today()
-    return (date_start is None or date_start <= today) and (date_end is None or today <= date_end)
+    return ((date_start is None or date_start <= today)
+            and (date_end is None or today < date_end))
 
 
 def has_subscription_already_ended(subscription):
     return (subscription.date_end is not None
-            and subscription.date_end <= datetime.date.today()
-            and not subscription.is_active)
+            and subscription.date_end <= datetime.date.today())
 
 
 def get_money_str(amount):
@@ -126,3 +130,61 @@ def get_money_str(amount):
             fmt = "$%0.2f"
         return fmt % amount
     return ""
+
+
+def get_address_from_invoice(invoice):
+    from corehq.apps.accounting.invoice_pdf import Address
+    from corehq.apps.accounting.models import BillingContactInfo
+    contact_info = BillingContactInfo.objects.get(
+        account=invoice.subscription.account,
+    )
+    return Address(
+        name=(
+            "%s %s" %
+            (contact_info.first_name
+             if contact_info.first_name is not None else "",
+             contact_info.last_name
+             if contact_info.last_name is not None else "")
+        ),
+        first_line=contact_info.first_line,
+        second_line=contact_info.second_line,
+        city=contact_info.city,
+        region=contact_info.state_province_region,
+        country=contact_info.country,
+    )
+
+
+def get_dimagi_from_email_by_product(product):
+    return ("Dimagi %(product)s Accounts <%(email)s>" % {
+        'product': product,
+        'email': settings.INVOICING_CONTACT_EMAIL,
+    })
+
+
+def quantize_accounting_decimal(decimal_value):
+    return decimal_value.quantize(Decimal(10) ** -2)
+
+
+def fmt_dollar_amount(decimal_value):
+    return _("USD %s") % quantize_accounting_decimal(decimal_value)
+
+
+def get_customer_cards(account, username, domain):
+    from corehq.apps.accounting.models import (
+        PaymentMethod, BillingAccountAdmin, PaymentMethodType,
+    )
+    from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
+    try:
+        payment_method = PaymentMethod.objects.get(
+            account=account,
+            billing_admin=BillingAccountAdmin.objects.get(
+                web_user=username,
+                domain=domain,
+            ),
+            method_type=PaymentMethodType.STRIPE
+        )
+        stripe_customer = get_or_create_stripe_customer(payment_method)
+        return stripe_customer.cards
+    except (PaymentMethod.DoesNotExist, BillingAccountAdmin.DoesNotExist):
+        pass
+    return None

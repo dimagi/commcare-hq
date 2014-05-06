@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges
+from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
@@ -22,7 +22,12 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.reports.formdetails.readable import (
+    FormQuestionResponse,
+    questions_in_hierarchy,
+)
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -31,6 +36,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
+from corehq.apps.translations.models import Translation
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -57,7 +63,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+    XForm, VELLUM_TYPES
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -73,7 +79,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
-    IncompatibleFormTypeException, ModuleNotFoundException
+    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -214,6 +220,7 @@ def get_user_registration_source(req, domain, app_id):
     form = app.get_user_registration()
     return _get_xform_source(req, app, form, filename="User Registration.xml")
 
+
 def xform_display(req, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
@@ -223,9 +230,18 @@ def xform_display(req, domain, form_unique_id):
         raise Http404()
     langs = [req.GET.get('lang')] + app.langs
 
-    questions = form.get_questions(langs)
+    questions = form.get_questions(langs, include_triggers=True,
+                                   include_groups=True)
 
-    return HttpResponse(json.dumps(questions))
+    if req.GET.get('format') == 'html':
+        questions = [FormQuestionResponse(q) for q in questions]
+
+        return render(req, 'app_manager/xform_display.html', {
+            'questions': questions_in_hierarchy(questions)
+        })
+    else:
+        return json_response(questions)
+
 
 @login_and_domain_required
 def form_casexml(req, domain, form_unique_id):
@@ -321,10 +337,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
     try:
         xform = form.wrapped_xform()
     except XFormError as e:
-        form_errors.append("Error in form: %s" % e)
+        form_errors.append(u"Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
-        form_errors.append("Unexpected error in form: %s" % e)
+        form_errors.append(u"Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -337,22 +353,22 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form.validate_form()
             xform_questions = xform.get_questions(langs, include_triggers=True)
         except etree.XMLSyntaxError as e:
-            form_errors.append("Syntax Error: %s" % e)
+            form_errors.append(u"Syntax Error: %s" % e)
         except AppEditingError as e:
-            form_errors.append("Error in application: %s" % e)
+            form_errors.append(u"Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
         except XFormError as e:
-            form_errors.append("Error in form: %s" % e)
+            form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
             notify_exception(request, 'Unexpected Build Error')
-            form_errors.append("Unexpected System Error: %s" % e)
+            form_errors.append(u"Unexpected System Error: %s" % e)
 
         try:
             form_action_errors = form.validate_for_build()
@@ -361,26 +377,22 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                 if settings.DEBUG and False:
                     xform.validate()
         except CaseError as e:
-            messages.error(request, "Error in Case Management: %s" % e)
+            messages.error(request, u"Error in Case Management: %s" % e)
         except XFormValidationError as e:
-            messages.error(request, "%s" % e)
+            messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception(e)
-            messages.error(request, "Unexpected Error: %s" % e)
+            logging.exception(unicode(e))
+            messages.error(request, u"Unexpected Error: %s" % e)
 
     try:
         languages = xform.get_languages()
     except Exception:
         languages = []
 
-    for i, err in enumerate(form_errors):
-        if not isinstance(err, basestring):
-            messages.error(request, err[0], **err[1])
-            form_errors[i] = err[0]
-        else:
-            messages.error(request, err)
+    for err in form_errors:
+        messages.error(request, err)
 
     module_case_types = []
     if is_user_registration:
@@ -394,6 +406,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                     'case_type': case_type,
                     'module_type': module.doc_type
                 })
+
+    if not form.unique_id:
+        form.get_unique_id()
+        form.get_app().save()
 
     context = {
         'nav_form': form if not is_user_registration else '',
@@ -727,6 +743,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         if module_id:
             module = app.get_module(module_id)
+            if not module.unique_id:
+                module.get_or_create_unique_id()
+                app.save()
         if form_id:
             form = module.get_form(form_id)
     except ModuleNotFoundException:
@@ -772,7 +791,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = toggles.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        module_context["enable_calc_xpaths"] = feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -988,18 +1007,19 @@ def undo_delete_app(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_module(req, domain, app_id, module_id):
+def delete_module(req, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_id)
+        record = app.delete_module(module_unique_id)
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
-    messages.success(req,
-        'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
+    if record is not None:
+        messages.success(req,
+            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
     return back_to_main(req, domain, app_id=app_id)
 
 @no_conflict_require_POST
@@ -1013,16 +1033,21 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_form(req, domain, app_id, module_id, form_id):
+def delete_form(req, domain, app_id, module_unique_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
-    record = app.delete_form(module_id, form_id)
-    messages.success(req,
-        'You have deleted a form. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_form', args=[domain, record.get_id]),
-        extra_tags='html'
-    )
-    app.save()
-    return back_to_main(req, domain, app_id=app_id, module_id=module_id)
+    record = app.delete_form(module_unique_id, form_unique_id)
+    if record is not None:
+        messages.success(
+            req,
+            'You have deleted a form. <a href="%s" class="post-link">Undo</a>'
+            % reverse('undo_delete_form', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
+    return back_to_main(
+        req, domain, app_id=app_id,
+        module_id=app.get_module_by_unique_id(module_unique_id).id)
 
 
 @no_conflict_require_POST
@@ -1054,8 +1079,13 @@ def copy_form(req, domain, app_id, module_id, form_id):
 @require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
-    record.undo()
-    messages.success(request, 'Form successfully restored.')
+    try:
+        record.undo()
+        messages.success(request, 'Form successfully restored.')
+    except ModuleNotFoundException:
+        messages.error(request,
+                       'Form could not be restored: module is missing.')
+
     return back_to_main(request, domain, app_id=record.app_id,
                         module_id=record.module_id, form_id=record.form_id)
 
@@ -1540,19 +1570,32 @@ def edit_app_langs(request, domain, app_id):
     app.save()
     return json_response(langs)
 
+
 @require_can_edit_apps
 @no_conflict_require_POST
 def edit_app_translations(request, domain, app_id):
-    params  = json_request(request.POST)
-    lang    = params.get('lang')
+    params = json_request(request.POST)
+    lang = params.get('lang')
     translations = params.get('translations')
-    #    key     = params.get('key')
-    #    value   = params.get('value')
     app = get_app(domain, app_id)
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
     return json_response(response)
+
+
+@require_GET
+def get_app_translations(request, domain):
+    params = json_request(request.GET)
+    lang = params.get('lang', 'en')
+    key = params.get('key', None)
+    one = params.get('one', False)
+    translations = Translation.get_translations(lang, key, one)
+    if isinstance(translations, dict):
+        translations = {k: v for k, v in translations.items()
+                        if not id_strings.is_custom_app_string(k)}
+    return json_response(translations)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1775,7 +1818,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(unique_form_id)
-    except KeyError:
+    except FormNotFoundException:
         # this can happen if you delete the form from another page
         raise Http404()
     errors = form.validate_for_build()
@@ -2291,14 +2334,26 @@ def upload_translations(request, domain, app_id):
 
         app = get_app(domain, app_id)
         trans_dict = defaultdict(dict)
+        error_properties = []
         for row in translations:
             for lang in app.langs:
                 if row.get(lang):
+                    all_parameters = re.findall("\$.*?}", row[lang])
+                    for param in all_parameters:
+                        if not re.match("\$\{[0-9]+}", param):
+                            error_properties.append(row["property"] + ' - ' + row[lang])
                     trans_dict[lang].update({row["property"]: row[lang]})
 
-        app.translations = dict(trans_dict)
-        app.save()
-        success = True
+        if error_properties:
+            message = _("We found problem with following translations:")
+            message += "<br>"
+            for prop in error_properties:
+                message += "<li>%s</li>" % prop
+            messages.error(request, message, extra_tags='html')
+        else:
+            app.translations = dict(trans_dict)
+            app.save()
+            success = True
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))

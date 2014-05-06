@@ -1,8 +1,12 @@
 
-.sidebar .nav-list > li > a, .sidebar .nav-list > li > a:hover {
+.nav-list > li > a, .nav-list > li > a:hover {
     cursor: pointer;
 }
 
-.sidebar .nav-list > li.disabled > a, .sidebar .nav-list > li.disabled > a:hover {
+.nav-list > li.disabled > a, .nav-list > li.disabled > a:hover {
     cursor: wait;
+}
+
+nav#sessions > ul > li.nav-header {
+    color: #6c6c6c;
 }

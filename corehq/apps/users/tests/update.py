@@ -38,26 +38,6 @@ class UpdateTestCase(TestCase):
         self.assertEqual(User.objects.get(username=new_username).id, self.couch_user.get_django_user().id)
         self.assertEqual(User.objects.filter(username=self.username).count(), 0)
 
-    def testTransferToDomain(self):
-        new_domain = 'my-new-domain'
-        xform = XFormInstance(
-            domain=self.domain,
-            app_id="old-app-id",
-            form=dict(
-                meta=dict(
-                    userID=self.couch_user.user_id
-                )
-            )
-        )
-        xform.save()
-        self.assertEqual(self.couch_user.form_count, 1)
-        self.couch_user.transfer_to_domain(new_domain, app_id="new-app-id")
-        self.assertEqual(self.couch_user.form_count, 1)
-        self.assertEqual(self.couch_user.domain, new_domain)
-        self.assertEqual(self.couch_user.username, self.username.replace(self.domain, new_domain))
-        for form in self.couch_user.get_forms():
-            self.assertEqual(form.domain, new_domain)
-            self.assertEqual(form.app_id, 'new-app-id')
 #    def testUpdateDjangoUser(self):
 #        """
 #        test that a basic couch user gets created properly after

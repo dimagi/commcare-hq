@@ -1,5 +1,5 @@
-DOMAIN_INDEX="hqdomains_m591sj94c9c4f4aa052cec2585d87b8b"
-DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/6/2014',
+DOMAIN_INDEX="hqdomains_g331kr4sf35784sue52ec425d8dt7b98"
+DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -147,6 +147,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/6/2014',
                                             'custom_eula': {'type': 'boolean'},
                                             'doc_type': {'index': 'not_analyzed',
                                                          'type': 'string'},
+                                            'goal_time_period': {'type': 'long'},
+                                            'goal_followup_rate': {'type': 'double'},
                                             'initiative': {'fields': {'exact': {'index': 'not_analyzed',
                                                                                 'type': 'string'},
                                                                       'initiative': {'index': 'analyzed',

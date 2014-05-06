@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import Document
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.dont_use.fields import ReportField
 from datetime import date
 from pathfinder.views import retrieve_patient_group, get_patients_by_provider
 from django.http import Http404
@@ -24,9 +24,9 @@ class PathfinderWardSummaryReport(CustomProjectReport):
     slug = "ward"
     asynchronous = False
     report_template_path = "pathfinder-reports/ward_summary.html"
-    fields = ['corehq.apps.reports.fields.MonthField',
-              'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.select.MonthFilter',
+              'corehq.apps.reports.filters.select.YearFilter',
+              'corehq.apps.reports.filters.select.GroupFilter']
     flush_layout = True
 
     @property
@@ -65,8 +65,8 @@ class PathfinderProviderReport(CustomProjectReport):
     slug = "provider"
     asynchronous = False
     report_template_path = "pathfinder-reports/provider_summary.html"
-    fields = ['corehq.apps.reports.fields.MonthField',
-              'corehq.apps.reports.fields.YearField',
+    fields = ['corehq.apps.reports.filters.select.MonthFilter',
+              'corehq.apps.reports.filters.select.YearFilter',
               'pathfinder.models.ProviderSelect']
     flush_layout = True
 
@@ -104,9 +104,9 @@ class PathfinderHBCReport(CustomProjectReport):
     slug = "hbc"
     asynchronous = False
     report_template_path = "pathfinder-reports/hbc.html"
-    fields = ['corehq.apps.reports.fields.MonthField',
-              'corehq.apps.reports.fields.YearField',
-              'corehq.apps.reports.fields.GroupField']
+    fields = ['corehq.apps.reports.filters.select.MonthFilter',
+              'corehq.apps.reports.filters.select.YearFilter',
+              'corehq.apps.reports.filters.select.GroupFilter']
     flush_layout = True
 
     @property

@@ -7,7 +7,6 @@ from corehq.apps.builds import get_default_build_spec
 
 def turn_on_secure_submissions_for_all_apps(domain):
     for app in all_apps_by_domain(domain):
-        print app
         save = False
         if app.application_version == '1.0':
             continue

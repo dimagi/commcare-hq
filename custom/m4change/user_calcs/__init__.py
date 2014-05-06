@@ -1,22 +1,24 @@
-from couchdbkit import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
-
-def update_value_for_date(date, dates):
-    if date not in dates:
-        dates[date] = 1
-    else:
-        dates[date] += 1
 
 def is_valid_user_by_case(case):
     if hasattr(case, "user_id"):
         return (hasattr(case, "user_id") and case.user_id not in [None, "", "demo_user"])
     return False
 
-def is_user_in_CCT_by_case(case):
-    if is_valid_user_by_case(case):
-        try:
-            user = CommCareUser.get(case.user_id) or None
-            return (user is not None and hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true")
-        except ResourceNotFound:
-            return False
-    return False
+
+def get_date_delivery(form):
+    return form.form.get("date_delivery", None)
+
+
+def get_received_on(form):
+    return form.received_on.date()
+
+
+def form_passes_filter_date_delivery(form, namespaces):
+    return (form.xmlns in namespaces and get_date_delivery(form) is not None)
+
+
+def string_to_numeric(string, type=int):
+    try:
+        return type(string)
+    except ValueError:
+        return 0

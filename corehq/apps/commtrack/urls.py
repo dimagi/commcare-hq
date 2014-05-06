@@ -1,8 +1,10 @@
 #from django.conf.urls.defaults import patterns, url
 from django.conf.urls.defaults import *
-from corehq.apps.commtrack.views import (ProductListView, FetchProductListView, NewProductView, EditProductView,
-    ProgramListView, FetchProgramListView, NewProgramView, EditProgramView, FetchProductForProgramListView,
-    DefaultConsumptionView, UploadProductView, ProductImportStatusView
+from corehq.apps.commtrack.views import (
+    ProductListView, FetchProductListView, NewProductView, EditProductView,
+    ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,
+    FetchProductForProgramListView, DefaultConsumptionView, UploadProductView,
+    ProductImportStatusView, SMSSettingsView
 )
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
@@ -23,7 +25,7 @@ settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^products/upload/$', UploadProductView.as_view(), name=UploadProductView.urlname),
     url(r'^products/upload/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', ProductImportStatusView.as_view(),
         name=ProductImportStatusView.urlname),
-    url(r'^prodcuts/upload/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+    url(r'^products/upload/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         'product_importer_job_poll', name='product_importer_job_poll'),
     url(r'^products/download/$', 'download_products', name='product_export'),
     url(r'^products/(?P<prod_id>[\w-]+)/$', EditProductView.as_view(), name=EditProductView.urlname),
@@ -34,4 +36,5 @@ settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^programs/(?P<prog_id>[\w-]+)/productlist/$', FetchProductForProgramListView.as_view(),
         name=FetchProductForProgramListView.urlname),
     url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
+    url(r'^sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
 )

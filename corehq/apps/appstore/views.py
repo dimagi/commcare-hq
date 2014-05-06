@@ -64,7 +64,7 @@ def can_view_app(req, dom):
     return True
 
 def project_info(request, domain, template="appstore/project_info.html"):
-    dom = Domain.get_by_name(domain)
+    dom = Domain.get(domain)
     if not can_view_app(request, dom):
         raise Http404()
 
@@ -123,6 +123,15 @@ def project_info(request, domain, template="appstore/project_info.html"):
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
 
+def deduplicate(hits):
+    unique_names = set()
+    unique_hits = []
+    for hit in hits:
+        if not hit['_source']['name'] in unique_names:
+            unique_hits.append(hit)
+            unique_names.add(hit['_source']['name'])
+    return unique_hits
+
 def appstore(request, template="appstore/appstore_base.html"):
     page_length = 10
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
@@ -132,7 +141,9 @@ def appstore(request, template="appstore/appstore_base.html"):
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+    hits = results.get('hits', {}).get('hits', [])
+    hits = deduplicate(hits)
+    d_results = [Domain.wrap(res['_source']) for res in hits]
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
@@ -209,7 +220,7 @@ def appstore_default(request):
 
 @require_superuser
 def approve_app(request, domain):
-    domain = Domain.get_by_name(domain)
+    domain = Domain.get(domain)
     if request.GET.get('approve') == 'true':
         domain.is_approved = True
         domain.save()
@@ -226,7 +237,7 @@ def import_app(request, domain):
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
-    from_project = Domain.get_by_name(domain)
+    from_project = Domain.get(domain)
 
     if request.method == 'POST' and from_project.is_snapshot:
         if not from_project.published:
@@ -256,7 +267,7 @@ def copy_snapshot(request, domain):
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
-    dom = Domain.get_by_name(domain)
+    dom = Domain.get(domain)
     if request.method == "POST" and dom.is_snapshot:
         from corehq.apps.registration.forms import DomainRegistrationForm
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
@@ -268,7 +279,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if form.is_valid():
-                new_domain = dom.save_copy(form.clean_domain_name(), user=user)
+                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
             else:
                 messages.error(request, form.errors)
                 return project_info(request, domain)
@@ -291,7 +302,7 @@ def copy_snapshot(request, domain):
         return HttpResponseRedirect(reverse('project_info', args=[domain]))
 
 def project_image(request, domain):
-    project = Domain.get_by_name(domain)
+    project = Domain.get(domain)
     if project.image_path:
         image = project.fetch_attachment(project.image_path)
         return HttpResponse(image, content_type=project.image_type)
@@ -367,7 +378,7 @@ def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time
     return es_query(params, facets, terms, q)
 
 def media_files(request, domain, template="appstore/media_files.html"):
-    dom = Domain.get_by_name(domain)
+    dom = Domain.get(domain)
     if not can_view_app(request, dom):
         raise Http404()
 

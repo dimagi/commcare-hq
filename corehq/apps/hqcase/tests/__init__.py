@@ -1,4 +1,4 @@
-from dimagi.utils.logging import log_exception
+import logging
 try:
     from .test_bugs import *
     from .test_case_assigment import *
@@ -7,5 +7,5 @@ try:
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
-    log_exception(e)
-    raise(e)
+    logging.exception(str(e))
+    raise

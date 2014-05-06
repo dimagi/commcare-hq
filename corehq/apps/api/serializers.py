@@ -95,6 +95,9 @@ class CommCareCaseSerializer(Serializer):
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
+        if isinstance(name, basestring):
+            # need to strip any whitespace from xml tag names
+            name = name.strip()
         etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)
         id = etree.find('id')
         if id is not None:

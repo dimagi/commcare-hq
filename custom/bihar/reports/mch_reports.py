@@ -13,7 +13,7 @@ from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
-from custom.bihar.reports.tasks import bihar_all_rows_task
+from corehq.apps.reports.tasks import export_all_rows_task
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -28,8 +28,8 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     model = None
 
     fields = [
-        'corehq.apps.reports.fields.GroupField',
-        'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.filters.select.GroupFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
     @property
@@ -76,15 +76,15 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def es_query(self):
-        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
-                                 status=self.case_status, owner_ids=self.case_owners)
+        query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
+                                 status=self.case_status)
         return query
 
     @property
     @request_cache("export")
     def export_response(self):
         self.request.datespan = None
-        bihar_all_rows_task.delay(self.__class__, self.__getstate__())
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
 
         return HttpResponse()
 
@@ -94,6 +94,12 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
                          for case in self.es_results['hits'].get('hits', []))
         return self.get_cases(case_displays)
 
+    @property
+    def export_table(self):
+        table = super(MCHBaseReport, self).export_table
+        #  remove first row from table headers
+        table[0][1].pop(0)
+        return table
 
 
 class MotherMCHRegister(MCHBaseReport):
@@ -105,9 +111,9 @@ class MotherMCHRegister(MCHBaseReport):
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
+                                   DataTablesColumn(_("Mother Name"), sortable=False),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Mother Name"), sortable=False),
                                        DataTablesColumn(_("Husband Name"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),
                                        DataTablesColumn(_("Full address"), sortable=False),
@@ -275,6 +281,10 @@ class MotherMCHRegister(MCHBaseReport):
                 disp.status
             ]
 
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=350)
+
 class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"
@@ -284,10 +294,10 @@ class ChildMCHRegister(MCHBaseReport):
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("CHW Name")),
+                                   DataTablesColumn(_("Child Name"), sortable=False),
+                                   DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                    DataTablesColumnGroup(
                                        _("Beneficiary Information"),
-                                       DataTablesColumn(_("Child Name"), sortable=False),
-                                       DataTablesColumn(_("Father and Mother Name"), sortable=False),
                                        DataTablesColumn(_("Mother's MCTS ID"), sortable=False),
                                        DataTablesColumn(_("Gender"), sortable=False),
                                        DataTablesColumn(_("City/ward/village"), sortable=False),
@@ -385,3 +395,7 @@ class ChildMCHRegister(MCHBaseReport):
                 disp.vit_a_3_date,
                 disp.date_je
             ]
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=3, width=450)

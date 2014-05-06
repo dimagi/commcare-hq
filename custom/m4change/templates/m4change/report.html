@@ -1,0 +1,9 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "m4change/css/daterangepicker-bs2.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "m4change/css/reports.css" %}">
+{% endblock %}

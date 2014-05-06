@@ -1,0 +1,2 @@
+class SMSRateCalculatorError(Exception):
+    pass

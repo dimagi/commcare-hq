@@ -1,6 +1,23 @@
 function (doc) {
     // !code util/mvp.js
     if (isChildCase(doc)) {
+
+        function delivered_infacility(place, extra_no) {
+            var i,
+                result,
+                arr = ["hospital", "facility", "centre", "clinic", "yes"];
+            if (extra_no) {
+                arr.push("no");
+            }
+            for (i=0; i < arr.length; i++) {
+                result = arr[i];
+                if (place && place.indexOf(result) >= 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         var indicator_entries_open = {},
             indicator_entries_closed = {},
             indicators_dob_occured = {},
@@ -11,8 +28,8 @@ function (doc) {
         if (doc.dob || doc.dob_calc) {
             var dob_date = doc.dob_calc || doc.dob,
                 weight_at_birth = doc.weight_at_birth,
-                is_delivered = doc.delivered_in_facility === 'yes' || doc.delivered_in_facility === 'no',
-                is_delivered_in_facility = doc.delivered_in_facility === 'yes',
+                is_delivered = doc.delivered_in_facility === 'yes' || doc.delivered_in_facility === 'no' || delivered_infacility(doc.delivery_place, true) === true,
+                is_delivered_in_facility = doc.delivered_in_facility === 'yes' || delivered_infacility(doc.delivery_place, false) === true,
                 opened_on_date = new Date(doc.opened_on);
 
             if (is_delivered) {

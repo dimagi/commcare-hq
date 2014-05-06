@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import AsyncLocationField
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin, CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -17,9 +17,11 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
     name = "Project Indicators Report"
     slug = "project_indicators_report"
     default_rows = 25
+    base_template = "m4change/report.html"
+    report_template_path = "m4change/report_content.html"
 
     fields = [
-        AsyncLocationField,
+        AsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]
@@ -31,7 +33,7 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
         domain = config["domain"]
         location_id = config["location_id"]
         sql_data = ProjectIndicatorsCaseSqlData(domain=domain, datespan=config["datespan"]).data
-        locations = get_location_hierarchy_by_id(location_id, domain)
+        locations = get_location_hierarchy_by_id(location_id, domain, CCT_only=True)
         row_data = ProjectIndicatorsReport.get_initial_row_data()
 
         for key in sql_data:

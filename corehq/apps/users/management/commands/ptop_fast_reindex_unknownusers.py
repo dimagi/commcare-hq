@@ -10,7 +10,10 @@ class Command(ElasticReindexer):
     help = "Fast reindex of user elastic index by using the domain view and reindexing users"
 
     doc_class = XFormInstance
-    view_name = 'couchforms/by_user'
+    view_name = 'reports_forms/all_forms'
     pillow_class = UnknownUsersPillow
     indexing_pillow_class = UserPillow
     own_index_exists = False
+
+    def get_extra_view_kwargs(self):
+        return {'startkey': ['submission'], 'endkey': ['submission', {}]}

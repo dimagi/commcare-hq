@@ -12,7 +12,6 @@ import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.fields import DatespanField
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
@@ -26,6 +25,7 @@ from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.utils.translation import ugettext
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
 
 class GenericReportView(CacheableRequestMixIn):
     """
@@ -409,7 +409,7 @@ class GenericReportView(CacheableRequestMixIn):
 
         def is_datespan(field):
             field_fn = to_function(field) if isinstance(field, basestring) else field
-            return issubclass(field_fn, (DatespanFilter, DatespanField))
+            return issubclass(field_fn, DatespanFilter)
         has_datespan = any([is_datespan(field) for field in self.fields])
 
         self.context.update(
@@ -851,10 +851,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-        if self.exportable_all:
-            formatted_rows = self.get_all_rows
-        else:
-            formatted_rows = self.rows
 
         def _unformat_row(row):
             def _unformat_val(val):
@@ -865,7 +861,7 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in formatted_rows]
+        rows = [_unformat_row(row) for row in self.export_rows]
         table.extend(rows)
         if self.total_row:
             table.append(_unformat_row(self.total_row))
@@ -873,6 +869,17 @@ class GenericTabularReport(GenericReportView):
             table.extend([_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
+
+    @property
+    def export_rows(self):
+        """
+        The rows that will be used in an export. Useful if you want to apply any additional
+        custom formatting to mirror something that would be done in a template.
+        """
+        if self.exportable_all:
+            return self.get_all_rows
+        else:
+            return self.rows
 
     @property
     def report_context(self):

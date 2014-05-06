@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
-from corehq.apps.reports.fields import AsyncLocationField
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -27,9 +27,11 @@ class LdHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Change
     name = "Facility L&D HMIS Report"
     slug = "facility_ld_hmis_report"
     default_rows = 25
+    base_template = "m4change/report.html"
+    report_template_path = "m4change/report_content.html"
 
     fields = [
-        AsyncLocationField,
+        AsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]

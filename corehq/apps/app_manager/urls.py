@@ -47,9 +47,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'new_form'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', 'delete_app'),
-    url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         'delete_module', name="delete_module"),
-    url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         'delete_form', name="delete_form"),
 
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
@@ -80,7 +80,6 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
-
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
         'edit_module_detail_screens', name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<attr>[\w-]+)/$',
@@ -99,7 +98,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_app_attr', name='edit_app_attr'),
     url(r'^edit_app_translations/(?P<app_id>[\w-]+)/$', 'edit_app_translations',
         name='edit_app_translations'),
-
+    url(r'^get_app_translations/$', 'get_app_translations', name='get_app_translations'),
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', 'rearrange'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', 'odk_qr_code'),

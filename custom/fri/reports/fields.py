@@ -1,4 +1,4 @@
-from corehq.apps.reports.fields import BooleanField
+from corehq.apps.reports.dont_use.fields import BooleanField
 
 class ShowOnlySurveyTraffic(BooleanField):
     label = "Show Only SMS from Surveys"

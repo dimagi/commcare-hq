@@ -26,3 +26,21 @@ class NewSubscriptionError(Exception):
     pass
 
 
+class InvoiceEmailThrottledError(Exception):
+    pass
+
+
+class SubscriptionReminderError(Exception):
+    pass
+
+
+class SubscriptionRenewalError(Exception):
+    pass
+
+
+class PaymentRequestError(Exception):
+    pass
+
+
+class PaymentHandlerError(Exception):
+    pass

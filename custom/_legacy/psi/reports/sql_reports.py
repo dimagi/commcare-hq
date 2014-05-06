@@ -3,13 +3,15 @@ from sqlagg.base import AliasColumn
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.reports.util import make_ctable_table_name
 from psi.reports import DEMO_TYPES
 from util import get_unique_combinations
 from dimagi.utils.decorators.memoized import memoized
 
 
 class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField']
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
+              'psi.reports.AsyncPlaceField']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -68,17 +70,17 @@ class PSISQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
         return FixtureDataItem.by_field_value(self.domain, village_fdt, 'id', float(id)).one()
 
     def get_village_name(self, village_id):
-        return self.get_village(village_id).fields.get("name", id)
+        return self.get_village(village_id).fields_without_attributes.get("name", id)
 
     def get_village_class(self, village_id):
-        return self.get_village(village_id).fields.get("village_class", "No data")
+        return self.get_village(village_id).fields_without_attributes.get("village_class", "No data")
     
     def get_village_fdt(self, domain):
         return FixtureDataType.by_domain_tag(domain, 'village').one()
 
 
 class PSISQLEventsReport(PSISQLReport):
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     name = "Event Demonstration Report (SQL)"
@@ -87,7 +89,7 @@ class PSISQLEventsReport(PSISQLReport):
     slug = "event_demonstations_sql"
     section_name = "event demonstrations"
     default_aggregation = 'district'
-    table_name = 'psi-unicef_psi_events'
+    table_name = make_ctable_table_name('psi-unicef_psi_events')
 
     @property
     def columns(self):
@@ -107,12 +109,12 @@ class PSISQLHouseholdReport(PSISQLReport):
     emailable = True
     slug = "household_demonstrations_sql"
     section_name = "household demonstrations"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.AsyncPlaceField',
               'psi.reports.DemoTypeField',
               'psi.reports.AASDBV',]
     default_aggregation = 'village'
-    table_name = "psi-unicef_psi_household_demonstrations"
+    table_name = make_ctable_table_name("psi-unicef_psi_household_demonstrations")
 
     @property
     @memoized
@@ -149,12 +151,12 @@ class PSISQLSensitizationReport(PSISQLReport):
     emailable = True
     slug = "sensitization_sessions_sql"
     section_name = "sensitization sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictBlockField',
               'psi.reports.AASDB',]
     default_aggregation = 'block'
 
-    table_name = 'psi-unicef_psi_sensitization'
+    table_name = make_ctable_table_name('psi-unicef_psi_sensitization')
 
     @property
     def columns(self):
@@ -175,11 +177,11 @@ class PSISQLTrainingReport(PSISQLReport):
     emailable = True
     slug = "training_sessions_sql"
     section_name = "training sessions"
-    fields = ['corehq.apps.reports.fields.DatespanField',
+    fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'psi.reports.StateDistrictField',
               'psi.reports.AASD',]
     default_aggregation = 'district'
-    table_name = "psi-unicef_psi_training"
+    table_name = make_ctable_table_name("psi-unicef_psi_training")
 
     @property
     def columns(self):

@@ -52,7 +52,7 @@
         $("[data-field=user_id]").each(function() {
             var user_id = $(this).text().trim();
             if ( maybe_username ) {
-                var params = $.param({individual: user_id});
+                var params = $.param({emw: "u__"+user_id});
                 var body = user_template
                              .replace(":username", maybe_username)
                              .replace(":case_list_url", case_list_url + "?" + params)
@@ -75,7 +75,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url "reports_home" domain %}"><strong>{% trans "Reports" %}w</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>{% trans "Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
             <a href="{% url "project_report_dispatcher" domain 'case_list' %}">{% trans "Case List" %}</a> <span class="divider">&gt;</span>

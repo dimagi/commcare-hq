@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportCaseES, ReportXFormES
-from corehq.apps.reports.fields import  ReportSelectField
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 
@@ -11,12 +11,13 @@ from pact.models import PactPatientCase, DOTSubmission, CObservation
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
-class PactDOTPatientField(ReportSelectField):
+class PactDOTPatientField(BaseSingleOptionFilter):
     slug = "dot_patient"
     name = "DOT Patient"
     default_option = "Select DOT Patient"
 
-    def update_params(self):
+    @property
+    def options(self):
         patient_cases = self.get_pact_cases()
         case_type = self.request.GET.get(self.slug, '')
 
@@ -50,7 +51,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
     report_template_path = "pact/dots/dots_report.html"
     flush_layout = True
-    fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.fields.DatespanField']
+    fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.filters.dates.DatespanFilter']
 
     @property
     def report_context(self):

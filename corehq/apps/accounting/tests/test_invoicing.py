@@ -113,6 +113,8 @@ class TestInvoice(BaseInvoiceTestCase):
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
         billing_contact.save()
+        account.date_confirmed_extra_charges = datetime.date.today()
+        account.save()
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
@@ -289,6 +291,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
         billing_contact.save()
+        account.date_confirmed_extra_charges = datetime.date.today()
+        account.save()
 
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)

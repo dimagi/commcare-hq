@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
+from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -16,10 +16,10 @@ from dimagi.utils.web import json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
 from django.shortcuts import render
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api
@@ -32,6 +32,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
+from touchforms.formplayer.models import EntrySession
 
 
 @require_cloudcare_access
@@ -59,8 +60,15 @@ def cloudcare_main(request, domain, urlPath):
 
     if not preview:
         apps = get_cloudcare_apps(domain)
-        # replace the apps with the last build of each app
-        apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
+        if request.project.use_cloudcare_releases:
+            # replace the apps with the last starred build of each app, removing the ones that aren't starred
+            apps = filter(lambda app: app.is_released, [get_app(domain, app['_id'], latest=True) for app in apps])
+            # convert to json
+            apps = [get_app_json(app) for app in apps]
+        else:
+            # legacy functionality - use the latest build regardless of stars
+            apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
+
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
         apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
@@ -129,6 +137,7 @@ def cloudcare_main(request, domain, urlPath):
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
        'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
+       'sessions_enabled': request.couch_user.is_commcare_user()
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
@@ -139,13 +148,23 @@ def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
+
+    # make the name for the session we will use with the case and form
+    session_name = u'{app} > {form}'.format(
+        app=app.name,
+        form=app.get_module(module_id).forms[int(form_id)].name.values()[0]
+    )
+    if case_id:
+        session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
-    return json_response(
-        touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, form_url, case_id,
-                                        delegation=delegation, offline=offline))
-        
+    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
+    return json_response(session_helper.get_full_context(
+        {'form_url': form_url,},
+        {'session_name': session_name, 'app_id': app._id}
+    ))
+
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
@@ -218,7 +237,10 @@ def filter_cases(request, domain, app_id, module_id):
     delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    xpath = SuiteGenerator(app).get_filter_xpath(module, delegation=delegation)
+    suite_gen = SuiteGenerator(app)
+    xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
+    extra_instances = [{'id': inst.id, 'src': inst.src}
+                       for inst in suite_gen.get_extra_instances(module)]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
@@ -234,9 +256,9 @@ def filter_cases(request, domain, app_id, module_id):
             "footprint": True
         }
 
-        result = touchforms_api.filter_cases(domain, request.couch_user,
-                                             xpath, additional_filters,
-                                             auth=DjangoAuth(auth_cookie))
+        helper = SessionDataHelper(domain, request.couch_user)
+        result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
+                                     extra_instances=extra_instances)
         if result.get('status', None) == 'error':
             return HttpResponseServerError(
                 result.get("message", _("Something went wrong filtering your cases.")))
@@ -302,6 +324,30 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
                 return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
         raise Http404
 
+@cloudcare_api
+def get_sessions(request, domain):
+    # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
+    skip = request.GET.get('skip') or 0
+    limit = request.GET.get('limit') or 10
+    return json_response(get_open_form_sessions(request.user, skip=skip, limit=limit))
+
+
+@cloudcare_api
+def get_session_context(request, domain, session_id):
+    try:
+        session = EntrySession.objects.get(session_id=session_id)
+    except EntrySession.DoesNotExist:
+        session = None
+    if request.method == 'DELETE':
+        if session:
+            session.delete()
+        return json_response({'status': 'success'})
+    else:
+        helper = SessionDataHelper(domain, request.couch_user)
+        return json_response(helper.get_full_context({
+            'session_id': session_id,
+            'app_id': session.app_id if session else None
+        }))
 
 class HttpResponseConflict(HttpResponse):
     status_code = 409

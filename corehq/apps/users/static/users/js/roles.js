@@ -28,6 +28,7 @@ $(function () {
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
+                self.hasUsersAssigned = data.hasUsersAssigned;
                 return self;
             },
             unwrap: function (self) {
@@ -43,24 +44,6 @@ $(function () {
             }
         };
 
-        function wrapRole(role) {
-            role.permissions.viewReportList = ko.computed({
-                read: function () {
-                    return ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
-                        return self.getReportObject(reportPath);
-                    });
-                },
-                write: function (reports) {
-                    var reportPaths = ko.utils.arrayMap(reports, function (report) {
-                        return report.path;
-                    });
-                    role.permissions.view_report_list.removeAll();
-                    ko.utils.arrayForEach(reportPaths, function (path) {
-                        role.permissions.view_report_list.push(path);
-                    });
-                }
-            });
-        }
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.getReportObject = function (path) {
@@ -77,11 +60,11 @@ $(function () {
             return UserRole.wrap(userRole);
         }));
         self.roleBeingEdited = ko.observable();
+        self.roleBeingDeleted = ko.observable();
         self.defaultRole = UserRole.wrap(o.defaultRole);
 
         self.addOrReplaceRole = function (role) {
             var newRole = UserRole.wrap(role);
-            wrapRole(newRole);
             var i;
             for (i = 0; i < self.userRoles().length; i++) {
                 if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === newRole._id()) {
@@ -90,6 +73,16 @@ $(function () {
                 }
             }
             self.userRoles.push(newRole);
+        };
+
+        self.removeRole = function (role) {
+            var i;
+            for (i = 0; i < self.userRoles().length; i++) {
+                if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === role._id) {
+                    self.userRoles.splice(i, 1);
+                    return;
+                }
+            }
         };
 
         self.setRoleBeingEdited = function (role) {
@@ -101,6 +94,20 @@ $(function () {
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
+        };
+        self.setRoleBeingDeleted = function (role) {
+            if(!role._id || !role.hasUsersAssigned) {
+                var title = "Delete Role: " + role.name();
+                var modalConfirmation = "Are you sure you want to delete a role: '" + role.name() + "' ?";
+                var roleCopy = UserRole.wrap(UserRole.unwrap(role));
+                roleCopy.modalTitle = title;
+                roleCopy.modalConfirmation = modalConfirmation;
+                self.roleBeingDeleted(roleCopy);
+                self.modalDeleteButton.state('save');
+            }
+        };
+        self.unsetRoleBeingDeleted = function () {
+            self.roleBeingDeleted(undefined);
         };
         self.modalSaveButton = {
             state: ko.observable(),
@@ -117,7 +124,21 @@ $(function () {
                 };
             }
         }
-
+        self.modalDeleteButton = {
+            state: ko.observable(),
+            saveOptions: function () {
+                return {
+                    url: o.deleteUrl,
+                    type: 'post',
+                    data: JSON.stringify(UserRole.unwrap(self.roleBeingDeleted)),
+                    dataType: 'json',
+                    success: function (data) {
+                        self.removeRole(data);
+                        self.unsetRoleBeingDeleted();
+                    }
+                };
+            }
+        }
     }
     $.fn.userRoles = function (o) {
         this.each(function () {

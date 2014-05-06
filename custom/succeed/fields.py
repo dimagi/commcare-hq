@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.fields import ReportSelectField
+from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.users.models import CouchUser, WebUser
 from custom.succeed.utils import _is_succeed_admin, CONFIG, _is_pm_or_pi
 
@@ -14,18 +14,7 @@ class CareSite(ReportSelectField):
 
     @property
     def options(self):
-        user = self.request.couch_user
-        options = []
-        if isinstance(user, WebUser) or _is_succeed_admin(user):
-            options = CONFIG['groups']
-        else:
-            groups = user.get_group_ids()
-            for group_id in groups:
-                group = Group.get(group_id)
-                for grp in CONFIG['groups']:
-                    if group.name == grp['text']:
-                        options.append(grp)
-        return options
+        return CONFIG['groups']
 
 
 class ResponsibleParty(ReportSelectField):

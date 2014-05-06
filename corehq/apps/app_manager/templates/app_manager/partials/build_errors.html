@@ -73,6 +73,11 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "invalid location xpath" %}
+                            Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
+                            Details: {{ error.details }}
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
                         {% if error.type == "subcase has no case type" %}
                             Child case specifies no module
                             in form {% include "app_manager/partials/form_error_message.html" %}
@@ -130,7 +135,15 @@
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {% if error.type == "circular ref" %}
-                            A circular reference was detecte in the hierarchy of subcase "{{ error.case_tag }}"
+                            A circular reference was detected in the hierarchy of subcase "{{ error.case_tag }}"
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "auto select ref" %}
+                            The case tag referenced in the auto-select expression of "{{ error.case_tag }}" was not found
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "no case type in action" %}
+                            The form action "{{ error.case_tag }}" does not have a case type selected
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {# And then show the optional `message` regardless #}

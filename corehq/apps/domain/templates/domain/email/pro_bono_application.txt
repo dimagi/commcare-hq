@@ -7,3 +7,7 @@ Project overview: {{ pro_bono_form.project_overview.value }}
 Pay only features needed: {{ pro_bono_form.pay_only_features_needed.value }}
 
 Duration of project: {{ pro_bono_form.duration_of_project.value }}
+
+Number of expected users: {{ pro_bono_form.num_expected_users.value }}
+
+Dimagi contact: {{ pro_bono_form.dimagi_contact.value }}

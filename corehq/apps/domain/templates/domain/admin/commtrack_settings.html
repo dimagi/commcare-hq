@@ -1,173 +1,18 @@
 {% extends "settings/base_template.html" %}
-{% load hqstyle_tags %}
-{% load hq_shared_tags %}
 {% load i18n %}
-
-{% block js %}{{ block.super }}
-<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-<script src="{% static 'commtrack/ko/settings.js' %}"></script>
-{% endblock %}
-
-{% block head %}
-{{ block.super }}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-<style>
-    .sortable-handle {
-      cursor: move;
-    }
-</style>
-{% endblock %}
+{% load crispy_forms_tags %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
-
-var settings = {{ settings|JSON }};
-var other_sms_codes = {{ other_sms_codes|JSON }};
-
+<script>
+    $("#id_use_auto_consumption").change(function () {
+        $("#id_consumption_min_transactions, " +
+          "#id_consumption_min_window, " +
+          "#id_consumption_optimal_window"
+        ).prop('disabled', !$(this).prop('checked'));
+    }).change();
 </script>
 {% endblock %}
 
 {% block main_column %}
-
-<form id="settings" class="form form-horizontal" method="post">
-
-<fieldset>
-    <legend>{% trans 'SMS Keywords' %}</legend>
-    <div class="control-group" data-bind="css: { 'error': keyword_error }">
-        <label class="control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
-        <div class="controls">
-            <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
-            <div class="help-inline" data-bind="text: keyword_error"></div>
-        </div>
-    </div>
-</fieldset>
-
-<fieldset>
-    <legend>{% trans 'Stock Actions' %}</legend>
-    <div class="control-group">
-        <label class="control-label">{% trans 'Edit Actions' %}</label>
-        <div class="controls">
-            <p><i class="icon-info-sign"></i>
-                {% blocktrans %}For a given incoming stock report, stock actions will be applied in the order listed below.{% endblocktrans %}
-            </p>
-            {% include "domain/admin/commtrack_action_table.html" %}
-            <button type="button" class="btn" data-bind="click: new_action">
-                <i class="icon-plus"></i> {% trans "New Action" %}
-            </button>
-        </div>
-    </div>
-</fieldset>
-
-<fieldset>
-    <legend>{% trans "Requisitions" %}</legend>
-    <div class="control-group" >
-    <label class="control-label"></label>
-    <div class="controls">
-      <label class="checkbox">
-          <input id="requisitions_enabled" type="checkbox" data-bind="checked: requisition_config().enabled" /> {% trans "Enable Requisitions" %}
-      </label>
-    </div>
-  </div>
-</fieldset>
-
-<fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
-    <legend>{% trans "Requisitions Actions" %}</legend>
-    <div class="control-group">
-        <label class="control-label">{% trans 'Edit Actions' %}</label>
-        <div class="controls">
-            {% include "domain/admin/commtrack_action_table.html" %}
-        <button type="button" class="btn" data-bind="click: new_action"><i class="icon-white"></i> {% trans "New Action" %}</button>
-        </div>
-    </div>
-</fieldset>
-
-<fieldset>
-    <legend>{% trans "Location Hierarchy" %}</legend>
-    <div class="control-group">
-        <label class="control-label">{% trans 'Edit Locations' %}</label>
-        <div class="controls">
-           <div class="text-error" data-bind="text: loc_types_error"></div>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>{% trans "Location Type" %}</th>
-                        <th>{% trans "Location Type Code" %}</th>
-                        <th>{% trans "Allowed Parent Types" %}</th>
-                        <th>{% trans "Administrative only?" %}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: loc_types">
-                    <tr data-bind="bind_element: Object()">
-                        <td class="control-group" data-bind="css: { 'error': name_error }">
-                            <input class="loctype_name" data-bind="value: name" type="text" />
-                            <div class="help-inline" data-bind="text: name_error"></div>
-                        </td>
-                        <td class="control-group" data-bind="css: { 'error': code_error }">
-                            <input class="loctype_code" data-bind="value: code" type="text" />
-                            <div class="help-inline" data-bind="text: code_error"></div>
-                        </td>
-                        <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                            <select multiple="true" data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'"></select>
-                            <div class="help-inline" data-bind="text: allowed_parents_error"></div>
-                        </td>
-                        <td>
-                            <input data-bind="checked: administrative" type="checkbox" />
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"><i class="icon-trash icon-white"></i> {% trans "Remove" %}</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <button type="button" class="btn" data-bind="click: new_loctype"><i class="icon-plus"></i> {% trans "New Location Type" %}</button>
-        </div>
-    </div>
-</fieldset>
-
-{% if request.couch_user.is_previewer %}
-<h3>{% trans "OpenLMIS Integration" %}</h3>
-<fieldset>
-    <div class="control-group" >
-        <label class="control-label" for="openlmis_enabled">{% trans "Enable OpenLMIS Integration?" %}</label>
-        <div class="controls">
-          <input id="openlmis_enabled" type="checkbox" data-bind="checked: openlmis_config().enabled">
-        </div>
-    </div>
-</fieldset>
-<fieldset data-bind="with: openlmis_config(), visible: openlmis_config().enabled">
-    <div class="control-group" >
-        <label class="control-label" for="openlmis_url">{% trans "API URL" %}</label>
-        <div class="controls">
-          <input id="openlmis_url" type="text" data-bind="value: url">
-        </div>
-    </div>
-    <div class="control-group" >
-        <label class="control-label" for="openlmis_username">{% trans "Username" %}</label>
-        <div class="controls">
-          <input id="openlmis_username" type="text" data-bind="value: username">
-        </div>
-    </div>
-    <div class="control-group" >
-        <label class="control-label" for="openlmis_password">{% trans "Password" %}</label>
-        <div class="controls">
-          <input id="openlmis_password" type="password" data-bind="value: password">
-        </div>
-    </div>
-    <div class="control-group" >
-        <label class="control-label" for="openlmis_using_requisitions">{% trans "Use OpenLMIS for Requisitions?" %}</label>
-        <div class="controls">
-          <input id="openlmis_using_requisitions" type="checkbox" data-bind="checked: using_requisitions">
-        </div>
-    </div>
-</fieldset>
-{% endif %}
-
-<div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Save Settings" %}</button></div>
-    <input name="json" type="hidden" data-bind="value: json_payload" />
-</form>
-
+    {% crispy form %}
 {% endblock %}
-

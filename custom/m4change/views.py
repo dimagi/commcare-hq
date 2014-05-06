@@ -1,5 +1,6 @@
-from django.http import HttpResponse
 from django.views.decorators.http import require_POST
+from django.http.response import HttpResponse
+
 from custom.m4change.models import McctStatus
 
 
@@ -8,6 +9,8 @@ def update_service_status(request, domain):
     forms = request.POST
     for lists in forms.lists():
         for list in lists:
+            if list is None or len(list) < 2:
+                continue
             form_id = list[0]
             new_status = list[1] if list[1].__len__() is not 1 else None
             reject_reason = list[2] if new_status == 'rejected' else None

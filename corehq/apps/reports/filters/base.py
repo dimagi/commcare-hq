@@ -71,6 +71,24 @@ class BaseReportFilter(CacheableRequestMixIn):   # (CacheableRequestMixIn):
         return request.GET.get(cls.slug)
 
 
+class CheckboxFilter(BaseReportFilter):
+    slug = "checkbox"
+    label = "hello"
+    template = "reports/filters/checkbox.html"
+
+    @property
+    def filter_context(self):
+        return {'checked': self.request.GET.get(self.slug, False)}
+
+    @classmethod
+    def get_value(cls, request, domain):
+        val = request.GET.get(cls.slug, False)
+        if not val:
+            return False
+        else:
+            return val is True or val == 'True' or val == 'true'
+
+
 class BaseSingleOptionFilter(BaseReportFilter):
     """
         Displays a select field.
@@ -278,5 +296,22 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     def get_value(cls, request, domain):
         instance = cls(request, domain)
         return instance.GET_values, instance
+
+
+class BaseTagsFilter(BaseReportFilter):
+    template = "reports/filters/base_tags_filter.html"
+    tags = []
+
+    @property
+    def selected(self):
+        return self.get_value(self.request, self.domain) or ''
+
+    @property
+    def filter_context(self):
+        return {
+            'tags': self.tags,
+            'selected': self.selected,
+            'placeholder': self.placeholder,
+        }
 
 

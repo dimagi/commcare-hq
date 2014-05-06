@@ -1,5 +1,5 @@
 import json
-from corehq.apps.app_manager.tests.util import add_build
+from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from dimagi.utils.decorators.memoized import memoized
 import os
@@ -45,7 +45,6 @@ class AppManagerTest(TestCase):
         self.app.save()
         self.assertEqual(self.app.version, old_version + 1)
 
-
     def tearDown(self):
         self.app.delete()
         #for xform in XForm.view('app_manager/xforms', key=self.xform_xmlns, reduce=False).all():
@@ -62,13 +61,14 @@ class AppManagerTest(TestCase):
         self.app.create_jadjar()
 
     def testDeleteForm(self):
-        self.app.delete_form(0,0)
+        self.app.delete_form(self.app.modules[0].unique_id,
+                             self.app.modules[0].forms[0].unique_id)
         self.assertEqual(len(self.app.modules), 3)
         for module, i in zip(self.app.get_modules(), [2,3,3]):
             self.assertEqual(len(module.forms), i)
 
     def testDeleteModule(self):
-        self.app.delete_module(0)
+        self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
 
     def testSwapModules(self):
@@ -78,6 +78,7 @@ class AppManagerTest(TestCase):
         self.assertEqual(self.app.modules[0].name['en'], m1)
         self.assertEqual(self.app.modules[1].name['en'], m0)
 
+    @patch_default_builds
     def testImportApp(self):
         self.assertTrue(self.app._attachments)
         new_app = import_app(self.app.id, self.domain)
@@ -143,6 +144,7 @@ class AppManagerTest(TestCase):
         self._check_has_build_files(copy)
         self._check_legacy_odk_files(copy)
 
+    @patch_default_builds
     def testBuildImportedApp(self):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()

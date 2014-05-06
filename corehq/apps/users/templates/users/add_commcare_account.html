@@ -17,7 +17,7 @@
             $("#add_commcare_account_form .help-block").hide();
             {% endif %}
 
-            $('#add_commcare_account_form button').click(function () {
+            $('#submit_mobile_worker').click(function () {
                 $(this).text("{% trans 'Creating' %}")
                        .prepend('<i class="icon-refresh icon-spin"></i> ')
                        .addClass('btn disabled')

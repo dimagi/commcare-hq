@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import time
 import json
 from copy import deepcopy
 import logging
@@ -9,9 +10,7 @@ import socket
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST, require_GET
-from pytz import timezone
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -21,7 +20,6 @@ from django.template.defaultfilters import yesno
 from django.contrib import messages
 from django.conf import settings
 from restkit import Resource
-from django.core import cache
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -42,15 +40,16 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import  require_superuser
+from corehq.apps.domain.decorators import require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, get_url_base
 from couchexport.export import export_raw, export_from_tables
@@ -58,10 +57,10 @@ from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.django.email import send_HTML_email
+from phonelog.utils import device_users_by_xform
 from pillowtop import get_all_pillows_json
-from phonelog.models import Log
+from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
 
 from .multimech import GlobalConfig
@@ -356,26 +355,10 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_forms_submitted = data[0].get('value', 0) if data else 0
 
-        if request.GET.get('old') == 'true':  ## old reports
-            key = [domain.name, "all_errors_only"]
-            data = get_db().view("phonelog/devicelog_data",
-                reduce=True,
-                startkey=key+[datespan.startdate_param_utc],
-                endkey=key+[datespan.enddate_param_utc],
-                #stale=settings.COUCH_STALE_QUERY,
-            ).first()
-            num_errors = 0
-            num_warnings = 0
-            if data:
-                data = data.get('value', {})
-                num_errors = data.get('errors', 0)
-                num_warnings = data.get('warnings', 0)
-
-        else:
-            phonelogs = Log.objects.filter(domain__exact=domain.name,
-                date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
-            num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
-            num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
+        phonelogs = DeviceReportEntry.objects.filter(domain__exact=domain.name,
+            date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
+        num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
+        num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
 
         rows.append(dict(domain=domain.name,
                         active_users=num_active_users,
@@ -403,43 +386,25 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
 
     return render(request, template, context)
 
+
 @require_superuser
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
+    _device_users_by_xform = memoized(device_users_by_xform)
 
     rows = []
 
-    if request.GET.get('old') == 'true':  # old reports
-        for domain in Domain.get_all():
-            data = get_db().view("phonelog/devicelog_data",
-                reduce=False,
-                startkey=[domain.name, "tag", "user-report"],
-                endkey=[domain.name, "tag", "user-report", {}],
-                #stale=settings.COUCH_STALE_QUERY,
-            ).all()
-            for report in data:
-                val = report.get('value')
-                version = val.get('version', 'unknown')
-                formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
-                rows.append(dict(domain=domain.name,
-                                 time=formatted_date,
-                                 user=val['user'],
-                                 device_users=val['device_users'],
-                                 message=val['msg'],
-                                 version=version.split(' ')[0],
-                                 detailed_version=html.escape(version),
-                                 report_id=report['id']))
-    else:
-        logs = Log.objects.filter(type__exact="user-report").order_by('domain')
-        for log in logs:
-            rows.append(dict(domain=log.domain,
-                             time=log.date,
-                             user=log.username,
-                             device_users=[u.username for u in log.device_users.all()],
-                             message=log.msg,
-                             version=(log.app_version or 'unknown').split(' ')[0],
-                             detailed_version=html.escape(log.app_version or 'unknown'),
-                             report_id=log.xform_id))
+    logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
+    for log in logs:
+        seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
+        rows.append(dict(domain=log.domain,
+                         time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
+                         user=log.username,
+                         device_users=_device_users_by_xform(log.xform_id),
+                         message=log.msg,
+                         version=(log.app_version or 'unknown').split(' ')[0],
+                         detailed_version=html.escape(log.app_version or 'unknown'),
+                         report_id=log.xform_id))
 
     headers = DataTablesHeader(
         DataTablesColumn(_("View Form")),
