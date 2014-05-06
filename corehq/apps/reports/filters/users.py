@@ -5,6 +5,7 @@ from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
@@ -20,7 +21,6 @@ from .base import (
     BaseSingleOptionFilter,
     BaseSingleOptionTypeaheadFilter,
 )
-from .api import group_tuple, user_tuple
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -219,7 +219,37 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
                 options.extend([(u.user_id, u.username_in_report) for u in users])
         return options
 
-class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
+
+class EmwfMixin(object):
+
+    def user_tuple(self, u):
+        user = util._report_user_dict(u)
+        uid = "u__%s" % user['user_id']
+        name = "%s [user]" % user['username_in_report']
+        return (uid, name)
+
+    def group_tuple(self, g):
+        return ("g__%s" % g['_id'], "%s [group]" % g['name'])
+
+    def user_type_tuple(self, t):
+        return (
+            "t__%s" % (t),
+            "[%s]" % HQUserType.human_readable[t]
+        )
+
+    @property
+    @memoized
+    def basics(self):
+        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        if Domain.get_by_name(self.domain).commtrack_enabled:
+            types.append('COMMTRACK')
+        user_types = [getattr(HQUserType, t) for t in types]
+        basics = [("t__0", _("[All mobile workers]"))] + \
+            [self.user_type_tuple(t) for t in user_types]
+        return basics
+
+
+class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("Groups or Users")
     default_options = None
@@ -265,7 +295,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 q=q,
                 fields=['_id', 'name'],
             )
-            selected += [group_tuple(hit['fields']) for hit in res['hits']['hits']]
+            selected += [self.group_tuple(hit['fields']) for hit in res['hits']['hits']]
         if user_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": user_ids}
@@ -275,7 +305,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 q=q,
                 fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type'],
             )
-            selected += [user_tuple(hit['fields']) for hit in res['hits']['hits']]
+            selected += [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
 
         known_ids = dict(selected)
         return [{'id': id, 'text': known_ids[id]}
@@ -289,6 +319,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         url = reverse('emwf_options', args=[self.domain])
         context.update({'endpoint': url})
         return context
+
+    @classmethod
+    def user_types(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return [int(u[3:]) for u in emws
+            if (u.startswith("t__") and u[3:].isdigit())]
 
     @classmethod
     def pull_groups(cls, domain, request):
@@ -376,13 +412,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             ret["users_by_group"] = user_dict
             ret["combined_users"] = remove_dups(ret["users"] + users_in_groups, "user_id")
         return ret
-
-    @property
-    @memoized
-    def basics(self):
-        return [("t__0", _("[All mobile workers]"))] + \
-            [("t__%s" % (i+1), "[%s]" % name)
-                for i, name in enumerate(HQUserType.human_readable[1:])]
 
     @property
     def options(self):
