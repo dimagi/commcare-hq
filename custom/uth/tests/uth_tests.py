@@ -31,7 +31,7 @@ class UTHTests(TestCase):
                 'scan_time': scan_time
             }
         ).as_xml(format_datetime=json_format_datetime)
-        post_case_blocks([case_block], {'domain': 'vscan_domain'})
+        post_case_blocks([case_block], {'domain': 'vscan-domain'})
 
         return case_id
 
@@ -39,12 +39,12 @@ class UTHTests(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-        self.domain = create_domain('vscan_domain')
+        self.domain = create_domain('vscan-domain')
 
-        username = format_username('vscan_user', 'vscan_domain')
+        username = format_username('vscan_user', 'vscan-domain')
 
         self.vscan_user = CommCareUser.get_by_username(username) or CommCareUser.create(
-            'vscan_domain',
+            'vscan-domain',
             username,
             'secret'
         )
@@ -62,15 +62,15 @@ class ScanLookupTests(UTHTests):
         super(ScanLookupTests, self).setUp()
 
     def testFindsCorrectCase(self):
-        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan-domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
     def testWrongScanID(self):
-        case = utils.match_case('vscan_domain', 'VH014466XK', 'wrong', '')
+        case = utils.match_case('vscan-domain', 'VH014466XK', 'wrong', '')
         self.assertIsNone(case)
 
     def testWrongSerial(self):
-        case = utils.match_case('vscan_domain', 'wrong', '123123', '')
+        case = utils.match_case('vscan-domain', 'wrong', '123123', '')
         self.assertIsNone(case)
 
     def testGetsNewestWithTwoCases(self):
@@ -89,7 +89,7 @@ class ScanLookupTests(UTHTests):
             '2014-03-22T10:48:49Z'
         )
 
-        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan-domain', 'VH014466XK', '123123', '')
         self.assertEqual(case_2_id, case._id)
 
     def testGetsNewestBasedOnScanProperty(self):
@@ -104,10 +104,10 @@ class ScanLookupTests(UTHTests):
             scan_uploaded=True
         )
 
-        case_count = len(utils.all_scan_cases('vscan_domain', 'VH014466XK', '123123'))
+        case_count = len(utils.all_scan_cases('vscan-domain', 'VH014466XK', '123123'))
         self.assertEqual(1, case_count)
 
-        case = utils.match_case('vscan_domain', 'VH014466XK', '123123', '')
+        case = utils.match_case('vscan-domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
 

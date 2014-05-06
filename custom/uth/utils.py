@@ -104,10 +104,10 @@ def create_case(case_id, files, patient_case_id=None):
         xform,
         attachments=file_dict,
         process=None,
-        domain='vscan_domain',
+        domain='vscan-domain',
     )
 
-    lock.obj.domain = 'vscan_domain'
+    lock.obj.domain = 'vscan-domain'
 
     return process_cases(lock.obj)
 
