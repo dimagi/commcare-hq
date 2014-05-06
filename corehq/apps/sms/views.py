@@ -1018,6 +1018,7 @@ def sms_settings(request, domain):
                 domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
                 domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
                 domain_obj.count_messages_as_read_by_anyone = form.cleaned_data["count_messages_as_read_by_anyone"]
+                domain_obj.send_to_duplicated_case_numbers = form.cleaned_data["send_to_duplicated_case_numbers"]
                 if settings.SMS_QUEUE_ENABLED:
                     domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
                     domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
@@ -1039,6 +1040,7 @@ def sms_settings(request, domain):
             "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
             "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
             "count_messages_as_read_by_anyone" : domain_obj.count_messages_as_read_by_anyone,
+            "send_to_duplicated_case_numbers": domain_obj.send_to_duplicated_case_numbers,
         }
         form = SMSSettingsForm(initial=initial)
 
