@@ -279,7 +279,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if form.is_valid():
-                new_domain = dom.save_copy(form.clean_domain_name(), user=user)
+                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
             else:
                 messages.error(request, form.errors)
                 return project_info(request, domain)
