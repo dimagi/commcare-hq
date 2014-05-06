@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case import process_cases
-import io
+from couchforms.util import create_and_lock_xform
 from django.core.files.uploadedfile import UploadedFile
 
 
@@ -90,7 +90,9 @@ def identifier(filename):
 
 
 def create_case(case_id, files, patient_case_id=None):
+    # TODO don't completely remove this from the dict
     files.pop('PT_PPS.XML', '')
+
     xform = render_xform(files, case_id, patient_case_id)
 
     file_dict = {}
@@ -98,12 +100,16 @@ def create_case(case_id, files, patient_case_id=None):
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
-    # TODO post_xform_to_couch is a test only function
-    from couchforms.util import post_xform_to_couch
+    lock = create_and_lock_xform(
+        xform,
+        attachments=file_dict,
+        process=None,
+        domain='vscan_domain',
+    )
 
-    form = post_xform_to_couch(xform, file_dict)
-    form.domain = 'vscan_domain'
-    return process_cases(form)
+    lock.obj.domain = 'vscan_domain'
+
+    return process_cases(lock.obj)
 
 
 def attach_images_to_case(case, upload_doc):
