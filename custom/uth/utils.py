@@ -53,17 +53,24 @@ def get_subdirectories(directory):
     return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
 
 
-def render_xform(files, exam_uuid, patient_case_id=None):
+def load_template(filename):
     xform_template = None
     template_path = os.path.join(
         os.path.dirname(__file__),
-        'upload_form.xml.template'
+        filename
     )
     with open(template_path, 'r') as fin:
         xform_template = fin.read()
 
-    def case_attach_block(key, filename):
-        return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
+    return xform_template
+
+
+def case_attach_block(key, filename):
+    return '<n0:%s src="%s" from="local"/>' % (key, os.path.split(filename)[-1])
+
+
+def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
+    xform_template = load_template('upload_form.xml.template')
     case_attachments = [case_attach_block(identifier(f), f) for f in files]
 
     format_dict = {
@@ -84,6 +91,28 @@ def render_xform(files, exam_uuid, patient_case_id=None):
     return final_xml
 
 
+def render_vscan_xform(case_id, files):
+    xform_template = load_template('vscan_form.xml.template')
+    case_attachments = [
+        case_attach_block(os.path.split(f)[-1], f) for f in files
+    ]
+
+    format_dict = {
+        'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'time_end': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'modified_date': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'user_id': 'f72265c0-362a-11e0-9e24-005056aa7fb5',  #TODO
+        'username': 'fakeuser@dimagi.com',  #TODO
+        'doc_id': uuid.uuid4().hex,
+        'case_id': case_id,
+        'case_attachments': ''.join(case_attachments),
+    }
+
+    final_xml = xform_template % format_dict
+    return final_xml
+
+
+
 def identifier(filename):
     # TODO fix this
     return 'attachment' + filename.split('[')[1][:7]
@@ -93,10 +122,9 @@ def create_case(case_id, files, patient_case_id=None):
     # TODO don't completely remove this from the dict
     files.pop('PT_PPS.XML', '')
 
-    xform = render_xform(files, case_id, patient_case_id)
+    xform = render_sonosite_xform(files, case_id, patient_case_id)
 
     file_dict = {}
-
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
@@ -106,11 +134,25 @@ def create_case(case_id, files, patient_case_id=None):
         process=None,
         domain='vscan-domain',
     )
-
     lock.obj.domain = 'vscan-domain'
 
     return process_cases(lock.obj)
 
 
-def attach_images_to_case(case, upload_doc):
-    pass
+def attach_images_to_case(case_id, files):
+    xform = render_vscan_xform(case_id, files)
+
+    file_dict = {}
+    for f in files:
+        identifier = os.path.split(f)[-1]
+        file_dict[identifier] = UploadedFile(files[f], identifier)
+
+    lock = create_and_lock_xform(
+        xform,
+        attachments=file_dict,
+        process=None,
+        domain='vscan-domain',
+    )
+    lock.obj.domain = 'vscan-domain'
+
+    return process_cases(lock.obj)

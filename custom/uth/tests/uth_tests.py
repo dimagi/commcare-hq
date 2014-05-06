@@ -8,9 +8,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.util import post_case_blocks
 import os
-import zipfile
 from custom.uth import utils
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.models import CommCareCase
 
 
 class UTHTests(TestCase):
@@ -109,6 +109,35 @@ class ScanLookupTests(UTHTests):
 
         case = utils.match_case('vscan-domain', 'VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
+
+
+class VscanTests(UTHTests):
+    def setUp(self):
+        super(VscanTests, self).setUp()
+
+    def pack_directory(self, directory):
+        # name of the test directory we're packing
+        packed_directory = {}
+
+        for root, dirs, files in os.walk(directory):
+            for f in files:
+                packed_directory[
+                    os.path.join(os.path.split(directory)[-1], f)
+                ] = open(os.path.join(root, f))
+
+        return packed_directory
+
+    def testAttachments(self):
+        self.assertEqual(len(CommCareCase.get(self.case_id).case_attachments), 0)
+        scan_path = os.path.join(
+            os.path.dirname(__file__),
+            'data',
+            'VH014466XK_000010_20130528T163904'
+        )
+        files = self.pack_directory(scan_path)
+        utils.attach_images_to_case(self.case_id, files)
+
+        self.assertEqual(len(CommCareCase.get(self.case_id).case_attachments), 3)
 
 
 class ImageUploadTests(UTHTests):
