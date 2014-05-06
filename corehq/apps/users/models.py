@@ -320,6 +320,22 @@ class UserRole(Document):
     def commcareuser_role_choices(cls, domain):
         return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
 
+    @property
+    def ids_of_assigned_users(self):
+        from corehq.apps.api.es import UserES
+        query = {"query": {"bool": {"must": [{"term": {"user.doc_type": "WebUser"}},
+                                             {"term": {"user.domain_memberships.role_id": self.get_id}},
+                                             {"term": {"user.domain_memberships.domain": self.domain}},
+                                             {"term": {"user.is_active": True}},
+                                             {"term": {"user.base_doc": "couchuser"}}],
+                                    }}, "fields": []}
+        query_results = UserES(self.domain).run_query(es_query=query, security_check=False)
+        assigned_user_ids = []
+        for user in query_results['hits'].get('hits', []):
+            assigned_user_ids.append(user['_id'])
+
+        return assigned_user_ids
+
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
     'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},

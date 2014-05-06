@@ -276,7 +276,7 @@ class UserES(ESView):
         if 'password' in query['fields']:
             raise ESUserError("You cannot include password in the results")
 
-    def run_query(self, es_query, es_type=None):
+    def run_query(self, es_query, es_type=None, security_check=True):
         """
         Must be called with a "fields" parameter
         Returns the raw query json back, or None if there's an error
@@ -302,15 +302,19 @@ class UserES(ESView):
             if '_source' in res:
                 raise ESUserError(
                     "This query does not support full document lookups")
-            res_domain = res['fields'].get('domain_membership.domain', None)
 
             # security check
-            if res_domain == self.domain:
-                hits.append(res)
+            if security_check:
+                res_domain = res['fields'].get('domain_memberships.domain', None)
+
+                if res_domain == self.domain:
+                    hits.append(res)
+                else:
+                    logging.info(
+                        "Requester domain %s does not match result domain %s" % (
+                        self.domain, res_domain))
             else:
-                logging.info(
-                    "Requester domain %s does not match result domain %s" % (
-                    self.domain, res_domain))
+                hits.append(res)
         es_results['hits']['hits'] = hits
         return es_results
 

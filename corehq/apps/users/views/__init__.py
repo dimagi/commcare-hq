@@ -350,6 +350,12 @@ class ListWebUsersView(BaseUserSettingsView):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(UserRole.by_domain(self.domain),
                                  key=lambda role: role.name if role.name else u'\uFFFF'))
+
+        #  indicate if a role has assigned users, skip admin role
+        for i in range(1, len(user_roles)):
+            role = user_roles[i]
+            role.__setattr__('hasUsersAssigned',
+                             True if len(role.ids_of_assigned_users) > 0 else False)
         return user_roles
 
     @property
@@ -430,7 +436,25 @@ def post_user_role(request, domain):
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
     role.save()
+    role.__setattr__('hasUsersAssigned',
+                     True if len(role.ids_of_assigned_users) > 0 else False)
     return json_response(role)
+
+
+@domain_admin_required
+@require_POST
+def delete_user_role(request, domain):
+    if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
+        return json_response({})
+    role_data = json.loads(request.body)
+    try:
+        role = UserRole.get(role_data["_id"])
+    except ResourceNotFound:
+        return json_response({})
+    copy_id = role._id
+    role.delete()
+    # return removed id in order to remove it from UI
+    return json_response({"_id": copy_id})
 
 
 class UserInvitationView(InvitationView):
