@@ -41,6 +41,7 @@ class SMSSettingsForm(Form):
     _cchq_is_previewer = False
     use_default_sms_response = BooleanField(required=False)
     default_sms_response = TrimmedCharField(required=False)
+    send_to_duplicated_case_numbers = BooleanField(required=False)
     use_custom_case_username = BooleanField(required=False)
     custom_case_username = TrimmedCharField(required=False)
     use_custom_message_count_threshold = BooleanField(required=False)

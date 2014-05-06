@@ -1020,6 +1020,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     of the CaseReminderHandler.
     """
     domain = StringProperty()                       # Domain
+    last_modified = DateTimeProperty()
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
     user_id = StringProperty()                      # Reference to the CommCareUser who will receive the SMS messages
@@ -1110,7 +1111,11 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def retired(self):
         return self.doc_type.endswith("-Deleted")
-    
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.utcnow()
+        super(CaseReminder, self).save(*args, **kwargs)
+
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()
