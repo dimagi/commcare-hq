@@ -1054,7 +1054,9 @@ class SelectPlanView(DomainAccountingSettings):
         return {
             'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
-                                if self.current_subscription is not None else ""),
+                                if self.current_subscription is not None
+                                and not self.current_subscription.is_trial
+                                else ""),
             'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 

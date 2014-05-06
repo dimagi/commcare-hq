@@ -52,23 +52,23 @@ def requires_privilege_with_fallback(slug, **assignment):
                     )
                     plan_name = request.subscription.plan_version.user_facing_description['name']
                     feature_name = privileges.Titles.get_name_from_privilege(slug)
-                    messages.info(request, ugettext(mark_safe(
-                        "You are currently on a <strong>Trial Subscription "
-                        "of %(plan_name)s</strong>, expiring on "
-                        "%(date_end)s. <strong>%(feature_name)s</strong> "
-                        "will not be available after this date unless you "
-                        "subscribe to the <strong>%(edition)s "
-                        "Software Plan</strong>." % {
-                            'plan_name': force_unicode(plan_name),
-                            'feature_name': force_unicode(feature_name),
-                            'date_end': request.subscription.date_end.strftime("%B %M %Y"),
-                            'edition': edition_req,
-                        }
-                    )))
+                    request.show_trial_notice = True
+                    request.trial_info = {
+                        'current_plan': plan_name,
+                        'feature_name': feature_name,
+                        'required_plan': edition_req,
+                        'date_end': request.subscription.date_end.strftime("%d %B %Y")
+                    }
+                    request.is_billing_admin = (hasattr(request, 'couch_user')
+                                                and BillingAccountAdmin.get_admin_status_and_account(
+                                                    request.couch_user, request.domain
+                                                )[0])
+
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
                 )
             except PermissionDenied:
+                request.show_trial_notice = False
                 from corehq.apps.domain.views import SubscriptionUpgradeRequiredView
                 return SubscriptionUpgradeRequiredView().get(
                     request, request.domain, slug
