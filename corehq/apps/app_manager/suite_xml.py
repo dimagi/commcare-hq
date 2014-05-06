@@ -15,6 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath
 
+FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'

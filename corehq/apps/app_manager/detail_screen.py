@@ -353,6 +353,13 @@ class Picture(FormattedDetailColumn):
     template_form = 'image'
 
 
+@register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
+class AttachmentXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        return sx.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
+
+
 @register_type_processor(sx.FIELD_TYPE_PROPERTY)
 class PropertyXpathGenerator(BaseXpathGenerator):
     @property

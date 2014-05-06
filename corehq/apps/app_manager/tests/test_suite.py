@@ -121,6 +121,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_picture_format(self):
         self._test_generic_suite('app_picture_format', 'suite-picture-format')
 
+    def test_attached_picture(self):
+        self._test_generic_suite('app_attached_image', 'suite-attached-image')
+
 
 class RegexTest(TestCase):
 
