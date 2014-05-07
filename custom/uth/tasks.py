@@ -31,10 +31,13 @@ def async_find_and_attach(upload_id):
         upload_doc.date
     )
 
-    files = {}
-    for f in upload_doc._attachments.keys():
-        files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
+    if case:
+        files = {}
+        for f in upload_doc._attachments.keys():
+            files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
 
-    attach_images_to_case(case._id, files)
+        attach_images_to_case(case._id, files)
+    else:
+        return -1
 
     # TODO delete doc if successful
