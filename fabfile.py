@@ -749,6 +749,7 @@ def deploy():
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
+            execute(stop_pillows)
             execute(migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
@@ -1077,6 +1078,13 @@ def update_apache_conf():
 @task
 def update_django_locales():
     do_update_django_locales()
+
+
+@roles(*ROLES_PILLOWTOP)
+def stop_pillows():
+    _require_target()
+    with cd(env.code_root):
+        sudo('scripts/pillowtopctl stop', user=env.sudo_user)
 
 
 @roles(*ROLES_ALL_SRC)
