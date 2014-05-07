@@ -2773,9 +2773,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def enable_multimedia_case_property(self):
         """
-        Multimedia case properties are supported on apps over version 2.5
+        Multimedia case properties are supported by apps version 2.6 or higher
         """
-        return LooseVersion(self.build_spec.version) > '2.5'
+        return LooseVersion(self.build_spec.version) >= '2.6'
 
     @property
     def default_language(self):
