@@ -14,7 +14,7 @@ if [[ $1 = "--deploy" ]]; then
 fi
 
 function rebuildstaging() {
-    python scripts/rebuildstaging.py < $f $@
+    python scripts/rebuildstaging.py < $f "$@"
 }
 
 if [[ $deploy = "y" ]]; then
