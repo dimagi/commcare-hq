@@ -362,25 +362,24 @@ class CaseBlock(object):
             else:
                 update_mapping[key] = value
 
-        if update_mapping:
-            for key, q_path in sorted(update_mapping.items()):
-                update_block.append(make_case_elem(key))
-                nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
-                resolved_path = self.xform.resolve_path(q_path)
-                if make_relative:
-                    resolved_path = relative_path(nodeset, resolved_path)
+        for key, q_path in sorted(update_mapping.items()):
+            update_block.append(make_case_elem(key))
+            nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
+            resolved_path = self.xform.resolve_path(q_path)
+            if make_relative:
+                resolved_path = relative_path(nodeset, resolved_path)
 
-                self.xform.add_bind(
-                    nodeset=nodeset,
-                    calculate=resolved_path,
-                    relevant=("count(%s) > 0" % resolved_path)
-                )
+            self.xform.add_bind(
+                nodeset=nodeset,
+                calculate=resolved_path,
+                relevant=("count(%s) > 0" % resolved_path)
+            )
 
         if attachments:
             attachment_block = make_case_elem('attachment')
             self.elem.append(attachment_block)
             for key, q_path in sorted(attachments.items()):
-                attach_elem = make_case_elem(key, {'src': '', 'from': 'local'}) # TODO verify that attributes should be set here
+                attach_elem = make_case_elem(key, {'src': '', 'from': 'local'})
                 attachment_block.append(attach_elem)
                 nodeset = self.xform.resolve_path(
                     "%scase/attachment/%s" % (self.path, key))

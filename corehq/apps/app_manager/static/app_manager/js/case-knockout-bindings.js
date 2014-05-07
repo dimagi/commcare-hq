@@ -1,7 +1,7 @@
 var utils = {
     getIcon: function(question) {
         if (question.tag === 'upload') {
-            return '<span class="icon-">&#xf0c6;</span> '; // fa-paperclip
+            return '<span class="icon-paper-clip"></span> ';
         }
         return '';
     },
