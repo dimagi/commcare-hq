@@ -851,7 +851,7 @@ class LogstashMonitoringPillow(NetworkPillow):
             return super(NetworkPillow, self).processor(change)
 
 
-class SQLPillow(BasicPillow):
+class SQLPillowMixIn(object):
 
     @db.transaction.commit_on_success
     def change_transport(self, doc_dict, retry=True):
@@ -879,3 +879,6 @@ class SQLPillow(BasicPillow):
 
     def process_sql(self, doc_dict):
         pass
+
+class SQLPillow(SQLPillowMixIn, BasicPillow):
+    pass
