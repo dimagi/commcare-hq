@@ -7,10 +7,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.views.decorators.http import require_http_methods
 
 from corehq.apps.app_manager.views import _clear_app_cache
 from corehq.apps.appstore.forms import AddReviewForm
