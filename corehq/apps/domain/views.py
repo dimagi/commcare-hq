@@ -717,7 +717,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     page_title = ugettext_noop("Billing Statements")
 
     limit_text = ugettext_noop("statements per page")
-    empty_notification = ugettext_noop("You have no Billing Statements yet.")
+    empty_notification = ugettext_noop("No Billing Statements match the current criteria.")
     loading_message = ugettext_noop("Loading statements...")
 
     @property
@@ -735,10 +735,19 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 
     @property
+    def show_unpaid(self):
+        try:
+            return json.loads(self.request.POST.get('additionalData[show_unpaid]'))
+        except TypeError:
+            return False
+
+    @property
     def invoices(self):
         invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
+        if self.show_unpaid:
+            invoices = invoices.filter(date_paid__exact=None)
         return invoices.order_by('-date_start', '-date_end')
 
     @property
