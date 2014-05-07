@@ -720,6 +720,7 @@ class CRUDPaginatedViewMixin(object):
         return {
             'success': True,
             'currentPage': self.page,
+            'total': self.total,
             'paginatedList': list(self.paginated_list),
         }
 
@@ -747,6 +748,7 @@ class CRUDPaginatedViewMixin(object):
         return {
             'success': True,
             'currentPage': self.page,
+            'total': self.total,
             'paginatedList': list(self.paginated_list),
         }
 
