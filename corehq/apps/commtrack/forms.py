@@ -24,8 +24,10 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label='SMS Code', max_length=10)
-    description = forms.CharField(max_length=500, required=False)
+    code = forms.CharField(label="SMS Code", max_length=10)
+    description = forms.CharField(max_length=500, required=False,
+        widget=forms.Textarea)
+    unit = forms.CharField(label="Default Unit", max_length=100, required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
@@ -73,7 +75,7 @@ class ProductForm(forms.Form):
 
         product = instance or self.product
 
-        for field in ('name', 'code', 'program_id', 'description', 'cost'):
+        for field in ('name', 'code', 'program_id', 'unit', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
 
         if commit:
