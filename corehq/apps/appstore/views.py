@@ -10,8 +10,8 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views import _clear_app_cache
 
+from corehq.apps.app_manager.views import _clear_app_cache
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
@@ -48,8 +48,6 @@ DEPLOYMENT_MAPPING = [
 ]
 
 
-
-
 def rewrite_url(request, path):
     return HttpResponseRedirect('/exchange%s?%s' % (path, request.META['QUERY_STRING']))
 
@@ -63,7 +61,8 @@ def can_view_app(req, dom):
         return False
     return True
 
-def project_info(request, domain, template="appstore/project_info.html"):
+
+def project_info(request, domain, template="appstore/project_info.html", error_message=""):
     dom = Domain.get(domain)
     if not can_view_app(request, dom):
         raise Http404()
@@ -120,8 +119,11 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "images": images,
         "audio": audio,
         "url_base": reverse('appstore'),
+        "error_message": error_message,
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
-    })
+        }
+    )
+
 
 def deduplicate(hits):
     unique_names = set()
@@ -260,46 +262,45 @@ def import_app(request, domain):
     else:
         return HttpResponseRedirect(reverse('project_info', args=[domain]))
 
+
 @login_required
 def copy_snapshot(request, domain):
-    user = request.couch_user
-    if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, domain)
+    """Accept a POST request and copy the project to POST['new_project_name']."""
 
-    dom = Domain.get(domain)
-    if request.method == "POST" and dom.is_snapshot:
+    user = request.couch_user
+
+    if request.method == "POST":
         from corehq.apps.registration.forms import DomainRegistrationForm
-        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
+        args = {'domain_name': request.POST['new_project_name']}
         form = DomainRegistrationForm(args)
 
-        if request.POST.get('new_project_name', ""):
-            if not dom.published:
-                messages.error(request, "This project is not published and can't be downloaded")
-                return project_info(request, domain)
-
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
-                messages.error(request, form.errors)
-                return project_info(request, domain)
-
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
+        if form.is_valid():
+            dom = Domain.get(domain)
+            new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
 
             def inc_downloads(d):
                 d.downloads += 1
 
             apply_update(dom, inc_downloads)
-            messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
-            return HttpResponseRedirect(reverse('view_app',
-                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
+            messages.success(request,
+                             render_to_string("appstore/partials/view_wiki.html",
+                                              {"pre": _("Project copied successfully!")}),
+                             extra_tags="html"
+                             )
+
+            return HttpResponseRedirect(
+                reverse('view_app', args=[new_domain.name,
+                        new_domain.full_applications()[0].get_id]))
+
         else:
-            messages.error(request, _("You must specify a name for the new project"))
-            return project_info(request, domain)
+            messages.error(request, _("There was an error processing your request.  Please see below."))
+            return project_info(
+                request, domain,
+                error_message=form.errors['domain_name'])
+
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[domain]))
+        return project_info(request, domain)
+
 
 def project_image(request, domain):
     project = Domain.get(domain)
