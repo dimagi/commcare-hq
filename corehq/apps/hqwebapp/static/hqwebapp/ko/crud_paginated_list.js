@@ -211,7 +211,7 @@ var CRUDPaginatedListModel = function (
             dataType: 'json',
             data: {
                 action: 'refresh',
-                itemId: paginatedItem.itemId,
+                itemId: (!!paginatedItem) ? paginatedItem.itemId : null,
                 page: self.currentPage(),
                 limit: self.pageLimit(),
                 sortBy: self.sortBy,
