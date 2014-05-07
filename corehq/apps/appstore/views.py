@@ -269,10 +269,9 @@ def import_app(request, domain):
 def copy_snapshot(request, domain):
     """Accept a POST request and copy the project to POST['new_project_name'].
 
-    Three initial validations on the request:
+    Two initial validations on the request:
     1. User must have signed the EULA
-    2. The Domain (project) must be a snapshot
-    3. The Domain must be published
+    2. The Domain must be published
 
     """
 

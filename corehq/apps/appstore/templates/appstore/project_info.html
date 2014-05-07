@@ -62,9 +62,9 @@
                 $('#agree-button').attr('data-form', new_form);
             });
             $('#agree-button').click(function() {
+                $(this).addClass('disabled');
                 var form = $("#" + $(this).attr('data-form'));
                 form.submit();
-                $(this).addClass('disabled');
             });
 
             // show downloads info div
