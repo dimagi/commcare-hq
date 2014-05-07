@@ -1,10 +1,11 @@
+{% load i18n %}
 <div data-bind="saveButton: saveButton, visible: editing"></div>
 <table class="table">
     <thead>
         <tr class="row control-group" data-bind="css: {error: validateGeneral()}">
             <th></th>
             <th></th>
-            <th>{% if not always_deploy %}Deploy{% endif %}</th>
+            <th>{% if not always_deploy %}{% trans "Deploy" %}{% endif %}</th>
             <th></th>
             <th></th>
             <th></th>
