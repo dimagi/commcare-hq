@@ -211,7 +211,8 @@ var CRUDPaginatedListModel = function (
                 itemId: paginatedItem.itemId,
                 page: self.currentPage(),
                 limit: self.pageLimit(),
-                sortBy: self.sortBy
+                sortBy: self.sortBy,
+                additionalData: self.getAdditionalData()
             },
             statusCode: self.handleStatusCode,
             success: function (data) {
