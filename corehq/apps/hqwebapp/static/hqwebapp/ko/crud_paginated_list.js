@@ -90,6 +90,9 @@ var CRUDPaginatedListModel = function (
 
                 }
                 self.currentPage(data.currentPage);
+                if (data.total !== null) {
+                    self.total(data.total);
+                }
                 self.paginatedList(_.map(
                     data.paginatedList,
                     function (listItem) {
