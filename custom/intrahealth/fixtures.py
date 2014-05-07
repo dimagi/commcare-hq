@@ -67,18 +67,15 @@ def payment_fixture(user, version, last_sync):
         payment_list = ElementTree.Element('payment_list')
         root.append(payment_list)
         for year, month in _recent_months(6):
-            payment_el = ElementTree.Element('period')
-            payment_el.append(_month_id_el(year, month))
-
             # todo: need to figure out how the structure should look for cases within a period
             # semi-working code below
             for payment in PaymentTracking.objects.filter(year=year, month=month):  # todo: should filter by user info somehow tbd
-                case_el = ElementTree.Element('payment')
-                payment_el.append(case_el)
+                payment_el = ElementTree.Element('payment')
+                payment_el.append(_month_id_el(year, month))
                 for field in ('case_id', 'calculated_amount_owed', 'actual_amount_owed', 'amount_paid'):
                     field_el = ElementTree.Element(field)
                     field_el.text = getattr(payment, field) or '0'
-                    case_el.append(field_el)
+                    payment_el.append(field_el)
 
         return [root]
 
