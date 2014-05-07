@@ -1,0 +1,1169 @@
+{
+   "_id": "4cc39415-ae40-4709-9008-441eefb5e64f",
+   "_rev": "2-a864a3c3782f82c921fd5f77ca287d53",
+   "domain": "testing-ipm-senegal",
+   "form": {
+       "@xmlns": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
+       "@uiVersion": "1",
+       "date_today": "2014-04-23",
+       "new_date": "2017-08-21",
+       "location_id": "179b2cf14c2e0f8000fbbbed31560be8",
+       "disp_total_amt_owed": "",
+       "#type": "data",
+       "total_amt_owed": "6042",
+       "case": {
+           "@xmlns": "http://commcarehq.org/case/transaction/v2",
+           "@date_modified": "2014-04-23T16:12:56Z",
+           "@user_id": "2d9da5e6009c8933255db3b1e1652f03",
+           "@case_id": "36f7ab065b274aae95e4da60aa1f6fd2"
+       },
+       "meta": {
+           "@xmlns": "http://openrosa.org/jr/xforms",
+           "username": "mike",
+           "instanceID": "4cc39415-ae40-4709-9008-441eefb5e64f",
+           "userID": "2d9da5e6009c8933255db3b1e1652f03",
+           "timeEnd": "2014-04-23T16:12:56Z",
+           "appVersion": {
+               "@xmlns": "http://commcarehq.org/xforms",
+               "#text": "CommCare ODK, version \"2.12\"(106). App v66. CommCare Version 2.12. Build CUSTOM_BUILD, built on: UNKNOWN_DATE"
+           },
+           "timeStart": "2014-04-23T16:11:24Z",
+           "deviceID": "358239050965088"
+       },
+       "products": [
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "912",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "6",
+               "amt_delivered_convenience": "6",
+               "disp_old_stock_pps": "",
+               "default_consumption": "2",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "6",
+               "billed_consumption": "6",
+               "product_name": "Collier",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df07f47",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "6",
+               "pps_stock": "-6",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "6",
+               "@index": "1",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "152",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df07f47",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df07f47",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "6"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "6",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "a808a4a137cd7cc6612112b18df07f47",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "456",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "3",
+               "amt_delivered_convenience": "3",
+               "disp_old_stock_pps": "",
+               "default_consumption": "1",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "3",
+               "billed_consumption": "3",
+               "product_name": "Dépo-Provera",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df073da",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "3",
+               "pps_stock": "-3",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "3",
+               "@index": "2",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "152",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df073da",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df073da",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "3"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "3",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "a808a4a137cd7cc6612112b18df073da",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "2280",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "6",
+               "amt_delivered_convenience": "6",
+               "disp_old_stock_pps": "",
+               "default_consumption": "2",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "6",
+               "billed_consumption": "6",
+               "product_name": "DIU",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df06b0b",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "6",
+               "pps_stock": "-6",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "6",
+               "@index": "3",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "380",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df06b0b",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df06b0b",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "6"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "6",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "a808a4a137cd7cc6612112b18df06b0b",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "1140",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "3",
+               "amt_delivered_convenience": "3",
+               "disp_old_stock_pps": "",
+               "default_consumption": "1",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "3",
+               "billed_consumption": "3",
+               "product_name": "Jadelle",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c9d",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "3",
+               "pps_stock": "-3",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "3",
+               "@index": "4",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "380",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c9d",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c9d",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "3"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "3",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "a808a4a137cd7cc6612112b18df05c9d",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "456",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "6",
+               "amt_delivered_convenience": "6",
+               "disp_old_stock_pps": "",
+               "default_consumption": "2",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "6",
+               "billed_consumption": "6",
+               "product_name": "Microgynon/Lof.",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "2d9da5e6009c8933255db3b1e13ce2b0",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "6",
+               "pps_stock": "-6",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "6",
+               "@index": "5",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "76",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "2d9da5e6009c8933255db3b1e13ce2b0",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "2d9da5e6009c8933255db3b1e13ce2b0",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "6"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "6",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "2d9da5e6009c8933255db3b1e13ce2b0",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "456",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "6",
+               "amt_delivered_convenience": "6",
+               "disp_old_stock_pps": "",
+               "default_consumption": "2",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "6",
+               "billed_consumption": "6",
+               "product_name": "Microlut/Ovrette",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b470f28f",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "6",
+               "pps_stock": "-6",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "6",
+               "@index": "6",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "76",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b470f28f",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b470f28f",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "6"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "6",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "8225e9c7f9a35064b3321778b470f28f",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "342",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "6",
+               "amt_delivered_convenience": "6",
+               "disp_old_stock_pps": "",
+               "default_consumption": "2",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "6",
+               "billed_consumption": "6",
+               "product_name": "Norlevo",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b4910147",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "6",
+               "pps_stock": "-6",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "6",
+               "@index": "7",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "57",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b4910147",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b4910147",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "6"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "6",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "8225e9c7f9a35064b3321778b4910147",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "0",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "3",
+               "amt_delivered_convenience": "3",
+               "disp_old_stock_pps": "",
+               "default_consumption": "1",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "3",
+               "billed_consumption": "3",
+               "product_name": "Préservatif Féminin",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b490fe88",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "3",
+               "pps_stock": "-3",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "3",
+               "@index": "8",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "0",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b490fe88",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "8225e9c7f9a35064b3321778b490fe88",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "3"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "3",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "8225e9c7f9a35064b3321778b490fe88",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           },
+           {
+               "outside_receipts_amt": "0",
+               "lot_number_2": "",
+               "lot_number_3": "",
+               "loss_amt": "0",
+               "lot_number_1": "",
+               "amount_owed": "0",
+               "disp_old_stock_total": "",
+               "disp_ideal_stock": "",
+               "actual_consumption": "3",
+               "amt_delivered_convenience": "3",
+               "disp_old_stock_pps": "",
+               "default_consumption": "1",
+               "review": {
+                   "disp_pps_stock_new": "",
+                   "disp_dispensed": "",
+                   "disp_ideal_stock_2": "",
+                   "disp_total_stock_new": "",
+                   "disp_amount_owed": "",
+                   "disp_total_stock_old": "",
+                   "disp_price_per_unit": "",
+                   "disp_billable_consumption": "",
+                   "disp_ideal_stock": "",
+                   "disp_losses": "",
+                   "disp_pps_stock_old": "",
+                   "disp_actual_consumption": "",
+                   "disp_outside_receipts": ""
+               },
+               "ideal_stock": "3",
+               "billed_consumption": "3",
+               "product_name": "Préservatif Masculin",
+               "old_stock_pps": "0",
+               "region_name": "Diourbel",
+               "outside_receipts": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c88",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       },
+                       "@type": "other",
+                       "@date": "2014-04-23"
+                   }
+               },
+               "display_total_stock": "3",
+               "pps_stock": "-3",
+               "PPS_name": "Clinic B",
+               "dispensed_ideal": "y",
+               "ideal_topup": "3",
+               "@index": "9",
+               "lot_exp_2": "2014-04-23",
+               "price_per_unit": "0",
+               "losses": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@date": "2014-04-23",
+                       "@type": "loss",
+                       "@src": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c88",
+                           "value": [
+                               {
+                                   "@section-id": "stock",
+                                   "@quantity": "0"
+                               },
+                               {
+                                   "@section-id": "stock-pps",
+                                   "@quantity": "0"
+                               }
+                           ]
+                       }
+                   }
+               },
+               "top_up": {
+                   "transfer": {
+                       "@xmlns": "http://commcarehq.org/ledger/v1",
+                       "@dest": "36f7ab065b274aae95e4da60aa1f6fd2",
+                       "entry": {
+                           "@id": "a808a4a137cd7cc6612112b18df05c88",
+                           "value": {
+                               "@section-id": "stock",
+                               "@quantity": "3"
+                           }
+                       },
+                       "@date": "2014-04-23"
+                   }
+               },
+               "old_stock_total": "3",
+               "lot_exp_1": "2014-04-23",
+               "district_name": "Mbacke",
+               "lot_exp_3": "2014-04-23",
+               "balance": {
+                   "@xmlns": "http://commcarehq.org/ledger/v1",
+                   "@date": "2014-04-23",
+                   "entry": {
+                       "@id": "a808a4a137cd7cc6612112b18df05c88",
+                       "value": [
+                           {
+                               "@section-id": "stock",
+                               "@quantity": "0"
+                           },
+                           {
+                               "@section-id": "stock-pps",
+                               "@quantity": "0"
+                           }
+                       ]
+                   },
+                   "@entity-id": "36f7ab065b274aae95e4da60aa1f6fd2"
+               },
+               "total_stock": "0"
+           }
+       ],
+       "real_date": "2017-08-21",
+       "product_ix_1": "9",
+       "@name": "Bon de commande-livraison Real",
+       "num_products": "9",
+       "@version": "66",
+       "date_question": "n"
+   },
+   "initial_processing_complete": true,
+   "computed_modified_on_": null,
+   "app_id": "6966ad1f911b99868175c9deb6d47850",
+   "auth_context": {
+       "authenticated": true,
+       "domain": "testing-ipm-senegal",
+       "user_id": "2d9da5e6009c8933255db3b1e1652f03",
+       "doc_type": "AuthContext"
+   },
+   "date_header": null,
+   "path": "/a/testing-ipm-senegal/receiver/secure/6966ad1f911b99868175c9deb6d47850/",
+   "last_sync_token": "c4163074bf4dd5f1600688f255ddd6ff",
+   "build_id": null,
+   "doc_type": "XFormInstance",
+   "xmlns": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
+   "partial_submission": false,
+   "#export_tag": [
+       "domain",
+       "xmlns"
+   ],
+   "received_on": "2014-04-23T20:13:05Z",
+   "submit_ip": "198.228.195.230",
+   "computed_": {
+   },
+   "openrosa_headers": {
+       "HTTP_X_OPENROSA_VERSION": "1.0"
+   },
+   "history": [
+   ],
+   "_attachments": {
+       "form.xml": {
+           "content_type": "text/xml",
+           "revpos": 1,
+           "digest": "md5-dksWJk/ydAxr7Hg9nJAzSw==",
+           "length": 23393,
+           "stub": true
+       }
+   }
+}
