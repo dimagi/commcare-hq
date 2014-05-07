@@ -1,8 +1,8 @@
 from casexml.apps.case.signals import cases_received
 from django.core.exceptions import ObjectDoesNotExist
 from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, TEST_DOMAIN, IMMUNIZATION_FORMS, \
-    BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, LAB_RESULTS_FORMS
-from custom.m4change.fixtures import get_last_month
+    BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS
+from custom.m4change.fixtures.report_fixtures import get_last_month
 from custom.m4change.models import FixtureReportResult, McctStatus
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 from custom.m4change.utils import get_user_by_id

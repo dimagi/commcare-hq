@@ -3,7 +3,7 @@ from celery.task import periodic_task
 
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DOMAINS
-from custom.m4change.fixtures import get_last_n_months
+from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 import settings
