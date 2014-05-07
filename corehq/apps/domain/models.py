@@ -786,12 +786,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if self.is_snapshot:
             return self
         else:
-            ignore = ignore if ignore is not None else []
             copy = self.save_copy(ignore=ignore)
             if copy is None:
                 return None
             copy.is_snapshot = True
-            copy.organization = self.organization # i don't think we want this?
             copy.snapshot_time = datetime.now()
             del copy.deployment
             copy.save()
