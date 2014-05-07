@@ -205,7 +205,7 @@ class ItextValue(unicode):
 
     @classmethod
     def from_node(cls, node):
-        parts = [node.text]
+        parts = [node.text or '']
         for sub in node.findall('*'):
             if sub.tag_name == 'output':
                 ref = sub.attrib.get('ref') or sub.attrib.get('value')
@@ -216,7 +216,7 @@ class ItextValue(unicode):
 
     @classmethod
     def _render(cls, parts, context=None, processor=None, escape=None):
-        escape = escape or (lambda x: x if x is not None else '')
+        escape = escape or (lambda x: x)
         processor = processor or (lambda x: x if x is not None else '____')
         context = context or {}
         return ''.join(

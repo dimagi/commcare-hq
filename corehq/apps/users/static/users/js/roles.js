@@ -28,6 +28,7 @@ $(function () {
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
+                self.hasUsersAssigned = data.hasUsersAssigned;
                 return self;
             },
             unwrap: function (self) {
@@ -59,6 +60,7 @@ $(function () {
             return UserRole.wrap(userRole);
         }));
         self.roleBeingEdited = ko.observable();
+        self.roleBeingDeleted = ko.observable();
         self.defaultRole = UserRole.wrap(o.defaultRole);
 
         self.addOrReplaceRole = function (role) {
@@ -73,6 +75,16 @@ $(function () {
             self.userRoles.push(newRole);
         };
 
+        self.removeRole = function (role) {
+            var i;
+            for (i = 0; i < self.userRoles().length; i++) {
+                if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === role._id) {
+                    self.userRoles.splice(i, 1);
+                    return;
+                }
+            }
+        };
+
         self.setRoleBeingEdited = function (role) {
             var title = role === self.defaultRole ? "New Role" : "Edit Role: " + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
@@ -82,6 +94,20 @@ $(function () {
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
+        };
+        self.setRoleBeingDeleted = function (role) {
+            if(!role._id || !role.hasUsersAssigned) {
+                var title = "Delete Role: " + role.name();
+                var modalConfirmation = "Are you sure you want to delete a role: '" + role.name() + "' ?";
+                var roleCopy = UserRole.wrap(UserRole.unwrap(role));
+                roleCopy.modalTitle = title;
+                roleCopy.modalConfirmation = modalConfirmation;
+                self.roleBeingDeleted(roleCopy);
+                self.modalDeleteButton.state('save');
+            }
+        };
+        self.unsetRoleBeingDeleted = function () {
+            self.roleBeingDeleted(undefined);
         };
         self.modalSaveButton = {
             state: ko.observable(),
@@ -98,7 +124,21 @@ $(function () {
                 };
             }
         }
-
+        self.modalDeleteButton = {
+            state: ko.observable(),
+            saveOptions: function () {
+                return {
+                    url: o.deleteUrl,
+                    type: 'post',
+                    data: JSON.stringify(UserRole.unwrap(self.roleBeingDeleted)),
+                    dataType: 'json',
+                    success: function (data) {
+                        self.removeRole(data);
+                        self.unsetRoleBeingDeleted();
+                    }
+                };
+            }
+        }
     }
     $.fn.userRoles = function (o) {
         this.each(function () {

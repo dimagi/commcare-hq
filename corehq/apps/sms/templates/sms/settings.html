@@ -68,6 +68,7 @@
         self.use_custom_chat_template = ko.observable(initial_values.use_custom_chat_template);
         self.custom_chat_template = ko.observable(initial_values.custom_chat_template);
         self.count_messages_as_read_by_anyone = ko.observable(initial_values.count_messages_as_read_by_anyone);
+        self.send_to_duplicated_case_numbers = ko.observable(initial_values.send_to_duplicated_case_numbers);
         
         self.add_restricted_sms_time = function() {
             self.restricted_sms_times.push(new DayTimeWindow(-1, null, null));
@@ -113,6 +114,7 @@
             "filter_surveys_from_chat" : {{ form.filter_surveys_from_chat.value|JSON }},
             "show_invalid_survey_responses_in_chat" : {{ form.show_invalid_survey_responses_in_chat.value|JSON }},
             "count_messages_as_read_by_anyone" : {{ form.count_messages_as_read_by_anyone.value|JSON }},
+            "send_to_duplicated_case_numbers" : {{ form.send_to_duplicated_case_numbers.value|JSON }},
         });
         ko.applyBindings(svm);
     });
@@ -184,6 +186,13 @@
                     </td>
                     <td></td>
                     <td></td>
+                </tr>
+                {% endif %}
+                {% if is_previewer %}
+                <tr>
+                    <td>{% trans "Send to duplicated case phone numbers" %}</td>
+                    <td><input type="checkbox" name="send_to_duplicated_case_numbers" data-bind="checked: send_to_duplicated_case_numbers" /></td>
+                    <td>{{ form.send_to_duplicated_case_numbers.errors }}</td>
                 </tr>
                 {% endif %}
             </tbody>

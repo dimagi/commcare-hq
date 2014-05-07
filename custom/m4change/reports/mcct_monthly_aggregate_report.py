@@ -5,7 +5,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id, get_CCT_user_ids
+from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import McctMonthlyAggregateFormSqlData
 
@@ -73,9 +73,8 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
 
         domain = config["domain"]
         location_id = config["location_id"]
-        user_ids = get_CCT_user_ids(domain)
-        sql_data = McctMonthlyAggregateFormSqlData(domain=domain, datespan=config["datespan"], user_ids=user_ids).data
-        locations = get_location_hierarchy_by_id(location_id, domain)
+        sql_data = McctMonthlyAggregateFormSqlData(domain=domain, datespan=config["datespan"]).data
+        locations = get_location_hierarchy_by_id(location_id, domain, CCT_only=True)
         row_data = McctMonthlyAggregateReport.get_initial_row_data()
 
         for location_id in locations:

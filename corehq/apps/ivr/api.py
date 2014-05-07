@@ -66,14 +66,6 @@ def get_input_length(question):
     else:
         return None
 
-# Returns True if the form has at least one question that requires input
-def form_requires_input(form):
-    for question in form.get_questions([]):
-        if question["tag"] not in ("trigger", "label", "hidden"):
-            return True
-    
-    return False
-
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
     # Look up the call if one already exists
     call_log_entry = CallLog.view("sms/call_by_session",

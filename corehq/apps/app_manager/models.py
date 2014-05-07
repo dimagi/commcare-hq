@@ -1466,7 +1466,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             except ValueError:
                 errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
 
-            if action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
+            if isinstance(action, LoadUpdateAction) and \
+                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
                 case_tag = action.auto_select.value_source
                 if not self.actions.get_action_from_tag(case_tag):
                     errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})

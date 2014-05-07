@@ -89,8 +89,3 @@ READABLE_FORM_DATA = StaticToggle(
     'Readable Form Data Page',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
-
-SAVED_EXCEL_DASHBOARDS = StaticToggle(
-    'excel-dashboards',
-    'Enable saved excel dashboards'
-)
