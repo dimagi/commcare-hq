@@ -345,7 +345,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
-
     @property
     def domain_type(self):
         """
@@ -623,7 +622,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if result:
             return result
         else:
-            new_domain = Domain(name=name, is_active=is_active, date_created=datetime.utcnow())
+            new_domain = Domain(
+                name=name,
+                is_active=is_active,
+                date_created=datetime.utcnow(),
+                secure_submissions=True,
+            )
             new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
