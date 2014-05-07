@@ -82,29 +82,19 @@
     <script type="text/html" id="statement-row-template">
         <td class="span2" data-bind="text: invoice_number"></td>
         <td class="span2" data-bind="text: plan.name"></td>
-        <td class="span2" data-bind="text: start"></td>
-        <td class="span2" data-bind="text: end"></td>
+        <td class="span3">
+            <span data-bind="text: start"></span> - <span data-bind="text: end"></span>
+        </td>
+        <td class="span1" data-bind="text: date_due"></td>
         <td class="span2">
+            <span data-bind="text: payment_status, attr: {class: payment_class}"></span>
             <!-- ko if: canMakePayment -->
-            <p class="alert alert-info"
-               style="margin-bottom: 2px;"
-               data-bind="text: payment_status"></p>
             <button type="button"
                     class="btn btn-success payment-button"
                     data-toggle="modal"
                     data-target="#paymentModal">
                 {% trans 'Make Payment' %}
             </button>
-            <div class="hide" class="payment-due-data">
-                <div class="control-group">
-                    <label class="control-label">
-                        {% trans 'Payment Amount' %}
-                    </label>
-                </div>
-            </div>
-            <!-- /ko -->
-            <!-- ko ifnot: canMakePayment -->
-            <p data-bind="text: payment_status"></p>
             <!-- /ko -->
         </td>
         <td class="span2">

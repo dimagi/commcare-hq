@@ -764,8 +764,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return [
             _("Statement No."),
             _("Plan"),
-            _("Start Date"),
-            _("End Date"),
+            _("Billing Period"),
+            _("Date Due"),
             _("Payment Status"),
             _("PDF"),
         ]
@@ -800,13 +800,12 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 if invoice.date_paid is not None:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime("%d %B %Y"))
+                    payment_class = "label label-inverse"
                 else:
-                    payment_status = (
-                        _("%(balance)s due %(date_due)s.") % {
-                            'balance': fmt_dollar_amount(invoice.balance),
-                            'date_due': invoice.date_due.strftime("%d %B %Y"),
-                        }
-                    )
+                    payment_status = _("Not Paid")
+                    payment_class = "label label-important"
+                date_due = (invoice.date_due.strftime("%d %B %Y")
+                            if invoice.date_paid is None else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -815,6 +814,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                         'end': invoice.date_end.strftime("%d %B %Y"),
                         'plan': invoice.subscription.plan_version.user_facing_description,
                         'payment_status': payment_status,
+                        'payment_class': payment_class,
+                        'date_due': date_due,
                         'pdfUrl': reverse(
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
