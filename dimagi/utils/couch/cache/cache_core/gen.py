@@ -148,6 +148,8 @@ class GenerationCache(object):
             else:
                 # cache miss, get view, cache it and all docs
                 view_obj = db.view(view_name, **params)
+                # todo: we should try and decouple this from the "protected" methods of
+                # couchdbkit's ViewResults
                 view_obj._fetch_if_needed()
                 view_results = view_obj._result_cache
                 row_stubs = []
@@ -162,8 +164,8 @@ class GenerationCache(object):
                     row_stubs.append(stub)
 
                 cached_results = {
-                    "total_rows": view_results['total_rows'],
-                    "offset": view_results['offset'],
+                    "total_rows": view_obj._total_rows,
+                    "offset": view_obj._offset,
                     "row_stubs": row_stubs
                 }
 
