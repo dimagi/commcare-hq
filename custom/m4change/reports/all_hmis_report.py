@@ -78,6 +78,21 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
     @classmethod
     def get_initial_row_data(cls):
         all_hmis_report_data = {
+            "newborns_low_birth_weight_discharged_total": {
+                "hmis_code": 46,
+                "label": _("Newborns with low birth weight discharged - Total"),
+                "value": 0
+            },
+            "newborns_low_birth_weight_discharged_male_total": {
+                "hmis_code": 46.1,
+                "label": _("Newborns with low birth weight discharged - Male"),
+                "value": 0
+            },
+            "newborns_low_birth_weight_discharged_female_total": {
+                "hmis_code": 46.2,
+                "label": _("Newborns with low birth weight discharged - Female"),
+                "value": 0
+            },
             "pregnant_mothers_referred_out_total": {
                 "hmis_code": 105,
                 "label": _("Pregnant Mothers Referred out"),
