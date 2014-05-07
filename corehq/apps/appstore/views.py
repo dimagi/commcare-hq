@@ -7,11 +7,12 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views import _clear_app_cache
+from django.views.decorators.http import require_http_methods
 
+from corehq.apps.app_manager.views import _clear_app_cache
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
@@ -48,8 +49,6 @@ DEPLOYMENT_MAPPING = [
 ]
 
 
-
-
 def rewrite_url(request, path):
     return HttpResponseRedirect('/exchange%s?%s' % (path, request.META['QUERY_STRING']))
 
@@ -63,7 +62,8 @@ def can_view_app(req, dom):
         return False
     return True
 
-def project_info(request, domain, template="appstore/project_info.html"):
+
+def project_info(request, domain, template="appstore/project_info.html", error_message=""):
     dom = Domain.get(domain)
     if not can_view_app(request, dom):
         raise Http404()
@@ -109,19 +109,24 @@ def project_info(request, domain, template="appstore/project_info.html"):
     images = set()
     audio = set()
 
-    return render(request, template, {
-        "project": dom,
-        "applications": dom.full_applications(include_builds=False),
-        "form": form,
-        "copies": copies,
-        "reviews": reviews,
-        "average_rating": average_rating,
-        "num_ratings": num_ratings,
-        "images": images,
-        "audio": audio,
-        "url_base": reverse('appstore'),
-        'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
-    })
+    return render(
+        request,
+        template,
+        {"project": dom,
+         "applications": dom.full_applications(include_builds=False),
+         "form": form,
+         "copies": copies,
+         "reviews": reviews,
+         "average_rating": average_rating,
+         "num_ratings": num_ratings,
+         "images": images,
+         "audio": audio,
+         "url_base": reverse('appstore'),
+         "error_message": error_message,
+         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
+         }
+    )
+
 
 def deduplicate(hits):
     unique_names = set()
@@ -260,46 +265,67 @@ def import_app(request, domain):
     else:
         return HttpResponseRedirect(reverse('project_info', args=[domain]))
 
+
 @login_required
 def copy_snapshot(request, domain):
+    """Accept a POST request and copy the project to POST['new_project_name'].
+
+    Three initial validations on the request:
+    1. User must have signed the EULA
+    2. The Domain (project) must be a snapshot
+    3. The Domain must be published
+
+    """
+
     user = request.couch_user
+    ERROR_MESSAGES = {
+        'NO_EULA': "You must agree to our End User License Agreement to download an app.",
+        'NOT_PUBLISHED': "This project is not published, so can't be downloaded.",
+        'INVALID_FORM': "There was an error processing your request.  Please see below."
+    }
+    valid_request = True
+
     if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, domain)
+        valid_request = False
+        messages.error(request, ERROR_MESSAGES['NO_EULA'])
 
     dom = Domain.get(domain)
-    if request.method == "POST" and dom.is_snapshot:
+    if not dom.published:
+        valid_request = False
+        messages.error(request, ERROR_MESSAGES['NOT_PUBLISHED'])
+
+    if not valid_request:
+        return project_info(request, domain)
+
+    if request.method == "POST":
         from corehq.apps.registration.forms import DomainRegistrationForm
-        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
+        args = {'domain_name': request.POST['new_project_name']}
         form = DomainRegistrationForm(args)
 
-        if request.POST.get('new_project_name', ""):
-            if not dom.published:
-                messages.error(request, "This project is not published and can't be downloaded")
-                return project_info(request, domain)
-
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
-                messages.error(request, form.errors)
-                return project_info(request, domain)
-
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
+        if form.is_valid():
+            new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
 
             def inc_downloads(d):
                 d.downloads += 1
 
             apply_update(dom, inc_downloads)
-            messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
-            return HttpResponseRedirect(reverse('view_app',
-                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
+            messages.success(request,
+                             render_to_string("appstore/partials/view_wiki.html",
+                                              {"pre": _("Project copied successfully!")}),
+                             extra_tags="html"
+                             )
+
+            return HttpResponseRedirect(
+                reverse('view_app', args=[new_domain.name,
+                        new_domain.full_applications()[0].get_id]))
+
         else:
-            messages.error(request, _("You must specify a name for the new project"))
-            return project_info(request, domain)
+            messages.error(request, ERROR_MESSAGES['INVALID_FORM'])
+            return project_info(request, domain, error_message=form.errors['domain_name'])
+
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[domain]))
+        return project_info(request, domain)
+
 
 def project_image(request, domain):
     project = Domain.get(domain)

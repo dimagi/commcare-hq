@@ -128,13 +128,16 @@ class OrganizationRegistrationForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
+
 class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
-                                  help_text=_("Project name cannot contain spaces."))
+                                  help_text=_("Project name cannot contain spaces."),
+                                  error_messages={
+                                      'required': _("You must specify a name for the new project")})
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
     domain_timezone = TimeZoneChoiceField(
@@ -146,11 +149,14 @@ class DomainRegistrationForm(forms.Form):
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+            raise forms.ValidationError(
+                """Only lowercase letters and numbers allowed. \
+                Single hyphens may be used to separate words."""
+            )
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:
-            raise forms.ValidationError('Project name already taken---please try another')
+            raise forms.ValidationError('Project name already taken -- please try another.')
         return data
 
     def clean_domain_type(self):
@@ -171,7 +177,7 @@ class DomainRegistrationForm(forms.Form):
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
 #
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized 
+# I'll put this in each app, so they can be standalone, but it should really go in some centralized
 # part of the distro
 
 class _BaseForm(object):
