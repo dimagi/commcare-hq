@@ -353,6 +353,29 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_form_location_id)
+    newborns_low_birth_weight_discharged = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_male = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "male")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_female = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "female")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
     pregnant_mothers_referred_out = all_hmis_report_calcs.FormComparisonCalculator(
         [("client_status", operator.eq, "referred_out")], ALL_HMIS_CASE_FLUFF_FORMS
     )

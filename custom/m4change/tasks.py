@@ -3,7 +3,7 @@ from celery.task import periodic_task
 
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DOMAINS
-from custom.m4change.fixtures import get_last_n_months
+from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 import settings
@@ -36,6 +36,6 @@ def generate_fixtures_for_domain(domain, db, data_source):
             report_data = data_source.get_data()
 
             for report_slug in report_data:
-                rows = report_data[report_slug].get("data", [])
+                rows = dict(report_data[report_slug].get("data", []))
                 name = report_data[report_slug].get("name")
                 FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(), report_slug, rows, name)
