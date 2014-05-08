@@ -23,44 +23,7 @@
                         <div id="import-export" class="accordion-body collapse">
                             <div class="accordion-inner">
                                 <section>
-                                    <h2>{% trans "Bulk Download/Upload UI Translations" %}</h2>
-                                    <p>
-                                        <ol>
-                                            <li>
-                                                {% trans "Download your translations" %}:
-                                                <a href="{% url "download_translations" domain app.get_id %}">translations.xls</a>
-                                            </li>
-                                            <li>
-                                                {% trans "Update it with new information." %}
-                                            </li>
-                                            <li>
-                                                {% trans "Use the form below to upload your completed file." %}
-                                            </li>
-                                        </ol>
-                                    </p>
-                                    <p class="alert alert-info">
-                                        {% trans "Your app's translations will be completely replaced with the translations found in this file." %}
-                                    </p>
-                                    <form id="translations-upload-form" class="form form-horizontal" action="{% url "upload_translations" domain app.get_id %}" method="post" enctype="multipart/form-data">
-                                        <legend>{% trans "Choose a file for upload" %}</legend>
-                                        <div class="form-actions" style="padding-left: 1em;">
-                                            <fieldset>
-                                                <div class="control-group">
-                                                    <label for="bulk_upload_file" class="control-label">{% trans "Translation File" %}</label>
-                                                    <div class="controls">
-                                                        <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                                                    </div>
-                                                </div>
-                                                <div class="control-group">
-                                                    <div class="controls">
-                                                        <button type="submit" class="btn btn-primary" data-bind="visible: file()">
-                                                            {% trans "Update Translations" %}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </fieldset>
-                                        </div>
-                                    </form>
+                                    {% include "hqwebapp/partials/bulk_upload.html" %}
                                 </section>
                             </div>
                         </div>
