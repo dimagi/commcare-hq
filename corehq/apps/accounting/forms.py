@@ -1129,6 +1129,8 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError("A slug is required for this new role.")
         if val:
             validate_slug(val)
+        if Role.objects.filter(slug=val).count() != 0:
+            raise ValidationError("Enter a unique role slug.")
         return val
 
     def clean_new_role_name(self):
