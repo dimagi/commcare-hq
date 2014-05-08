@@ -200,7 +200,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'bulk_upload': {
                 "download_url": static(
                     'data_interfaces/files/cases_bulk_example.xlsx'),
-                "name": _("case"),
+                "adjective": _("case"),
                 "plural_noun": _("cases"),
             },
             'bulk_upload_id': self.bulk_upload_id,

@@ -7,7 +7,7 @@
     <ol>
         <li>
             <p>
-                {% blocktrans with name=bulk_upload.name %}Download your current {{ name }} Excel file.{% endblocktrans %}
+                {% blocktrans with adjective=bulk_upload.adjective %}Download your current {{ adjective }} Excel file.{% endblocktrans %}
             </p>
             <p>
                 <a href="{{ bulk_upload.download_url }}">

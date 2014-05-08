@@ -1029,7 +1029,7 @@ def sms_languages(request, domain):
                               args=(domain,)),
             "download_url": reverse("download_sms_translations",
                                     args=(domain,)),
-            "name": _("messaging translation"),
+            "adjective": _("messaging translation"),
             "plural_noun": _("messaging translations"),
         },
     }

@@ -287,7 +287,7 @@ class LocationImportView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse(
                     "location_export", args=(self.domain,)),
-                "name": _("location"),
+                "adjective": _("location"),
                 "plural_noun": _("locations"),
             },
         }
