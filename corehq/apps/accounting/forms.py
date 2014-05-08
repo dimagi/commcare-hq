@@ -1388,18 +1388,26 @@ class TriggerInvoiceForm(forms.Form):
                 # this will happen if there were any credits generated.
                 # Leave in for now, as it's just for testing purposes.
                 pass
-            if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                community_sub = invoice.subscription
-                community_sub.subscriptionadjustment_set.all().delete()
-                community_sub.subscriptionadjustment_related.all().delete()
-                community_sub.creditline_set.all().delete()
-                invoice.delete()
-                try:
-                    community_sub.delete()
-                except ProtectedError:
-                    pass
-            else:
-                invoice.delete()
+            try:
+                # we want to get rid of as many old community subscriptions from that month
+                # as testing will allow.
+                if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                    community_sub = invoice.subscription
+                    community_sub.subscriptionadjustment_set.all().delete()
+                    community_sub.subscriptionadjustment_related.all().delete()
+                    community_sub.creditline_set.all().delete()
+                    invoice.delete()
+                    try:
+                        community_sub.delete()
+                    except ProtectedError:
+                        pass
+                else:
+                    invoice.delete()
+            except ProtectedError:
+                # this will happen for credit lines applied to invoices' line items. We don't
+                # want to throw away the credit lines, as that will affect testing totals
+                invoice.is_hidden = True
+                invoice.save()
 
 
 class TriggerBookkeeperEmailForm(forms.Form):
