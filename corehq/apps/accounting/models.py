@@ -314,6 +314,7 @@ class BillingAccount(models.Model):
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
             ).filter(created_by_domain=domain).latest('date_created')
+        return None
 
 
 class BillingContactInfo(models.Model):
@@ -1609,6 +1610,14 @@ class CreditLine(models.Model):
     @classmethod
     def get_credits_for_invoice(cls, invoice):
         return cls.get_credits_by_subscription_and_features(invoice.subscription)
+
+    @classmethod
+    def get_credits_for_account(cls, account, feature_type=None, product_type=None):
+        return cls.objects.filter(
+            account=account, subscription__exact=None
+        ).filter(
+            product_type__exact=product_type, feature_type__exact=feature_type
+        ).all()
 
     @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,

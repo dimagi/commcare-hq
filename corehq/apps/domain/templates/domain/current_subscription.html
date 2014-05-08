@@ -134,11 +134,19 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.subscription_credit and plan.subscription_credit.is_visible %}
+                    {% if plan.general_credit and plan.general_credit.is_visible %}
                         <div class="control-group">
                             <label class="control-label">{% trans 'General Credit' %}</label>
                             <div class="controls">
-                                <p class="control-group-text">{{ plan.subscription_credit.amount }}</p>
+                                <p class="control-group-text">{{ plan.general_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to either your software plan
+                                        or the features below. It's likely that someone from Dimagi added these
+                                        credits for you.
+                                    {% endblocktrans %}
+                                </p>
                             </div>
                         </div>
                     {% endif %}
