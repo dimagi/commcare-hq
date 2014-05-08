@@ -47,6 +47,15 @@
                     {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                 </label>
             </div>
+            <!-- ko if: show_product_stock_var -->
+            <div class="control-group" style="margin-left: 25px;">
+                <label class="control-label">{% trans "Only show products for this program:" %}</label>
+                <select data-bind="optstr: $root.programs,
+                    value: product_program,
+                    edit: $root.edit">
+                </select>
+            </div>
+            <!-- /ko -->
             <!-- /ko -->
             {% endif %}
 
