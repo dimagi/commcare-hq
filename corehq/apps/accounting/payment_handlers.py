@@ -3,8 +3,13 @@ import logging
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.models import PaymentRecord, CreditLine
+from corehq import Domain
+from corehq.apps.accounting.models import (
+    PaymentRecord, CreditLine, SoftwareProductType,
+)
+from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
+from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 logger = logging.getLogger('accounting')
@@ -34,6 +39,8 @@ def get_or_create_stripe_customer(payment_method):
 class BaseStripePaymentHandler(object):
     """Handler for paying via Stripe's API
     """
+    receipt_email_template = None
+    receipt_email_template_plaintext = None
 
     def __init__(self, payment_method):
         self.payment_method = payment_method
@@ -43,6 +50,12 @@ class BaseStripePaymentHandler(object):
         """Returns a name for the cost item that's used in the logging messages.
         """
         raise NotImplementedError("you must implement cost_item_name")
+
+    @property
+    @memoized
+    def core_product(self):
+        domain = Domain.get_by_name(self.payment_method.billing_admin.domain)
+        return SoftwareProductType.get_type_by_domain(domain)
 
     def create_charge(self, amount, card=None, customer=None):
         """Process the HTTPRequest used to make this payment
@@ -102,6 +115,7 @@ class BaseStripePaymentHandler(object):
                 self.payment_method, charge.id, amount
             )
             self.update_credits(payment_record)
+            self.send_email(payment_record)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -132,6 +146,17 @@ class BaseStripePaymentHandler(object):
             'card': card,
             'wasSaved': save_card,
         }
+
+    def get_email_context(self):
+        return {}
+
+    def send_email(self, payment_record):
+        additional_context = self.get_email_context()
+        from corehq.apps.accounting.tasks import send_purchase_receipt
+        send_purchase_receipt.delay(
+            payment_record, self.core_product, self.receipt_email_template,
+            self.receipt_email_template_plaintext, additional_context
+        )
 
 
 class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
@@ -176,6 +201,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class CreditStripePaymentHandler(BaseStripePaymentHandler):
+    receipt_email_template = 'accounting/credit_receipt_email.html'
+    receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, account, subscription=None,
                  product_type=None, feature_type=None):
@@ -222,3 +249,13 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                 'balance': fmt_dollar_amount(self.credit_line.balance),
             })
         return response
+
+    def get_email_context(self):
+        if self.product_type:
+            credit_name = _("%s Software Plan" % self.product_type)
+        else:
+            credit_name = get_feature_name(self.feature_type, self.core_product)
+        return {
+            'credit_name': credit_name,
+        }
+
