@@ -22,11 +22,13 @@ class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, name_pluralized, *args, **kwargs):
+    def __init__(self, name_pluralized, action, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_id = 'bulk_upload_form'
         self.helper.form_method = 'post'
+        if action:
+            self.helper.form_action = action
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "",
