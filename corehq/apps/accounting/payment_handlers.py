@@ -160,6 +160,8 @@ class BaseStripePaymentHandler(object):
 
 
 class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
+    receipt_email_template = 'accounting/invoice_receipt_email.html'
+    receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, invoice):
         super(InvoiceStripePaymentHandler, self).__init__(payment_method)
@@ -198,6 +200,14 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         )
         self.invoice.update_balance()
         self.invoice.save()
+
+    def get_email_context(self):
+        return {
+            'balance': fmt_dollar_amount(self.invoice.balance),
+            'is_paid': self.invoice.date_paid is not None,
+            'date_due': self.invoice.date_due.strftime("%d %B %Y"),
+            'invoice_num': self.invoice.invoice_number,
+        }
 
 
 class CreditStripePaymentHandler(BaseStripePaymentHandler):
