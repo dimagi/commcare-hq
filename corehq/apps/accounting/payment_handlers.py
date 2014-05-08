@@ -56,7 +56,7 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement get_charge_amount")
 
-    def update_credits(self, amount, payment_record):
+    def update_credits(self, payment_record):
         """Updates any relevant Credit lines
         """
         raise NotImplementedError("you must implement update_credits")
@@ -99,9 +99,9 @@ class BaseStripePaymentHandler(object):
                 customer = get_or_create_stripe_customer(self.payment_method)
             charge = self.create_charge(amount, card=card, customer=customer)
             payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id
+                self.payment_method, charge.id, amount
             )
-            self.update_credits(amount, payment_record)
+            self.update_credits(payment_record)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -160,14 +160,14 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
             return self.invoice.balance.quantize(Decimal(10) ** -2)
         return Decimal(request.POST['customPaymentAmount'])
 
-    def update_credits(self, amount, payment_record):
+    def update_credits(self, payment_record):
         # record the credit to the account
         CreditLine.add_credit(
-            amount, account=self.invoice.subscription.account,
+            payment_record.amount, account=self.invoice.subscription.account,
             payment_record=payment_record,
         )
         CreditLine.add_credit(
-            -amount,
+            -payment_record.amount,
             account=self.invoice.subscription.account,
             invoice=self.invoice,
         )
@@ -208,9 +208,9 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             description="Payment for %s" % self.cost_item_name,
         )
 
-    def update_credits(self, amount, payment_record):
+    def update_credits(self, payment_record):
         self.credit_line = CreditLine.add_credit(
-            amount, account=self.account, subscription=self.subscription,
+            payment_record.amount, account=self.account, subscription=self.subscription,
             product_type=self.product_type, feature_type=self.feature_type,
             payment_record=payment_record,
         )

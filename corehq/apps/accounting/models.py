@@ -1728,12 +1728,15 @@ class PaymentRecord(models.Model):
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     transaction_id = models.CharField(max_length=255)
+    amount = models.DecimalField(default=Decimal('0.0000'),
+                                 max_digits=10, decimal_places=4)
 
     @classmethod
-    def create_record(cls, payment_method, transaction_id):
+    def create_record(cls, payment_method, transaction_id, amount):
         return cls.objects.create(
             payment_method=payment_method,
-            transaction_id=transaction_id
+            transaction_id=transaction_id,
+            amount=amount,
         )
 
 
