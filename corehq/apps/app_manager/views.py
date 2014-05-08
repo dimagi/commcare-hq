@@ -1519,6 +1519,27 @@ def edit_commcare_profile(request, domain, app_id):
     return json_response(response_json)
 
 
+def validate_langs(request, existing_langs, validate_build=True):
+    o = json.loads(request.raw_post_data)
+    langs = o['langs']
+    rename = o['rename']
+    build = o['build']
+
+    assert set(rename.keys()).issubset(existing_langs)
+    assert set(rename.values()).issubset(langs)
+    # assert that there are no repeats in the values of rename
+    assert len(set(rename.values())) == len(rename.values())
+    # assert that no lang is renamed to an already existing lang
+    for old, new in rename.items():
+        if old != new:
+            assert(new not in existing_langs)
+    # assert that the build langs are in the correct order
+    if validate_build:
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+
+    return (langs, rename, build)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
@@ -1534,23 +1555,9 @@ def edit_app_langs(request, domain, app_id):
         build: ["es", "hin"]
     }
     """
-    o = json.loads(request.raw_post_data)
     app = get_app(domain, app_id)
-    langs = o['langs']
-    rename = o['rename']
-    build = o['build']
-
     try:
-        assert set(rename.keys()).issubset(app.langs)
-        assert set(rename.values()).issubset(langs)
-        # assert that there are no repeats in the values of rename
-        assert len(set(rename.values())) == len(rename.values())
-        # assert that no lang is renamed to an already existing lang
-        for old, new in rename.items():
-            if old != new:
-                assert(new not in app.langs)
-        # assert that the build langs are in the correct order
-        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+        langs, rename, build = validate_langs(request, app.langs)
     except AssertionError:
         return HttpResponse(status=400)
 

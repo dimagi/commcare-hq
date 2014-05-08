@@ -1,7 +1,9 @@
 from collections import defaultdict
-from couchdbkit.ext.django.schema import Document, DictProperty
+from couchdbkit.ext.django.schema import (Document, DictProperty,
+    StringProperty, ListProperty)
 import commcare_translations
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch import CouchDocLockableMixIn
 
 class TranslationMixin(Document):
     translations = DictProperty()
@@ -37,6 +39,40 @@ class TranslationDoc(TranslationMixin):
         t.save()
         return t
         
+
+class StandaloneTranslationDoc(TranslationDoc, CouchDocLockableMixIn):
+    """
+    There is either 0 or 1 StandaloneTranslationDoc doc for each (domain, area).
+    """
+    domain = StringProperty()
+    # For example, "sms"
+    area = StringProperty()
+    langs = ListProperty()
+
+    @property
+    def default_lang(self):
+        if len(self.langs) > 0:
+            return self.langs[0]
+        else:
+            return None
+
+    @classmethod
+    def get_obj(cls, domain, area, *args, **kwargs):
+        return StandaloneTranslationDoc.view(
+            "translations/standalone",
+            key=[domain, area],
+            include_docs=True
+        ).one()
+
+    @classmethod
+    def create_obj(cls, domain, area, *args, **kwargs):
+        obj = StandaloneTranslationDoc(
+            domain=domain,
+            area=area,
+        )
+        obj.save()
+        return obj
+
 
 class Translation(object):
     @classmethod
