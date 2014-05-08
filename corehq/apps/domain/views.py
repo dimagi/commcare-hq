@@ -571,8 +571,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             date_end = (subscription.date_end.strftime("%d %B %Y")
                         if subscription.date_end is not None else "--")
 
-            if (subscription.date_end is not None
-                and toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)):
+            if subscription.date_end is not None:
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -1339,10 +1338,6 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'confirm_form': self.confirm_form,
             'next_plan': self.next_plan_version.user_facing_description,
         }
-
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
