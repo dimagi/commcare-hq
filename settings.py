@@ -747,7 +747,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
