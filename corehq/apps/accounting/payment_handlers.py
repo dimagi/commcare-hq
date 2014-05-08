@@ -139,7 +139,7 @@ class BaseStripePaymentHandler(object):
                     'error_class': e.__class__.__name__,
                     'cost_item': self.cost_item_name,
                     'error_msg': e.json_body['error']
-                })
+                }, exc_info=True)
             return generic_error
         except Exception as e:
             logger.error(
@@ -147,7 +147,7 @@ class BaseStripePaymentHandler(object):
                 "to: %(error_msg)s" % {
                     'cost_item': self.cost_item_name,
                     'error_msg': e,
-                })
+                }, exc_info=True)
             return generic_error
         return {
             'success': True,
