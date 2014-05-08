@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import copy
 from datetime import datetime
 from xml.etree import ElementTree
 from dimagi.utils.parsing import json_format_datetime
@@ -126,8 +127,8 @@ class CaseBlock(dict):
         super(CaseBlock, self).__init__()
         self._id = case_id
         date_modified = date_modified or datetime.utcnow()
-        update = update or {}
-        index = index or {}
+        update = copy.copy(update) if update else {}
+        index = copy.copy(index) if index else {}
 
         self.XMLNS = NS_VERSION_MAP.get(version)
 
