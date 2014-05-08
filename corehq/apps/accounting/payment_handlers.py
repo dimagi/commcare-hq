@@ -117,12 +117,12 @@ class BaseStripePaymentHandler(object):
             self.update_credits(payment_record)
             try:
                 self.send_email(payment_record)
-            except Exception as e:
+            except Exception:
                 logger.error(
                     "[BILLING] Failed to send out an email receipt for "
                     "payment related to PaymentRecord No. %s. "
-                    "Everything else succeeded. Error was: %s"
-                    % (payment_record.id, e)
+                    "Everything else succeeded."
+                    % payment_record.id, exc_info=True
                 )
         except stripe.error.CardError as e:
             # card was declined
