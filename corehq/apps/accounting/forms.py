@@ -315,7 +315,7 @@ class SubscriptionForm(forms.Form):
             try:
                 plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
                 self.fields['plan_product'].initial = plan_product
-            except SoftwarePlanVersion.DoesNotExist:
+            except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
                     '<i class="icon-alert-sign"></i> No Product Exists for '
                     'the Plan (update required)'
