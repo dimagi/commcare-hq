@@ -1138,5 +1138,3 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
-
-BULK_MOBILE_HELP_SITE = "https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-B.UseBulkUploadtocreatemultipleusersatonce"

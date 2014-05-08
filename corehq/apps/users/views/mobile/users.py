@@ -46,9 +46,12 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReader
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
-from settings import BULK_MOBILE_HELP_SITE
 from soil.util import get_download_context, expose_download
 
+BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
+                         "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
+                         "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
+                         "ultipleusersatonce")
 DEFAULT_USER_LIST_LIMIT = 10
 
 
