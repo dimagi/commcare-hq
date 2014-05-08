@@ -25,6 +25,7 @@ var AdvancedCase = (function () {
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
+        self.programs = params.commtrack_programs;
 
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -352,6 +353,7 @@ var AdvancedCase = (function () {
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
                     show_product_stock: false,
+                    product_program: '',
                     auto_select: null
                 };
                 if (action.value === 'auto_select') {
@@ -498,7 +500,8 @@ var AdvancedCase = (function () {
                     'case_tag',
                     'parent_tag',
                     'close_condition',
-                    'show_product_stock'],
+                    'show_product_stock',
+                    'product_program'],
                 preload: {
                     create: function (options) {
                         return CasePreloadProperty.wrap(options.data,  self);
@@ -555,6 +558,8 @@ var AdvancedCase = (function () {
                     if (value) {
                         var newTag = 'case_' + self.case_type();
                         self.config.caseConfigViewModel.renameCaseTag(self.case_tag(), newTag);
+                    } else {
+                        self.product_program('');
                     }
                 }
             });
