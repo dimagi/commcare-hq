@@ -2,5 +2,5 @@ ko.applyBindings(
     {
         file: ko.observable(null)
     },
-    $("#bulk-upload-form").get(0)
+    $("#bulk_upload_form").get(0)
 );
