@@ -1,0 +1,33 @@
+{% load i18n %}{% blocktrans %}Dear {{ name }},
+
+This email is a receipt for your payment of {{ amount }} toward Invoice No.
+{{ invoice_num }} for your project {{ project }}.
+{% endblocktrans %}
+{% if is_paid %}
+This invoice is now marked as paid as of {{ date_paid }}.
+
+Invoice No.: {{ invoice_num }}
+Amount Paid: {{ amount }}
+Payment Date: {{ date_paid }}
+Transaction No.: {{ transaction_id }}{% else %}{% blocktrans %}
+Please note that there is still a remaining balance on this Invoice.
+
+Invoice No.: {{ invoice_num }}
+Amount Paid: {{ amount }}
+Payment Date: {{ date_paid }}
+Transaction No.: {{ transaction_id }}
+Remaining Balance: {{ balance }}
+Date Due: {{ date_due }}{% endblocktrans %}{% endif %}
+
+{% blocktrans %}
+Thank you for using {{ product }}. If you have any questions, please don't
+hesitate to contact accounts@dimagi.com.
+
+Best Regards,
+The {{ product }} HQ Team
+www.commcarehq.org
+
+Email From:
+CommCare HQ and the corporation Dimagi, Inc.
+585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA
+{% endblocktrans %}
