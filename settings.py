@@ -1138,3 +1138,21 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
+
+TRAVIS_TEST_GROUPS = (
+    "accounting adm announcements api "
+    "app_manager appstore auditcare bihar "
+    "builds cachehq callcenter care_benin "
+    "care_sa case cleanup cloudcare commtrack "
+    "consumption couchapps couchlog crud cvsu "
+    "dca django_digest djangocouch djangocouchuser "
+    "domain domainsync export facilities".split(),
+
+    "fixtures fluff_filter formplayer formtranslate "
+    "fri grapevine groups gsid hope hqadmin "
+    "hqbilling hqcase hqcouchlog hqmedia "
+    "hqpillow_retry hqscripts hqstyle hqwebapp "
+    "hsph hutch importer indicators "
+    "loadtestendpoints locations mc migration "
+    "mobile_auth mvp mvp_apps openlmis".split(),
+)
