@@ -195,7 +195,7 @@ class UploadProductView(BaseCommTrackManageView):
             'bulk_upload': {
                 "download_url": reverse("product_export", args=(self.domain,)),
                 "name": _("product"),
-                "name_pluralized": _("products"),
+                "plural_noun": _("products"),
             },
         }
         context.update({

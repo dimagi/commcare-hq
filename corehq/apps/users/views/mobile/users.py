@@ -684,7 +684,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "download_url": reverse(
                     "download_commcare_users", args=(self.domain,)),
                 "name": _("mobile worker"),
-                "name_pluralized": _("mobile workers"),
+                "plural_noun": _("mobile workers"),
             },
             'show_secret_settings': self.request.REQUEST.get("secret", False),
         }

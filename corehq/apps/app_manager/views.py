@@ -516,7 +516,7 @@ def get_app_view_context(request, app):
             'download_url': reverse('download_translations',
                                     args=(app.domain, app.get_id)),
             'name': _(u"U\u200BI translation"),
-            'name_pluralized': _(u"U\u200BI translations"),
+            'plural_noun': _(u"U\u200BI translations"),
         },
     })
     context.update({

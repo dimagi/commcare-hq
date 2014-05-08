@@ -1030,7 +1030,7 @@ def sms_languages(request, domain):
             "download_url": reverse("download_sms_translations",
                                     args=(domain,)),
             "name": _("messaging translation"),
-            "name_pluralized": _("messaging translations"),
+            "plural_noun": _("messaging translations"),
         },
     }
     context.update({

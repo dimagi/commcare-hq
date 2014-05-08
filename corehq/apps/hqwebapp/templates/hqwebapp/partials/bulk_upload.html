@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<h2>{% blocktrans with name_pluralized=bulk_upload.name_pluralized|title %}Upload {{ name_pluralized }} Using Excel{% endblocktrans %}</h2>
+<h2>{% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Upload {{ plural_noun }} Using Excel{% endblocktrans %}</h2>
 <p>
     <ol>
         <li>
@@ -12,7 +12,7 @@
             <p>
                 <a href="{{ bulk_upload.download_url }}">
                     <button class="btn btn-success">
-                        <i class="icon-download-alt"></i> {% blocktrans with name_pluralized=bulk_upload.name_pluralized|title %}Download {{ name_pluralized }}{% endblocktrans %}
+                        <i class="icon-download-alt"></i> {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Download {{ plural_noun }}{% endblocktrans %}
                     </button>
                 </a>
             </p>
