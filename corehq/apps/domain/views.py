@@ -549,12 +549,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+        return BillingAccountAdmin.objects.filter(
             web_user=self.request.user.username, domain=self.domain
         ).exists()
-        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                and is_registered_billing_admin)
 
     @property
     def plan(self):
@@ -802,12 +799,9 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def can_pay_invoices(self):
-        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+        return BillingAccountAdmin.objects.filter(
             web_user=self.request.user.username, domain=self.domain
         ).exists()
-        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                and is_registered_billing_admin)
 
     @property
     def paginated_list(self):
@@ -905,10 +899,6 @@ class BaseStripePaymentView(DomainAccountingSettings):
         """Returns a StripePaymentHandler object
         """
         raise NotImplementedError("You must impmenent get_payment_handler()")
-
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseStripePaymentView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         try:
