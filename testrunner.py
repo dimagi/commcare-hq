@@ -52,7 +52,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         if not test_labels:
             test_labels = [self._strip(app) for app in settings.INSTALLED_APPS
                            if not app in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                and not app.startswith('django.')]
+                           and not app.startswith('django.')]
         return test_labels
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
@@ -195,3 +195,74 @@ class NonDbOnlyTestRunner(TwoStageTestRunner):
     def run_db_tests(self, suite):
         print("Skipping {0} database tests".format(suite.countTestCases()))
         return 0
+
+
+class DbOnlyTestRunner(TwoStageTestRunner):
+    """
+    Override run_non_db_tests to do nothing.
+    """
+    def run_non_db_tests(self, suite):
+        print("Skipping {0} non-database tests".format(suite.countTestCases()))
+        return 0
+
+
+class _OnlySpecificApps(HqTestSuiteRunner):
+    app_labels = set()
+    # If include is False, then run for all EXCEPT app_labels
+    include = True
+
+    def filter_test_labels(self, test_labels):
+        if not test_labels:
+            test_labels = super(_OnlySpecificApps, self).filter_test_labels(test_labels)
+            test_labels = [app_label for app_label in test_labels
+                           if self.include == (app_label in self.app_labels)]
+            print "Running tests for the following apps:"
+            for test_label in sorted(test_labels):
+                print "  {}".format(test_label)
+
+        return test_labels
+
+
+def _bootstrap_group_test_runners():
+    """
+    Dynamically insert classes named GroupTestRunner[0-N] and GroupTestRunnerCatchall
+    generated from the TRAVIS_TEST_GROUPS settings variable
+    into this module, so they can be used like
+        python manage.py test --testrunner=testrunner.GroupTestRunner0
+        python manage.py test --testrunner=testrunner.GroupTestRunner1
+        ...
+        python manage.py test --testrunner=testrunner.GroupTestRunnerCatchall
+
+    When you change the number of groups in TRAVIS_TEST_GROUPS, you must also
+    manually edit travis.yml have the following env variables:
+
+        env:
+            [...] TEST_RUNNER=testrunner.NonDbOnlyTestRunner
+            [...] TEST_RUNNER=testrunner.GroupTestRunner0
+            [...] TEST_RUNNER=testrunner.GroupTestRunner1
+            ...
+            [...] TEST_RUNNER=testrunner.GroupTestRunnerCatchall
+
+    """
+    for i, app_labels in enumerate(settings.TRAVIS_TEST_GROUPS):
+        class_name = 'GroupTestRunner{}'.format(i)
+        globals()[class_name] = type(
+            class_name,
+            (_OnlySpecificApps, DbOnlyTestRunner),
+            {
+                'app_labels': settings.TRAVIS_TEST_GROUPS[i]
+            }
+        )
+    class_name = 'GroupTestRunnerCatchall'
+    globals()[class_name] = type(
+        class_name,
+        (_OnlySpecificApps, DbOnlyTestRunner),
+        {
+            'app_labels': {app_label
+                           for app_labels in settings.TRAVIS_TEST_GROUPS
+                           for app_label in app_labels},
+            'include': False,
+        }
+    )
+
+_bootstrap_group_test_runners()
