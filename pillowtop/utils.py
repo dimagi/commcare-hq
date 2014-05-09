@@ -1,6 +1,9 @@
 from importlib import import_module
 import warnings
+from datetime import datetime
+from dateutil.parser import parse
 from django.utils import importlib
+import pytz
 
 
 class PillowtopConfigurationException(Exception):
@@ -69,10 +72,21 @@ def get_all_pillows_json():
     pillows_json = []
     for pillow in pillows:
         checkpoint = pillow.get_checkpoint()
+        timestamp = checkpoint.get('timestamp')
+        if timestamp:
+            time_since_last = str(datetime.now(tz=pytz.UTC) - parse(timestamp))
+            try:
+                # remove microsecond portion
+                time_since_last = time_since_last[0:time_since_last.index('.')]
+            except ValueError:
+                pass
+        else:
+            time_since_last = ''
         pillows_json.append({
             'name': pillow.__class__.__name__,
             'seq': force_seq_int(checkpoint.get('seq')),
             'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
             'db_seq': force_seq_int(pillow.get_db_seq()),
+            'time_since_last': time_since_last
         })
     return pillows_json
