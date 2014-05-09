@@ -941,7 +941,7 @@ class CaseReminderHandler(Document):
                     endkey=[self.domain, {}],
                 ).all()
                 case_ids = [entry["id"] for entry in case_id_result]
-                process_fast(case_ids, run_rule, item_goal=100, max_threads=50,
+                process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition))
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
@@ -1004,7 +1004,7 @@ class CaseReminderHandler(Document):
     def retire(self):
         reminder_ids = self.get_reminders(ids_only=True)
         process_fast(reminder_ids, retire_reminder, item_goal=100,
-            max_threads=50)
+            max_threads=5)
         self.doc_type += "-Deleted"
         self.save()
 
