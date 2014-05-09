@@ -54,7 +54,7 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
                 report_rows = _get_row(row_data, sql_data, key)
                 for key in report_rows:
                     row_data.get(key)["value"] += report_rows.get(key)
-            return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("hmis_code"))
+        return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("hmis_code"))
 
 
     @classmethod
