@@ -73,6 +73,34 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
         return self.get_cases(case_displays)
 
+    def build_query(self, case_type=None, afilter=None, status=None, owner_ids=None, user_ids=None, search_string=None):
+
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
+
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
+
+        and_block = {'and': subterms} if subterms else {}
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': {"match_all": {}},
+                    'filter': and_block
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+
+        return es_query
+
     @property
     @memoized
     def es_query(self):
