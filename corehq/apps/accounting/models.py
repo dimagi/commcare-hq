@@ -314,6 +314,7 @@ class BillingAccount(models.Model):
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
             ).filter(created_by_domain=domain).latest('date_created')
+        return None
 
 
 class BillingContactInfo(models.Model):
@@ -816,7 +817,6 @@ class Subscription(models.Model):
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
         """
-        date_end = date_end or self.date_end
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
@@ -1611,6 +1611,14 @@ class CreditLine(models.Model):
         return cls.get_credits_by_subscription_and_features(invoice.subscription)
 
     @classmethod
+    def get_credits_for_account(cls, account, feature_type=None, product_type=None):
+        return cls.objects.filter(
+            account=account, subscription__exact=None
+        ).filter(
+            product_type__exact=product_type, feature_type__exact=feature_type
+        ).all()
+
+    @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  product_type=None):
@@ -1728,12 +1736,20 @@ class PaymentRecord(models.Model):
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     transaction_id = models.CharField(max_length=255)
+    amount = models.DecimalField(default=Decimal('0.0000'),
+                                 max_digits=10, decimal_places=4)
+
+    @property
+    def public_transaction_id(self):
+        ops_num = settings.INVOICE_STARTING_NUMBER + self.id
+        return "%sP-%d" % (settings.INVOICE_PREFIX, ops_num)
 
     @classmethod
-    def create_record(cls, payment_method, transaction_id):
+    def create_record(cls, payment_method, transaction_id, amount):
         return cls.objects.create(
             payment_method=payment_method,
-            transaction_id=transaction_id
+            transaction_id=transaction_id,
+            amount=amount,
         )
 
 

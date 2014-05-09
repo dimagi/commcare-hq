@@ -429,10 +429,13 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
+    "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
     "custom.intrahealth.fixtures.month_fixture",
     "custom.intrahealth.fixtures.payment_fixture",
 ]
@@ -749,7 +752,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },

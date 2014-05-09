@@ -559,17 +559,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        products = self.get_product_summary(plan_version, subscription)
         date_end = None
         next_subscription = {
             'exists': False,
             'can_renew': False,
         }
         cards = None
+        general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime("%d %B %Y")
                         if subscription.date_end is not None else "--")
+
             if (subscription.date_end is not None
                 and toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)):
                 if subscription.is_renewed:
@@ -583,11 +584,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'can_renew': days_left <= 30,
                         'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
                     })
+            general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
+        elif self.account is not None:
+            general_credits = CreditLine.get_credits_for_account(self.account)
+        if general_credits:
+            general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
+
+        products = self.get_product_summary(plan_version, self.account, subscription)
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
-            'features': self.get_feature_summary(plan_version, subscription),
-            'subscription_credit': None,
+            'features': self.get_feature_summary(plan_version, self.account, subscription),
+            'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
@@ -598,9 +606,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'next_subscription': next_subscription,
         }
         info.update(plan_version.user_facing_description)
-        if subscription is not None:
-            subscription_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
-            info['subscription_credit'] = self._fmt_credit(self._credit_grand_total(subscription_credits))
+
         return info
 
     def _fmt_credit(self, credit_amount=None):
@@ -616,7 +622,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def _credit_grand_total(self, credit_lines):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
-    def get_product_summary(self, plan_version, subscription):
+    def get_product_summary(self, plan_version, account, subscription):
         product_summary = []
         for product_rate in plan_version.product_rates.all():
             product_info = {
@@ -625,14 +631,21 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'credit': None,
                 'type': product_rate.product.product_type,
             }
+            credit_lines = None
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type)
+                    subscription, product_type=product_rate.product.product_type
+                )
+            elif account is not None:
+                credit_lines = CreditLine.get_credits_for_account(
+                    account, product_type=product_rate.product.product_type
+                )
+            if credit_lines:
                 product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             product_summary.append(product_info)
         return product_summary
 
-    def get_feature_summary(self, plan_version, subscription):
+    def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []
         for feature_rate in plan_version.feature_rates.all():
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
@@ -643,11 +656,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
             }
+
+            credit_lines = None
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
                     subscription, feature_type=feature_rate.feature.feature_type
                 )
+            elif account is not None:
+                credit_lines = CreditLine.get_credits_for_account(
+                    account, feature_type=feature_rate.feature.feature_type)
+            if credit_lines:
                 feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+
             feature_summary.append(feature_info)
         return feature_summary
 

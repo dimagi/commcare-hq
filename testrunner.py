@@ -1,5 +1,7 @@
+import functools
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
+import datetime
 from django.conf import settings
 from django.utils import unittest
 import settingshelper
@@ -63,6 +65,27 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         return app_name.split('.')[-1]
 
 
+class TimingTestSuite(unittest.TestSuite):
+    def __init__(self, tests=()):
+        super(TimingTestSuite, self).__init__(tests)
+        self.test_times = []
+
+    def addTest(self, test):
+        suite = self
+
+        class Foo(test.__class__):
+            def __call__(self, *args, **kwargs):
+                start = datetime.datetime.utcnow()
+                result = super(Foo, self).__call__(*args, **kwargs)
+                end = datetime.datetime.utcnow()
+                suite.test_times.append((self, end - start))
+                return result
+        Foo.__name__ = test.__class__.__name__
+        Foo.__module__ = test.__class__.__module__
+        test.__class__ = Foo
+        super(TimingTestSuite, self).addTest(test)
+
+
 class TwoStageTestRunner(HqTestSuiteRunner):
     """
     Test runner which splits testing into two stages:
@@ -78,7 +101,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         """
         suite = super(TwoStageTestRunner, self).build_suite(*args, **kwargs)
         simple_tests = unittest.TestSuite()
-        db_tests = unittest.TestSuite()
+        db_tests = TimingTestSuite()
         for test in suite:
             if isinstance(test, TransactionTestCase):
                 db_tests.addTest(test)
@@ -136,9 +159,33 @@ class TwoStageTestRunner(HqTestSuiteRunner):
 
         if db_suite.countTestCases():
             failures += self.run_db_tests(db_suite)
-
+            self.print_test_times(db_suite)
         self.teardown_test_environment()
         return failures
+
+    def print_test_times(self, suite, percent=.5):
+        total_time = reduce(
+            lambda x, y: x + y,
+            (test_time for _, test_time in suite.test_times),
+            datetime.timedelta(seconds=0)
+        )
+        rounded_total_time = total_time - datetime.timedelta(
+            microseconds=total_time.microseconds
+        )
+        cumulative_time = datetime.timedelta(seconds=0)
+
+        print (
+            '{:.0f}% of the test time (total: {}) '
+            'was spent in the following tests:'.format(
+                percent * 100,
+                rounded_total_time,
+            )
+        )
+        for test, test_time in sorted(suite.test_times, key=lambda x: x[1], reverse=True):
+            cumulative_time += test_time
+            print ' ', test, test_time
+            if cumulative_time > total_time / 2:
+                break
 
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):

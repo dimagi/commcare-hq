@@ -46,7 +46,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         def _filter_gen(key, flist):
             return {"terms": {
-                key: [item.lower() if item else "" for item in flist]
+                key: [item.lower() for item in flist if item]
             }}
 
         def _domain_term():

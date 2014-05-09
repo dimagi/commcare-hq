@@ -115,7 +115,7 @@ def get_cases_in_domain(domain, type=None):
                                                         get_case_ids_in_domain(domain, type=type)))
 
 def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=True,
-                include_parent_cases=False, exclude=()):
+                include_parent_cases=False, exclude=(), update=None):
     """
     Assigns a case to an owner. Optionally traverses through subcases and parent cases
     and reassigns those to the same owner.
@@ -131,10 +131,10 @@ def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=Tr
         cases_to_assign.extend(get_related_cases([primary_case], primary_case.domain, search_up=True).values())
     if exclude:
         cases_to_assign = filter(lambda case: case._id not in exclude, cases_to_assign)
-    return assign_cases(cases_to_assign, owner_id, acting_user)
+    return assign_cases(cases_to_assign, owner_id, acting_user, update=update)
 
 
-def assign_cases(caselist, owner_id, acting_user=None):
+def assign_cases(caselist, owner_id, acting_user=None, update=None):
     """
     Assign all cases in a list to an owner. Won't update if the owner is already
     set on the case. Doesn't touch parent cases or subcases.
@@ -167,6 +167,7 @@ def assign_cases(caselist, owner_id, acting_user=None):
                 case_id=c._id,
                 owner_id=owner_id,
                 version=V2,
+                update=update,
             ).as_xml(format_datetime=json_format_datetime)) for c in filtered_cases
         ]
         # todo: this should check whether the submit_case_blocks call actually succeeds

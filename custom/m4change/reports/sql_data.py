@@ -307,6 +307,9 @@ class AllHmisCaseSqlData(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn(_("Newborns with low birth weight discharged - Total"), SumColumn("newborns_low_birth_weight_discharged_total")),
+            DatabaseColumn(_("Newborns with low birth weight discharged - Male"), SumColumn("newborns_low_birth_weight_discharged_male_total")),
+            DatabaseColumn(_("Newborns with low birth weight discharged - Female"), SumColumn("newborns_low_birth_weight_discharged_female_total")),
             DatabaseColumn(_("Pregnant Mothers Referred out"), SumColumn("pregnant_mothers_referred_out_total")),
             DatabaseColumn(_("ANC Anemia test done"), SumColumn("anc_anemia_test_done_total")),
             DatabaseColumn(_("ANC Anemia test positive"), SumColumn("anc_anemia_test_positive_total")),

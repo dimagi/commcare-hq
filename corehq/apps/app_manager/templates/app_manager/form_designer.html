@@ -61,7 +61,7 @@
                 saveType: 'patch',
                 form: formSrc,
                 langs: {{ app.langs|JSON }},
-                formName: "{{ form.name|trans:app.langs }}",
+                formName: "{{ form.name|trans:app.langs|escapejs }}",
                 displayLanguage: {{ lang|JSON }},
                 sessionid: {{ sessionid|JSON }}
             });

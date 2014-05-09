@@ -47,7 +47,7 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
                 if row_key == "women_delivering_within_6_weeks_attending_pnc_total" and value > 1:
                     value = 1
                 row_data.get(row_key, {})["value"] += value
-        return row_data
+        return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("s/n"))
 
     @classmethod
     def get_initial_row_data(cls):
@@ -89,11 +89,11 @@ class ProjectIndicatorsReport(MonthYearMixin, CustomProjectReport, CaseListRepor
             "domain": str(self.domain)
         })
 
-        for key in row_data:
+        for row in row_data:
             yield [
-                self.table_cell(row_data.get(key).get("s/n", "")),
-                self.table_cell(row_data.get(key).get("label", "")),
-                self.table_cell(row_data.get(key).get("value", 0))
+                self.table_cell(row[1].get("s/n", "")),
+                self.table_cell(row[1].get("label", "")),
+                self.table_cell(row[1].get("value", 0))
             ]
 
     @property

@@ -93,6 +93,12 @@ env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
 env.pillow_retry_queue_enabled = True
 
+
+def _require_target():
+    require('root', 'code_root', 'hosts', 'environment',
+            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+
+
 def format_env(current_env):
     """
     formats the current env to be a foo=bar,sna=fu type paring
@@ -438,7 +444,7 @@ def development():
 @roles(*ROLES_ALL_SRC)
 def install_packages():
     """Install packages, given a list of package names"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    _require_target()
 
     if what_os() == 'ubuntu':
         packages_list = 'apt-packages.txt'
@@ -465,7 +471,7 @@ def upgrade_packages():
     OS Upgrade (e.g RHEL 5.1 to RHEL 6).
     Should be avoided.  Run install packages instead.
     """
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     if what_os() == 'ubuntu':
         sudo("apt-get update", shell=False)
         sudo("apt-get upgrade -y", shell=False)
@@ -476,7 +482,7 @@ def upgrade_packages():
 @task
 def what_os():
     with settings(warn_only=True):
-        require('environment', provided_by=('staging','preview','production'))
+        _require_target()
         if getattr(env, 'host_os_map', None) is None:
             # prior use case of setting a env.remote_os
             # did not work when doing multiple hosts with different os!
@@ -503,7 +509,7 @@ def what_os():
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
@@ -518,7 +524,7 @@ def setup_server():
 @task
 def create_pg_user():
     """Create the Postgres user"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
@@ -526,7 +532,7 @@ def create_pg_user():
 @task
 def create_pg_db():
     """Create the Postgres database"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
 
 
@@ -536,7 +542,7 @@ def bootstrap():
 
     Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
     """
-    require('root', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     clone_repo()
 
@@ -606,7 +612,7 @@ def remove_submodule_source(path):
              '{env.environment}?').format(path=path, env=env), default=False):
         utils.abort('Action aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
 
     execute(_remove_submodule_source_main, path)
     execute(_remove_submodule_source_preindex, path)
@@ -712,7 +718,7 @@ def hotfix_deploy():
        not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
         utils.abort('Deployment aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     run('echo ping!')  # workaround for delayed console response
 
     try:
@@ -734,7 +740,7 @@ def deploy():
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     run('echo ping!')  # workaround for delayed console response
 
     try:
@@ -743,6 +749,7 @@ def deploy():
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
+            execute(stop_pillows)
             execute(migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
@@ -769,7 +776,7 @@ def update_virtualenv(preindex=False):
     assumes you've done a code update
 
     """
-    require('code_root', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     if preindex:
         root_to_use = env.code_root_preindex
         env_to_use = env.virtualenv_root_preindex
@@ -814,14 +821,14 @@ def clear_services_dir():
 @roles('lb')
 def configtest():
     """test Apache configuration"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('apache2ctl configtest')
 
 
 @roles('lb')
 def apache_reload():
     """reload Apache on remote host"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     if what_os() == 'redhat':
         sudo('/etc/init.d/httpd reload')
     elif what_os() == 'ubuntu':
@@ -831,38 +838,37 @@ def apache_reload():
 @roles('lb')
 def apache_restart():
     """restart Apache on remote host"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('/etc/init.d/apache2 restart')
 
 @task
 def netstat_plnt():
     """run netstat -plnt on a remote host"""
-    require('hosts', provided_by=('production', 'preview', 'staging'))
+    _require_target()
     sudo('netstat -plnt')
 
 
 @roles(*ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
-    require('environment', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     _supervisor_command('stop all')
 
 
 @task
 def restart_services():
+    _require_target()
     if not console.confirm('Are you sure you want to restart the services on '
                            '{env.environment}?'.format(env=env), default=False):
         utils.abort('Task aborted.')
 
-    require('root', provided_by=('staging', 'preview', 'production', 'india'))
     execute(services_restart)
 
 
 @roles(*ROLES_ALL_SERVICES)
 def services_restart():
     """Stop and restart all supervisord services"""
-    require('environment',
-            provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -874,8 +880,7 @@ def services_restart():
 @roles(*ROLES_DB_ONLY)
 def migrate():
     """run south migration on remote environment"""
-    require('code_root',
-            provided_by=('production', 'preview', 'staging', 'india'))
+    _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
@@ -885,8 +890,7 @@ def migrate():
 @roles(*ROLES_DB_ONLY)
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
-    require('code_root',
-            provided_by=('production', 'preview', 'staging', 'india'))
+    _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
@@ -927,7 +931,7 @@ def version_static(preindex=False):
 @roles(*ROLES_STATIC)
 def collectstatic():
     """run collectstatic on remote environment"""
-    require('code_root', provided_by=('production', 'preview', 'staging'))
+    _require_target()
     update_code()
     _do_collectstatic()
 
@@ -935,7 +939,7 @@ def collectstatic():
 @task
 def reset_local_db():
     """Reset local database from remote host"""
-    require('code_root', provided_by=('production', 'preview', 'staging'))
+    _require_target()
     if env.environment == 'production':
         utils.abort('Local DB reset is for staging environment only')
     question = ('Are you sure you want to reset your local '
@@ -950,15 +954,18 @@ def reset_local_db():
     local('createdb %s' % local_db)
     host = '%s@%s' % (env.user, env.hosts[0])
     local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
+
+
 @task
 def fix_locale_perms():
     """Fix the permissions on the locale directory"""
-    require('root', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     _set_apache_user()
     locale_dir = '%s/locale/' % env.code_root
     sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
     sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
     sudo('chmod -R g+w %s' % locale_dir, user=env.sudo_user)
+
 
 @task
 def commit_locale_changes():
@@ -986,7 +993,6 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
         }, user=env.sudo_user)
 
 
-
 @roles(*ROLES_CELERY)
 def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
@@ -1000,7 +1006,6 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
-
 
 
 @roles(*ROLES_PILLOWTOP)
@@ -1035,7 +1040,7 @@ def set_pillow_retry_queue_supervisorconf():
 @task
 def set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     execute(set_celery_supervisorconf)
     execute(set_djangoapp_supervisorconf)
     execute(set_formsplayer_supervisorconf)
@@ -1048,7 +1053,7 @@ def set_supervisor_config():
 
 
 def _supervisor_command(command):
-    require('hosts', provided_by=('staging', 'preview', 'production'))
+    _require_target()
     sudo('supervisorctl %s' % (command), shell=False)
 
 
@@ -1075,6 +1080,13 @@ def update_django_locales():
     do_update_django_locales()
 
 
+@roles(*ROLES_PILLOWTOP)
+def stop_pillows():
+    _require_target()
+    with cd(env.code_root):
+        sudo('scripts/pillowtopctl stop', user=env.sudo_user)
+
+
 @roles(*ROLES_ALL_SRC)
 @parallel
 def do_update_django_locales():
@@ -1088,7 +1100,7 @@ def do_update_django_locales():
 
 @task
 def selenium_test():
-    require('environment', provided_by=('staging', 'preview', 'production', 'india'))
+    _require_target()
     prompt("Jenkins username:", key="jenkins_user", default="selenium")
     prompt("Jenkins password:", key="jenkins_password")
     url = env.selenium_url % {"token": "foobar", "environment": env.environment}

@@ -17,7 +17,8 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS, \
-    REJECTION_REASON_DISPLAY_NAMES, LAB_RESULTS_FORMS
+    REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
+from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_property, get_form_ids_by_status
@@ -30,6 +31,11 @@ def _get_date_range(range):
         dates = str(range).split(_(" to "))
         return (dates[0], dates[1])
     return None
+
+def _get_relevant_xmlnss_for_service_type(service_type_filter):
+    relevant_form_types = \
+        MCCT_SERVICE_TYPES[service_type_filter] if service_type_filter else MCCT_SERVICE_TYPES["all"]
+    return filter(None, [form for form in relevant_form_types])
 
 
 def _get_report_query(start_date, end_date, filtered_case_ids, location_ids):
@@ -103,7 +109,8 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         fields = [
             AsyncLocationFilter,
             'custom.m4change.fields.DateRangeField',
-            'custom.m4change.fields.CaseSearchField'
+            'custom.m4change.fields.CaseSearchField',
+            ServiceTypeFilter
         ]
 
         base_template = 'm4change/report.html'
@@ -209,9 +216,7 @@ class McctProjectReview(BaseReport):
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
 
-            allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS\
-                       + LAB_RESULTS_FORMS
-            xmlnss = filter(None, [form for form in allforms])
+            xmlnss = _get_relevant_xmlnss_for_service_type(self.request.GET.get("service_type_filter"))
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
@@ -412,8 +417,7 @@ class McctClientLogPage(McctProjectReview):
                                                         CCT_only=True)
             q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids, location_ids)
 
-            allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
-            xmlnss = filter(None, [form for form in allforms])
+            xmlnss = _get_relevant_xmlnss_for_service_type(self.request.GET.get("service_type_filter"))
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 

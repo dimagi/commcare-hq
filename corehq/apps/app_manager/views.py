@@ -24,6 +24,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.commtrack.models import Program
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
     questions_in_hierarchy,
@@ -395,10 +396,11 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         messages.error(request, err)
 
     module_case_types = []
+    app = form.get_app()
     if is_user_registration:
         module_case_types = None
     else:
-        for module in form.get_app().get_modules():
+        for module in app.get_modules():
             for case_type in module.get_case_types():
                 module_case_types.append({
                     'id': module.unique_id,
@@ -409,7 +411,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     if not form.unique_id:
         form.get_unique_id()
-        form.get_app().save()
+        app.save()
 
     context = {
         'nav_form': form if not is_user_registration else '',
@@ -430,8 +432,17 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         })
         return "app_manager/form_view_careplan.html", context
     elif isinstance(form, AdvancedForm):
+        def commtrack_programs():
+            if app.commtrack_enabled:
+                programs = Program.by_domain(app.domain)
+                return [{'value': program.get_id, 'label': program.name} for program in programs]
+            else:
+                return []
+
+        all_programs = [{'value': '', 'label': _('All Programs')}]
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
+            'commtrack_programs': all_programs + commtrack_programs(),
         })
         return "app_manager/form_view_advanced.html", context
     else:
@@ -1519,6 +1530,27 @@ def edit_commcare_profile(request, domain, app_id):
     return json_response(response_json)
 
 
+def validate_langs(request, existing_langs, validate_build=True):
+    o = json.loads(request.raw_post_data)
+    langs = o['langs']
+    rename = o['rename']
+    build = o['build']
+
+    assert set(rename.keys()).issubset(existing_langs)
+    assert set(rename.values()).issubset(langs)
+    # assert that there are no repeats in the values of rename
+    assert len(set(rename.values())) == len(rename.values())
+    # assert that no lang is renamed to an already existing lang
+    for old, new in rename.items():
+        if old != new:
+            assert(new not in existing_langs)
+    # assert that the build langs are in the correct order
+    if validate_build:
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+
+    return (langs, rename, build)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
@@ -1534,23 +1566,9 @@ def edit_app_langs(request, domain, app_id):
         build: ["es", "hin"]
     }
     """
-    o = json.loads(request.raw_post_data)
     app = get_app(domain, app_id)
-    langs = o['langs']
-    rename = o['rename']
-    build = o['build']
-
     try:
-        assert set(rename.keys()).issubset(app.langs)
-        assert set(rename.values()).issubset(langs)
-        # assert that there are no repeats in the values of rename
-        assert len(set(rename.values())) == len(rename.values())
-        # assert that no lang is renamed to an already existing lang
-        for old, new in rename.items():
-            if old != new:
-                assert(new not in app.langs)
-        # assert that the build langs are in the correct order
-        assert sorted(build, key=lambda lang: langs.index(lang)) == build
+        langs, rename, build = validate_langs(request, app.langs)
     except AssertionError:
         return HttpResponse(status=400)
 

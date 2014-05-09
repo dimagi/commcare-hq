@@ -1,39 +1,10 @@
 {% extends "users/base_template.html" %}
 {% load hq_shared_tags %}
-{% load i18n %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-            ko.applyBindings({file: ko.observable(null)}, 
-                             $("#bulk-user-upload-form").get(0));
-    </script>
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
 {% endblock %}
 
 {% block main_column %}
-    <h2>{% blocktrans %}Steps to Upload Mobile Workers in bulk{% endblocktrans %}</h2>
-    <p>
-        <ol>
-            <li>
-                {% trans "Download your current user data: " %}<a href="{% url "download_commcare_users" domain %}">{% trans "users.xlsx" %}</a>
-            </li>
-            <li>
-                {% trans "Updated it with the changes you want to make" %}
-            </li>
-            <li>
-                {% trans "Use the form below to upload your completed file" %}
-            </li>
-        </ol>
-    </p>
-    <form id="bulk-user-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
-        <fieldset>
-            <legend>{% trans 'Choose a file for upload' %}</legend>
-            <div class="control-group">
-                <label for="bulk_upload_file" class="control-label">{% trans 'Users File' %}</label>
-                <div class="controls">
-                    <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                </div>
-            </div>
-        </fieldset>
-        <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file()">{% trans 'Create Mobile Workers' %}</button></div>
-    </form>
+    {% include "hqwebapp/partials/bulk_upload.html" %}
 {% endblock %}
