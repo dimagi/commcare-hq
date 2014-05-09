@@ -5,6 +5,7 @@ import math
 from django.db import models
 from django.db.models.aggregates import Count
 
+ERROR_MESSAGE_LENGTH = 512
 
 def _get_extra_args(limit, reduce, skip):
     extra_args = dict()
@@ -28,7 +29,7 @@ class PillowError(models.Model):
     date_next_attempt = models.DateTimeField(db_index=True, null=True)
     total_attempts = models.IntegerField(default=0)
     current_attempt = models.IntegerField(default=0, db_index=True)
-    error_message = models.CharField(max_length=512, null=True)
+    error_message = models.CharField(max_length=ERROR_MESSAGE_LENGTH, null=True)
     error_type = models.CharField(max_length=255, null=True)
     error_traceback = models.TextField(null=True)
 
@@ -39,7 +40,10 @@ class PillowError(models.Model):
         self.current_attempt += 1
         self.total_attempts += 1
         self.date_last_attempt = date or datetime.utcnow()
-        self.error_message = exception.message
+        if isinstance(exception.message, basestring):
+            self.error_message = exception.message[:ERROR_MESSAGE_LENGTH]
+        else:
+            self.error_message = None
         self.error_type = path_from_object(exception)
         self.error_traceback = "".join(traceback.format_tb(traceb))
 
