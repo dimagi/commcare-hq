@@ -2,7 +2,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.users.models import CouchUser, WebUser
-from custom.succeed.utils import _is_succeed_admin, CONFIG, _is_pm_or_pi
+from custom.succeed.utils import is_succeed_admin, CONFIG, is_pm_or_pi
 
 
 class CareSite(ReportSelectField):
@@ -29,7 +29,7 @@ class ResponsibleParty(ReportSelectField):
         cm = dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager"))
         chw = dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker"))
         options = []
-        if isinstance(user, WebUser) or _is_succeed_admin(user) or _is_pm_or_pi(user):
+        if isinstance(user, WebUser) or is_succeed_admin(user) or is_pm_or_pi(user):
             options = [
                 dict(val='', text=ugettext_noop("All Roles")),
                 dict(val=CONFIG['pm_role'], text=ugettext_noop("Project Manager")),

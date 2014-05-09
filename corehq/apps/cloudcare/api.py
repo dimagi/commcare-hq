@@ -1,4 +1,5 @@
 import json
+from django.utils import html
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from corehq.apps.users.models import CouchUser
@@ -15,7 +16,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
 from touchforms.formplayer.models import EntrySession
-
+from django.core.urlresolvers import reverse
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -381,3 +382,17 @@ def get_open_form_sessions(user, skip=0, limit=10):
         last_activity_date__isnull=False,
         user=user,
     ).order_by('-last_activity_date')[skip:limit]]
+
+
+def get_cloudcare_form_url(domain, app_build_id=None, module_id=None, form_id=None, case_id=None):
+    url_root = reverse("cloudcare_main", args=[domain, ""])
+    url = url_root + "/"
+    if app_build_id != None:
+        url = url + "view/" + str(app_build_id)
+        if module_id != None:
+            url = url + "/" + str(module_id)
+            if form_id != None:
+                url = url + "/" + str(form_id)
+                if case_id != None:
+                    url = url + "/" + str(case_id)
+    return url

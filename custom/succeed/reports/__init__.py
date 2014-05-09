@@ -19,6 +19,7 @@ CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca85
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
+AP2 = ''
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
 
 EMPTY_FIELD = "---"
@@ -26,17 +27,26 @@ EMPTY_FIELD = "---"
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"
 INPUT_DATE_FORMAT = "%Y-%m-%d"
 
-CM_MODULE = 0
-HUD_MODULE = 1
-PD_MODULE = 2
-CHW_MODULE = 3
+CM_APP_CM_MODULE = 0
+CM_APP_HUD_MODULE = 1
+CM_APP_PD_MODULE = 2
+CM_APP_CHW_MODULE = 3
+
+PM_APP_PM_MODULE = 0
+
+CHW_APP_ACHW_MODULE = 0
+CHW_APP_PD_MODULE = 1
+CHW_APP_CHW1_MODULE = 2
+CHW_APP_CHW2_MODULE = 3
+CHW_APP_CM_MODULE = 4
+CHW_APP_MA_MODULE = 5
 
 VISIT_SCHEDULE = [
     {
         'visit_name': _('CM Initial contact form'),
         'xmlns': CM1,
         'days': 5,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'target_date_case_property': 'CM1_form_target'
     },
@@ -44,7 +54,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Medical Record Review'),
         'xmlns': CM2,
         'days': 7,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'target_date_case_property': 'CM2_form_target'
     },
@@ -52,7 +62,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM 1-week Telephone Call'),
         'xmlns': CM3,
         'days': 10,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM3_scheduled_date',
         'target_date_case_property': 'CM3_form_target'
@@ -61,7 +71,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Initial huddle'),
         'xmlns': HUD1,
         'days': 21,
-        'module_idx': HUD_MODULE,
+        'module_idx': CM_APP_HUD_MODULE,
         'show_button': True,
         'target_date_case_property': 'HUD1_form_target'
     },
@@ -69,7 +79,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 1'),
         'xmlns': CHW1,
         'days': 35,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW1_scheduled_date',
         'target_date_case_property': 'CHW1_form_target'
@@ -78,7 +88,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 1'),
         'xmlns': CM4,
         'days': 49,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM4_scheduled_date',
         'target_date_case_property': 'CM4_form_target'
@@ -87,7 +97,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 2'),
         'xmlns': CHW2,
         'days': 100,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW2_scheduled_date',
         'target_date_case_property': 'CHW2_form_target'
@@ -96,7 +106,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 2'),
         'xmlns': CM5,
         'days': 130,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM5_scheduled_date',
         'target_date_case_property': 'CM5_form_target'
@@ -105,7 +115,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW CDSMP tracking'),
         'xmlns': CHW4,
         'days': 135,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW4_scheduled_date',
         'target_date_case_property': 'CHW4_form_target'
@@ -114,7 +124,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 3'),
         'xmlns': CHW2,
         'days': 200,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW2-2_scheduled_date',
         'target_date_case_property': 'CHW2-2_form_target'
@@ -123,12 +133,13 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 3'),
         'xmlns': CM5,
         'days': 250,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',
         'scheduled_source': 'CM5-2_scheduled_date',
         'target_date_case_property': 'CM5-2_form_target'
     },
 ]
+
 
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 
