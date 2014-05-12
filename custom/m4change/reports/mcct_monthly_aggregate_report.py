@@ -5,9 +5,12 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.m4change.constants import FOLLOW_UP_FORMS
+from custom.m4change.models import McctStatus
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import McctMonthlyAggregateFormSqlData
+from couchforms.models import XFormInstance
 
 
 def _get_rows(row_data, form_data, key):
@@ -17,10 +20,10 @@ def _get_rows(row_data, form_data, key):
         if rows.get(key) == None:
             rows[key] = 0
     rows["all_eligible_clients_total"] += \
-        rows["eligible_due_to_registration_total"] + \
-        rows["eligible_due_to_4th_visit_total"] + \
-        rows["eligible_due_to_delivery_total"] + \
-        rows["eligible_due_to_immun_or_pnc_visit_total"]
+        rows["status_eligible_due_to_registration"] + \
+        rows["status_eligible_due_to_4th_visit"] + \
+        rows["status_eligible_due_to_delivery"] + \
+        rows["status_eligible_due_to_immun_or_pnc_visit"]
     rows["all_reviewed_clients_total"] += \
         rows["status_reviewed_due_to_registration"] + \
         rows["status_reviewed_due_to_4th_visit"] + \
@@ -50,6 +53,20 @@ def _get_rows(row_data, form_data, key):
     return rows
 
 
+def _add_eligible_9months(row_data, start_date, end_date, domain):
+    eligible_9months = McctStatus.objects\
+        .filter(domain__exact=domain)\
+        .filter(status__exact="eligible")\
+        .filter(immunized=False)\
+        .filter(is_booking=False)\
+        .filter(received_on__range=(start_date, end_date))
+    forms = [form for form in [XFormInstance.get(status.form_id) for status in eligible_9months]
+             if form.xmlns in FOLLOW_UP_FORMS]
+    forms_4th_visit = [form for form in forms if form.form.get("visits", "") == "4"]
+    row_data["all_eligible_clients_total"]["value"] += len(forms) - len(forms_4th_visit)
+    row_data["status_eligible_due_to_4th_visit"]["value"] += len(forms_4th_visit)
+
+
 class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
@@ -73,7 +90,8 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
 
         domain = config["domain"]
         location_id = config["location_id"]
-        sql_data = McctMonthlyAggregateFormSqlData(domain=domain, datespan=config["datespan"]).data
+        datespan = config["datespan"]
+        sql_data = McctMonthlyAggregateFormSqlData(domain=domain, datespan=datespan).data
         locations = get_location_hierarchy_by_id(location_id, domain, CCT_only=True)
         row_data = McctMonthlyAggregateReport.get_initial_row_data()
 
@@ -83,6 +101,8 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
                 report_rows = _get_rows(row_data, sql_data, key)
                 for key in report_rows:
                     row_data.get(key)["value"] += report_rows.get(key)
+
+        _add_eligible_9months(row_data, datespan.startdate_utc, datespan.enddate_utc, domain)
         return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("s/n"))
 
 
@@ -104,16 +124,16 @@ class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListRe
             "all_paid_clients_total": {
                 "s/n": 5, "label": _("Paid clients for the month"), "value": 0
             },
-            "eligible_due_to_registration_total": {
+            "status_eligible_due_to_registration": {
                 "s/n": 6, "label": _("Eligible clients due to registration"), "value": 0
             },
-            "eligible_due_to_4th_visit_total": {
+            "status_eligible_due_to_4th_visit": {
                 "s/n": 7, "label": _("Eligible clients due to 4th visit"), "value": 0
             },
-            "eligible_due_to_delivery_total": {
+            "status_eligible_due_to_delivery": {
                 "s/n": 8, "label": _("Eligible clients due to delivery"), "value": 0
             },
-            "eligible_due_to_immun_or_pnc_visit_total": {
+            "status_eligible_due_to_immun_or_pnc_visit": {
                 "s/n": 9, "label": _("Eligible clients due to immunization or PNC visit"), "value": 0
             },
             "status_reviewed_due_to_registration": {
