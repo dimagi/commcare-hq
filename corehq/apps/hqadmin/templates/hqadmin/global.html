@@ -1,12 +1,13 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
+{% load hq_shared_tags %}
 {% block page_imports %}
     {% include "imports/datatables.html" %}
 {% endblock %}
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" href="{{STATIC_URL}}reports/css/flot.css">
-    <script src="{{STATIC_URL}}reports/javascripts/flot/jquery.flot.js"></script>
-    <script src="{{STATIC_URL}}reports/javascripts/flot/jquery.flot.selection.js"></script>
+    <link rel="stylesheet" href="{% static 'reports/css/flot.css' %}">
+    <script src="{% static 'reports/javascripts/flot/jquery.flot.js' %}"></script>
+    <script src="{% static 'reports/javascripts/flot/jquery.flot.selection.js' %}"></script>
 
     <script>
         $(document).ready(function() {

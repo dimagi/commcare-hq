@@ -1,19 +1,20 @@
 {% extends "reports/async/default.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block reportcontent %}
     <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }} &nbsp; <a href="{{ patient_case.get_info_url }}" target="_blank">Profile</a></small></h3>
     <small>Observations spanning <strong>visits</strong> during this time</small>
     <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
-            <img src="{{ STATIC_URL }}pact/icons/plus.png">&nbsp;Direct<br>
-            <img src="{{ STATIC_URL }}pact/icons/bucket.png">&nbsp;Pillbox<br>
-            <img src="{{ STATIC_URL }}pact/icons/minus.png">&nbsp;Self Report<br>
-            <img src="{{ STATIC_URL }}pact/icons/warning.png">&nbsp;Conflict<br>
-            <img src="{{ STATIC_URL }}pact/icons/info.png">&nbsp;Notes<br>
+            <img src="{% static 'pact/icons/plus.png' %}">&nbsp;Direct<br>
+            <img src="{% static 'pact/icons/bucket.png' %}">&nbsp;Pillbox<br>
+            <img src="{% static 'pact/icons/minus.png' %}">&nbsp;Self Report<br>
+            <img src="{% static 'pact/icons/warning.png' %}">&nbsp;Conflict<br>
+            <img src="{% static 'pact/icons/info.png' %}">&nbsp;Notes<br>
             <hr>
             <strong>Pillbox</strong><br>
-            <img src="{{ STATIC_URL }}pact/icons/check.jpg">&nbsp; Empty<br>
-            <img src="{{ STATIC_URL }}pact/icons/exclamation-point.jpg">&nbsp;Partial<br>
-            <img src="{{ STATIC_URL }}pact/icons/x-mark.png">&nbsp; Full<br> ' data-original-title="Report Legend">Legend</a>
+            <img src="{% static 'pact/icons/check.jpg' %}">&nbsp; Empty<br>
+            <img src="{% static 'pact/icons/exclamation-point.jpg' %}">&nbsp;Partial<br>
+            <img src="{% static 'pact/icons/x-mark.png' %}">&nbsp; Full<br> ' data-original-title="Report Legend">Legend</a>
     <script>
         $(function ()
         {
@@ -30,7 +31,7 @@
         {{ calendar|safe }}
     {% endfor %}
     </div>
-        <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}pact/stylesheets/dots.css"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'pact/stylesheets/dots.css' %}"/>
 
     <div class="span11">
     <hr>

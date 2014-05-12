@@ -221,9 +221,9 @@
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <style>
         .casexml ul {
             margin-left: 15px;
