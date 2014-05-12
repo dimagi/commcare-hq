@@ -624,7 +624,7 @@ def system_ajax(request):
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
-                if 'name' in traw:
+                if 'name' in traw and traw['name']:
                     traw['name'] = '.'.join(traw['name'].split('.')[-2:])
                 else:
                     traw['name'] = None
