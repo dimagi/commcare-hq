@@ -11,6 +11,7 @@ from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
 # import weasyprint
+from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
 
 
 @require_case_view_permission
@@ -45,6 +46,10 @@ def get_questions_with_answers(forms, domain, report_slug):
         for form in forms:
             form_dict = form.form
             for question in section['questions']:
+                if form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS and question['case_property'] in form_dict['baby_alive_group']:
+                    question['answers'].append(form_dict['baby_alive_group'][question['case_property']])
+                    continue
+
                 if question['case_property'] in form_dict:
                     question['answers'].append(form_dict[question['case_property']])
         for question in section['questions']:
@@ -65,9 +70,11 @@ def get_dict_to_report(domain, case_id, report_slug):
 
     baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
     if baby_case:
-        forms = case.get_forms() + baby_case[0].get_forms()
+        mother_forms = [form for form in case.get_forms() if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
+        baby_forms = [form for form in baby_case[0].get_forms() if form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS]
+        forms = mother_forms + baby_forms
     else:
-        forms = case.get_forms()
+        forms = [form for form in case.get_forms() if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
 
     try:
         user = CommCareUser.get_by_user_id(case.user_id, domain)
