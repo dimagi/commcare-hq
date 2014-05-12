@@ -13,7 +13,11 @@ from fluff.util import metadata as fluff_metadata
 
 logger = logging.getLogger('fluff')
 
-indicator_document_updated = Signal(providing_args=["diff"])
+BACKEND_COUCH = 'COUCH'
+BACKEND_SQL = 'SQL'
+
+indicator_document_updated = Signal(providing_args=["doc_id", "diff", "backend"])
+
 
 class RebuildTableException(Exception):
     pass
