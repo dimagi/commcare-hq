@@ -70,7 +70,7 @@ def import_location(domain, location_type, location_data):
 
     form_data = {}
 
-    parent_id_invalid = check_parent_id(parent_id, domain, location_type)
+    parent_id_invalid = _check_parent_id(parent_id, domain, location_type)
     if parent_id_invalid:
         return parent_id_invalid
 
@@ -130,7 +130,7 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
     )
 
 
-def check_parent_id(parent_id, domain, location_type):
+def _check_parent_id(parent_id, domain, location_type):
     if parent_id:
         try:
             parent_obj = Location.get(parent_id)
@@ -141,6 +141,15 @@ def check_parent_id(parent_id, domain, location_type):
                     parent_id
                 )
             }
+
+        if parent_obj.domain != domain:
+            return {
+                'id': None,
+                'message': _('Parent ID {0} references a location in another project').format(
+                    parent_id
+                )
+            }
+
         parent_relationships = parent_child(domain)
         if invalid_location_type(location_type, parent_obj, parent_relationships):
             return {
