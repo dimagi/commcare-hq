@@ -635,13 +635,7 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
-    'OpmCaseFluff': 'SQL',
     'OpmUserFluff': 'SQL',
-    'OpmFormFluff': 'SQL',
-    'OpmHealthStatusFluff': 'SQL',
-    'OpmHealthStatusBasicInfoFluff': 'SQL',
-    'AncHmisCaseFluff': 'SQL',
-    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
