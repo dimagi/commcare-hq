@@ -809,6 +809,7 @@ def api_history(request, domain):
             "text" : sms.text,
             "timestamp" : tz_utils.adjust_datetime_to_timezone(sms.date, pytz.utc.zone, timezone.zone).strftime("%I:%M%p %m/%d/%y").lower(),
             "utc_timestamp" : json_format_datetime(sms.date),
+            "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
         })
     if last_sms:
         try:
