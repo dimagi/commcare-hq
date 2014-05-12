@@ -7,7 +7,7 @@ from django.conf import settings
 import simplejson
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.dot_data import get_dots_case_json
@@ -40,7 +40,7 @@ class dotsOrderingTests(TestCase):
                 XFormInstance.get_db().delete_doc(doc['doc'])
 
         two_weeks = timedelta(days=14)
-        self.domain = Domain.get_or_create_with_name(PACT_DOMAIN, is_active=True)
+        self.domain = create_domain(PACT_DOMAIN)
         self.domain.date_created = datetime.utcnow() - two_weeks
         self.domain.save()
 
@@ -72,8 +72,6 @@ class dotsOrderingTests(TestCase):
                 'encounter_date': ANCHOR_DATE_B.strftime('%Y-%m-%d'),
                 'anchor_date': ANCHOR_DATE_B.strftime("%d %b %Y")
             }
-
-
 
     def tearDown(self):
         CommCareCase.get_db().delete_doc(CASE_ID)
@@ -146,9 +144,7 @@ class dotsOrderingTests(TestCase):
 
             self._verify_dot_cells(nonart_submissions, art_submissions, examine_day)
 
-
     def _verify_dot_cells(self, nonart_submissions, art_submissions, examine_day):
         for day_dose_idx, time_string in enumerate(['morning', 'evening']):
             self.assertEqual(examine_day[DOT_NONART_IDX][day_dose_idx][0:2], nonart_submissions[day_dose_idx][0:2])
             self.assertEqual(examine_day[DOT_ART_IDX][day_dose_idx][0:2], art_submissions[day_dose_idx][0:2])
-
