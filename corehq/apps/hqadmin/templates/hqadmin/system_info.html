@@ -176,6 +176,13 @@
                 <td>
                     {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
                     <hr>
+                    {% trans "Celery Heartbeat " %}
+                    {% if heartbeat %}
+                        <span class="label label-success">OK</span>
+                    {% else %}
+                        <span class="label label-important">DOWN</span>
+                    {% endif %}
+                    <hr>
                     {{ worker_status }}<br>
                 </td>
                 <td>
