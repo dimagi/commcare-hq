@@ -650,7 +650,6 @@ def preindex_views():
         # no update to env - the actual deploy will do
         # this may break if a new dependency is introduced in preindex
         update_virtualenv(preindex=True)
-        version_static(preindex=True)
 
         sudo((
             'echo "%(virtualenv_root_preindex)s/bin/python '
@@ -658,6 +657,7 @@ def preindex_views():
             '8 %(user)s" --mail | at -t `date -d "5 seconds" '
             '+%%m%%d%%H%%M.%%S`'
         ) % env, user=env.sudo_user)
+        version_static(preindex=True)
 
 
 @roles(*ROLES_ALL_SRC)
