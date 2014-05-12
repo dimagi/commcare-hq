@@ -22,14 +22,11 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     print "synced '%s' in couchdb" % design_name
     if temp:
         # found in the innards of couchdbkit
-        try:
-            view_names = db[docid].get('views', {}).keys()
-            if len(view_names) > 0:
-                print 'Triggering view rebuild'
-                view = '%s/%s' % (design_name_, view_names[0])
-                list(db.view(view, limit=0))
-        except Exception, ex:
-            print "\tError trying to sync couchapp %s, but ignoring %s" % (docid, ex)
+        view_names = db[docid].get('views', {}).keys()
+        if len(view_names) > 0:
+            print 'Triggering view rebuild'
+            view = '%s/%s' % (design_name_, view_names[0])
+            list(db.view(view, limit=0))
 
 
 def copy_designs(db, design_name, temp='tmp', delete=True):
