@@ -57,11 +57,14 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    new_domain = Domain(name=form.cleaned_data['domain_name'],
+    new_domain = Domain(
+        name=form.cleaned_data['domain_name'],
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
-        creating_user=current_user.username)
+        creating_user=current_user.username,
+        secure_submissions=True,
+    )
 
     if form.cleaned_data.get('domain_timezone'):
         new_domain.default_timezone = form.cleaned_data['domain_timezone']
