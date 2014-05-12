@@ -7,6 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import Product, SupplyPointCase
 from decimal import Decimal, InvalidOperation
+from django.utils.translation import ugettext as _
 
 
 class LocationCache(object):
@@ -79,14 +80,14 @@ def import_location(domain, location_type, location_data):
         except ResourceNotFound:
             return {
                 'id': None,
-                'message': "Location with id {0} was not found".format(
+                'message': _("Location with id {0} was not found").format(
                     existing_id
                 )
             }
         if existing.location_type != location_type:
             return {
                 'id': None,
-                'message': "Existing location type error, type of {0} is not {1}".format(
+                'message': _("Existing location type error, type of {0} is not {1}").format(
                     existing.name, location_type
                 )
             }
@@ -136,7 +137,7 @@ def check_parent_id(parent_id, domain, location_type):
         except ResourceNotFound:
             return {
                 'id': None,
-                'message': 'Parent with id {0} does not exist'.format(
+                'message': _('Parent with id {0} does not exist').format(
                     parent_id
                 )
             }
@@ -144,7 +145,7 @@ def check_parent_id(parent_id, domain, location_type):
         if invalid_location_type(location_type, parent_obj, parent_relationships):
             return {
                 'id': None,
-                'message': 'Invalid parent type of {0} for child type {1}'.format(
+                'message': _('Invalid parent type of {0} for child type {1}').format(
                     parent_obj.location_type, location_type)
             }
 
