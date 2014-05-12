@@ -51,10 +51,7 @@ class LocationImportTest(CommTrackTest):
 
         original_count = len(list(Location.by_domain(self.domain.name)))
 
-        try:
-            result = import_location(self.domain.name, 'outlet', data)
-        except Exception as e:
-            self.fail("import_location raised an error: %s" % e)
+        result = import_location(self.domain.name, 'outlet', data)
 
         self.assertEqual(result['id'], None)
         self.assertEqual(len(list(Location.by_domain(self.domain.name))), original_count)
@@ -67,10 +64,7 @@ class LocationImportTest(CommTrackTest):
             'parent_id': 'banana'
         }
 
-        try:
-            result = import_location(self.domain.name, 'outlet', data)
-        except Exception as e:
-            self.fail("import_location raised an error: %s" % e)
+        result = import_location(self.domain.name, 'outlet', data)
 
         self.assertTrue('Parent with id banana does not exist' in result['message'])
 
