@@ -2,6 +2,7 @@ import json
 import logging
 from django.db.models import Count, Q
 from django.utils import html
+import pytz
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
     DeviceLogDevicesFilter,
@@ -23,6 +24,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
+from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
@@ -236,6 +238,12 @@ class DeviceLogDetailsReport(PhonelogReport):
         return self.request_params.get('limit', 100)
 
     @property
+    @memoized
+    def goto_log(self):
+        if self.goto_key:
+            return DeviceReportEntry.objects.get(pk=self.goto_key)
+
+    @property
     def breadcrumbs(self):
         breadcrumbs = None
         if self.errors_only:
@@ -263,20 +271,15 @@ class DeviceLogDetailsReport(PhonelogReport):
                 else "Errors &amp; Warnings Log"
             )
         elif self.goto_key:
-            record_desc = '"%s" at %s' % (
-                self.goto_key[2],
-                tz_utils.string_to_prertty_time(
-                    self.goto_key[-1], self.timezone
-                )
-            )
-            new_title = "Last %s Logs <small>before %s</small>" % (
-                self.limit, record_desc)
+            log = self.goto_log
+            date = adjust_datetime_to_timezone(log.date, from_tz=pytz.utc, to_tz=self.timezone)
+            new_title = "Last %s Logs <small>before %s</small>" % (self.limit, date.strftime("%b %d, %Y %H:%M"))
         return mark_safe(new_title)
 
     @property
     def rows(self):
         if self.goto_key:
-            log = DeviceReportEntry.objects.get(pk=self.goto_key)
+            log = self.goto_log
             assert log.domain == self.domain
             logs = DeviceReportEntry.objects.filter(
                 date__lte=log.date,
