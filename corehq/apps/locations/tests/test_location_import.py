@@ -51,10 +51,7 @@ class LocationImportTest(CommTrackTest):
 
         original_count = len(list(Location.by_domain(self.domain.name)))
 
-        try:
-            result = import_location(self.domain.name, 'outlet', data)
-        except Exception as e:
-            self.fail("import_location raised an error: %s" % e)
+        result = import_location(self.domain.name, 'outlet', data)
 
         self.assertEqual(result['id'], None)
         self.assertEqual(len(list(Location.by_domain(self.domain.name))), original_count)
@@ -67,12 +64,27 @@ class LocationImportTest(CommTrackTest):
             'parent_id': 'banana'
         }
 
-        try:
-            result = import_location(self.domain.name, 'outlet', data)
-        except Exception as e:
-            self.fail("import_location raised an error: %s" % e)
+        result = import_location(self.domain.name, 'outlet', data)
 
         self.assertTrue('Parent with id banana does not exist' in result['message'])
+
+    def test_invalid_parent_domain(self):
+        parent = make_loc('someparent', domain='notright')
+        parent.location_type = 'village'
+        parent.save()
+
+        data = {
+            'name': 'bad parent',
+            'outlet_type': 'SHG',
+            'site_code': 'wat',
+            'parent_id': parent._id,
+        }
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+        result = import_location(self.domain.name, 'outlet', data)
+        self.assertEqual(result['id'], None)
+        self.assertEqual(len(list(Location.by_domain(self.domain.name))), original_count)
+        self.assertTrue('references a location in another project' in result['message'])
 
     def test_updating_existing_location_properties(self):
         parent = make_loc('sillyparents')
