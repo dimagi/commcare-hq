@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
@@ -1024,7 +1025,19 @@ def sms_languages(request, domain):
         "domain": domain,
         "always_deploy": True,
         "sms_langs": tdoc.langs,
+        "bulk_upload": {
+            "action": reverse("upload_sms_translations",
+                              args=(domain,)),
+            "download_url": reverse("download_sms_translations",
+                                    args=(domain,)),
+            "adjective": _("messaging translation"),
+            "plural_noun": _("messaging translations"),
+        },
     }
+    context.update({
+        "bulk_upload_form": get_bulk_upload_form(context),
+    })
+
     return render(request, "sms/languages.html", context)
 
 
@@ -1088,7 +1101,7 @@ def download_sms_translations(request, domain):
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@get_file("file")
+@get_file("bulk_upload_file")
 def upload_sms_translations(request, domain):
     try:
         workbook = WorkbookJSONReader(request.file)

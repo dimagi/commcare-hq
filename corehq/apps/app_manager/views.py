@@ -25,6 +25,7 @@ from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
     questions_in_hierarchy,
@@ -507,6 +508,20 @@ def get_app_view_context(request, app):
         context.update({
             'multimedia': multimedia,
         })
+
+    context.update({
+        'bulk_upload': {
+            'action': reverse('upload_translations',
+                              args=(app.domain, app.get_id)),
+            'download_url': reverse('download_translations',
+                                    args=(app.domain, app.get_id)),
+            'adjective': _(u"U\u200BI translation"),
+            'plural_noun': _(u"U\u200BI translations"),
+        },
+    })
+    context.update({
+        'bulk_upload_form': get_bulk_upload_form(context),
+    })
     return context
 
 
@@ -2341,9 +2356,10 @@ def download_translations(request, domain, app_id):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
-@get_file("file")
+@get_file("bulk_upload_file")
 def upload_translations(request, domain, app_id):
     success = False
     try:
