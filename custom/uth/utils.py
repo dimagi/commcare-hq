@@ -7,6 +7,7 @@ import uuid
 from casexml.apps.case import process_cases
 from couchforms.util import create_and_lock_xform
 from django.core.files.uploadedfile import UploadedFile
+from custom.uth.const import UTH_DOMAIN
 
 
 def all_scan_cases(domain, scanner_serial, scan_id):
@@ -132,9 +133,9 @@ def create_case(case_id, files, patient_case_id=None):
         xform,
         attachments=file_dict,
         process=None,
-        domain='vscan-domain',
+        domain=UTH_DOMAIN,
     )
-    lock.obj.domain = 'vscan-domain'
+    lock.obj.domain = UTH_DOMAIN
 
     return process_cases(lock.obj)
 
@@ -151,8 +152,8 @@ def attach_images_to_case(case_id, files):
         xform,
         attachments=file_dict,
         process=None,
-        domain='vscan-domain',
+        domain=UTH_DOMAIN,
     )
-    lock.obj.domain = 'vscan-domain'
+    lock.obj.domain = UTH_DOMAIN
 
     return process_cases(lock.obj)
