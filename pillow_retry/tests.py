@@ -34,14 +34,14 @@ class PillowRetryTestCase(TestCase):
         error = create_error(message=message, attempts=1)
         self.assertEqual(error.total_attempts, 1)
         self.assertEqual(error.current_attempt, 1)
-        self.assertEqual(error.error_message, message)
+        self.assertTrue(message in error.error_traceback)
         self.assertEqual(error.error_type, 'pillow_retry.tests.ExceptionA')
 
         message = 'ex message2'
         error.add_attempt(*get_ex_tb(message))
         self.assertEqual(error.total_attempts, 2)
         self.assertEqual(error.current_attempt, 2)
-        self.assertEqual(error.error_message, message)
+        self.assertTrue(message in error.error_traceback)
 
     def test_get_or_create(self):
         message = 'abcd'
@@ -52,7 +52,7 @@ class PillowRetryTestCase(TestCase):
         get = PillowError.get_or_create({'id': id}, FakePillow())
         self.assertEqual(get.total_attempts, 2)
         self.assertEqual(get.current_attempt, 2)
-        self.assertEqual(get.error_message, message)
+        self.assertTrue(message in error.error_traceback)
 
         new = PillowError.get_or_create({'id': id}, FakePillow1())
         self.assertIsNone(new.id)

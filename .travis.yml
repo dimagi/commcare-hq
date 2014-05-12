@@ -1,12 +1,12 @@
 language: python
 python:
- - "2.6"
  - "2.7"
 install:
  - "uname -a"
  - "lsb_release -a"
  - "bash -ex .travis/upgrade-couchdb.sh"
  - "curl http://127.0.0.1:5984/"
+ - "psql -c 'create database pillowtop' -U postgres"
  - "pip install -e ."
  - "pip install coverage coveralls"
 script: coverage run `which django-admin.py` test --settings settings
