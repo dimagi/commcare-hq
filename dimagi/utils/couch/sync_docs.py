@@ -1,5 +1,9 @@
+import os
 from couchdbkit import push
 from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.ext.django.loading import couchdbkit_handler
+import sys
+import settings
 
 
 def sync_design_docs(db, design_dir, design_name, temp=None):
@@ -40,3 +44,44 @@ def copy_designs(db, design_name, temp='tmp', delete=True):
 
     except ResourceNotFound:
         print '%s not found.' % (from_id, )
+
+
+def sync(app, verbosity=2, temp=None):
+    """
+    All of this is copied from couchdbkit.ext.django.loading
+
+    but replaces
+    """
+    app_name = app.__name__.rsplit('.', 1)[0]
+    app_labels = set()
+    schema_list = couchdbkit_handler.app_schema.values()
+    for schema_dict in schema_list:
+        for schema in schema_dict.values():
+            app_module = schema.__module__.rsplit(".", 1)[0]
+            if app_module == app_name and not schema._meta.app_label in app_labels:
+                app_labels.add(schema._meta.app_label)
+    for app_label in app_labels:
+        if not app_label in couchdbkit_handler._databases:
+            continue
+        if verbosity >=1:
+            print "sync `%s` in CouchDB" % app_name
+        db = couchdbkit_handler.get_db(app_label)
+
+        app_path = os.path.abspath(os.path.join(sys.modules[app.__name__].__file__, ".."))
+        design_path = "%s/%s" % (app_path, "_design")
+        if not os.path.isdir(design_path):
+            if settings.DEBUG:
+                print >>sys.stderr, "%s don't exists, no ddoc synchronized" % design_path
+            return
+
+        # these lines differ from the original
+        # and simply pass on the responsibility of syncing to our
+        # improved method
+        design_name = app_label
+        design_dir = os.path.join(app_path, "_design")
+        sync_design_docs(
+            db=db,
+            design_dir=design_dir,
+            design_name=design_name,
+            temp=temp,
+        )
