@@ -186,6 +186,7 @@ def send_global_domain_registration_email(requesting_user, domain_name):
     domain_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
     wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
     users_link = 'http://groups.google.com/group/commcare-users'
+    pricing_link = 'http://www.commcarehq.org/software-plans'
 
     message_plaintext = u"""
 Hello {name},
@@ -194,17 +195,24 @@ You have successfully created and activated the project "{domain}" for the CommC
 
 You may access your project by following this link: {domain_link}
 
-Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.
+30 Day Free Trial
 
-Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
+Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans:
+{pricing_link}
+
+Want to learn more?
+
+Check out our tutorials and other documentation on the CommCare Help Site, the home of all CommCare documentation:
 {wiki_link}
 
-If you haven't yet, we also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
+Need Support?
+
+We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe here:
 {users_link}
 
-If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
+If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.
 
-Thank you,
+We hope you enjoy your experience with CommCareHQ!
 
 The CommCareHQ Team
 
@@ -214,17 +222,28 @@ The CommCareHQ Team
 <h1>New project "{domain}" created!</h1>
 <p>Hello {name},</p>
 <p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
-<p>Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.</p>
+<p><h2>30 Day Free Trial</h2></p>
+<p>Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans <a href="{pricing_link}">here</a>.</p>
+<p><h2>Want to learn more?</h2></p>
+<p>Check out our tutorials and other documentation on the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
+<p><h2>Need Support?</h2></p>
+<p>We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe <a href="{users_link}">here</a></p>
+<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.</p>
+<p>We hope you enjoy your experience with CommCareHQ!</p>
+<p>The CommCareHQ Team</p>
 
-<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
-<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
-<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
-<p style="margin-top:1em">Thank you,</p>
-<p><strong>The CommCareHQ Team</strong></p>
 <p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
 {domain_link}
 """
-    params = {"name": requesting_user.first_name, "domain": domain_name, "domain_link": domain_link, "username": requesting_user.email, "wiki_link": wiki_link, "users_link": users_link}
+    params = {
+        "name": requesting_user.first_name,
+        "domain": domain_name,
+        "domain_link": domain_link,
+        "username": requesting_user.email,
+        "wiki_link": wiki_link,
+        "users_link": users_link,
+        "pricing_link": pricing_link,
+    }
     message_plaintext = message_plaintext.format(**params)
     message_html = message_html.format(**params)
 
