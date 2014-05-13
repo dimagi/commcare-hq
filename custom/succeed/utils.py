@@ -25,23 +25,24 @@ def is_succeed_admin(user):
 
 
 def is_pi(user):
-    return True if user.user_data['role'] in [CONFIG['pi_role']] else False
+    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pi_role']] else False
 
 
 def is_cm(user):
-    return True if user.user_data['role'] in [CONFIG['cm_role']] else False
+    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['cm_role']] else False
 
 
 def is_chw(user):
-    return True if user.user_data['role'] in [CONFIG['chw_role']] else False
+    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['chw_role']] else False
 
 
 def is_pm_or_pi(user):
-    return True if user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
+    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
 
 
 def has_any_role(user):
-    return True if user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'], CONFIG['cm_role'], CONFIG['chw_role']] else False
+    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'],
+                                                                      CONFIG['cm_role'], CONFIG['chw_role']] else False
 
 
 def get_form_dict(case, form_xmlns):
