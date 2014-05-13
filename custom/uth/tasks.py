@@ -28,7 +28,7 @@ def async_find_and_attach(upload_id):
     case = match_case(
         upload_doc.scanner_serial,
         upload_doc.scan_id,
-        upload_doc.date
+        # upload_doc.date
     )
 
     if case:

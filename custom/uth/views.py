@@ -17,9 +17,9 @@ from custom.uth.tasks import async_create_case, async_find_and_attach
 def vscan_upload(request, domain, **kwargs):
     scanner_serial = request.POST.get('scanner_serial', None)
     scan_id = request.POST.get('scan_id', None)
-    date = request.POST.get('date', None)
+    # scan_time = request.POST.get('scan_time', None)
 
-    if not (scanner_serial and scan_id and date):
+    if not (scanner_serial and scan_id): # and scan_time):
         response_data = {}
         response_data['result'] = 'failed'
         response_data['message'] = 'Missing required parameters'
@@ -27,6 +27,7 @@ def vscan_upload(request, domain, **kwargs):
         upload = VscanUpload(
             scanner_serial=scanner_serial,
             scan_id=scan_id,
+        #    scan_time=scan_time
         )
         upload.save()
 

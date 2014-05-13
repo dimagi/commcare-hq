@@ -10,16 +10,19 @@ from django.core.files.uploadedfile import UploadedFile
 from custom.uth.const import UTH_DOMAIN
 
 
-def all_scan_cases(domain, scanner_serial, scan_id):
+def all_scan_cases(scanner_serial, scan_id):
+    # it is shown on device and stored on the case with no leading zeroes
+    scan_id = scan_id.lstrip('0')
+
     return get_db().view(
         'uth/uth_lookup',
-        startkey=[domain, scanner_serial, scan_id],
-        endkey=[domain, scanner_serial, scan_id, {}],
+        startkey=[UTH_DOMAIN, scanner_serial, scan_id],
+        endkey=[UTH_DOMAIN, scanner_serial, scan_id, {}],
     ).all()
 
 
-def match_case(domain, scanner_serial, scan_id, date=None):
-    results = all_scan_cases(domain, scanner_serial, scan_id)
+def match_case(scanner_serial, scan_id, date=None):
+    results = all_scan_cases(scanner_serial, scan_id)
 
     if results:
         return CommCareCase.get(results[-1]['value'])
@@ -84,7 +87,7 @@ def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
         'case_id': uuid.uuid4().hex,
         'patient_case_id': patient_case_id,
         'case_attachments': ''.join(case_attachments),
-        'exam_id': 'TODO',
+        'exam_id': exam_uuid,
         'case_name': 'TODO',
     }
 

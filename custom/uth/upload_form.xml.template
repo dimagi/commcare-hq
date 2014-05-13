@@ -11,6 +11,9 @@
     <n0:update>
       <n0:patient_case_id>%(patient_case_id)s</n0:patient_case_id>
     </n0:update>
+    <n0:index>
+      <n0:child_id case_type="child">%(exam_id)s</n0:child_id>
+    </n0:index>
     <n0:attachment>
         %(case_attachments)s
     </n0:attachment>
