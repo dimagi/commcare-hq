@@ -1,6 +1,7 @@
 from calendar import month_name
 from xml.etree import ElementTree
 from datetime import datetime
+from corehq.apps.commtrack.models import CommTrackUser
 from custom.intrahealth import INTRAHEALTH_DOMAINS
 from custom.intrahealth.models import PaymentTracking
 from dimagi.utils.dates import add_months
@@ -61,6 +62,9 @@ def month_fixture(user, version, last_sync):
 
 def payment_fixture(user, version, last_sync):
     if user.domain in INTRAHEALTH_DOMAINS:
+        commtrack_user = CommTrackUser.wrap(user.to_json())
+        sup_ids = [supply_point._id for supply_point in commtrack_user.supply_points]
+
         root = ElementTree.Element('fixture',
                                    attrib={'id': 'intrahealth:payments',
                                            'user_id': user.user_id})
@@ -70,10 +74,8 @@ def payment_fixture(user, version, last_sync):
         for year, month in _recent_months(6):
             # todo: need to figure out how the structure should look for cases within a period
             # semi-working code below
-            payments = PaymentTracking.objects.filter(year=year, month=month)  # todo: should filter by user info somehow tbd
-
-            # need to discuss, if it is a good solution
-            payments_by_user = [payment for payment in payments if CommCareCase.get(getattr(payment, 'case_id')).user_id == user.user_id]
+            payments = PaymentTracking.objects.filter(year=year, month=month)
+            payments_by_user = [payment for payment in payments if getattr(payment, 'case_id') in sup_ids]
             for payment in payments_by_user:
                 payment_el = ElementTree.Element('payment')
                 payment_el.append(_month_id_el(year, month))

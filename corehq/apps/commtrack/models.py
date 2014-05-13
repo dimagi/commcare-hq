@@ -1202,10 +1202,13 @@ class CommTrackUser(CommCareUser):
 
     @property
     def locations(self):
-        mapping = self.get_location_map_case()
+        return [supply_point.location for supply_point in self.supply_points]
 
+    @property
+    def supply_points(self):
+        mapping = self.get_location_map_case()
         if mapping:
-            return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
+            return [SupplyPointCase.wrap(index.referenced_case.to_json()) for index in mapping.indices]
         else:
             return []
 
