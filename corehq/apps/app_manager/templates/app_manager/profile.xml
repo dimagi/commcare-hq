@@ -35,15 +35,15 @@
     </features>
 
     <suite><resource id="suite" version="{{ app.version }}">
-        {% if not is_odk %}
-        <location authority="local">jr://resource/{{ suite_loc }}</location>
-        {% endif %}
+        
+        <location authority="local">./{{ suite_loc }}</location>
+        
         <location authority="remote">{{ suite_url }}</location>
     </resource></suite>
     {% if include_media_suite %}
     <suite><resource id="media-suite" version="{{ app.version }}">
         {% if not is_odk %}
-            <location authority="local">jr://resource/{{ app.media_suite_loc }}</location>
+            <location authority="local">./{{ app.media_suite_loc }}</location>
         {% endif %}
         <location authority="remote">{{ app.media_suite_url }}</location>
     </resource></suite>
