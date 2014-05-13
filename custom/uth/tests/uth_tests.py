@@ -15,7 +15,7 @@ from custom.uth.const import UTH_DOMAIN, UTH_CASE_TYPE
 
 
 class UTHTests(TestCase):
-    def create_scan_case(self, user_id, serial, scan_id, scan_time, scan_uploaded=False):
+    def create_scan_case(self, user_id, serial, scan_id, scan_time, scan_status=''):
         case_id = uuid.uuid4().hex
         case_block = CaseBlock(
             create=True,
@@ -26,9 +26,9 @@ class UTHTests(TestCase):
             owner_id=user_id,
             version=V2,
             update={
-                'scan_id': scan_id,
+                'exam_number': scan_id,
                 'vscan_serial': serial,
-                'scan_uploaded': scan_uploaded,
+                'scan_status': scan_status,
                 'scan_time': scan_time
             }
         ).as_xml(format_datetime=json_format_datetime)
@@ -63,15 +63,15 @@ class ScanLookupTests(UTHTests):
         super(ScanLookupTests, self).setUp()
 
     def testFindsCorrectCase(self):
-        case = utils.match_case(UTH_DOMAIN, 'VH014466XK', '123123', '')
+        case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
     def testWrongScanID(self):
-        case = utils.match_case(UTH_DOMAIN, 'VH014466XK', 'wrong', '')
+        case = utils.match_case('VH014466XK', 'wrong', '')
         self.assertIsNone(case)
 
     def testWrongSerial(self):
-        case = utils.match_case(UTH_DOMAIN, 'wrong', '123123', '')
+        case = utils.match_case('wrong', '123123', '')
         self.assertIsNone(case)
 
     def testGetsNewestWithTwoCases(self):
@@ -90,7 +90,7 @@ class ScanLookupTests(UTHTests):
             '2014-03-22T10:48:49Z'
         )
 
-        case = utils.match_case(UTH_DOMAIN, 'VH014466XK', '123123', '')
+        case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(case_2_id, case._id)
 
     def testGetsNewestBasedOnScanProperty(self):
@@ -102,13 +102,13 @@ class ScanLookupTests(UTHTests):
             'VH014466XK',
             '123123',
             '2014-03-30T10:48:49Z',
-            scan_uploaded=True
+            scan_status='scan_complete'
         )
 
-        case_count = len(utils.all_scan_cases(UTH_DOMAIN, 'VH014466XK', '123123'))
+        case_count = len(utils.all_scan_cases('VH014466XK', '123123'))
         self.assertEqual(1, case_count)
 
-        case = utils.match_case(UTH_DOMAIN, 'VH014466XK', '123123', '')
+        case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
 
 
