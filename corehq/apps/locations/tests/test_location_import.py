@@ -101,6 +101,26 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(existing._id, new_loc._id)
         self.assertEqual(new_loc.parent_id, new_parent._id)
 
+    def test_change_to_invalid_parent(self):
+        parent = make_loc('original parent', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
+
+        new_parent = make_loc('new parent', type='state')
+        data = {
+            'id': existing._id,
+            'name': existing.name,
+            'site_code': 'wat',
+            'outlet_type': 'SHG',
+            'parent_id': new_parent._id,
+        }
+
+        result = import_location(self.domain.name, 'outlet', data)
+        self.assertEqual(None, result['id'])
+        self.assertTrue('Invalid parent type' in result['message'])
+        new_loc = Location.get(existing._id)
+        self.assertEqual(existing._id, new_loc._id)
+        self.assertEqual(new_loc.parent_id, parent._id)
+
     def test_updating_existing_location_properties(self):
         parent = make_loc('sillyparents', type='village')
         existing = make_loc('existingloc', type='outlet', parent=parent)
