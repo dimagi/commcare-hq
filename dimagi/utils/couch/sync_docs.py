@@ -1,5 +1,5 @@
 import os
-from couchdbkit import push
+from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.loading import couchdbkit_handler
 import sys
@@ -26,7 +26,14 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
         if len(view_names) > 0:
             print 'Triggering view rebuild'
             view = '%s/%s' % (design_name_, view_names[0])
-            list(db.view(view, limit=0))
+            while True:
+                try:
+                    list(db.view(view, limit=0))
+                except RequestFailed as e:
+                    if 'timeout' not in e.message:
+                        raise
+                else:
+                    break
 
 
 def copy_designs(db, design_name, temp='tmp', delete=True):
