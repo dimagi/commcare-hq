@@ -25,6 +25,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
@@ -529,12 +530,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     slug = "health_status_report"
     model = HealthStatus
 
-    def passes_filter(self, case):
-        if case.type.upper() == "PREGNANCY":
-            return True
-        else:
-            return False
-
     @property
     def rows(self):
         ret = list(super(HealthStatusReport, self).rows)
@@ -545,18 +540,49 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    @property
-    @memoized
-    def get_users(self):
-        return CommCareUser.by_domain(DOMAIN)
-
     def get_rows(self, dataspan):
-        return self.get_users
+        q = {
+            "query": {
+                "filtered": {
+                    "query": {
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"domain.exact": self.domain}},
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        es_filters = q["query"]["filtered"]["filter"]
+        blocks = self.request.GET.getlist('blocks')
+        if blocks:
+            block_lower = [block.lower() for block in blocks]
+            es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
+        awcs = self.request.GET.getlist('awcs')
+        if awcs:
+            awcs_lower = [awc.lower() for awc in awcs]
+            awc_term = {
+                "or":
+                    [{"and": [{"term": {"user_data.awc": term}} for term in re.split('\s', awc)
+                                if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
+                    } for awc in awcs_lower]
+            }
+            es_filters["bool"]["must"].append(awc_term)
+        q["query"]["filtered"]["query"].update({"match_all": {}})
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+
 
     def get_row_data(self, row):
-        basic_info = OpmHealthStatusBasicInfoSqlData(DOMAIN, row._id, self.datespan)
-        sql_data = OpmHealthStatusSqlData(DOMAIN, row._id, self.datespan)
-        return self.model(row, self, basic_info.data, sql_data.data)
+        if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
+            basic_info = OpmHealthStatusBasicInfoSqlData(DOMAIN, row['_id'], self.datespan)
+            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan)
+        else:
+            raise InvalidRow
+        return self.model(row['_source'], self, basic_info.data, sql_data.data)
 
     @property
     def export_table(self):
@@ -603,7 +629,6 @@ def calculate_total_row(rows):
                     total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
                 else:
                     total_row.append('')
-
     return total_row
 
 class MetReport(BaseReport):
@@ -725,6 +750,13 @@ class HealthMapSource(HealthStatusReport):
     def snapshot(self):
         # Don't attempt to load a snapshot
         return None
+
+
+    #TODO Hot fix - we should change this to ElasticSearch - we working on this
+    @property
+    @memoized
+    def get_users(self):
+        return CommCareUser.by_domain(DOMAIN)
 
     @property
     def gps_mapping(self):

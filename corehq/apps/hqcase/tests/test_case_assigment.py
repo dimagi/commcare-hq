@@ -67,6 +67,14 @@ class CaseAssignmentTest(TestCase):
         self._check_state(new_owner_id=self.primary_user._id,
                           expected_changed=self.all)
 
+    def test_assign_add_property(self):
+        self._make_tree()
+        update = {'reassigned': 'yes'}
+        assign_case(self.primary, self.primary_user._id, include_subcases=True, include_parent_cases=True,
+                    update=update)
+        self._check_state(new_owner_id=self.primary_user._id,
+                          expected_changed=self.all, update=update)
+
     def test_assign_to_group(self):
         group = Group(users=[], name='case-assignment-group', domain=self.domain)
         group.save()
@@ -124,11 +132,14 @@ class CaseAssignmentTest(TestCase):
         for case in self.all:
             self.assertEqual(case.owner_id, self.original_owner._id)
 
-    def _check_state(self, new_owner_id, expected_changed):
+    def _check_state(self, new_owner_id, expected_changed, update=None):
         expected_ids = set(c._id for c in expected_changed)
         for case in expected_changed:
             expected = CommCareCase.get(case._id)
             self.assertEqual(new_owner_id, expected.owner_id)
+            if update:
+                for prop, value in update.items():
+                    self.assertEqual(getattr(expected, prop), value)
         for case in (c for c in self.all if c._id not in expected_ids):
             remaining = CommCareCase.get(case._id)
             self.assertEqual(self.original_owner._id, remaining.owner_id)

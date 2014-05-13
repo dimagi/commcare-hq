@@ -1,17 +1,102 @@
 {% load i18n %}
 
-<script type="text/html" id="stripe-card-ko-template">
+<script type="text/html" id="select-stripe-card-template">
+    <fieldset>
+        <legend>{% trans 'Select Payment Method' %}</legend>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans 'Card' %}
+            </label>
+            <div class="controls">
+                <label class="radio">
+                    <input type="radio"
+                           name="selectedCardType"
+                           data-bind="checked: selectedCardType"
+                           value="saved">
+                    {% trans 'Use a saved card' %}<br />
+                    <p data-bind="visible: isSavedCard">
+                        <select class="input-xlarge"
+                                data-bind="options: savedCards,
+                                           optionsText: 'cardName',
+                                           value: selectedSavedCard"></select>
+                        <button type="button"
+                                class="btn btn-danger"
+                                data-bind="event: {click: confirmRemoveSavedCard}">
+                            <i class="icon-remove"></i>
+                        </button>
+                    </p>
+                    <div class="alert" data-bind="visible: showConfirmRemoveCard">
+                        <p>{% trans 'Actually remove this card?' %}</p>
+                        <button type="button"
+                                class="btn btn-danger"
+                                data-bind="event: {click: removeSavedCard}">
+                            <i class="icon-remove"></i> {% trans 'Yes, Remove' %}
+                        </button>
+                        <button type="button"
+                                class="btn"
+                                data-bind="event: {click: cancelRemoveSavedCard}">
+                            {% trans 'Cancel' %}
+                        </button>
+                    </div>
+                    <div class="alert" data-bind="visible: isRemovingCard">
+                        {% trans 'Removing card...' %}
+                    </div>
+                </label>
+                <label class="radio">
+                    <input type="radio"
+                           name="selectedCardType"
+                           data-bind="checked: selectedCardType"
+                           value="new">
+                    {% trans 'Use a different card' %}
+                </label>
+            </div>
+        </div>
+        <div data-bind="template: {
+                            data: selectedSavedCard,
+                            name: 'saved-stripe-card-ko-template',
+                            if: isSavedCard,
+                        }"></div>
+        <div data-bind="template: {
+                            data: newCard,
+                            name: 'new-stripe-card-ko-template',
+                            if: isNewCard
+                        }"></div>
+    </fieldset>
+</script>
+
+<script type="text/html" id="select-new-stripe-card-template">
     <fieldset>
         <legend>{% trans 'Card Information' %}</legend>
-        <p class="alert alert-error" data-bind="visible: showErrors">
-            <i class="icon-warning-sign"></i>
-            <span data-bind="text: errorMsg"></span>
-        </p>
+        <div data-bind="template: {
+                            data: $data,
+                            name: 'new-stripe-card-ko-template',
+                        }"></div>
+    </fieldset>
+</script>
 
-        <input type="hidden"
-               name="stripeToken"
-               data-bind="value: token" />
+<script type="text/html" id="saved-stripe-card-ko-template">
+    <input type="hidden"
+           name="stripeToken"
+           data-bind="value: token" />
+    <p class="alert alert-success"
+         data-bind="visible: isProcessing">
+        {% blocktrans %}
+        Processing your payment...
+        {% endblocktrans %}
+    </p>
+</script>
 
+<script type="text/html" id="new-stripe-card-ko-template">
+    <p class="alert alert-error" data-bind="visible: showErrors">
+        <i class="icon-warning-sign"></i>
+        <span data-bind="text: errorMsg"></span>
+    </p>
+
+    <input type="hidden"
+           name="stripeToken"
+           data-bind="value: token" />
+
+    <div data-bind="visible: showCardData">
         <div class="control-group">
             <label class="control-label">
                 {% trans 'Card Number' %}
@@ -58,6 +143,10 @@
         </div>
         <div class="control-group">
             <div class="controls">
+                <label class="checkbox">
+                    <input type="checkbox" name="saveCard" />
+                    {% trans 'Save card for later' %}
+                </label>
                 <span class="help-block">
                     <i class="icon-info-sign"></i>
                     {% blocktrans %}
@@ -67,17 +156,17 @@
                 </span>
             </div>
         </div>
+    </div>
 
-        <p class="alert alert-success"
-             data-bind="visible: isProcessing">
-            {% blocktrans %}
-            Processing your payment...
-            {% endblocktrans %}
-        </p>
+    <p class="alert alert-success"
+         data-bind="visible: isProcessing">
+        {% blocktrans %}
+        Processing your payment...
+        {% endblocktrans %}
+    </p>
 
-        <p class="alert alert-info" data-bind="visible: isTestMode">
-            <i class="icon-info-sign"></i>
-            {% trans "Using Stripe's TEST API." %}
-        </p>
-    </fieldset>
+    <p class="alert alert-info" data-bind="visible: isTestMode">
+        <i class="icon-info-sign"></i>
+        {% trans "Using Stripe's TEST API." %}
+    </p>
 </script>

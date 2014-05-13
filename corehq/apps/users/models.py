@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
@@ -318,6 +319,22 @@ class UserRole(Document):
     @classmethod
     def commcareuser_role_choices(cls, domain):
         return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
+
+    @property
+    def ids_of_assigned_users(self):
+        from corehq.apps.api.es import UserES
+        query = {"query": {"bool": {"must": [{"term": {"user.doc_type": "WebUser"}},
+                                             {"term": {"user.domain_memberships.role_id": self.get_id}},
+                                             {"term": {"user.domain_memberships.domain": self.domain}},
+                                             {"term": {"user.is_active": True}},
+                                             {"term": {"user.base_doc": "couchuser"}}],
+                                    }}, "fields": []}
+        query_results = UserES(self.domain).run_query(es_query=query, security_check=False)
+        assigned_user_ids = []
+        for user in query_results['hits'].get('hits', []):
+            assigned_user_ids.append(user['_id'])
+
+        return assigned_user_ids
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
@@ -1119,10 +1136,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
-
         """
         try:
-            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
+            couch_user = cls.wrap_correctly(cache_core.cached_open_doc(cls.get_db(), userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -1657,12 +1673,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return time_zone
 
     def get_language_code(self):
-        try:
-            lang = self.user_data["language_code"]
-        except Exception as e:
-            # Gracefully handle when user_data is None, or does not have a "language_code" entry
-            lang = None
-        return lang
+        if self.user_data and "language_code" in self.user_data:
+            # Old way
+            return self.user_data["language_code"]
+        else:
+            return self.language
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(

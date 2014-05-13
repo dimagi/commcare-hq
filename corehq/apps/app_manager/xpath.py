@@ -12,8 +12,8 @@ def dot_interpolate(string, replacement):
     return re.sub(pattern, repl, string)
 
 
-def session_var(var):
-    return u"instance('commcaresession')/session/data/%s" % var
+def session_var(var, subref=None):
+    return u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var)
 
 
 class XPath(unicode):
@@ -166,3 +166,9 @@ class LedgerSectionXpath(XPath):
 
     def entry(self, id):
         return XPath(self.slash(u'entry').select(u'@id', id, quote=False))
+
+
+class FixtureXpath(XPath):
+
+    def table(self):
+        return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))

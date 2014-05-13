@@ -33,6 +33,7 @@
     {% block pagination_header %}{% endblock %}
     {% block pagination_structure %}
         <div id="editable-paginated-list">
+        {% block paginated_list_top %}{% endblock %}
 
             <div class="row-fluid" data-bind="visible: isLoadingVisible">
                 <div class="span12">

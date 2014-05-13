@@ -75,11 +75,11 @@ def global_keyword_start(v, text, msg, text_words, open_sessions):
                 return False
             process_survey_keyword_actions(v, sk, text[6:].strip(), msg)
         else:
-            message = get_message(MSG_KEYWORD_NOT_FOUND, v, {"keyword": keyword})
+            message = get_message(MSG_KEYWORD_NOT_FOUND, v, (keyword,))
             send_sms_to_verified_number(v, message, metadata=outbound_metadata)
     else:
         message = get_message(MSG_START_KEYWORD_USAGE, v, 
-            {"start_keyword": text_words[0]})
+            (text_words[0],))
         send_sms_to_verified_number(v, message, metadata=outbound_metadata)
     return True
 
@@ -102,7 +102,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
     return True
 
 def global_keyword_unknown(v, text, msg, text_words, open_sessions):
-    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, v, {"keyword": text_words[0]})
+    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, v, (text_words[0],))
     send_sms_to_verified_number(v, message)
     return True
 
@@ -203,7 +203,7 @@ def parse_structured_sms_named_args(args, action, verified_number=None):
             answer_parts = answer.partition(action.named_args_separator)
             if answer_parts[1] != action.named_args_separator:
                 error_msg = get_message(MSG_EXPECTED_NAMED_ARGS_SEPARATOR,
-                    verified_number, {"separator": action.named_args_separator})
+                    verified_number, (action.named_args_separator,))
                 raise StructuredSMSException(response_text=error_msg)
             else:
                 arg_name = answer_parts[0].upper().strip()
@@ -212,7 +212,7 @@ def parse_structured_sms_named_args(args, action, verified_number=None):
                     if xpath in xpath_answer:
                         error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
                             verified_number,
-                            {"arg_name": arg_name})
+                            (arg_name,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     xpath_answer[xpath] = answer_parts[2].strip()
@@ -229,13 +229,13 @@ def parse_structured_sms_named_args(args, action, verified_number=None):
                     if matches > 1:
                         error_msg = get_message(MSG_MULTIPLE_QUESTIONS_MATCH,
                             verified_number,
-                            {"answer": answer})
+                            (answer,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     if v in xpath_answer:
                         error_msg = get_message(MSG_MULTIPLE_ANSWERS_FOUND,
                             verified_number,
-                            {"arg_name": k})
+                            (k,))
                         raise StructuredSMSException(response_text=error_msg)
 
                     xpath_answer[v] = answer[len(k):].strip()
@@ -315,7 +315,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
                     {v: k for k, v in survey_keyword_action.named_args.items()}
             field_name = get_question_id(sse.xformsresponse, xpath_arg)
             error_msg = get_message(MSG_FIELD_DESCRIPTOR, verified_number,
-                {"field_name": field_name})
+                (field_name,))
         error_msg = "%s%s" % (error_msg, sse.response_text)
     except Exception:
         logging.exception("Could not process structured sms for contact %s, "

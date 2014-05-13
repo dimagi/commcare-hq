@@ -1,15 +1,13 @@
+from datetime import date
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from jsonobject import DateTimeProperty
 
-from corehq import Domain
-from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_URLS
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -19,15 +17,13 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
 from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS, \
-    REJECTION_REASON_DISPLAY_NAMES
+    REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
+from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
-from custom.m4change.utils import get_case_by_id, get_user_by_id, get_property, get_form_ids_by_status
+from custom.m4change.utils import get_case_by_id, get_property, get_form_ids_by_status
 from custom.m4change.constants import EMPTY_FIELD
 from corehq.apps.reports.tasks import export_all_rows_task
-
-
-CASE_FORM_SCRIPT_FILTER_NAMESPACES = BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
 
 
 def _get_date_range(range):
@@ -36,8 +32,13 @@ def _get_date_range(range):
         return (dates[0], dates[1])
     return None
 
+def _get_relevant_xmlnss_for_service_type(service_type_filter):
+    relevant_form_types = \
+        MCCT_SERVICE_TYPES[service_type_filter] if service_type_filter else MCCT_SERVICE_TYPES["all"]
+    return filter(None, [form for form in relevant_form_types])
 
-def _get_report_query(start_date, end_date, filtered_case_ids):
+
+def _get_report_query(start_date, end_date, filtered_case_ids, location_ids):
     return {
         "query": {
             "bool": {
@@ -53,15 +54,13 @@ def _get_report_query(start_date, end_date, filtered_case_ids):
                 {"terms": {"form.case.@case_id": filtered_case_ids}},
                 {"script":{
                     "script": """
-                    if (namespaces contains _source.xmlns) {
-                        return true;
-                    } else if (_source.form.?visits != "" && _source.form.?visits >= 1 && _source.form.?visits <= 4) {
+                    if (_source.form.?service_type != "" && _source.form.?location_id != "" && (location_ids contains _source.form.?location_id)) {
                         return true;
                     }
                     return false;
                     """,
                     "params": {
-                        "namespaces": CASE_FORM_SCRIPT_FILTER_NAMESPACES
+                        "location_ids": location_ids
                     }
                 }}
             ]
@@ -77,41 +76,22 @@ def calculate_form_data(self, form):
         case = EMPTY_FIELD
 
     amount_due = EMPTY_FIELD
-    service_type = EMPTY_FIELD
-    visits = form["form"].get("visits")
+    if form["form"].get("registration_amount", None) is not None:
+        amount_due = form["form"].get("registration_amount", None)
+    elif form["form"].get("immunization_amount", None) is not None:
+        amount_due = form["form"].get("immunization_amount", None)
+
+    service_type = form["form"].get("service_type", EMPTY_FIELD)
     form_id = form["_id"]
     location_name = EMPTY_FIELD
     location_parent_name = EMPTY_FIELD
-    location_id = None
+    location_id = form["form"].get("location_id", None)
 
-    if case is not EMPTY_FIELD:
-        user_id = get_property(case, "user_id", EMPTY_FIELD)
-        user = get_user_by_id(user_id)
-        location_id = get_commtrack_location_id(user, Domain.get_by_name(self.domain))
     if location_id is not None:
         location = Location.get(location_id)
         location_name = location.name
         location_parent = location.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
-
-    if form["xmlns"] in IMMUNIZATION_FORMS:
-        service_type = _("Immunization")
-        amount_due = 1000
-    elif form["xmlns"] in BOOKED_AND_UNBOOKED_DELIVERY_FORMS:
-        service_type = _("Delivery")
-        amount_due = 2000
-    elif visits == "1":
-        service_type = _("First Antenatal")
-        amount_due = 1000
-    elif visits == "2":
-        service_type = _("Second Antenatal")
-        amount_due = 300
-    elif visits == "3":
-        service_type = _("Third Antenatal")
-        amount_due = 300
-    elif visits == "4":
-        service_type = _("Fourth Antenatal")
-        amount_due = 400
 
     return {'case': case, 'service_type': service_type, 'location_name': location_name,
             'location_parent_name': location_parent_name, 'amount_due': amount_due, 'form_id': form_id}
@@ -129,7 +109,8 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         fields = [
             AsyncLocationFilter,
             'custom.m4change.fields.DateRangeField',
-            'custom.m4change.fields.CaseSearchField'
+            'custom.m4change.fields.CaseSearchField',
+            ServiceTypeFilter
         ]
 
         base_template = 'm4change/report.html'
@@ -149,17 +130,6 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
             return self.es_response
 
         def _get_filtered_cases(self, start_date, end_date):
-            location_id = self.request.GET.get("location_id")
-            location_ids = get_location_hierarchy_by_id(location_id, self.domain)
-            domain = Domain.get_by_name(self.domain)
-            all_users = CommCareUser.by_domain(self.domain)
-            matching_user_ids = []
-            for user in all_users:
-                if hasattr(user, "user_data") and user.user_data.get("CCT", None) == "true":
-                    user_location_id = get_commtrack_location_id(user, domain)
-                    if user_location_id in location_ids:
-                        matching_user_ids.append(user._id)
-
             query = {
                 "query": {
                     "bool": {
@@ -168,21 +138,16 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                             {"range": {"opened_on.date": {"gt": end_date}}}
                         ]
                     }
-                },
-                "filter": {
-                    "and": [
-                        {"terms": {"user_id": matching_user_ids}}
-                    ]
                 }
             }
 
             case_search = self.request.GET.get("case_search", "")
             if len(case_search) > 0:
-                query["filter"]["and"].append({
-                    "regexp": {
-                        "name.exact": ".*?%s.*?" % case_search
-                    }
-                })
+                query["filter"] = {
+                    "and": [
+                        {"regexp": {"name.exact": ".*?%s.*?" % case_search}}
+                    ]
+                }
 
             es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
             return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
@@ -238,14 +203,20 @@ class McctProjectReview(BaseReport):
                 start_date = dates[0]
                 end_date = dates[1]
             filtered_case_ids = self._get_filtered_cases(start_date, end_date)
-            exclude_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(domain=self.domain)]
-            q = _get_report_query(start_date, end_date, filtered_case_ids)
+            exclude_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(
+                domain=self.domain, received_on__range=(start_date, end_date))
+                                if (mcct_status.status != "eligible" or
+                                    (mcct_status.immunized == False and
+                                    (date.today() - mcct_status.registration_date).days < 272 and
+                                     mcct_status.is_booking == False))]
+            location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
+                                                        CCT_only=True)
+            q = _get_report_query(start_date, end_date, filtered_case_ids, location_ids)
 
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
 
-            allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
-            xmlnss = filter(None, [form for form in allforms])
+            xmlnss = _get_relevant_xmlnss_for_service_type(self.request.GET.get("service_type_filter"))
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
@@ -325,7 +296,9 @@ class McctClientApprovalPage(McctProjectReview):
             if not getattr(self, 'es_response', None):
                 date_tuple = _get_date_range(self.request_params.get('range', None))
                 filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-                q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids)
+                location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
+                                                            CCT_only=True)
+                q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids, location_ids)
 
                 if len(reviewed_form_ids) > 0:
                     q["filter"]["and"].append({"ids": {"values": reviewed_form_ids}})
@@ -440,10 +413,11 @@ class McctClientLogPage(McctProjectReview):
         if not getattr(self, 'es_response', None):
             date_tuple = _get_date_range(self.request_params.get('range', None))
             filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-            q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids)
+            location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
+                                                        CCT_only=True)
+            q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids, location_ids)
 
-            allforms = BOOKING_FORMS + FOLLOW_UP_FORMS + BOOKED_AND_UNBOOKED_DELIVERY_FORMS + IMMUNIZATION_FORMS
-            xmlnss = filter(None, [form for form in allforms])
+            xmlnss = _get_relevant_xmlnss_for_service_type(self.request.GET.get("service_type_filter"))
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 

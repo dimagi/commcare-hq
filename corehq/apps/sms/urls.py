@@ -28,6 +28,10 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', 'sms_settings', name='sms_settings'),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
+    url(r'^languages/$', 'sms_languages', name='sms_languages'),
+    url(r'^languages/edit/$', 'edit_sms_languages', name='edit_sms_languages'),
+    url(r'^translations/download/$', 'download_sms_translations', name='download_sms_translations'),
+    url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',

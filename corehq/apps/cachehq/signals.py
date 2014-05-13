@@ -1,23 +1,15 @@
+from corehq.apps.cachehq.invalidate import invalidate_document
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import couch_user_post_save
-#from corehq.apps.groups.signals import commcare_group_post_save
-
-from corehq.pillows import cacheinvalidate
-
-cache_pillow = cacheinvalidate.CacheInvalidatePillow()
 
 
-def invalidate_cached_domain(sender, **kwargs):
-    cache_pillow.change_trigger({'doc': kwargs['domain'].to_json(), 'id': kwargs['domain']._id})
+def invalidate_cached_domain(sender, domain, **kwargs):
+    invalidate_document(domain)
+
+
+def invalidate_cached_user(sender, couch_user, **kwargs):
+    invalidate_document(couch_user)
+
+
 commcare_domain_post_save.connect(invalidate_cached_domain)
-
-
-def invalidate_cached_user(sender, **kwargs):
-    cache_pillow.change_trigger({'doc': kwargs['couch_user'].to_json(), 'id': kwargs['couch_user']['_id']})
 couch_user_post_save.connect(invalidate_cached_user)
-
-
-def invalidate_cached_group(sender, **kwargs):
-    cache_pillow.change_trigger({'doc': kwargs['group'].to_json(), 'id': kwargs['group']._id})
-# TODO for phase2 cache
-# commcare_group_post_save.connect(invalidate_cached_group)

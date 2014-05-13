@@ -77,6 +77,7 @@
     <div style="display: none;" class="custom_subform" loctype="{{ loc_type }}">
       {% include 'hqstyle/forms/basic_fieldset.html' with form=subform %}
     </div>
+    {% endfor %}
     <input name="metadata" id="metadata-input" type="hidden"/>
     <fieldset>
         <legend>{% trans "Custom Location Data" %}</legend>
@@ -86,7 +87,6 @@
             <div class="controls custom-data-controls"></div>
         </div>
     </fieldset>
-    {% endfor %}
 
     {% if consumption %}
       <legend>{% trans "Default consumption values" %}</legend>

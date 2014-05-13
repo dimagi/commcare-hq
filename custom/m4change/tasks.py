@@ -2,8 +2,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq.apps.locations.models import Location
-from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES
-from custom.m4change.fixtures import get_last_n_months
+from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DOMAINS
+from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 import settings
@@ -14,13 +14,9 @@ def generate_production_fixtures():
 
     db = FixtureReportResult.get_db()
     data_source = M4ChangeReportDataSource()
-    generate_fixtures_for_domain('m4change', db, data_source)
 
-@periodic_task(run_every=crontab(minute="15"), queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
-def generate_test_fixtures():
-    db = FixtureReportResult.get_db()
-    data_source = M4ChangeReportDataSource()
-    generate_fixtures_for_domain('test-pathfinder', db, data_source)
+    for domain in M4CHANGE_DOMAINS:
+        generate_fixtures_for_domain(domain, db, data_source)
 
 def generate_fixtures_for_domain(domain, db, data_source):
     # Remove all FixtureReportResult instances, as they would either be deleted or replaced anyway
@@ -40,6 +36,6 @@ def generate_fixtures_for_domain(domain, db, data_source):
             report_data = data_source.get_data()
 
             for report_slug in report_data:
-                rows = report_data[report_slug].get("data", [])
+                rows = dict(report_data[report_slug].get("data", []))
                 name = report_data[report_slug].get("name")
                 FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(), report_slug, rows, name)

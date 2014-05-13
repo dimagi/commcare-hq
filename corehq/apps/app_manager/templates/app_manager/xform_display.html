@@ -1,14 +1,5 @@
-<ul>
-    {% for question in questions %}
-        <li>
-            {{ question.tag }}: {{ question.label }}
-            <ul>
-                {% for option in question.options %}
-                <li>
-                    {{ option.label }} => {{ option.value }}
-                </li>
-                {% endfor %}
-            </ul>
-        </li>
-    {% endfor %}
-</ul>
+{% extends 'hqwebapp/base.html' %}
+{% load i18n %}
+{% block content %}
+    {% include 'app_manager/xform_display_tree.html' %}
+{% endblock %}

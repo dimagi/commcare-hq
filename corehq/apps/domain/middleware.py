@@ -33,9 +33,10 @@ class CCHQPRBACMiddleware(object):
     def process_request(cls, request):
         if hasattr(request, 'domain'):
             try:
-                plan_version = Subscription.get_subscribed_plan_by_domain(request.domain)[0]
+                plan_version, subscription = Subscription.get_subscribed_plan_by_domain(request.domain)
                 request.role = plan_version.role
                 request.plan = plan_version
+                request.subscription = subscription
                 return None
             except AccountingError:
                 pass

@@ -23,6 +23,9 @@ def get_last_n_months(months):
         ranges.insert(0, (month_start, month_end))
     return ranges
 
+def get_last_month():
+    return get_last_n_months(1)[0]
+
 def get_last_day_of_month(month_start, today):
     return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 
@@ -91,9 +94,10 @@ class ReportFixtureProvider(object):
                 columns_element = ElementTree.Element('columns')
                 rows_element = ElementTree.Element('rows')
 
-                report_rows = report_data.rows
-                for row_key in sorted(report_rows):
-                    row_data = report_rows.get(row_key, {})
+                report_rows = sorted(report_data.rows.items(), key=lambda t: t[1]["hmis_code"]
+                                     if t[1].get("hmis_code", None) is not None else t[1].get("s/n"))
+                for row in report_rows:
+                    row_data = row[1]
                     if not columns_added:
                         for column_key in sorted(row_data):
                             column = ElementTree.Element('column', attrib={

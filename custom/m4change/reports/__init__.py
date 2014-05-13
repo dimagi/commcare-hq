@@ -9,16 +9,17 @@ def validate_report_parameters(parameters, config):
             raise KeyError(_("Parameter '%s' is missing" % parameter))
 
 
-def get_location_hierarchy_by_id(location_id, domain):
+def _is_location_CCT(location):
+    return location.metadata.get("CCT", "").lower() == "true"
+
+
+# A workaround to the problem occurring if a user selects 'All' in the first location filter dropdown
+def get_location_hierarchy_by_id(location_id, domain, CCT_only=False):
     if location_id is None or len(location_id) == 0:
-        # A workaround to the problem occurring if a user selects 'All' in the first location filter dropdown
-        return [location.get_id for location in Location.by_domain(domain)]
+        return [location.get_id for location in Location.by_domain(domain) if not CCT_only or _is_location_CCT(location)]
     else:
         user_location = Location.get(location_id)
-        return [location_id] + [descendant.get_id for descendant in user_location.descendants]
-
-
-def get_CCT_user_ids(domain):
-    users = CommCareUser.by_domain(domain=domain)
-    return tuple(user["_id"] for user in users if hasattr(user, "user_data") and
-                                                  user.user_data.get("CCT", "").lower() == "true")
+        locations = [location.get_id for location in user_location.descendants if not CCT_only or _is_location_CCT(location)]
+        if not CCT_only or _is_location_CCT(user_location):
+            locations.insert(0, user_location.get_id)
+        return locations

@@ -17,6 +17,7 @@ from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.multithreading import process_fast
 from random import randint
 
 METHOD_SMS = "sms"
@@ -230,6 +231,21 @@ class CaseReminderEvent(DocumentSchema):
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
 
+def run_rule(case_id, handler, schedule_changed, prev_definition):
+    case = CommCareCase.get(case_id)
+    try:
+        handler.case_changed(case, schedule_changed=schedule_changed,
+            prev_definition=prev_definition)
+    except ResourceConflict:
+        # Sometimes the reminder fires in the middle of reprocessing
+        # the scheduling.
+        handler.case_changed(case, schedule_changed=schedule_changed,
+            prev_definition=prev_definition)
+
+def retire_reminder(reminder_id):
+    r = CaseReminder.get(reminder_id)
+    r.retire()
+
 class CaseReminderHandler(Document):
     """
     A CaseReminderHandler defines the rules and schedule which govern how messages 
@@ -339,6 +355,7 @@ class CaseReminderHandler(Document):
     ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
     """
     domain = StringProperty()
+    last_modified = DateTimeProperty()
     active = BooleanProperty(default=True)
     case_type = StringProperty()
     nickname = StringProperty()
@@ -443,14 +460,19 @@ class CaseReminderHandler(Document):
             include_docs=True,
         ).one()
 
-    def get_reminders(self):
+    def get_reminders(self, ids_only=False):
         domain = self.domain
         handler_id = self._id
-        return CaseReminder.view('reminders/by_domain_handler_case',
+        include_docs = not ids_only
+        result = CaseReminder.view('reminders/by_domain_handler_case',
             startkey=[domain, handler_id],
             endkey=[domain, handler_id, {}],
-            include_docs=True,
+            include_docs=include_docs,
         ).all()
+        if ids_only:
+            return [entry["id"] for entry in result]
+        else:
+            return result
     
     # For use with event_interpretation = EVENT_AS_SCHEDULE
     def get_current_reminder_event_timestamp(self, reminder, recipient, case):
@@ -909,17 +931,18 @@ class CaseReminderHandler(Document):
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
         send_immediately = params.pop("send_immediately", False)
+        self.last_modified = datetime.utcnow()
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
-                cases = CommCareCase.view('hqcase/types_by_domain',
+                case_id_result = CommCareCase.view('hqcase/types_by_domain',
                     reduce=False,
                     startkey=[self.domain],
                     endkey=[self.domain, {}],
-                    include_docs=True,
                 ).all()
-                for case in cases:
-                    self.case_changed(case, schedule_changed=schedule_changed, prev_definition=prev_definition)
+                case_ids = [entry["id"] for entry in case_id_result]
+                process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
+                    args=(self, schedule_changed, prev_definition))
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
     
@@ -979,10 +1002,10 @@ class CaseReminderHandler(Document):
                     reminder.release_lock()
 
     def retire(self):
-        reminders = self.get_reminders()
+        reminder_ids = self.get_reminders(ids_only=True)
+        process_fast(reminder_ids, retire_reminder, item_goal=100,
+            max_threads=5)
         self.doc_type += "-Deleted"
-        for reminder in reminders:
-            reminder.retire()
         self.save()
 
     def deleted(self):
@@ -997,6 +1020,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     of the CaseReminderHandler.
     """
     domain = StringProperty()                       # Domain
+    last_modified = DateTimeProperty()
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
     user_id = StringProperty()                      # Reference to the CommCareUser who will receive the SMS messages
@@ -1087,7 +1111,11 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def retired(self):
         return self.doc_type.endswith("-Deleted")
-    
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.utcnow()
+        super(CaseReminder, self).save(*args, **kwargs)
+
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()

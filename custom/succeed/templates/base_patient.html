@@ -25,8 +25,10 @@
                             <a href="{{ root_url }}&view=interactions{% if notabs %}&notabs{% endif %}" >{% trans "Patient Interactions" %}</a></li>
                         <li {% if view_mode == "plan" %}class="active"{% endif %}>
                             <a href="{{ root_url }}&view=plan{% if notabs %}&notabs{% endif %}" >{% trans "Care Plan" %}</a></li>
+                        {% if patient_status_access %}
                         <li {% if view_mode == "status" %}class="active"{% endif %}>
                             <a href="{{ root_url }}&view=status{% if notabs %}&notabs{% endif %}" >{% trans "Manage Patient Status" %}</a></li>
+                        {% endif %}
                     {% endblock patient-tab %}
                 </ul>
                 {% block patient-tab-container %}

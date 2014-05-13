@@ -430,10 +430,12 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.reportfixtures.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
+    "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
-    "custom.m4change.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -748,7 +750,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog'],
+            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1062,6 +1064,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1089,6 +1092,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
     'uth-rhd-test',
+    'succeed'
 ]
 
 CUSTOM_MODULES = [
@@ -1139,3 +1143,21 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
+
+# arbitrarily split up tests into three chunks
+# that have approximately equal run times,
+# The two groups shown here, plus a third group consisting of everything else
+TRAVIS_TEST_GROUPS = (
+    (
+        'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
+        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
+    ),
+    (
+        'care_sa', 'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
+        'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',
+        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
+        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
+        'hqadmin', 'hqbilling', 'hqcase', 'hqcouchlog', 'hqmedia',
+    ),
+)

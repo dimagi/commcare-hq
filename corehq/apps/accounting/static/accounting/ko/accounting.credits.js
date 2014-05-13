@@ -1,9 +1,11 @@
-var CreditsManager = function (products, features, paymentHandler, can_purchase_credits) {
+var CreditsManager = function (products, features, paymentHandler, can_purchase_credits, is_plan_trial) {
     'use strict';
     var self = this;
 
     self.products = ko.observableArray();
     self.features = ko.observableArray();
+
+    can_purchase_credits = can_purchase_credits && !is_plan_trial;
 
     self.init = function () {
         _.each(products, function (product) {

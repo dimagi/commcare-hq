@@ -69,16 +69,9 @@ class HealthStatus(object):
 
 
 
-    def __init__(self, worker, report, basic_info=None, sql_data=None):
+    def __init__(self, user, report, basic_info=None, sql_data=None):
 
-        # make sure worker passes the filters
-        report.filter(
-            lambda key: worker.user_data.get(key),
-            # user.awc, user.block
-            [('awc', 'awcs'), ('block', 'blocks')]
-        )
-
-        self.awc = worker.user_data.get('awc', "Invalid AWC name")
+        self.awc = user['user_data']['awc']
         if basic_info:
             ben = basic_info.get('beneficiaries_registered_total', 0)
             child_num = basic_info.get('children_total', 0)
@@ -91,10 +84,10 @@ class HealthStatus(object):
             ben = 0
             child_num = 0
             mother_num = 0
-            self.beneficiaries_registered = format_percent(0, 0)
+            self.beneficiaries_registered = normal_format(0)
             self.pregnant_women = format_percent(0, 0)
             self.mother = format_percent(0, 0)
-            self.children = format_percent(0, 0)
+            self.children = normal_format(0)
 
         if sql_data:
             self.vhnd_monthly = format_percent(sql_data.get('vhnd_monthly_total', 0), calc_percentage(sql_data.get('vhnd_monthly_total', 0), ben))

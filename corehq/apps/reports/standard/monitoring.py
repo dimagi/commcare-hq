@@ -685,7 +685,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     slug = "worker_activity_times"
     is_cacheable = True
 
-    description = ugettext_noop("Graphical representation of when forms are submitted.")
+    description = ugettext_noop("Graphical representation of when forms are "
+                                "completed or submitted.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',

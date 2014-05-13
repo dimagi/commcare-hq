@@ -182,6 +182,50 @@ class ItextNode(object):
         return self.id
 
 
+class ItextOutput(object):
+    def __init__(self, ref):
+        self.ref = ref
+
+    def render(self, context):
+        return context.get(self.ref)
+
+
+class ItextValue(unicode):
+    def __new__(cls, parts):
+        return super(ItextValue, cls).__new__(cls, cls._render(parts))
+
+    def __init__(self, parts):
+        super(ItextValue, self).__init__()
+        self.parts = parts
+        self.context = {}
+
+    def with_refs(self, context, processor=None, escape=None):
+        return self._render(self.parts, context, processor=processor,
+                            escape=escape)
+
+    @classmethod
+    def from_node(cls, node):
+        parts = [node.text or '']
+        for sub in node.findall('*'):
+            if sub.tag_name == 'output':
+                ref = sub.attrib.get('ref') or sub.attrib.get('value')
+                if ref:
+                    parts.append(ItextOutput(ref=ref))
+            parts.append(sub.tail or '')
+        return cls(parts)
+
+    @classmethod
+    def _render(cls, parts, context=None, processor=None, escape=None):
+        escape = escape or (lambda x: x)
+        processor = processor or (lambda x: x if x is not None else '____')
+        context = context or {}
+        return ''.join(
+            processor(part.render(context)) if hasattr(part, 'render')
+            else escape(part)
+            for part in parts
+        )
+
+
 def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
@@ -522,9 +566,8 @@ class XForm(WrappedNode):
             search_tag += '[@form="%s"]' % form
         value_node = text_node.find(search_tag)
 
-        _safe_strip = lambda x: x if isinstance(x, unicode) else str.strip(x)
         if value_node:
-            text = " ____ ".join([t for t in map(_safe_strip, value_node.itertext()) if t])
+            text = ItextValue.from_node(value_node)
         else:
             raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
                 trans_node.attrib.get('lang'), id
@@ -533,6 +576,8 @@ class XForm(WrappedNode):
         return text
 
     def get_label_text(self, prompt, langs, form=None):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_text(prompt.find('..'), langs, form)
         label_node = prompt.find('{f}label')
         label = ""
         if label_node.exists():
@@ -572,7 +617,8 @@ class XForm(WrappedNode):
             langs.append(translation.attrib['lang'])
         return langs
 
-    def get_questions(self, langs, include_triggers=False):
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -588,20 +634,26 @@ class XForm(WrappedNode):
         repeat_contexts = set()
         excluded_paths = set()
 
-        for node_data in self.get_control_nodes(include_triggers=include_triggers):
-            node, path, repeat_context, items, is_leaf = node_data
+        control_nodes = self.get_control_nodes()
+
+        for node, path, repeat, group, items, is_leaf, data_type in control_nodes:
             excluded_paths.add(path)
-            if not is_leaf:
+            if not is_leaf and not include_groups:
                 continue
 
-            if repeat_context is not None:
-                repeat_contexts.add(repeat_context)
+            if node.tag_name == 'trigger' and not include_triggers:
+                continue
+
+            if repeat is not None:
+                repeat_contexts.add(repeat)
 
             question = {
                 "label": self.get_label_text(node, langs),
                 "tag": node.tag_name,
                 "value": path,
-                "repeat": repeat_context,
+                "repeat": repeat,
+                "group": group,
+                "type": data_type,
             }
 
             if items:
@@ -634,34 +686,71 @@ class XForm(WrappedNode):
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
+                    "group": matching_repeat_context,
+                    "type": "DataBindOnly",
                 })
 
         return questions
 
-    def get_control_nodes(self, include_triggers=True):
+    def get_control_nodes(self):
         if not self.exists():
             return []
 
         control_nodes = []
 
-        def for_each_control_node(group, path_context="", repeat_context=None):
+        def for_each_control_node(group, path_context="", repeat_context=None,
+                                  group_context=None):
+            """
+            repeat_context is the path to the last enclosing repeat
+            group_context is the path to the last enclosing group,
+            including repeat groups
+
+            """
             for node in group.findall('*'):
                 is_leaf = False
                 items = None
                 tag = node.tag_name
                 if node.tag_xmlns == namespaces['f'][1:-1] and tag != 'label':
                     path = self.resolve_path(self.get_path(node), path_context)
+                    bind = self.get_bind(path)
+                    data_type = infer_vellum_type(node, bind)
+                    skip = False
+
                     if tag == "group":
-                        for_each_control_node(node, path_context=path, repeat_context=repeat_context)
+                        if node.find('{f}repeat').exists():
+                            skip = True
+                            recursive_kwargs = dict(
+                                group=node,
+                                path_context=path,
+                                repeat_context=repeat_context,
+                                group_context=group_context,
+                            )
+                        else:
+                            recursive_kwargs = dict(
+                                group=node,
+                                path_context=path,
+                                repeat_context=repeat_context,
+                                group_context=path,
+                            )
                     elif tag == "repeat":
-                        for_each_control_node(node, path_context=path, repeat_context=path)
-                    elif include_triggers or tag != 'trigger':
+                        recursive_kwargs = dict(
+                            group=node,
+                            path_context=path,
+                            repeat_context=path,
+                            group_context=path,
+                        )
+                    else:
+                        recursive_kwargs = None
                         is_leaf = True
                         if tag in ("select1", "select"):
                             items = node.findall('{f}item')
 
-                    control_nodes.append(
-                            (node, path, repeat_context, items, is_leaf))
+                    if not skip:
+                        control_nodes.append((node, path, repeat_context,
+                                              group_context, items, is_leaf,
+                                              data_type))
+                    if recursive_kwargs:
+                        for_each_control_node(**recursive_kwargs)
 
         for_each_control_node(self.find('{h}body'))
         return control_nodes
@@ -861,13 +950,16 @@ class XForm(WrappedNode):
         """set the form's version attribute"""
         self.data_node.set('version', "%s" % version)
 
+    def get_bind(self, path):
+        return self.model_node.find('{f}bind[@nodeset="%s"]' % path)
+
     def add_bind(self, **d):
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
         if len(d) > 1:
             bind = _make_elem('bind', d)
-            conflicting = self.model_node.find('{f}bind[@nodeset="%s"]' % bind.attrib['nodeset'])
+            conflicting = self.get_bind(bind.attrib['nodeset'])
             if conflicting.exists():
                 for a in bind.attrib:
                     conflicting.attrib[a] = bind.attrib[a]
@@ -1081,7 +1173,6 @@ class XForm(WrappedNode):
                 raise CaseError("Case type (%s) for form (%s) does not exist" % (action.case_type, form.default_name()))
 
         for action in form.actions.load_update_cases:
-            check_case_type(action)
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
             if action.preload:
                 self.add_casedb()
@@ -1312,7 +1403,7 @@ class XForm(WrappedNode):
                     if not name_path:
                         raise CaseError("Please set 'Name according to question'. "
                                         "This will give each case a 'name' attribute")
-                    name_bind = self.model_node.find('{f}bind[@nodeset="%s"]' % name_path)
+                    name_bind = self.get_bind(name_path)
 
                     if name_bind.exists():
                         name_bind.attrib['required'] = "true()"
@@ -1476,7 +1567,7 @@ class XForm(WrappedNode):
             }))
 
             # add required="true()" to binds of required elements
-            bind = self.model_node.find('{f}bind[@nodeset="%s"]' % self.resolve_path(path))
+            bind = self.get_bind(self.resolve_path(path))
             if not bind.exists():
                 bind = _make_elem('{f}bind', {
                     'nodeset': self.resolve_path(path),
@@ -1659,3 +1750,164 @@ class XForm(WrappedNode):
                 relevance = "%s = '%s'" % (self.resolve_path(form.close_path), 'yes')
                 case_block.add_close_block(relevance)
                 self.data_node.append(case_block.elem)
+
+
+VELLUM_TYPES = {
+    "AndroidIntent": {
+        'tag': 'input',
+        'type': 'intent',
+        'icon': 'icon-vellum-android-intent',
+    },
+    "Audio": {
+        'tag': 'upload',
+        'media': 'audio/*',
+        'type': 'binary',
+        'icon': 'icon-vellum-audio-capture',
+    },
+    "Barcode": {
+        'tag': 'input',
+        'type': 'barcode',
+        'icon': 'icon-vellum-android-intent',
+    },
+    "DataBindOnly": {
+        'icon': 'icon-vellum-variable',
+    },
+    "Date": {
+        'tag': 'input',
+        'type': 'xsd:date',
+        'icon': 'icon-calendar',
+    },
+    "DateTime": {
+        'tag': 'input',
+        'type': 'xsd:datetime',
+        'icon': 'icon-vellum-datetime',
+    },
+    "Double": {
+        'tag': 'input',
+        'type': 'xsd:double',
+        'icon': 'icon-vellum-decimal',
+    },
+    "FieldList": {
+        'tag': 'group',
+        'appearance': 'field-list',
+        'icon': 'icon-reorder',
+    },
+    "Geopoint": {
+        'tag': 'input',
+        'type': 'geopoint',
+        'icon': 'icon-map-marker',
+    },
+    "Group": {
+        'tag': 'group',
+        'icon': 'icon-folder-open',
+    },
+    "Image": {
+        'tag': 'upload',
+        'media': 'image/*',
+        'type': 'binary',
+        'icon': 'icon-camera',
+    },
+    "Int": {
+        'tag': 'input',
+        'type': ('xsd:int', 'xsd:integer'),
+        'icon': 'icon-vellum-numeric',
+    },
+    "Long": {
+        'tag': 'input',
+        'type': 'xsd:long',
+        'icon': 'icon-vellum-long',
+    },
+    "MSelect": {
+        'tag': 'select',
+        'icon': 'icon-vellum-multi-select',
+    },
+    "PhoneNumber": {
+        'tag': 'input',
+        'type': ('xsd:string', None),
+        'appearance': 'numeric',
+        'icon': 'icon-signal',
+    },
+    "Repeat": {
+        'tag': 'repeat',
+        'icon': 'icon-retweet',
+    },
+    "Secret": {
+        'tag': 'secret',
+        'type': ('xsd:string', None),
+        'icon': 'icon-key',
+    },
+    "Select": {
+        'tag': 'select1',
+        'icon': 'icon-vellum-single-select',
+    },
+    "Text": {
+        'tag': 'input',
+        'type': ('xsd:string', None),
+        'icon': "icon-vellum-text",
+    },
+    "Time": {
+        'tag': 'input',
+        'type': 'xsd:time',
+        'icon': 'icon-time',
+    },
+    "Trigger": {
+        'tag': 'trigger',
+        'icon': 'icon-tag',
+    },
+    "Video": {
+        'tag': 'upload',
+        'media': 'video/*',
+        'type': 'binary',
+        'icon': 'icon-facetime-video',
+    },
+}
+
+
+def _index_on_fields(dicts, fields):
+    try:
+        field, other_fields = fields[0], fields[1:]
+    except IndexError:
+        return dicts
+    partition = defaultdict(list)
+    left_over = []
+    for dct in dicts:
+        values = dct.get(field)
+        if not isinstance(values, (tuple, list)):
+            values = [values]
+        for value in values:
+            if value is not None:
+                partition[value].append(dct)
+            else:
+                left_over.append(dct)
+
+    # the index should by default return an index on the rest of the fields
+    # if it doesn't recognize the value accessed for the current field
+    # This is actually important: if <group appearance="poodles"> is a Group;
+    # but <group appearance="field-list"> is a FieldList. Here, "poodles" is
+    # not recognized so it continues searching through dicts that don't care
+    # about the "appearance" field
+    default = _index_on_fields(left_over, other_fields)
+    index = defaultdict(lambda: default)
+    # This line makes the return value more printable for debugging
+    index[None] = default
+    for key in partition:
+        index[key] = _index_on_fields(partition[key], other_fields)
+    return index
+
+
+VELLUM_TYPE_INDEX = _index_on_fields(
+    [{field: value for field, value in (dct.items() + [('name', key)])}
+     for key, dct in VELLUM_TYPES.items()],
+    ('tag', 'type', 'media', 'appearance')
+)
+
+
+def infer_vellum_type(control, bind):
+    tag = control.tag_name
+    data_type = bind.attrib.get('type') if bind else None
+    media_type = control.attrib.get('mediatype')
+    appearance = control.attrib.get('appearance')
+
+    results = VELLUM_TYPE_INDEX[tag][data_type][media_type][appearance]
+    result, = results
+    return result['name']
