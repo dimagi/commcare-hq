@@ -648,16 +648,27 @@ class SuiteGenerator(object):
         for instance in self.get_fixture_instances(module, form):
             yield instance
 
-    def add_case_sharing_assertion(self, entry):
-        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
-        assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
-        assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+    def add_assertion(self, entry, test, locale_id):
+        assertion = Assertion(test=test)
+        assertion.text.append(Text(locale_id=locale_id))
         entry.assertions.append(assertion)
 
-    def add_fixture_auto_select_assertion(self, entry, test):
-        assertion = Assertion(test=test)
-        assertion.text.append(Text(locale_id='case_autoload.exactly_one_fixture'))
-        entry.assertions.append(assertion)
+    def add_case_sharing_assertion(self, entry):
+        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
+
+    def add_auto_select_assertion(self, entry, case_id_xpath, mode):
+        self.add_assertion(
+            entry,
+            "{0} = 1".format(case_id_xpath.count()),
+            'case_autoload.{0}.property_missing'.format(mode)
+        )
+        case_count = CaseIDXPath(case_id_xpath).case().status_open().count()
+        self.add_assertion(
+            entry,
+            "{0} = 1".format(case_count),
+            'case_autoload.{0}.case_missing'.format(mode)
+        )
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -786,28 +797,31 @@ class SuiteGenerator(object):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 if auto_select.mode == AUTO_SELECT_USER:
+                    xpath = session_var(auto_select.value_key, subref='user')
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=session_var(auto_select.value_key, subref='user')
+                        function=xpath
                     ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode)
                 elif auto_select.mode == AUTO_SELECT_CASE:
                     try:
                         ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
                         sess_var = ref.case_session_var
                     except KeyError:
                         raise ValueError("Case tag not found: %s" % auto_select.value_source)
-
+                    xpath = CaseIDXPath(session_var(sess_var)).case().slash(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=CaseIDXPath(session_var(sess_var)).case().slash(auto_select.value_key)
+                        function=xpath
                     ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode)
                 elif auto_select.mode == AUTO_SELECT_FIXTURE:
-                    xpath_base = FixtureXpath(auto_select.value_source).table()
+                    xpath = FixtureXpath(auto_select.value_source).table().slash(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=xpath_base.slash(auto_select.value_key)
+                        function=xpath
                     ))
-                    self.add_fixture_auto_select_assertion(e, "{0} = 1".format(xpath_base.count()))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode)
                 elif auto_select.mode == AUTO_SELECT_RAW:
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
