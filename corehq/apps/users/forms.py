@@ -14,10 +14,15 @@ from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.locations.models import Location
+from corehq.apps.registration.utils import (
+    subscribe_commcare_users,
+    unsubscribe_commcare_users,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import CommTrackUser, Program
+import mailchimp
 import re
 
 # required to translate inside of a mark_safe tag
@@ -65,7 +70,43 @@ class BaseUpdateUserForm(forms.Form):
             existing_user.save()
             is_update_successful = True
 
+        def unsubscribe_user():
+            matching_list_emails = CouchUser.get_db().view(
+                'users/mailing_list_emails',
+                key=existing_user.email,
+            )
+            matching_subscribed_emails = [
+                result
+                for result in matching_list_emails
+                if not CouchUser.get(result['id']).email_opt_out
+            ]
+            if (len(matching_subscribed_emails) == 1 and
+                    matching_subscribed_emails[0]['id'] == existing_user.get_id):
+                try:
+                    unsubscribe_commcare_users(existing_user)
+                except (
+                        mailchimp.ListNotSubscribedError,
+                        mailchimp.ValidationError,
+                ):
+                    pass
+
+        is_email_changed = existing_user.email != self.cleaned_data['email']
+        if is_email_changed:
+            if not existing_user.email_opt_out:
+                unsubscribe_user()
+            existing_user.email = self.cleaned_data['email']
+            existing_user.save()
+
         for prop in self.direct_properties:
+            if prop == 'email_opt_out' and existing_user.email:
+                if self.cleaned_data[prop]:
+                    if not is_email_changed:  # optimization
+                        unsubscribe_user()
+                else:
+                    try:
+                        subscribe_commcare_users(existing_user)
+                    except mailchimp.ListAlreadySubscribedError:
+                        pass
             setattr(existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 

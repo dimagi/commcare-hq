@@ -37,6 +37,15 @@ def subscribe_commcare_users(user):
     )
 
 
+def unsubscribe_commcare_users(user):
+    get_mailchimp_api().lists.unsubscribe(
+        settings.MAILCHIMP_COMMCARE_USERS_ID,
+        {'email': user.email},
+        send_goodbye=False,
+        send_notify=False,
+    )
+
+
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
