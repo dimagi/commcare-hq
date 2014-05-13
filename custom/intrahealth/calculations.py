@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 import logging
 from casexml.apps.case.models import CommCareCase
 from custom.intrahealth import OPERATEUR_XMLNSES, PAYMENT_XMLNSES
@@ -10,7 +10,7 @@ def get_payment_month_from_form(form):
     Given a form, pull out the payment month to use, which is the month
     the form was filled in + 30 days
     """
-    timestamp = form.metadata.timeEnd + timedelta(days=30)
+    timestamp = _safedate(form, 'form/real_date_repeat') + timedelta(days=30)
     return (timestamp.year, timestamp.month)
 
 
@@ -36,6 +36,14 @@ def _safeint(form, xpath):
     except ValueError:
         logging.exception('unable to get {0} from form {0}'.format(xpath, form['_id']))
         return 0
+
+def _safedate(form, xpath):
+    form_date = form.xpath(xpath)
+    if isinstance(form_date, datetime) or isinstance(form_date, date):
+        return form_date
+    else:
+        return datetime.strptime(form_date, "%Y-%m-%d")
+
 
 
 def payment_model_from_form(form):
