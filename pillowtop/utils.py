@@ -1,6 +1,7 @@
+from __future__ import division
 from importlib import import_module
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 from django.utils import importlib
 import pytz
@@ -74,19 +75,24 @@ def get_all_pillows_json():
         checkpoint = pillow.get_checkpoint()
         timestamp = checkpoint.get('timestamp')
         if timestamp:
-            time_since_last = str(datetime.now(tz=pytz.UTC) - parse(timestamp))
+            time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
+            hours_since_last = time_since_last.total_seconds() // 3600
+
             try:
                 # remove microsecond portion
+                time_since_last = str(time_since_last)
                 time_since_last = time_since_last[0:time_since_last.index('.')]
             except ValueError:
                 pass
         else:
             time_since_last = ''
+            hours_since_last = None
         pillows_json.append({
             'name': pillow.__class__.__name__,
             'seq': force_seq_int(checkpoint.get('seq')),
             'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
             'db_seq': force_seq_int(pillow.get_db_seq()),
-            'time_since_last': time_since_last
+            'time_since_last': time_since_last,
+            'hours_since_last': hours_since_last
         })
     return pillows_json
