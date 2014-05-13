@@ -109,9 +109,22 @@
             self.seq = pillow.seq;
             self.db_seq = pillow.db_seq;
             self.time_since_last = pillow.time_since_last;
+            self.status = (function() {
+                var hours = pillow.hours_since_last;
+                switch (true) {
+                    case (hours <= 1):
+                        return 'label-success';
+                    case (hours <= 6):
+                        return 'label-info';
+                    case (hours <= 12):
+                        return 'label-warning';
+                    default:
+                        return 'label-important';
+                }
+            })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-                }
+            }
         }
 
         function PillowtopViewModel() {
@@ -239,7 +252,7 @@
             <tbody data-bind="foreach: pillows">
                 <tr>
                     <td><code data-bind="text: name"></code></td>
-                    <td><code data-bind="text: time_since_last"></code></td>
+                    <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
                     <td>
                         <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
                             <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
