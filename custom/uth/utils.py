@@ -8,6 +8,7 @@ from casexml.apps.case import process_cases
 from couchforms.util import create_and_lock_xform
 from django.core.files.uploadedfile import UploadedFile
 from custom.uth.const import UTH_DOMAIN
+import re
 
 
 def all_scan_cases(scanner_serial, scan_id):
@@ -116,10 +117,17 @@ def render_vscan_xform(case_id, files):
     return final_xml
 
 
-
 def identifier(filename):
-    # TODO fix this
-    return 'attachment' + filename.split('[')[1][:7]
+    """
+    File names are of the format: 09.44.32 hrs __[0000312].jpeg and we need
+    to filter out the 0000312 part to use as identifier
+    """
+    match = re.search('\[(\d+)\]', filename)
+    if match:
+        return 'attachment' + match.group(1)
+    else:
+        # if we can't match, lets hope returning the filename works
+        return filename
 
 
 def create_case(case_id, files, patient_case_id=None):
