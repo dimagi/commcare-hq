@@ -98,7 +98,7 @@ def import_location(domain, location_type, location_data):
                     existing.name, location_type
                 )
             }
-        parent = existing.parent_id
+        parent = parent_id or existing.parent_id
     else:
         existing = None
         parent = parent_id
