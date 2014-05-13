@@ -1203,7 +1203,6 @@ class CommTrackUser(CommCareUser):
     @property
     def locations(self):
         mapping = self.get_location_map_case()
-
         if mapping:
             return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
         else:
