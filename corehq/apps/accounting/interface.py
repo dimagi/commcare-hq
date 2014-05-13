@@ -512,7 +512,7 @@ class InvoiceInterface(GenericTabularReport):
                     '<a href="%s" class="btn">Go to Invoice</a>'
                     % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
             else:
-                column.append(get_address_from_invoice(invoice))
+                column.append(unicode(get_address_from_invoice(invoice)))
             rows.append(column)
         return rows
 

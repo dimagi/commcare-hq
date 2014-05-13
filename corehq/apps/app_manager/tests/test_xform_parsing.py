@@ -1,7 +1,9 @@
 # coding=utf-8
 from unittest2.case import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.app_manager.xform import XForm, XFormError
+from corehq.apps.app_manager.xform import XForm, XFormError, ItextValue, \
+    WrappedNode
+
 
 class XFormParsingTest(TestCase, TestFileMixin):
     file_path = ('data',)
@@ -36,3 +38,39 @@ class XFormParsingTest(TestCase, TestFileMixin):
         original = self.xforms['itext_form']
         original.normalize_itext()
         self.assertXmlEqual(original.render(), self.get_xml('itext_form_normalized'))
+
+
+class ItextValueTest(TestCase):
+    def _test(self, escaped_itext, expected):
+        itext_value = ItextValue.from_node(
+            WrappedNode(
+                '<value xmlns="http://www.w3.org/2002/xforms">%s</value>' % (
+                    escaped_itext
+                )
+            )
+        )
+        self.assertEqual(itext_value, expected)
+
+    def test_simple(self):
+        self._test('This is a test', 'This is a test')
+
+    def test_output_ref_middle(self):
+        self._test('Test <output ref="/data/question1"/> test',
+                   'Test ____ test')
+
+    def test_output_ref_start(self):
+        self._test('<output ref="/data/question1"/> Test test',
+                   '____ Test test')
+
+    def test_output_ref_end(self):
+        self._test('Test test <output ref="/data/question1"/>',
+                   'Test test ____')
+
+    def test_output_value_middle(self):
+        """Test whether @value works as well as @ref"""
+        self._test('Test <output value="/data/question1"/> test',
+                   'Test ____ test')
+
+    def test_whitespace(self):
+        self._test(' Test test  <output ref="/data/question1"/> ',
+                   ' Test test  ____ ')

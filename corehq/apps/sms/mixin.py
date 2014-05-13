@@ -368,7 +368,8 @@ class CommCareMobileContactMixin(object):
 
         return verified.get(strip_plus(phone))
 
-    def validate_number_format(self, phone_number):
+    @classmethod
+    def validate_number_format(cls, phone_number):
         """
         Validates that the given phone number consists of all digits.
 

@@ -24,6 +24,8 @@ from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
@@ -46,6 +48,10 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.util import get_download_context, expose_download
 
+BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
+                         "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
+                         "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
+                         "ultipleusersatonce")
 DEFAULT_USER_LIST_LIMIT = 10
 
 
@@ -669,18 +675,32 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        return {
+        context = {
+            'bulk_upload': {
+                "help_site": {
+                    "address": BULK_MOBILE_HELP_SITE,
+                    "name": _("CommCare Help Site"),
+                },
+                "download_url": reverse(
+                    "download_commcare_users", args=(self.domain,)),
+                "adjective": _("mobile worker"),
+                "plural_noun": _("mobile workers"),
+            },
             'show_secret_settings': self.request.REQUEST.get("secret", False),
         }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
 
-    @method_decorator(get_file)
     def post(self, request, *args, **kwargs):
+        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
         try:
-            self.workbook = WorkbookJSONReader(request.file)
+            self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
             try:
-                csv.DictReader(io.StringIO(request.file.read().decode('ascii'),
+                csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))
                 return HttpResponseBadRequest(
                     "CommCare HQ no longer supports CSV upload. "

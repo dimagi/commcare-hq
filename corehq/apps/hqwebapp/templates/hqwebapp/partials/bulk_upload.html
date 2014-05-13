@@ -1,0 +1,37 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<h2>{% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Upload {{ plural_noun }} Using Excel{% endblocktrans %}</h2>
+<p>
+    <ol>
+        <li>
+            <p>
+                {% blocktrans with adjective=bulk_upload.adjective %}Download your current {{ adjective }} Excel file.{% endblocktrans %}
+            </p>
+            <p>
+                <a href="{{ bulk_upload.download_url }}">
+                    <button class="btn btn-success">
+                        <i class="icon-download-alt"></i> {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Download {{ plural_noun }}{% endblocktrans %}
+                    </button>
+                </a>
+            </p>
+        </li>
+        <li>
+            <p>
+                {% trans "Update the downloaded file." %}
+                {% if bulk_upload.help_site %}
+                    {% blocktrans with address=bulk_upload.help_site.address name=bulk_upload.help_site.name %}
+                        Check the <a href="{{ address }}">{{ name }}</a> for instructions.
+                    {% endblocktrans %}
+                {% endif %}
+            </p>
+        </li>
+        <li>
+            <p>
+                {% trans "Upload your updated file." %}
+            </p>
+            {% crispy bulk_upload_form %}
+        </li>
+    </ol>
+</p>

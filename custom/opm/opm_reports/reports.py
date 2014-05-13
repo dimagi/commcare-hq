@@ -530,12 +530,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     slug = "health_status_report"
     model = HealthStatus
 
-    def passes_filter(self, case):
-        if case.type.upper() == "PREGNANCY":
-            return True
-        else:
-            return False
-
     @property
     def rows(self):
         ret = list(super(HealthStatusReport, self).rows)
@@ -570,9 +564,14 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         awcs = self.request.GET.getlist('awcs')
         if awcs:
             awcs_lower = [awc.lower() for awc in awcs]
-            q["query"]["filtered"]["query"].update({"match":{"_all": {"query": "|".join(awcs_lower)}}})
-        else:
-            q["query"]["filtered"]["query"].update({"match_all": {}})
+            awc_term = {
+                "or":
+                    [{"and": [{"term": {"user_data.awc": term}} for term in re.split('\s', awc)
+                                if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
+                    } for awc in awcs_lower]
+            }
+            es_filters["bool"]["must"].append(awc_term)
+        q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 
@@ -630,7 +629,6 @@ def calculate_total_row(rows):
                     total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
                 else:
                     total_row.append('')
-
     return total_row
 
 class MetReport(BaseReport):
@@ -752,6 +750,13 @@ class HealthMapSource(HealthStatusReport):
     def snapshot(self):
         # Don't attempt to load a snapshot
         return None
+
+
+    #TODO Hot fix - we should change this to ElasticSearch - we working on this
+    @property
+    @memoized
+    def get_users(self):
+        return CommCareUser.by_domain(DOMAIN)
 
     @property
     def gps_mapping(self):

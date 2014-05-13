@@ -1,19 +1,25 @@
 from urllib import urlencode
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 import datetime
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from corehq import Domain, toggles
+from django.utils.translation import ugettext
+from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.accounting.utils import has_subscription_already_ended
-from corehq.apps.users.models import FakeUser
+from corehq.apps.accounting.models import Subscription, Invoice
+from corehq.apps.accounting.utils import (
+    has_subscription_already_ended, get_dimagi_from_email_by_product,
+    fmt_dollar_amount,
+)
+from corehq.apps.users.models import FakeUser, WebUser
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
@@ -47,7 +53,7 @@ def deactivate_subscriptions(based_on_date=None):
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None):
+def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     """
     Generates all invoices for the past month.
     """
@@ -60,24 +66,39 @@ def generate_invoices(based_on_date=None):
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
         domain = Domain.wrap(domain_doc)
-        try:
-            invoice_factory = DomainInvoiceFactory(
-                invoice_start, invoice_end, domain)
-            invoice_factory.create_invoices()
-            logger.info("[BILLING] Sent invoices for domain %s"
+        if (check_existing and
+            Invoice.objects.filter(
+                subscription__subscriber__domain=domain,
+                date_created__gte=today).count() != 0):
+            pass
+        elif is_test:
+            logger.info("[Billing] Ready to create invoice for domain %s"
                         % domain.name)
-        except CreditLineError as e:
-            logger.error(
-                "[BILLING] There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e)
-            )
-        except InvoiceError as e:
-            logger.error(
-                "[BILLING] Could not create invoice for domain %s: %s" % (
-                domain.name, e
-            ))
+        else:
+            try:
+                invoice_factory = DomainInvoiceFactory(
+                    invoice_start, invoice_end, domain)
+                invoice_factory.create_invoices()
+                logger.info("[BILLING] Sent invoices for domain %s"
+                            % domain.name)
+            except CreditLineError as e:
+                logger.error(
+                    "[BILLING] There was an error utilizing credits for "
+                    "domain %s: %s" % (domain.name, e)
+                )
+            except InvoiceError as e:
+                logger.error(
+                    "[BILLING] Could not create invoice for domain %s: %s" % (
+                    domain.name, e
+                ))
+            except Exception as e:
+                logger.error(
+                    "[BILLING] Error occurred while creating invoice for "
+                    "domain %s: %s" % (domain.name, e)
+                )
     # And finally...
-    send_bookkeeper_email()
+    if not is_test:
+        send_bookkeeper_email()
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
@@ -162,7 +183,44 @@ def remind_subscription_ending_30_days(based_on_date=None):
 def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    ending_subscriptions = Subscription.objects.filter(
+        is_trial=False, date_end=date_in_n_days
+    )
     for subscription in ending_subscriptions:
         subscription.send_ending_reminder_email()
 
+
+@task
+def send_purchase_receipt(payment_record, core_product,
+                          template_html, template_plaintext,
+                          additional_context):
+    email = payment_record.payment_method.billing_admin.web_user
+
+    try:
+        web_user = WebUser.get_by_username(email)
+        name = web_user.first_name
+    except ResourceNotFound:
+        logger.error(
+            "[BILLING] Strange. A payment attempt was made by a user that "
+            "we can't seem to find! %s" % email
+        )
+        name = email
+
+    context = {
+        'name': name,
+        'amount': fmt_dollar_amount(payment_record.amount),
+        'project': payment_record.payment_method.billing_admin.domain,
+        'date_paid': payment_record.date_created.strftime('%d %B %Y'),
+        'product': core_product,
+        'transaction_id': payment_record.public_transaction_id,
+    }
+    context.update(additional_context)
+
+    email_html = render_to_string(template_html, context)
+    email_plaintext = render_to_string(template_plaintext, context)
+
+    send_HTML_email(
+        ugettext("Payment Received - Thank You!"), email, email_html,
+        text_content=email_plaintext,
+        email_from=get_dimagi_from_email_by_product(core_product),
+    )

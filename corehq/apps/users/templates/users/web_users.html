@@ -68,6 +68,7 @@
                 userRoles: {{ user_roles|JSON }},
                 defaultRole: {{ default_role|JSON }},
                 saveUrl: '{% url "post_user_role" domain %}',
+                deleteUrl: '{% url "delete_user_role" domain %}',
                 reportOptions: {{ report_list|JSON }},
                 allowEdit: {{ can_edit_roles|BOOL }}
             });
@@ -195,18 +196,34 @@
                         <button class="btn" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
                             <i class="icon-edit"></i>Edit Role
                         </button>
+                        <button class="btn" data-bind="css: {disabled: !$data._id || $data.hasUsersAssigned}, click: $data._id ? $root.setRoleBeingDeleted : null">
+                            <i class="icon-white icon-trash"></i>
+                            Delete Role
+                        </button>
                     </td>
-                    <!--<td>-->
-                        <!--<button class="btn btn-danger" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">-->
-                            <!--<i class="icon-white icon-trash"></i>-->
-                            <!--Delete Role-->
-                        <!--</button>-->
-                    <!--</td>-->
                 </tr>
             </tbody>
         </table>
         {% if can_edit_roles %}
         <button class="btn btn-primary" data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">Add Role</button>
+        <div data-bind="modal: roleBeingDeleted">
+            <div data-bind="with: roleBeingDeleted">
+                <div class="modal-header">
+                    <a class="close" data-bind="click: $root.unsetRoleBeingDeleted">×</a>
+                    <h3 data-bind="text: modalTitle"></h3>
+                </div>
+                <div class="modal-body">
+                    <h4 data-bind="text: modalConfirmation"></h4>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn" data-bind="click: $root.unsetRoleBeingDeleted">Cancel</a>
+                    <!-- Couldn't figure out how else to get the space in there... sorry!!!-->
+                    <div style="display: inline-block; width: 5px"></div>
+                    <span data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></span>
+
+                </div>
+            </div>
+        </div>
         <div data-bind="modal: roleBeingEdited">
             <div data-bind="with: roleBeingEdited">
                 <div class="modal-header">

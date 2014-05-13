@@ -54,6 +54,10 @@
     </script>
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+{% endblock %}
+
 {% block pagination_header %}
     <h3>
         {% blocktrans %}
@@ -153,35 +157,7 @@
         </div>
         <div id="bulk-upload-accordion" class="accordion-body collapse">
             <div class="accordion-inner">
-                <div class="well">
-                    <h4>{% trans 'Steps' %}</h4>
-                    <ol>
-                        <li>
-                            {% blocktrans %}
-                                Download this example file:
-                            {% endblocktrans %}
-                            <a href="{% static 'data_interfaces/files/cases_bulk_example.xlsx' %}">
-                                cases_bulk_example.xlsx
-                            </a>
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                                Add your case identifiers to the case_identifier column.
-                                This can be either a Phone Number, External ID, or Case ID.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                                Upload your file below.
-                            {% endblocktrans %}
-                        </li>
-                    </ol>
-                </div>
-                <form class="form form-horizontal"
-                      enctype="multipart/form-data"
-                      method="post">
-                    {% crispy bulk_upload_from %}
-                </form>
+                {% include "hqwebapp/partials/bulk_upload.html" %}
             </div>
         </div>
     </div>

@@ -15,7 +15,8 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 
 def strip_plus(phone_number):
-    if isinstance(phone_number, basestring) and phone_number[0] == "+":
+    if (isinstance(phone_number, basestring) and len(phone_number) > 0
+        and phone_number[0] == "+"):
         return phone_number[1:]
     else:
         return phone_number
@@ -206,3 +207,10 @@ def get_contact(contact_id):
             raise Exception("Unkown contact type for contact %s" % contact_id)
     return contact
 
+
+def get_backend_by_class_name(class_name):
+    backends = dict([(d.split('.')[-1], d) for d in settings.SMS_LOADED_BACKENDS])
+    backend_path = backends.get(class_name)
+    if backend_path is not None:
+        return to_function(backend_path)
+    return None

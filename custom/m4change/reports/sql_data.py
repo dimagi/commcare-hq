@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import IN
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -59,26 +58,23 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     table_name = "fluff_ProjectIndicatorsCaseFluff"
 
-    def __init__(self, domain, datespan, user_ids):
+    def __init__(self, domain, datespan):
         self.domain = domain
         self.datespan = datespan
-        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date(),
-            user_ids=self.user_ids
+            enddate=self.datespan.enddate_utc.date()
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate",
-            IN("user_id", "user_ids")
+            "date between :startdate and :enddate"
         ]
 
     @property
@@ -237,37 +233,34 @@ class McctMonthlyAggregateFormSqlData(SqlData):
 
     table_name = "fluff_McctMonthlyAggregateFormFluff"
 
-    def __init__(self, domain, datespan, user_ids):
+    def __init__(self, domain, datespan):
         self.domain = domain
         self.datespan = datespan
-        self.user_ids = user_ids
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date(),
-            user_ids=self.user_ids
+            enddate=self.datespan.enddate_utc.date()
         )
 
     @property
     def filters(self):
         return [
             "domain = :domain",
-            "date between :startdate and :enddate",
-            IN("user_id", "user_ids")
+            "date between :startdate and :enddate"
         ]
 
     @property
     def columns(self):
         return [
             DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
-            DatabaseColumn(_("Eligible clients due to registration"), SumColumn("eligible_due_to_registration_total")),
-            DatabaseColumn(_("Eligible clients due to 4th visit"), SumColumn("eligible_due_to_4th_visit_total")),
-            DatabaseColumn(_("Eligible clients due to delivery"), SumColumn("eligible_due_to_delivery_total")),
+            DatabaseColumn(_("Eligible clients due to registration"), SumColumn("status_eligible_due_to_registration")),
+            DatabaseColumn(_("Eligible clients due to 4th visit"), SumColumn("status_eligible_due_to_4th_visit")),
+            DatabaseColumn(_("Eligible clients due to delivery"), SumColumn("status_eligible_due_to_delivery")),
             DatabaseColumn(_("Eligible clients due to immunization or PNC visit"),
-                           SumColumn("eligible_due_to_immun_or_pnc_visit_total")),
+                           SumColumn("status_eligible_due_to_immun_or_pnc_visit")),
             DatabaseColumn(_("Reviewed clients due to registration"), SumColumn("status_reviewed_due_to_registration")),
             DatabaseColumn(_("Reviewed clients due to 4th visit"), SumColumn("status_reviewed_due_to_4th_visit")),
             DatabaseColumn(_("Reviewed clients due to delivery"), SumColumn("status_reviewed_due_to_delivery")),
@@ -278,6 +271,11 @@ class McctMonthlyAggregateFormSqlData(SqlData):
             DatabaseColumn(_("Approved clients due to delivery"), SumColumn("status_approved_due_to_delivery")),
             DatabaseColumn(_("Approved clients due to immunization or PNC visit"),
                            SumColumn("status_approved_due_to_immun_or_pnc_visit")),
+            DatabaseColumn(_("Paid clients due to registration"), SumColumn("status_paid_due_to_registration")),
+            DatabaseColumn(_("Paid clients due to 4th visit"), SumColumn("status_paid_due_to_4th_visit")),
+            DatabaseColumn(_("Paid clients due to delivery"), SumColumn("status_paid_due_to_delivery")),
+            DatabaseColumn(_("Paid clients due to immunization or PNC visit"),
+                           SumColumn("status_paid_due_to_immun_or_pnc_visit")),
             DatabaseColumn(_("Rejected clients due to incorrect phone number"), SumColumn("status_rejected_due_to_incorrect_phone_number")),
             DatabaseColumn(_("Rejected clients due to double entry"), SumColumn("status_rejected_due_to_double_entry")),
             DatabaseColumn(_("Rejected clients due to other errors"), SumColumn("status_rejected_due_to_other_errors"))
@@ -314,6 +312,9 @@ class AllHmisCaseSqlData(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn(_("Newborns with low birth weight discharged - Total"), SumColumn("newborns_low_birth_weight_discharged_total")),
+            DatabaseColumn(_("Newborns with low birth weight discharged - Male"), SumColumn("newborns_low_birth_weight_discharged_male_total")),
+            DatabaseColumn(_("Newborns with low birth weight discharged - Female"), SumColumn("newborns_low_birth_weight_discharged_female_total")),
             DatabaseColumn(_("Pregnant Mothers Referred out"), SumColumn("pregnant_mothers_referred_out_total")),
             DatabaseColumn(_("ANC Anemia test done"), SumColumn("anc_anemia_test_done_total")),
             DatabaseColumn(_("ANC Anemia test positive"), SumColumn("anc_anemia_test_positive_total")),

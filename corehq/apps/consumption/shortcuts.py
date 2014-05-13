@@ -1,5 +1,6 @@
 from decimal import Decimal
 from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT
+from dimagi.utils.couch.cache import cache_core
 
 
 def get_default_consumption(domain, product_id, location_type, case_id):
@@ -9,11 +10,11 @@ def get_default_consumption(domain, product_id, location_type, case_id):
         [domain, product_id, None, None],
         [domain, None, None, None],
     ]
-    results = DefaultConsumption.get_db().view(
-        'consumption/consumption_index',
+
+    results = cache_core.cached_view(DefaultConsumption.get_db(), 'consumption/consumption_index',
         keys=keys, reduce=False, limit=1, descending=True,
     )
-    results = results.one()
+    results = results[0] if results else None
     if results and results['value']:
         return Decimal(results['value'])
     else:

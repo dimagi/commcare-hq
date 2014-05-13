@@ -94,8 +94,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
               'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
-              'custom.apps.crs_reports.fields.SelectASHAField',
-              'custom.apps.crs_reports.fields.SelectPNCStatusField']
+              'custom.apps.crs_reports.fields.SelectASHAField']
 
     ajax_pagination = True
     include_inactive = True
@@ -106,6 +105,38 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @memoized
     def case_es(self):
         return ReportCaseES(self.domain)
+
+    def build_es_query(self, case_type=None, afilter=None, status=None):
+
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
+        subterms = [_domain_term(), afilter] if afilter else [_domain_term()]
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
+
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': {"match_all": {}},
+                    'filter': {'and': subterms}
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+
+        return es_query
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self.build_es_query(case_type=self.case_type, afilter=self.case_filter, status=self.case_status)
+        return self.case_es.run_query(query)
 
     @property
     def headers(self):
@@ -146,12 +177,13 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     def base_filters(self):
         block = self.request_params.get('block', '')
-
+        individual = self.request_params.get('individual', '')
         filters = []
 
         if block:
             filters.append({'term': {'block.#value': block}})
-
+        if individual:
+            filters.append({'term': {'owner_id': individual}})
         return filters
 
     def date_to_json(self, date):
@@ -187,8 +219,4 @@ class HBNCMotherReport(BaseHNBCReport):
                 filters.append(or_stmt)
 
         return {'and': filters} if filters else {}
-
-    @property
-    def user_filter(self):
-        return super(HBNCMotherReport, self).user_filter
 

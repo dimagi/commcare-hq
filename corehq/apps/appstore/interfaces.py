@@ -76,7 +76,7 @@ class CommCareExchangeAdvanced(GenericTabularReport, AppstoreInterface, Datespan
         rows = list()
         data = self._get_data()
         for app in data:
-            rows.append(['<a href="%s">%s</a>' % (reverse('project_info', args=[app.name]),
+            rows.append(['<a href="%s">%s</a>' % (reverse('project_info', args=[app._id]),
                                                   app.copied_from.display_name()),
                          app.organization_title(),
                          app.project_type,

@@ -315,7 +315,7 @@ class SubscriptionForm(forms.Form):
             try:
                 plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
                 self.fields['plan_product'].initial = plan_product
-            except SoftwarePlanVersion.DoesNotExist:
+            except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
                     '<i class="icon-alert-sign"></i> No Product Exists for '
                     'the Plan (update required)'
@@ -1129,6 +1129,8 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError("A slug is required for this new role.")
         if val:
             validate_slug(val)
+        if Role.objects.filter(slug=val).count() != 0:
+            raise ValidationError("Enter a unique role slug.")
         return val
 
     def clean_new_role_name(self):
@@ -1382,19 +1384,32 @@ class TriggerInvoiceForm(forms.Form):
                 record.delete()
             invoice.subscriptionadjustment_set.all().delete()
             invoice.creditadjustment_set.all().delete()
-            invoice.lineitem_set.all().delete()
-            if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                community_sub = invoice.subscription
-                community_sub.subscriptionadjustment_set.all().delete()
-                community_sub.subscriptionadjustment_related.all().delete()
-                community_sub.creditline_set.all().delete()
-                invoice.delete()
-                try:
-                    community_sub.delete()
-                except ProtectedError:
-                    pass
-            else:
-                invoice.delete()
+            try:
+                invoice.lineitem_set.all().delete()
+            except ProtectedError:
+                # this will happen if there were any credits generated.
+                # Leave in for now, as it's just for testing purposes.
+                pass
+            try:
+                # we want to get rid of as many old community subscriptions from that month
+                # as testing will allow.
+                if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                    community_sub = invoice.subscription
+                    community_sub.subscriptionadjustment_set.all().delete()
+                    community_sub.subscriptionadjustment_related.all().delete()
+                    community_sub.creditline_set.all().delete()
+                    invoice.delete()
+                    try:
+                        community_sub.delete()
+                    except ProtectedError:
+                        pass
+                else:
+                    invoice.delete()
+            except ProtectedError:
+                # this will happen for credit lines applied to invoices' line items. We don't
+                # want to throw away the credit lines, as that will affect testing totals
+                invoice.is_hidden = True
+                invoice.save()
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

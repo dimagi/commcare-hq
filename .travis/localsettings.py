@@ -64,6 +64,8 @@ CACHES = {
     }
 }
 
+AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
+
 ELASTICSEARCH_HOST = 'localhost' 
 ELASTICSEARCH_PORT = 9200
 

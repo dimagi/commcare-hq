@@ -1,5 +1,12 @@
 import json
-from corehq.apps.accounting.models import BillingAccountAdmin
+from django.contrib import messages
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext
+from corehq import privileges
+from corehq.apps.accounting.models import (
+    BillingAccountAdmin, DefaultProductPlan,
+)
 from django.http import Http404, HttpResponse
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
@@ -35,10 +42,33 @@ def requires_privilege_with_fallback(slug, **assignment):
     def decorate(fn):
         def wrapped(request, *args, **kwargs):
             try:
+                if (hasattr(request, 'subscription')
+                    and request.subscription is not None
+                    and request.subscription.is_trial
+                    and request.subscription.date_end is not None
+                ):
+                    edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
+                        request.domain, [slug]
+                    )
+                    plan_name = request.subscription.plan_version.user_facing_description['name']
+                    feature_name = privileges.Titles.get_name_from_privilege(slug)
+                    request.show_trial_notice = True
+                    request.trial_info = {
+                        'current_plan': plan_name,
+                        'feature_name': feature_name,
+                        'required_plan': edition_req,
+                        'date_end': request.subscription.date_end.strftime("%d %B %Y")
+                    }
+                    request.is_billing_admin = (hasattr(request, 'couch_user')
+                                                and BillingAccountAdmin.get_admin_status_and_account(
+                                                    request.couch_user, request.domain
+                                                )[0])
+
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
                 )
             except PermissionDenied:
+                request.show_trial_notice = False
                 from corehq.apps.domain.views import SubscriptionUpgradeRequiredView
                 return SubscriptionUpgradeRequiredView().get(
                     request, request.domain, slug

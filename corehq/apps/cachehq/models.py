@@ -1,2 +1,2 @@
-from cachemodels import *
+from .cachemodels import *
 from .signals import *
