@@ -432,7 +432,7 @@ class Test(TestCase):
         )
         current = MockIndicatorsSql(_id='234')
         current.calculate(MockDoc.wrap(doc))
-        current.save_to_sql(self.engine)
+        current.save_to_sql(current.diff(None), self.engine)
         expected = [
             (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
             (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
@@ -460,7 +460,7 @@ class Test(TestCase):
         )
         current = MockIndicatorsSql(_id='234')
         current.calculate(MockDoc.wrap(doc))
-        current.save_to_sql(self.engine)
+        current.save_to_sql(current.diff(None), self.engine)
         expected = [
             (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
             (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
@@ -487,7 +487,7 @@ class Test(TestCase):
         )
         current = MockIndicatorsSqlWithFlatFields(_id='234')
         current.calculate(MockDoc.wrap(doc))
-        current.save_to_sql(self.engine)
+        current.save_to_sql(current.diff(None), self.engine)
         expected = [
             (u'123', date(2012, 9, 24), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
             (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'123', None, None, 2, None, 1, None, None, None),

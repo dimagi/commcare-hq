@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='pillowfluff',
-    version='0.0.3',
+    version='0.0.4',
     description='Map over CouchDB changes feed built to run on Pillowtop',
     author='Dimagi',
     author_email='information@dimagi.com',

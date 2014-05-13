@@ -7,6 +7,7 @@ import sqlalchemy
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
+from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
 try:
@@ -552,9 +553,7 @@ class IndicatorDocument(schema.Document):
         changed = set(o for o in intersect if left[o] != right[o])
         return added | removed | changed
 
-    def save_to_sql(self, engine):
-        diff = self.diff(None)
-
+    def save_to_sql(self, diff, engine):
         if not diff:
             # empty indicator document
             return
@@ -712,10 +711,11 @@ class FluffPillow(PythonPillow):
     def change_transport(self, indicators):
         old_indicator, new_indicator = indicators
 
+        diff = new_indicator.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
-            new_indicator.save_to_sql(self.get_sql_engine())
+            new_indicator.save_to_sql(diff, self.get_sql_engine())
         else:
             new_indicator.save()
-            diff = new_indicator.diff(None)  # pass in None for old_doc to force sending ALL indicators to ctable
-            if diff:
-                indicator_document_updated.send(sender=self, diff=diff)
+
+        backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
+        indicator_document_updated.send(sender=self, doc_id=new_indicator.id, diff=diff, backend=backend)
