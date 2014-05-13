@@ -593,11 +593,15 @@ class FetchProductForProgramListView(EditProgramView):
 
     @property
     def product_data(self):
+        def _scrub(product_doc):
+            product_doc['code'] = product_doc.pop('code_')
+            return product_doc
+
         data = []
         products = Product.by_program_id(domain=self.domain, prog_id=self.program_id, skip=self.skip(),
                 limit=self.limit)
         for p in products:
-            data.append(p._doc)
+            data.append(_scrub(p._doc))
         return data
 
     def get(self, request, *args, **kwargs):
