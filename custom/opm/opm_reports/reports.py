@@ -751,6 +751,13 @@ class HealthMapSource(HealthStatusReport):
         # Don't attempt to load a snapshot
         return None
 
+
+    #TODO Hot fix - we should change this to ElasticSearch - we working on this
+    @property
+    @memoized
+    def get_users(self):
+        return CommCareUser.by_domain(DOMAIN)
+
     @property
     def gps_mapping(self):
         users = self.get_users

@@ -345,7 +345,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
-
     @property
     def domain_type(self):
         """
@@ -618,12 +617,18 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return result
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False):
+    def get_or_create_with_name(cls, name, is_active=False,
+                                secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
         else:
-            new_domain = Domain(name=name, is_active=is_active, date_created=datetime.utcnow())
+            new_domain = Domain(
+                name=name,
+                is_active=is_active,
+                date_created=datetime.utcnow(),
+                secure_submissions=secure_submissions,
+            )
             new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
@@ -789,12 +794,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if self.is_snapshot:
             return self
         else:
-            ignore = ignore if ignore is not None else []
             copy = self.save_copy(ignore=ignore)
             if copy is None:
                 return None
             copy.is_snapshot = True
-            copy.organization = self.organization # i don't think we want this?
             copy.snapshot_time = datetime.now()
             del copy.deployment
             copy.save()

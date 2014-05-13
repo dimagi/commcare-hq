@@ -672,6 +672,7 @@
                 },
                 "case_type": "requisition",
                 "show_product_stock": true,
+                "product_program": "abc123def",
                 "parent_reference_id": "parent"
               }
             ]

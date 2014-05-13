@@ -46,7 +46,7 @@ var PaymentMethodHandler = function (errorMessages) {
     });
 
     self.isSubmitDisabled = ko.computed(function () {
-        return !(!! self.costItem() && self.costItem().isValid()) || self.newCard().isProcessing();
+        return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
     });
 
     self.serverErrorMsg = ko.observable();

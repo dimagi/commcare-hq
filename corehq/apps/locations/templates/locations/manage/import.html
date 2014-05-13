@@ -1,59 +1,10 @@
 {% extends "settings/base_template.html" %}
-{% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
-    <script type="text/javascript">
-        $('form#upload-locations').submit(function(){
-            $(this).find('button[type=submit]').attr('disabled', 'disabled');
-        });
-    </script>
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
 {% endblock %}
 
-
 {% block main_column %}
-    <header>
-        <div class="row-fluid">
-            <div class="span8">
-                <h2>{% trans "Import Locations from Excel" %}</h2>
-            </div>
-        </div>
-    </header>
-
-    <ol>
-        <li>
-            {% trans "Download your current location data: " %}<a href="{% url "location_export" domain %}">{% trans "locations.xlsx" %}</a>
-        </li>
-        <li>
-            {% trans "Update it with the changes you want to make" %}
-        </li>
-        <li>
-            {% trans "To speed up the process, you can remove rows you aren't modifying" %}
-        </li>
-        <li>
-            {% trans "Use the form below to upload your completed file" %}
-        </li>
-    </ol>
-
-    <form class="form-horizontal form-report"
-          method="post"
-          action=""
-          id="upload-locations"
-          enctype="multipart/form-data">
-        <div class="control-group">
-            <label class="control-label" for="file">
-                {% trans "Select a file to upload" %}
-            </label>
-            <div class="controls">
-                <input type="file" name="locs" />
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                {% trans "Import locations" %}
-            </button>
-        </div>
-    </form>
+    {% include "hqwebapp/partials/bulk_upload.html" %}
 {% endblock %}

@@ -315,10 +315,18 @@ class AutoSelectCase(DocumentSchema):
 
 
 class LoadUpdateAction(AdvancedAction):
+    """
+    details_module:     Use the case list configuration from this module to show the cases.
+    preload:            Value from the case to load into the form.
+    auto_select:        Configuration for auto-selecting the case
+    show_product_stock: If True list the product stock using the module's Product List configuration.
+    product_program:    Only show products for this CommTrack program.
+    """
     details_module = StringProperty()
     preload = DictProperty()
     auto_select = SchemaProperty(AutoSelectCase, default=None)
     show_product_stock = BooleanProperty(default=False)
+    product_program = StringProperty()
 
     def get_paths(self):
         for path in super(LoadUpdateAction, self).get_paths():

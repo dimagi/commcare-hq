@@ -1,7 +1,8 @@
-from corehq.apps.users.models import CouchUser
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.helper import FormHelper
 from django.contrib.auth.forms import AuthenticationForm
 from django import forms
-from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -12,5 +13,39 @@ class EmailAuthenticationForm(AuthenticationForm):
         username = self.cleaned_data['username'].lower()
         return username
 
+
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
     username = forms.EmailField(label=_("Username"), max_length=75)
+
+
+class BulkUploadForm(forms.Form):
+    bulk_upload_file = forms.FileField(label="")
+    action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
+
+    def __init__(self, plural_noun, action, *args, **kwargs):
+        super(BulkUploadForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = 'bulk_upload_form'
+        self.helper.form_method = 'post'
+        if action:
+            self.helper.form_action = action
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                crispy.Field(
+                    'bulk_upload_file',
+                    data_bind="value: file",
+                ),
+                crispy.Field(
+                    'action',
+                ),
+            ),
+            StrictButton(
+                ('<i class="icon-cloud-upload"></i> Upload %s'
+                 % plural_noun.title()),
+                css_class='btn-primary',
+                data_bind='disable: !file()',
+                onclick='this.disabled=true;this.form.submit();',
+                type='submit',
+            ),
+        )

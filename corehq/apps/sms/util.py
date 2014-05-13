@@ -15,7 +15,8 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 
 def strip_plus(phone_number):
-    if isinstance(phone_number, basestring) and phone_number[0] == "+":
+    if (isinstance(phone_number, basestring) and len(phone_number) > 0
+        and phone_number[0] == "+"):
         return phone_number[1:]
     else:
         return phone_number

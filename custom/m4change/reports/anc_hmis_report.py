@@ -54,7 +54,7 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
                 report_rows = _get_row(row_data, sql_data, key)
                 for key in report_rows:
                     row_data.get(key)["value"] += report_rows.get(key)
-        return row_data
+        return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("hmis_code"))
 
 
     @classmethod
@@ -125,11 +125,11 @@ class AncHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             "domain": str(self.domain)
         })
 
-        for key in row_data:
+        for row in row_data:
             yield [
-                self.table_cell(row_data.get(key).get("hmis_code")),
-                self.table_cell(row_data.get(key).get("label")),
-                self.table_cell(row_data.get(key).get("value"))
+                self.table_cell(row[1].get("hmis_code")),
+                self.table_cell(row[1].get("label")),
+                self.table_cell(row[1].get("value"))
             ]
 
     @property

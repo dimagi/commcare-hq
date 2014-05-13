@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 
@@ -16,4 +16,19 @@ class FacilityHmisFilter(BaseSingleOptionFilter):
             ("anc", anc_hmis_report.AncHmisReport.name),
             ("immunization", immunization_hmis_report.ImmunizationHmisReport.name),
             ("ld", ld_hmis_report.LdHmisReport.name),
+        ]
+
+class ServiceTypeFilter(BaseSingleOptionFilter):
+    slug = "service_type_filter"
+    label = ugettext_noop("Service type")
+    default_text = None
+
+    @property
+    def options(self):
+        return [
+            ("all", _("All")),
+            ("registration", _("registration")),
+            ("antenatal", _("antenatal")),
+            ("delivery", _("delivery")),
+            ("immunization", _("immunization"))
         ]

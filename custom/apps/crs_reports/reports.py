@@ -94,8 +94,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
               'custom.apps.crs_reports.fields.SelectSubCenterField', # Todo: Currently there is no data about it in case
-              'custom.apps.crs_reports.fields.SelectASHAField',
-              'custom.apps.crs_reports.fields.SelectPNCStatusField']
+              'custom.apps.crs_reports.fields.SelectASHAField']
 
     ajax_pagination = True
     include_inactive = True

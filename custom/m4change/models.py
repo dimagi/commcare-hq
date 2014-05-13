@@ -331,8 +331,13 @@ class McctStatus(models.Model):
         mcct_status_list = McctStatus.objects.filter(domain__in=[name for name in M4CHANGE_DOMAINS])
         for mcct_status in mcct_status_list:
             if mcct_status.status not in status_dict:
-                status_dict[mcct_status.status] = set()
-            status_dict[mcct_status.status].add((mcct_status.form_id, mcct_status.reason))
+                status_dict[mcct_status.status] = list()
+            status_dict[mcct_status.status].append({
+                "form_id": mcct_status.form_id,
+                "reason": mcct_status.reason,
+                "immunized": mcct_status.immunized,
+                "is_booking": mcct_status.is_booking,
+            })
         return status_dict
 
 
@@ -340,10 +345,6 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_form_location_id)
-    eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
-    eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
-    eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()
-    eligible_due_to_immun_or_pnc_visit = mcct_monthly_aggregate_report_calcs.EligibleDueToImmunizationOrPncVisitCalculator()
     status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
@@ -353,6 +354,29 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_form_location_id)
+    newborns_low_birth_weight_discharged = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_male = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "male")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_female = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "female")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
     pregnant_mothers_referred_out = all_hmis_report_calcs.FormComparisonCalculator(
         [("client_status", operator.eq, "referred_out")], ALL_HMIS_CASE_FLUFF_FORMS
     )

@@ -24,12 +24,24 @@
             ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
         });
 
+        paginatedListModel.showUnpaidBills = ko.observable(true);
+        paginatedListModel.showAllBills = ko.computed(function () {
+            return ! paginatedListModel.showUnpaidBills();
+        });
+        paginatedListModel.toggleUnpaidBills = function () {
+            paginatedListModel.showUnpaidBills(!paginatedListModel.showUnpaidBills());
+            paginatedListModel.currentPage(1);
+            paginatedListModel.refreshList();
+        };
+
         paginatedListModel.getAdditionalData = function () {
-            if (window.location.href.split('?').length < 2)
-                return null;
-            return {
-                'show_hidden': _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true')
+            var additiona_data = {
+                'show_unpaid': paginatedListModel.showUnpaidBills()
+            };
+            if (window.location.href.split('?').length > 2) {
+                additiona_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
             }
+            return additiona_data;
         };
         paginatedListModel.initRow = function (rowElems, paginatedItem) {
             var paymentButton = $(rowElems).find('.payment-button');
@@ -48,42 +60,47 @@
     </script>
 {% endblock %}
 
-{% block pagination_header %}
-    <h2>{% trans 'Billing Statements' %}</h2>
+{% block paginated_list_top %}
+    <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
+    <p>
+        <button type="button"
+                class="btn btn-primary"
+                data-bind="event: {click: toggleUnpaidBills},
+                           visible: showAllBills">
+            {% trans 'Show Only Unpaid Statements' %}
+        </button>
+        <button type="button"
+                class="btn btn-primary"
+                data-bind="event: {click: toggleUnpaidBills},
+                           visible: showUnpaidBills">
+            {% trans 'Show All Statements' %}
+        </button>
+    </p>
 {% endblock %}
 
 {% block pagination_templates %}
     <script type="text/html" id="statement-row-template">
         <td class="span2" data-bind="text: invoice_number"></td>
         <td class="span2" data-bind="text: plan.name"></td>
-        <td class="span2" data-bind="text: start"></td>
-        <td class="span2" data-bind="text: end"></td>
+        <td class="span3">
+            <span data-bind="text: start"></span> - <span data-bind="text: end"></span>
+        </td>
+        <td class="span1" data-bind="text: date_due"></td>
         <td class="span2">
+            <span data-bind="text: payment_status, attr: {class: payment_class}"></span>
             <!-- ko if: canMakePayment -->
-            <p class="alert alert-info"
-               style="margin-bottom: 2px;"
-               data-bind="text: payment_status"></p>
             <button type="button"
                     class="btn btn-success payment-button"
                     data-toggle="modal"
                     data-target="#paymentModal">
                 {% trans 'Make Payment' %}
             </button>
-            <div class="hide" class="payment-due-data">
-                <div class="control-group">
-                    <label class="control-label">
-                        {% trans 'Payment Amount' %}
-                    </label>
-                </div>
-            </div>
-            <!-- /ko -->
-            <!-- ko ifnot: canMakePayment -->
-            <p data-bind="text: payment_status"></p>
             <!-- /ko -->
         </td>
         <td class="span2">
             <a class="btn btn-primary"
-               data-bind="attr: { href: pdfUrl }">{% trans 'Download' %}</a>
+               data-bind="attr: { href: pdfUrl }"
+               target="_blank">{% trans 'Download' %}</a>
         </td>
     </script>
 

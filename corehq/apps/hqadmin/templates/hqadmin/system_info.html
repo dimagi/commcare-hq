@@ -108,9 +108,23 @@
             self.name = pillow.name;
             self.seq = pillow.seq;
             self.db_seq = pillow.db_seq;
+            self.time_since_last = pillow.time_since_last;
+            self.status = (function() {
+                var hours = pillow.hours_since_last;
+                switch (true) {
+                    case (hours <= 1):
+                        return 'label-success';
+                    case (hours <= 6):
+                        return 'label-info';
+                    case (hours <= 12):
+                        return 'label-warning';
+                    default:
+                        return 'label-important';
+                }
+            })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-                }
+            }
         }
 
         function PillowtopViewModel() {
@@ -176,6 +190,13 @@
                 <td>
                     {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
                     <hr>
+                    {% trans "Celery Heartbeat " %}
+                    {% if heartbeat %}
+                        <span class="label label-success">OK</span>
+                    {% else %}
+                        <span class="label label-important">DOWN</span>
+                    {% endif %}
+                    <hr>
                     {{ worker_status }}<br>
                 </td>
                 <td>
@@ -222,6 +243,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Time since last checkpoint</th>
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
@@ -230,6 +252,7 @@
             <tbody data-bind="foreach: pillows">
                 <tr>
                     <td><code data-bind="text: name"></code></td>
+                    <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
                     <td>
                         <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
                             <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>

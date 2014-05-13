@@ -1,5 +1,4 @@
 import fluff
-from casexml.apps.case.models import CommCareCase
 from custom.m4change.constants import PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, \
     BOOKING_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
 
@@ -16,7 +15,7 @@ class Anc4VisitsCalculator(fluff.Calculator):
     def total(self, form):
         if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS:
             visits = form.form.get("visits", "")
-            if len(visits) > 0 and visits.isdigit() and int(visits) >= 4:
+            if len(visits) > 0 and visits.isdigit() and int(visits) == 4:
                 yield [form.received_on.date(), 1]
 
 

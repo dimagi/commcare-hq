@@ -790,6 +790,8 @@ class MessagingTab(UITab):
                 (_("Settings"), [
                     {'title': ugettext_lazy("General Settings"),
                      'url': reverse('sms_settings', args=[self.domain])},
+                    {'title': ugettext_lazy("Languages"),
+                     'url': reverse('sms_languages', args=[self.domain])},
                 ])
             )
 

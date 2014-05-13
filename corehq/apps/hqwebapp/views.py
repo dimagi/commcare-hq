@@ -427,6 +427,12 @@ def bug_report(req):
         cc=cc
     )
 
+    uploaded_file = req.FILES.get('report_issue')
+    if uploaded_file:
+        filename = uploaded_file.name
+        content = uploaded_file.read()
+        email.attach(filename=filename, content=content)
+
     # only fake the from email if it's an @dimagi.com account
     if re.search('@dimagi\.com$', report['username']):
         email.from_email = report['username']
@@ -720,6 +726,7 @@ class CRUDPaginatedViewMixin(object):
         return {
             'success': True,
             'currentPage': self.page,
+            'total': self.total,
             'paginatedList': list(self.paginated_list),
         }
 
@@ -747,6 +754,7 @@ class CRUDPaginatedViewMixin(object):
         return {
             'success': True,
             'currentPage': self.page,
+            'total': self.total,
             'paginatedList': list(self.paginated_list),
         }
 

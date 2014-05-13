@@ -20,6 +20,6 @@ def get_location_hierarchy_by_id(location_id, domain, CCT_only=False):
     else:
         user_location = Location.get(location_id)
         locations = [location.get_id for location in user_location.descendants if not CCT_only or _is_location_CCT(location)]
-        if CCT_only and not _is_location_CCT(user_location):
-            locations.remove(0)
+        if not CCT_only or _is_location_CCT(user_location):
+            locations.insert(0, user_location.get_id)
         return locations

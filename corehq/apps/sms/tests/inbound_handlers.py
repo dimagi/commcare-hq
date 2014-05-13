@@ -329,7 +329,7 @@ class KeywordTestCase(TouchformsTestCase):
 
         def get_field_and_message(field_name, msg_id):
             msg1 = get_message(MSG_FIELD_DESCRIPTOR,
-                context={"field_name": field_name})
+                context=(field_name,))
             msg2 = get_message(msg_id)
             return "%s%s" % (msg1, msg2)
 
@@ -564,11 +564,11 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertNoNewSubmission(form)
 
         incoming("999123", "mod_ss_3,pid1235,arm a", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_EXPECTED_NAMED_ARGS_SEPARATOR, context={"separator":"="}))
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_EXPECTED_NAMED_ARGS_SEPARATOR, context=("=",)))
         self.assertNoNewSubmission(form)
 
         incoming("999123", "mod_ss_3,pid1235,arm=a,arm=b", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_MULTIPLE_ANSWERS_FOUND, context={"arg_name":"ARM"}))
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_MULTIPLE_ANSWERS_FOUND, context=("ARM",)))
         self.assertNoNewSubmission(form)
 
         incoming("999123", "mod_ss_3 ,  pid1235  ,  arm = a", "TEST")
@@ -581,15 +581,15 @@ class KeywordTestCase(TouchformsTestCase):
 
         # Test global keywords
         incoming("999123", "#start unknownkeyword", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_KEYWORD_NOT_FOUND, context={"keyword":"UNKNOWNKEYWORD"}))
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_KEYWORD_NOT_FOUND, context=("UNKNOWNKEYWORD",)))
         self.assertNoNewSubmission(form)
 
         incoming("999123", "#start", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_START_KEYWORD_USAGE, context={"start_keyword":"#START"}))
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_START_KEYWORD_USAGE, context=("#START",)))
         self.assertNoNewSubmission(form)
 
         incoming("999123", "#unknown", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, context={"keyword":"#UNKNOWN"}))
+        self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, context=("#UNKNOWN",)))
         self.assertNoNewSubmission(form)
 
         # Mobile worker creates a case
