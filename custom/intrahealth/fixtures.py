@@ -5,6 +5,7 @@ from custom.intrahealth import INTRAHEALTH_DOMAINS
 from custom.intrahealth.models import PaymentTracking
 from dimagi.utils.dates import add_months
 from django.utils.translation import ugettext as _
+from casexml.apps.case.models import CommCareCase
 
 
 def month_fixture(user, version, last_sync):
@@ -69,14 +70,18 @@ def payment_fixture(user, version, last_sync):
         for year, month in _recent_months(6):
             # todo: need to figure out how the structure should look for cases within a period
             # semi-working code below
-            for payment in PaymentTracking.objects.filter(year=year, month=month):  # todo: should filter by user info somehow tbd
+            payments = PaymentTracking.objects.filter(year=year, month=month)  # todo: should filter by user info somehow tbd
+
+            # need to discuss, if it is a good solution
+            payments_by_user = [payment for payment in payments if CommCareCase.get(getattr(payment, 'case_id')).user_id == user.user_id]
+            for payment in payments_by_user:
                 payment_el = ElementTree.Element('payment')
                 payment_el.append(_month_id_el(year, month))
                 for field in ('case_id', 'calculated_amount_owed', 'actual_amount_owed', 'amount_paid'):
                     field_el = ElementTree.Element(field)
-                    field_el.text = getattr(payment, field) or '0'
+                    field_el.text = str(getattr(payment, field)) or '0'
                     payment_el.append(field_el)
-
+                payment_list.append(payment_el)
         return [root]
 
 

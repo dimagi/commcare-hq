@@ -13,7 +13,7 @@ class IntrahealthPillow(SQLPillowMixIn, PythonPillow):
 
     def python_filter(self, doc):
         assert self.domains
-        assert self.doc_type is not None
+        assert self.doc_types is not None
         return (
             doc.get('domain', object()) in self.domains and
             doc.get('doc_type', object()) in self.doc_types
