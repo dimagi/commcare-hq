@@ -82,6 +82,25 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(len(list(Location.by_domain(self.domain.name))), original_count)
         self.assertTrue('references a location in another project' in result['message'])
 
+    def test_change_parent(self):
+        parent = make_loc('original parent', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
+
+        new_parent = make_loc('new parent', type='village')
+        self.assertNotEqual(parent._id, new_parent._id)
+        data = {
+            'id': existing._id,
+            'name': existing.name,
+            'site_code': 'wat',
+            'outlet_type': 'SHG',
+            'parent_id': new_parent._id,
+        }
+
+        result = import_location(self.domain.name, 'outlet', data)
+        new_loc = Location.get(result['id'])
+        self.assertEqual(existing._id, new_loc._id)
+        self.assertEqual(new_loc.parent_id, new_parent._id)
+
     def test_updating_existing_location_properties(self):
         parent = make_loc('sillyparents', type='village')
         existing = make_loc('existingloc', type='outlet', parent=parent)
