@@ -12,7 +12,8 @@ import re
 
 
 def all_scan_cases(scanner_serial, scan_id):
-    # it is shown on device and stored on the case with no leading zeroes
+    # this is shown on device and stored on the case with no leading zeroes
+    # but has them on the file itself
     scan_id = scan_id.lstrip('0')
 
     return get_db().view(
@@ -75,6 +76,11 @@ def case_attach_block(key, filename):
 
 
 def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
+    """
+    Render the xml needed to create a new case for a given
+    screening. This case will be a subcase to the `exam_uuid` case,
+    which belongs to the patient.
+    """
     xform_template = load_template('upload_form.xml.template')
     case_attachments = [case_attach_block(identifier(f), f) for f in files]
 
@@ -97,6 +103,9 @@ def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
 
 
 def render_vscan_xform(case_id, files):
+    """
+    Render the xml needed add attachments to the patients case.
+    """
     xform_template = load_template('vscan_form.xml.template')
     case_attachments = [
         case_attach_block(os.path.split(f)[-1], f) for f in files
@@ -131,7 +140,11 @@ def identifier(filename):
 
 
 def create_case(case_id, files, patient_case_id=None):
-    # TODO don't completely remove this from the dict
+    """
+    Handle case submission for the sonosite endpoint
+    """
+    # we already parsed what we need from this, so can just remove it
+    # without worrying we will need it later
     files.pop('PT_PPS.XML', '')
 
     xform = render_sonosite_xform(files, case_id, patient_case_id)
@@ -152,6 +165,9 @@ def create_case(case_id, files, patient_case_id=None):
 
 
 def attach_images_to_case(case_id, files):
+    """
+    Handle case submission for the vscan endpoint
+    """
     xform = render_vscan_xform(case_id, files)
 
     file_dict = {}

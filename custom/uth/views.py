@@ -3,10 +3,8 @@ from django.views.decorators.http import require_POST
 import json
 from django.http import HttpResponse
 from custom.uth.utils import (
-    match_case,
     get_case_id,
     get_study_id,
-    create_case,
 )
 from custom.uth.models import SonositeUpload, VscanUpload
 from custom.uth.tasks import async_create_case, async_find_and_attach
