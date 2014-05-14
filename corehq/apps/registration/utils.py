@@ -50,10 +50,13 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
     if email_opt_in:
-        subscribe_user_to_mailchimp_list(
-            new_user,
-            settings.MAILCHIMP_COMMCARE_USERS_ID
-        )
+        try:
+            subscribe_user_to_mailchimp_list(
+                new_user,
+                settings.MAILCHIMP_COMMCARE_USERS_ID
+            )
+        except mailchimp.Error as e:
+            logging.error(e.message)
 
     new_user.eula.signed = True
     new_user.eula.date = now
