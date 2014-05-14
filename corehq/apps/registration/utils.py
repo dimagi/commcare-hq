@@ -71,7 +71,7 @@ def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
             list_id,
             email=new_email,
         )
-    except mailchimp.EmailAlreadySubscribedError:
+    except mailchimp.ListAlreadySubscribedError:
         pass
     except mailchimp.Error as e:
         logging.error(e.message)
@@ -96,7 +96,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
                 new_user,
                 settings.MAILCHIMP_COMMCARE_USERS_ID
             )
-        except mailchimp.EmailAlreadySubscribedError:
+        except mailchimp.ListAlreadySubscribedError:
             pass
         except mailchimp.Error as e:
             logging.error(e.message)
