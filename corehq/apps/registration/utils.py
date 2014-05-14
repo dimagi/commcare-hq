@@ -23,10 +23,10 @@ def get_mailchimp_api():
     return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
 
 
-def subscribe_user_to_mailchimp_list(user, list_id):
+def subscribe_user_to_mailchimp_list(user, list_id, email=None):
     get_mailchimp_api().lists.subscribe(
         list_id,
-        {'email': user.email},
+        {'email': email or user.email},
         double_optin=False,
         merge_vars={
             'FNAME': user.first_name,
@@ -37,22 +37,22 @@ def subscribe_user_to_mailchimp_list(user, list_id):
     )
 
 
-def unsubscribe_user_from_mailchimp_list(user, list_id):
+def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
     get_mailchimp_api().lists.unsubscribe(
         list_id,
-        {'email': user.email},
+        {'email': email or user.email},
         send_goodbye=False,
         send_notify=False,
     )
 
 
-def handle_changed_mailchimp_email(old_email, new_email, list_id):
+def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
     try:
-        unsubscribe_user_from_mailchimp_list(old_email, list_id)
+        unsubscribe_user_from_mailchimp_list(user, list_id, email=old_email)
     except mailchimp.Error as e:
         logging.error(e.message)
     try:
-        subscribe_user_to_mailchimp_list(new_email, list_id)
+        subscribe_user_to_mailchimp_list(user, list_id, email=new_email)
     except mailchimp.Error as e:
         logging.error(e.message)
 

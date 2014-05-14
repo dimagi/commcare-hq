@@ -72,6 +72,7 @@ class BaseUpdateUserForm(forms.Form):
             new_email = self.cleaned_data['email']
             if old_email != new_email:
                 handle_changed_mailchimp_email(
+                    existing_user,
                     old_email,
                     new_email,
                     settings.MAILCHIMP_COMMCARE_USERS_ID
