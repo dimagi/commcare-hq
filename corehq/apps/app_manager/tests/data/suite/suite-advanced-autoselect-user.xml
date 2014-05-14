@@ -193,7 +193,9 @@
     <assertions>
       <assert test="count(instance('commcaresession')/session/user/data/case_id) = 1">
         <text>
-          <locale id="case_autoload.user.property_missing"/>
+          <locale id="case_autoload.user.property_missing">
+            <argument>case_id</argument>
+          </locale>
         </text>
       </assert>
       <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/user/data/case_id]) = 1">

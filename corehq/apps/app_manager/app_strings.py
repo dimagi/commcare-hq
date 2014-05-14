@@ -112,24 +112,29 @@ class AppStringsBase(object):
                 (u'The case sharing settings for your user are incorrect. '
                  u'This user must be in exactly one case sharing group. Please contact your supervisor.')
 
-        if 'case_autoload.fixture.property_missing' not in messages:
-            messages['case_autoload.fixture.property_missing'] = \
+        if 'case_autoload.fixture.exactly_one_fixture' not in messages:
+            messages['case_autoload.fixture.exactly_one_fixture'] = \
                 (u'The lookup table settings for your user are incorrect. '
-                 u'This user must have access to exactly one lookup table row.')
-
-        if 'case_autoload.case.property_missing' not in messages:
-            messages['case_autoload.case.property_missing'] = \
-                u'The user data key specified for case auto-selecting does not exist.'
-
-        if 'case_autoload.case.property_missing' not in messages:
-            messages['case_autoload.case.property_missing'] = \
-                u'The case property specified for case auto-selecting does not exist'
+                    u'This user must have access to exactly one lookup table row for the table: ${0}')
 
         from corehq.apps.app_manager.models import AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER
+
+        mode_text = {
+            AUTO_SELECT_FIXTURE: u'lookup table field',
+            AUTO_SELECT_USER: u'user data key',
+            AUTO_SELECT_CASE: u'case property'
+        }
+
+        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+            key = 'case_autoload.{0}.property_missing'.format(mode)
+            if key not in messages:
+                messages[key] = (u'The {} specified for case auto-selecting '
+                                 u'could not be found: ${{0}}').format(mode_text[mode])
+
         for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
-                messages[key] = u'Unable to find open case referenced by auto-select case ID.'
+                messages[key] = u'Unable to find case referenced by auto-select case ID.'
 
         return commcare_translations.dumps(messages).encode('utf-8')
 
