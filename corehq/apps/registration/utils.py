@@ -41,7 +41,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
-    email_opt_out = form.cleaned_data['email_opt_out']
+    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
@@ -49,6 +49,11 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
+    if email_opt_in:
+        subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_COMMCARE_USERS_ID
+        )
 
     new_user.eula.signed = True
     new_user.eula.date = now
