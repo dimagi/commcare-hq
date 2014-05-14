@@ -7,10 +7,7 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
-    item = '{namespace}:{item}'.format(
-        namespace=namespace, item=item
-    ) if namespace is not None else item
-
+    item = _namespaced_item(item, namespace)
     cache_key = get_toggle_cache_key(slug, item)
     if check_cache:
         from_cache = cache.get(cache_key)
@@ -25,5 +22,17 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
     return ret
 
 
+def clear_toggle_cache(slug, item, namespace=None):
+    item = _namespaced_item(item, namespace)
+    cache_key = get_toggle_cache_key(slug, item)
+    cache.delete(cache_key)
+
+
 def get_toggle_cache_key(slug, item):
     return 'toggle-{slug}:{item}'.format(slug=slug, item=item)
+
+
+def _namespaced_item(item, namespace):
+    return '{namespace}:{item}'.format(
+        namespace=namespace, item=item
+    ) if namespace is not None else item
