@@ -75,7 +75,7 @@ def payment_fixture(user, version, last_sync):
             # todo: need to figure out how the structure should look for cases within a period
             # semi-working code below
             payments = PaymentTracking.objects.filter(year=year, month=month)
-            payments_by_user = [payment for payment in payments if getattr(payment, 'case_id') in sup_ids]
+            payments_by_user = [payment for payment in payments if payment.case_id in sup_ids]
             for payment in payments_by_user:
                 payment_el = ElementTree.Element('payment')
                 payment_el.append(_month_id_el(year, month))
