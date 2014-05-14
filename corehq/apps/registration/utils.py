@@ -124,51 +124,85 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
-def send_domain_registration_email(recipient, domain_name, guid):
-    DNS_name = Site.objects.get(id = settings.SITE_ID).domain
-    activation_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-    wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
-    users_link = 'http://groups.google.com/group/commcare-users'
 
-    message_plaintext = u"""
-Welcome to CommCareHQ!
+REGISTRATION_EMAIL_BODY_HTML = u"""
+<p><h2>30 Day Free Trial</h2></p>
+<p>Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans <a href="{pricing_link}">here</a>.</p>
+<p><h2>Want to learn more?</h2></p>
+<p>Check out our tutorials and other documentation on the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
+<p><h2>Need Support?</h2></p>
+<p>We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe <a href="{users_link}">here</a></p>
+<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.</p>
+<p>We hope you enjoy your experience with CommCareHQ!</p>
+<p>The CommCareHQ Team</p>
 
-Please click this link:
-{activation_link}
-to activate your new domain.  You will not be able to use your domain until you have confirmed this email address.
+<p>If your email viewer won't permit you to click on the link above, cut and paste the following link into your web browser:
+{registration_link}
+</p>
+"""
 
-Project name: "{domain}"
+REGISTRATION_EMAIL_BODY_PLAINTEXT = u"""
+30 Day Free Trial
 
-Username:  "{username}"
+Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans:
+{pricing_link}
 
-For help getting started, you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
+Want to learn more?
+
+Check out our tutorials and other documentation on the CommCare Help Site, the home of all CommCare documentation:
 {wiki_link}
 
-We also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
+Need Support?
+
+We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe here:
 {users_link}
 
-If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
+If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.
 
-Thank you,
+We hope you enjoy your experience with CommCareHQ!
 
 The CommCareHQ Team
 
 """
 
+
+WIKI_LINK = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
+USERS_LINK = 'http://groups.google.com/group/commcare-users'
+PRICING_LINK = 'http://www.commcarehq.org/software-plans'
+
+
+def send_domain_registration_email(recipient, domain_name, guid):
+    DNS_name = Site.objects.get(id=settings.SITE_ID).domain
+    registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
+
+    message_plaintext = u"""
+Welcome to CommCareHQ!
+
+Please click this link:
+{registration_link}
+to activate your new project.  You will not be able to use your project until you have confirmed this email address.
+
+Project name: "{domain}"
+
+Username:  "{username}"
+
+""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
+
     message_html = u"""
 <h1>Welcome to CommCare HQ!</h1>
-<p>Please <a href="{activation_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
+<p>Please <a href="{registration_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
 <p><strong>Project name:</strong> {domain}</p>
 <p><strong>Username:</strong> {username}</p>
-<p>For help getting started, you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
-<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
-<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
-<p style="margin-top:1em">Thank you,</p>
-<p><strong>The CommCareHQ Team</strong></p>
-<p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
-{activation_link}
-"""
-    params = {"domain": domain_name, "activation_link": activation_link, "username": recipient, "wiki_link": wiki_link, "users_link": users_link}
+""" + REGISTRATION_EMAIL_BODY_HTML
+
+    params = {
+        "domain": domain_name,
+        "pricing_link": PRICING_LINK,
+        "registration_link": registration_link,
+        "username": recipient,
+        "users_link": USERS_LINK,
+        "wiki_link": WIKI_LINK,
+    }
     message_plaintext = message_plaintext.format(**params)
     message_html = message_html.format(**params)
 
@@ -182,49 +216,33 @@ The CommCareHQ Team
 
 
 def send_global_domain_registration_email(requesting_user, domain_name):
-    DNS_name = Site.objects.get(id = settings.SITE_ID).domain
-    domain_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
-    wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
-    users_link = 'http://groups.google.com/group/commcare-users'
+    DNS_name = Site.objects.get(id=settings.SITE_ID).domain
+    registration_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
 
     message_plaintext = u"""
 Hello {name},
 
 You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
 
-You may access your project by following this link: {domain_link}
+You may access your project by following this link: {registration_link}
 
-Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.
-
-Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
-{wiki_link}
-
-If you haven't yet, we also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
-{users_link}
-
-If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
-
-Thank you,
-
-The CommCareHQ Team
-
-"""
+""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
 
     message_html = u"""
 <h1>New project "{domain}" created!</h1>
 <p>Hello {name},</p>
-<p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
-<p>Additionally, you have automatically been subscribed to a Free 30 Day Trial Subscription of CommCare Advanced.</p>
+<p>You may now <a href="{registration_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
+""" + REGISTRATION_EMAIL_BODY_HTML
 
-<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
-<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
-<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
-<p style="margin-top:1em">Thank you,</p>
-<p><strong>The CommCareHQ Team</strong></p>
-<p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
-{domain_link}
-"""
-    params = {"name": requesting_user.first_name, "domain": domain_name, "domain_link": domain_link, "username": requesting_user.email, "wiki_link": wiki_link, "users_link": users_link}
+    params = {
+        "name": requesting_user.first_name,
+        "domain": domain_name,
+        "pricing_link": PRICING_LINK,
+        "registration_link": registration_link,
+        "username": requesting_user.email,
+        "users_link": USERS_LINK,
+        "wiki_link": WIKI_LINK,
+    }
     message_plaintext = message_plaintext.format(**params)
     message_html = message_html.format(**params)
 
