@@ -1,4 +1,5 @@
 import logging
+import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
@@ -16,6 +17,24 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
+
+
+def get_mailchimp_api():
+    return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+
+
+def subscribe_user_to_mailchimp_list(user, list_id):
+    get_mailchimp_api().lists.subscribe(
+        list_id,
+        {'email': user.email},
+        double_optin=False,
+        merge_vars={
+            'FNAME': user.first_name,
+            'LNAME': user.last_name,
+        } if user.first_name else {
+            'FNAME': user.last_name or user.email,
+        },
+    )
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
