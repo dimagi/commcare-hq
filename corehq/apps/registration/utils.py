@@ -47,17 +47,16 @@ def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
 
 
 def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
-    users_with_old_email = CouchUser.get_db().view(
-        'users/mailing_list_emails',
-        key=old_email,
-    )
+    def is_user_subscribed_with_email(couch_user):
+        return (couch_user.subscribed_to_commcare_users
+                and couch_user.email == old_email)
     users_subscribed_with_old_email = [
-        user
-        for user in users_with_old_email
-        if CouchUser.get(user['id']).subscribed_to_commcare_users
+        other_user
+        for other_user in CouchUser.all()
+        if is_user_subscribed_with_email(other_user)
     ]
     if (len(users_subscribed_with_old_email) == 1 and
-            users_subscribed_with_old_email[0]['id'] == user.get_id):
+            users_subscribed_with_old_email[0].get_id == user.get_id):
         try:
             unsubscribe_user_from_mailchimp_list(
                 user,
