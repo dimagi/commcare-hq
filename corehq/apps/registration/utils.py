@@ -37,6 +37,15 @@ def subscribe_user_to_mailchimp_list(user, list_id):
     )
 
 
+def unsubscribe_user_from_mailchimp_list(user, list_id):
+    get_mailchimp_api().lists.unsubscribe(
+        list_id,
+        {'email': user.email},
+        send_goodbye=False,
+        send_notify=False,
+    )
+
+
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
