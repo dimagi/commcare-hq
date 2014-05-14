@@ -146,7 +146,12 @@ class UserLocMapping(object):
         Calculate which locations need added or removed, then submit
         one caseblock to handle this
         """
-        user = CommTrackUser.wrap(CommTrackUser.get_by_username(self.username).to_json())
+        user = CommTrackUser.get_by_username(self.username)
+        if not user:
+            raise UserUploadError(_('no username with {} found!'.format(self.username)))
+
+        # have to rewrap since we need to force it to a commtrack user
+        user = CommTrackUser.wrap(user.to_json())
         current_locations = user.locations
         current_location_codes = [loc.site_code for loc in current_locations]
 
@@ -173,7 +178,7 @@ def create_or_update_locations(domain, location_specs, log):
         try:
             username = normalize_username(username, domain)
         except ValidationError:
-            log['errors'].append("Username must be a valid email address: %s" % username)
+            log['errors'].append(_("Username must be a valid email address: %s") % username)
         else:
             location_code = unicode(row.get('location-sms-code'))
             if username in users:
@@ -188,7 +193,12 @@ def create_or_update_locations(domain, location_specs, log):
                 user_mapping.to_add.add(location_code)
 
     for username, mapping in users.iteritems():
-        mapping.save()
+        try:
+            mapping.save()
+        except UserUploadError as e:
+            log['errors'].append(_('Unable to update locations for {user} because {message}'.format(
+                user=username, message=e
+            )))
 
 
 def create_or_update_groups(domain, group_specs, log):
