@@ -56,6 +56,8 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
                 new_user,
                 settings.MAILCHIMP_COMMCARE_USERS_ID
             )
+        except mailchimp.EmailAlreadySubscribedError:
+            pass
         except mailchimp.Error as e:
             logging.error(e.message)
 
