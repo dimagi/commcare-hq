@@ -122,7 +122,7 @@ def handle_fixture_update(sender, xform, cases, **kwargs):
         report_data = data_source.get_data()
 
         for report_slug in report_data:
-            rows = report_data[report_slug].get("data", [])
+            rows = dict(report_data[report_slug].get("data", []))
             name = report_data[report_slug].get("name")
             FixtureReportResult.save_result(xform.domain, location_id, date_range[0].date(), date_range[1].date(), report_slug, rows, name)
 

@@ -639,13 +639,7 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
-    'OpmCaseFluff': 'SQL',
     'OpmUserFluff': 'SQL',
-    'OpmFormFluff': 'SQL',
-    'OpmHealthStatusFluff': 'SQL',
-    'OpmHealthStatusBasicInfoFluff': 'SQL',
-    'AncHmisCaseFluff': 'SQL',
-    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
@@ -1097,6 +1091,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
     'uth-rhd-test',
+    'succeed'
 ]
 
 CUSTOM_MODULES = [

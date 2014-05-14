@@ -52,6 +52,9 @@ class ReportFixtureProvider(object):
         self.dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
         self.domain = domain
         self.location_id = location_id
+        m4change_data_source = M4ChangeReportDataSource()
+        self.report_slugs = m4change_data_source.get_report_slugs()
+        self.reports = dict((report.slug, report) for report in m4change_data_source.get_reports())
 
     def to_fixture(self):
         """
@@ -127,15 +130,18 @@ class ReportFixtureProvider(object):
                 'id': facility_id,
                 'name': _(facility.name)
             })
-            report_slugs = M4ChangeReportDataSource().get_report_slugs()
             report_data = {}
-            startdate = startdate.strftime("%Y-%m-%d")
-            enddate = enddate.strftime("%Y-%m-%d")
-            for report_slug in report_slugs:
-                report_data[report_slug] = FixtureReportResult.by_composite_key(self.domain.name, facility_id, startdate,
-                                                                                enddate, report_slug)
-            if None in report_data.values():
-                return None
+            for report_slug in self.report_slugs:
+                report_data[report_slug] = FixtureReportResult.by_composite_key(self.domain.name, facility_id,
+                                                                                startdate.strftime("%Y-%m-%d"),
+                                                                                enddate.strftime("%Y-%m-%d"), report_slug)
+                if report_data[report_slug] is None:
+                    name = self.reports[report_slug].name
+                    rows = self.reports[report_slug].get_initial_row_data()
+                    fixture_result = FixtureReportResult(domain=self.domain.name, location_id=facility_id,
+                                                         start_date=startdate, end_date=enddate, report_slug=report_slug,
+                                                         rows=rows, name=name)
+                    report_data[report_slug] = fixture_result
             facility_element = (_reports_to_fixture(report_data, facility_element))
             return facility_element
 

@@ -1,0 +1,4 @@
+
+
+class LocationImportError(Exception):
+    pass

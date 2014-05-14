@@ -1,3 +1,4 @@
+from corehq.apps.locations.exceptions import LocationImportError
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
@@ -7,6 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import Product, SupplyPointCase
 from decimal import Decimal, InvalidOperation
+from django.utils.translation import ugettext as _
 
 
 class LocationCache(object):
@@ -69,9 +71,15 @@ def import_location(domain, location_type, location_data):
 
     form_data = {}
 
-    parent_id_invalid = check_parent_id(parent_id, domain, location_type)
-    if parent_id_invalid:
-        return parent_id_invalid
+    try:
+        _check_parent_id(parent_id, domain, location_type)
+    except LocationImportError as e:
+        return {
+            'id': None,
+            'message': _('Unable to import location {0}: {1}').format(
+                data.pop('name'), e
+            )
+        }
 
     if existing_id:
         try:
@@ -79,18 +87,18 @@ def import_location(domain, location_type, location_data):
         except ResourceNotFound:
             return {
                 'id': None,
-                'message': "Location with id {0} was not found".format(
+                'message': _("Location with id {0} was not found").format(
                     existing_id
                 )
             }
         if existing.location_type != location_type:
             return {
                 'id': None,
-                'message': "Existing location type error, type of {0} is not {1}".format(
+                'message': _("Existing location type error, type of {0} is not {1}").format(
                     existing.name, location_type
                 )
             }
-        parent = existing.parent_id
+        parent = parent_id or existing.parent_id
     else:
         existing = None
         parent = parent_id
@@ -129,24 +137,23 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
     )
 
 
-def check_parent_id(parent_id, domain, location_type):
+def _check_parent_id(parent_id, domain, location_type):
     if parent_id:
         try:
             parent_obj = Location.get(parent_id)
         except ResourceNotFound:
-            return {
-                'id': None,
-                'message': 'Parent with id {0} does not exist'.format(
-                    parent_id
-                )
-            }
+            raise LocationImportError(_('Parent with id {0} does not exist').format(parent_id))
+
+        if parent_obj.domain != domain:
+            raise LocationImportError(
+                _('Parent ID {0} references a location in another project').format(parent_id)
+            )
+
         parent_relationships = parent_child(domain)
         if invalid_location_type(location_type, parent_obj, parent_relationships):
-            return {
-                'id': None,
-                'message': 'Invalid parent type of {0} for child type {1}'.format(
-                    parent_obj.location_type, location_type)
-            }
+            raise LocationImportError(
+                _('Invalid parent type of {0} for child type {1}').format(parent_obj.location_type, location_type)
+            )
 
 
 def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):

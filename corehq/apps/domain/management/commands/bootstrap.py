@@ -1,6 +1,8 @@
 from django.core.management.base import LabelCommand, CommandError
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
+from corehq import Domain
+
 
 class Command(LabelCommand):
     help = "Bootstrap a domain and user who owns it."
@@ -13,7 +15,7 @@ class Command(LabelCommand):
         if len(args) != 3:
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
-        domain = create_domain(domain_name)
+        domain = Domain.get_or_create_with_name(domain_name, is_active=True)
         couch_user = WebUser.create(domain_name, username, passwd)
         couch_user.add_domain_membership(domain_name, is_admin=True)
         couch_user.is_superuser = True

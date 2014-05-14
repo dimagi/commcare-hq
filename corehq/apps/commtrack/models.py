@@ -100,7 +100,7 @@ class Product(Document):
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
-    code_ = StringProperty()
+    code_ = StringProperty()  # todo: why the hell is this code_ and not code
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
