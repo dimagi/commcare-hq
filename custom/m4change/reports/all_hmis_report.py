@@ -138,6 +138,21 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
                 "label": _("Pregnant Mothers with confirmed Malaria"),
                 "value": 0
             },
+            "anc_women_previously_known_hiv_status_total": {
+                "hmis_code": 162,
+                "label": _("ANC Women with previously known HIV status (at ANC)"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_anc_total": {
+                "hmis_code": 163,
+                "label": _("Pregnant women who received HIV counseling testing and received result at ANC"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_ld_total": {
+                "hmis_code": 164,
+                "label": _("Pregnant women who received HIV counseling testing and received result at L&D"),
+                "value": 0
+            },
             "partners_of_hiv_positive_women_tested_negative_total": {
                 "hmis_code": 166,
                 "label": _("Partners of HIV positive women who tested HIV negative"),
