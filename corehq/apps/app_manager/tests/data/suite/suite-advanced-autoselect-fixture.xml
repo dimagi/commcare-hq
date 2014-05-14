@@ -196,7 +196,7 @@
           <locale id="case_autoload.fixture.property_missing"/>
         </text>
       </assert>
-      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('table_tags')/table_tag_list/table_tag/field_name][@status='open']) = 1">
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('table_tags')/table_tag_list/table_tag/field_name]) = 1">
         <text>
           <locale id="case_autoload.fixture.case_missing"/>
         </text>

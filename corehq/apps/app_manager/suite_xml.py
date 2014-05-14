@@ -663,7 +663,7 @@ class SuiteGenerator(object):
             "{0} = 1".format(case_id_xpath.count()),
             'case_autoload.{0}.property_missing'.format(mode)
         )
-        case_count = CaseIDXPath(case_id_xpath).case().status_open().count()
+        case_count = CaseIDXPath(case_id_xpath).case().count()
         self.add_assertion(
             entry,
             "{0} = 1".format(case_count),
