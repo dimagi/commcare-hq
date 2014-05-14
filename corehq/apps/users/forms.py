@@ -131,12 +131,6 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(
-        required=False,
-        label="",
-        help_text=ugettext_lazy("Opt out of emails about new features and other CommCare updates.")
-    )
-
     @property
     def direct_properties(self):
         return self.fields.keys()
