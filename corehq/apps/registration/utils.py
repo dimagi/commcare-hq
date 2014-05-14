@@ -29,7 +29,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
-    new_user.email_opt_out = email_opt_out
+    new_user.email_opt_out = False  # auto add new users
 
     new_user.eula.signed = True
     new_user.eula.date = now
