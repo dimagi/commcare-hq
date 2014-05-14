@@ -290,7 +290,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     is_cacheable = True
 
 
-    description = _("Number of submissions by form.")
+    description = ugettext_noop("Number of submissions by form.")
 
     @property
     def headers(self):
