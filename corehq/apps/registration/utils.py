@@ -46,6 +46,17 @@ def unsubscribe_user_from_mailchimp_list(user, list_id):
     )
 
 
+def handle_changed_mailchimp_email(old_email, new_email, list_id):
+    try:
+        unsubscribe_user_from_mailchimp_list(old_email, list_id)
+    except mailchimp.Error as e:
+        logging.error(e.message)
+    try:
+        subscribe_user_to_mailchimp_list(new_email, list_id)
+    except mailchimp.Error as e:
+        logging.error(e.message)
+
+
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
