@@ -276,21 +276,16 @@ def copy_snapshot(request, domain):
     """
 
     user = request.couch_user
-    ERROR_MESSAGES = {
-        'NO_EULA': "You must agree to our End User License Agreement to download an app.",
-        'NOT_PUBLISHED': "This project is not published, so can't be downloaded.",
-        'INVALID_FORM': "There was an error processing your request.  Please see below."
-    }
     valid_request = True
 
     if not user.is_eula_signed():
         valid_request = False
-        messages.error(request, ERROR_MESSAGES['NO_EULA'])
+        messages.error(request, "You must agree to our End User License Agreement to download an app.")
 
     dom = Domain.get(domain)
     if not dom.published:
         valid_request = False
-        messages.error(request, ERROR_MESSAGES['NOT_PUBLISHED'])
+        messages.error(request, "This project is not published, so can't be downloaded.")
 
     if not valid_request:
         return project_info(request, domain)
@@ -318,7 +313,7 @@ def copy_snapshot(request, domain):
                         new_domain.full_applications()[0].get_id]))
 
         else:
-            messages.error(request, ERROR_MESSAGES['INVALID_FORM'])
+            messages.error(request, "There was an error processing your request.  Please see below.")
             return project_info(request, domain, error_message=form.errors['domain_name'])
 
     else:
