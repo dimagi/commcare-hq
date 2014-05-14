@@ -54,7 +54,8 @@ def sync(app, verbosity=2, temp=None):
     """
     All of this is copied from couchdbkit.ext.django.loading
 
-    but replaces
+    but the actual syncing code is replaced with our improved version
+
     """
     app_name = app.__name__.rsplit('.', 1)[0]
     app_labels = set()
@@ -81,11 +82,9 @@ def sync(app, verbosity=2, temp=None):
         # these lines differ from the original
         # and simply pass on the responsibility of syncing to our
         # improved method
-        design_name = app_label
-        design_dir = os.path.join(app_path, "_design")
         sync_design_docs(
             db=db,
-            design_dir=design_dir,
-            design_name=design_name,
+            design_dir=os.path.join(app_path, "_design"),
+            design_name=app_label,
             temp=temp,
         )
