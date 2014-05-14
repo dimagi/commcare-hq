@@ -1,6 +1,8 @@
+from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
 import math
+import warnings
 
 from django.contrib import messages
 from django.http import Http404
@@ -188,6 +190,39 @@ def get_username_from_forms(domain, user_id):
     return username
 
 
+def namedtupledict(name, fields):
+    cls = namedtuple(name, fields)
+
+    def __getitem__(self, item):
+        if isinstance(item, basestring):
+            warnings.warn(
+                "namedtuple fields should be accessed as attributes",
+                DeprecationWarning,
+            )
+            return getattr(self, item)
+        return cls.__getitem__(self, item)
+
+    def get(self, item, default=None):
+        warnings.warn(
+            "namedtuple fields should be accessed as attributes",
+            DeprecationWarning,
+        )
+        return getattr(self, item, default)
+    # return a subclass of cls that has the above __getitem__
+    return type(name, (cls,), {
+        '__getitem__': __getitem__,
+        'get': get,
+    })
+
+
+SimplifiedUserInfo = namedtupledict('SimplifiedUserInfo', (
+    'user_id',
+    'username_in_report',
+    'raw_username',
+    'is_active',
+))
+
+
 def _report_user_dict(user):
     """
     Accepts a user object or a dict such as that returned from elasticsearch.
@@ -195,8 +230,10 @@ def _report_user_dict(user):
     ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
     """
     if not isinstance(user, dict):
-        user_report_attrs = ['user_id', 'username_in_report', 'raw_username', 'is_active']
-        return dict([(attr, getattr(user, attr)) for attr in user_report_attrs])
+        user_report_attrs = ['user_id', 'username_in_report', 'raw_username',
+                             'is_active']
+        return SimplifiedUserInfo(**{attr: getattr(user, attr)
+                                     for attr in user_report_attrs})
     else:
         username = user.get('username', '')
         raw_username = (username.split("@")[0]
@@ -210,13 +247,12 @@ def _report_user_dict(user):
             if full_name:
                 yield u' "%s"' % html.escape(full_name)
         username_in_report = safestring.mark_safe(''.join(parts()))
-        report_dict = {
-            'user_id': user.get('_id', ''),
-            'username_in_report': username_in_report,
-            'raw_username': raw_username,
-            'is_active': user.get('is_active', None),
-        }
-        return report_dict
+        return SimplifiedUserInfo(
+            user_id=user.get('_id', ''),
+            username_in_report=username_in_report,
+            raw_username=raw_username,
+            is_active=user.get('is_active', None)
+        )
 
 
 def format_datatables_data(text, sort_key, raw=None):
