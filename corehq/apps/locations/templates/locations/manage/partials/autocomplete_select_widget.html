@@ -9,6 +9,7 @@ $(function() {
 $("#{{ id }}").select2({
     placeholder: "Enter Name of Supply Point",
     minimumInputLength: 1,
+    multiple: true,
     ajax: {
         url: "{{ query_url }}",
         dataType: 'json',
@@ -23,11 +24,11 @@ $("#{{ id }}").select2({
         }
     },
     initSelection: function(element, callback) {
-        var id = $(element).val();
+        var ids = $(element).val();
 
-        if (id !== "") {
+        if (ids !== "") {
             $.get("{{ query_url }}", {
-                id: id
+                ids: ids
             }).done(function(data) { callback(data); });
         }
     },
@@ -43,7 +44,7 @@ $('#clear_location').click(function() {
 });
 
 </script>
-<input type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
+<input multiple="multiple" type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
 {% if value and is_admin %}
     <button id="clear_location" class="btn btn-danger"><i class="icon-remove"></i> {% trans 'Delete' %}</button>
 {% endif %}

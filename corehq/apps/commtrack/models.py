@@ -1193,14 +1193,6 @@ class CommTrackUser(CommCareUser):
             return None
 
     @property
-    def location(self):
-        """ Legacy method. To be removed when the site supports multiple locations """
-        if self.locations:
-            return self.locations[0]
-        else:
-            return None
-
-    @property
     def locations(self):
         mapping = self.get_location_map_case()
         if mapping:

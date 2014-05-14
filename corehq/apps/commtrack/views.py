@@ -431,16 +431,16 @@ def location_dump(request, domain):
 
 @login_and_domain_required
 def api_query_supply_point(request, domain):
-    id = request.GET.get('id')
+    ids = request.GET.get('ids', '')
     query = request.GET.get('name', '')
     
     def loc_to_payload(loc):
         return {'id': loc._id, 'name': loc.name}
 
-    if id:
+    if ids:
         try:
-            loc = Location.get(id)
-            return HttpResponse(json.dumps(loc_to_payload(loc)), 'text/json')
+            locs = [Location.get(id) for id in ids.split(',')]
+            return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
 
         except ResourceNotFound:
             return HttpResponseNotFound(json.dumps({'message': 'no location with is %s found' % id}, 'text/json'))

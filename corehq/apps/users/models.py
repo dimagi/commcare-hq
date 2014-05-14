@@ -367,7 +367,7 @@ class DomainMembership(Membership):
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
-    location_id = StringProperty()
+    location_ids = StringListProperty()
     program_id = StringProperty()
 
     @property

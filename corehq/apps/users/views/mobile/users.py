@@ -166,9 +166,9 @@ class EditCommCareUserView(BaseFullEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         # currently only support one location on the UI
-        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
-        initial_id = linked_loc._id if linked_loc else None
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
+        user_locations = CommTrackUser.wrap(self.editable_user.to_json()).locations
+        initial_ids = [loc._id for loc in user_locations]
+        return CommtrackUserForm(domain=self.domain, initial={'supply_points': ','.join(initial_ids)})
 
     @property
     def page_context(self):

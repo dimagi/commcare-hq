@@ -191,13 +191,16 @@ class BaseEditUserView(BaseUserSettingsView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
-        linked_loc = user_domain_membership.location_id
+        linked_locs = user_domain_membership.location_ids
         linked_prog = user_domain_membership.program_id
-        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'supply_point': linked_loc, 'program_id': linked_prog})
+        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain),
+                                 initial={'supply_points': ','.join(linked_locs), 'program_id': linked_prog})
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
+            supply_points = self.request.POST['supply_points']
+            new_location_ids = supply_points.split(",") if supply_points else []
+            self.editable_user.get_domain_membership(self.domain).location_ids = new_location_ids
             self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":

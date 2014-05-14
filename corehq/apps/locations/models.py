@@ -123,6 +123,16 @@ class Location(Document):
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
+    def children_available_for_user(self, user, domain):
+        all_children = self.children
+        user_location_ids = user.get_domain_membership(domain).location_ids
+        user_locations = [Location.get(loc_id) for loc_id in user_location_ids]
+        children_available = []
+        for child in all_children:
+            if child._id in user_location_ids or set(child.descendants) & set(user_locations):
+                children_available.append(child)
+        return children_available
+
     def linked_docs(self, doc_type, include_descendants=False):
         startkey = [self.domain, self._id, doc_type]
         if not include_descendants:
@@ -148,6 +158,11 @@ def root_locations(domain):
 
     ids = [res['key'][-1] for res in results]
     return [Location.get(id) for id in ids]
+
+def root_locations_for_user(domain, user):
+    user_location_ids = user.get_domain_membership(domain).location_ids
+    user_locations = [Location.get(loc_id) for loc_id in user_location_ids]
+    return [Location.get(location.lineage[-1]) for location in user_locations]
 
 def all_locations(domain):
     return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
