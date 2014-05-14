@@ -49,6 +49,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
+    new_user.subscribed_to_commcare_users = email_opt_in
     if email_opt_in:
         try:
             subscribe_user_to_mailchimp_list(
