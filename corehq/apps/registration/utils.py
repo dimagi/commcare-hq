@@ -72,6 +72,8 @@ def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
             list_id,
             email=new_email,
         )
+    except mailchimp.EmailAlreadySubscribedError:
+        pass
     except mailchimp.Error as e:
         logging.error(e.message)
 
