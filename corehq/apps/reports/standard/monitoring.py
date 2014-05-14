@@ -997,7 +997,12 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "enddate": end_date,
             }
 
-            return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+            return util.numcell(u'<a href="{base}{report}?{params}" target="_blank">{display}</a>'.format(
+                base=get_url_base(),
+                report=fs_url,
+                params=urlencode(url_args, True),
+                display=val,
+            ), val)
 
         def add_case_list_links(owner_id, row):
             """
