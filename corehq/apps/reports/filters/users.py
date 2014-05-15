@@ -429,3 +429,16 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     @property
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
+
+
+    @classmethod
+    def for_user(cls, user_id):
+        return {
+            cls.slug: 'u__%s' % user_id
+        }
+
+    @classmethod
+    def for_group(cls, group_id):
+        return {
+            cls.slug: 'g__%s' % group_id
+        }
