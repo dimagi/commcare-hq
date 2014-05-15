@@ -559,7 +559,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
         do_constrain = bool(constraint_dict)
 
         # if size key is None, then one of the limit criteria are set
-        attachment_cache_key = "%(case_id)s_%(attachment)s_%(filename)s" % {
+        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
             "case_id": case_id,
             "attachment": attachment_key,
         }
