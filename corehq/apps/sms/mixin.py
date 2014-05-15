@@ -295,6 +295,16 @@ class MobileBackend(Document):
 class SMSBackend(MobileBackend):
     backend_type = "SMS"
 
+    def get_sms_interval(self):
+        """
+        Override to use rate limiting. Return None to not use rate limiting,
+        otherwise return the number of seconds by which outbound sms requests
+        should be separated when using this backend.
+        Note that this should not be over 30 due to choice of redis lock 
+        timeout. See corehq.apps.sms.tasks.handle_outgoing.
+        """
+        return None
+
     def send(msg, *args, **kwargs):
         raise NotImplementedError("send() method not implemented")
 

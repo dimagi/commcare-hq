@@ -25,6 +25,9 @@ class TropoBackend(SMSBackend):
     def get_form_class(cls):
         return TropoBackendForm
 
+    def get_sms_interval(self):
+        return 1
+
     def send(self, msg, delay=True, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
         text = msg.text.encode("utf-8")
