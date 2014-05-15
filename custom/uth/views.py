@@ -1,10 +1,11 @@
 from corehq.apps.domain.decorators import login_or_digest
 from django.views.decorators.http import require_POST
 import json
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from custom.uth.utils import (
     get_case_id,
     get_study_id,
+    put_request_files_in_doc,
 )
 from custom.uth.models import SonositeUpload, VscanUpload
 from custom.uth.tasks import async_create_case, async_find_and_attach
@@ -13,11 +14,13 @@ from custom.uth.tasks import async_create_case, async_find_and_attach
 @require_POST
 @login_or_digest
 def vscan_upload(request, domain, **kwargs):
+    if domain != 'uth-rhd':
+        raise Http404()
+
     scanner_serial = request.POST.get('scanner_serial', None)
     scan_id = request.POST.get('scan_id', None)
-    # scan_time = request.POST.get('scan_time', None)
 
-    if not (scanner_serial and scan_id): # and scan_time):
+    if not (scanner_serial and scan_id):
         response_data = {}
         response_data['result'] = 'failed'
         response_data['message'] = 'Missing required parameters'
@@ -25,18 +28,12 @@ def vscan_upload(request, domain, **kwargs):
         upload = VscanUpload(
             scanner_serial=scanner_serial,
             scan_id=scan_id,
-        #    scan_time=scan_time
         )
         upload.save()
 
-        for name, f in request.FILES.iteritems():
-            upload.put_attachment(
-                f,
-                name,
-            )
+        put_request_files_in_doc(request, upload)
 
-        # TODO delay
-        async_find_and_attach(upload._id)
+        async_find_and_attach.delay(upload._id)
 
         response_data = {}
         response_data['result'] = 'success'
@@ -48,6 +45,9 @@ def vscan_upload(request, domain, **kwargs):
 @require_POST
 @login_or_digest
 def sonosite_upload(request, domain, **kwargs):
+    if domain != 'uth-rhd':
+        raise Http404()
+
     response_data = {}
 
     try:
@@ -66,14 +66,9 @@ def sonosite_upload(request, domain, **kwargs):
     )
     upload.save()
 
-    for name, f in request.FILES.iteritems():
-        upload.put_attachment(
-            f,
-            name,
-        )
+    put_request_files_in_doc(request, upload)
 
-    # TODO delay
-    async_create_case(upload._id)
+    async_create_case.delay(upload._id)
 
     response_data['result'] = 'uploaded'
     response_data['message'] = 'uploaded'

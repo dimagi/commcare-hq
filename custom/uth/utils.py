@@ -95,7 +95,7 @@ def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
         'patient_case_id': patient_case_id,
         'case_attachments': ''.join(case_attachments),
         'exam_id': exam_uuid,
-        'case_name': 'TODO',
+        'case_name': 'Sonosite Exam',
     }
 
     final_xml = xform_template % format_dict
@@ -184,3 +184,11 @@ def attach_images_to_case(case_id, files):
     lock.obj.domain = UTH_DOMAIN
 
     return process_cases(lock.obj)
+
+
+def put_request_files_in_doc(request, doc):
+    for name, f in request.FILES.iteritems():
+        doc.put_attachment(
+            f,
+            name,
+        )
