@@ -97,3 +97,6 @@ MCCT_SERVICE_TYPES = {
     "delivery": BOOKED_AND_UNBOOKED_DELIVERY_FORMS,
     "immunization": IMMUNIZATION_FORMS
 }
+
+REDIS_FIXTURE_KEYS = dict([(domain, '%s-fixture-locations' % domain) for domain in M4CHANGE_DOMAINS])
+REDIS_FIXTURE_LOCK_KEYS = dict([(domain, '%s-fixture-locations-lock' % domain) for domain in M4CHANGE_DOMAINS])
