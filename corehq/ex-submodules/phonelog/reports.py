@@ -121,6 +121,8 @@ class FormErrorReport(PhonelogReport):
             return SimplifiedUserInfo(
                 raw_username=username,
                 username_in_report=username,
+                user_id=None,
+                is_active=None,
             )
 
         return [make_user(u) for u in usernames]
