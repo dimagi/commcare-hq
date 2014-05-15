@@ -10,10 +10,6 @@ from fluff import exceptions
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
-try:
-    import fluff.sync_couchdb
-except ImportError:
-    pass
 import fluff.util
 
 
@@ -719,3 +715,9 @@ class FluffPillow(PythonPillow):
 
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
         indicator_document_updated.send(sender=self, doc_id=new_indicator.id, diff=diff, backend=backend)
+
+try:
+    # make sure this module gets called, as it is auto-registering
+    import fluff.sync_couchdb
+except ImportError:
+    pass
