@@ -27,6 +27,8 @@ MERGE_LIVE_BOOKING_FORM_XMLNS = 'http://openrosa.org/formdesigner/b9d9f943e63d5d
 PNC_CHILD_IMMUNIZATION_FORM_XMLNS = 'http://openrosa.org/formdesigner/4dc380eadd46dfa9915f374934af30b5596edc92'
 REG_HOME_DELIVERED_INFANT_FORM_XMLNS = 'http://openrosa.org/formdesigner/7fea595525157a9edd81b731d6b10f0b65a44ae2'
 
+PMTCT_CLIENTS_FORM = 'http://openrosa.org/formdesigner/E671459B-7402-4B68-9020-7F49F0D94ED5'
+
 BOOKING_FORMS = [
     M4CHANGE_LIVE_BOOKING_FORM_XMLNS,
     M4CHANGE2_BOOKING_FORM_XMLNS,
@@ -85,6 +87,7 @@ ALL_M4CHANGE_FORMS = [
     MERGE_LIVE_BOOKING_FORM_XMLNS,
     PNC_CHILD_IMMUNIZATION_FORM_XMLNS,
     REG_HOME_DELIVERED_INFANT_FORM_XMLNS,
+    PMTCT_CLIENTS_FORM
 ]
 
 MCCT_SERVICE_TYPES = {
@@ -94,3 +97,6 @@ MCCT_SERVICE_TYPES = {
     "delivery": BOOKED_AND_UNBOOKED_DELIVERY_FORMS,
     "immunization": IMMUNIZATION_FORMS
 }
+
+REDIS_FIXTURE_KEYS = dict([(domain, '%s-fixture-locations' % domain) for domain in M4CHANGE_DOMAINS])
+REDIS_FIXTURE_LOCK_KEYS = dict([(domain, '%s-fixture-locations-lock' % domain) for domain in M4CHANGE_DOMAINS])

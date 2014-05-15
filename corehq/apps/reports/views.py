@@ -22,6 +22,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
+from casexml.apps.case.cleanup import rebuild_case
+from corehq import toggles
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -736,6 +738,7 @@ def case_details(request, domain, case_id):
             "get_case_url": lambda case_id: reverse(
                 case_details, args=[domain, case_id])
         },
+        "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
     })
 
 @require_case_view_permission
@@ -745,6 +748,16 @@ def case_xml(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def rebuild_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    rebuild_case(case_id)
+    messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
 def _get_case_or_404(domain, case_id):
