@@ -183,7 +183,8 @@ def rebuild_staging(config):
             if config.submodules:
                 for submodule in config.submodules:
                     git.add(submodule)
-                git.commit('-m', "update submodule refs", '--no-edit')
+                git.commit('-m', "update submodule refs", '--no-edit',
+                           '--allow-empty')
             # stupid safety check
             assert config.name != 'master'
             print "  [{cwd}] Force pushing to origin {name}".format(
