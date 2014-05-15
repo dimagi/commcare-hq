@@ -985,17 +985,22 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             end_date = end_date.strftime(self.datespan.format)
             return start_date, end_date
 
-        def submit_history_link(owner_id, val, param='select_mw'):
+        def submit_history_link(owner_id, val, type):
             """
-                takes a row, and converts certain cells in the row to links that link to the submit history report
+            takes a row, and converts certain cells in the row to links that link to the submit history report
             """
             fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            if type == 'user':
+                url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+            else:
+                assert type == 'group'
+                url_args = ExpandedMobileWorkerFilter.for_group(owner_id)
+
             start_date, end_date = dates_for_linked_reports()
-            url_args = {
-                param: owner_id,
+            url_args.update({
                 "startdate": start_date,
                 "enddate": end_date,
-            }
+            })
 
             return util.numcell(u'<a href="{base}{report}?{params}" target="_blank">{display}</a>'.format(
                 base=get_url_base(),
@@ -1009,9 +1014,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 takes a row, and converts certain cells in the row to links that link to the case list page
             """
             cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = {
-                "ufilter": range(4), # include all types of users in case list report
-            }
+            url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
             start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
@@ -1032,7 +1035,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                     Given an index for a cell in a the row, creates the link to the case list page for that cell
                 """
-                url_params = {"individual": owner_id} if index not in (4, 5) else {}
+                url_params = {}
                 url_params.update(url_args)
                 url_params.update({"search_query": search_strings[index]})
                 return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
@@ -1076,7 +1079,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 rows.append([
                     group_cell(group_id, group_name),
                     submit_history_link(group_id,
-                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
+                                        sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                                        type='group'),
                     util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     util.numcell("%s / %s" % (active_users, total_users),
                                  int((float(active_users)/total_users) * 10000) if total_users else -1),
@@ -1096,7 +1100,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
-                    submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
+                    submit_history_link(user['user_id'],
+                                        submissions_by_user.get(user["user_id"], 0),
+                                        type='user'),
                     util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"].lower(),0)),
