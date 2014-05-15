@@ -89,14 +89,14 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
 
     def _es_extra_filters(self):
         truthy_only = functools.partial(filter, None)
-        xmlns_list = truthy_only(
-            f['xmlns'] for f in self.all_relevant_forms.values()
-        )
-        if xmlns_list:
+        form_values = self.all_relevant_forms.values()
+        if form_values:
             yield {
-                'terms': {
-                    'xmlns.exact': xmlns_list
-                }
+                'or': [
+                    {'and': [{'term': {'xmlns.exact': f['xmlns']}},
+                             {'term': {'app_id': f['app_id']}}]}
+                    for f in form_values
+                ]
             }
 
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
