@@ -543,11 +543,22 @@ var AdvancedCase = (function () {
             });
 
             self.case_type.subscribe(function (value) {
+                // fix for resizing of accordion when content changes
                 if (!value) {
                     var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                     self.config.applyAccordion('load', index);
                 }
             }, null, 'beforeChange');
+
+            if (self.auto_select) {
+                self.auto_select.mode.subscribe(function (value) {
+                    // fix for resizing of accordion when content changes
+                    if (!value) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        self.config.applyAccordion('load', index);
+                    }
+                }, null, 'beforeChange');
+            }
 
             self.show_product_stock_var = ko.computed({
                 read: function () {
