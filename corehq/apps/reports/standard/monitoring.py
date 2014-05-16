@@ -277,7 +277,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         ).one() or 0
 
 
-class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
+                              MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
@@ -288,42 +289,61 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     fix_left_col = True
     emailable = True
     is_cacheable = True
-
-
     description = ugettext_noop("Number of submissions by form.")
 
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
         if not self.all_relevant_forms:
-            headers.add_column(DataTablesColumn(_("No submissions were found for selected forms within this date range."),
-                sortable=False))
+            headers.add_column(
+                DataTablesColumn(
+                    _("No submissions were found for selected forms "
+                      "within this date range."),
+                    sortable=False
+                )
+            )
         else:
             for _form, info in self.all_relevant_forms.items():
                 help_text = None
                 if info['is_fuzzy']:
-                    help_text = "This column shows Fuzzy Submissions."
+                    help_text = _("This column shows Fuzzy Submissions.")
                 elif info['is_remote']:
-                    help_text = "These forms came from a Remote CommCare HQ Application."
-                headers.add_column(DataTablesColumn(info['name'], sort_type=DTSortType.NUMERIC, help_text=help_text))
-            headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
+                    help_text = _("These forms came from "
+                                  "a Remote CommCare HQ Application.")
+                headers.add_column(
+                    DataTablesColumn(
+                        info['name'],
+                        sort_type=DTSortType.NUMERIC,
+                        help_text=help_text,
+                    )
+                )
+            headers.add_column(
+                DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC)
+            )
         return headers
 
     @property
     def rows(self):
         rows = []
-        totals = [0]*(len(self.all_relevant_forms)+1)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        totals = [0] * (len(self.all_relevant_forms) + 1)
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
         for user in users_data["combined_users"]:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(self._get_num_submissions(user.get('user_id'), form['xmlns'], form['app_id']))
+                    row.append(
+                        self._get_num_submissions(
+                            user.get('user_id'), form['xmlns'], form['app_id'])
+                    )
                 row_sum = sum(row)
-                row = [self.get_user_link(user)] + \
-                    [self.table_cell(row_data) for row_data in row] + \
+                row = (
+                    [self.get_user_link(user)] +
+                    [self.table_cell(row_data) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
-                totals = [totals[i]+col.get('sort_key') for i, col in enumerate(row[1:])]
+                )
+                totals = [totals[i] + col.get('sort_key')
+                          for i, col in enumerate(row[1:])]
                 rows.append(row)
             else:
                 rows.append([self.get_user_link(user), '--'])
@@ -332,11 +352,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
         return rows
 
     def _get_num_submissions(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns, app_id=app_id)
-        data = get_db().view('reports_forms/all_forms',
+        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
+                                  app_id=app_id)
+        data = get_db().view(
+            'reports_forms/all_forms',
             reduce=True,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
+            startkey=key + [self.datespan.startdate_param_utc],
+            endkey=key + [self.datespan.enddate_param_utc],
         ).first()
         return data['value'] if data else 0
 
@@ -776,7 +798,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
-    need_group_ids = True
     is_cacheable = True
 
     fields = [
@@ -834,10 +855,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if '_all' in self.group_ids:
-            from corehq.apps.groups.models import Group
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
-            for r in ret:
-                r["group_ids"] = Group.by_user(r["user_id"], False)
             return ret
         else:
             return self.combined_users
