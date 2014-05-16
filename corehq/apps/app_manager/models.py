@@ -2161,6 +2161,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    # not used yet, but nice for tagging/debugging
+    # currently only canonical value is 'incomplete-build',
+    # for when build resources aren't found where they should be
+    build_broken_reason = StringProperty()
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
