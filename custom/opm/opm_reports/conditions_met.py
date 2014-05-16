@@ -67,11 +67,12 @@ class ConditionsMet(object):
     }
 
     def __init__(self, case, report):
-        report.filter(
-            lambda key: case['_source'][key],
-            # case.awc_name, case.block_name
-            [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
-        )
+        if report.snapshot is not None:
+            report.filter(
+                lambda key: case['_source'][key],
+                # case.awc_name, case.block_name
+                [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
+            )
         img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
 
         met = {

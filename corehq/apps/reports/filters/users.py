@@ -2,8 +2,6 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
-from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -416,3 +414,16 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     @property
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
+
+
+    @classmethod
+    def for_user(cls, user_id):
+        return {
+            cls.slug: 'u__%s' % user_id
+        }
+
+    @classmethod
+    def for_group(cls, group_id):
+        return {
+            cls.slug: 'g__%s' % group_id
+        }

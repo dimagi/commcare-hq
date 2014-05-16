@@ -12,22 +12,19 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
-from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 
 from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.bulkupload import GroupMemoizer
-from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.users.util import normalize_username
 from couchexport.export import export_raw
 from couchexport.models import Format
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.decorators.profile import profile
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -36,13 +33,6 @@ from dimagi.utils.decorators.view import get_file
 from copy import deepcopy
 from soil import CachedDownload
 from soil.util import expose_download
-
-
-require_can_edit_fixtures = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
-        requires_privilege_with_fallback(privileges.LOOKUP_TABLES)(*args, **kwargs)
-    )
-)
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):

@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
-from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -20,7 +18,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientInfoReport
-from custom.succeed.utils import CONFIG, is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase

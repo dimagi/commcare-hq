@@ -166,7 +166,7 @@ The CommCareHQ Team
 """
 
 
-WIKI_LINK = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
+WIKI_LINK = 'http://help.commcarehq.org'
 USERS_LINK = 'http://groups.google.com/group/commcare-users'
 PRICING_LINK = 'http://www.commcarehq.org/software-plans'
 
