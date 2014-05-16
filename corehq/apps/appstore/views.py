@@ -299,7 +299,7 @@ def copy_snapshot(request, domain):
                 error_message=form.errors['domain_name'])
 
     else:
-        return project_info(request, domain)
+        return HttpResponseRedirect(reverse('project_info', args=[domain]))
 
 
 def project_image(request, domain):
