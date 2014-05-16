@@ -122,7 +122,7 @@ class AppStringsBase(object):
         mode_text = {
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
-            AUTO_SELECT_CASE: u'case property'
+            AUTO_SELECT_CASE: u'case index'
         }
 
         for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:

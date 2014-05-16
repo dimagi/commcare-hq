@@ -828,7 +828,7 @@ class SuiteGenerator(object):
                         sess_var = ref.case_session_var
                     except KeyError:
                         raise ValueError("Case tag not found: %s" % auto_select.value_source)
-                    xpath = CaseIDXPath(session_var(sess_var)).case().slash(auto_select.value_key)
+                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
                         function=xpath

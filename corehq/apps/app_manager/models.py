@@ -305,7 +305,7 @@ class AutoSelectCase(DocumentSchema):
                         this represents the 'case_tag' for the case.
                         The mode 'user' doesn't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
-                        property or a user data key or a fixture field name or the raw
+                        index or a user data key or a fixture field name or the raw
                         xpath expression.
 
     """
