@@ -699,22 +699,30 @@ class FluffPillow(PythonPillow):
             indicator = self.indicator_class(_id=indicator_id)
         else:
             indicator = current_indicator
-            current_indicator = indicator.to_json()
 
         indicator.calculate(doc)
-        return current_indicator, indicator
 
-    def change_transport(self, indicators):
-        old_indicator, new_indicator = indicators
+        return {
+            'doc_dict': doc_dict,
+            'indicators': indicator,
+        }
 
-        diff = new_indicator.diff(None)  # pass in None for old_doc to force diff with ALL indicators
+    def change_transport(self, data):
+        indicators = data['indicators']
+
+        diff = indicators.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
-            new_indicator.save_to_sql(diff, self.get_sql_engine())
+            indicators.save_to_sql(diff, self.get_sql_engine())
         else:
-            new_indicator.save()
+            indicators.save()
 
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
-        indicator_document_updated.send(sender=self, doc_id=new_indicator.id, diff=diff, backend=backend)
+        indicator_document_updated.send(
+            sender=self,
+            doc=data['doc_dict'],
+            diff=diff,
+            backend=backend
+        )
 
 try:
     # make sure this module gets called, as it is auto-registering
