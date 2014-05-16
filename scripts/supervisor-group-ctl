@@ -1,0 +1,42 @@
+#!/bin/bash
+
+command=$1
+group=$2
+
+function print_usage() {
+    # This is bash's way of printing a multiline string
+    cat << EOF
+usage: $0 [stop|start|restart] [celery|pillowtop]
+
+This script stops, starts, or restarts all pillowtop processes using supervisorctl
+
+EOF
+}
+
+# verify command is valid and print usage otherwise
+case $command in
+  stop|start|restart)
+    ;;
+  *)
+    print_usage
+    exit 1
+    ;;
+esac
+
+case $group in
+  celery)
+    pattern='\-celery'
+    ;;
+  pillowtop)
+    pattern='\-pillowtop-'
+    ;;
+  *)
+    print_usage
+    exit 1
+    ;;
+esac
+
+# grep supervisor status for all processes containing the pattern
+# strip away everything except just the process name
+# and pass that to supervisorctl as args
+sudo supervisorctl status | grep "$pattern" | cut -d' ' -f1 | xargs sudo supervisorctl $command
