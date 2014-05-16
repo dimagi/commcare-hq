@@ -170,7 +170,13 @@
     {% endif %}
 {% endblock %}
 
-{% block title %}{{ app.name|html_name }}{% endblock %}
+{% block title %}
+    {% if app.name %}
+        {{ app.name|html_name }}
+    {% else %}
+        {% trans 'Applications' %}
+    {% endif %}
+{% endblock %}
 
 {% block head %}{{ block.super }}
     <style>
