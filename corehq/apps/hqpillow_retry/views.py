@@ -55,7 +55,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Date next attempt', sortable=True),
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
-            DataTablesColumn('Error message', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
 
