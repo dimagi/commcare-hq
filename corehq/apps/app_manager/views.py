@@ -768,12 +768,18 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 form = app.get_user_registration()
 
         if module_id:
-            module = app.get_module(module_id)
+            try:
+                module = app.get_module(module_id)
+            except ModuleNotFoundException:
+                raise Http404()
             if not module.unique_id:
                 module.get_or_create_unique_id()
                 app.save()
         if form_id:
-            form = module.get_form(form_id)
+            try:
+                form = module.get_form(form_id)
+            except IndexError:
+                raise Http404()
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
@@ -886,7 +892,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     else:
         try:
             module = app.get_module(module_id)
-        except IndexError:
+        except ModuleNotFoundException:
             return bail(req, domain, app_id, not_found="module")
         try:
             form = module.get_form(form_id)
