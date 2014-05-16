@@ -1,6 +1,6 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
-from casexml.apps.case.const import CASE_ACTION_REBUILD
+from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids, primary_actions
 from casexml.apps.case.xform import get_case_updates
@@ -71,7 +71,7 @@ def rebuild_case(case_id):
 def _rebuild_action():
     now = datetime.utcnow()
     return CommCareCaseAction(
-        action_type=CASE_ACTION_REBUILD,
+        action_type=const.CASE_ACTION_REBUILD,
         date=now,
         server_date=now,
     )
