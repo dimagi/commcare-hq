@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from xml.etree import ElementTree
 from couchdbkit.schema.properties import LazyDict
-from casexml.apps.case.const import CASE_ACTION_REBUILD
+from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
@@ -96,4 +96,5 @@ def reverse_indices(db, case):
 
 
 def primary_actions(case):
-    return filter(lambda a: a.action_type != CASE_ACTION_REBUILD, case.actions)
+    return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
+                  case.actions)
