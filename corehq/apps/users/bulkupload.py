@@ -157,7 +157,7 @@ class UserLocMapping(object):
 
         commit_list = {}
         messages = []
-        def _add_loc(loc):
+        def _add_loc(loc, clear=False):
             sp = self.get_supply_point_from_location(loc)
             if sp is None:
                 messages.append(_("No supply point found for location '{}'. "
@@ -165,14 +165,14 @@ class UserLocMapping(object):
                    "and that the location has a valid sms code."
                 ).format(loc or ''))
             else:
-                commit_list.update(user.supply_point_index_mapping(sp))
+                commit_list.update(user.supply_point_index_mapping(sp, clear))
 
         for loc in self.to_add:
             if loc not in current_location_codes:
                 _add_loc(loc)
         for loc in self.to_remove:
             if loc in current_location_codes:
-                _add_loc(loc)
+                _add_loc(loc, clear=True)
 
         if commit_list:
             submit_mapping_case_block(user, commit_list)
