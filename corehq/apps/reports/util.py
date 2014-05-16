@@ -23,6 +23,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, string_to_utc_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
@@ -215,12 +216,18 @@ def namedtupledict(name, fields):
     })
 
 
-SimplifiedUserInfo = namedtupledict('SimplifiedUserInfo', (
-    'user_id',
-    'username_in_report',
-    'raw_username',
-    'is_active',
-))
+class SimplifiedUserInfo(
+        namedtupledict('SimplifiedUserInfo', (
+            'user_id',
+            'username_in_report',
+            'raw_username',
+            'is_active',
+        ))):
+
+    @property
+    @memoized
+    def group_ids(self):
+        return Group.by_user(self.user_id, False)
 
 
 def _report_user_dict(user):

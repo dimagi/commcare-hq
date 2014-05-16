@@ -798,7 +798,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
-    need_group_ids = True
     is_cacheable = True
 
     fields = [
@@ -856,10 +855,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if '_all' in self.group_ids:
-            from corehq.apps.groups.models import Group
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
-            for r in ret:
-                r["group_ids"] = Group.by_user(r["user_id"], False)
             return ret
         else:
             return self.combined_users
