@@ -16,7 +16,7 @@ logger = logging.getLogger('fluff')
 BACKEND_COUCH = 'COUCH'
 BACKEND_SQL = 'SQL'
 
-indicator_document_updated = Signal(providing_args=["doc_id", "diff", "backend"])
+indicator_document_updated = Signal(providing_args=["doc", "diff", "backend"])
 
 
 class RebuildTableException(Exception):
