@@ -2,8 +2,12 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.standard import CustomProjectReport
 
-class M4ChangeReport(object):
+
+class M4ChangeReport(CustomProjectReport):
+    printable = True
+
     @classmethod
     def get_report_data(cls, config):
         """

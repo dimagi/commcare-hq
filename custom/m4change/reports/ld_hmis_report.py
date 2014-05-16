@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
@@ -19,7 +19,7 @@ def _get_row(row_data, form_data, key):
     return rows
 
 
-class LdHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
+class LdHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True
