@@ -1058,8 +1058,13 @@ pre code {
 code {
   color: #333333;
 }
+code.bitly {
+  display: inline-block;
+  padding: 4px;
+  font-family: inherit;
+  font-size: 18px;
+}
 .bitly {
-  font-family: monospace;
   font-size: 13px;
 }
 form {
