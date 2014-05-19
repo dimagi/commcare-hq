@@ -8,13 +8,13 @@ DEATH_INDICATORS = dict(
                 indicator_key="neonatal_death",
             ),
             infant_deaths=dict(
-                description="No. of Infant (0-11 months) Deaths",
-                title="# Infant Deaths",
+                description="No. of Infant (29-365 days) Deaths, excluding neonatal deaths",
+                title="# of Infant (29-365 days) Deaths, excluding neonatal deaths",
                 indicator_key="infant_death",
             ),
             under5_deaths=dict(
-                description="No. of Under-5 (0-59 months) Deaths",
-                title="# Under-5 Deaths",
+                description="No. of Under-5 (366-1825 days) Deaths, excluding neonatal and infant deaths",
+                title="# of Under-5 (366-1825 days) Deaths, excluding neonatal and infant deaths",
                 indicator_key="under5_death",
             )
         ),
