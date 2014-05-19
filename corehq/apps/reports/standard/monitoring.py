@@ -4,19 +4,23 @@ from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import math
+from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, ElasticProjectInspectionReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER, es_wrapper
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
@@ -32,13 +36,17 @@ from django.utils.translation import ugettext_noop
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_user_link(self, user):
+    def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(domain=self.domain)),
                                           "user_id": user.get('user_id'),
                                           "username": user.get('username_in_report')}
+        return user_link
+
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
@@ -441,6 +449,426 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return rows
 
 
+class DailyFormStatsReportES(ElasticProjectInspectionReport, WorkerMonitoringReportTableBase,
+        CompletionOrSubmissionTimeMixin, DatespanMixin):
+    slug = "daily_form_stats_es"
+    name = ugettext_noop("Daily Form Activity (ES)")
+
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    description = ugettext_noop("Number of submissions per day.")
+
+    ajax_pagination = True
+    emailable = True
+    is_cacheable = False
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
+    @property
+    @memoized
+    def dates(self):
+        date_list = [self.datespan.startdate]
+        while date_list[-1] < self.datespan.enddate:
+            date_list.append(date_list[-1] + datetime.timedelta(days=1))
+        return date_list
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+        return headers
+
+    @property
+    def date_field(self):
+        return ("received_on" if self.by_submission_time
+                else "form.meta.timeStart")
+
+    @property
+    def startdate(self):
+        return (self.datespan.startdate_utc if self.by_submission_time
+                else self.datespan.startdate)
+
+    @property
+    def enddate(self):
+        return (self.datespan.enddate_utc if self.by_submission_time
+                else self.datespan.enddate_adjusted)
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(name=ExpandedMobileWorkerFilter.slug, value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
+            dict(name=CompletionOrSubmissionTimeFilter.slug, value=CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)),
+            dict(name='startdate', value=self.datespan.startdate_display),
+            dict(name='enddate', value=self.datespan.enddate_display),
+        ]
+        return params
+
+    def ids_by_doc_type(self, doc_types):
+        q = {
+            "fields": [],
+            "query": {"match_all": {}},
+            "filter": {"and": [
+                {"terms": {"doc_type": doc_types}},
+                {"term": {"domain.exact": self.domain}}
+            ]}
+        }
+        res = es_query(es_url=ES_URLS['users'], q=q)
+        return [hit['_id'] for hit in res['hits']['hits']]
+
+    def es_user_filter(self):
+        matching = ExpandedMobileWorkerFilter.matching_ids(self.request)
+        user_ids = matching['user_ids']
+        user_types = matching['user_types']
+        group_ids = matching['group_ids']
+        if 't__0' in user_types:
+            # exclude demo users, admin users, and unknown users as necessary
+            exclude_docs = []
+            exclude_ids = []
+            if "t__1" not in user_types:
+                exclude_ids.append("demo_user")
+            if "t__2" not in user_types:
+                exclude_docs.append("AdminUser")
+            if "t__3" not in user_types:
+                exclude_docs.append("UnknownUser")
+                exclude_ids.append('')
+            if exclude_docs:
+                exclude_ids.extend(self.ids_by_doc_type(exclude_docs))
+            if exclude_ids:
+                return {"not": {"terms": {"xform.form.meta.userID": exclude_ids}}}
+            else:
+                return {"match_all": {}}
+
+        other_user_ids = [u['user_id'] for u in ExpandedMobileWorkerFilter.other_users(
+            self.domain, user_types, simplified=True)]
+        group_user_ids = []
+        for group in [Group.get(g) for g in group_ids]:
+            group_user_ids.extend([user['user_id'] for user in
+                util.get_all_users_by_domain(group=group, simplified=True)])
+        all_ids = filter(None, list(set(user_ids + other_user_ids + group_user_ids)))
+        return {"terms": {"xform.form.meta.userID": all_ids}}
+
+    def get_row(self, user=None):
+        """
+        Assemble a row for a given user.
+        If no user is passed, assemble a totals row
+        then the number of forms filled out per day for the datespan,
+        and finally the total forms filled out in the datespan.
+        """
+        tz_offset = self.timezone.localize(self.enddate).strftime("%z")
+        offset_string = '%s:%s' % (tz_offset[:3], tz_offset[3:])
+        facets = {"date": {"date_histogram": {
+            "field": self.date_field,
+            "interval": "day",
+            "time_zone": offset_string,
+        }}}
+
+        date_format = "%Y-%m-%d"
+        gte = self.startdate.strftime(date_format)
+        lte = self.enddate.strftime(date_format)
+        filters = [
+            {"range": {
+                self.date_field: {
+                    "gte": gte,
+                    "lte": lte}
+            }},
+            {"term": {"domain.exact": self.domain}},
+        ]
+        if user:
+            filters.append({"term": {"xform.form.meta.userID": user.get('user_id')}})
+        else:
+            filters.append(self.es_user_filter())
+        res = es_query(
+            q={"filter": {"and": filters}},
+            facets=facets,
+            es_url=ES_URLS["forms"],
+            size=0,
+            fields=None,
+        )
+        assert('error' not in res), "Bad ES query: %s" % (res['error'])
+        def parse(entry):
+            date = datetime.datetime.fromtimestamp(entry['time']/1000)
+            return (date.strftime(DATE_FORMAT), entry['count'])
+        counts_by_date = dict(map(parse, res['facets']['date']['entries']))
+        date_cols = [
+            counts_by_date.get(date.strftime(DATE_FORMAT), 0)
+            for date in self.dates
+        ]
+        first_col = self.get_raw_user_link(user) if user else _("Total")
+        return [first_col] + date_cols + [sum(date_cols)]
+
+    @property
+    def total_records(self):
+        return len(self.all_users)
+
+    @property
+    @memoized
+    def all_users(self):
+        fields = ['_id', 'username', 'first_name', 'last_name',
+            'doc_type', 'is_active', 'email']
+        result = ExpandedMobileWorkerFilter.pull_users_from_es(
+            self.domain, self.request, fields=fields)
+        return sorted(map(
+            util._report_user_dict,
+            [u['fields'] for u in result['hits']['hits']]
+        ), key=lambda u: u['username_in_report'])
+
+    def users_by_username(self, order):
+        start = self.pagination.start
+        end = start + self.pagination.count
+        users = self.all_users
+        if order == "desc":
+            users.reverse()
+        return users[start:end]
+
+    def users_by_range(self, start, end, order):
+        query = {"filter": {"range": {
+                    self.date_field: {
+                        "gte": start.strftime('%Y-%m-%d'),
+                        "lte": end.strftime('%Y-%m-%d')}
+                }}}
+        uid_param = 'xform.form.meta.userID'
+        res = es_query(
+            q=query,
+            params={'domain.exact': self.domain},
+            facets=[uid_param],
+            es_url=ES_URLS["forms"],
+            size=0,
+        )
+        assert('error' not in res), "Bad ES query"
+        count_dict = dict((user['term'], user['count'])
+                for user in res['facets'][uid_param]['terms'])
+        return self.users_sorted_by_count(count_dict, order)
+
+    def users_sorted_by_count(self, count_dict, order):
+        # Split all_users into those in count_dict and those not.
+        # Sort the former by count and return
+        users_with_forms = []
+        users_without_forms = []
+        for user in self.all_users:
+            u_id = user['user_id']
+            if u_id in count_dict:
+                users_with_forms.append((count_dict[u_id], user))
+            else:
+                users_without_forms.append(user)
+        if order == "asc":
+            users_with_forms.sort()
+            sorted_users = users_without_forms
+            sorted_users += map(lambda u: u[1], users_with_forms)
+        else:
+            users_with_forms.sort(reverse=True)
+            sorted_users = map(lambda u: u[1], users_with_forms)
+            sorted_users += users_without_forms
+        start = self.pagination.start
+        end = start + self.pagination.count
+        # end = min(len(sorted_users), start+self.pagination.count)
+        return sorted_users[start:end]
+
+    @property
+    def column_count(self):
+        return len(self.dates) + 2
+
+    @property
+    def rows(self):
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+        if self.sort_col == totals_col:
+            start = self.dates[0]
+            end = self.dates[-1] + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col-1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
+        else:
+            users = self.users_by_username(order)
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
+
+
+class DailyFormStatsReportSQL(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+    slug = "daily_form_stats_sql"
+    name = ugettext_noop("Daily Form Activity (SQL)")
+
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
+
+    description = ugettext_noop("Number of submissions per day.")
+
+    fix_left_col = False
+    emailable = True
+    is_cacheable = False
+    ajax_pagination = True
+
+    @property
+    @memoized
+    def dates(self):
+        date_list = [self.datespan.startdate]
+        while date_list[-1] < self.datespan.enddate:
+            date_list.append(date_list[-1] + datetime.timedelta(days=1))
+        return date_list
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+        return headers
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and user.is_previewer()
+
+    @property
+    def date_field(self):
+        return 'received_on' if self.by_submission_time else 'time_end'
+
+    @property
+    def startdate(self):
+        return self.datespan.startdate_utc if self.by_submission_time else self.datespan.startdate
+
+    @property
+    def enddate(self):
+        return self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
+
+    def date_filter(self, start, end):
+        return {'%s__range' % self.date_field: (start, end)}
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(name=ExpandedMobileWorkerFilter.slug, value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
+            dict(name=CompletionOrSubmissionTimeFilter.slug, value=CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)),
+            dict(name='startdate', value=self.datespan.startdate_display),
+            dict(name='enddate', value=self.datespan.enddate_display),
+        ]
+        return params
+
+    @property
+    def total_records(self):
+        return len(self.all_users)
+
+    @property
+    @memoized
+    def all_users(self):
+        fields = ['_id', 'username', 'first_name', 'last_name',
+            'doc_type', 'is_active', 'email']
+        result = ExpandedMobileWorkerFilter.pull_users_from_es(
+            self.domain, self.request, fields=fields)
+        return sorted(map(
+            util._report_user_dict,
+            [u['fields'] for u in result['hits']['hits']]
+        ), key=lambda u: u['username_in_report'])
+
+    def users_by_username(self, order):
+        start = self.pagination.start
+        end = start + self.pagination.count
+        users = self.all_users
+        if order == "desc":
+            users.reverse()
+        return users[start:end]
+
+    def users_by_range(self, start, end, order):
+        results = FormData.objects \
+            .filter(doc_type='XFormInstance') \
+            .filter(**self.date_filter(start, end)) \
+            .values('user_id') \
+            .annotate(Count('user_id'))
+
+        count_dict = dict((result['user_id'], result['user_id__count']) for result in results)
+        return self.users_sorted_by_count(count_dict, order)
+
+    def users_sorted_by_count(self, count_dict, order):
+        # Split all_users into those in count_dict and those not.
+        # Sort the former by count and return
+        users_with_forms = []
+        users_without_forms = []
+        for user in self.all_users:
+            u_id = user['user_id']
+            if u_id in count_dict:
+                users_with_forms.append((count_dict[u_id], user))
+            else:
+                users_without_forms.append(user)
+        if order == "asc":
+            users_with_forms.sort()
+            sorted_users = users_without_forms
+            sorted_users += map(lambda u: u[1], users_with_forms)
+        else:
+            users_with_forms.sort(reverse=True)
+            sorted_users = map(lambda u: u[1], users_with_forms)
+            sorted_users += users_without_forms
+        start = self.pagination.start
+        end = start + self.pagination.count
+        return sorted_users[start:end]
+
+    @property
+    def column_count(self):
+        return len(self.dates) + 2
+
+    @property
+    def rows(self):
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+        if self.sort_col == totals_col:
+            users = self.users_by_range(self.startdate, self.enddate, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col-1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
+        else:
+            users = self.users_by_username(order)
+
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
+
+    def get_row(self, user=None):
+        """
+        Assemble a row for a given user.
+        If no user is passed, assemble a totals row
+        then the number of forms filled out per day for the datespan,
+        and finally the total forms filled out in the datespan.
+        """
+        values = ['date']
+        results = FormData.objects \
+            .filter(doc_type='XFormInstance') \
+            .filter(**self.date_filter(self.startdate, self.enddate))
+
+        if user:
+            results = results.filter(user_id=user.get('user_id'))
+            values.append('user_id')
+        else:
+            user_ids = [user_a.get('user_id') for user_a in self.all_users]
+            results = results.filter(user_id__in=user_ids)
+
+        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
+            .values(*values) \
+            .annotate(Count(self.date_field))
+
+        count_field = '%s__count' % self.date_field
+        counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
+        date_cols = [
+            counts_by_date.get(date.strftime(DATE_FORMAT), 0)
+            for date in self.dates
+        ]
+        first_col = self.get_raw_user_link(user) if user else _("Total")
+        return [first_col] + date_cols + [sum(date_cols)]
+
+
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
@@ -485,7 +913,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Median"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Std. Dev."), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Shortest"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Longest"), sort_type=DTSortType.NUMERIC),
@@ -498,24 +925,22 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
-        def to_duration(val_in_ms, d=None):
-            assert val_in_ms is not None
-            if d:
-                val_in_ms /= d
-            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+        def to_duration(val_in_s):
+            assert val_in_s is not None
+            return datetime.timedelta(seconds=val_in_s)
 
-        def to_minutes(val_in_ms, d=None):
-            if val_in_ms is None or d == 0:
+        def to_minutes(val_in_s):
+            if val_in_s is None:
                 return "--"
-            return friendly_timedelta(to_duration(val_in_ms, d))
+            return friendly_timedelta(to_duration(val_in_s))
 
-        def to_minutes_raw(val_in_ms):
+        def to_minutes_raw(val_in_s):
             """
             return a timestamp like 66:12:24 (the first number is hours
             """
-            if val_in_ms is None:
+            if val_in_s is None:
                 return '--'
-            td = to_duration(val_in_ms)
+            td = to_duration(val_in_s)
             hours, remainder = divmod(td.seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             return '{h}:{m}:{s}'.format(
@@ -530,52 +955,57 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
-        durations = []
-        totalcount = 0
+        def get_data(users, group_by_user=True):
+            query = FormData.objects \
+                .filter(doc_type='XFormInstance') \
+                .filter(xmlns=self.selected_xmlns['xmlns']) \
+                .filter(time_end__range=(self.datespan.startdate_utc, self.datespan.enddate_utc))
+
+            if users:
+                query = query.filter(user_id__in=users)
+
+            if self.selected_xmlns['app_id'] is not None:
+                query = query.filter(app_id=self.selected_xmlns['app_id'])
+
+            if group_by_user:
+                query = query.values('user_id')
+                return query.annotate(Max('duration')) \
+                    .annotate(Min('duration')) \
+                    .annotate(Avg('duration')) \
+                    .annotate(StdDev('duration')) \
+                    .annotate(Count('duration'))
+            else:
+                return query.aggregate(
+                    Max('duration'),
+                    Min('duration'),
+                    Avg('duration'),
+                    StdDev('duration'),
+                    Count('duration')
+                )
+
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+
+        data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
+
         for user in users_data["combined_users"]:
-            stats = self.get_user_data(user.get('user_id'))
+            stats = data_map.get(user.get('user_id'), {})
             rows.append([self.get_user_link(user),
-                         stats['error_msg'] if stats['error_msg'] else _fmt_ts(stats['avg']),
-                         _fmt_ts(stats['med']),
-                         _fmt_ts(stats['std']),
-                         _fmt_ts(stats["min"]),
-                         _fmt_ts(stats["max"]),
-                         _fmt(lambda x: x, stats["count"]),
+                         _fmt_ts(stats.get('duration__avg')),
+                         _fmt_ts(stats.get('duration__stddev')),
+                         _fmt_ts(stats.get("duration__min")),
+                         _fmt_ts(stats.get("duration__max")),
+                         _fmt(lambda x: x, stats.get("duration__count", 0)),
             ])
-            durations.extend(stats['durations'])
-            totalcount += stats["count"]
 
-        if totalcount:
-            self.total_row = ["All Users",
-                              _fmt_ts(numpy.average(durations) if durations else None),
-                              _fmt_ts(numpy.median(durations) if durations else None),
-                              _fmt_ts(numpy.std(durations) if durations else None),
-                              _fmt_ts(numpy.min(durations) if durations else None),
-                              _fmt_ts(numpy.max(durations) if durations else None),
-                              totalcount]
+        total_data = get_data(user_ids, group_by_user=False)
+        self.total_row = ["All Users",
+                          _fmt_ts(total_data.get('duration__avg')),
+                          _fmt_ts(total_data.get('duration__stddev')),
+                          _fmt_ts(total_data.get('duration__min')),
+                          _fmt_ts(total_data.get('duration__max')),
+                          total_data.get('duration__count', 0)]
         return rows
-
-    def get_user_data(self, user_id):
-        key = make_form_couch_key(self.domain, by_submission_time=False, user_id=user_id,
-            xmlns=self.selected_xmlns['xmlns'], app_id=self.selected_xmlns['app_id'])
-        data = get_db().view("reports_forms/all_forms",
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-            reduce=False
-        ).all()
-        durations = [d['value']['duration'] for d in data if d['value']['duration'] is not None]
-        error_msg = _("Problem retrieving form durations.") if (not durations and data) else None
-        return {
-            "count": len(data),
-            "max": numpy.max(durations) if durations else None,
-            "min": numpy.min(durations) if durations else None,
-            "avg": numpy.average(durations) if durations else None,
-            "med": numpy.median(durations) if durations else None,
-            "std": numpy.std(durations) if durations else None,
-            "durations": durations,
-            "error_msg": error_msg,
-        }
 
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
@@ -585,7 +1015,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
-    
+
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -607,49 +1037,54 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total_seconds = 0
         if self.all_relevant_forms:
             users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            for user in users_data["combined_users"]:
-                if not user.get('user_id'):
-                    # calling get_form_data with no user_id will return ALL form data which is not what we want
-                    continue
-                for form in self.all_relevant_forms.values():
-                    data = self.get_form_data(user.get('user_id'), form['xmlns'], form['app_id'])
-                    for item in data:
-                        vals = item.get('value')
-                        completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
-                        completion_dst = False if self.timezone == pytz.utc else\
-                        tz_utils.is_timezone_in_dst(self.timezone, completion_time)
-                        completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
-                        submission_time = dateutil.parser.parse(vals.get('submission_time'))
-                        submission_time = submission_time.replace(tzinfo=pytz.utc)
-                        submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
-                        td = submission_time-completion_time
 
-                        td_total = (td.seconds + td.days * 24 * 3600)
-                        rows.append([
-                            self.get_user_link(user),
+            placeholders = []
+            params = []
+            user_map = dict([(user.get('user_id'), user) for user in users_data["combined_users"] if user.get('user_id')])
+            form_map = {}
+            for form in self.all_relevant_forms.values():
+                placeholders.append('(%s,%s)')
+                params.extend([form['app_id'], form['xmlns']])
+                form_map[form['xmlns']] = form
+
+            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
+            results = FormData.objects \
+                .filter(doc_type='XFormInstance') \
+                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
+                .filter(user_id__in=user_map.keys()) \
+                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
+                .extra(
+                    where=[where], params=params
+                )
+
+            for row in results:
+                completion_time = row['time_end'].replace(tzinfo=None)
+                completion_dst = False if self.timezone == pytz.utc else\
+                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
+
+                submission_time = row['received_on'].replace(tzinfo=pytz.utc)
+                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
+
+                td = submission_time-completion_time
+                td_total = (td.seconds + td.days * 24 * 3600)
+                rows.append([
+                            self.get_user_link(user_map.get(row['user_id'])),
                             self._format_date(completion_time),
                             self._format_date(submission_time),
-                            form['name'],
-                            self._view_form_link(item.get('id', '')),
+                            form_map[row['xmlns']]['name'],
+                            self._view_form_link(row['instance_id']),
                             self.table_cell(td_total, self._format_td_status(td))
                         ])
 
-                        if td_total >= 0:
-                            total_seconds += td_total
-                            total += 1
+                if td_total >= 0:
+                    total_seconds += td_total
+                    total += 1
         else:
             rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
 
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
-
-    def get_form_data(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns, app_id=app_id)
-        return get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc]
-        ).all()
 
     def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
         return self.table_cell(
