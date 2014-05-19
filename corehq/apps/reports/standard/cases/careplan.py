@@ -23,13 +23,6 @@ class CareplanCaseListReport(CaseListReport):
     name = ugettext_noop('Care Plan Case List')
     slug = "careplan_caselist"
 
-    fields = [
-        'corehq.apps.reports.filters.users.UserTypeFilter',
-        'corehq.apps.reports.filters.users.SelectCaseOwnerFilter',
-        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
-        'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
-    ]
-
     def case_detail_url(self, case_id):
         return self.sub_report.get_url(self.domain) + "?patient_id=%s" % case_id
 
