@@ -128,6 +128,7 @@ class VscanTests(UTHTests):
         scan_path = os.path.join(
             os.path.dirname(__file__),
             'data',
+            'vscan',
             'VH014466XK_000016_20130722T175057'
         )
         files = self.pack_directory(scan_path)
@@ -151,7 +152,12 @@ class ImageUploadTests(UTHTests):
     def setUp(self):
         super(ImageUploadTests, self).setUp()
 
-        path = os.path.join(os.path.dirname(__file__), 'data', 'complete')
+        path = os.path.join(
+            os.path.dirname(__file__),
+            'data',
+            'sonosite',
+            'complete'
+        )
 
         self.files = self.pack_directory(path)
 
