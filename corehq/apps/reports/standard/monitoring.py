@@ -4,7 +4,7 @@ from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import math
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
@@ -684,6 +684,145 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "durations": durations,
             "error_msg": error_msg,
         }
+
+
+class FormCompletionTimeReportSQL(WorkerMonitoringReportTableBase, DatespanMixin):
+    name = ugettext_noop("Form Completion Time (SQL)")
+    slug = "completion_times_sql"
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
+
+    description = ugettext_noop("Statistics on time spent on a particular form.")
+    is_cacheable = True
+
+    def get_user_link(self, user):
+
+        params = {
+            'select_mw': user.get('user_id'),
+            "form_unknown": self.request.GET.get("form_unknown", ''),
+            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
+            "form_status": self.request.GET.get("form_status", ''),
+            "form_app_id": self.request.GET.get("form_app_id", ''),
+            "form_module": self.request.GET.get("form_module", ''),
+            "form_xmlns": self.request.GET.get("form_xmlns", ''),
+            "startdate": self.request.GET.get("startdate", ''),
+            "enddate": self.request.GET.get("enddate", '')
+        }
+
+        from corehq.apps.reports.standard.inspect import SubmitHistory
+
+        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        base_link = "%s%s" % (get_url_base(), SubmitHistory.get_url(domain=self.domain))
+        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
+        user_link = user_link_template % {"link": link,
+                                          "username": user.get('username_in_report')}
+        return self.table_cell(user.get('raw_username'), user_link)
+
+    @property
+    @memoized
+    def selected_xmlns(self):
+        return SingleFormByApplicationFilter.get_value(self.request, self.domain)
+
+    @property
+    def headers(self):
+        if self.selected_xmlns['xmlns'] is None:
+            return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
+        return DataTablesHeader(DataTablesColumn(_("User")),
+            DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Std. Dev."), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Shortest"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Longest"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("No. of Forms"), sort_type=DTSortType.NUMERIC))
+
+    @property
+    def rows(self):
+        rows = []
+        if self.selected_xmlns['xmlns'] is None:
+            rows.append([_("You must select a specific form to view data.")])
+            return rows
+
+        def to_duration(val_in_s):
+            assert val_in_s is not None
+            return datetime.timedelta(seconds=val_in_s)
+
+        def to_minutes(val_in_s):
+            if val_in_s is None:
+                return "--"
+            return friendly_timedelta(to_duration(val_in_s))
+
+        def to_minutes_raw(val_in_s):
+            """
+            return a timestamp like 66:12:24 (the first number is hours
+            """
+            if val_in_s is None:
+                return '--'
+            td = to_duration(val_in_s)
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return '{h}:{m}:{s}'.format(
+                h=(td.days * 24) + hours,
+                m=minutes,
+                s=seconds,
+            )
+
+        def _fmt(pretty_fn, val):
+            return format_datatables_data(pretty_fn(val), val)
+
+        def _fmt_ts(timestamp):
+            return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
+
+        def get_data(users, group_by_user=True):
+            query = FormData.objects \
+                .filter(doc_type='XFormInstance') \
+                .filter(xmlns=self.selected_xmlns['xmlns']) \
+                .filter(time_end__range=(self.datespan.startdate_utc, self.datespan.enddate_utc))
+
+            if users:
+                query = query.filter(user_id__in=users)
+
+            if self.selected_xmlns['app_id'] is not None:
+                query = query.filter(app_id=self.selected_xmlns['app_id'])
+
+            if group_by_user:
+                query = query.values('user_id')
+                return query.annotate(Max('duration')) \
+                    .annotate(Min('duration')) \
+                    .annotate(Avg('duration')) \
+                    .annotate(StdDev('duration')) \
+                    .annotate(Count('duration'))
+            else:
+                return query.aggregate(
+                    Max('duration'),
+                    Min('duration'),
+                    Avg('duration'),
+                    StdDev('duration'),
+                    Count('duration')
+                )
+
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+
+        data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
+
+        for user in users_data["combined_users"]:
+            stats = data_map.get(user.get('user_id'), {})
+            rows.append([self.get_user_link(user),
+                         _fmt_ts(stats.get('duration__avg')),
+                         _fmt_ts(stats.get('duration__stddev')),
+                         _fmt_ts(stats.get("duration__min")),
+                         _fmt_ts(stats.get("duration__max")),
+                         _fmt(lambda x: x, stats.get("duration__count", 0)),
+            ])
+
+        total_data = get_data(user_ids, group_by_user=False)
+        self.total_row = ["All Users",
+                          _fmt_ts(total_data.get('duration__avg')),
+                          _fmt_ts(total_data.get('duration__stddev')),
+                          _fmt_ts(total_data.get('duration__min')),
+                          _fmt_ts(total_data.get('duration__max')),
+                          total_data.get('duration__count', 0)]
+        return rows
 
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
