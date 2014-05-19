@@ -856,9 +856,14 @@ var DetailScreenConfig = (function () {
         {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
-        {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
-        {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT}
+        {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
+
+    if (window.FEATURE_enable_enum_image) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+        );
+    }
 
     if (window.FEATURE_enable_calc_xpaths) {
         DetailScreenConfig.MENU_OPTIONS.push(
