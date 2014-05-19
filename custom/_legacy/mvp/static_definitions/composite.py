@@ -26,14 +26,14 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="under5_fever"
     ),
     under5_diarrhea_ors_proportion=dict(
-        description="Proportion of children aged 2-59 months with "\
+        description="Proportion of children aged 2-59 months with "
                     "uncomplicated diarrhea who received ORS",
         title="% Under-5s with uncomplicated diarrhea who received ORS",
         numerator_slug="under5_diarrhea_ors",
         denominator_slug="under5_diarrhea"
     ),
     under5_diarrhea_zinc_proportion=dict(
-        description="Proportion of children aged 2-59 months with "\
+        description="Proportion of children aged 2-59 months with "
                     "uncomplicated diarrhea who received ZINC",
         title="% Under-5s with uncomplicated diarrhea who received ZINC",
         numerator_slug="under5_diarrhea_zinc",
