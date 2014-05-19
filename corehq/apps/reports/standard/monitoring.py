@@ -802,6 +802,128 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
 
 
+class FormCompletionVsSubmissionTrendsReportSQL(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+    name = ugettext_noop("Form Completion vs. Submission Trends (SQL)")
+    slug = "completion_vs_submission_sql"
+    is_cacheable = True
+
+    description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
+                                "sent to CommCare HQ.")
+
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.filters.dates.DatespanFilter']
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn(_("User")),
+            DataTablesColumn(_("Completion Time")),
+            DataTablesColumn(_("Submission Time")),
+            DataTablesColumn(_("Form Name")),
+            DataTablesColumn(_("View"), sortable=False),
+            DataTablesColumn(_("Difference"), sort_type=DTSortType.NUMERIC)
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        total = 0
+        total_seconds = 0
+        if self.all_relevant_forms:
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+
+            placeholders = []
+            params = []
+            user_map = dict([(user.get('user_id'), user) for user in users_data["combined_users"] if user.get('user_id')])
+            form_map = {}
+            for form in self.all_relevant_forms.values():
+                placeholders.append('(%s,%s)')
+                params.extend([form['app_id'], form['xmlns']])
+                form_map[form['xmlns']] = form
+
+            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
+            results = FormData.objects \
+                .filter(doc_type='XFormInstance') \
+                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
+                .filter(user_id__in=user_map.keys()) \
+                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
+                .extra(
+                    where=[where], params=params
+                )
+
+            for row in results:
+                completion_time = row['time_end'].replace(tzinfo=None)
+                completion_dst = False if self.timezone == pytz.utc else\
+                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
+
+                submission_time = row['received_on'].replace(tzinfo=pytz.utc)
+                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
+
+                td = submission_time-completion_time
+                td_total = (td.seconds + td.days * 24 * 3600)
+                rows.append([
+                            self.get_user_link(user_map.get(row['user_id'])),
+                            self._format_date(completion_time),
+                            self._format_date(submission_time),
+                            form_map[row['xmlns']]['name'],
+                            self._view_form_link(row['instance_id']),
+                            self.table_cell(td_total, self._format_td_status(td))
+                        ])
+
+                if td_total >= 0:
+                    total_seconds += td_total
+                    total += 1
+        else:
+            rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
+
+        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
+        return rows
+
+    def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
+        return self.table_cell(
+            date,
+            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname)
+        )
+
+    def _format_td_status(self, td, use_label=True):
+        status = list()
+        template = '<span class="label %(klass)s">%(status)s</span>'
+        klass = ""
+        if isinstance(td, int):
+            td = datetime.timedelta(seconds=td)
+        if isinstance(td, datetime.timedelta):
+            hours = td.seconds//3600
+            minutes = (td.seconds//60)%60
+            vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
+            names = [_("day"), _("hour"), _("minute"), _("second")]
+            status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
+
+            if td.days > 1:
+                klass = "label-important"
+            elif td.days == 1:
+                klass = "label-warning"
+            elif hours > 5:
+                klass = "label-info"
+            if not status:
+                status.append("same")
+            elif td.days < 0:
+                if abs(td).seconds > 15*60:
+                    status = [_("submitted before completed [strange]")]
+                    klass = "label-inverse"
+                else:
+                    status = [_("same")]
+
+        if use_label:
+            return template % dict(status=", ".join(status), klass=klass)
+        else:
+            return ", ".join(status)
+
+    def _view_form_link(self, instance_id):
+        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
+
+
+
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
