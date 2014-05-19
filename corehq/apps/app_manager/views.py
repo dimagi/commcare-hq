@@ -1945,29 +1945,6 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
 
 @safe_download
 def download_ccz(req, domain, app_id):
-    """
-    A landing page, mostly for debugging, that has links the jad and jar as well as
-    all the resource files that will end up zipped into the jar.
-
-    """
-    
-    """
-    
-    Start of my attempt at incorporating multimedia
-    
-    fd, fpath = tempfile.mkstemp()
-    tmpfile = os.fdopen(fd, 'w')
-    media_zip = zipfile.ZipFile(tmpfile, "w")
-    for path, media in req.app.get_media_objects():
-        try:
-            data, content_type = media.get_display_file()
-            folder = path.replace(MULTIMEDIA_PREFIX, "")
-            if not isinstance(data, unicode):
-                media_zip.writestr(os.path.join(folder), data)
-        except NameError as e:
-            print e
-    media_zip.close()   
-    """
     
     files = []
     if req.app.copy_of:
