@@ -1,26 +1,29 @@
 COMPOSITE_INDICATORS = dict(
     # Child Health
     under5_fever_rdt_proportion=dict(
-        description="Proportion of Under-5s with uncomplicated fever who received RDT test",
+        description="Proportion of children aged 6-59 months with "
+                    "uncomplicated fever who received RDT test",
         title="% Under-5s w/ uncomplicated fever who received RDT test",
         numerator_slug="under5_fever_rdt",
         denominator_slug="under5_fever"
     ),
     under5_fever_rdt_positive_proportion=dict(
-        description="Proportion of Under-5s with uncomplicated fever who received RDT test and were RDT positive",
+        description="Proportion of children aged 6-59 months with uncomplicated"
+                    " fever who received RDT test and were RDT positive",
         title="% Under-5s with uncomplicated fever who received RDT test and were RDT positive",
         numerator_slug="under5_fever_rdt_positive",
         denominator_slug="under5_fever_rdt"
     ),
     under5_fever_rdt_positive_medicated_proportion=dict(
-        description="Proportion of Under-5s with positive RDT result who received antimalarial/ADT medication",
+        description="Proportion of children aged 6-59 months with positive RDT"
+                    " result who received antimalarial/ADT medication",
         title="% Under-5s w/ Positive RDT result who received antimalarial/ADT medication",
         numerator_slug="under5_fever_rdt_positive_medicated",
         denominator_slug="under5_fever_rdt_positive"
     ),
     under5_fever_rdt_not_received_proportion=dict(
-        description="Proportion of Under-5s with uncomplicated fever who did NOT receive RDT "
-                    "test due to 'RDT not available' with CHW",
+        description="Proportion of children aged 6-59 months with uncomplicated"
+                    " fever who did NOT receive RDT test due to 'RDT not available' with CHW",
         title="% Under-5s w/ RDT Not Available",
         numerator_slug="under5_fever_rdt_not_received",
         denominator_slug="under5_fever"
@@ -66,7 +69,8 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="under1_visits",
     ),
     under5_fever_rdt_negative_medicated_proportion=dict(
-        description="Proportion of Under-5s with negative RDT result who received antimalarial/ADT medication",
+        description="Proportion of children aged 6-59 months with negative RDT"
+                    " result who received antimalarial/ADT medication",
         title="% Under-5s w/ Negative RDT result who received antimalarial/ADT medication",
         numerator_slug="under5_fever_rdt_negative_medicated",
         denominator_slug="under5_fever_rdt_negative"
