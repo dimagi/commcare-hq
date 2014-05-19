@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
 from redis_cache.cache import RedisCache
+from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
                                  store_billable)
@@ -122,13 +123,37 @@ def handle_outgoing(msg):
     backend = msg.outbound_backend
     sms_interval = backend.get_sms_interval()
     use_rate_limit = sms_interval is not None
-    if use_rate_limit:
+    use_load_balancing = (isinstance(backend, SMSLoadBalancingMixin) and
+        len(backend.phone_numbers) > 1)
+
+    if use_rate_limit or use_load_balancing:
         client = cache_core.get_redis_client()
-        lock_key = "sms-backend-%s-rate-limit" % backend._id
+
+    lbi = None
+    orig_phone_number = None
+    if use_load_balancing:
+        lbi = backend.get_next_phone_number(client)
+        orig_phone_number = lbi.phone_number
+    elif (isinstance(backend, SMSLoadBalancingMixin) and 
+        len(backend.phone_numbers) == 1):
+        # If there's only one phone number, we don't need to go through the
+        # load balancing algorithm. But we should always pass an
+        # orig_phone_number if it's an instance of SMSLoadBalancingMixin.
+        orig_phone_number = backend.phone_numbers[0]
+
+    if use_rate_limit:
+        if use_load_balancing:
+            lock_key = "sms-backend-%s-rate-limit-phone-%s" % (backend._id,
+                lbi.phone_number)
+        else:
+            lock_key = "sms-backend-%s-rate-limit" % backend._id
         lock = client.lock(lock_key, timeout=30)
 
     if not use_rate_limit or (use_rate_limit and lock.acquire(blocking=False)):
-        result = send_message_via_backend(msg, backend=backend, onerror=onerror)
+        if use_load_balancing:
+            lbi.finish(save_stats=True)
+        result = send_message_via_backend(msg, backend=backend, 
+            orig_phone_number=orig_phone_number, onerror=onerror)
         if use_rate_limit:
             wait_and_release_lock(lock, sms_interval)
         if result:
@@ -140,6 +165,8 @@ def handle_outgoing(msg):
         # We're using rate limiting, but couldn't acquire the lock, so
         # another thread is sending sms with this backend. Rather than wait,
         # we'll just put this message at the back of the queue.
+        if use_load_balancing:
+            lbi.finish(save_stats=False)
         return True
 
 def handle_incoming(msg):
