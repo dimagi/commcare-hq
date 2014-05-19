@@ -131,10 +131,10 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="pregnancy_cases_30days"
     ),
     neonate_routine_visit_past7days=dict(
-        description="Proportion of NEONATES (NEWBORN LESS THAN 29 DAYS OLD) receiving on-time" \
-                    " routine visit within last 7 DAYS",
-        title="% of NEONATES (NEWBORN LESS THAN 29 DAYS OLD) receiving on-time routine visit " \
-              "within last 7 DAYS",
+        description="Proportion of Neonates (less than 29 days old) receiving "
+                    "on-time routine visit in the past 7 days",
+        title="% of Neonates (less than 29 days old) receiving on-time routine"
+              " visit in the past 7 days",
         numerator_slug="neonate_visits_7days",
         denominator_slug="neonate_cases_7days"
     ),
