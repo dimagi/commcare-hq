@@ -156,18 +156,28 @@ class UserLocMapping(object):
         current_location_codes = [loc.site_code for loc in current_locations]
 
         commit_list = {}
+        messages = []
+        def _add_loc(loc, clear=False):
+            sp = self.get_supply_point_from_location(loc)
+            if sp is None:
+                messages.append(_("No supply point found for location '{}'. "
+                   "Make sure the location type is not set to administrative only "
+                   "and that the location has a valid sms code."
+                ).format(loc or ''))
+            else:
+                commit_list.update(user.supply_point_index_mapping(sp, clear))
+
         for loc in self.to_add:
             if loc not in current_location_codes:
-                sp = self.get_supply_point_from_location(loc)
-                commit_list.update(user.supply_point_index_mapping(sp))
-
+                _add_loc(loc)
         for loc in self.to_remove:
             if loc in current_location_codes:
-                sp = self.get_supply_point_from_location(loc)
-                commit_list.update(user.supply_point_index_mapping(sp, True))
+                _add_loc(loc, clear=True)
 
         if commit_list:
             submit_mapping_case_block(user, commit_list)
+
+        return messages
 
 
 def create_or_update_locations(domain, location_specs, log):
@@ -194,7 +204,8 @@ def create_or_update_locations(domain, location_specs, log):
 
     for username, mapping in users.iteritems():
         try:
-            mapping.save()
+            messages = mapping.save()
+            log['errors'].extend(messages)
         except UserUploadError as e:
             log['errors'].append(_('Unable to update locations for {user} because {message}'.format(
                 user=username, message=e

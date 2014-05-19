@@ -174,12 +174,12 @@
 
 <script type="text/html" id="auto-select:case">
     &nbsp;
-    {% trans "Select case:" %}
+    {% trans "Case containing index:" %}
     <select data-bind="optstr: $parent.config.caseConfigViewModel.getCaseTags('auto-select', $parent),
         value: value_source,
         edit: $root.edit">
     </select>
-    {% trans "Case property:" %}
+    {% trans "Index name:" %}
     <input type="text" class="input-medium" data-bind="value: value_key" />
 </script>
 

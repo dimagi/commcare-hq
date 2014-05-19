@@ -13,7 +13,7 @@ def dot_interpolate(string, replacement):
 
 
 def session_var(var, subref=None):
-    return u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var)
+    return XPath(u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var))
 
 
 class XPath(unicode):
@@ -60,6 +60,9 @@ class CaseXPath(XPath):
 
     def property(self, property):
         return self.slash(property)
+
+    def status_open(self):
+        return self.select('@status', 'open')
 
 
 class IndicatorXpath(XPath):
