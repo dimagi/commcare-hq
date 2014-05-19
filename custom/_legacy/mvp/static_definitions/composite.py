@@ -26,13 +26,15 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="under5_fever"
     ),
     under5_diarrhea_ors_proportion=dict(
-        description="Proportion of Under-5s with uncomplicated diarrhea who received ORS",
+        description="Proportion of children aged 2-59 months with "\
+                    "uncomplicated diarrhea who received ORS",
         title="% Under-5s with uncomplicated diarrhea who received ORS",
         numerator_slug="under5_diarrhea_ors",
         denominator_slug="under5_diarrhea"
     ),
     under5_diarrhea_zinc_proportion=dict(
-        description="Proportion of Under-5s with uncomplicated diarrhea who received ZINC",
+        description="Proportion of children aged 2-59 months with "\
+                    "uncomplicated diarrhea who received ZINC",
         title="% Under-5s with uncomplicated diarrhea who received ZINC",
         numerator_slug="under5_diarrhea_zinc",
         denominator_slug="under5_diarrhea"
@@ -133,7 +135,7 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="neonate_cases_7days"
     ),
     newborn_7day_visit_proportion=dict(
-        description=" Proportion of children (LESS THAN 8 DAYS OLD) receiving first CHW check-up" \ 
+        description=" Proportion of children (LESS THAN 8 DAYS OLD) receiving first CHW check-up" \
 		    "within 7 days of birth during the time period",
         title="% Newborns checked within 7 days of birth",
         numerator_slug="newborn_visits",
