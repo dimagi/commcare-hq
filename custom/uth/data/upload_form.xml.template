@@ -6,13 +6,13 @@
     <n0:create>
       <n0:case_name>%(case_name)s</n0:case_name>
       <n0:owner_id>%(user_id)s</n0:owner_id>
-      <n0:case_type>ultrasound_upload</n0:case_type>
+      <n0:case_type>sonosite_upload</n0:case_type>
     </n0:create>
     <n0:update>
       <n0:patient_case_id>%(patient_case_id)s</n0:patient_case_id>
     </n0:update>
     <n0:index>
-      <n0:child_id case_type="child">%(exam_id)s</n0:child_id>
+      <n0:patient_id case_type="child">%(exam_id)s</n0:patient_id>
     </n0:index>
     <n0:attachment>
         %(case_attachments)s
@@ -22,7 +22,6 @@
     <n1:deviceID>cloudcare</n1:deviceID>
     <n1:timeStart>%(modified_date)s</n1:timeStart>
     <n1:timeEnd>%(modified_date)s</n1:timeEnd>
-    <n1:username>%(username)s</n1:username>
     <n1:userID>%(user_id)s</n1:userID>
     <n1:instanceID>%(doc_id)s</n1:instanceID>
     <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>

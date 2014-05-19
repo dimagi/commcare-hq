@@ -173,10 +173,9 @@ class ImageUploadTests(UTHTests):
 
         case = result[0]
 
-        self.assertEqual(case.type, 'ultrasound_upload')
+        self.assertEqual(case.type, 'sonosite_upload')
         self.assertEqual(len(case.case_attachments), 3)
         self.assertEqual(case.patient_case_id, self.case_id)
-        # TODO assert that this case has parent of the correct case
-        # self.assertEqual(case.user_id, '')
-        # self.assertEqual(case.username, '')
-        # self.assertEqual(case.owner_id, '')
+        self.assertEqual(self.case_id, case.indices[0].referenced_id)
+        self.assertEqual('child', case.indices[0].referenced_type)
+        self.assertEqual('patient_id', case.indices[0].identifier)

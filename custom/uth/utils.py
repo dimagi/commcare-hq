@@ -63,6 +63,7 @@ def load_template(filename):
     xform_template = None
     template_path = os.path.join(
         os.path.dirname(__file__),
+        'data',
         filename
     )
     with open(template_path, 'r') as fin:
@@ -84,18 +85,19 @@ def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
     xform_template = load_template('upload_form.xml.template')
     case_attachments = [case_attach_block(identifier(f), f) for f in files]
 
+    exam_time = datetime.utcnow()
+
     format_dict = {
-        'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'time_end': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'modified_date': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'user_id': 'f72265c0-362a-11e0-9e24-005056aa7fb5',  #TODO
-        'username': 'fakeuser@dimagi.com',  #TODO
+        'time_start': (exam_time - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'time_end': exam_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'modified_date': exam_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'user_id': 'uth-uploader',
         'doc_id': uuid.uuid4().hex,
         'case_id': uuid.uuid4().hex,
         'patient_case_id': patient_case_id,
         'case_attachments': ''.join(case_attachments),
         'exam_id': exam_uuid,
-        'case_name': 'Sonosite Exam',
+        'case_name': 'Sonosite Exam - ' + exam_time.strftime('%Y-%m-%d'),
     }
 
     final_xml = xform_template % format_dict
@@ -115,8 +117,7 @@ def render_vscan_xform(case_id, files):
         'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'time_end': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         'modified_date': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'user_id': 'f72265c0-362a-11e0-9e24-005056aa7fb5',  #TODO
-        'username': 'fakeuser@dimagi.com',  #TODO
+        'user_id': 'uth-uploader',
         'doc_id': uuid.uuid4().hex,
         'case_id': case_id,
         'case_attachments': ''.join(case_attachments),

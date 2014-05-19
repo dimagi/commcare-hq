@@ -12,7 +12,6 @@
     <n1:deviceID>cloudcare</n1:deviceID>
     <n1:timeStart>%(modified_date)s</n1:timeStart>
     <n1:timeEnd>%(modified_date)s</n1:timeEnd>
-    <n1:username>%(username)s</n1:username>
     <n1:userID>%(user_id)s</n1:userID>
     <n1:instanceID>%(doc_id)s</n1:instanceID>
     <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
