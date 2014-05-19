@@ -128,7 +128,7 @@ class VscanTests(UTHTests):
         scan_path = os.path.join(
             os.path.dirname(__file__),
             'data',
-            'VH014466XK_000010_20130528T163904'
+            'VH014466XK_000016_20130722T175057'
         )
         files = self.pack_directory(scan_path)
         utils.attach_images_to_case(self.case_id, files)
@@ -174,7 +174,7 @@ class ImageUploadTests(UTHTests):
         case = result[0]
 
         self.assertEqual(case.type, 'ultrasound_upload')
-        self.assertEqual(len(case.case_attachments), 4)
+        self.assertEqual(len(case.case_attachments), 3)
         self.assertEqual(case.patient_case_id, self.case_id)
         # TODO assert that this case has parent of the correct case
         # self.assertEqual(case.user_id, '')
