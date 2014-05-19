@@ -11,7 +11,7 @@ from custom.uth.const import UTH_DOMAIN
 import re
 
 
-def all_scan_cases(scanner_serial, scan_id):
+def scan_case(scanner_serial, scan_id):
     # this is shown on device and stored on the case with no leading zeroes
     # but has them on the file itself
     scan_id = scan_id.lstrip('0')
@@ -20,14 +20,14 @@ def all_scan_cases(scanner_serial, scan_id):
         'uth/uth_lookup',
         startkey=[UTH_DOMAIN, scanner_serial, scan_id],
         endkey=[UTH_DOMAIN, scanner_serial, scan_id, {}],
-    ).all()
+    ).one()
 
 
 def match_case(scanner_serial, scan_id, date=None):
-    results = all_scan_cases(scanner_serial, scan_id)
+    results = scan_case(scanner_serial, scan_id)
 
     if results:
-        return CommCareCase.get(results[-1]['value'])
+        return CommCareCase.get(results['value'])
     else:
         return None
 

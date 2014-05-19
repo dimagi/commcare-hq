@@ -12,6 +12,7 @@ from custom.uth import utils
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
 from custom.uth.const import UTH_DOMAIN, UTH_CASE_TYPE
+from couchdbkit import MultipleResultsFound
 
 
 class UTHTests(TestCase):
@@ -74,15 +75,13 @@ class ScanLookupTests(UTHTests):
         case = utils.match_case('wrong', '123123', '')
         self.assertIsNone(case)
 
-    def testGetsNewestWithTwoCases(self):
-        # newest by date loaded date
-        case_2_id = self.create_scan_case(
+    def testErrorsWithTwoCases(self):
+        self.create_scan_case(
             self.vscan_user._id,
             'VH014466XK',
             '123123',
             '2014-03-29T10:48:49Z'
         )
-        # newest by creation time
         self.create_scan_case(
             self.vscan_user._id,
             'VH014466XK',
@@ -90,11 +89,10 @@ class ScanLookupTests(UTHTests):
             '2014-03-22T10:48:49Z'
         )
 
-        case = utils.match_case('VH014466XK', '123123', '')
-        self.assertEqual(case_2_id, case._id)
-
-    def testGetsNewestBasedOnScanProperty(self):
-        pass
+        self.assertRaises(
+            MultipleResultsFound,
+            lambda: utils.match_case('VH014466XK', '123123', '')
+        )
 
     def testGetsOnlyUnmarkedCases(self):
         self.create_scan_case(
@@ -104,9 +102,6 @@ class ScanLookupTests(UTHTests):
             '2014-03-30T10:48:49Z',
             scan_status='scan_complete'
         )
-
-        case_count = len(utils.all_scan_cases('VH014466XK', '123123'))
-        self.assertEqual(1, case_count)
 
         case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
