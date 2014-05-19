@@ -763,6 +763,10 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
+# Mailchimp
+MAILCHIMP_APIKEY = ''
+MAILCHIMP_COMMCARE_USERS_ID = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
