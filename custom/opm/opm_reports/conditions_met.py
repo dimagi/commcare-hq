@@ -249,7 +249,7 @@ class ConditionsMet(object):
             else:
                 self.cash = '<span style="color: red;">Rs. 0</span>'
 
-        elif report.block.lower == 'wazirganj':
+        elif report.block.lower() == 'wazirganj':
             if met_one or met_two or met_four or met_five:
                 self.cash = '<span style="color: green;">Rs. 250</span>'
             else:
