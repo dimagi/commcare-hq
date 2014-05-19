@@ -24,6 +24,7 @@ def REPORTS(project):
         (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
+            monitoring.DailyFormStatsReportSQL,
             monitoring.SubmissionsByFormReport,
             monitoring.FormCompletionTimeReport,
             monitoring.CaseActivityReport,
