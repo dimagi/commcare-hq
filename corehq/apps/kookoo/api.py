@@ -8,7 +8,8 @@ from django.core.urlresolvers import reverse
 from xml.sax.saxutils import escape
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
-from corehq.apps.ivr.api import get_case_id, format_ivr_response, get_input_length, form_requires_input
+from corehq.apps.smsforms.util import form_requires_input
+from corehq.apps.ivr.api import get_case_id, format_ivr_response, get_input_length
 from corehq.apps.app_manager.models import Form
 
 class InvalidPhoneNumberException(Exception):

@@ -549,29 +549,26 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+        return BillingAccountAdmin.objects.filter(
             web_user=self.request.user.username, domain=self.domain
         ).exists()
-        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                and is_registered_billing_admin)
 
     @property
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        products = self.get_product_summary(plan_version, subscription)
         date_end = None
         next_subscription = {
             'exists': False,
             'can_renew': False,
         }
         cards = None
+        general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime("%d %B %Y")
                         if subscription.date_end is not None else "--")
-            if (subscription.date_end is not None
-                and toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)):
+
+            if subscription.date_end is not None:
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -583,11 +580,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'can_renew': days_left <= 30,
                         'renew_url': reverse(ConfirmSubscriptionRenewalView.urlname, args=[self.domain]),
                     })
+            general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
+        elif self.account is not None:
+            general_credits = CreditLine.get_credits_for_account(self.account)
+        if general_credits:
+            general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
+
+        products = self.get_product_summary(plan_version, self.account, subscription)
         info = {
             'products': products,
             'is_multiproduct': len(products) > 1,
-            'features': self.get_feature_summary(plan_version, subscription),
-            'subscription_credit': None,
+            'features': self.get_feature_summary(plan_version, self.account, subscription),
+            'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
@@ -598,9 +602,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'next_subscription': next_subscription,
         }
         info.update(plan_version.user_facing_description)
-        if subscription is not None:
-            subscription_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
-            info['subscription_credit'] = self._fmt_credit(self._credit_grand_total(subscription_credits))
+
         return info
 
     def _fmt_credit(self, credit_amount=None):
@@ -616,7 +618,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def _credit_grand_total(self, credit_lines):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
-    def get_product_summary(self, plan_version, subscription):
+    def get_product_summary(self, plan_version, account, subscription):
         product_summary = []
         for product_rate in plan_version.product_rates.all():
             product_info = {
@@ -625,14 +627,21 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'credit': None,
                 'type': product_rate.product.product_type,
             }
+            credit_lines = None
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type)
+                    subscription, product_type=product_rate.product.product_type
+                )
+            elif account is not None:
+                credit_lines = CreditLine.get_credits_for_account(
+                    account, product_type=product_rate.product.product_type
+                )
+            if credit_lines:
                 product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
             product_summary.append(product_info)
         return product_summary
 
-    def get_feature_summary(self, plan_version, subscription):
+    def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []
         for feature_rate in plan_version.feature_rates.all():
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
@@ -643,11 +652,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
             }
+
+            credit_lines = None
             if subscription is not None:
                 credit_lines = CreditLine.get_credits_by_subscription_and_features(
                     subscription, feature_type=feature_rate.feature.feature_type
                 )
+            elif account is not None:
+                credit_lines = CreditLine.get_credits_for_account(
+                    account, feature_type=feature_rate.feature.feature_type)
+            if credit_lines:
                 feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+
             feature_summary.append(feature_info)
         return feature_summary
 
@@ -717,7 +733,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     page_title = ugettext_noop("Billing Statements")
 
     limit_text = ugettext_noop("statements per page")
-    empty_notification = ugettext_noop("You have no Billing Statements yet.")
+    empty_notification = ugettext_noop("No Billing Statements match the current criteria.")
     loading_message = ugettext_noop("Loading statements...")
 
     @property
@@ -735,10 +751,19 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 
     @property
+    def show_unpaid(self):
+        try:
+            return json.loads(self.request.POST.get('additionalData[show_unpaid]'))
+        except TypeError:
+            return False
+
+    @property
     def invoices(self):
         invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
+        if self.show_unpaid:
+            invoices = invoices.filter(date_paid__exact=None)
         return invoices.order_by('-date_start', '-date_end')
 
     @property
@@ -755,8 +780,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return [
             _("Statement No."),
             _("Plan"),
-            _("Start Date"),
-            _("End Date"),
+            _("Billing Period"),
+            _("Date Due"),
             _("Payment Status"),
             _("PDF"),
         ]
@@ -774,12 +799,9 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def can_pay_invoices(self):
-        is_registered_billing_admin = BillingAccountAdmin.objects.filter(
+        return BillingAccountAdmin.objects.filter(
             web_user=self.request.user.username, domain=self.domain
         ).exists()
-        return ((toggles.ACCOUNTING_PREVIEW.enabled(self.request.user.username)
-                 or toggles.ACCOUNTING_PREVIEW.enabled(self.domain))
-                and is_registered_billing_admin)
 
     @property
     def paginated_list(self):
@@ -791,13 +813,12 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 if invoice.date_paid is not None:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime("%d %B %Y"))
+                    payment_class = "label label-inverse"
                 else:
-                    payment_status = (
-                        _("%(balance)s due %(date_due)s.") % {
-                            'balance': fmt_dollar_amount(invoice.balance),
-                            'date_due': invoice.date_due.strftime("%d %B %Y"),
-                        }
-                    )
+                    payment_status = _("Not Paid")
+                    payment_class = "label label-important"
+                date_due = (invoice.date_due.strftime("%d %B %Y")
+                            if invoice.date_paid is None else _("Already Paid"))
                 yield {
                     'itemData': {
                         'id': invoice.id,
@@ -806,6 +827,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                         'end': invoice.date_end.strftime("%d %B %Y"),
                         'plan': invoice.subscription.plan_version.user_facing_description,
                         'payment_status': payment_status,
+                        'payment_class': payment_class,
+                        'date_due': date_due,
                         'pdfUrl': reverse(
                             BillingStatementPdfView.urlname,
                             args=[self.domain, last_billing_record.pdf_data_id]
@@ -876,10 +899,6 @@ class BaseStripePaymentView(DomainAccountingSettings):
         """Returns a StripePaymentHandler object
         """
         raise NotImplementedError("You must impmenent get_payment_handler()")
-
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseStripePaymentView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -1054,7 +1073,9 @@ class SelectPlanView(DomainAccountingSettings):
         return {
             'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
-                                if self.current_subscription is not None else ""),
+                                if self.current_subscription is not None
+                                and not self.current_subscription.is_trial
+                                else ""),
             'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
@@ -1307,10 +1328,6 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'confirm_form': self.confirm_form,
             'next_plan': self.next_plan_version.user_facing_description,
         }
-
-    @method_decorator(toggles.ACCOUNTING_PREVIEW.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

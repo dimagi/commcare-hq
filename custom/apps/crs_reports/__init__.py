@@ -2,6 +2,8 @@ from django.utils.translation import ugettext_noop as _
 
 from custom.apps.crs_reports.reports import HBNCMotherReport
 
+MOTHER_POSTPARTUM_VISIT_FORM_XMLNS = "http://openrosa.org/formdesigner/63866D7C-42FC-43DD-8EFA-E02C74729DD6"
+BABY_POSTPARTUM_VISIT_FORM_XMLNS = "http://openrosa.org/formdesigner/EA8FB6FC-E269-440F-993E-AD07F733BF31"
 
 CUSTOM_REPORTS = (
     (_('Custom Reports'), (

@@ -1,5 +1,4 @@
 import json
-from corehq.toggles import SAVED_EXCEL_DASHBOARDS
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import privileges
@@ -166,7 +165,6 @@ class CustomExportHelper(object):
             'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
-            'excel_dashboards': SAVED_EXCEL_DASHBOARDS.enabled(self.request.couch_user.username),
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),

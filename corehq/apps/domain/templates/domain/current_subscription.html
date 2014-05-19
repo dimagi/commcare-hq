@@ -28,7 +28,7 @@
 
         var creditsHandler = new CreditsManager(
             {{ plan.products|JSON }}, {{ plan.features|JSON }},
-            paymentHandler, {{ can_purchase_credits|BOOL }}
+            paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
         );
         $(function () {
             ko.applyBindings(creditsHandler, $('#subscriptionSummary').get(0));
@@ -59,19 +59,22 @@
                             {% endblocktrans %}
                             </div>
                         {% endif %}
-                        <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                            {% trans "Change Plan" %}
-                        </a>
+                        <p>
+                            <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                                {% trans "Change Plan" %}
+                            </a>
+                        </p>
+                        {% if plan.is_trial %}
+                            <div class="alert alert-info">
+                                <i class="icon-info-sign"></i>
+                                {% blocktrans with plan.date_end as date_end %}
+                                    Your trial expires on {{ date_end }}.
+                                {% endblocktrans %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-                {% if plan.is_trial %}
-                    <div class="alert alert-info">
-                        <i class="icon-info-sign"></i>
-                        {% blocktrans with plan.date_end as date_end %}
-                            Your trial expires on {{ date_end }}.
-                        {% endblocktrans %}
-                    </div>
-                {% else %}
+                {% if not plan.is_trial %}
                     {% if plan.date_start %}
                         <div class="control-group">
                             <label class="control-label">{% trans 'Date Started' %}</label>
@@ -131,48 +134,62 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.subscription_credit and plan.subscription_credit.is_visible %}
+                    {% if plan.general_credit and plan.general_credit.is_visible %}
                         <div class="control-group">
                             <label class="control-label">{% trans 'General Credit' %}</label>
                             <div class="controls">
-                                <p class="control-group-text">{{ plan.subscription_credit.amount }}</p>
+                                <p class="control-group-text">{{ plan.general_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to either your software plan
+                                        or the features below. It's likely that someone from Dimagi added these
+                                        credits for you.
+                                    {% endblocktrans %}
+                                </p>
                             </div>
                         </div>
                     {% endif %}
-                </div>
-                <h2>{% trans 'Usage Summary' %}</h2>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Feature" %}</th>
-                            <th>{% trans "Current Use" %}</th>
-                            <th>{% trans "Remaining" %}</th>
-                            <th>{% trans "Credits Available" %}</th>
-                            {% if can_purchase_credits %}
-                            <th>{% trans "Add Credit" %}</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: features">
-                        <tr>
-                            <td data-bind="text: name"></td>
-                            <td data-bind="text: usage"></td>
-                            <td data-bind="text: remaining"></td>
-                            <td data-bind="text: amount"></td>
-                            <td data-bind="visible: canPurchaseCredits">
-                                <button type="button"
-                                        class="btn"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment">
-                                    <i class="icon-plus"></i>
-                                    {% trans 'Add Credit' %}
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            {% endif %}
+                {% endif %}
+            </div>
+            <h2>{% trans 'Usage Summary' %}</h2>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "Feature" %}</th>
+                        <th>{% trans "Current Use" %}</th>
+                        <th>{% trans "Remaining" %}</th>
+                        {% if not plan.is_trial %}
+                        <th>{% trans "Credits Available" %}</th>
+                        {% endif %}
+                        {% if can_purchase_credits and not plan.is_trial %}
+                        <th>{% trans "Add Credit" %}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: features">
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td data-bind="text: usage"></td>
+                        <td data-bind="text: remaining"></td>
+                        {% if not plan.is_trial %}
+                        <td data-bind="text: amount"></td>
+                        {% endif %}
+                        {% if can_purchase_credits and not plan.is_trial %}
+                        <td data-bind="visible: canPurchaseCredits">
+                            <button type="button"
+                                    class="btn"
+                                    data-toggle="modal"
+                                    data-target="#paymentModal"
+                                    data-bind="click: triggerPayment">
+                                <i class="icon-plus"></i>
+                                {% trans 'Add Credit' %}
+                            </button>
+                        </td>
+                        {% endif %}
+                    </tr>
+                </tbody>
+            </table>
         </article>
     </div>
 </div>

@@ -2,17 +2,21 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.standard import CustomProjectReport
 
-class M4ChangeReport(object):
+
+class M4ChangeReport(CustomProjectReport):
+    printable = True
+
     @classmethod
     def get_report_data(cls, config):
         """
         Intention: Override
 
         :param config: A dictionary containing configuration for this report
-        :return: A dictionary containing report rows
+        :return: A list containing report rows
         """
-        return {}
+        return []
 
     @classmethod
     def get_initial_row_data(cls):
@@ -32,6 +36,7 @@ class M4ChangeReportDataSource(ReportDataSource):
         from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
         from custom.m4change.reports.all_hmis_report import AllHmisReport
         from custom.m4change.reports.project_indicators_report import ProjectIndicatorsReport
+        from custom.m4change.reports.mcct_monthly_aggregate_report import McctMonthlyAggregateReport
 
         return [
             AncHmisReport,
@@ -39,6 +44,7 @@ class M4ChangeReportDataSource(ReportDataSource):
             ImmunizationHmisReport,
             AllHmisReport,
             ProjectIndicatorsReport,
+            McctMonthlyAggregateReport
         ]
 
     @memoized

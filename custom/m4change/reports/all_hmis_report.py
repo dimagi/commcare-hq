@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
@@ -32,7 +32,7 @@ def _get_rows(row_data, form_data, key):
     return rows
 
 
-class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
+class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True
@@ -72,12 +72,27 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
                     report_rows = _get_rows(row_data, data, key)
                     for key in report_rows:
                         row_data.get(key)["value"] += report_rows.get(key)
-        return row_data
+        return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("hmis_code"))
 
 
     @classmethod
     def get_initial_row_data(cls):
         all_hmis_report_data = {
+            "newborns_low_birth_weight_discharged_total": {
+                "hmis_code": 46,
+                "label": _("Newborns with low birth weight discharged - Total"),
+                "value": 0
+            },
+            "newborns_low_birth_weight_discharged_male_total": {
+                "hmis_code": 46.1,
+                "label": _("Newborns with low birth weight discharged - Male"),
+                "value": 0
+            },
+            "newborns_low_birth_weight_discharged_female_total": {
+                "hmis_code": 46.2,
+                "label": _("Newborns with low birth weight discharged - Female"),
+                "value": 0
+            },
             "pregnant_mothers_referred_out_total": {
                 "hmis_code": 105,
                 "label": _("Pregnant Mothers Referred out"),
@@ -121,6 +136,21 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             "pregnant_mothers_with_confirmed_malaria_total": {
                 "hmis_code": 196,
                 "label": _("Pregnant Mothers with confirmed Malaria"),
+                "value": 0
+            },
+            "anc_women_previously_known_hiv_status_total": {
+                "hmis_code": 162,
+                "label": _("ANC Women with previously known HIV status (at ANC)"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_anc_total": {
+                "hmis_code": 163,
+                "label": _("Pregnant women who received HIV counseling testing and received result at ANC"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_ld_total": {
+                "hmis_code": 164,
+                "label": _("Pregnant women who received HIV counseling testing and received result at L&D"),
                 "value": 0
             },
             "partners_of_hiv_positive_women_tested_negative_total": {
@@ -236,11 +266,11 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             "domain": str(self.domain)
         })
 
-        for key in row_data:
+        for row in row_data:
             yield [
-                self.table_cell(row_data.get(key).get("hmis_code")),
-                self.table_cell(row_data.get(key).get("label")),
-                self.table_cell(row_data.get(key).get("value"))
+                self.table_cell(row[1].get("hmis_code")),
+                self.table_cell(row[1].get("label")),
+                self.table_cell(row[1].get("value"))
             ]
 
     @property

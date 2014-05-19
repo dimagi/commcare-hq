@@ -13,7 +13,7 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         {% block underscore %}<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>{% endblock %}
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
@@ -173,7 +173,7 @@
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
-                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post">
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -204,6 +204,14 @@
                                     <div class="alert fade in page-level-alert alert-error">
                                         <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter valid comma-separated email-list." %}
                                     </div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label for="file" class="control-label">{% trans 'Upload file' %}</label>
+                                <div class="controls">
+                                    <input type="file" name="report_issue"/>
+                                    <p class="help-block"><i class="icon-warning-sign"></i> {% trans "Do not upload a file containing individually identifiable data." %}
+                                    </p>
                                 </div>
                             </div>
                         </fieldset>
@@ -288,6 +296,61 @@
                     </ul>
                 </div>
             </div>
+            {% if request.show_trial_notice %}
+            <div class="modal hide fade" id="trial-notice">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans 'Important Message' %}</h3>
+                </div>
+                <div class="modal-body">
+                    {% with request.trial_info.feature_name as feat_name %}
+                    {% with request.trial_info.required_plan as req_plan %}
+                    {% with request.trial_info.current_plan as current_plan %}
+                    {% with request.trial_info.date_end as date_end %}
+                        <p class="lead">
+                        {% blocktrans %}
+                            <strong>{{ feat_name }}</strong> is only available for the {{ req_plan }}
+                            Plan and higher. You are currently on a trial version
+                            of the {{ current_plan }} Plan.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            We want you to have a chance to use and evaluate our
+                            pay-only features before deciding which plan to subscribe to.
+                            You will have access to <strong>{{ feat_name }}</strong> for a
+                            30 day trial period. <strong>This period is ending on {{ date_end }}.</strong>
+                            After {{ date_end }}, you will no longer have access to {{ feat_name }}.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            To continue accessing {{ feat_name }} after the trial period,
+                            subscribe to the {{ req_plan }} Plan.
+                        {% endblocktrans %}
+                        </p>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% if request.is_billing_admin %}
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'domain_select_plan' request.domain %}">
+                                {% blocktrans %}
+                                    Change my project's plan
+                                {% endblocktrans %}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn"
+                            data-dismiss="modal">
+                        {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
+            {% endif %}
         {% endblock %}
         </div>
         <!--Begin javascript -->
@@ -361,7 +424,9 @@
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });
-                ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
+                var element = $('#keyboard-shortcuts-config-form').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new KBConfigFormModel(), element);
             });
         </script>
 
@@ -476,6 +541,14 @@
         {% endblock %}
         {% endif %}
         {% endblock %}
+
+        {% if request.show_trial_notice %}
+        <script>
+            $(function () {
+                $('#trial-notice').modal('show');
+            });
+        </script>
+        {% endif %}
 
         <script>
             $(function () {

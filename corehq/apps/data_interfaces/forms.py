@@ -94,30 +94,3 @@ class AddCaseToGroupForm(forms.Form):
                 type="submit"
             )
         )
-
-
-class UploadBulkCaseGroupForm(forms.Form):
-    bulk_file = forms.FileField(
-        label=ugettext_noop("Bulk File"),
-        help_text=ugettext_noop("An excel file of case identifiers (Phone Number, External ID, or Case ID).")
-    )
-    action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
-
-    def __init__(self, *args, **kwargs):
-        super(UploadBulkCaseGroupForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            Fieldset(
-                _('Upload bulk file'),
-                Field('bulk_file'),
-                Field('action')
-            ),
-            FormActions(
-                StrictButton(
-                    _("Upload Bulk Cases"),
-                    css_class="btn-primary",
-                    type="submit"
-                )
-            )
-        )

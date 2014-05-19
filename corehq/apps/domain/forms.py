@@ -26,7 +26,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
-from corehq.apps.app_manager.models import Application, FormBase
+from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain)
@@ -518,12 +518,22 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
                 domain.cloudcare_releases = cloudcare_releases
-            domain.secure_submissions = self.cleaned_data.get('secure_submissions', False)
+            secure_submissions = self.cleaned_data.get('secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in ApplicationBase.by_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
             domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception, e:
             logging.exception("couldn't save project settings - error is %s" % e)
             return False
+
 
 class DomainDeploymentForm(forms.Form):
     city = CharField(label=ugettext_noop("City"), required=False)

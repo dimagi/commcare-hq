@@ -4,14 +4,17 @@ from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK,
     RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
+    CommCareMobileContactMixin, InvalidFormatException)
 from touchforms.formplayer.api import current_question
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.util import form_requires_input
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
     CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
@@ -73,6 +76,32 @@ def get_workflow(handler):
     else:
         return WORKFLOW_REMINDER
 
+
+def get_recipient_phone_number(reminder, recipient, verified_numbers):
+    verified_number = verified_numbers.get(recipient.get_id, None)
+    unverified_number = None
+
+    if verified_number is None:
+        if isinstance(recipient, CouchUser):
+            try:
+                unverified_number = recipient.phone_number
+            except Exception:
+                unverified_number = None
+        elif isinstance(recipient, CommCareCase):
+            unverified_number = recipient.get_case_property("contact_phone_number")
+            unverified_number = apply_leniency(unverified_number)
+            if unverified_number:
+                try:
+                    CommCareMobileContactMixin.validate_number_format(
+                        unverified_number)
+                except InvalidFormatException:
+                    unverified_number = None
+            else:
+                unverified_number = None
+
+    return (verified_number, unverified_number)
+
+
 def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
     metadata = MessageMetadata(
         workflow=workflow or get_workflow(handler),
@@ -89,7 +118,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                 lang = recipient.get_language_code()
             except Exception:
                 lang = None
-            
+
             if handler.custom_content_handler is not None:
                 if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
                     try:
@@ -116,42 +145,32 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
                     else:
                         raise_warning() # ERROR_RENDERING_MESSAGE
                         continue
-            
-            verified_number = verified_numbers[recipient.get_id]
+
+            verified_number, unverified_number = get_recipient_phone_number(
+                reminder, recipient, verified_numbers)
+
+            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
             if verified_number is not None:
-                result = send_sms_to_verified_number(verified_number, message, metadata)
-                if not result:
-                    raise_warning() # Could not send SMS
-            elif isinstance(recipient, CouchUser):
-                # If there is no verified number, but the recipient is a CouchUser, still try to send it
-                try:
-                    phone_number = recipient.phone_number
-                except Exception:
-                    phone_number = None
-                
-                if phone_number is None:
-                    result = False
-                    if len(recipients) == 1:
-                        raise_error(reminder, ERROR_NO_OTHER_NUMBERS)
-                    else:
-                        raise_warning() # ERROR_NO_OTHER_NUMBERS
-                else:
-                    result = send_sms(reminder.domain, recipient, phone_number, message, metadata)
-                    if not result:
-                        raise_warning() # Could not send SMS
+                result = send_sms_to_verified_number(verified_number,
+                    message, metadata)
+            elif isinstance(recipient, CouchUser) and unverified_number:
+                result = send_sms(reminder.domain, recipient, unverified_number,
+                    message, metadata)
+            elif (isinstance(recipient, CommCareCase) and unverified_number and
+                domain_obj.send_to_duplicated_case_numbers):
+                result = send_sms(reminder.domain, recipient, unverified_number,
+                    message, metadata)
             else:
                 if len(recipients) == 1:
                     raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-                else:
-                    raise_warning() # ERROR_NO_VERIFIED_NUMBER
                 result = False
-            
+
             if len(recipients) == 1:
                 return result
-        
+
         # For multiple recipients, always move to the next event
         return True
-    
+
     elif handler.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
         # Used for automated tests
         return True
@@ -232,7 +251,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         return True
     else:
         reminder.xforms_session_ids = []
-        
+
         # Get the app, module, and form
         try:
             form_unique_id = reminder.current_event.form_unique_id
@@ -242,21 +261,28 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         except Exception as e:
             raise_error(reminder, ERROR_FORM)
             return False
-        
+
         # Start a touchforms session for each recipient
         for recipient in recipients:
-            verified_number = verified_numbers[recipient.get_id]
-            if verified_number is None:
+
+            verified_number, unverified_number = get_recipient_phone_number(
+                reminder, recipient, verified_numbers)
+
+            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
+            no_verified_number = verified_number is None
+            cant_use_unverified_number = (unverified_number is None or
+                not domain_obj.send_to_duplicated_case_numbers or
+                form_requires_input(form))
+            if no_verified_number and cant_use_unverified_number:
                 if len(recipients) == 1:
                     raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
                     return False
                 else:
-                    raise_warning() # ERROR_NO_VERIFIED_NUMBER
                     continue
-            
+
             # Close all currently open sessions
             XFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
-            
+
             # Start the new session
             if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:
                 case_id = recipient.get_id
@@ -268,7 +294,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             session.reminder_id = reminder._id
             session.save()
             reminder.xforms_session_ids.append(session.session_id)
-            
+
             # Send out first message
             if len(responses) > 0:
                 message = format_message_list(responses)
@@ -277,13 +303,15 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                     reminder_id=reminder._id,
                     xforms_session_couch_id=session._id,
                 )
-                result = send_sms_to_verified_number(verified_number, message, metadata)
-                if not result:
-                    raise_warning() # Could not send SMS
-                
+                if verified_number:
+                    result = send_sms_to_verified_number(verified_number, message, metadata)
+                else:
+                    result = send_sms(reminder.domain, recipient, unverified_number,
+                        message, metadata)
+
                 if len(recipients) == 1:
                     return result
-            
+
         return True
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):

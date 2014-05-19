@@ -30,17 +30,26 @@ class OpmReportSnapshot(Document):
     @classmethod
     def filtered(cls, snapshot, report):
         filtered_rows = []
-        for row in snapshot.rows:
-            def key_finder(key):
-                index = snapshot.slugs.index(key)
-                return row[index]
-            try:
-                report.filter(key_finder)
-            except InvalidRow:
-                pass
-            else:
-                filtered_rows.append(row)
-        snapshot.rows = filtered_rows
+
+        need_filering = False
+        filters = []
+        for key, field in report.filter_fields:
+            keys = report.filter_data.get(field, [])
+            if keys:
+                need_filering = True
+                filters.append((key, field))
+        if need_filering:
+            for row in snapshot.rows:
+                def key_finder(key):
+                    index = snapshot.slugs.index(key)
+                    return row[index]
+                try:
+                    report.filter(fn=key_finder, filter_fields=filters)
+                except InvalidRow:
+                    pass
+                else:
+                    filtered_rows.append(row)
+            snapshot.rows = filtered_rows
         return snapshot
 
     @classmethod

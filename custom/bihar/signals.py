@@ -27,7 +27,7 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
                     if case.type in ('cc_bihar_pregnancy', 'cc_bihar_newborn'):
                         assign_case(case, owner_id, BiharMockUser(),
                                     include_subcases=True, include_parent_cases=True,
-                                    exclude=form_cases)
+                                    exclude=form_cases, update={'reassignment_form_id': xform._id})
 
 
 cases_received.connect(bihar_reassignment)

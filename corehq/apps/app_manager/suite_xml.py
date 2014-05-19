@@ -839,10 +839,14 @@ class SuiteGenerator(object):
             try:
                 last_action = form.actions.load_update_cases[-1]
                 if last_action.show_product_stock:
+                    product_filter = ''
+                    if last_action.product_program:
+                        product_filter = "[program_id='{}']".format(last_action.product_program)
+
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
                     e.datums.append(SessionDatum(
                         id='product_id',
-                        nodeset="instance('products')/products/product",
+                        nodeset="instance('products')/products/product{}".format(product_filter),
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))

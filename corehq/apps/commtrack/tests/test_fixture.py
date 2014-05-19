@@ -4,8 +4,8 @@ from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.commtrack.fixtures import product_fixture_generator
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.fixtures import product_fixture_generator, program_fixture_generator
+from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.tests.util import bootstrap_user
 
@@ -75,4 +75,35 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                                         {products}
                                     </products>
                                 </fixture>'''.format(user_id=user_id, products=products),
+                            ElementTree.tostring(fixture[0]))
+
+    def test_program_fixture(self):
+        user = bootstrap_user(self, phone_number="1234567890")
+        Program(
+            domain=user.domain,
+            name="test1",
+            code="t1"
+        ).save()
+
+        program_list = Program.by_domain(user.domain)
+        program_xml = ''
+        for program in program_list:
+            program_xml += '''
+                <program id="{id}">
+                    <name>{name}</name>
+                    <code>{code}</code>
+                </program>
+            '''.format(
+                id=program.get_id,
+                name=program.name,
+                code=program.code
+            )
+
+        fixture = program_fixture_generator(user, V1, None)
+
+        self.assertXmlEqual('''<fixture id="commtrack:programs" user_id="{user_id}">
+                                    <programs>
+                                        {programs}
+                                    </programs>
+                                </fixture>'''.format(user_id=user.user_id, programs=program_xml),
                             ElementTree.tostring(fixture[0]))

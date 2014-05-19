@@ -16,7 +16,7 @@ from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_cal
     form_passes_filter_date_delivery
 from custom.m4change.constants import BOOKED_AND_UNBOOKED_DELIVERY_FORMS, \
     BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, \
-    LAB_RESULTS_FORMS
+    LAB_RESULTS_FORMS, BOOKING_AND_FOLLOW_UP_FORMS, BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS, PMTCT_CLIENTS_FORM
 
 
 NO_VALUE_STRING = "None"
@@ -138,16 +138,16 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
         BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     male_lt_2_5kg = ld_hmis_report_calcs.ChildSexWeightCalculator(
-        {"baby_sex": "male"}, 2.5, '<', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+        {"baby_sex": "male"}, 2.5, '<', BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     male_gte_2_5kg = ld_hmis_report_calcs.ChildSexWeightCalculator(
-        {"baby_sex": "male"}, 2.5, '>=', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+        {"baby_sex": "male"}, 2.5, '>=', BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     female_lt_2_5kg = ld_hmis_report_calcs.ChildSexWeightCalculator(
-        {"baby_sex": "female"}, 2.5, '<', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+        {"baby_sex": "female"}, 2.5, '<', BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     female_gte_2_5kg = ld_hmis_report_calcs.ChildSexWeightCalculator(
-        {"baby_sex": "female"}, 2.5, '>=', BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+        {"baby_sex": "female"}, 2.5, '>=', BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     still_births = ld_hmis_report_calcs.LdKeyValueDictCalculator(
         {"pregnancy_outcome": {"value": "still_birth", "comparator": eq}},
@@ -331,8 +331,13 @@ class McctStatus(models.Model):
         mcct_status_list = McctStatus.objects.filter(domain__in=[name for name in M4CHANGE_DOMAINS])
         for mcct_status in mcct_status_list:
             if mcct_status.status not in status_dict:
-                status_dict[mcct_status.status] = set()
-            status_dict[mcct_status.status].add((mcct_status.form_id, mcct_status.reason))
+                status_dict[mcct_status.status] = list()
+            status_dict[mcct_status.status].append({
+                "form_id": mcct_status.form_id,
+                "reason": mcct_status.reason,
+                "immunized": mcct_status.immunized,
+                "is_booking": mcct_status.is_booking,
+            })
         return status_dict
 
 
@@ -340,10 +345,6 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_form_location_id)
-    eligible_due_to_registration = mcct_monthly_aggregate_report_calcs.EligibleDueToRegistrationCalculator()
-    eligible_due_to_4th_visit = mcct_monthly_aggregate_report_calcs.EligibleDueTo4thVisitCalculator()
-    eligible_due_to_delivery = mcct_monthly_aggregate_report_calcs.EligibleDueToDeliveryCalculator()
-    eligible_due_to_immun_or_pnc_visit = mcct_monthly_aggregate_report_calcs.EligibleDueToImmunizationOrPncVisitCalculator()
     status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
@@ -353,56 +354,88 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
     location_id = fluff.FlatField(_get_form_location_id)
+    newborns_low_birth_weight_discharged = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_male = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "male")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
+    newborns_low_birth_weight_discharged_female = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("birth_complication", operator.contains, "kmc"),
+            ("low_birth_weight_action", operator.eq, "discharged"),
+            ("baby_sex", operator.eq, "female")
+        ],
+        BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
+    )
     pregnant_mothers_referred_out = all_hmis_report_calcs.FormComparisonCalculator(
-        [("client_status", operator.eq, "referred_out")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("client_status", operator.eq, "referred_out")], BOOKING_AND_FOLLOW_UP_FORMS
     )
     anc_anemia_test_done = all_hmis_report_calcs.FormComparisonCalculator(
-        [("tests_conducted", operator.contains, "hb")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("tests_conducted", operator.contains, "hb")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
     )
     anc_anemia_test_positive = all_hmis_report_calcs.FormComparisonCalculator(
-        [("hb_test_result", operator.eq, "positive")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("hb_test_result", operator.eq, "positive")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
     )
     anc_proteinuria_test_done = all_hmis_report_calcs.FormComparisonCalculator(
-        [("tests_conducted", operator.contains, "hb")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("tests_conducted", operator.contains, "proteinuria")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
     )
     anc_proteinuria_test_positive = all_hmis_report_calcs.FormComparisonCalculator(
-        [("protein_test_result", operator.eq, "positive")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("protein_test_result", operator.eq, "positive")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
     )
     hiv_rapid_antibody_test_done = all_hmis_report_calcs.FormComparisonCalculator(
-        [("tests_conducted", operator.contains, "hiv")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("tests_conducted", operator.contains, "hiv")], BOOKED_AND_UNBOOKED_DELIVERY_FORMS
     )
     deaths_of_women_related_to_pregnancy = all_hmis_report_calcs.FormComparisonCalculator(
-        [("pregnancy_outcome", operator.eq, "maternal_death")], ALL_HMIS_CASE_FLUFF_FORMS, form_passes_filter_date_delivery
+        [("pregnancy_outcome", operator.eq, "maternal_death")], BOOKED_AND_UNBOOKED_DELIVERY_FORMS, form_passes_filter_date_delivery
     )
     pregnant_mothers_tested_for_hiv = all_hmis_report_calcs.FormComparisonCalculator(
-        [("hiv_test_result", operator.eq, "positive")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("hiv_test_result", operator.eq, "positive")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
     )
     pregnant_mothers_with_confirmed_malaria = all_hmis_report_calcs.FormComparisonCalculator(
-        [("malaria_test_result", operator.eq, "positive")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("malaria_test_result", operator.eq, "positive")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
+    )
+    anc_women_previously_known_hiv_status = all_hmis_report_calcs.FormComparisonCalculator(
+        [("tests_conducted", operator.contains, "known_hiv")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
+    )
+    pregnant_women_received_hiv_counseling_and_result_anc = all_hmis_report_calcs.FormComparisonCalculator(
+        [("tests_conducted", operator.contains, "hiv")], BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS
+    )
+    pregnant_women_received_hiv_counseling_and_result_ld = all_hmis_report_calcs.FormComparisonCalculator(
+        [("tests_conducted", operator.contains, "hiv")], BOOKED_AND_UNBOOKED_DELIVERY_FORMS
     )
     partners_of_hiv_positive_women_tested_negative = all_hmis_report_calcs.FormComparisonCalculator(
-        [("partner_hiv_status", operator.eq, "negative")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("partner_hiv_status", operator.eq, "negative")], PMTCT_CLIENTS_FORM
     )
     partners_of_hiv_positive_women_tested_positive = all_hmis_report_calcs.FormComparisonCalculator(
-        [("partner_hiv_status", operator.eq, "positive")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("partner_hiv_status", operator.eq, "positive")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_stage_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "clinical_stage")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("eligibility_assessment", operator.eq, "clinical_stage")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_cd4_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "cd4")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("eligibility_assessment", operator.eq, "cd4")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_art = all_hmis_report_calcs.FormComparisonCalculator(
-        [("commenced_drugs", operator.contains, "3tc")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("commenced_drugs", operator.contains, "3tc")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_arv = all_hmis_report_calcs.FormComparisonCalculator(
-        [("commenced_drugs", operator.contains, ["3tc", "mother_sdnvp"])], ALL_HMIS_CASE_FLUFF_FORMS
+        [("commenced_drugs", operator.contains, ["3tc", "mother_sdnvp"])], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_azt = all_hmis_report_calcs.FormComparisonCalculator(
-        [("commenced_drugs", operator.contains, "azt")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("commenced_drugs", operator.contains, "azt")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_mother_sdnvp = all_hmis_report_calcs.FormComparisonCalculator(
-        [("commenced_drugs", operator.contains, "mother_sdnvp")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("commenced_drugs", operator.contains, "mother_sdnvp")], PMTCT_CLIENTS_FORM
     )
     infants_hiv_women_cotrimoxazole_lt_2_months = \
         all_hmis_report_calcs.InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months()
@@ -417,7 +450,7 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     infants_hiv_women_received_hiv_test_gte_18_months = \
         all_hmis_report_calcs.InfantsBornToHivInfectedWomenReceivedHivTestGte18Months()
     hiv_exposed_infants_breast_feeding_receiving_arv = all_hmis_report_calcs.FormComparisonCalculator(
-        [("commenced_drugs", operator.contains, "infant_nvp")], ALL_HMIS_CASE_FLUFF_FORMS
+        [("commenced_drugs", operator.contains, "infant_nvp")], PMTCT_CLIENTS_FORM
     )
 
 AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()

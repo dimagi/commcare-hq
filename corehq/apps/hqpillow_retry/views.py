@@ -55,7 +55,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Date next attempt', sortable=True),
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
-            DataTablesColumn('Error message', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
 
@@ -132,7 +131,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
 
         errors = query[self.pagination.start:(self.pagination.start+self.pagination.count)]
         for error in errors:
-            msg = error.error_message
             yield [
                 self.make_traceback_link(error),
                 self.make_search_link(error),
@@ -142,7 +140,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 error.date_next_attempt,
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
-                (msg[:30] + '..') if len(msg) > 32 else msg,
                 self.make_checkbox(error)
             ]
 

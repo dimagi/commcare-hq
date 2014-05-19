@@ -1,5 +1,6 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.hqwebapp.forms import BulkUploadForm
 from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
@@ -151,3 +152,9 @@ class InvitationView():
 
         return render(request, self.template, {"form": form})
 
+
+def get_bulk_upload_form(context):
+    return BulkUploadForm(
+        context['bulk_upload']['plural_noun'],
+        context['bulk_upload'].get('action'),
+    )

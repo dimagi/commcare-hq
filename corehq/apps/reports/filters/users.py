@@ -2,10 +2,10 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
-from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
@@ -20,7 +20,6 @@ from .base import (
     BaseSingleOptionFilter,
     BaseSingleOptionTypeaheadFilter,
 )
-from .api import group_tuple, user_tuple
 
 
 class LinkedUserFilter(BaseDrilldownOptionFilter):
@@ -219,7 +218,46 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
                 options.extend([(u.user_id, u.username_in_report) for u in users])
         return options
 
-class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
+
+class EmwfMixin(object):
+
+    def user_tuple(self, u):
+        user = util._report_user_dict(u)
+        uid = "u__%s" % user['user_id']
+        name = "%s [user]" % user['username_in_report']
+        return (uid, name)
+
+    def group_tuple(self, g):
+        return ("g__%s" % g['_id'], "%s [group]" % g['name'])
+
+    def user_type_tuple(self, t):
+        return (
+            "t__%s" % (t),
+            "[%s]" % HQUserType.human_readable[t]
+        )
+
+    @property
+    @memoized
+    def basics(self):
+        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        if Domain.get_by_name(self.domain).commtrack_enabled:
+            types.append('COMMTRACK')
+        user_types = [getattr(HQUserType, t) for t in types]
+        basics = [("t__0", _("[All mobile workers]"))] + \
+            [self.user_type_tuple(t) for t in user_types]
+        return basics
+
+
+_UserData = namedtupledict('_UserData', (
+    'users',
+    'admin_and_demo_users',
+    'groups',
+    'users_by_group',
+    'combined_users',
+))
+
+
+class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("Groups or Users")
     default_options = None
@@ -265,7 +303,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 q=q,
                 fields=['_id', 'name'],
             )
-            selected += [group_tuple(hit['fields']) for hit in res['hits']['hits']]
+            selected += [self.group_tuple(hit['fields']) for hit in res['hits']['hits']]
         if user_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": user_ids}
@@ -275,7 +313,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 q=q,
                 fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type'],
             )
-            selected += [user_tuple(hit['fields']) for hit in res['hits']['hits']]
+            selected += [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
 
         known_ids = dict(selected)
         return [{'id': id, 'text': known_ids[id]}
@@ -289,6 +327,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         url = reverse('emwf_options', args=[self.domain])
         context.update({'endpoint': url})
         return context
+
+    @classmethod
+    def user_types(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return [int(u[3:]) for u in emws
+            if (u.startswith("t__") and u[3:].isdigit())]
 
     @classmethod
     def pull_groups(cls, domain, request):
@@ -357,11 +401,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
         groups = [Group.get(g) for g in group_ids]
 
-        ret = {
-            "users": users + other_users,
-            "admin_and_demo_users": other_users,
-            "groups": groups,
-        }
+        all_users = users + other_users
 
         if combined:
             user_dict = {}
@@ -373,17 +413,32 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             users_in_groups = [user for sublist in user_dict.values() for user in sublist]
 
-            ret["users_by_group"] = user_dict
-            ret["combined_users"] = remove_dups(ret["users"] + users_in_groups, "user_id")
-        return ret
-
-    @property
-    @memoized
-    def basics(self):
-        return [("t__0", _("[All mobile workers]"))] + \
-            [("t__%s" % (i+1), "[%s]" % name)
-                for i, name in enumerate(HQUserType.human_readable[1:])]
+            users_by_group = user_dict
+            combined_users = remove_dups(all_users + users_in_groups, "user_id")
+        else:
+            users_by_group = None
+            combined_users = None
+        return _UserData(
+            users=all_users,
+            admin_and_demo_users=other_users,
+            groups=groups,
+            users_by_group=users_by_group,
+            combined_users=combined_users,
+        )
 
     @property
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
+
+
+    @classmethod
+    def for_user(cls, user_id):
+        return {
+            cls.slug: 'u__%s' % user_id
+        }
+
+    @classmethod
+    def for_group(cls, group_id):
+        return {
+            cls.slug: 'g__%s' % group_id
+        }

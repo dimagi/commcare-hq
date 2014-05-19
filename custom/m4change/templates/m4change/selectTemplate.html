@@ -26,6 +26,7 @@
             var managementModel = new McctProjectReviewPageManagement(OPTIONS);
             var $mcctProjectReviewPageManagement = $('#mcct_project_review_page_management');
             var element = $mcctProjectReviewPageManagement[0];
+            ko.cleanNode(element);
             ko.applyBindings(managementModel, element);
 
             $mcctProjectReviewPageManagement.find('a.select-all').click(function () {

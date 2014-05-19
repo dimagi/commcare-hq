@@ -145,7 +145,7 @@ class DomainInvoiceFactory(object):
             return
 
         if subscription.auto_generate_credits:
-            for product_rate in subscription.plan_version.product_rates:
+            for product_rate in subscription.plan_version.product_rates.all():
                 CreditLine.add_credit(
                     product_rate.monthly_fee,
                     subscription=subscription,

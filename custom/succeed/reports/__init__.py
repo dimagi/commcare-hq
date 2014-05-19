@@ -15,28 +15,49 @@ HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1a
 HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
 PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
 PD2 = 'http://openrosa.org/formdesigner/69751bf3078369491e1c2f1e3c874895f762a4c1'
+PD2AM = 'http://openrosa.org/formdesigner/b5376c48fbe845273db04ba88bb610577480fc26'
+PD2BPM = 'http://openrosa.org/formdesigner/8fca2fbbbe0655c55d651f587d99368f248842cd'
+PD2CHM = 'http://openrosa.org/formdesigner/351ec6c430a7dd90f6f7a96938f3d58183ec3992'
+PD2DIABM = 'http://openrosa.org/formdesigner/9e15c3bad39a9f5aea5961c164c7d27d47b555bf'
+PD2DEPM = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511e73b'
+PD2SCM = 'http://openrosa.org/formdesigner/b3226cecdc7c32fe7aca37a76799b48900b2e050'
+PD2OM = 'http://openrosa.org/formdesigner/e859b4d46422f61d902be6acd3ed758009694998'
 CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca850'
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
+AP2 = 'http://openrosa.org/formdesigner/58ba18b4bd2054419bfa8da8ec2d08f6c547c91b'
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
 
 EMPTY_FIELD = "---"
 
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"
+INTERACTION_OUTPUT_DATE_FORMAT = "%m/%d/%Y %H:%M"
 INPUT_DATE_FORMAT = "%Y-%m-%d"
 
-CM_MODULE = 0
-HUD_MODULE = 1
-PD_MODULE = 2
-CHW_MODULE = 3
+CM_APP_CM_MODULE = 0
+CM_APP_HUD_MODULE = 1
+CM_APP_PD_MODULE = 2
+CM_APP_CHW_MODULE = 3
+CM_APP_CP_MODULE = 4
+CM_APP_APPOINTMENTS_MODULE = 5
+CM_APP_MEDICATIONS_MODULE = 6
+
+PM_APP_PM_MODULE = 0
+
+CHW_APP_ACHW_MODULE = 0
+CHW_APP_PD_MODULE = 1
+CHW_APP_CHW1_MODULE = 2
+CHW_APP_CHW2_MODULE = 3
+CHW_APP_CM_MODULE = 4
+CHW_APP_MA_MODULE = 5
 
 VISIT_SCHEDULE = [
     {
         'visit_name': _('CM Initial contact form'),
         'xmlns': CM1,
         'days': 5,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'target_date_case_property': 'CM1_form_target'
     },
@@ -44,7 +65,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Medical Record Review'),
         'xmlns': CM2,
         'days': 7,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'target_date_case_property': 'CM2_form_target'
     },
@@ -52,7 +73,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM 1-week Telephone Call'),
         'xmlns': CM3,
         'days': 10,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM3_scheduled_date',
         'target_date_case_property': 'CM3_form_target'
@@ -61,7 +82,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Initial huddle'),
         'xmlns': HUD1,
         'days': 21,
-        'module_idx': HUD_MODULE,
+        'module_idx': CM_APP_HUD_MODULE,
         'show_button': True,
         'target_date_case_property': 'HUD1_form_target'
     },
@@ -69,7 +90,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 1'),
         'xmlns': CHW1,
         'days': 35,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW1_scheduled_date',
         'target_date_case_property': 'CHW1_form_target'
@@ -78,7 +99,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 1'),
         'xmlns': CM4,
         'days': 49,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM4_scheduled_date',
         'target_date_case_property': 'CM4_form_target'
@@ -87,7 +108,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 2'),
         'xmlns': CHW2,
         'days': 100,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW2_scheduled_date',
         'target_date_case_property': 'CHW2_form_target'
@@ -96,7 +117,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 2'),
         'xmlns': CM5,
         'days': 130,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
         'scheduled_source': 'CM5_scheduled_date',
         'target_date_case_property': 'CM5_form_target'
@@ -105,7 +126,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW CDSMP tracking'),
         'xmlns': CHW4,
         'days': 135,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW4_scheduled_date',
         'target_date_case_property': 'CHW4_form_target'
@@ -114,7 +135,7 @@ VISIT_SCHEDULE = [
         'visit_name': _('CHW Home Visit 3'),
         'xmlns': CHW2,
         'days': 200,
-        'module_idx': CHW_MODULE,
+        'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
         'scheduled_source': 'CHW2-2_scheduled_date',
         'target_date_case_property': 'CHW2-2_form_target'
@@ -123,14 +144,125 @@ VISIT_SCHEDULE = [
         'visit_name': _('CM Clinic Visit 3'),
         'xmlns': CM5,
         'days': 250,
-        'module_idx': CM_MODULE,
+        'module_idx': CM_APP_CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',
         'scheduled_source': 'CM5-2_scheduled_date',
         'target_date_case_property': 'CM5-2_form_target'
     },
 ]
 
+SUBMISSION_SELECT_FIELDS = [
+    {
+        "text": "Project Manager Forms",
+        "val": "pm_forms",
+        "next": [
+            {
+                "text": "PM1 Enrollment Form",
+                "val": PM1
+            },
+            {
+                "text": "PM2 Edit/Update Patient Info",
+                "val": PM2
+            },
+            {
+                "text": "PM3 Disenrollment Form",
+                "val": PM3
+            },
+            {
+                "text": "PM4 Change Care Site",
+                "val": PM4
+            }
+        ]
+    },
+    {
+        "text": "Care Manager Forms",
+        "val": "cm_forms",
+        "next": [
+            {
+                "text": "CM1 Initial Contact Form",
+                "val": CM1
+            },
+            {
+                "text": "CM2 Medical Record Form",
+                "val": CM2
+            },
+            {
+                "text": "CM3 1-week Phone Call",
+                "val": CM3
+            },
+            {
+                "text": "CM4 Initial Clinic Visit",
+                "val": CM4
+            },
+            {
+                "text": "CM5 Follow-up Clinic Visit",
+                "val": CM5
+            },
+            {
+                "text": "CM6 Follow-up Phone",
+                "val": CM6
+            },
+            {
+                "text": "CM7 Edit Patient Schedule",
+                "val": CM7
+            }
+        ]
+    },
+    {
+        "text": "CHW Manager Forms",
+        "val": "chwm_forms",
+        "next": [
+            {
+                "text": "CHW1 Initial Home Visit",
+                "val": CHW1
+            },
+            {
+                "text": "CHW2 Follow-up Home Visit",
+                "val": CHW2
+            },
+            {
+                "text": "CHW3 Follow-up Phone",
+                "val": CHW3
+            },
+            {
+                "text": "CHW4 CDSMP Tracking",
+                "val": CHW4
+            }
+        ]
+    },
+    {
+        "text": "Patient Data Forms",
+        "val": "pd_forms",
+        "next": [
+            {
+                "text": "PD1 Problem List",
+                "val": PD1
+            },
+            {
+                "text": "PD2 Medications",
+                "val": PD2
+            }
+        ]
+    },
+    {
+        "text": "Huddle Forms",
+        "val": "hd_forms",
+        "next": [
+            {
+                "text": "HUD1 Initial Huddle",
+                "val": HUD1
+            },
+            {
+                "text": "HUD2 Follow-up Huddle",
+                "val": HUD2
+            }
+        ]
+    }
+]
+
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
+MEDICATION_DETAILS = ['MEDS_at_prescribed', 'MEDS_bp_prescribed', 'MEDS_cholesterol_prescribed', 'MEDS_depression_prescribed',
+                      'MEDS_diabetes_prescribed', 'MEDS_smoking_prescribed', 'MEDS_other_prescribed']
 
 class DrilldownReportMixin(object):
 

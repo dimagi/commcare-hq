@@ -1,19 +1,25 @@
 from urllib import urlencode
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 import datetime
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from corehq import Domain, toggles
+from django.utils.translation import ugettext
+from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import Subscription, Invoice
-from corehq.apps.accounting.utils import has_subscription_already_ended
-from corehq.apps.users.models import FakeUser
+from corehq.apps.accounting.utils import (
+    has_subscription_already_ended, get_dimagi_from_email_by_product,
+    fmt_dollar_amount,
+)
+from corehq.apps.users.models import FakeUser, WebUser
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
@@ -183,3 +189,38 @@ def send_subscription_reminder_emails(num_days):
     for subscription in ending_subscriptions:
         subscription.send_ending_reminder_email()
 
+
+@task
+def send_purchase_receipt(payment_record, core_product,
+                          template_html, template_plaintext,
+                          additional_context):
+    email = payment_record.payment_method.billing_admin.web_user
+
+    try:
+        web_user = WebUser.get_by_username(email)
+        name = web_user.first_name
+    except ResourceNotFound:
+        logger.error(
+            "[BILLING] Strange. A payment attempt was made by a user that "
+            "we can't seem to find! %s" % email
+        )
+        name = email
+
+    context = {
+        'name': name,
+        'amount': fmt_dollar_amount(payment_record.amount),
+        'project': payment_record.payment_method.billing_admin.domain,
+        'date_paid': payment_record.date_created.strftime('%d %B %Y'),
+        'product': core_product,
+        'transaction_id': payment_record.public_transaction_id,
+    }
+    context.update(additional_context)
+
+    email_html = render_to_string(template_html, context)
+    email_plaintext = render_to_string(template_plaintext, context)
+
+    send_HTML_email(
+        ugettext("Payment Received - Thank You!"), email, email_html,
+        text_content=email_plaintext,
+        email_from=get_dimagi_from_email_by_product(core_product),
+    )

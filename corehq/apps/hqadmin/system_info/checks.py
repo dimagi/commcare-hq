@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from restkit import Resource
 import json
 from corehq.apps.hqadmin.system_info.utils import human_bytes
+from soil import heartbeat
 
 
 def check_redis():
@@ -81,6 +82,7 @@ def check_celery_health():
             worker_info.append(' '.join([hostname, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
     ret['worker_status'] = mark_safe(worker_status)
+    ret['heartbeat'] = heartbeat.is_alive()
     return ret
 
 

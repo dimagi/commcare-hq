@@ -6,19 +6,9 @@ from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
 
 
-class SelectPNCStatusField(ReportSelectField):
-    slug = "PNC_status"
-    name = ugettext_noop("Status")
-    cssId = "opened_closed"
-    cssClasses = "span3"
-    default_option = "Select PNC Status"
-    options = [dict(val="On Time", text=ugettext_noop("On time")),
-               dict(val="Late", text=ugettext_noop("Late"))]
-
-
 class SelectBlockField(ReportSelectField):
     slug = "block"
-    name = ugettext_noop("Block")
+    name = ugettext_noop("Name of the Block")
     cssId = "opened_closed"
     cssClasses = "span3"
 

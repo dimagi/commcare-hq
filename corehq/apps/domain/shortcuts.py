@@ -2,8 +2,12 @@
 Shortcuts for working with domains and users.
 """
 
+
 def create_domain(name, active=True):
-    return Domain.get_or_create_with_name(name=name, is_active=active)
+    """Create domain without secure submissions for tests"""
+    return Domain.get_or_create_with_name(name=name, is_active=active,
+                                          secure_submissions=False)
+
 
 def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, **kwargs):
     user = User()

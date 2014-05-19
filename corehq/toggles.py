@@ -90,7 +90,7 @@ READABLE_FORM_DATA = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-SAVED_EXCEL_DASHBOARDS = StaticToggle(
-    'excel-dashboards',
-    'Enable saved excel dashboards'
+CASE_REBUILD = StaticToggle(
+    'case_rebuild',
+    'Show UI-based case rebuild option',
 )

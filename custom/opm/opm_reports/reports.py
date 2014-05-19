@@ -280,6 +280,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     exportable = True
     export_format_override = "csv"
     block = ''
+    filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
 
     @property
     def fields(self):
@@ -311,7 +312,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
         the same logic in incentive, beneficiary, and snapshot.
         """
         if filter_fields is None:
-            filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
+            filter_fields = self.filter_fields
         for key, field in filter_fields:
             keys = self.filter_data.get(field, [])
             if keys and fn(key) not in keys:
@@ -638,6 +639,7 @@ class MetReport(BaseReport):
     model = ConditionsMet
     exportable = False
     default_case_type = "Pregnancy"
+    filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
 
     @property
     def block(self):
@@ -670,6 +672,11 @@ class MetReport(BaseReport):
         ])
 
     @property
+    @memoized
+    def users(self):
+        return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
+
+    @property
     def rows(self):
         if self.snapshot is not None:
             return self.snapshot.rows
@@ -681,37 +688,61 @@ class MetReport(BaseReport):
 
     def filter(self, fn, filter_fields=None):
         if filter_fields is None:
-            filter_fields = [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')]
+            filter_fields = self.filter_fields
         for key, field in filter_fields:
-            case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
             keys = self.filter_data.get(field, [])
-            if keys and field == 'is_open':
-                if case_key != (keys == 'closed'):
-                    raise InvalidRow
-            else:
-                if keys and field == 'gp':
-                    gps = keys
-                    users = CouchUser.by_domain(self.domain)
-                    keys = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in gps]
-                if keys and case_key not in keys:
-                    raise InvalidRow
+            if keys:
+                case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
+                if field == 'is_open':
+                    if case_key != (keys == 'closed'):
+                        raise InvalidRow
+                else:
+                    if field == 'gp':
+                        keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
+                    if case_key not in keys:
+                        raise InvalidRow
 
     def get_rows(self, datespan):
         block = self.block
         q = {
             "query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {'match': {'block_name.#value': block}}
-                    ],
-                    "must_not": []
+                "filtered": {
+                    "query": {
+                        "match_all": {},
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"domain.exact": self.domain}},
+                                {"term": {"block_name.#value": block.lower()}}
+                            ]
+                        }
+                    }
                 }
             }
         }
-        query = q['query']['bool']['must']
+        es_filters = q["query"]["filtered"]["filter"]
+        if self.snapshot is None:
+            awcs = self.request.GET.getlist('awcs')
+            if awcs:
+                awcs_lower = [awc.lower() for awc in awcs]
+                awc_term = {
+                    "or":
+                        [{"and": [{"term": {"awc_name.#value": term}} for term in re.split('\s', awc)
+                                    if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
+                        } for awc in awcs_lower]
+                }
+                es_filters["bool"]["must"].append(awc_term)
+            gp = self.request_params.get('gp', None)
+            if gp:
+                users = CouchUser.by_domain(self.domain)
+                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == gp]
+                es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
+            is_open = self.request_params.get('is_open', None)
+            if is_open:
+                es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
         if self.default_case_type:
-            query.append({"match": {"type.exact": self.default_case_type}})
+            es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 
@@ -750,6 +781,13 @@ class HealthMapSource(HealthStatusReport):
     def snapshot(self):
         # Don't attempt to load a snapshot
         return None
+
+
+    #TODO Hot fix - we should change this to ElasticSearch - we working on this
+    @property
+    @memoized
+    def get_users(self):
+        return CommCareUser.by_domain(DOMAIN)
 
     @property
     def gps_mapping(self):

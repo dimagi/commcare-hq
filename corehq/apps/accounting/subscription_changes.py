@@ -168,8 +168,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         """
         Makes sure that subscriptions beginning in the future are ended.
         """
-        if not toggles.ACCOUNTING_PREVIEW.enabled(self.web_user):
-            return True
         from corehq.apps.accounting.models import (
             Subscription, SubscriptionAdjustment, SubscriptionAdjustmentReason
         )
@@ -478,8 +476,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Alert the user if they have subscriptions scheduled to start
         in the future.
         """
-        if not toggles.ACCOUNTING_PREVIEW.enabled(self.web_user):
-            return None
         from corehq.apps.accounting.models import Subscription
         later_subs = Subscription.objects.filter(
             subscriber__domain=self.domain.name,

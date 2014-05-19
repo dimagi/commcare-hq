@@ -871,14 +871,9 @@ var DetailScreenConfig = (function () {
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
-        {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT}
+        {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
+        {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT}
     ];
-
-    if (window.FEATURE_enable_enum_image) {
-        DetailScreenConfig.MENU_OPTIONS.push(
-            {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
-        );
-    }
 
     if (window.FEATURE_enable_calc_xpaths) {
         DetailScreenConfig.MENU_OPTIONS.push(

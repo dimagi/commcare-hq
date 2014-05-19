@@ -1,26 +1,24 @@
 from datetime import datetime, timedelta
-from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.cloudcare.api import get_cloudcare_app
-from corehq.apps.groups.models import Group
+from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
 import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_MODULE, \
+from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientInfoReport
-from custom.succeed.utils import CONFIG, _is_succeed_admin, SUCCEED_CLOUD_APPNAME, _has_any_role
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -47,7 +45,7 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CLOUD_APPNAME)
+        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
         self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
         super(PatientListReportDisplay, self).__init__(report, case_dict)
         self.update_target_date_case_properties()
@@ -85,18 +83,14 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def edit_link(self):
-        base_url = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
-        module = self.app_dict['modules'][CM_MODULE]
+        module = self.app_dict['modules'][CM_APP_CM_MODULE]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
         return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
-            % html.escape(base_url % dict(
-                form_id=form_idx,
-                case_id=self.case_id,
-                domain=self.app_dict['domain'],
-                build_id=self.latest_build,
-                module_id=CM_MODULE
-            )
-        )
+            % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
+                                                 app_build_id=self.latest_build,
+                                                 module_id=CM_APP_CM_MODULE,
+                                                 form_id=form_idx,
+                                                 case_id=self.case_id) + '/enter')
 
     @property
     def case_detail_url(self):
@@ -176,7 +170,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if user and (_is_succeed_admin(user) or _has_any_role(user)):
+        if user and (is_succeed_admin(user) or has_any_role(user)):
             return True
         return False
 
