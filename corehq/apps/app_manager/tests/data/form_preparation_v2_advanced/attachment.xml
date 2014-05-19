@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>New Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="1" name="New Form">
+          <thepicture/>
+        </data>
+      </instance>
+      <bind nodeset="/data/thepicture" type="binary" />
+    </model>
+  </h:head>
+  <h:body>
+    <upload ref="/data/thepicture" mediatype="image/*">
+      <label>Please take a picture</label>
+    </upload>
+  </h:body>
+</h:html>

@@ -258,6 +258,15 @@ class FormPreparationV2TestAdvanced(FormPrepBase):
         ))
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
 
+    def test_update_attachment(self):
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'photo': '/data/thepicture'}
+        ))
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
+
 
 class SubcaseRepeatTestAdvanced(FormPrepBase):
     file_path = ('data', 'form_preparation_v2_advanced')
