@@ -36,7 +36,7 @@
 
     <suite><resource id="suite" version="{{ app.version }}">
         
-        <location authority="local">./{{ suite_loc }}</location>
+        <location authority="local">{{ suite_loc }}</location>
         
         <location authority="remote">{{ suite_url }}</location>
     </resource></suite>

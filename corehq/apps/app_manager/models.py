@@ -2736,7 +2736,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def suite_loc(self):
-        return "suite.xml"
+        if LooseVersion(self.build_spec.version) >= '2.12':
+            return './suite.xml'
+        else:
+            return "jr://resource/suite.xml"
 
     @absolute_url_property
     def media_suite_url(self):

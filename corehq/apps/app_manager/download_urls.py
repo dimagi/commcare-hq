@@ -17,5 +17,4 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^CommCare.jad$', 'download_jad', {}, 'download_jad'),
     url(r'^CommCare_raw.jar$', 'download_raw_jar', {}, 'download_raw_jar'),
     url(r'^CommCare.jar$', 'download_jar', {}, 'download_jar'),
-    url(r'^CommCare.ccz$', 'download_ccz', {}, 'download_ccz'),
 )
