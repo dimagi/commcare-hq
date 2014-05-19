@@ -686,11 +686,13 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
         }
 
 
-class FormCompletionTimeReportSQL(WorkerMonitoringReportTableBase, DatespanMixin):
+class FormCompletionTimeReportSQL(WorkerMonitoringReportTableBase, DatespanMixin,
+                                  CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Form Completion Time (SQL)")
     slug = "completion_times_sql"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
+              'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
@@ -775,8 +777,13 @@ class FormCompletionTimeReportSQL(WorkerMonitoringReportTableBase, DatespanMixin
         def get_data(users, group_by_user=True):
             query = FormData.objects \
                 .filter(doc_type='XFormInstance') \
-                .filter(xmlns=self.selected_xmlns['xmlns']) \
-                .filter(time_end__range=(self.datespan.startdate_utc, self.datespan.enddate_utc))
+                .filter(xmlns=self.selected_xmlns['xmlns'])
+
+            date_field = 'received_on' if self.by_submission_time else 'time_end'
+            date_filter = {
+                '{}__range'.format(date_field): (self.datespan.startdate_utc, self.datespan.enddate_utc)
+            }
+            query = query.filter(**date_filter)
 
             if users:
                 query = query.filter(user_id__in=users)
