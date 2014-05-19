@@ -68,8 +68,10 @@ ENUM_IMAGE = FeaturePreview(
     label=_('Icons in Case List'),
     description=_(
         "Display a case property as an icon in the case list. "
-        "Examples: check/X icons instead of yes/no text; progress indicators"
+        "For example, to show that a case is late, "
+        'display a red square instead of "late: yes".'
     ),
+    help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
 )
 
 
