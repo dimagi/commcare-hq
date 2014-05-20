@@ -5,12 +5,10 @@ from datetime import datetime
 import logging
 import copy
 import sys
-from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.utils import http
 from django.utils.translation import ugettext as _
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -50,28 +48,6 @@ CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
 INDEX_ID_PARENT = 'parent'
-
-
-class CaseBase(SafeSaveDocument):
-    """
-    Base class for cases and referrals.
-    """
-    opened_on = DateTimeProperty()
-    modified_on = DateTimeProperty()
-    type = StringProperty()
-    closed = BooleanProperty(default=False)
-    closed_on = DateTimeProperty()
-    
-    def to_full_dict(self):
-        """
-        Include calculated properties that need to be available to the case
-        details display by overriding this method.
-
-        """
-        json = self.to_json()
-        json['status'] = _('Closed') if self.closed else _('Open')
-
-        return json
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -145,7 +121,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
             date=self.date, server_date=self.server_date
         )
 
-class Referral(CaseBase):
+
+class Referral(DocumentSchema):
     """
     A referral, taken from casexml.  
     """
@@ -154,6 +131,11 @@ class Referral(CaseBase):
     # to the phone, so we keep it here.  This is _not_ globally unique
     # but case_id/referral_id/type should be.  
     # (in our world: case_id/referral_id/type)
+    opened_on = DateTimeProperty()
+    modified_on = DateTimeProperty()
+    type = StringProperty()
+    closed = BooleanProperty(default=False)
+    closed_on = DateTimeProperty()
     referral_id = StringProperty()
     followup_on = DateTimeProperty()
     outcome = StringProperty()
@@ -259,7 +241,7 @@ class CaseQueryMixin(object):
         return [prefix] + key
 
 
-class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
+class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                    CaseQueryMixin, CouchDocLockableMixIn):
     """
     A case, taken from casexml.  This represents the latest
@@ -271,6 +253,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
     xform_ids = StringListProperty()
 
     external_id = StringProperty()
+    opened_on = DateTimeProperty()
+    modified_on = DateTimeProperty()
+    type = StringProperty()
+    closed = BooleanProperty(default=False)
+    closed_on = DateTimeProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
     opened_by = StringProperty()
@@ -350,6 +337,17 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
     def has_indices(self):
         return self.indices or self.reverse_indices
         
+    def to_full_dict(self):
+        """
+        Include calculated properties that need to be available to the case
+        details display by overriding this method.
+
+        """
+        json = self.to_json()
+        json['status'] = _('Closed') if self.closed else _('Open')
+
+        return json
+
     def get_json(self, lite=False):
         ret = {
             # referrals and actions excluded here
