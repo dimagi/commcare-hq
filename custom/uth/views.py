@@ -28,6 +28,8 @@ def vscan_upload(request, domain, **kwargs):
     scanner_serial = request.POST.get('scanner_serial', None)
     scan_id = request.POST.get('scan_id', None)
 
+    response_code = None
+
     if not (scanner_serial and scan_id):
         response_data = {}
         response_data['result'] = 'failed'
