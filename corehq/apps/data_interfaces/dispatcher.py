@@ -1,5 +1,5 @@
 from django.utils.decorators import method_decorator
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission

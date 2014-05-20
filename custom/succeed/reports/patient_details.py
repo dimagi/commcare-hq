@@ -13,11 +13,11 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CouchUser, CommCareUser
 from custom.succeed.reports import DrilldownReportMixin, VISIT_SCHEDULE, CM_APP_PD_MODULE, CM_APP_HUD_MODULE, CM_APP_CM_MODULE, CM_APP_CHW_MODULE, \
-    EMPTY_FIELD, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT, PM2, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, CHW_APP_PD_MODULE, SUBMISSION_SELECT_FIELDS
+    EMPTY_FIELD, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT, PM2, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, CHW_APP_PD_MODULE, SUBMISSION_SELECT_FIELDS, MEDICATION_DETAILS, INTERACTION_OUTPUT_DATE_FORMAT, CM_APP_MEDICATIONS_MODULE, PD2AM, PD2BPM, PD2CHM, PD2DIABM, PD2DEPM, PD2SCM, PD2OM, CM_APP_APPOINTMENTS_MODULE, AP2
 from custom.succeed.reports import PD1, PD2, PM3, PM4, HUD2, CM6, CHW3
 from custom.succeed.reports.patient_Info import PatientInfoDisplay
 from custom.succeed.utils import SUCCEED_CM_APPNAME, is_pm_or_pi, is_cm, is_pi, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, is_chw, SUCCEED_DOMAIN
-
+from dimagi.utils.decorators.memoized import memoized
 
 class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     slug = "patient"
@@ -104,11 +104,11 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 module = app_dict['modules'][module_idx]
                 form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
             except IndexError:
-                return ''
+                form_idx = None
 
             return html.escape(get_cloudcare_form_url(domain=self.domain,
                                                       app_build_id=app_build_id,
-                                                      module_id=CM_APP_CM_MODULE,
+                                                      module_id=module_idx,
                                                       form_id=form_idx,
                                                       case_id=case_id))
 
@@ -170,10 +170,19 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
         elif self.view_mode == 'interactions':
             self.report_template_path = "patient_interactions.html"
             ret['problem_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_PD_MODULE, PD1)
-            ret['medication_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_PD_MODULE, PD2)
             ret['huddle_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_HUD_MODULE, HUD2)
             ret['cm_phone_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_CM_MODULE, CM6)
             ret['chw_phone_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_CHW_MODULE, CHW3)
+            ret['cm_visits_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_APPOINTMENTS_MODULE, AP2)
+
+            ret['anti_thrombotic_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2AM)
+            ret['blood_pressure_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2BPM)
+            ret['cholesterol_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2CHM)
+            ret['depression_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2DIABM)
+            ret['diabetes_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2DEPM)
+            ret['smoking_cessation_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2SCM)
+            ret['other_meds_url'] = get_form_url(cm_app_dict, latest_cm_build, CM_APP_MEDICATIONS_MODULE, PD2OM)
+
             ret['interaction_table'] = []
             for visit_key, visit in enumerate(VISIT_SCHEDULE):
                 if case["randomization_date"]:
@@ -190,7 +199,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 }
                 for key, action in enumerate(case['actions']):
                     if visit['xmlns'] == action['xform_xmlns']:
-                        interaction['received_date'] = action['date'].strftime(OUTPUT_DATE_FORMAT)
+                        interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
                         try:
                             user = CouchUser.get(action['user_id'])
                             interaction['completed_by'] = user.raw_username
@@ -201,9 +210,14 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 if visit['show_button']:
                     interaction['url'] = get_form_url(cm_app_dict, latest_cm_build, visit['module_idx'], visit['xmlns'])
                 if 'scheduled_source' in visit and case.get_case_property(visit['scheduled_source']):
-                    interaction['scheduled_date'] = (case.get_case_property(visit['scheduled_source'])).strftime(OUTPUT_DATE_FORMAT)
+                    interaction['scheduled_date'] = (case.get_case_property(visit['scheduled_source'])).strftime(INTERACTION_OUTPUT_DATE_FORMAT)
 
                 ret['interaction_table'].append(interaction)
+
+                medication = []
+                for med_prop in MEDICATION_DETAILS:
+                    medication.append(getattr(case, med_prop, EMPTY_FIELD))
+                ret['medication_table'] = medication
 
         elif self.view_mode == 'plan':
             self.report_template_path = "patient_plan.html"
@@ -224,6 +238,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
         url = reverse('render_form_data', args=[self.domain, form_id])
         return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(form_name)))
 
+    @memoized
     def form_submitted_by(self, user_id):
         try:
             user = CommCareUser.get(user_id)

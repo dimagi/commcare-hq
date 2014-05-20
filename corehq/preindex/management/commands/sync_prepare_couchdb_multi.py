@@ -1,4 +1,5 @@
 from optparse import make_option
+from dimagi.utils.couch import sync_docs
 from gevent import monkey
 from corehq.preindex import get_preindex_plugins
 
@@ -28,13 +29,7 @@ def do_sync(app_index):
     """
     #sanity check:
     app = get_apps()[app_index]
-    try:
-        couchdbkit_handler.sync(app, verbosity=2, temp='tmp')
-    except Exception, ex:
-        print "Exception running sync, but ignoring."
-        print "\tapp=%s" % app
-        print "\t%s" % ex
-        return "%s-error" % app_index
+    sync_docs.sync(app, verbosity=2, temp='tmp')
     print "preindex %s complete" % app_index
     return app_index
 
@@ -87,6 +82,9 @@ class Command(BaseCommand):
 
         print "All apps loaded into jobs, waiting..."
         pool.join()
+        # reraise any error
+        for greenlet in pool.greenlets:
+            greenlet.get()
         print "All apps reported complete."
 
         message = "Preindex results:\n"

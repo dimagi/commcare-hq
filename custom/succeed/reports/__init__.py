@@ -15,22 +15,33 @@ HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1a
 HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
 PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
 PD2 = 'http://openrosa.org/formdesigner/69751bf3078369491e1c2f1e3c874895f762a4c1'
+PD2AM = 'http://openrosa.org/formdesigner/b5376c48fbe845273db04ba88bb610577480fc26'
+PD2BPM = 'http://openrosa.org/formdesigner/8fca2fbbbe0655c55d651f587d99368f248842cd'
+PD2CHM = 'http://openrosa.org/formdesigner/351ec6c430a7dd90f6f7a96938f3d58183ec3992'
+PD2DIABM = 'http://openrosa.org/formdesigner/9e15c3bad39a9f5aea5961c164c7d27d47b555bf'
+PD2DEPM = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511e73b'
+PD2SCM = 'http://openrosa.org/formdesigner/b3226cecdc7c32fe7aca37a76799b48900b2e050'
+PD2OM = 'http://openrosa.org/formdesigner/e859b4d46422f61d902be6acd3ed758009694998'
 CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca850'
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
-AP2 = ''
+AP2 = 'http://openrosa.org/formdesigner/58ba18b4bd2054419bfa8da8ec2d08f6c547c91b'
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
 
 EMPTY_FIELD = "---"
 
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"
+INTERACTION_OUTPUT_DATE_FORMAT = "%m/%d/%Y %H:%M"
 INPUT_DATE_FORMAT = "%Y-%m-%d"
 
 CM_APP_CM_MODULE = 0
 CM_APP_HUD_MODULE = 1
 CM_APP_PD_MODULE = 2
 CM_APP_CHW_MODULE = 3
+CM_APP_CP_MODULE = 4
+CM_APP_APPOINTMENTS_MODULE = 5
+CM_APP_MEDICATIONS_MODULE = 6
 
 PM_APP_PM_MODULE = 0
 
@@ -250,6 +261,8 @@ SUBMISSION_SELECT_FIELDS = [
 ]
 
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
+MEDICATION_DETAILS = ['MEDS_at_prescribed', 'MEDS_bp_prescribed', 'MEDS_cholesterol_prescribed', 'MEDS_depression_prescribed',
+                      'MEDS_diabetes_prescribed', 'MEDS_smoking_prescribed', 'MEDS_other_prescribed']
 
 class DrilldownReportMixin(object):
 

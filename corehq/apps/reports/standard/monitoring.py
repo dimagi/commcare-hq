@@ -277,7 +277,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         ).one() or 0
 
 
-class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
+                              MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
@@ -288,42 +289,61 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     fix_left_col = True
     emailable = True
     is_cacheable = True
-
-
-    description = _("Number of submissions by form.")
+    description = ugettext_noop("Number of submissions by form.")
 
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
         if not self.all_relevant_forms:
-            headers.add_column(DataTablesColumn(_("No submissions were found for selected forms within this date range."),
-                sortable=False))
+            headers.add_column(
+                DataTablesColumn(
+                    _("No submissions were found for selected forms "
+                      "within this date range."),
+                    sortable=False
+                )
+            )
         else:
             for _form, info in self.all_relevant_forms.items():
                 help_text = None
                 if info['is_fuzzy']:
-                    help_text = "This column shows Fuzzy Submissions."
+                    help_text = _("This column shows Fuzzy Submissions.")
                 elif info['is_remote']:
-                    help_text = "These forms came from a Remote CommCare HQ Application."
-                headers.add_column(DataTablesColumn(info['name'], sort_type=DTSortType.NUMERIC, help_text=help_text))
-            headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
+                    help_text = _("These forms came from "
+                                  "a Remote CommCare HQ Application.")
+                headers.add_column(
+                    DataTablesColumn(
+                        info['name'],
+                        sort_type=DTSortType.NUMERIC,
+                        help_text=help_text,
+                    )
+                )
+            headers.add_column(
+                DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC)
+            )
         return headers
 
     @property
     def rows(self):
         rows = []
-        totals = [0]*(len(self.all_relevant_forms)+1)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+        totals = [0] * (len(self.all_relevant_forms) + 1)
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
         for user in users_data["combined_users"]:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(self._get_num_submissions(user.get('user_id'), form['xmlns'], form['app_id']))
+                    row.append(
+                        self._get_num_submissions(
+                            user.get('user_id'), form['xmlns'], form['app_id'])
+                    )
                 row_sum = sum(row)
-                row = [self.get_user_link(user)] + \
-                    [self.table_cell(row_data) for row_data in row] + \
+                row = (
+                    [self.get_user_link(user)] +
+                    [self.table_cell(row_data) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
-                totals = [totals[i]+col.get('sort_key') for i, col in enumerate(row[1:])]
+                )
+                totals = [totals[i] + col.get('sort_key')
+                          for i, col in enumerate(row[1:])]
                 rows.append(row)
             else:
                 rows.append([self.get_user_link(user), '--'])
@@ -332,11 +352,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
         return rows
 
     def _get_num_submissions(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns, app_id=app_id)
-        data = get_db().view('reports_forms/all_forms',
+        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
+                                  app_id=app_id)
+        data = get_db().view(
+            'reports_forms/all_forms',
             reduce=True,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
+            startkey=key + [self.datespan.startdate_param_utc],
+            endkey=key + [self.datespan.enddate_param_utc],
         ).first()
         return data['value'] if data else 0
 
@@ -776,7 +798,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
-    need_group_ids = True
     is_cacheable = True
 
     fields = [
@@ -834,10 +855,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if '_all' in self.group_ids:
-            from corehq.apps.groups.models import Group
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
-            for r in ret:
-                r["group_ids"] = Group.by_user(r["user_id"], False)
             return ret
         else:
             return self.combined_users
@@ -985,28 +1003,36 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             end_date = end_date.strftime(self.datespan.format)
             return start_date, end_date
 
-        def submit_history_link(owner_id, val, param='select_mw'):
+        def submit_history_link(owner_id, val, type):
             """
-                takes a row, and converts certain cells in the row to links that link to the submit history report
+            takes a row, and converts certain cells in the row to links that link to the submit history report
             """
             fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            if type == 'user':
+                url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+            else:
+                assert type == 'group'
+                url_args = ExpandedMobileWorkerFilter.for_group(owner_id)
+
             start_date, end_date = dates_for_linked_reports()
-            url_args = {
-                param: owner_id,
+            url_args.update({
                 "startdate": start_date,
                 "enddate": end_date,
-            }
+            })
 
-            return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (fs_url, urlencode(url_args, True), val), val)
+            return util.numcell(u'<a href="{base}{report}?{params}" target="_blank">{display}</a>'.format(
+                base=get_url_base(),
+                report=fs_url,
+                params=urlencode(url_args, True),
+                display=val,
+            ), val)
 
         def add_case_list_links(owner_id, row):
             """
                 takes a row, and converts certain cells in the row to links that link to the case list page
             """
             cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = {
-                "ufilter": range(4), # include all types of users in case list report
-            }
+            url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
             start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
@@ -1027,7 +1053,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                     Given an index for a cell in a the row, creates the link to the case list page for that cell
                 """
-                url_params = {"individual": owner_id} if index not in (4, 5) else {}
+                url_params = {}
                 url_params.update(url_args)
                 url_params.update({"search_query": search_strings[index]})
                 return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
@@ -1071,7 +1097,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 rows.append([
                     group_cell(group_id, group_name),
                     submit_history_link(group_id,
-                            sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]), param="group"),
+                                        sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                                        type='group'),
                     util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     util.numcell("%s / %s" % (active_users, total_users),
                                  int((float(active_users)/total_users) * 10000) if total_users else -1),
@@ -1091,7 +1118,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
-                    submit_history_link(user['user_id'], submissions_by_user.get(user["user_id"], 0)),
+                    submit_history_link(user['user_id'],
+                                        submissions_by_user.get(user["user_id"], 0),
+                                        type='user'),
                     util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                     int(creations_by_user.get(user["user_id"].lower(),0)),

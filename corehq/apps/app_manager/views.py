@@ -25,6 +25,7 @@ from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
     questions_in_hierarchy,
@@ -35,7 +36,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, RegexURLResolver
+from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
 from dimagi.utils.django.cached_object import CachedObject
@@ -507,6 +508,20 @@ def get_app_view_context(request, app):
         context.update({
             'multimedia': multimedia,
         })
+
+    context.update({
+        'bulk_upload': {
+            'action': reverse('upload_translations',
+                              args=(app.domain, app.get_id)),
+            'download_url': reverse('download_translations',
+                                    args=(app.domain, app.get_id)),
+            'adjective': _(u"U\u200BI translation"),
+            'plural_noun': _(u"U\u200BI translations"),
+        },
+    })
+    context.update({
+        'bulk_upload_form': get_bulk_upload_form(context),
+    })
     return context
 
 
@@ -753,12 +768,18 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 form = app.get_user_registration()
 
         if module_id:
-            module = app.get_module(module_id)
+            try:
+                module = app.get_module(module_id)
+            except ModuleNotFoundException:
+                raise Http404()
             if not module.unique_id:
                 module.get_or_create_unique_id()
                 app.save()
         if form_id:
-            form = module.get_form(form_id)
+            try:
+                form = module.get_form(form_id)
+            except IndexError:
+                raise Http404()
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
@@ -802,7 +823,13 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        module_context["enable_calc_xpaths"] = (
+            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        )
+        module_context["enable_enum_image"] = (
+            req.couch_user.is_previewer or
+            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
+        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -871,7 +898,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     else:
         try:
             module = app.get_module(module_id)
-        except IndexError:
+        except ModuleNotFoundException:
             return bail(req, domain, app_id, not_found="module")
         try:
             form = module.get_form(form_id)
@@ -1944,6 +1971,10 @@ def download_file(req, domain, app_id, path):
     else:
         full_path = 'files/%s' % path
 
+    def resolve_path(path):
+        return RegexURLResolver(
+            r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+
     try:
         assert req.app.copy_of
         obj = CachedObject('{id}::{path}'.format(
@@ -1974,10 +2005,28 @@ def download_file(req, domain, app_id, path):
                 req.app.save()
                 return download_file(req, domain, app_id, path)
             else:
-                notify_exception(req, 'Build resource not found')
+                try:
+                    resolve_path(path)
+                except Resolver404:
+                    # ok this was just a url that doesn't exist
+                    logging.error(
+                        'Unknown build resource %s not found' % path)
+                    pass
+                else:
+                    # this resource should exist but doesn't
+                    logging.error(
+                        'Expected build resource %s not found' % path)
+                    req.app.build_broken = True
+                    req.app.build_broken_reason = 'incomplete-build'
+                    req.app.save()
                 raise Http404()
-        callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+        try:
+            callback, callback_args, callback_kwargs = resolve_path(path)
+        except Resolver404:
+            raise Http404()
+
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
+
 
 @safe_download
 def download_profile(req, domain, app_id):
@@ -2341,9 +2390,10 @@ def download_translations(request, domain, app_id):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
-@get_file("file")
+@get_file("bulk_upload_file")
 def upload_translations(request, domain, app_id):
     success = False
     try:

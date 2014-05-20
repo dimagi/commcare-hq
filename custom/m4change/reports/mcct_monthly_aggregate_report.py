@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from custom.m4change.constants import FOLLOW_UP_FORMS
 from custom.m4change.models import McctStatus
@@ -67,7 +67,7 @@ def _add_eligible_9months(row_data, start_date, end_date, domain):
     row_data["status_eligible_due_to_4th_visit"]["value"] += len(forms_4th_visit)
 
 
-class McctMonthlyAggregateReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
+class McctMonthlyAggregateReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True

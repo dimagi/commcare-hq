@@ -40,7 +40,8 @@ ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
-PROD_PROXIES = ['hqproxy0.internal.commcarehq.org', 'hqproxy2.internal.commcarehq.org']
+PROD_PROXIES = ['hqproxy0.internal.commcarehq.org',
+                'hqproxy2.internal.commcarehq.org']
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
@@ -264,32 +265,35 @@ def production():
         if not console.confirm(branch_message, default=False):
             utils.abort('Action aborted.')
 
+    class Servers(object):
+        db = ['hqdb0.internal.commcarehq.org']
+        celery = ['hqcelery0.internal.commcarehq.org']
+        touch = ['hqtouch0.internal.commcarehq.org']
+        django = ['hqdjango3.internal.commcarehq.org',
+                  'hqdjango4.internal.commcarehq.org',
+                  'hqdjango5.internal.commcarehq.org']
+
     env.roledefs = {
-        'couch': ['hqdb0.internal.commcarehq.org'],
-        'pg': ['hqdb0.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb0.internal.commcarehq.org'],
-        'django_celery': ['hqcelery0.internal.commcarehq.org'],
-        'sms_queue': ['hqcelery0.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqcelery0.internal.commcarehq.org'],
-        'django_app': [
-            'hqdjango3.internal.commcarehq.org',
-            'hqdjango4.internal.commcarehq.org',
-            'hqdjango5.internal.commcarehq.org',
-        ],
-        'django_pillowtop': ['hqdb0.internal.commcarehq.org'],
+        'couch': Servers.db,
+        'pg': Servers.db,
+        'rabbitmq': Servers.db,
+        'django_celery': Servers.celery,
+        'sms_queue': Servers.celery,
+        'pillow_retry_queue': Servers.celery,
+        'django_app': Servers.django,
+        'django_pillowtop': Servers.db,
 
         # for now, we'll have touchforms run on both hqdb0 and hqdjango0
         # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': ['hqtouch0.internal.commcarehq.org'],
+        'formsplayer': Servers.touch,
         'lb': [],
         'staticfiles': PROD_PROXIES,
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
-        'deploy': ['hqdb0.internal.commcarehq.org'],
+        'deploy': Servers.db,
         # fab complains if this doesn't exist
         'django_monolith': []
     }
-
 
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
@@ -298,7 +302,7 @@ def production():
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
     env.roles = ['deploy']  # this line should be commented out when running bootstrap on a new machine
-    env.es_endpoint = 'hqes0.internal.commcarehq.org'''
+    env.es_endpoint = 'hqes0.internal.commcarehq.org'
     env.flower_port = 5555
 
     _setup_path()
@@ -646,7 +650,6 @@ def preindex_views():
         # no update to env - the actual deploy will do
         # this may break if a new dependency is introduced in preindex
         update_virtualenv(preindex=True)
-        version_static(preindex=True)
 
         sudo((
             'echo "%(virtualenv_root_preindex)s/bin/python '
@@ -654,6 +657,7 @@ def preindex_views():
             '8 %(user)s" --mail | at -t `date -d "5 seconds" '
             '+%%m%%d%%H%%M.%%S`'
         ) % env, user=env.sudo_user)
+        version_static(preindex=True)
 
 
 @roles(*ROLES_ALL_SRC)
@@ -750,6 +754,7 @@ def deploy():
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
+            execute(stop_celery_tasks)
             execute(migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
@@ -1084,7 +1089,14 @@ def update_django_locales():
 def stop_pillows():
     _require_target()
     with cd(env.code_root):
-        sudo('scripts/pillowtopctl stop', user=env.sudo_user)
+        sudo('scripts/supervisor-group-ctl stop pillowtop', user=env.sudo_user)
+
+
+@roles(*ROLES_CELERY)
+def stop_celery_tasks():
+    _require_target()
+    with cd(env.code_root):
+        sudo('scripts/supervisor-group-ctl stop celery', user=env.sudo_user)
 
 
 @roles(*ROLES_ALL_SRC)

@@ -107,7 +107,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             auto_select=AutoSelectCase(
                 mode=AUTO_SELECT_CASE,
                 value_source=load_update_cases[0].case_tag,
-                value_key='case_id_prop'
+                value_key='case_id_index'
             )
         ))
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())

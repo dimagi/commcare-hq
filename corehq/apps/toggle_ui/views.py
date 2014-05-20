@@ -7,6 +7,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from toggle.models import Toggle, generate_toggle_id
+from toggle.shortcuts import clear_toggle_cache
 
 
 class ToggleBaseView(BasePageView):
@@ -82,8 +83,12 @@ class ToggleEditView(ToggleBaseView):
             item_list = json.loads(item_list)
             item_list = [u for u in item_list if u]
 
+        affected_users = set(toggle.enabled_users) | set(item_list)
         toggle.enabled_users = item_list
         toggle.save()
+        for item in affected_users:
+            clear_toggle_cache(toggle.slug, item)
+
         data = {
             'item_list': item_list
         }

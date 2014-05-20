@@ -14,11 +14,13 @@ from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.locations.models import Location
+from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import CommTrackUser, Program
 import re
+import settings
 
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
@@ -64,6 +66,17 @@ class BaseUpdateUserForm(forms.Form):
             existing_user = CouchUser.from_django_user(django_user)
             existing_user.save()
             is_update_successful = True
+
+        if existing_user.subscribed_to_commcare_users:
+            old_email = existing_user.email
+            new_email = self.cleaned_data['email']
+            if old_email != new_email:
+                handle_changed_mailchimp_email(
+                    existing_user,
+                    old_email,
+                    new_email,
+                    settings.MAILCHIMP_COMMCARE_USERS_ID
+                )
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])
@@ -131,12 +144,6 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(
-        required=False,
-        label="",
-        help_text=ugettext_lazy("Opt out of emails about new features and other CommCare updates.")
-    )
-
     @property
     def direct_properties(self):
         return self.fields.keys()

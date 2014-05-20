@@ -18,6 +18,7 @@ from corehq.apps.users.models import CommCareUser
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -100,7 +101,7 @@ class Product(Document):
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
-    code_ = StringProperty()
+    code_ = StringProperty()  # todo: why the hell is this code_ and not code
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
@@ -1200,14 +1201,24 @@ class CommTrackUser(CommCareUser):
         else:
             return None
 
+    def get_linked_supply_point_ids(self):
+        mapping = self.get_location_map_case()
+        if mapping:
+            return [index.referenced_id for index in mapping.indices]
+        return []
+
+    def get_linked_supply_points(self):
+        for doc in iter_docs(CommCareCase.get_db(), self.get_linked_supply_point_ids()):
+            yield SupplyPointCase.wrap(doc)
+
     @property
     def locations(self):
-        mapping = self.get_location_map_case()
+        def _gen():
+            location_ids = [sp.location_id for sp in self.get_linked_supply_points()]
+            for doc in iter_docs(Location.get_db(), location_ids):
+                yield Location.wrap(doc)
 
-        if mapping:
-            return [SupplyPointCase.wrap(index.referenced_case.to_json()).location for index in mapping.indices]
-        else:
-            return []
+        return list(_gen())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         if supply_point:

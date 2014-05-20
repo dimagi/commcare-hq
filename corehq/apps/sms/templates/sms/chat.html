@@ -21,7 +21,7 @@
         </title>
         <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
         <style>
             html, body {
@@ -232,14 +232,18 @@
                             dataType : "json",
                             success : function(data, textStatus, jqXHR) {
                                 var chat_message = null;
+                                var requires_notification = false;
                                 for(i = 0; i < data.length; i++) {
                                     chat_message = new ChatMessage(
                                         data[i].sender,
                                         data[i].text,
                                         data[i].timestamp,
                                         data[i].utc_timestamp,
-                                        self.first_update || self.is_focused
+                                        self.first_update || self.is_focused || data[i].sent_by_requester
                                     );
+                                    if(!data[i].sent_by_requester) {
+                                        requires_notification = true;
+                                    }
                                     self.latest_message_utc_timestamp = data[i].utc_timestamp;
                                     if(self.first_update) {
                                         if((self.last_read_message_utc_timestamp == null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
@@ -249,8 +253,12 @@
                                     }
                                     self.messages.push(chat_message);
                                 }
-                                if(!self.first_update && data.length > 0 && !self.is_focused) {
-                                    self.start_new_message_notification();
+                                if(!self.first_update && data.length > 0 && requires_notification) {
+                                    if(self.is_focused) {
+                                        self.start_new_message_notification(4);
+                                    } else {
+                                        self.start_new_message_notification(null);
+                                    }
                                 }
                                 if(data.length > 0) {
                                     scrollHeight = $("#chat_messages").prop("scrollHeight");
@@ -309,7 +317,9 @@
                             }
                         }, 250);
                     };
-                    self.start_new_message_notification = function() {
+                    self.start_new_message_notification = function(num_seconds) {
+                        //num_seconds should be null to flash the window until it receives focus again
+                        //otherwise num_seconds is the number of seconds to flash the window
                         self.stop_new_message_notification();
                         self.flash_on();
                         self.title_flag = false;
@@ -321,6 +331,11 @@
                                 self.flash_on();
                             }
                         }, 1000);
+                        if(typeof(num_seconds) == typeof(1)) {
+                            setTimeout(function() {
+                                self.stop_new_message_notification();
+                            }, num_seconds * 1000);
+                        }
                     };
                     self.stop_new_message_notification = function() {
                         if(self.title_timeout_handle != null) {

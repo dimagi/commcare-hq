@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
@@ -32,7 +32,7 @@ def _get_rows(row_data, form_data, key):
     return rows
 
 
-class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4ChangeReport):
+class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
     exportable = True
@@ -136,6 +136,21 @@ class AllHmisReport(MonthYearMixin, CustomProjectReport, CaseListReport, M4Chang
             "pregnant_mothers_with_confirmed_malaria_total": {
                 "hmis_code": 196,
                 "label": _("Pregnant Mothers with confirmed Malaria"),
+                "value": 0
+            },
+            "anc_women_previously_known_hiv_status_total": {
+                "hmis_code": 162,
+                "label": _("ANC Women with previously known HIV status (at ANC)"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_anc_total": {
+                "hmis_code": 163,
+                "label": _("Pregnant women who received HIV counseling testing and received result at ANC"),
+                "value": 0
+            },
+            "pregnant_women_received_hiv_counseling_and_result_ld_total": {
+                "hmis_code": 164,
+                "label": _("Pregnant women who received HIV counseling testing and received result at L&D"),
                 "value": 0
             },
             "partners_of_hiv_positive_women_tested_negative_total": {

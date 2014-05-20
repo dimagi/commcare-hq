@@ -13,7 +13,7 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         {% block underscore %}<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>{% endblock %}
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
@@ -424,7 +424,9 @@
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });
-                ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
+                var element = $('#keyboard-shortcuts-config-form').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new KBConfigFormModel(), element);
             });
         </script>
 

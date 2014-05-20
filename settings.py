@@ -637,13 +637,7 @@ FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
     'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
-    'OpmCaseFluff': 'SQL',
     'OpmUserFluff': 'SQL',
-    'OpmFormFluff': 'SQL',
-    'OpmHealthStatusFluff': 'SQL',
-    'OpmHealthStatusBasicInfoFluff': 'SQL',
-    'AncHmisCaseFluff': 'SQL',
-    'ImmunizationHmisCaseFluff': 'SQL',
 }
 
 PREVIEWER_RE = '^$'
@@ -770,6 +764,10 @@ BANK_SWIFT_CODE = ''
 
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
+
+# Mailchimp
+MAILCHIMP_APIKEY = ''
+MAILCHIMP_COMMCARE_USERS_ID = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1065,6 +1063,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
+    'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

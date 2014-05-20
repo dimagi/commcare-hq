@@ -89,3 +89,8 @@ READABLE_FORM_DATA = StaticToggle(
     'Readable Form Data Page',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+CASE_REBUILD = StaticToggle(
+    'case_rebuild',
+    'Show UI-based case rebuild option',
+)

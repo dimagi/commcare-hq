@@ -1,3 +1,4 @@
+import functools
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
@@ -22,6 +23,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
+from dimagi.utils.decorators.memoized import memoized
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -35,15 +37,18 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
-class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, CompletionOrSubmissionTimeMixin, 
-                    MultiFormDrilldownMixin, DatespanMixin):
+class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
+                    ProjectReportParametersMixin,
+                    CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
+                    DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-              'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
@@ -68,8 +73,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
         h = [
             DataTablesColumn(_("View Form")),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
-            DataTablesColumn(_("Submission Time") if self.by_submission_time else _("Completion Time"),
-                             prop_name=self.time_field),
+            DataTablesColumn(
+                _("Submission Time") if self.by_submission_time
+                else _("Completion Time"),
+                prop_name=self.time_field
+            ),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
         ]
         h.extend([DataTablesColumn(field) for field in self.other_fields])
@@ -79,47 +87,87 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
     def default_datespan(self):
         return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
 
+    def _es_extra_filters(self):
+        truthy_only = functools.partial(filter, None)
+        form_values = self.all_relevant_forms.values()
+        if form_values:
+            yield {
+                'or': [
+                    {'and': [{'term': {'xmlns.exact': f['xmlns']}},
+                             {'term': {'app_id': f['app_id']}}]}
+                    for f in form_values
+                ]
+            }
+
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
+        all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
+        if not all_mobile_workers_selected or users_data.admin_and_demo_users:
+            yield {
+                'terms': {
+                    'form.meta.userID': truthy_only(
+                        u.user_id for u in users_data.combined_users
+                    )
+                }
+            }
+        else:
+            negated_ids = util.get_all_users_by_domain(
+                self.domain,
+                user_filter=HQUserType.all_but_users(),
+                simplified=True,
+            )
+            yield {
+                'not': {
+                    'terms': {
+                        'form.meta.userID': truthy_only(
+                            user.user_id for user in negated_ids
+                        )
+                    }
+                }
+            }
+
+        props = truthy_only(self.request.GET.get('form_data', '').split(','))
+        for prop in props:
+            yield {
+                'term': {'__props_for_querying': prop.lower()}
+            }
+
     @property
+    @memoized
     def es_results(self):
-        if not getattr(self, 'es_response', None):
-            self.es_query()
-        return self.es_response
+        return es_query(
+            params={'domain.exact': self.domain},
+            q={
+                'query': {
+                    'range': {
+                        self.time_field: {
+                            'from': self.datespan.startdate_param,
+                            'to': self.datespan.enddate_param,
+                            'include_upper': False,
+                        }
+                    }
+                },
+                'filter': {
+                    'and': (ADD_TO_ES_FILTER['forms'] +
+                            list(self._es_extra_filters()))
+                },
+                'sort': self.get_sorting_block(),
+            },
+            es_url=XFORM_INDEX + '/xform/_search',
+            start_at=self.pagination.start,
+            size=self.pagination.count,
+        )
+
+    def get_sorting_block(self):
+        sorting_block = super(SubmitHistory, self).get_sorting_block()
+        if sorting_block:
+            return sorting_block
+        else:
+            return [{self.time_field: {'order': 'desc'}}]
 
     @property
     def time_field(self):
         return 'received_on' if self.by_submission_time else 'form.meta.timeEnd'
-
-    def es_query(self):
-        if not getattr(self, 'es_response', None):
-            q = {
-                "query": {
-                    "range": {
-                        self.time_field: {
-                            "from": self.datespan.startdate_param,
-                            "to": self.datespan.enddate_param,
-                            "include_upper": False}}},
-                "filter": {"and": ADD_TO_ES_FILTER["forms"][:]}}
-
-            xmlnss = filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])
-            if xmlnss:
-                q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
-
-            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-            if "t__0" not in self.request.GET.getlist("emw") or users_data["admin_and_demo_users"]:
-                q["filter"]["and"].append(
-                    {"terms": {"form.meta.userID": filter(None, [u["user_id"] for u in users_data["combined_users"]])}})
-            else:
-                negated_ids = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.all_but_users(), simplified=True)
-                ids = filter(None, [user['user_id'] for user in negated_ids])
-                q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
-
-            for cp in filter(None, self.request.GET.get('form_data', "").split(",")):
-                q["filter"]["and"].append({"term": {"__props_for_querying": cp.lower()}})
-
-            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{self.time_field : {"order": "desc"}}]
-            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
-                start_at=self.pagination.start, size=self.pagination.count)
-        return self.es_response
 
     @property
     def total_records(self):

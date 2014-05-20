@@ -32,7 +32,7 @@ class Worker(object):
         report.filter(
             lambda key: worker.user_data.get(key),
             # user.awc, user.block
-            [('awc', 'awcs'), ('block', 'blocks')]
+            report.filter_fields
         )
 
         def user_data(property):

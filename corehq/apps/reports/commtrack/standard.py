@@ -239,26 +239,26 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def rows(self):
-            def fmt(val, formatter=lambda k: k, default=u'\u2014'):
-                return formatter(val) if val is not None else default
+        def fmt(val, formatter=lambda k: k, default=u'\u2014'):
+            return formatter(val) if val is not None else default
 
-            statuses = {
-                'nodata': _('no data'),
-                'stockout': _('stock-out'),
-                'understock': _('under-stock'),
-                'adequate': _('adequate'),
-                'overstock': _('over-stock'),
-            }
+        statuses = {
+            'nodata': _('no data'),
+            'stockout': _('stock-out'),
+            'understock': _('under-stock'),
+            'adequate': _('adequate'),
+            'overstock': _('over-stock'),
+        }
 
-            for row in self.product_data:
-                yield [
-                    fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
-                    fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
-                    fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
-                    fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
-                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
-                    # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
-                ]
+        for row in self.product_data:
+            yield [
+                fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
+                fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
+                fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
+                fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
+                fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
+                # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
+            ]
 
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):

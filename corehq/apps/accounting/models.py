@@ -1033,19 +1033,18 @@ class Subscription(models.Model):
             context
         )
         for admin in billing_admins:
-            if toggles.ACCOUNTING_PREVIEW.enabled(admin.web_user):
-                send_HTML_email(
-                    subject, admin.web_user, email_html,
-                    text_content=email_plaintext,
-                    email_from=get_dimagi_from_email_by_product(product),
-                )
-                logger.info(
-                    "[BILLING] Sent %(days_left)s-day subscription reminder "
-                    "email for %(domain)s to %(email)s." % {
-                        'days_left': num_days_left,
-                        'domain': domain_name,
-                        'email': admin.web_user,
-                    })
+            send_HTML_email(
+                subject, admin.web_user, email_html,
+                text_content=email_plaintext,
+                email_from=get_dimagi_from_email_by_product(product),
+            )
+            logger.info(
+                "[BILLING] Sent %(days_left)s-day subscription reminder "
+                "email for %(domain)s to %(email)s." % {
+                    'days_left': num_days_left,
+                    'domain': domain_name,
+                    'email': admin.web_user,
+                })
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):

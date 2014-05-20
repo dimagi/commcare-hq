@@ -154,4 +154,7 @@ class InvitationView():
 
 
 def get_bulk_upload_form(context):
-    return BulkUploadForm(context['bulk_upload']['name_pluralized'])
+    return BulkUploadForm(
+        context['bulk_upload']['plural_noun'],
+        context['bulk_upload'].get('action'),
+    )
