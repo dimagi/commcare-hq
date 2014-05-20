@@ -24,6 +24,7 @@
             var caseManagementModel = new CaseManagement(OPTIONS);
             var $caseManagement = $('#case-management');
             var element = $caseManagement[0];
+            ko.cleanNode(element);
             ko.applyBindings(caseManagementModel, element);
 
             $caseManagement.find('a.select-all').click(function () {
@@ -37,8 +38,9 @@
 
             function selectNone() {
                 $caseManagement.find('input.selected-commcare-case:checked').attr('checked', false).change();
-                ko.cleanNode($caseManagement.find('table tbody')[0]);
-                ko.applyBindings(caseManagementModel, $caseManagement.find('table tbody')[0]);
+                var element = $caseManagement.find('table tbody')[0];
+                ko.cleanNode(element);
+                ko.applyBindings(caseManagementModel, element);
             }
         }
         var keepTrying = setInterval(function () {
