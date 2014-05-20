@@ -17,18 +17,23 @@ from corehq.apps.reports.cache import request_cache
 from django.http import HttpResponse
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin, \
+    ProjectReportParametersMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
+from custom.opm import HealthStatusMixin
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
+from dimagi.utils.decorators.memoized import memoized
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
@@ -261,7 +266,7 @@ class OpmHealthStatusSqlData(SqlData):
         else:
             return None
 
-class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
+class BaseReport(CustomProjectReport, ElasticTabularReport, MonthYearMixin):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -524,8 +529,11 @@ def get_report(ReportClass, month=None, year=None, block=None):
 
     return Report()
 
-class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
 
+class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, DatespanMixin):
+
+    ajax_pagination = True
+    asynchronous = True
     name = "Health Status Report"
     slug = "health_status_report"
     model = HealthStatus
@@ -540,7 +548,9 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    def get_rows(self, dataspan):
+    @property
+    @memoized
+    def es_results(self):
         q = {
             "query": {
                 "filtered": {
@@ -557,13 +567,11 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             }
         }
         es_filters = q["query"]["filtered"]["filter"]
-        blocks = self.request.GET.getlist('blocks')
-        if blocks:
-            block_lower = [block.lower() for block in blocks]
+        if self.blocks:
+            block_lower = [block.lower() for block in self.blocks]
             es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
-        awcs = self.request.GET.getlist('awcs')
-        if awcs:
-            awcs_lower = [awc.lower() for awc in awcs]
+        if self.awcs:
+            awcs_lower = [awc.lower() for awc in self.awcs]
             awc_term = {
                 "or":
                     [{"and": [{"term": {"user_data.awc": term}} for term in re.split('\s', awc)
@@ -573,7 +581,11 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             es_filters["bool"]["must"].append(awc_term)
         q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
+                        start_at=self.pagination.start, size=self.pagination.count)
+
+    def get_rows(self, dataspan):
+        return self.es_results['hits'].get('hits', [])
 
 
     def get_row_data(self, row):
