@@ -219,10 +219,11 @@ def zip_form_data_and_questions(data, questions, path_context='',
 
     if data:
         for key, response in sorted(_flatten_json(data).items()):
+            joined_key = '/'.join(map(unicode, key))
             result.append(
                 FormQuestionResponse(
-                    label='/'.join(key),
-                    value='%s%s' % (path_context, '/'.join(key)),
+                    label=joined_key,
+                    value='%s%s' % (path_context, joined_key),
                     response=response,
                 )
             )
