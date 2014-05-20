@@ -89,6 +89,15 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
+    try:
+        subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_MASS_EMAIL_ID
+        )
+    except mailchimp.ListAlreadySubscribedError:
+        pass
+    except mailchimp.Error as e:
+        logging.error(e.message)
     new_user.subscribed_to_commcare_users = email_opt_in
     if email_opt_in:
         try:
