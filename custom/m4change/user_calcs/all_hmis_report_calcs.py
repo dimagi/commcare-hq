@@ -1,22 +1,18 @@
 import fluff
-import operator
 from custom.m4change.constants import PMTCT_CLIENTS_FORM
 from custom.m4change.user_calcs import get_date_delivery, form_passes_filter_date_delivery, get_received_on
 from datetime import datetime
 
 
-def _get_comparison_results(field_value, comparison_operator, value):
+def _get_comparison_results(field_value, comparison_operator, expected_value):
     result = True
-    is_contains_operator = (comparison_operator == operator.contains)
-    if isinstance(value, list):
-        for value_item in value:
-            value_tuple = (value_item, field_value) if is_contains_operator else (field_value, value_item)
-            if not comparison_operator(value_tuple[0], value_tuple[1]):
+    if isinstance(expected_value, list):
+        for expected_value_item in expected_value:
+            if not comparison_operator(field_value, expected_value_item):
                 result = False
                 break
     else:
-        value_tuple = (value, field_value) if is_contains_operator else (field_value, value)
-        if not comparison_operator(value_tuple[0], value_tuple[1]):
+        if not comparison_operator(field_value, expected_value):
             result = False
     return result
 
