@@ -104,6 +104,25 @@ def render_sonosite_xform(files, exam_uuid, patient_case_id=None):
     return final_xml
 
 
+def render_vscan_error(case_id):
+    """
+    Render the xml needed add attachments to the patients case.
+    """
+    xform_template = load_template('vscan_error.xml.template')
+
+    format_dict = {
+        'time_start': (datetime.utcnow() - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'time_end': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'modified_date': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'user_id': 'uth-uploader',
+        'doc_id': uuid.uuid4().hex,
+        'case_id': case_id,
+    }
+
+    final_xml = xform_template % format_dict
+    return final_xml
+
+
 def render_vscan_xform(case_id, files):
     """
     Render the xml needed add attachments to the patients case.
@@ -179,6 +198,19 @@ def attach_images_to_case(case_id, files):
     lock = create_and_lock_xform(
         xform,
         attachments=file_dict,
+        process=None,
+        domain=UTH_DOMAIN,
+    )
+    lock.obj.domain = UTH_DOMAIN
+
+    return process_cases(lock.obj)
+
+
+def submit_error_case(case_id):
+    xform = render_vscan_error(case_id)
+
+    lock = create_and_lock_xform(
+        xform,
         process=None,
         domain=UTH_DOMAIN,
     )

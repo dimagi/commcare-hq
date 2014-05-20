@@ -1,4 +1,4 @@
-from custom.uth.utils import create_case, match_case, attach_images_to_case
+from custom.uth.utils import create_case, match_case, attach_images_to_case, submit_error_case
 from custom.uth.models import SonositeUpload, VscanUpload
 from celery.task import task
 import io
@@ -23,21 +23,29 @@ def async_create_case(upload_id):
 
 @task
 def async_find_and_attach(upload_id):
-    upload_doc = VscanUpload.get(upload_id)
-    files = get_files_from_doc(upload_doc)
-    case = match_case(
-        upload_doc.scanner_serial,
-        upload_doc.scan_id,
-        # upload_doc.date
-    )
+    try:
+        upload_doc = VscanUpload.get(upload_id)
+        files = get_files_from_doc(upload_doc)
+        case = match_case(
+            upload_doc.scanner_serial,
+            upload_doc.scan_id,
+            # upload_doc.date
+        )
 
-    if case:
-        files = {}
-        for f in upload_doc._attachments.keys():
-            files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
+        if case:
+            files = {}
+            for f in upload_doc._attachments.keys():
+                files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
 
-        attach_images_to_case(case._id, files)
-    else:
-        return -1
+            attach_images_to_case(case._id, files)
+        else:
+            return -1
 
-    # TODO delete doc if successful
+        # TODO delete doc if successful
+    except:
+        # mark the case as having errored (if we know what it is)
+        # but reraise the error since we don't want to hide it
+        if case:
+            submit_error_case(case._id)
+
+        raise
