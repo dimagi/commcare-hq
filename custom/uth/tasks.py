@@ -18,18 +18,19 @@ def async_create_case(upload_id):
     files = get_files_from_doc(upload_doc)
     create_case(upload_doc.related_case_id, files)
 
-    # TODO delete doc if processing is successful
+    upload_doc.delete()
 
 
 @task
 def async_find_and_attach(upload_id):
+    case = None
+
     try:
         upload_doc = VscanUpload.get(upload_id)
         files = get_files_from_doc(upload_doc)
         case = match_case(
             upload_doc.scanner_serial,
             upload_doc.scan_id,
-            # upload_doc.date
         )
 
         if case:
@@ -41,7 +42,7 @@ def async_find_and_attach(upload_id):
         else:
             return -1
 
-        # TODO delete doc if successful
+        upload_doc.delete()
     except:
         # mark the case as having errored (if we know what it is)
         # but reraise the error since we don't want to hide it
