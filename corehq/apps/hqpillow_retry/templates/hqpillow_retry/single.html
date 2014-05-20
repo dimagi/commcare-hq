@@ -6,6 +6,27 @@
     <title>{{ current_page.page_title }}</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    <script src="{% static 'hqstyle/js/jquery/jquery-1.8.2.min.js' %}"></script>
+    <script type="text/javascript">
+        function performAction(action) {
+            if (action === 'delete') {
+                var r=confirm("Are you sure you want to delete this error log?");
+                if (!r) {
+                    return;
+                }
+            }
+            $("input[name=action]").val(action);
+            $("#actionform").submit();
+        }
+        $(function(){
+            $.each(['reset','delete','send'], function(index, id){
+                $('#'+id).click(function() {
+                    performAction(id);
+                    return false;
+                });
+            });
+        })
+    </script>
 </head>
 <body>
     <div class="container">
@@ -16,16 +37,20 @@
         </div>
         <div class="row">
             <h3>{{ current_page.page_name }}</h3>
+            <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button class="btn" id="reset">Reset Attempts</button>
+                  <button class="btn" id="delete">Delete</button>
+                </div>
+                <div class="btn-group">
+                  <button class="btn" id="send">Send as bug report</button>
+                </div>
+            </div>
             <div>
-                <form class="form-inline" action="{% url "pillow_errors" %}" method="post">
+                <form id="actionform" class="form-inline" action="{% url "pillow_errors" %}" method="post">
                     <input type="hidden" name="source" value="single" />
                     <input type="hidden" name="PillowError_{{ error.id }}" value="1" />
-                    <select name="action">
-                        <option value="">{% trans "Select Action..." %}</option>
-                        <option value="delete">{% trans "Delete" %}</option>
-                        <option value="reset">{% trans "Reset Attempts" %}</option>
-                    </select>
-                    <button type="submit">{% trans "Go" %}</button>
+                    <input type="hidden" name="action" value="" />
                 </form>
             </div>
         </div>
