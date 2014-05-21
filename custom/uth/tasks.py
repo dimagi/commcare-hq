@@ -5,6 +5,10 @@ import io
 
 
 def get_files_from_doc(doc):
+    """
+    Load all attachments from a couch doc into a readable object
+    """
+
     files = {}
     for f in doc._attachments.keys():
         files[f] = io.BytesIO(doc.fetch_attachment(f))
@@ -14,6 +18,10 @@ def get_files_from_doc(doc):
 
 @task
 def async_create_case(upload_id):
+    """
+    Task backend for sonosite upload
+    """
+
     upload_doc = SonositeUpload.get(upload_id)
     files = get_files_from_doc(upload_doc)
     create_case(upload_doc.related_case_id, files)
@@ -23,6 +31,10 @@ def async_create_case(upload_id):
 
 @task
 def async_find_and_attach(upload_id):
+    """
+    Task backend for Vscan upload
+    """
+
     case = None
 
     try:

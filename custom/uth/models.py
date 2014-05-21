@@ -1,5 +1,12 @@
-# Stub models file
 from couchdbkit.ext.django.schema import Document, StringProperty, DateProperty
+
+
+"""
+Two Couch models used to temporarily hold important
+information and the attachments from the upload. These
+are passed to Celery, but are in a doc so that we don't
+lose images if something fails.
+"""
 
 
 class SonositeUpload(Document):

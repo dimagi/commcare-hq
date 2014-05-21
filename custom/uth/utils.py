@@ -12,6 +12,14 @@ import re
 
 
 def scan_case(scanner_serial, scan_id):
+    """
+    Find the appropriate case for a serial/exam id combo.
+
+    Throws an exception if there are more than one (this is
+    an error that we do not expect to be able to make corrections
+    for).
+    """
+
     # this is shown on device and stored on the case with no leading zeroes
     # but has them on the file itself
     scan_id = scan_id.lstrip('0')
@@ -52,11 +60,6 @@ def get_study_id(patient_xml):
     """
     exam_root = etree.fromstring(patient_xml)
     return exam_root.find("SonoStudyInstanceUID").text
-
-
-def get_subdirectories(directory):
-    # TODO make sure this is needed
-    return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
 
 
 def load_template(filename):
@@ -188,6 +191,7 @@ def attach_images_to_case(case_id, files):
     """
     Handle case submission for the vscan endpoint
     """
+
     xform = render_vscan_xform(case_id, files)
 
     file_dict = {}
@@ -207,6 +211,11 @@ def attach_images_to_case(case_id, files):
 
 
 def submit_error_case(case_id):
+    """
+    Used if something went wrong creating the real vscan
+    case update.
+    """
+
     xform = render_vscan_error(case_id)
 
     lock = create_and_lock_xform(
