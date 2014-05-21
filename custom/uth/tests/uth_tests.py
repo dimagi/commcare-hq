@@ -28,7 +28,7 @@ class UTHTests(TestCase):
             version=V2,
             update={
                 'exam_number': scan_id,
-                'vscan_serial': serial,
+                'scanner_serial': serial,
                 'scan_status': scan_status,
                 'scan_time': scan_time
             }
