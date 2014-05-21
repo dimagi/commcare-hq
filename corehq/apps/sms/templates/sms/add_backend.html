@@ -28,20 +28,42 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    function domain_sharing_changed() {
-        if($("#id_give_other_domains_access").is(":checked")) {
-            $("#id_for_authorized_domains_input").show();
-        } else {
-            $("#id_for_authorized_domains_input").hide();
-        }
+    function PhoneNumber(phone_number) {
+        var self = this;
+        self.phone_number = ko.observable(phone_number);
     }
-    
-    $(function(){
-        $("#id_give_other_domains_access").click(function() {
-            domain_sharing_changed();
+    function SettingsViewModel(initial) {
+        var self = this;
+        self.share_backend = ko.observable({{ form.give_other_domains_access.value|JSON }});
+        self.phone_numbers = ko.observableArray();
+        
+        self.phone_numbers_json = ko.computed(function() {
+            return ko.toJSON(self.phone_numbers());
         });
-        domain_sharing_changed();
-    });
+        
+        self.add_phone_number = function() {
+            self.phone_numbers.push(new PhoneNumber(""));
+        };
+        
+        {% if use_load_balancing %}
+        var arr = {{ form.phone_numbers.value|default:'[]'|safe }};
+        for(var i = 0; i < arr.length; i++) {
+            self.phone_numbers.push(new PhoneNumber(arr[i].phone_number));
+        }
+        if(self.phone_numbers().length == 0) {
+            self.add_phone_number();
+        }
+        {% endif %}
+        
+        self.remove_phone_number = function() {
+            if(self.phone_numbers().length == 1) {
+                alert("{% trans 'You must have at least one phone number.' %}");
+            } else {
+                self.phone_numbers.remove(this);
+            }
+        };
+    }
+    ko.applyBindings(new SettingsViewModel(), document.getElementById("settings_form"));
 </script>
 {% endblock %}
 
@@ -87,7 +109,7 @@
 
 {% block main_column %}
     <div class="page-header"><h3>{{ backend_generic_name }} {% trans "Connection" %}</h3></div>
-    <form action="" method="post">
+    <form id="settings_form" action="" method="post">
         <h4>{% trans "General Settings" %}</h4>
         <div class="form-block">
             <table>
@@ -105,10 +127,10 @@
                     {% if not is_global %}
                     <tr>
                         <td><label for="id_give_other_domains_access">{% trans "Give other domains access" %}</label></td>
-                        <td>{{ form.give_other_domains_access }}</td>
+                        <td><input type="checkbox" id="id_give_other_domains_access" name="give_other_domains_access" data-bind="checked: share_backend"></td>
                         <td></td>
                     </tr>
-                    <tr id="id_for_authorized_domains_input">
+                    <tr id="id_for_authorized_domains_input" data-bind="visible: share_backend">
                         <td><label for="id_authorized_domains">{% trans "List domains here:" %}</label></td>
                         <td>{{ form.authorized_domains }}</td>
                         <td>{{ form.authorized_domains.errors }}</td>
@@ -118,6 +140,22 @@
             </table>
         </div>
         {% block backend_specific %}{% endblock %}
+        {% if use_load_balancing %}
+        <h4>{% trans "Phone Numbers" %}</h4>
+        <div class="form-block">
+            {{ form.phone_numbers.errors }}
+            <table data-bind="foreach: phone_numbers">
+                <tr>
+                    <td><input type="text" data-bind="value: $data.phone_number" /></td>
+                    <td><span class="btn btn-danger" data-bind="click: $parent.remove_phone_number"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                </tr>
+            </table>
+            <div>
+                <input type="hidden" name="phone_numbers" data-bind="value: phone_numbers_json" />
+                <span class="btn btn-success" data-bind="click: add_phone_number"><i class="icon icon-white icon-plus"></i> Add Phone Number</span>
+            </div>
+        </div>
+        {% endif %}
         <div style="padding-top: 20px;">
             <input type="submit" class="btn btn-primary" value="Save" />
         </div>

@@ -38,8 +38,8 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         one phone number, so need to handle old Twilio backends which don't
         have the _phone_numbers property set.
         """
-        if self._phone_numbers:
-            return self._phone_numbers
+        if self.x_phone_numbers:
+            return self.x_phone_numbers
         else:
             return [self.phone_number]
 

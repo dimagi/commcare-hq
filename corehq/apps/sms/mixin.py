@@ -319,7 +319,7 @@ class SMSLoadBalancingInfo(object):
             if raise_exc:
                 raise
 
-class SMSLoadBalancingMixin(object):
+class SMSLoadBalancingMixin(Document):
     """
     A mixin to be used with an instance of SMSBackend. When using this you will
     need to:
@@ -329,8 +329,12 @@ class SMSLoadBalancingMixin(object):
        be the phone number to send from. This parameter is always sent in for
        instances of SMSLoadBalancingMixin, even if there's just one phone number
        in self.phone_numbers.
+    4) have the backend's form class use the LoadBalancingBackendFormMixin to
+       automatically set the load balancing phone numbers.
     """
-    _phone_numbers = ListProperty(StringProperty)
+    # Do not access this property directly as subclasses may override the
+    # method below.
+    x_phone_numbers = ListProperty(StringProperty)
 
     @property
     def phone_numbers(self):
