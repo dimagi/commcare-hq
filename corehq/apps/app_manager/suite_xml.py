@@ -385,12 +385,37 @@ def get_detail_column_infos(detail, include_sort):
     return columns
 
 
-class SuiteGenerator(object):
+class SuiteGeneratorBase(object):
+    descriptor = None
+    sections = ()
+
     def __init__(self, app):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
         self.id_strings = id_strings
+
+    def generate_suite(self):
+        suite = Suite(descriptor=self.descriptor)
+        suite.version = self.app.version
+
+        def add_to_suite(attr):
+            getattr(suite, attr).extend(getattr(self, attr))
+
+        map(add_to_suite, self.sections)
+        return suite.serializeDocument(pretty=True)
+
+
+class SuiteGenerator(SuiteGeneratorBase):
+    descriptor = u"Suite File"
+    sections = (
+        'xform_resources',
+        'locale_resources',
+        'details',
+        'entries',
+        'menus',
+        'fixtures',
+    )
 
     @property
     def xform_resources(self):
@@ -438,42 +463,6 @@ class SuiteGenerator(object):
                 unknown_lang_txt = u"Unknown Language (%s)" % lang
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
-
-    @property
-    def media_resources(self):
-        PREFIX = 'jr://file/'
-        # you have to call remove_unused_mappings
-        # before iterating through multimedia_map
-        self.app.remove_unused_mappings()
-        if self.app.multimedia_map is None:
-            self.app.multimedia_map = {}
-        for path, m in self.app.multimedia_map.items():
-            unchanged_path = path
-            if path.startswith(PREFIX):
-                path = path[len(PREFIX):]
-            else:
-                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
-            path, name = split_path(path)
-            # CommCare assumes jr://media/,
-            # which is an alias to jr://file/commcare/media/
-            # so we need to replace 'jr://file/' with '../../'
-            # (this is a hack)
-            path = '../../' + path
-
-            if not getattr(m, 'unique_id', None):
-                # lazy migration for adding unique_id to map_item
-                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
-
-            yield MediaResource(
-                id=self.id_strings.media_resource(m.unique_id, name),
-                path=path,
-                version=m.version,
-                local=None,
-                remote=get_url_base() + reverse(
-                    'hqmedia_download',
-                    args=[m.media_type, m.multimedia_id]
-                ) + urllib.quote(name.encode('utf-8')) if name else name
-            )
 
     @property
     @memoized
@@ -1042,24 +1031,46 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def generate_suite(self, sections=None, is_media=False):
-        sections = sections or (
-            'xform_resources',
-            'locale_resources',
-            'details',
-            'entries',
-            'menus',
-            'fixtures',
-        )
-        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
-        suite = Suite(**kw)
-        suite.version = self.app.version
 
-        def add_to_suite(attr):
-            getattr(suite, attr).extend(getattr(self, attr))
+class MediaSuiteGenerator(SuiteGeneratorBase):
+    descriptor = u"Media Suite File"
+    sections = ('media_resources',)
 
-        map(add_to_suite, sections)
-        return suite.serializeDocument(pretty=True)
+    @property
+    def media_resources(self):
+        PREFIX = 'jr://file/'
+        # you have to call remove_unused_mappings
+        # before iterating through multimedia_map
+        self.app.remove_unused_mappings()
+        if self.app.multimedia_map is None:
+            self.app.multimedia_map = {}
+        for path, m in self.app.multimedia_map.items():
+            unchanged_path = path
+            if path.startswith(PREFIX):
+                path = path[len(PREFIX):]
+            else:
+                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+            path, name = split_path(path)
+            # CommCare assumes jr://media/,
+            # which is an alias to jr://file/commcare/media/
+            # so we need to replace 'jr://file/' with '../../'
+            # (this is a hack)
+            path = '../../' + path
+
+            if not getattr(m, 'unique_id', None):
+                # lazy migration for adding unique_id to map_item
+                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
+
+            yield MediaResource(
+                id=self.id_strings.media_resource(m.unique_id, name),
+                path=path,
+                version=m.version,
+                local=None,
+                remote=get_url_base() + reverse(
+                    'hqmedia_download',
+                    args=[m.media_type, m.multimedia_id]
+                ) + urllib.quote(name.encode('utf-8')) if name else name
+            )
 
 
 def validate_suite(suite):
