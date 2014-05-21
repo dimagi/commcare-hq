@@ -18,6 +18,8 @@ from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
+DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
+
 
 def get_mailchimp_api():
     return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
@@ -32,7 +34,7 @@ def subscribe_user_to_mailchimp_list(user, list_id, email=None):
             'FNAME': user.first_name,
             'LNAME': user.last_name,
         } if user.first_name else {
-            'FNAME': user.last_name or user.email,
+            'FNAME': user.last_name or DEFAULT_MAILCHIMP_FIRST_NAME,
         },
     )
 
