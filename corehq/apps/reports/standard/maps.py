@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListReport
@@ -251,6 +252,51 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         return True
 
 
+class ElasticSearchMapReport(GenericTabularReport, GenericMapReport):
+
+    report_template_path = "reports/async/maps.html"
+    report_partial_path = "reports/async/partials/maps.html"
+    ajax_pagination = True
+    asynchronous = True
+    flush_layout = True
+
+    def get_report(self):
+        Report = to_function(self.data_source['report'])
+        assert issubclass(Report, GenericTabularReport), '[%s] must be a GenericTabularReport!' % self.data_source['report']
+
+        report = Report(request=self.request, domain=self.domain, **self.data_source.get('report_params', {}))
+        return report
+
+    @property
+    def rows(self):
+        report = self.get_report()
+        return report.rows
+
+    @property
+    def headers(self):
+        columns = self.display_config['column_titles']
+        headers = DataTablesHeader(*[
+            DataTablesColumn(name=name) for name in columns]
+        )
+        return headers
+
+    @property
+    def report_context(self):
+        context = super(ElasticSearchMapReport, self).report_context
+        layers = getattr(settings, 'MAPS_LAYERS', None)
+        if not layers:
+            layers = {'Default': {'family': 'fallback'}}
+
+        data = self._get_data()
+        display = self.dynamic_config(self.display_config, data['features'])
+
+        context.update(dict(context={
+            'data': data,
+            'config': display,
+            'layers': layers,
+        }))
+
+        return context
 
 
 

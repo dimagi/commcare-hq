@@ -41,7 +41,7 @@ from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
 import logging
-from corehq.apps.reports.standard.maps import GenericMapReport
+from corehq.apps.reports.standard.maps import GenericMapReport, ElasticSearchMapReport
 
 
 class OpmCaseSqlData(SqlData):
@@ -821,7 +821,7 @@ class HealthMapSource(HealthStatusReport):
         return new_rows
 
 
-class HealthMapReport(GenericMapReport, CustomProjectReport):
+class HealthMapReport(ElasticSearchMapReport, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 
@@ -902,4 +902,3 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
-
