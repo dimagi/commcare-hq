@@ -285,7 +285,9 @@ HQ_APPS = (
     'custom.hope',
     'custom.openlmis',
     'custom.m4change',
-    'custom.succeed'
+    'custom.succeed',
+
+    'custom.uth',
 )
 
 TEST_APPS = ()
@@ -871,6 +873,7 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
+    'uth',
 
     # custom reports
     'penn_state',
