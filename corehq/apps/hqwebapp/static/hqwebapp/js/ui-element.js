@@ -218,6 +218,7 @@ var uiElement;
                 this.edit = true;
                 this.modal_id = 'enumModal-'+guid;
                 this.modal_title = modal_title;
+                this.modal_messages = [];
 
                 this.$edit_view = $('<div />');
                 this.$noedit_view = $('<div />');
@@ -239,11 +240,43 @@ var uiElement;
                 $('#hq-modal-home').append($enumModal);
 
                 $('#'+this.modal_id).on('hide', function() {
+                    that.modal_messages = [];
                     var $inputMap = $(this).find('form .hq-input-map'),
                         pairs = {};
+
+                    function hasUpperCase(str) {
+                        return (/[A-Z]/.test(str));
+                    }
+
+                    function hasTraillingSpaces(str) {
+                        return (/[^\x21-\x7E]+/g.test(str));
+                    }
+
+                    function trim(str) {
+                        str = str.replace(/[^\x21-\x7E]+/g, ' ');  // change non-printing chars to spaces
+                        str =  str.replace(/^\s+|\s+$/g, '');      // remove leading/trailing spaces
+                        return str.replace(/\s/g, "-");            // replace spaces with '-' chars
+                    }
+
                     for (var i=0; i < $inputMap.length; i++) {
                         var key = $($inputMap[i]).find('.enum-key').val(),
                             mapVal = $($inputMap[i]).find('.enum-value').val();
+
+                        // ignore previous case sensitive keys
+                        if(!that.value.hasOwnProperty(key) ) {
+                            if (hasUpperCase(key)) {
+                                var origKey = key;
+                                key = key.toLowerCase();
+                                that.modal_messages.push('key: "' + origKey + '" contained upperCase characters, was lowercased to "' + key + '".');
+                            }
+
+                            if (hasTraillingSpaces(key)) {
+                                var origKey = key;
+                                key = trim(key);
+                                that.modal_messages.push('key: "' + origKey + '" contained trailing whitespaces, was stripped to "' + key + '".');
+                            }
+                        }
+
                         if (key !== undefined){
                             pairs[key] = mapVal.toString();
                         }
