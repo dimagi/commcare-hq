@@ -34,7 +34,8 @@ def subscribe_user_to_mailchimp_list(user, list_id, email=None):
             'FNAME': user.first_name.title(),
             'LNAME': user.last_name.title(),
         } if user.first_name else {
-            'FNAME': user.last_name.title() or DEFAULT_MAILCHIMP_FIRST_NAME,
+            'FNAME': (user.last_name.title()
+                      if user.last_name else DEFAULT_MAILCHIMP_FIRST_NAME),
         },
     )
 
