@@ -77,6 +77,12 @@ class BaseUpdateUserForm(forms.Form):
                     new_email,
                     settings.MAILCHIMP_COMMCARE_USERS_ID
                 )
+                handle_changed_mailchimp_email(
+                    existing_user,
+                    old_email,
+                    new_email,
+                    settings.MAILCHIMP_MASS_EMAIL_ID
+                )
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])

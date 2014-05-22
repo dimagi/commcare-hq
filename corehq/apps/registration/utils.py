@@ -18,6 +18,8 @@ from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
+DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
+
 
 def get_mailchimp_api():
     return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
@@ -29,10 +31,11 @@ def subscribe_user_to_mailchimp_list(user, list_id, email=None):
         {'email': email or user.email},
         double_optin=False,
         merge_vars={
-            'FNAME': user.first_name,
-            'LNAME': user.last_name,
+            'FNAME': user.first_name.title(),
+            'LNAME': user.last_name.title() if user.last_name else "",
         } if user.first_name else {
-            'FNAME': user.last_name or user.email,
+            'FNAME': (user.last_name.title()
+                      if user.last_name else DEFAULT_MAILCHIMP_FIRST_NAME),
         },
     )
 
@@ -89,6 +92,15 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
+    try:
+        subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_MASS_EMAIL_ID
+        )
+    except mailchimp.ListAlreadySubscribedError:
+        pass
+    except mailchimp.Error as e:
+        logging.error(e.message)
     new_user.subscribed_to_commcare_users = email_opt_in
     if email_opt_in:
         try:

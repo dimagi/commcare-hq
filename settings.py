@@ -768,6 +768,7 @@ STRIPE_PRIVATE_KEY = ''
 # Mailchimp
 MAILCHIMP_APIKEY = ''
 MAILCHIMP_COMMCARE_USERS_ID = ''
+MAILCHIMP_MASS_EMAIL_ID = ''
 
 try:
     # try to see if there's an environmental variable set for local_settings
