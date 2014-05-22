@@ -126,7 +126,7 @@ def sortkey(child, type_info=None):
                     val = get_inverse(val)
                 key.append(val)
         except KeyError:
-            key.append(case.opened_on)
+            key.append(case.opened_on or datetime.datetime.min)
     return key
 
 def get_session_data(case, current_case, type_info):
@@ -190,6 +190,7 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
 
     process_output(case_output)
 
+
 def get_case_hierarchy(case, type_info):
     def get_children(case, referenced_type=None):
         children = [get_children(i.referenced_case, i.referenced_type) for i in case.reverse_indices]
@@ -225,6 +226,7 @@ def get_case_hierarchy(case, type_info):
         }
 
     return get_children(case)
+
 
 def get_flat_descendant_case_list(case, get_case_url, type_info=None):
     type_info = type_info or {}
