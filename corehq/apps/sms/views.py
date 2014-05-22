@@ -959,7 +959,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             'name': backend.name,
             'description': backend.description,
             'editUrl': reverse(
-                'edit_domain_backend',
+                EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
             ) if not backend.is_global else "",
         }
