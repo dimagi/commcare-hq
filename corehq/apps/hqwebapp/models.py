@@ -768,7 +768,10 @@ class MessagingTab(UITab):
 
         settings_pages = []
         if self.can_access_sms:
-            from corehq.apps.sms.views import DomainSmsGatewayListView
+            from corehq.apps.sms.views import (
+                DomainSmsGatewayListView, AddDomainGatewayView,
+                EditDomainGatewayView,
+            )
             if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
                 sms_connectivity_url = reverse(
                     DomainSmsGatewayListView.urlname, args=[self.domain]
@@ -786,8 +789,16 @@ class MessagingTab(UITab):
                         'urlname': 'add_domain_backend'
                     },
                     {
+                        'title': _("Add Connection"),
+                        'urlname': AddDomainGatewayView.urlname,
+                    },
+                    {
                         'title': _('Edit Connection'),
                         'urlname': 'edit_domain_backend'
+                    },
+                    {
+                        'title': _("Edit Connection"),
+                        'urlname': EditDomainGatewayView.urlname,
                     },
                 ],
             })
