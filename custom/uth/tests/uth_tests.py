@@ -60,9 +60,6 @@ class UTHTests(TestCase):
 
 
 class ScanLookupTests(UTHTests):
-    def setUp(self):
-        super(ScanLookupTests, self).setUp()
-
     def testFindsCorrectCase(self):
         case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
@@ -108,9 +105,6 @@ class ScanLookupTests(UTHTests):
 
 
 class VscanTests(UTHTests):
-    def setUp(self):
-        super(VscanTests, self).setUp()
-
     def pack_directory(self, directory):
         # name of the test directory we're packing
         packed_directory = {}
