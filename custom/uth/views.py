@@ -100,7 +100,7 @@ def sonosite_upload(request, domain, **kwargs):
     response_data = {}
 
     try:
-        config_file = request.FILES.pop('PT_PPS.XML')[0].read()
+        config_file = request.FILES['PT_PPS.XML'].read()
     except Exception as e:
         response_data['result'] = 'failed'
         response_data['message'] = 'Could not load config file: %s' % (e.message)
