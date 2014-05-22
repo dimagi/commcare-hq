@@ -297,8 +297,8 @@ class MobileBackend(Document):
         return dict((str(k), v) for k, v in self.outbound_params.items())
 
 class SMSLoadBalancingInfo(object):
-    def __init__(phone_number, stats_key=None, stats=None, redis_client=None,
-        lock=None):
+    def __init__(self, phone_number, stats_key=None, stats=None,
+        redis_client=None, lock=None):
         self.phone_number = phone_number
         self.stats_key = stats_key
         self.stats = stats
@@ -449,6 +449,9 @@ class SMSBackend(MobileBackend):
         should be separated when using this backend.
         Note that this should not be over 30 due to choice of redis lock 
         timeout. See corehq.apps.sms.tasks.handle_outgoing.
+
+        Also, this can be a fractional amount of seconds. For example, to
+        separate requests by a minimum of a quarter second, return 0.25.
         """
         return None
 
