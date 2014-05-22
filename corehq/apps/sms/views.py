@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timedelta, time
 import re
 import json
+from couchdbkit import ResourceNotFound
 import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -862,6 +863,7 @@ def api_last_read_message(request, domain):
         result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
     return HttpResponse(json.dumps(result))
 
+
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends_new'
@@ -894,6 +896,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def column_names(self):
         return [
             _("Connection"),
+            _("Description"),
             _("Default"),
         ]
 
@@ -954,6 +957,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return {
             'id': backend._id,
             'name': backend.name,
+            'description': backend.description,
             'editUrl': reverse(
                 'edit_domain_backend',
                 args=[self.domain, backend.__class__.__name__, backend._id]
