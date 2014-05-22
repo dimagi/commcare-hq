@@ -32,7 +32,7 @@ def subscribe_user_to_mailchimp_list(user, list_id, email=None):
         double_optin=False,
         merge_vars={
             'FNAME': user.first_name.title(),
-            'LNAME': user.last_name.title(),
+            'LNAME': user.last_name.title() if user.last_name else "",
         } if user.first_name else {
             'FNAME': (user.last_name.title()
                       if user.last_name else DEFAULT_MAILCHIMP_FIRST_NAME),
