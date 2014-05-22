@@ -7,6 +7,8 @@ from corehq.apps.users.models import Permissions
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
+from dimagi.utils.decorators.profile import *
+
 require_can_edit_data = require_permission(Permissions.edit_data)
 
 
@@ -14,6 +16,7 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'data_interface'
     map_name = 'DATA_INTERFACES'
 
+    @profile("/home/sravfeyn/src/hotshot-logfiles/users.prof")
     def dispatch(self, request, *args, **kwargs):
         from corehq.apps.reports.standard.export import DeidExportReport
         if kwargs['report_slug'] in [DeidExportReport.slug]:
