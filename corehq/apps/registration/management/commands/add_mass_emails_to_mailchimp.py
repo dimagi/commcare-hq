@@ -32,6 +32,8 @@ class Command(BaseCommand):
                     print 'subscribed %s' % email_address
                 except mailchimp.ListAlreadySubscribedError:
                     print 'already subscribed %s' % email_address
+                except mailchimp.ListInvalidImportError as e:
+                    print e.message
                 except mailchimp.Error as e:
                     raise e
             else:
