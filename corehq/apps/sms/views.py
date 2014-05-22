@@ -897,7 +897,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return [
             _("Connection"),
             _("Description"),
-            _("Default"),
+            _("Status"),
+            _("Actions"),
         ]
 
     @property
@@ -962,6 +963,25 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
             ) if not backend.is_global else "",
+            'canDelete': not backend.is_global,
+            'deleteModalId': 'delete_%s' % backend._id,
+        }
+
+    def get_deleted_item_data(self, item_id):
+        try:
+            backend = SMSBackend.get(item_id)
+        except ResourceNotFound:
+            raise Http404()
+        if backend.domain != self.domain or backend.base_doc != "MobileBackend":
+            raise Http404()
+        if self.domain_object.default_sms_backend_id == backend._id:
+            self.domain_object.default_sms_backend_id = None
+            self.domain_object.save()
+        # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
+        backend.retire()
+        return {
+            'itemData': self._fmt_backend_data(backend),
+            'template': 'gateway-deleted-template',
         }
 
     def refresh_item(self, item_id):
@@ -979,7 +999,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def post(self, request, *args, **kwargs):
         if self.action == 'new_backend':
             backend_type = request.POST['backend_type']
-            return HttpResponseRedirect(reverse('add_domain_backend', args=[self.domain, backend_type]))
+            return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, backend_type]))
         return self.paginate_crud_response
 
     @method_decorator(domain_admin_required)
