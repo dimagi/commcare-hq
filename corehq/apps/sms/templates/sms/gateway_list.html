@@ -19,6 +19,7 @@
             <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
+        <td class="span4" data-bind="text: description"></td>
         <td class="span3">
             <button type="button"
                     class="btn refresh-list-confirm"
@@ -27,10 +28,11 @@
     </script>
 
     <script type="text/html" id="gateway-default-template">
-        <td class="span5">
+        <td class="span5" colspan="2">
             <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
+        <td class="span4" data-bind="text: description"></td>
         <td class="span3">
             <button type="button"
                     class="btn btn-danger refresh-list-confirm"
@@ -39,7 +41,7 @@
     </script>
 
     <script type="text/html" id="gateway-automatic-template">
-        <td class="span5"><em data-bind="text: name"></em></td>
+        <td class="span9" colspan="2"><em data-bind="text: name"></em></td>
         <td class="span3"><span class="label label-info">{% trans 'DEFAULT' %}</span></td>
     </script>
 {% endblock %}

@@ -1,7 +1,7 @@
 import re
 import json
 from datetime import time
-from crispy_forms.bootstrap import StrictButton, InlineField
+from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from crispy_forms.helper import FormHelper
 from django import forms
 from django.forms.forms import Form
@@ -228,10 +228,67 @@ class LoadBalancingBackendFormMixin(Form):
 class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None
-    name = CharField()
-    give_other_domains_access = BooleanField(required=False)
-    authorized_domains = CharField(required=False)
-    reply_to_phone_number = CharField(required=False)
+    name = CharField(
+        label=ugettext_noop("Name")
+    )
+    description = CharField(
+        label=ugettext_noop("Description"),
+        widget=forms.Textarea,
+        required=False,
+    )
+    give_other_domains_access = BooleanField(
+        required=False,
+        label=ugettext_noop("Give other domains access.")
+    )
+    authorized_domains = CharField(
+        required=False,
+        label=ugettext_noop("List of authorized domains")
+    )
+    reply_to_phone_number = CharField(
+        required=False,
+        label=ugettext_noop("Reply-To Phone Number"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        button_text = kwargs.pop('button_text', _("Create SMS Connection"))
+        super(BackendForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+               _('General Settings'),
+                crispy.Field('name', css_class='input-xxlarge'),
+                crispy.Field('description', css_class='input-xxlarge', rows="3"),
+                crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+                crispy.Field(
+                    'give_other_domains_access',
+                    data_bind="checked: give_other_domains_access"
+                ),
+                crispy.Div(
+                    'authorized_domains',
+                    data_bind="visible: showAuthorizedDomains",
+                ),
+            ),
+            self.gateway_specific_fields,
+            FormActions(
+                StrictButton(
+                    button_text,
+                    type="submit",
+                    css_class='btn-primary'
+                ),
+            ),
+        )
+
+    @property
+    def gateway_specific_fields(self):
+        return crispy.Div()
+
+    @property
+    def initial_values(self):
+        return {
+            'give_other_domains_access': self.give_other_domains_access
+        }
 
     def clean_name(self):
         value = self.cleaned_data.get("name")
