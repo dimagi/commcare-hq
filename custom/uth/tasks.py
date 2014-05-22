@@ -11,7 +11,10 @@ def get_files_from_doc(doc):
 
     files = {}
     for f in doc._attachments.keys():
-        files[f] = io.BytesIO(doc.fetch_attachment(f))
+        if f[-4:].lower() != '.xml':
+            # we really only want images/videos, but specifically
+            # blacklisting uploaded config files
+            files[f] = io.BytesIO(doc.fetch_attachment(f))
 
     return files
 
