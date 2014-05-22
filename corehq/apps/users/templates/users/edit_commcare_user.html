@@ -54,6 +54,18 @@
             {% endif %}
 
             $("input#user-data-input").val(JSON.stringify(data));
+
+            // show message box with taken actions
+            $("#custom-data-messages-box").empty();
+            if (customDataEditor.modal_messages.length > 0) {
+                for(var i = 0; i< customDataEditor.modal_messages.length; i++) {
+                    var message = customDataEditor.modal_messages[i];
+                    $("#custom-data-messages-box").append(message + '<br />')
+                }
+                $("#custom-data-messages-box").show();
+            } else {
+                $("#custom-data-messages-box").hide();
+            }
         }
 
         customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', '{% trans 'User Data' %}');
@@ -159,6 +171,8 @@
 
                 <fieldset>
                     <legend>{% trans "Custom Registration Data" %}</legend>
+                    <div id="custom-data-messages-box" class="alert alert-info hide">
+                    </div>
                     <div class="control-group">
                         <label class="control-label">{% trans 'Current Data' %}</label>
                         <div class="controls custom-data-controls"></div>
