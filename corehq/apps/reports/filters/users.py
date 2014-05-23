@@ -361,6 +361,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             {"terms": {"doc_type": doc_types_to_include}},
             {"term": {"domain": domain}},
             {"term": {"is_active": True}},
+            {"term": {"base_doc": "couchuser"}},
         ]}
         if "t__0" not in emws:
             or_filter = {"or": [
