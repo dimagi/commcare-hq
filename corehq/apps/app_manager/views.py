@@ -1973,8 +1973,10 @@ def _make_zip_payload(files):
 
 @safe_download
 def download_ccz(req, domain, app_id):
+    files = ((name, f.encode('utf-8'))
+             for name, f in _download_index_files(req))
     response = HttpResponse(
-        _make_zip_payload(_download_index_files(req)),
+        _make_zip_payload(files),
         content_type='application/x-zip-compressed',
     )
     set_file_download(response, 'commcare.ccz')
