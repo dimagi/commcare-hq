@@ -521,6 +521,32 @@ class CouchCachedStringProperty(CachedStringProperty):
             cls.set(key, value)
 
 
+class ScheduleVisit(DocumentSchema):
+    """
+    due:         Days after the anchor date that this visit is due
+    late_window: Days after the due day that this visit is valid until
+    """
+    due = IntegerProperty()
+    late_window = IntegerProperty()
+
+
+class FormSchedule(DocumentSchema):
+    """
+    anchor:                     Case property containing a date after which this schedule becomes active
+    expiry:                     Days after the anchor date that this schedule expires (optional)
+    visit_list:                 List of visits in this schedule
+    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    transition_condition:       Condition under which the schedule transitions to the next phase
+    termination_condition:      Condition under which the schedule terminates
+    """
+    anchor = StringProperty()
+    expires = IntegerProperty()
+    visits = SchemaListProperty(ScheduleVisit)
+    post_schedule_increment = IntegerProperty()
+    transition_condition = SchemaProperty(FormActionCondition)
+    termination_condition = SchemaProperty(FormActionCondition)
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -538,6 +564,7 @@ class FormBase(DocumentSchema):
     validation_cache = CouchCachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
+    schedule = SchemaProperty(FormSchedule)
 
     @classmethod
     def wrap(cls, data):
@@ -1139,6 +1166,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     name = DictProperty()
     unique_id = StringProperty()
     case_type = StringProperty()
+    has_schedule = BooleanProperty()
 
     @classmethod
     def wrap(cls, data):

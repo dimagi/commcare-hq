@@ -1,6 +1,6 @@
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, ScheduleVisit, FormSchedule
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -117,6 +117,31 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
+    def test_schedule(self):
+        app = Application.wrap(self.get_json('app'))
+        mod = app.get_module(0)
+        mod.has_schedule = True
+        f1 = mod.get_form(0)
+        f2 = mod.get_form(1)
+        f1.schedule = FormSchedule(
+            expires=120,
+            post_schedule_increment=15,
+            visits=[
+                ScheduleVisit(due=5, late_window=4),
+                ScheduleVisit(due=10, late_window=9),
+                ScheduleVisit(due=20, late_window=5)
+            ]
+        )
+
+        f2.schedule = FormSchedule(
+            visits=[
+                ScheduleVisit(due=7, late_window=4),
+                ScheduleVisit(due=15)
+            ]
+        )
+        self.assertXmlEqual(self.get_xml('suite-schedule'), app.create_suite())
+
 
 
 class RegexTest(TestCase):
