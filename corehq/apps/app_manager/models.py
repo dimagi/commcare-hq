@@ -2740,7 +2740,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def suite_loc(self):
-        if LooseVersion(self.build_spec.version) >= '2.12':
+        if self.enable_relative_suite_path:
             return './suite.xml'
         else:
             return "jr://resource/suite.xml"
@@ -2751,7 +2751,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def media_suite_loc(self):
-        return "media_suite.xml"
+        if self.enable_relative_suite_path:
+            return "./media_suite.xml"
+        else:
+            return "jr://resource/media_suite.xml"
+
+    @property
+    def enable_relative_suite_path(self):
+        return LooseVersion(self.build_spec.version) >= '2.12'
 
     @property
     def enable_multi_sort(self):
