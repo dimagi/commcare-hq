@@ -360,6 +360,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         query_filter = {"and": [
             {"terms": {"doc_type": doc_types_to_include}},
             {"term": {"domain": domain}},
+            {"term": {"is_active": True}},
         ]}
         if "t__0" not in emws:
             or_filter = {"or": [
