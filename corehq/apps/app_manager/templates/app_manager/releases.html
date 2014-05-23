@@ -405,6 +405,7 @@
                             </div>
                         </div>
                     {% endif %}
+                    {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle">
@@ -431,6 +432,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
             <div class="modal-footer">
