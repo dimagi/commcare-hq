@@ -193,7 +193,21 @@
     <assertions>
       <assert test="count(instance('table_tags')/table_tag_list/table_tag) = 1">
         <text>
-          <locale id="case_autoload.exactly_one_fixture"/>
+          <locale id="case_autoload.fixture.exactly_one_fixture">
+            <argument>table_tag</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('table_tags')/table_tag_list/table_tag/field_name) = 1">
+        <text>
+          <locale id="case_autoload.fixture.property_missing">
+            <argument>field_name</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('table_tags')/table_tag_list/table_tag/field_name]) = 1">
+        <text>
+          <locale id="case_autoload.fixture.case_missing"/>
         </text>
       </assert>
     </assertions>

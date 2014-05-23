@@ -1,11 +1,13 @@
 from casexml.apps.case.signals import cases_received
+from casexml.apps.case.models import XFormInstance
+from fluff.signals import indicator_document_updated
+import json
+from dimagi.utils.couch import get_redis_client
 from django.core.exceptions import ObjectDoesNotExist
-from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, TEST_DOMAIN, IMMUNIZATION_FORMS, \
-    BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS
-from custom.m4change.fixtures.report_fixtures import get_last_month
-from custom.m4change.models import FixtureReportResult, McctStatus
-from custom.m4change.reports.reports import M4ChangeReportDataSource
-from custom.m4change.utils import get_user_by_id
+from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, IMMUNIZATION_FORMS, \
+    BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, REDIS_FIXTURE_KEYS, \
+    REDIS_FIXTURE_LOCK_KEYS
+from custom.m4change.models import McctStatus
 
 
 def _create_mcct_status_row(form_id, status, domain, received_on, registration_date, immunized, is_booking):
@@ -99,31 +101,28 @@ def handle_m4change_forms(sender, xform, cases, **kwargs):
 cases_received.connect(handle_m4change_forms)
 
 
-def handle_fixture_update(sender, xform, cases, **kwargs):
-    if hasattr(xform, "domain") and xform.domain == TEST_DOMAIN\
-            and hasattr(xform, "xmlns") and xform.xmlns in ALL_M4CHANGE_FORMS:
-        db = FixtureReportResult.get_db()
-        data_source = M4ChangeReportDataSource()
-        date_range = get_last_month()
-        location_id = get_user_by_id(xform.form['meta']['userID']).get_domain_membership(xform.domain).location_id
+def handle_fixture_location_update(sender, doc, diff, backend, **kwargs):
+    if doc.get('doc_type') == 'XFormInstance' and doc.get('domain') in M4CHANGE_DOMAINS:
+        xform = XFormInstance.wrap(doc)
+        if hasattr(xform, "xmlns") and xform.xmlns in ALL_M4CHANGE_FORMS:
+            location_id = xform.form.get("location_id", None)
+            if not location_id:
+                return
+            client = get_redis_client()
+            redis_key = REDIS_FIXTURE_KEYS[xform.domain]
+            redis_lock_key = REDIS_FIXTURE_LOCK_KEYS[xform.domain]
+            lock = client.lock(redis_lock_key, timeout=5)
+            if lock.acquire(blocking=True):
+                try:
+                    location_ids_str = client.get(redis_key)
+                    location_ids = []
+                    if location_ids_str:
+                        location_ids = json.loads(location_ids_str)
+                    if location_id not in location_ids:
+                        location_ids.append(location_id)
+                    client.set(redis_key, json.dumps(location_ids))
+                finally:
+                    lock.release()
 
-        results_for_last_month = FixtureReportResult.get_report_results_by_key(domain=xform.domain,
-                                                                               location_id=location_id,
-                                                                               start_date=date_range[0].strftime("%Y-%m-%d"),
-                                                                               end_date=date_range[1].strftime("%Y-%m-%d"))
-        db.delete_docs(results_for_last_month)
 
-        data_source.configure(config={
-            "startdate": date_range[0],
-            "enddate": date_range[1],
-            "location_id": location_id,
-            "domain": xform.domain
-        })
-        report_data = data_source.get_data()
-
-        for report_slug in report_data:
-            rows = dict(report_data[report_slug].get("data", []))
-            name = report_data[report_slug].get("name")
-            FixtureReportResult.save_result(xform.domain, location_id, date_range[0].date(), date_range[1].date(), report_slug, rows, name)
-
-cases_received.connect(handle_fixture_update)
+indicator_document_updated.connect(handle_fixture_location_update)

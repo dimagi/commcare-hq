@@ -52,6 +52,18 @@ class Xpath(XmlObject):
     variables = NodeListField('variable', XpathVariable)
 
 
+class LocaleArgument(XmlObject):
+    ROOT_NAME = 'argument'
+    key = StringField('@key')
+    value = StringField('.')
+
+
+class Locale(XmlObject):
+    ROOT_NAME = 'locale'
+    id = StringField('@id')
+    arguments = NodeListField('argument', LocaleArgument)
+
+
 class Text(XmlObject):
     """
     <text>                     <!----------- Exactly one. Will be present wherever text can be defined. Contains a sequential list of string elements to be concatenated to form the text body.-->
@@ -70,6 +82,7 @@ class Text(XmlObject):
     xpath = NodeField('xpath', Xpath)
     xpath_function = StringField('xpath/@function')
 
+    locale = NodeField('locale', Locale)
     locale_id = StringField('locale/@id')
 
 
@@ -372,12 +385,37 @@ def get_detail_column_infos(detail, include_sort):
     return columns
 
 
-class SuiteGenerator(object):
+class SuiteGeneratorBase(object):
+    descriptor = None
+    sections = ()
+
     def __init__(self, app):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
         self.id_strings = id_strings
+
+    def generate_suite(self):
+        suite = Suite(descriptor=self.descriptor)
+        suite.version = self.app.version
+
+        def add_to_suite(attr):
+            getattr(suite, attr).extend(getattr(self, attr))
+
+        map(add_to_suite, self.sections)
+        return suite.serializeDocument(pretty=True)
+
+
+class SuiteGenerator(SuiteGeneratorBase):
+    descriptor = u"Suite File"
+    sections = (
+        'xform_resources',
+        'locale_resources',
+        'details',
+        'entries',
+        'menus',
+        'fixtures',
+    )
 
     @property
     def xform_resources(self):
@@ -425,42 +463,6 @@ class SuiteGenerator(object):
                 unknown_lang_txt = u"Unknown Language (%s)" % lang
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
-
-    @property
-    def media_resources(self):
-        PREFIX = 'jr://file/'
-        # you have to call remove_unused_mappings
-        # before iterating through multimedia_map
-        self.app.remove_unused_mappings()
-        if self.app.multimedia_map is None:
-            self.app.multimedia_map = {}
-        for path, m in self.app.multimedia_map.items():
-            unchanged_path = path
-            if path.startswith(PREFIX):
-                path = path[len(PREFIX):]
-            else:
-                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
-            path, name = split_path(path)
-            # CommCare assumes jr://media/,
-            # which is an alias to jr://file/commcare/media/
-            # so we need to replace 'jr://file/' with '../../'
-            # (this is a hack)
-            path = '../../' + path
-
-            if not getattr(m, 'unique_id', None):
-                # lazy migration for adding unique_id to map_item
-                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
-
-            yield MediaResource(
-                id=self.id_strings.media_resource(m.unique_id, name),
-                path=path,
-                version=m.version,
-                local=None,
-                remote=get_url_base() + reverse(
-                    'hqmedia_download',
-                    args=[m.media_type, m.multimedia_id]
-                ) + urllib.quote(name.encode('utf-8')) if name else name
-            )
 
     @property
     @memoized
@@ -648,16 +650,33 @@ class SuiteGenerator(object):
         for instance in self.get_fixture_instances(module, form):
             yield instance
 
-    def add_case_sharing_assertion(self, entry):
-        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
-        assertion = Assertion(test="count(instance('groups')/groups/group) = 1")
-        assertion.text.append(Text(locale_id='case_sharing.exactly_one_group'))
+    def add_assertion(self, entry, test, locale_id, locale_arguments=None):
+        assertion = Assertion(test=test)
+        text = Text(locale_id=locale_id)
+        if locale_arguments:
+            locale = text.locale
+            for arg in locale_arguments:
+                locale.arguments.append(LocaleArgument(value=arg))
+        assertion.text.append(text)
         entry.assertions.append(assertion)
 
-    def add_fixture_auto_select_assertion(self, entry, test):
-        assertion = Assertion(test=test)
-        assertion.text.append(Text(locale_id='case_autoload.exactly_one_fixture'))
-        entry.assertions.append(assertion)
+    def add_case_sharing_assertion(self, entry):
+        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
+
+    def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
+        self.add_assertion(
+            entry,
+            "{0} = 1".format(case_id_xpath.count()),
+            'case_autoload.{0}.property_missing'.format(mode),
+            locale_arguments
+        )
+        case_count = CaseIDXPath(case_id_xpath).case().count()
+        self.add_assertion(
+            entry,
+            "{0} = 1".format(case_count),
+            'case_autoload.{0}.case_missing'.format(mode),
+        )
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -786,28 +805,38 @@ class SuiteGenerator(object):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 if auto_select.mode == AUTO_SELECT_USER:
+                    xpath = session_var(auto_select.value_key, subref='user')
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=session_var(auto_select.value_key, subref='user')
+                        function=xpath
                     ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
                 elif auto_select.mode == AUTO_SELECT_CASE:
                     try:
                         ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
                         sess_var = ref.case_session_var
                     except KeyError:
                         raise ValueError("Case tag not found: %s" % auto_select.value_source)
-
+                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=CaseIDXPath(session_var(sess_var)).case().slash(auto_select.value_key)
+                        function=xpath
                     ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
                 elif auto_select.mode == AUTO_SELECT_FIXTURE:
                     xpath_base = FixtureXpath(auto_select.value_source).table()
+                    xpath = xpath_base.slash(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
-                        function=xpath_base.slash(auto_select.value_key)
+                        function=xpath
                     ))
-                    self.add_fixture_auto_select_assertion(e, "{0} = 1".format(xpath_base.count()))
+                    self.add_assertion(
+                        e,
+                        "{0} = 1".format(xpath_base.count()),
+                        'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
+                        [auto_select.value_source]
+                    )
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
                 elif auto_select.mode == AUTO_SELECT_RAW:
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
@@ -1002,24 +1031,46 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def generate_suite(self, sections=None, is_media=False):
-        sections = sections or (
-            'xform_resources',
-            'locale_resources',
-            'details',
-            'entries',
-            'menus',
-            'fixtures',
-        )
-        kw = {"descriptor": u"Suite File" if not is_media else u"Media Suite File"}
-        suite = Suite(**kw)
-        suite.version = self.app.version
 
-        def add_to_suite(attr):
-            getattr(suite, attr).extend(getattr(self, attr))
+class MediaSuiteGenerator(SuiteGeneratorBase):
+    descriptor = u"Media Suite File"
+    sections = ('media_resources',)
 
-        map(add_to_suite, sections)
-        return suite.serializeDocument(pretty=True)
+    @property
+    def media_resources(self):
+        PREFIX = 'jr://file/'
+        # you have to call remove_unused_mappings
+        # before iterating through multimedia_map
+        self.app.remove_unused_mappings()
+        if self.app.multimedia_map is None:
+            self.app.multimedia_map = {}
+        for path, m in self.app.multimedia_map.items():
+            unchanged_path = path
+            if path.startswith(PREFIX):
+                path = path[len(PREFIX):]
+            else:
+                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+            path, name = split_path(path)
+            # CommCare assumes jr://media/,
+            # which is an alias to jr://file/commcare/media/
+            # so we need to replace 'jr://file/' with '../../'
+            # (this is a hack)
+            path = '../../' + path
+
+            if not getattr(m, 'unique_id', None):
+                # lazy migration for adding unique_id to map_item
+                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
+
+            yield MediaResource(
+                id=self.id_strings.media_resource(m.unique_id, name),
+                path=path,
+                version=m.version,
+                local=None,
+                remote=get_url_base() + reverse(
+                    'hqmedia_download',
+                    args=[m.media_type, m.multimedia_id]
+                ) + urllib.quote(name.encode('utf-8')) if name else name
+            )
 
 
 def validate_suite(suite):

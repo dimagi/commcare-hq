@@ -88,7 +88,8 @@ def login_and_domain_required(view_func):
                 login_url = reverse('domain_login', kwargs={'domain': domain})
                 return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
         else:
-            raise Http404
+            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            raise Http404(msg)
     return _inner
 
 

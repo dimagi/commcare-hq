@@ -1,4 +1,6 @@
 from optparse import make_option
+import traceback
+from cStringIO import StringIO
 from django.core.management import call_command
 
 from django.core.management.base import BaseCommand
@@ -64,15 +66,22 @@ class Command(BaseCommand):
 
         gevent.joinall(jobs)
 
-        message = '\n'.join([
-            "We heard a rumor that preindex is complete, "
-            "but it's on you to check that all tasks are complete."
-        ])
+        try:
+            for job in jobs:
+                job.get()
+        except Exception:
+            subject = " HQAdmin preindex_everything failed"
+            f = StringIO()
+            traceback.print_exc(file=f)
+            message = f.getvalue()
+        else:
+            subject = " HQAdmin preindex_everything may or may not be complete"
+            message = (
+                "We heard a rumor that preindex is complete,\n"
+                "but it's on you to check that all tasks are complete."
+            )
 
         if email:
-            mail_admins(
-                " HQAdmin preindex_everything may or may not be complete",
-                message
-            )
+            mail_admins(subject, message)
         else:
-            print message
+            print '{}\n\n{}'.format(subject, message)

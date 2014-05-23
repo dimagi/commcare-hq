@@ -91,7 +91,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             has_error = True
             case = None
         if case is None:
-            self.report_template_path = "error.html"
+            self.report_template_path = "patient_error.html"
             if has_error:
                 ret['error_message'] = "Patient not found"
             else:
@@ -121,7 +121,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             chw_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CHW_APPNAME)
             latest_chw_build = ApplicationBase.get_latest_build(case['domain'], chw_app_dict['_id'])['_id']
         except ResourceNotFound as ex:
-            self.report_template_path = "error.html"
+            self.report_template_path = "patient_error.html"
             ret['error_message'] = ex.message
             return ret
 
@@ -129,6 +129,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
         ret['root_url'] = '?patient_id=%s' % case['_id']
         ret['view_mode'] = self.view_mode
         ret['patient_status_access'] = self.patient_status_access
+        ret['submission_user_access'] = self.submission_user_access
 
         if self.view_mode == 'info':
             self.report_template_path = "patient_info.html"
@@ -164,7 +165,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
 
                 return tabular_context
             else:
-                self.report_template_path = "error.html"
+                self.report_template_path = "patient_error.html"
                 ret['error_message'] = "Cannot access report(incorrect user role)"
                 return ret
         elif self.view_mode == 'interactions':
@@ -227,7 +228,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 ret['disenroll_patient_url'] = get_form_url(pm_app_dict, latest_pm_build, PM_APP_PM_MODULE, PM3)
                 ret['change_patient_data_url'] = get_form_url(pm_app_dict, latest_pm_build, PM_APP_PM_MODULE, PM4)
             else:
-                self.report_template_path = "error.html"
+                self.report_template_path = "patient_error.html"
                 ret['error_message'] = "Only PMs can disenrollment participants"
                 return ret
         else:

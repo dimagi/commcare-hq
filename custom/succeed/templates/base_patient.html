@@ -19,8 +19,10 @@
                     {% block patient-tab %}
                         <li {% if view_mode == "info" %}class="active"{% endif %}>
                             <a href="{{ root_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
+                        {% if submission_user_access %}
                         <li {% if view_mode == "submissions" %}class="active"{% endif %}>
                             <a href="{{ root_url }}&view=submissions{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a></li>
+                        {% endif %}
                         <li {% if view_mode == "interactions" %}class="active"{% endif %}>
                             <a href="{{ root_url }}&view=interactions{% if notabs %}&notabs{% endif %}" >{% trans "Patient Interactions" %}</a></li>
                         <li {% if view_mode == "plan" %}class="active"{% endif %}>

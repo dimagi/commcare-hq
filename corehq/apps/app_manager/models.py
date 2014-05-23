@@ -305,7 +305,7 @@ class AutoSelectCase(DocumentSchema):
                         this represents the 'case_tag' for the case.
                         The mode 'user' doesn't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
-                        property or a user data key or a fixture field name or the raw
+                        index or a user data key or a fixture field name or the raw
                         xpath expression.
 
     """
@@ -2161,6 +2161,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    # not used yet, but nice for tagging/debugging
+    # currently only canonical value is 'incomplete-build',
+    # for when build resources aren't found where they should be
+    build_broken_reason = StringProperty()
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -2897,7 +2901,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
-        return suite_xml.SuiteGenerator(self).generate_suite(sections=['media_resources'], is_media=True)
+        return suite_xml.MediaSuiteGenerator(self).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):

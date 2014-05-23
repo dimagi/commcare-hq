@@ -6,6 +6,7 @@ from mock import patch
 from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.commtrack.models import Product
 
+
 class LocationImportTest(CommTrackTest):
     def names_of_locs(self):
         return [loc.name for loc in Location.by_domain(self.domain.name)]
@@ -20,9 +21,8 @@ class LocationImportTest(CommTrackTest):
         self.assertTrue(data['name'] in self.names_of_locs())
 
     def test_import_with_existing_parent_by_id(self):
-        parent = make_loc('sillyparents')
-        parent.location_type = 'state'  # state can't have outlet as child
-        parent.save()
+        # state can't have outlet as child
+        parent = make_loc('sillyparents', type='state')
 
         data = {
             'name': 'importedloc',
@@ -39,10 +39,8 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(new_loc.parent_id, parent._id)
 
     def test_id_of_invalid_parent_type(self):
-        parent = make_loc('sillyparents')
-        parent.location_type = 'state'  # state can't have outlet as child
-        parent.save()
-
+        # state can't have outlet as child
+        parent = make_loc('sillyparents', type='state')
         data = {
             'name': 'oops',
             'outlet_type': 'SHG',
@@ -69,9 +67,7 @@ class LocationImportTest(CommTrackTest):
         self.assertTrue('Parent with id banana does not exist' in result['message'])
 
     def test_invalid_parent_domain(self):
-        parent = make_loc('someparent', domain='notright')
-        parent.location_type = 'village'
-        parent.save()
+        parent = make_loc('someparent', domain='notright', type='village')
 
         data = {
             'name': 'bad parent',
@@ -86,13 +82,48 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(len(list(Location.by_domain(self.domain.name))), original_count)
         self.assertTrue('references a location in another project' in result['message'])
 
+    def test_change_parent(self):
+        parent = make_loc('original parent', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
+
+        new_parent = make_loc('new parent', type='village')
+        self.assertNotEqual(parent._id, new_parent._id)
+        data = {
+            'id': existing._id,
+            'name': existing.name,
+            'site_code': 'wat',
+            'outlet_type': 'SHG',
+            'parent_id': new_parent._id,
+        }
+
+        result = import_location(self.domain.name, 'outlet', data)
+        new_loc = Location.get(result['id'])
+        self.assertEqual(existing._id, new_loc._id)
+        self.assertEqual(new_loc.parent_id, new_parent._id)
+
+    def test_change_to_invalid_parent(self):
+        parent = make_loc('original parent', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
+
+        new_parent = make_loc('new parent', type='state')
+        data = {
+            'id': existing._id,
+            'name': existing.name,
+            'site_code': 'wat',
+            'outlet_type': 'SHG',
+            'parent_id': new_parent._id,
+        }
+
+        result = import_location(self.domain.name, 'outlet', data)
+        self.assertEqual(None, result['id'])
+        self.assertTrue('Invalid parent type' in result['message'])
+        new_loc = Location.get(existing._id)
+        self.assertEqual(existing._id, new_loc._id)
+        self.assertEqual(new_loc.parent_id, parent._id)
+
     def test_updating_existing_location_properties(self):
-        parent = make_loc('sillyparents')
-        parent.location_type = 'village'
-        parent.save()
-        existing = make_loc('existingloc', parent=parent)
-        existing.location_type = 'outlet'
-        existing.save()
+        parent = make_loc('sillyparents', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
 
         data = {
             'id': existing._id,
@@ -110,9 +141,7 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(new_loc.site_code, data['site_code'])
 
     def test_given_id_matches_type(self):
-        existing = make_loc('existingloc')
-        existing.location_type = 'state'
-        existing.save()
+        existing = make_loc('existingloc', type='state')
 
         data = {
             'id': existing._id,
@@ -125,11 +154,8 @@ class LocationImportTest(CommTrackTest):
         self.assertTrue('Existing location type error' in result['message'])
 
     def test_shouldnt_save_if_no_changes(self):
-        parent = make_loc('sillyparents')
-        parent.location_type = 'village'
-        parent.save()
-        existing = make_loc('existingloc', parent=parent)
-        existing.location_type = 'outlet'
+        parent = make_loc('sillyparents', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
         existing.site_code = 'wat'
         existing.outlet_type = 'SHG'
         existing.save()
@@ -149,11 +175,8 @@ class LocationImportTest(CommTrackTest):
     def test_should_still_save_if_name_changes(self):
         # name isn't a dynamic property so should test these still
         # get updated alone
-        parent = make_loc('sillyparents')
-        parent.location_type = 'village'
-        parent.save()
-        existing = make_loc('existingloc', parent=parent)
-        existing.location_type = 'outlet'
+        parent = make_loc('sillyparents', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
         existing.site_code = 'wat'
         existing.outlet_type = 'SHG'
         existing.save()
@@ -173,9 +196,7 @@ class LocationImportTest(CommTrackTest):
             self.assertTrue(result['id'] is not None)
 
     def test_should_import_consumption(self):
-        existing = make_loc('existingloc')
-        existing.location_type = 'state'
-        existing.save()
+        existing = make_loc('existingloc', type='state')
         sp = make_supply_point(self.loc.domain, existing)
 
         data = {

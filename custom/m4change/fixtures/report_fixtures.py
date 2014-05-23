@@ -91,8 +91,8 @@ class ReportFixtureProvider(object):
                 columns_added = False
                 report_data = data.get(report_key, {})
                 report_element = ElementTree.Element('report', attrib={
-                    'id': report_key,
-                    'name': report_data.name
+                    "id": report_key,
+                    "name": report_data.name
                 })
                 columns_element = ElementTree.Element('columns')
                 rows_element = ElementTree.Element('rows')

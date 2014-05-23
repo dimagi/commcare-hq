@@ -23,6 +23,8 @@ class FixtureDataType(Document):
 
     @classmethod
     def wrap(cls, obj):
+        if not obj["doc_type"] == "FixtureDataType":
+            raise ResourceNotFound
         if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
         return super(FixtureDataType, cls).wrap(obj)
@@ -125,6 +127,8 @@ class FixtureDataItem(Document):
 
     @classmethod
     def wrap(cls, obj):
+        if not obj["doc_type"] == "FixtureDataItem":
+            raise ResourceNotFound
         if not obj["fields"]:
             return super(FixtureDataItem, cls).wrap(obj)
         

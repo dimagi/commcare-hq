@@ -89,5 +89,10 @@
 {% block main_column %}
 <div class="hq-generic-report">
     {% render_case case case_display_options %}
+    {% if show_case_rebuild %}
+        <form action="{% url 'rebuild_case' domain case_id %}" method="post">
+             <button type="submit" class="btn btn-primary" >{% trans 'Rebuild Case' %}</button>
+        </form>
+    {% endif %}
 </div>
 {% endblock %}

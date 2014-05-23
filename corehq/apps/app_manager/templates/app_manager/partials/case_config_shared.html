@@ -37,6 +37,7 @@
         edit: $root.edit"
     />
     <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
+    <p class="help-inline" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
 
 <script type="text/html" id="case-config:case-properties:property">
@@ -116,7 +117,7 @@
         </thead>
 
         <tbody data-bind="foreach: case_properties">
-            <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
+            <tr class="control-group" data-bind="css: {error: validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removeProperty,
