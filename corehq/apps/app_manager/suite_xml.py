@@ -326,6 +326,30 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
+class ScheduleVisit(IdNode):
+    ROOT_NAME = 'visit'
+
+    due = StringField('@due')
+    late_window = StringField('@late_window')
+
+
+class Schedule(XmlObject):
+    ROOT_NAME = 'schedule'
+
+    expires = StringField('@expires')
+    post_schedule_increment = StringField('@post_schedule_increment')
+    visits = NodeListField('visit', ScheduleVisit)
+
+    def set_content(self, xml):
+        for child in self.node:
+            self.node.remove(child)
+        self.node.append(xml)
+
+
+class ScheduleFixture(Fixture):
+    schedule = NodeField('schedule', Schedule)
+
+
 class Suite(XmlObject):
     ROOT_NAME = 'suite'
 
@@ -1029,6 +1053,25 @@ class SuiteGenerator(SuiteGeneratorBase):
                 </groups>
             """)
             f.set_content(groups)
+            yield f
+
+        schedule_modules = (module for module in self.app.get_modules() if module.has_schedule)
+        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+        for form in schedule_forms:
+            schedule = form.schedule
+            f = ScheduleFixture(
+                id=self.id_strings.schedule_fixture(form),
+                schedule=Schedule(
+                    expires=schedule.expires,
+                    post_schedule_increment=schedule.post_schedule_increment
+                ))
+            for i, visit in enumerate(schedule.visits):
+                f.schedule.visits.append(ScheduleVisit(
+                    id=i+1,
+                    due=visit.due,
+                    late_window=visit.late_window
+                ))
+
             yield f
 
 
