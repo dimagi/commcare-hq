@@ -28,10 +28,10 @@ class NewWebUserRegistrationForm(forms.Form):
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
-    email_opt_out = forms.BooleanField(required=False,
-                                       initial=True,
-                                       label="",
-                                       help_text=_("Opt into emails about new features and other CommCare updates."))
+    email_opt_in = forms.BooleanField(required=False,
+                                      initial=True,
+                                      label="",
+                                      help_text=_("Opt into emails about new features and other CommCare updates."))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",

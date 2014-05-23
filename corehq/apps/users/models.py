@@ -768,6 +768,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     status = StringProperty()
     language = StringProperty()
     email_opt_out = BooleanProperty(default=False)
+    subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
 

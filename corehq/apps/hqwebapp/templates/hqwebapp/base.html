@@ -424,7 +424,9 @@
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });
-                ko.applyBindings(new KBConfigFormModel(), $('#keyboard-shortcuts-config-form').get(0));
+                var element = $('#keyboard-shortcuts-config-form').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new KBConfigFormModel(), element);
             });
         </script>
 

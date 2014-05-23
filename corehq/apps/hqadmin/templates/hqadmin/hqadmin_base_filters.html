@@ -1,0 +1,56 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="hq-accordion-control">
+    <div class="accordion-heading">
+        <div class="accordion-actions">
+            {% if report.is_exportable %}
+                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                    <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+                </a>
+            {% endif %}
+
+            {% if report.is_emailable %}
+                <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                    <i class="icon icon-envelope"></i> {% trans "Email report" %}
+                </a>
+            {% endif %}
+
+            {% if report.is_printable %}
+                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                    <i class="icon icon-print"></i> {% trans "Print" %}
+                </a>
+            {% endif %}
+
+        </div>
+        {% if show_dates %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
+            <div class="no-filters">&nbsp;</div>
+        {% endif %}
+        <div id="extra-filter-info" class="accordion-extra"></div>
+    </div>
+    {% if show_dates %}
+        <div id="reportFilters" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <form method="get" id="paramSelectorForm" class="form-horizontal">
+                    <fieldset>
+                        <legend>Report Filters</legend>
+                        <div id="datespan" class="control-group">
+                            <label class="control-label">Date Range</label>
+                            <div class="controls">
+                                <label for="startdate" class="sub-label">From</label>
+                                <input type="text" id="startdate" name="startdate" class="date-picker input-small" value="{{ datespan.startdate|date:"Y-m-d" }}">
+                                <label for="enddate" class="sub-label">To</label>
+                                <input type="text" id="enddate" name="enddate" class="date-picker input-small" value="{{ datespan.enddate|date:"Y-m-d" }}">
+                                <span class="helptext help-inline" style="margin-left: 1.5em;">Showing {{ datespan }}.</span>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-large btn-primary">Update Filters</button>
+                        <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>

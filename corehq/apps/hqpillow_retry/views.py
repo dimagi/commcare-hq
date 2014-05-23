@@ -1,12 +1,16 @@
 from datetime import datetime
+import re
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
+from django.core.mail import mail_admins
+from django.core.mail.message import EmailMessage
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.db.models.query_utils import Q
 from django.http.response import Http404
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop as _
 from corehq.apps.domain.decorators import require_superuser
@@ -16,13 +20,15 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
+from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
 from django.conf import settings
 
 SOURCE_SINGLE = 'single'
 ACTION_RESET = 'reset'
 ACTION_DELETE = 'delete'
-ACTIONS = [ACTION_RESET, ACTION_DELETE]
+ACTION_SEND = 'send'
+ACTIONS = [ACTION_RESET, ACTION_DELETE, ACTION_SEND]
 
 
 class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
@@ -202,22 +208,54 @@ class EditPillowError(BasePageView):
 
         redirect_url = None
 
+        error_list_url = reverse('admin_report_dispatcher', args=('pillow_errors',))
         if not action or action not in ACTIONS:
             messages.error(self.request, _("Unknown action: '%(action)s'") % {'action': action})
         elif not error_ids:
             messages.error(self.request, _("No error records specified"))
+        elif action == ACTION_SEND and not len(error_ids) == 1:
+            messages.error(self.request, _("Only one error may be sent to FogBugs at a time."))
         else:
             with transaction.commit_on_success():
                 if action == ACTION_DELETE:
                     PillowError.objects.filter(id__in=error_ids).delete()
                 elif action == ACTION_RESET:
-                    PillowError.objects.filter(id__in=error_ids).update(current_attempt=0, date_next_attempt=datetime.utcnow())
+                    PillowError.objects.filter(id__in=error_ids).\
+                        update(current_attempt=0, date_next_attempt=datetime.utcnow())
+                elif action == ACTION_SEND:
+                    self.bug_report(request.couch_user, error_ids[0])
 
-            messages.success(self.request, _("%(num)s records successfully %(action)s") % {'num': len(error_ids), 'action': action})
+            success = _("%(num)s records successfully %(action)s") % {'num': len(error_ids), 'action': action}
+            messages.success(self.request, success)
 
             if source == SOURCE_SINGLE and action == ACTION_DELETE:
-                redirect_url = reverse('admin_report_dispatcher', args=('pillow_errors',))
+                redirect_url = error_list_url
 
-        redirect_url = redirect_url or request.META.get('HTTP_REFERER', reverse('admin_report_dispatcher', args=('pillow_errors',)))
+        redirect_url = redirect_url or request.META.get('HTTP_REFERER', error_list_url)
         return redirect(redirect_url)
 
+    def bug_report(self, couch_user, error_id):
+        error = PillowError.objects.get(id=error_id)
+
+        context = {
+            'error': error,
+            'url': "{}{}?error={}".format(get_url_base(), reverse(EditPillowError.urlname), error_id)
+        }
+        message = render_to_string('hqpillow_retry/fb.txt', context)
+        subject = 'PillowTop error: {} - {}'.format(error.pillow, error.error_type)
+
+        reply_to = u'"{}" <{}>'.format(couch_user.full_name, couch_user.get_email())
+        email = EmailMessage(
+            subject=subject,
+            body=message,
+            to=settings.BUG_REPORT_RECIPIENTS,
+            headers={'Reply-To': reply_to}
+        )
+
+        # only fake the from email if it's an @dimagi.com account
+        if re.search('@dimagi\.com$', couch_user.username):
+            email.from_email = couch_user.username
+        else:
+            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
+
+        email.send(fail_silently=False)
