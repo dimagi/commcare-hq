@@ -2869,12 +2869,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app': self,
             'profile_url': profile_url,
             'app_profile': app_profile,
-            'suite_url': self.suite_url,
-            'suite_loc': self.suite_loc,
-            'post_url': self.post_url,
-            'key_server_url': self.key_server_url,
-            'post_test_url': self.post_url,
-            'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
             'descriptor': u"Profile File"
