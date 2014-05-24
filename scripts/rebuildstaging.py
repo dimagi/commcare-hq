@@ -191,7 +191,18 @@ def rebuild_staging(config):
                 cwd=path,
                 name=config.name,
             )
-            git.push('origin', config.name, '--force')
+            force_push(git, config.name)
+
+
+def force_push(git, branch):
+    try:
+        git.push('origin', branch, '--force')
+    except sh.ErrorReturnCode_128 as e:
+        # oops we're using a read-only URL, so change to the suggested url
+        line = sh.grep('  Use ', _in=e.stderr)
+        edit_url = line.strip().split()[1]
+        git.remote('set-url', 'origin', edit_url)
+        git.push('origin', branch, '--force')
 
 
 def format_cwd(cwd):
