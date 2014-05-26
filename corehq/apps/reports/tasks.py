@@ -219,16 +219,8 @@ def _send_email(to, report, hash_id):
 def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex
 
-    tmp = NamedTemporaryFile(delete=False)
-    tmp.file.write(file.getvalue())
-
     r = get_redis_client()
-    r.set(hash_id, tmp.name)
+    r.set(hash_id, file.getvalue())
     r.expire(hash_id, EXPIRE_TIME)
-    _remove_temp_file.apply_async(args=[tmp.name], countdown=EXPIRE_TIME)
 
     return hash_id
-
-@task
-def _remove_temp_file(temp_file):
-    os.unlink(temp_file)
