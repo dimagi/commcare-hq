@@ -5,8 +5,12 @@ from lxml import etree
 import os
 import re
 import json
+import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
+from django.http import HttpResponse
+from django.core.servers.basehttp import FileWrapper
+import tempfile
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -21,6 +25,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
+from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1924,6 +1929,27 @@ def delete_copy(req, domain, app_id):
 
 BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
 
+
+def _download_index_files(request):
+    files = []
+    if request.app.copy_of:
+        files = [(path[len('files/'):], request.app.fetch_attachment(path))
+                 for path in request.app._attachments
+                 if path.startswith('files/')]
+    else:
+        try:
+            files = sorted(request.app.create_all_files().items())
+        except Exception:
+            messages.error(request, _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click <strong>Make New Version</strong> "
+                "under <strong>Deploy</strong> "
+                "for feedback on how to fix these errors."
+            ), extra_tags='html')
+    return files
+
+
 @safe_download
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     """
@@ -1931,24 +1957,31 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
-    files = []
-    if req.app.copy_of:
-        files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
-    else:
-        try:
-            files = sorted(req.app.create_all_files().items())
-        except Exception:
-            messages.error(req, _(
-                "We were unable to get your files "
-                "because your Application has errors. "
-                "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
-                "for feedback on how to fix these errors."
-            ), extra_tags='html')
     return render(req, template, {
         'app': req.app,
-        'files': files,
+        'files': _download_index_files(req),
     })
+
+
+def _make_zip_payload(files):
+    buffer = StringIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
+        for filename, f in files:
+            z.writestr(filename, f)
+    return buffer.getvalue()
+
+
+@safe_download
+def download_ccz(req, domain, app_id):
+    files = ((name, f.encode('utf-8'))
+             for name, f in _download_index_files(req))
+    response = HttpResponse(
+        _make_zip_payload(files),
+        content_type='application/x-zip-compressed',
+    )
+    set_file_download(response, 'commcare.ccz')
+    return response
+
 
 @safe_download
 def download_file(req, domain, app_id, path):

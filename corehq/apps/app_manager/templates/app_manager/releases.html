@@ -22,6 +22,7 @@
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
+            ccz: '{% url "corehq.apps.app_manager.views.download_ccz" domain '___' %}',
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
@@ -403,6 +404,34 @@
                                 <a class="accordion-toggle" data-bind="attr: {href: $root.url('source', id)}">{% trans "View Source Files" %}</a>
                             </div>
                         </div>
+                    {% endif %}
+                    {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle">
+                                {% trans "Download Zip Archive" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <label class="checkbox" data-bind="visible: allow_media_install">
+                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                                    {% trans "Include Multimedia" %}
+                                    <span data-bind="visible: !mm_supported()" class="label">
+                                        {% trans "Only supported for builds made after 2013-10-15" %}
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        {% trans "Download the following file:" %}
+                                        <p><a data-bind="attr: {href: $root.url('ccz', id)}">{% trans "Download" %} CommCare.ccz</a></p>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>

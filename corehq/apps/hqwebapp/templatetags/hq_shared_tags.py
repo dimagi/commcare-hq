@@ -230,3 +230,13 @@ def pretty_doc_info(doc_info):
     return render_to_string('hqwebapp/pretty_doc_info.html', {
         'doc_info': doc_info,
     })
+
+
+@register.filter
+def toggle_enabled(request, toggle_name):
+    import corehq.toggles
+    toggle = getattr(corehq.toggles, toggle_name)
+    return (
+        (hasattr(request, 'user') and toggle.enabled(request.user.username)) or
+        (hasattr(request, 'domain') and toggle.enabled(request.domain))
+    )
