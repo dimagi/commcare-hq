@@ -1,8 +1,7 @@
 # coding=utf-8
 import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase
+from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction
 from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -74,6 +73,14 @@ class FormPreparationV2Test(FormPrepBase):
         self.form.actions.close_case = FormAction()
         self.form.actions.close_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('close_case'), self.form.render_xform())
+
+    def test_form_schedule(self):
+        self.form.requires = 'case'
+        self.form.actions.update_case.condition.type = 'always'
+        schedule = self.form.schedule
+        schedule.anchor = 'edd'
+        xml = self.get_xml('schedule').format(form_id=self.form.schedule_form_id)
+        self.assertXmlEqual(xml, self.form.render_xform())
 
 
 class SubcaseRepeatTest(FormPrepBase):

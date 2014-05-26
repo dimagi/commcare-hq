@@ -613,6 +613,10 @@ class FormBase(DocumentSchema):
         else:
             return form
 
+    @property
+    def schedule_form_id(self):
+        return self.unique_id
+
     def wrapped_xform(self):
         return XForm(self.source)
 
