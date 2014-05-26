@@ -37,7 +37,11 @@ def _make_elem(tag, attr=None):
 
 
 def make_case_elem(tag, attr=None):
-        return _make_elem('{cx2}%s' % tag, attr)
+        return _make_elem(case_elem_tag(tag), attr)
+
+
+def case_elem_tag(tag):
+    return '{cx2}%s' % tag
 
 
 def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
@@ -339,9 +343,17 @@ class CaseBlock(object):
             required="true()",
         )
 
+    @property
+    def update_block(self):
+        update_block = self.elem.find(case_elem_tag('update'))
+        if not update_block:
+            update_block = make_case_elem('update')
+            self.elem.append(update_block)
+
+        return update_block
+
     def add_update_block(self, updates, make_relative=False):
-        update_block = make_case_elem('update')
-        self.elem.append(update_block)
+        update_block = self.update_block
         update_mapping = {}
 
         if updates:
@@ -364,6 +376,8 @@ class CaseBlock(object):
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
+
+        return update_block
 
     def add_close_block(self, relevance):
         self.elem.append(make_case_elem('close'))
@@ -1005,8 +1019,32 @@ class XForm(WrappedNode):
             case_block = None
         else:
             extra_updates = {}
-
             case_block = CaseBlock(self)
+
+            if form.schedule and form.schedule.anchor:
+                update_block = case_block.update_block
+                update_block.append(make_case_elem('current_schedule_phase'))
+                last_visit_num = 'last_visit_number_{}'.format(form.schedule_form_id)
+                last_visit_date = 'last_visit_date_{}'.format(form.schedule_form_id)
+                update_block.append(make_case_elem(last_visit_num))
+
+                self.add_setvalue(
+                    ref='case/update/{}'.format('current_schedule_phase'),
+                    value=str(form.id + 1)
+                )
+
+                last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
+                self.add_setvalue(
+                    ref='case/update/{}'.format(last_visit_num),
+                    value="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+                )
+
+                self.add_bind(
+                    nodeset='case/update/{}'.format(last_visit_date),
+                    type="xsd:dateTime",
+                    calculate=self.resolve_path("meta/timeEnd")
+                )
+
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
