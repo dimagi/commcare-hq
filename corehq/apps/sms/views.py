@@ -1118,7 +1118,11 @@ def upload_sms_translations(request, domain):
                     if row.get(lang):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
-                            result[lang][msg_id] = str(row[lang]).strip()
+                            val = row[lang]
+                            if not isinstance(val, basestring):
+                                val = str(val)
+                            val = val.strip()
+                            result[lang][msg_id] = val
 
             tdoc.translations = result
             tdoc.save()
