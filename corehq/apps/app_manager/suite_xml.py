@@ -1,4 +1,5 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+from os.path import commonprefix
 from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
@@ -342,6 +343,9 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
+DatumMeta = namedtuple('Datum', SessionDatum.ORDER)
+
+
 def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
@@ -402,7 +406,11 @@ class SuiteGeneratorBase(object):
             getattr(suite, attr).extend(getattr(self, attr))
 
         map(add_to_suite, self.sections)
+        self.post_process(suite)
         return suite.serializeDocument(pretty=True)
+
+    def post_process(self, suite):
+        pass
 
 
 class SuiteGenerator(SuiteGeneratorBase):
@@ -415,6 +423,83 @@ class SuiteGenerator(SuiteGeneratorBase):
         'menus',
         'fixtures',
     )
+
+    def post_process(self, suite):
+        self.add_form_workflow(suite)
+
+    def add_form_workflow(self, suite):
+        """
+        post_form_workflow = 'module':
+          * Add stack frame and a command with value = "module command"
+
+        post_form_workflow = 'previous_screen':
+          * Add stack frame and a command with value = "module command"
+          * Find longest list of common datums between form entries for the module and add datums
+            to the stack frame for each.
+          * Add a command to the frame with value = "form command"
+          * Add datums to the frame for any remaining datums for that form.
+          * Remove any autoselect items from the end of the stack frame.
+          * Finally remove the last item from the stack frame.
+        """
+        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS
+
+        for module in self.modules:
+            for form in module.get_forms():
+                form_command = self.id_strings.form_command(form)
+                module_id, form_id = form_command.split('-')
+                if form.post_form_workflow != WORKFLOW_DEFAULT:
+                    entry = self.get_form_entry(suite, form_command)
+                    entry.stack = Stack()
+                    frame = CreateFrame()
+                    frame.add_command(self.id_strings.menu(module))
+                    entry.stack.add_frame(frame)
+
+                    if form.post_form_workflow == WORKFLOW_PREVIOUS:
+                        module_datums = self.get_module_datums(suite, module_id)
+                        form_datums = module_datums[form_id]
+                        datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+                        common_datums = commonprefix(datums_list)
+                        remaining_datums = form_datums[len(common_datums):]
+
+                        frame_children = common_datums
+                        frame_children.append(self.id_strings.form_command(form))
+                        frame_children.extend(remaining_datums)
+
+                        while True:
+                            last = frame_children.pop()
+                            if isinstance(last, basestring) or last.nodeset:
+                                # keep removing last element until we hit a command
+                                # or a datum with a nodeset (i.e. not an autoload)
+                                break
+
+                        for child in frame_children:
+                            if isinstance(child, basestring):
+                                frame.add_command(child)
+                            else:
+                                frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+
+    def get_module_datums(self, suite, module_id):
+        _, datums = self._get_entries_datums(suite)
+        return datums[module_id]
+
+    def get_form_entry(self, suite, form_command):
+        entries, _ = self._get_entries_datums(suite)
+        return entries[form_command]
+
+    @memoized
+    def _get_entries_datums(self, suite):
+        datums = defaultdict(lambda: defaultdict(list))
+        entries = {}
+        for e in suite.entries:
+            command = e.node.find('command').get('id')
+            module_id, form_id = command.split('-', 1)
+            if form_id != 'case-list':
+                entries[command] = e
+                for d in e.datums:
+                    datum = DatumMeta(**{field: getattr(d, field) for field in SessionDatum.ORDER})
+                    datums[module_id][form_id].append(datum)
+
+        return entries, datums
 
     @property
     def xform_resources(self):
@@ -678,6 +763,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
+        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS
+
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
             if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
