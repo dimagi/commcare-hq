@@ -30,7 +30,7 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
+from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm, UpdateUserPermissionForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -231,6 +231,27 @@ class EditWebUserView(BaseEditUserView):
         return form
 
     @property
+    def editable_user(self):
+        #  the same method as above, just without memoization
+        try:
+            return WebUser.get(self.editable_user_id)
+        except (ResourceNotFound, CouchUser.AccountTypeError):
+            raise Http404()
+
+    @property
+    def form_user_update_permissions(self):
+        is_super_user = self.editable_user.is_superuser
+        is_user_staff = self.editable_user.is_staff
+
+        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user, 'staff_user': is_user_staff})
+
+    @property
+    def main_context(self):
+        ctx = super(EditWebUserView, self).main_context
+        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
+        return ctx
+
+    @property
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
@@ -247,6 +268,15 @@ class EditWebUserView(BaseEditUserView):
         if self.editable_user_id == self.couch_user._id:
             return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "update-user-permissions":
+            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_staff_user = True if  'staff_user' in self.request.POST and self.request.POST['staff_user'] == 'on' else False
+            if self.form_user_update_permissions.update_user_permission(editable_user=self.editable_user,
+                                                                        is_super_user=is_super_user, is_staff_user=is_staff_user):
+                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+        return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
 class BaseFullEditUserView(BaseEditUserView):

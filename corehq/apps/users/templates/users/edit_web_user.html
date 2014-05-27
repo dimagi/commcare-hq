@@ -34,11 +34,26 @@
         <fieldset>
             <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
             {% crispy form_user_update %}
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
             </div>
         </fieldset>
     </form>
+
+    <form class="form form-horizontal" name="user_permissions" method="post">
+        <input type="hidden" name="form_type" value="update-user-permissions" />
+        <fieldset>
+
+        <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Staff Permissions{% endblocktrans %}</legend>
+        {% crispy form_user_update_permissions %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
+        </div>
+        </fieldset>
+    </form>
+
     {% if update_form %}
         <form id="commtrack_form" class="form form-horizontal" name="" method="post">
             <input type="hidden" name="form_type" value="commtrack" />

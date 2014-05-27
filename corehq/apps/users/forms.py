@@ -128,6 +128,27 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             self.initial['role'] = current_role
 
 
+class UpdateUserPermissionForm(forms.Form):
+    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
+    staff_user = forms.BooleanField(label=ugettext_lazy('System Staff User'), required=False)
+
+    def update_user_permission(self, editable_user=None, is_super_user=None, is_staff_user=None):
+        is_update_successful = False
+        if editable_user:
+            from django.contrib.auth.models import User
+            django_user = User.objects.get_by_natural_key(editable_user.username)
+            django_user.is_superuser = is_super_user
+            django_user.is_staff = is_staff_user
+            django_user.save()
+
+            existing_user = CouchUser.from_django_user(django_user)
+            existing_user.is_superuser = is_super_user
+            existing_user.is_staff = is_staff_user
+            existing_user.save()
+            is_update_successful = True
+
+        return is_update_successful
+
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
     last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
