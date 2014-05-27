@@ -540,12 +540,16 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return [first_col] + date_cols + [sum(date_cols)]
 
 
-class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
+class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
+        CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
-    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
@@ -656,8 +660,13 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         return rows
 
     def get_user_data(self, user_id):
-        key = make_form_couch_key(self.domain, by_submission_time=False, user_id=user_id,
-            xmlns=self.selected_xmlns['xmlns'], app_id=self.selected_xmlns['app_id'])
+        key = make_form_couch_key(
+            self.domain,
+            by_submission_time=self.by_submission_time,
+            user_id=user_id,
+            xmlns=self.selected_xmlns['xmlns'],
+            app_id=self.selected_xmlns['app_id'],
+        )
         data = get_db().view("reports_forms/all_forms",
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
