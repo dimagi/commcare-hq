@@ -340,10 +340,6 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
-    @property
-    def requires_casedb(self):
-        return not self.auto_select or self.auto_select.mode in [AUTO_SELECT_CASE, AUTO_SELECT_RAW]
-
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
