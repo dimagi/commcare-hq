@@ -1,6 +1,6 @@
 from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
@@ -1023,13 +1023,13 @@ class XForm(WrappedNode):
 
             if form.schedule and form.schedule.anchor:
                 update_block = case_block.update_block
-                update_block.append(make_case_elem('current_schedule_phase'))
-                last_visit_num = 'last_visit_number_{}'.format(form.schedule_form_id)
-                last_visit_date = 'last_visit_date_{}'.format(form.schedule_form_id)
+                update_block.append(make_case_elem(SCHEDULE_PHASE))
+                last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+                last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
                 update_block.append(make_case_elem(last_visit_num))
 
                 self.add_setvalue(
-                    ref='case/update/{}'.format('current_schedule_phase'),
+                    ref='case/update/{}'.format(SCHEDULE_PHASE),
                     value=str(form.id + 1)
                 )
 

@@ -20,3 +20,7 @@ CT_LEDGER_PREFIX = 'ledger:'
 CT_LEDGER_STOCK = 'stock'
 CT_LEDGER_REQUESTED = 'ct-requested'
 CT_LEDGER_APPROVED = 'ct-approved'
+
+SCHEDULE_PHASE = 'current_schedule_phase'
+SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
+SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'

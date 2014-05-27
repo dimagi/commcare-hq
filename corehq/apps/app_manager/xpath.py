@@ -23,6 +23,9 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
+    def select_raw(self, expression):
+        return XPath("{self}[{expression}]".format(self=self, expression=expression))
+
     def select(self, ref, value, quote=True):
         if quote:
             value = "'{val}'".format(val=value)
@@ -175,3 +178,13 @@ class FixtureXpath(XPath):
 
     def table(self):
         return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))
+
+
+class ScheduleFixtureInstance(XPath):
+
+    def visit(self):
+        return XPath(u"instance('{0}')/schedule/visit".format(self))
+
+    def expires(self):
+        return XPath(u"instance('{0}')/schedule/@expires".format(self))
+

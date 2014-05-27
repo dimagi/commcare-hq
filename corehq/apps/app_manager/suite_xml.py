@@ -6,19 +6,20 @@ from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath, ScheduleFixtureInstance
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
+FIELD_TYPE_SCHEDULE = 'schedule'
 
 
 class OrderedXmlObject(XmlObject):
@@ -509,6 +510,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
                             )
 
+                            if module.has_schedule and \
+                                    any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos):
+                                self.add_schedule_variables(module, d)
+
                             for column_info in detail_column_infos:
                                 fields = get_column_generator(
                                     self.app, module, detail,
@@ -526,6 +531,51 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 r.append(d)
 
         return r
+
+    def add_schedule_variables(self, module, detail):
+        forms_due = []
+        for form in module.get_forms():
+            fixture_id = id_strings.schedule_fixture(form)
+            anchor = form.schedule.anchor
+            valid_not_expired = "{phase} = {form_index} and not({anchor} = '') and " \
+                                "({expires} = '' or today() < (date({anchor}) + {expires}))".format(
+                phase=SCHEDULE_PHASE,
+                form_index=form.id,
+                anchor=anchor,
+                expires=ScheduleFixtureInstance(fixture_id).expires(),
+            )
+
+            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+            visit_num_valid = 'not(@id <= {last_visit_num})'.format(last_visit_num=last_visit_num)
+
+            within_window = "@late_window = '' or " \
+                            "not(today() > (date({anchor}) + int(@due) + int(@late_window)))".format(anchor=anchor)
+
+            due = ScheduleFixtureInstance(fixture_id).visit().\
+                select_raw(visit_num_valid, quote=False).\
+                select_raw(within_window).\
+                select_raw("1").slash('@due')
+
+            name = 'next_{}'.format(form.schedule_form_id)
+            forms_due.append(name)
+            detail.variables.append(DetailVariable(
+                name=name,
+                function="if({valid_not_expired}, date({anchor}) + int({due}), 0)".format(
+                    valid_not_expired=valid_not_expired,
+                    anchor=anchor,
+                    due=due
+                )
+            ))
+
+        detail.variables.append(DetailVariable(
+            name='next_due',
+            function='min({})'.format(','.join(forms_due))
+        ))
+
+        detail.variables.append(DetailVariable(
+            name='is_late',
+            function='next_due < today()'
+        ))
 
     def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
