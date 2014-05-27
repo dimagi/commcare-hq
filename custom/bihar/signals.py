@@ -18,7 +18,7 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
     if hasattr(xform, 'domain') and xform.domain in BIHAR_DOMAINS and xform.metadata and xform.metadata.userID != SYSTEM_USERID:
         owner_ids = set(c.owner_id for c in cases)
         if len(owner_ids) != 1:
-            logging.error('form {form} had mismatched case owner ids'.format(form=xform._id))
+            logging.warning('form {form} had mismatched case owner ids'.format(form=xform._id))
         else:
             [owner_id] = owner_ids
             if owner_id not in DEMO_OWNER_IDS:
