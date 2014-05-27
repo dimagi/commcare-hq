@@ -746,8 +746,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         def get_instances():
-            if any(a.requires_casedb for a in form.actions.load_update_cases):
-                yield Instance(id='casedb', src='jr://instance/casedb')
+            yield Instance(id='casedb', src='jr://instance/casedb')
 
             parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
             form_filter = any(form.form_filter for form in module.get_forms())
