@@ -1,6 +1,8 @@
 
 DISPLAY_DIMENSIONS = ['size', 'color', 'icon'];
 TABLE_TOGGLE = false;
+var map_obj;
+var points = [];
 
 function setMapHeight(map, animate) {
     var $map = $('#map');
@@ -161,7 +163,9 @@ MetricsControl = L.Control.extend({
 
     init: function() {
         var koModel = new MetricsViewModel(this);
-        ko.applyBindings(koModel, $('#metrics')[0]);
+        var metrics = $('#metrics')[0];
+        ko.cleanNode(metrics);
+        ko.applyBindings(koModel, metrics);
         koModel.load(this.options.metrics);
     },
 
@@ -288,22 +292,26 @@ function load(context, iconPath) {
 
 // main entry point
 function mapsInit(context) {
-    var map = initMap($('#map'), context.layers, [30., 0.], 2);
-    var table = initData(context.data, context.config);
-    initMetrics(map, table, context.data, context.config);
+    if (map_obj === undefined) {
+        var map = initMap($('#map'), context.layers, [30., 0.], 2);
+    } else {
+        map = map_obj;
+    }
+    initData(context.data, context.config);
+    initMetrics(map, context.data, context.config);
     return map;
 }
 
 // initialize leaflet map
 function initMap($div, layers, default_pos, default_zoom) {
-    var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
-    initLayers(map, layers);
+    map_obj = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
+    initLayers(map_obj, layers);
 
-    new ZoomToFitControl().addTo(map);
-    new ToggleTableControl().addTo(map);
-    L.control.scale().addTo(map);
+    new ZoomToFitControl().addTo(map_obj);
+    new ToggleTableControl().addTo(map_obj);
+    L.control.scale().addTo(map_obj);
 
-    return map;
+    return map_obj;
 }
 
 function initLayers(map, layers_spec) {
@@ -386,7 +394,17 @@ function initData(data, config) {
     // show any alerts
     processMetadata(data.metadata || {});
 
-    return null;
+    console.log(data.features);
+
+    var cols = getTableColumns(config);
+
+    $.each(data.features, function(i, e) {
+        console.log("test");
+        e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
+            $cell.html(e.value);
+        });
+    });
+
 }
 
 function processMetadata(metadata) {
@@ -399,7 +417,12 @@ function processMetadata(metadata) {
 }
 
 // set up the configured display metrics
-function initMetrics(map, table, data, config) {
+function initMetrics(map, data, config) {
+    for (var point in points._layers) {
+        if (points._layers.hasOwnProperty(point)){
+            map.removeLayer(points._layers[point]);
+        }
+    }
     // auto-generate metrics from data columns (if none provided)
     if (!config.metrics || config.debug) {
         autoConfiguration(config, data);
@@ -449,7 +472,6 @@ function initMetrics(map, table, data, config) {
     var m = new MetricsControl({
         metrics: config.metrics,
         data: data,
-        table: table,
         legend: l,
         info: h
     }).addTo(map);
@@ -464,7 +486,8 @@ function loadData(map, data, display_context) {
         map.activeOverlay = null;
     }
 
-    var points = L.geoJson(data, display_context);
+    points = L.geoJson(data, display_context);
+
     points.addTo(map);
     map.activeOverlay = points;
 }
@@ -804,7 +827,6 @@ function infoContext(feature, config, mode) {
         prop_cols = mode;
         info_cols = mode;
     }
-
     var formatForDisplay = function(col, datum) {
         // if display value was explicitly provided from server, use it above all else
         // note: this pattern has drawbacks -- namely the browser doesn't know how to

@@ -564,7 +564,9 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
                         }
                     }
                 }
-            }
+            },
+            "size": self.pagination.count,
+            "from": self.pagination.start,
         }
         es_filters = q["query"]["filtered"]["filter"]
         if self.blocks:
@@ -764,19 +766,19 @@ class HealthMapSource(HealthStatusReport):
         return None
 
 
-    #TODO Hot fix - we should change this to ElasticSearch - we working on this
     @property
     @memoized
     def get_users(self):
-        return CommCareUser.by_domain(DOMAIN)
+        return super(HealthMapSource, self).es_results['hits'].get('hits', [])
 
     @property
     def gps_mapping(self):
         users = self.get_users
         mapping = {}
         for user in users:
-            aww_name = user.first_name + " " + user.last_name
-            meta_data = user.user_data
+            user_src = user['_source']
+            aww_name = user_src['first_name'] + " " + user_src['last_name']
+            meta_data = user_src['user_data']
             awc = meta_data.get("awc", "")
             block = meta_data.get("block", "")
             gp = meta_data.get("gp", "")
@@ -814,9 +816,7 @@ class HealthMapSource(HealthStatusReport):
             escaped_row = [row[0]]
             for cell in row[1:]:
                 # _unformat_row([<html>] => ["N - f%"])
-                percent = re.findall(pattern, _unformat_row([cell])[0])
-                html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
-                escaped_row.append(html_cell)
+                escaped_row.append(cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
 

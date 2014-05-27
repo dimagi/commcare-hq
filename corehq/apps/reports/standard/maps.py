@@ -268,35 +268,39 @@ class ElasticSearchMapReport(GenericTabularReport, GenericMapReport):
         return report
 
     @property
+    def total_records(self):
+        report = self.get_report()
+        return report.total_records
+
+    @property
     def rows(self):
         report = self.get_report()
         return report.rows
 
     @property
     def headers(self):
-        columns = self.display_config['column_titles']
+        columns = self.display_config['table_columns']
         headers = DataTablesHeader(*[
             DataTablesColumn(name=name) for name in columns]
         )
         return headers
 
     @property
-    def report_context(self):
-        context = super(ElasticSearchMapReport, self).report_context
+    def json_dict(self):
+        ret = super(ElasticSearchMapReport, self).json_dict
         layers = getattr(settings, 'MAPS_LAYERS', None)
         if not layers:
             layers = {'Default': {'family': 'fallback'}}
-
         data = self._get_data()
         display = self.dynamic_config(self.display_config, data['features'])
 
-        context.update(dict(context={
+        context = {
             'data': data,
             'config': display,
             'layers': layers,
-        }))
-
-        return context
+        }
+        ret.update(dict(context=context))
+        return ret
 
 
 
