@@ -414,20 +414,19 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             return HttpResponse("You have no multimedia to download.")
 
         fd, fpath = tempfile.mkstemp()
-        tmpfile = os.fdopen(fd, 'w')
-        media_zip = zipfile.ZipFile(tmpfile, "w")
-        for path, media in self.app.get_media_objects():
-            try:
-                data, content_type = media.get_display_file()
-                folder = path.replace(MULTIMEDIA_PREFIX, "")
-                if not isinstance(data, unicode):
-                    media_zip.writestr(os.path.join(folder), data)
-            except NameError as e:
-                errors.append("%(path)s produced an ERROR: %(error)s" % {
-                    'path': path,
-                    'error': e,
-                })
-        media_zip.close()
+        with os.fdopen(fd, 'w') as tmpfile, \
+                zipfile.ZipFile(tmpfile, "w") as media_zip:
+            for path, media in self.app.get_media_objects():
+                try:
+                    data, content_type = media.get_display_file()
+                    folder = path.replace(MULTIMEDIA_PREFIX, "")
+                    if not isinstance(data, unicode):
+                        media_zip.writestr(os.path.join(folder), data)
+                except NameError as e:
+                    errors.append("%(path)s produced an ERROR: %(error)s" % {
+                        'path': path,
+                        'error': e,
+                    })
         if errors:
             logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
                           (self.domain, self.app_id))
