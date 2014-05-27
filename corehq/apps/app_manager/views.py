@@ -285,6 +285,18 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
         compressed = req.POST.get('compressed')
+
+        valid_request = True
+        if not name:
+            messages.error(req, _("You must submit a name for the application you are importing."))
+            valid_request = False
+        if not compressed:
+            messages.error(req, _("You must submit the source data."))
+            valid_request = False
+
+        if not valid_request:
+            return render(req, template, {'domain': domain})
+
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
@@ -316,7 +328,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             app = None
 
         return render(req, template, {
-            'domain': domain, 
+            'domain': domain,
             'app': app,
             'is_superuser': req.couch_user.is_superuser
         })
