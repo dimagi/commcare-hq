@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
@@ -396,7 +396,7 @@ class McctClientLogPage(McctProjectReview):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Date of action"), sortable=False),
             DataTablesColumn(_("Client Name"), sortable=False),
             DataTablesColumn(_("Service Type"), sortable=False),
             DataTablesColumn(_("Health Facility"), sortable=False),
@@ -439,11 +439,11 @@ class McctClientLogPage(McctProjectReview):
             data = calculate_form_data(self, form)
             try:
                 status_data = McctStatus.objects.get(domain=self.domain, form_id=data.get('form_id'))
-                status, reason = (status_data.status, status_data.reason)
-            except McctStatus.DoesNotExist:
-                status, reason = ('eligible', None)
+                status, reason, status_date = (status_data.status, status_data.reason, status_data.modified_on)
+            except:
+                status, reason, status_date = ('eligible', None, None)
             row = [
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
+                status_date.strftime("%Y-%m-%d %H:%M") if status_date is not None else EMPTY_FIELD,
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
