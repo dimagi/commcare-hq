@@ -20,13 +20,11 @@
             webUserID: '{{ request.couch_user.userID }}'
         };
 
-        function reapplyBindings() {
-            var caseManagementModel = new CaseManagement(OPTIONS);
+        var caseManagementModel = new CaseManagement(OPTIONS);
+        function applyBindings() {
             var $caseManagement = $('#case-management');
             var element = $caseManagement[0];
-            if (!ko.dataFor(element)) {
-                ko.applyBindings(caseManagementModel, element);
-            }
+            ko.applyBindings(caseManagementModel, element);
 
             $caseManagement.find('a.select-all').click(function () {
                 $caseManagement.find('input.selected-commcare-case').attr('checked', true).change();
@@ -39,16 +37,21 @@
 
             function selectNone() {
                 $caseManagement.find('input.selected-commcare-case:checked').attr('checked', false).change();
-                var element = $caseManagement.find('table tbody')[0];
-                ko.cleanNode(element);
-                ko.applyBindings(caseManagementModel, element);
             }
         }
+
+        function applyCheckboxListeners() {
+            $('input.selected-commcare-case', '#case-management').on('change', function(event) {
+                caseManagementModel.updateCaseSelection({}, event);
+            });
+        }
+
         var keepTrying = setInterval(function () {
             if (window.reportTables !== undefined) {
                 clearInterval(keepTrying);
-                reapplyBindings();
-                window.reportTables.fnDrawCallback = reapplyBindings;
+                applyBindings();
+                applyCheckboxListeners();
+                window.reportTables.fnDrawCallback = applyCheckboxListeners;
             }
         }, 1000);
     }());
