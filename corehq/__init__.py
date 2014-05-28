@@ -28,7 +28,6 @@ def REPORTS(project):
             monitoring.FormCompletionTimeReport,
             monitoring.CaseActivityReport,
             monitoring.FormCompletionVsSubmissionTrendsReport,
-            monitoring.FormCompletionVsSubmissionTrendsReportSQL,
             monitoring.WorkerActivityTimes,
         )),
         (ugettext_lazy("Inspect Data"), (
