@@ -285,7 +285,9 @@ HQ_APPS = (
     'custom.hope',
     'custom.openlmis',
     'custom.m4change',
-    'custom.succeed'
+    'custom.succeed',
+
+    'custom.uth',
 )
 
 TEST_APPS = ()
@@ -763,6 +765,11 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
+# Mailchimp
+MAILCHIMP_APIKEY = ''
+MAILCHIMP_COMMCARE_USERS_ID = ''
+MAILCHIMP_MASS_EMAIL_ID = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -867,6 +874,7 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
+    'uth',
 
     # custom reports
     'penn_state',
@@ -1056,6 +1064,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
+    'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

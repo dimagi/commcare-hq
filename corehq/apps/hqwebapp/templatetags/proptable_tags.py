@@ -24,8 +24,9 @@ from django import template
 from django.template.defaultfilters import yesno
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
-
+from django.utils.html import escape, conditional_escape
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 
 from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 
@@ -134,7 +135,10 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     prop_def = dict(prop_def)
 
     default_processors = {
-        'yesno': yesno
+        'yesno': yesno,
+        'doc_info': lambda value: pretty_doc_info(
+            get_doc_info_by_id(data['domain'], value)
+        )
     }
     processors = processors or {}
     processors.update(default_processors)
@@ -161,7 +165,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
 
     try:
-        val = escape(processors[process](val))
+        val = conditional_escape(processors[process](val))
     except KeyError:
         val = mark_safe(to_html(None, val, 
             timezone=timezone, key_format=format_key, collapse_lists=True,

@@ -18,7 +18,7 @@ from corehq.apps.reports.datatables import (
     DTSortDirection,
     DTSortType,
 )
-from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
@@ -118,7 +118,12 @@ class FormErrorReport(PhonelogReport):
                 '%s@%s.commcarehq.org' % (username, self.domain))
             if user:
                 return _report_user_dict(user)
-            return {"raw_username": username, "username_in_report": username}
+            return SimplifiedUserInfo(
+                raw_username=username,
+                username_in_report=username,
+                user_id=None,
+                is_active=None,
+            )
 
         return [make_user(u) for u in usernames]
 

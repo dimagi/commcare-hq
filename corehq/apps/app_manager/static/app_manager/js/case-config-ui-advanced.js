@@ -81,7 +81,7 @@ var AdvancedCase = (function () {
             ];
             if (index > 0) {
                 modes.push({
-                    label: 'Case property',
+                    label: 'Case Index',
                     value: 'case'
                 });
             }
@@ -471,6 +471,9 @@ var AdvancedCase = (function () {
                     closeSnip + "</span>",
                     action, {variable: 'action'});
             } else {
+                if (action.auto_select) {
+                    nameSnip = "<%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
+                }
                 return _.template(nameSnip + spanSnip +
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
@@ -543,11 +546,22 @@ var AdvancedCase = (function () {
             });
 
             self.case_type.subscribe(function (value) {
+                // fix for resizing of accordion when content changes
                 if (!value) {
                     var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                     self.config.applyAccordion('load', index);
                 }
             }, null, 'beforeChange');
+
+            if (self.auto_select) {
+                self.auto_select.mode.subscribe(function (value) {
+                    // fix for resizing of accordion when content changes
+                    if (!value) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        self.config.applyAccordion('load', index);
+                    }
+                }, null, 'beforeChange');
+            }
 
             self.show_product_stock_var = ko.computed({
                 read: function () {

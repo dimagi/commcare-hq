@@ -305,7 +305,7 @@ class AutoSelectCase(DocumentSchema):
                         this represents the 'case_tag' for the case.
                         The mode 'user' doesn't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
-                        property or a user data key or a fixture field name or the raw
+                        index or a user data key or a fixture field name or the raw
                         xpath expression.
 
     """
@@ -2161,6 +2161,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    # not used yet, but nice for tagging/debugging
+    # currently only canonical value is 'incomplete-build',
+    # for when build resources aren't found where they should be
+    build_broken_reason = StringProperty()
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -2736,7 +2740,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def suite_loc(self):
-        return "suite.xml"
+        if self.enable_relative_suite_path:
+            return './suite.xml'
+        else:
+            return "jr://resource/suite.xml"
 
     @absolute_url_property
     def media_suite_url(self):
@@ -2744,7 +2751,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def media_suite_loc(self):
-        return "media_suite.xml"
+        if self.enable_relative_suite_path:
+            return "./media_suite.xml"
+        else:
+            return "jr://resource/media_suite.xml"
+
+    @property
+    def enable_relative_suite_path(self):
+        return LooseVersion(self.build_spec.version) >= '2.12'
 
     @property
     def enable_multi_sort(self):
@@ -2862,12 +2876,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app': self,
             'profile_url': profile_url,
             'app_profile': app_profile,
-            'suite_url': self.suite_url,
-            'suite_loc': self.suite_loc,
-            'post_url': self.post_url,
-            'key_server_url': self.key_server_url,
-            'post_test_url': self.post_url,
-            'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
             'descriptor': u"Profile File"
@@ -2894,7 +2902,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
-        return suite_xml.SuiteGenerator(self).generate_suite(sections=['media_resources'], is_media=True)
+        return suite_xml.MediaSuiteGenerator(self).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):

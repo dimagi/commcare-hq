@@ -214,7 +214,7 @@ def send_to_recipients(request, domain):
             elif (not send_to_all_checked) and recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
-            elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
+            elif re.match(r'^\+\d+$', recipient): # here we expect it to have a plus sign
                 def wrap_user_by_type(u):
                     return getattr(user_models, u['doc']['doc_type']).wrap(u['doc'])
 
@@ -266,15 +266,21 @@ def send_to_recipients(request, domain):
                     user.raw_username if user else "<no username>"
                 ))
 
+        def comma_reminder():
+            messages.error(request, _("Please remember to separate recipients"
+                " with a comma."))
+
         if empty_groups or failed_numbers or unknown_usernames or no_numbers:
             if empty_groups:
                 messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
+                comma_reminder()
             if no_numbers:
                 messages.error(request, _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
             if failed_numbers:
                 messages.error(request, _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
             if unknown_usernames:
                 messages.error(request, _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
+                comma_reminder()
             if sent:
                 messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
             else:
@@ -1118,7 +1124,11 @@ def upload_sms_translations(request, domain):
                     if row.get(lang):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
-                            result[lang][msg_id] = str(row[lang]).strip()
+                            val = row[lang]
+                            if not isinstance(val, basestring):
+                                val = str(val)
+                            val = val.strip()
+                            result[lang][msg_id] = val
 
             tdoc.translations = result
             tdoc.save()

@@ -65,12 +65,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 @require_POST
 def post(request, domain, app_id=None):
     if domain_requires_auth(domain):
-        if app_id:
-            url = reverse('receiver_secure_post_with_app_id',
-                          args=[domain, app_id])
-        else:
-            url = reverse('receiver_secure_post', args=[domain])
-        return HttpResponseRedirect(url)
+        # "redirect" to the secure version
+        # an actual redirect doesn't work because it becomes a GET
+        return secure_post(request, domain, app_id)
     return _process_form(
         request=request,
         domain=domain,

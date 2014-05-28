@@ -12,7 +12,7 @@ function (doc) {
         if (indicators.date_of_death && indicators.date_of_death.value) {
             report_date = new Date(indicators.date_of_death.value);
         } else {
-            report_date = closed_date;   
+            report_date = closed_date;
         }
 
         if (indicators.close_reason && indicators.close_reason.value) {
@@ -35,10 +35,10 @@ function (doc) {
                 if (difference <= 28*MS_IN_DAY) {
                     indicator_keys.push("neonatal_death");
                 }
-                if (difference < 330*MS_IN_DAY) {
+                if (difference > 28*MS_IN_DAY && difference <= 365*MS_IN_DAY) {
                     indicator_keys.push("infant_death")
                 }
-                if (difference < 1825*MS_IN_DAY) {
+                if (difference > 365*MS_IN_DAY && difference < 1825*MS_IN_DAY) {
                     indicator_keys.push("under5_death")
                 }
 

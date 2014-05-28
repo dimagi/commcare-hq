@@ -19,7 +19,7 @@ $.fn.inlineTouchform = function (options) {
         url: options.formUrl,
         dataType: "json",
         success: function (data) {
-            var loading = $("<div>Loading...</div>").appendTo($target);
+            var loading = $('.hq-loading');
             var onLoading = function () {
                 loading.show();
             };

@@ -754,6 +754,7 @@ def deploy():
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
+            execute(stop_celery_tasks)
             execute(migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
@@ -1088,7 +1089,14 @@ def update_django_locales():
 def stop_pillows():
     _require_target()
     with cd(env.code_root):
-        sudo('scripts/pillowtopctl stop', user=env.sudo_user)
+        sudo('scripts/supervisor-group-ctl stop pillowtop', user=env.sudo_user)
+
+
+@roles(*ROLES_CELERY)
+def stop_celery_tasks():
+    _require_target()
+    with cd(env.code_root):
+        sudo('scripts/supervisor-group-ctl stop celery', user=env.sudo_user)
 
 
 @roles(*ROLES_ALL_SRC)

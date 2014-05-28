@@ -1,14 +1,10 @@
 from couchdbkit import ResourceNotFound
-
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
-from corehq.apps.fixtures.views import data_table, require_can_edit_fixtures
+from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
-from django.utils.decorators import method_decorator
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
 
 class FixtureInterface(GenericReportView):
@@ -72,6 +68,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     @property
     @memoized
     def table(self):
+        from corehq.apps.fixtures.views import data_table
         if self.has_tables() and self.request.GET.get("table_id", None):
             return data_table(self.request, self.domain)
         else:

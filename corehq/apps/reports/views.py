@@ -1022,9 +1022,7 @@ def export_report(request, domain, export_hash):
     cache = get_redis_client()
 
     if cache.exists(export_hash):
-        with open(cache.get(export_hash), 'r') as content_file:
-            content = content_file.read()
-
+        content = cache.get(export_hash)
         file = ContentFile(content)
         response = HttpResponse(file, 'application/vnd.ms-excel')
         response['Content-Length'] = file.size
