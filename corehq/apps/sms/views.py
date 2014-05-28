@@ -58,6 +58,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
 from django.conf import settings
+from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
@@ -452,12 +453,25 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
     if not (request.couch_user.is_superuser or is_global or backend_class_name == "TelerivetBackend"):
         raise Http404
     backend_classes = get_available_backends()
-    backend_class = backend_classes[backend_class_name]
-
+    backend_class = None
     backend = None
+
     if backend_id is not None:
-        backend = backend_class.get(backend_id)
+        try:
+            backend = SMSBackend.get(backend_id)
+        except ResourceNotFound:
+            raise Http404
+        if backend.doc_type not in backend_classes:
+            raise Http404
+        backend_class = backend_classes[backend.doc_type]
+        backend = backend_class.wrap(backend.to_json())
         if not is_global and backend.domain != domain:
+            raise Http404
+
+    if backend_class is None:
+        if backend_class_name in backend_classes:
+            backend_class = backend_classes[backend_class_name]
+        else:
             raise Http404
 
     use_load_balancing = issubclass(backend_class, SMSLoadBalancingMixin)
