@@ -319,6 +319,7 @@ class McctStatus(models.Model):
     registration_date = models.DateField(null=True)
     immunized = models.BooleanField(null=False, default=False)
     is_booking = models.BooleanField(null=False, default=False)
+    modified_on = models.DateTimeField(auto_now=True)
 
     def update_status(self, new_status, reason):
         self.status = new_status
