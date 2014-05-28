@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
 from redis_cache.cache import RedisCache
+from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
                                  store_billable)
@@ -11,6 +12,7 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
+from threading import Thread
 
 ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
 ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
@@ -95,13 +97,77 @@ def message_is_stale(msg, utcnow):
     else:
         return True
 
+def _wait_and_release_lock(lock, timeout, start_timestamp):
+    while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
+        sleep(0.1)
+    try:
+        lock.release()
+    except:
+        # The lock could have timed out in the meantime
+        pass
+
+def wait_and_release_lock(lock, timeout):
+    timestamp = datetime.utcnow()
+    t = Thread(target=_wait_and_release_lock, args=(lock, timeout, timestamp))
+    t.start()
+
 def handle_outgoing(msg):
+    """
+    Should return a requeue flag, so if it returns True, the message will be
+    requeued and processed again immediately, and if it returns False, it will
+    not be queued again.
+    """
     def onerror():
         logging.exception("Exception while processing SMS %s" % msg._id)
-    if send_message_via_backend(msg, onerror=onerror):
-        handle_successful_processing_attempt(msg)
+
+    backend = msg.outbound_backend
+    sms_interval = backend.get_sms_interval()
+    use_rate_limit = sms_interval is not None
+    use_load_balancing = (isinstance(backend, SMSLoadBalancingMixin) and
+        len(backend.phone_numbers) > 1)
+
+    if use_rate_limit or use_load_balancing:
+        client = cache_core.get_redis_client()
+
+    lbi = None
+    orig_phone_number = None
+    if use_load_balancing:
+        lbi = backend.get_next_phone_number(client)
+        orig_phone_number = lbi.phone_number
+    elif (isinstance(backend, SMSLoadBalancingMixin) and 
+        len(backend.phone_numbers) == 1):
+        # If there's only one phone number, we don't need to go through the
+        # load balancing algorithm. But we should always pass an
+        # orig_phone_number if it's an instance of SMSLoadBalancingMixin.
+        orig_phone_number = backend.phone_numbers[0]
+
+    if use_rate_limit:
+        if use_load_balancing:
+            lock_key = "sms-backend-%s-rate-limit-phone-%s" % (backend._id,
+                lbi.phone_number)
+        else:
+            lock_key = "sms-backend-%s-rate-limit" % backend._id
+        lock = client.lock(lock_key, timeout=30)
+
+    if not use_rate_limit or (use_rate_limit and lock.acquire(blocking=False)):
+        if use_load_balancing:
+            lbi.finish(save_stats=True)
+        result = send_message_via_backend(msg, backend=backend, 
+            orig_phone_number=orig_phone_number, onerror=onerror)
+        if use_rate_limit:
+            wait_and_release_lock(lock, sms_interval)
+        if result:
+            handle_successful_processing_attempt(msg)
+        else:
+            handle_unsuccessful_processing_attempt(msg)
+        return False
     else:
-        handle_unsuccessful_processing_attempt(msg)
+        # We're using rate limiting, but couldn't acquire the lock, so
+        # another thread is sending sms with this backend. Rather than wait,
+        # we'll just put this message at the back of the queue.
+        if use_load_balancing:
+            lbi.finish(save_stats=False)
+        return True
 
 def handle_incoming(msg):
     try:
@@ -146,6 +212,7 @@ def process_sms(message_id):
                 message_lock.release()
                 return
 
+        requeue = False
         # Process inbound SMS from a single contact one at a time
         recipient_block = msg.direction == INCOMING
         if (isinstance(msg.processed, bool)
@@ -158,7 +225,7 @@ def process_sms(message_id):
                 recipient_lock.acquire(blocking=True)
 
             if msg.direction == OUTGOING:
-                handle_outgoing(msg)
+                requeue = handle_outgoing(msg)
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
@@ -167,4 +234,6 @@ def process_sms(message_id):
             if recipient_block:
                 recipient_lock.release()
         message_lock.release()
+        if requeue:
+            process_sms.delay(message_id)
 

@@ -9,10 +9,13 @@ from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
-
+from django.core.exceptions import ValidationError
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
+from django.utils.translation import ugettext as _
+
+phone_number_plus_re = re.compile("^\+{0,1}\d+$")
 
 def strip_plus(phone_number):
     if (isinstance(phone_number, basestring) and len(phone_number) > 0
@@ -35,6 +38,11 @@ def clean_outgoing_sms_text(text):
         return urllib.quote(text)
     except KeyError:
         return urllib.quote(text.encode('utf-8'))
+
+def validate_phone_number(phone_number):
+    if (not isinstance(phone_number, basestring) or
+        not phone_number_plus_re.match(phone_number)):
+        raise ValidationError(_("Invalid phone number format."))
 
 def domains_for_phone(phone):
     """

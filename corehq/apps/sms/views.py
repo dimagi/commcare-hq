@@ -35,7 +35,8 @@ from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
     LastReadMessage,
 )
-from corehq.apps.sms.mixin import SMSBackend, BackendMapping, VerifiedNumber
+from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
+    SMSLoadBalancingMixin)
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
@@ -473,7 +474,8 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
         else:
             raise Http404
 
-    ignored_fields = ["give_other_domains_access"]
+    use_load_balancing = issubclass(backend_class, SMSLoadBalancingMixin)
+    ignored_fields = ["give_other_domains_access", "phone_numbers"]
     if request.method == "POST":
         form = backend_class.get_form_class()(request.POST)
         form._cchq_domain = domain
@@ -484,6 +486,8 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
             for key, value in form.cleaned_data.items():
                 if key not in ignored_fields:
                     setattr(backend, key, value)
+            if use_load_balancing:
+                backend.x_phone_numbers = form.cleaned_data["phone_numbers"]
             backend.save()
             if is_global:
                 return HttpResponseRedirect(reverse("list_backends"))
@@ -502,6 +506,9 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
                 initial["give_other_domains_access"] = True
             else:
                 initial["give_other_domains_access"] = False
+            if use_load_balancing:
+                initial["phone_numbers"] = json.dumps(
+                    [{"phone_number": p} for p in backend.phone_numbers])
         form = backend_class.get_form_class()(initial=initial)
     context = {
         "is_global" : is_global,
@@ -510,6 +517,7 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
         "backend_class_name" : backend_class_name,
         "backend_generic_name" : backend_class.get_generic_name(),
         "backend_id" : backend_id,
+        "use_load_balancing": use_load_balancing,
     }
     return render(request, backend_class.get_template(), context)
 
