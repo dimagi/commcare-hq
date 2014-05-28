@@ -445,6 +445,7 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://'  # default django db based
+CELERYD_FORCE_EXECV = True
 
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
