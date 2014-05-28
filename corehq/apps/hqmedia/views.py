@@ -396,6 +396,43 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
+def _make_zip(media_files):
+    fd, fpath = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as tmp:
+        with zipfile.ZipFile(tmp, "w") as media_zip:
+            for path, data in media_files:
+                media_zip.writestr(path, data)
+    return fpath
+
+
+def _iter_media_files(media_objects):
+    """
+    take as input the output of get_media_objects
+    and return an iterator of (path, data) tuples for the media files
+    as they should show up in the .zip
+    as well as a list of error messages
+
+    as a side effect of implementation,
+    errors will not include all error messages until the iterator is exhausted
+
+    """
+    errors = []
+
+    def _media_files():
+        for path, media in media_objects:
+            try:
+                data, _ = media.get_display_file()
+                folder = path.replace(MULTIMEDIA_PREFIX, "")
+                if not isinstance(data, unicode):
+                    yield os.path.join(folder), data
+            except NameError as e:
+                errors.append("%(path)s produced an ERROR: %(error)s" % {
+                    'path': path,
+                    'error': e,
+                })
+    return _media_files(), errors
+
+
 class DownloadMultimediaZip(View, ApplicationViewMixin):
     """
         This is where the Multimedia for an application gets generated.
@@ -408,25 +445,12 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        errors = []
         self.app.remove_unused_mappings()
         if not self.app.multimedia_map:
             return HttpResponse("You have no multimedia to download.")
 
-        fd, fpath = tempfile.mkstemp()
-        with os.fdopen(fd, 'w') as tmpfile, \
-                zipfile.ZipFile(tmpfile, "w") as media_zip:
-            for path, media in self.app.get_media_objects():
-                try:
-                    data, content_type = media.get_display_file()
-                    folder = path.replace(MULTIMEDIA_PREFIX, "")
-                    if not isinstance(data, unicode):
-                        media_zip.writestr(os.path.join(folder), data)
-                except NameError as e:
-                    errors.append("%(path)s produced an ERROR: %(error)s" % {
-                        'path': path,
-                        'error': e,
-                    })
+        media_files, errors = _iter_media_files(self.app.get_media_objects())
+        fpath = _make_zip(media_files)
         if errors:
             logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
                           (self.domain, self.app_id))
