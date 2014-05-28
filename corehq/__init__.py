@@ -26,7 +26,6 @@ def REPORTS(project):
             monitoring.DailyFormStatsReport,
             monitoring.SubmissionsByFormReport,
             monitoring.FormCompletionTimeReport,
-            monitoring.FormCompletionTimeReportSQL,
             monitoring.CaseActivityReport,
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
