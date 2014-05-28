@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import get_available_backends
+from corehq.apps.sms.util import get_available_backends, validate_phone_number
 from corehq.apps.domain.models import DayTimeWindow
 from dimagi.utils.django.fields import TrimmedCharField
 from django.conf import settings
@@ -195,6 +195,35 @@ class ForwardingRuleForm(Form):
             return keyword
         else:
             return None
+
+class LoadBalancingBackendFormMixin(Form):
+    phone_numbers = CharField(required=False)
+
+    def clean_phone_numbers(self):
+        """
+        Expects a list of [{"phone_number": <phone number>}] as the value.
+        """
+        value = self.cleaned_data.get("phone_numbers")
+        result = []
+        try:
+            value = json.loads(value)
+            assert isinstance(value, list)
+            for item in value:
+                assert isinstance(item, dict)
+                assert "phone_number" in item
+                result.append(item["phone_number"])
+        except (AssertionError, ValueError):
+            raise ValidationError(_("Something went wrong. Please reload the "
+                "page and try again."))
+
+        if len(result) == 0:
+            raise ValidationError(_("You must specify at least one phone"
+                "number."))
+
+        for phone_number in result:
+            validate_phone_number(phone_number)
+
+        return result
 
 class BackendForm(Form):
     _cchq_domain = None

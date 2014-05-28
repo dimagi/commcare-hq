@@ -13,6 +13,9 @@ class MachBackend(SMSBackend):
     account_id = StringProperty()
     password = StringProperty()
     sender_id = StringProperty()
+    # Defines the maximum number of outgoing sms requests to be made per
+    # second. This is defined at the account level.
+    max_sms_per_second = IntegerProperty(default=1)
 
     @classmethod
     def get_api_id(cls):
@@ -29,6 +32,9 @@ class MachBackend(SMSBackend):
     @classmethod
     def get_form_class(cls):
         return MachBackendForm
+
+    def get_sms_interval(self):
+        return (1.0 / self.max_sms_per_second)
 
     def send(self, msg, delay=True, *args, **kwargs):
         params = {
