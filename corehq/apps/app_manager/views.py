@@ -1979,10 +1979,16 @@ class DownloadCCZ(DownloadMultimediaZip):
         pass
 
     def iter_files(self):
-        files = ((name, f.encode('utf-8'))
-                 for name, f in _download_index_files(self.request))
+        skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+
+        def _files():
+            for name, f in _download_index_files(self.request):
+                if name not in skip_files:
+                    yield (get_name(name), f.encode('utf-8'))
+
         media_files, errors = super(DownloadCCZ, self).iter_files()
-        return itertools.chain(files, media_files), errors
+        return itertools.chain(_files(), media_files), errors
 
 
 @safe_download
