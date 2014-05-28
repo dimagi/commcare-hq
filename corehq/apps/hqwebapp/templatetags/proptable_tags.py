@@ -157,12 +157,14 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
 
     if prop_def.pop('parse_date', None):
         val = parse_date_or_datetime(val)
-
+    is_utc = prop_def.pop('is_utc', True)
     if isinstance(val, datetime.datetime):
-        if val.tzinfo is None:
-            val = val.replace(tzinfo=pytz.utc)
-
-        val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+        if is_utc:
+            if val.tzinfo is None:
+                val = val.replace(tzinfo=pytz.utc)
+            val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+        else:
+            val = val.replace(tzinfo=timezone)
 
     try:
         val = conditional_escape(processors[process](val))
