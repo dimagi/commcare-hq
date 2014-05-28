@@ -196,6 +196,7 @@ class ForwardingRuleForm(Form):
         else:
             return None
 
+
 class LoadBalancingBackendFormMixin(Form):
     phone_numbers = CharField(required=False)
 
@@ -224,6 +225,7 @@ class LoadBalancingBackendFormMixin(Form):
             validate_phone_number(phone_number)
 
         return result
+    
 
 class BackendForm(Form):
     _cchq_domain = None
@@ -263,7 +265,7 @@ class BackendForm(Form):
                 crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
                 crispy.Field(
                     'give_other_domains_access',
-                    data_bind="checked: give_other_domains_access"
+                    data_bind="checked: share_backend"
                 ),
                 crispy.Div(
                     'authorized_domains',
@@ -271,6 +273,16 @@ class BackendForm(Form):
                 ),
             ),
             self.gateway_specific_fields,
+            crispy.Fieldset(
+                _("Phone Numbers"),
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'ko-load-balancing-template', "
+                              " data: $data"
+                              "}",
+                ),
+                data_bind="visible: use_load_balancing",
+            ),
             FormActions(
                 StrictButton(
                     button_text,
@@ -283,12 +295,6 @@ class BackendForm(Form):
     @property
     def gateway_specific_fields(self):
         return crispy.Div()
-
-    @property
-    def initial_values(self):
-        return {
-            'give_other_domains_access': self.give_other_domains_access
-        }
 
     def clean_name(self):
         value = self.cleaned_data.get("name")

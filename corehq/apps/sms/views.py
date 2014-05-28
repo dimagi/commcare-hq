@@ -1032,6 +1032,10 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             raise Http404()
 
     @property
+    def use_load_balancing(self):
+        return issubclass(self.backend_class, SMSLoadBalancingMixin)
+
+    @property
     @memoized
     def backend(self):
         return self.backend_class(domain=self.domain, is_global=False)
@@ -1063,6 +1067,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
         return {
             'form': self.backend_form,
             'button_text': self.button_text,
+            'use_load_balancing': self.use_load_balancing,
         }
 
     @property
