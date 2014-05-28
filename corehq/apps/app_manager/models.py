@@ -2322,6 +2322,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_build(self):
         return self.build_spec.get_build()
 
+    @property
+    def build_version(self):
+        # `LooseVersion`s are smart!
+        # LooseVersion('2.12.0') > '2.2'
+        # (even though '2.12.0' < '2.2')
+        return LooseVersion(self.build_spec.version)
+
     def get_preview_build(self):
         preview = self.get_build()
 
@@ -2454,7 +2461,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.8':
+        if self.build_version < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -2754,14 +2761,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def enable_relative_suite_path(self):
-        return LooseVersion(self.build_spec.version) >= '2.12'
+        return self.build_version >= '2.12'
 
     @property
     def enable_multi_sort(self):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        return LooseVersion(self.build_spec.version) >= '2.2'
+        return self.build_version >= '2.2'
 
     @property
     def default_language(self):
