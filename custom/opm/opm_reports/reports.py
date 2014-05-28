@@ -289,7 +289,7 @@ class BaseReport(CustomProjectReport, ElasticTabularReport, MonthYearMixin):
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
+        return [BlockFilter, AWCFilter]
 
     @property
     def report_subtitles(self):
@@ -847,12 +847,14 @@ class HealthMapSource(HealthStatusReport):
             escaped_row = [row[0]]
             for cell in row[1:]:
                 # _unformat_row([<html>] => ["N - f%"])
-                escaped_row.append(cell)
+                percent = re.findall(pattern, _unformat_row([cell])[0])
+                html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
+                escaped_row.append(html_cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
 
 
-class HealthMapReport(ElasticSearchMapReport, CustomProjectReport):
+class HealthMapReport(ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 

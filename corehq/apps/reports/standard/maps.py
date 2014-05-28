@@ -274,14 +274,27 @@ class ElasticSearchMapReport(GenericTabularReport, GenericMapReport):
 
     @property
     def rows(self):
-        report = self.get_report()
-        return report.rows
+        data = self._get_data()
+        columns = self.display_config['table_columns']
+        rows = []
+
+        for feature in data['features']:
+            row = []
+            for column in columns:
+                if column in feature['properties']:
+                    row.append(feature['properties'][column])
+                else:
+                    disp_col = '__disp_' + column
+                    if disp_col in feature['properties']:
+                        row.append(feature['properties'][disp_col])
+            rows.append(row)
+        return rows
 
     @property
     def headers(self):
         columns = self.display_config['table_columns']
         headers = DataTablesHeader(*[
-            DataTablesColumn(name=name) for name in columns]
+            DataTablesColumn(name=name, sortable=False) for name in columns]
         )
         return headers
 
