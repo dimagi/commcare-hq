@@ -1028,16 +1028,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                             "expr": "opened_on",
                             "name": _("Opened On"),
                             "parse_date": True,
+                            "is_utc": False,
                         },
                         {
                             "expr": "modified_on",
                             "name": _("Modified On"),
                             "parse_date": True,
+                            "is_utc": False,
                         },
                         {
                             "expr": "closed_on",
                             "name": _("Closed On"),
                             "parse_date": True,
+                            "is_utc": False,
                         },
                     ],
                     [
@@ -1076,11 +1079,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin,
                 'name': _('Date Opened'),
                 'expr': "opened_on",
                 'parse_date': True,
+                "is_utc": False,
             },
             {
                 'name': _('Date Modified'),
                 'expr': "modified_on",
-                'parse_date': True
+                'parse_date': True,
+                "is_utc": False,
             }
         ]
 
