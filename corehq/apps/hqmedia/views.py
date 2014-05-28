@@ -1,11 +1,9 @@
 from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
-import tempfile
 import zipfile
 import logging
 import os
 from django.contrib.auth.decorators import login_required
-from django.core.servers.basehttp import FileWrapper
 import json
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
@@ -17,8 +15,8 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpRespons
 
 from django.shortcuts import render
 
-from corehq.apps.app_manager.decorators import safe_download
-from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
+from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app, RemoteApp
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
@@ -27,6 +25,7 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.zip_utils import DownloadZip
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_download
@@ -396,15 +395,6 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
-def _make_zip(media_files):
-    fd, fpath = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as tmp:
-        with zipfile.ZipFile(tmp, "w") as media_zip:
-            for path, data in media_files:
-                media_zip.writestr(path, data)
-    return fpath
-
-
 def _iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
@@ -433,35 +423,40 @@ def _iter_media_files(media_objects):
     return _media_files(), errors
 
 
-class DownloadMultimediaZip(View, ApplicationViewMixin):
+class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
     """
-        This is where the Multimedia for an application gets generated.
-        Expects domain and app_id to be in its args, otherwise it's generally unhappy.
+    This is where the Multimedia for an application gets generated.
+    Expects domain and app_id to be in its args
+
     """
+
     name = "download_multimedia_zip"
+    compress_zip = False
+    zip_name = 'commcare.zip'
+
+    def iter_files(self):
+        self.app.remove_unused_mappings()
+        return _iter_media_files(self.app.get_media_objects())
+
+    def check_before_zipping(self):
+        if not self.app.multimedia_map:
+            return HttpResponse("You have no multimedia to download.")
+
+    def log_errors(self, errors):
+        logging.error(
+            "Error downloading multimedia ZIP "
+            "for domain %s and application %s." % (
+                self.domain, self.app_id)
+        )
+        return HttpResponseServerError(
+            "Errors were encountered while "
+            "retrieving media for this application.<br /> %s" % (
+                "<br />".join(errors))
+        )
 
     @method_decorator(safe_download)
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        self.app.remove_unused_mappings()
-        if not self.app.multimedia_map:
-            return HttpResponse("You have no multimedia to download.")
-
-        media_files, errors = _iter_media_files(self.app.get_media_objects())
-        fpath = _make_zip(media_files)
-        if errors:
-            logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
-                          (self.domain, self.app_id))
-            return HttpResponseServerError("Errors were encountered while "
-                                           "retrieving media for this application.<br /> %s" % "<br />".join(errors))
-
-        wrapper = FileWrapper(open(fpath))
-        response = HttpResponse(wrapper, mimetype="application/zip")
-        response['Content-Length'] = os.path.getsize(fpath)
-        set_file_download(response, 'commcare.zip')
-        return response
 
 
 class MultimediaUploadStatusView(View):

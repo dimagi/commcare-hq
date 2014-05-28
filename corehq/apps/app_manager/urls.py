@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import patterns, url, include
+from corehq.apps.app_manager.views import DownloadCCZ
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
@@ -113,7 +114,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^emulator/(?P<app_id>[\w-]+)/$', 'emulator_handler', name="emulator"),
     url(r'^emulator/(?P<app_id>[\w-]+)/CommCare\.jar$', 'emulator_commcare_jar'),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
-    url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', 'download_ccz', name='download_ccz'),
+    url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
+        name=DownloadCCZ.name),
     url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file',
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',
