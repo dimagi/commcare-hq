@@ -114,8 +114,9 @@ def get_cases_in_domain(domain, type=None):
     return (CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
                                                         get_case_ids_in_domain(domain, type=type)))
 
+
 def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=True,
-                include_parent_cases=False, exclude=(), update=None):
+                include_parent_cases=False, exclude_function=None, update=None):
     """
     Assigns a case to an owner. Optionally traverses through subcases and parent cases
     and reassigns those to the same owner.
@@ -129,8 +130,8 @@ def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=Tr
         cases_to_assign.extend(get_related_cases([primary_case], primary_case.domain, search_up=False).values())
     if include_parent_cases:
         cases_to_assign.extend(get_related_cases([primary_case], primary_case.domain, search_up=True).values())
-    if exclude:
-        cases_to_assign = filter(lambda case: case._id not in exclude, cases_to_assign)
+    if exclude_function:
+        cases_to_assign = [c for c in cases_to_assign if not exclude_function(c)]
     return assign_cases(cases_to_assign, owner_id, acting_user, update=update)
 
 
