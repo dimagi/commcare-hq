@@ -509,6 +509,12 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         self.total_row = self.get_row()
         return rows
 
+    @property
+    def get_all_rows(self):
+        rows = [self.get_row(user) for user in self.all_users]
+        self.total_row = self.get_row()
+        return rows
+
     def get_row(self, user=None):
         """
         Assemble a row for a given user.

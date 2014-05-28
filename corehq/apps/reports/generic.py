@@ -892,7 +892,10 @@ class GenericTabularReport(GenericReportView):
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
 
-        if self.ajax_pagination or self.needs_filters:
+        if self.ajax_pagination and self.is_rendered_as_email:
+            rows = self.get_all_rows
+            charts = []
+        elif self.ajax_pagination or self.needs_filters:
             rows = []
             charts = []
         else:
@@ -904,7 +907,7 @@ class GenericTabularReport(GenericReportView):
         if self.statistics_rows is not None:
             self.statistics_rows = list(self.statistics_rows)
 
-        pagination_spec = dict(is_on=self.ajax_pagination)
+        pagination_spec = dict(is_on=self.ajax_pagination and not self.is_rendered_as_email)
         if self.ajax_pagination:
             shared_params = list(self.shared_pagination_GET_params)
             pagination_spec.update(
