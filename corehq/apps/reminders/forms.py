@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 import pytz
 from datetime import timedelta, datetime, time
 from django.conf import settings
@@ -1944,6 +1945,12 @@ class RecordListWidget(Widget):
                 data_list.append(data_dict[input_name][key])
         
         return data_list
+
+    def render(self, name, value, attrs=None):
+        return render_to_string('reminders/partial/record_list_widget.html', {
+            'value': value,
+            'name': name,
+        })
 
 class RecordListField(Field):
     required = None

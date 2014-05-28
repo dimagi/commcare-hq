@@ -23,7 +23,7 @@ class MachBackend(SMSBackend):
 
     @classmethod
     def get_generic_name(cls):
-        return "Mach"
+        return "Syniverse"
 
     @classmethod
     def get_template(cls):

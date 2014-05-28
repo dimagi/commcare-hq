@@ -1,7 +1,7 @@
 import re
 import json
 from datetime import time
-from crispy_forms.bootstrap import StrictButton, InlineField
+from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from crispy_forms.helper import FormHelper
 from django import forms
 from django.forms.forms import Form
@@ -196,6 +196,7 @@ class ForwardingRuleForm(Form):
         else:
             return None
 
+
 class LoadBalancingBackendFormMixin(Form):
     phone_numbers = CharField(required=False)
 
@@ -224,14 +225,76 @@ class LoadBalancingBackendFormMixin(Form):
             validate_phone_number(phone_number)
 
         return result
+    
 
 class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None
-    name = CharField()
-    give_other_domains_access = BooleanField(required=False)
-    authorized_domains = CharField(required=False)
-    reply_to_phone_number = CharField(required=False)
+    name = CharField(
+        label=ugettext_noop("Name")
+    )
+    description = CharField(
+        label=ugettext_noop("Description"),
+        widget=forms.Textarea,
+        required=False,
+    )
+    give_other_domains_access = BooleanField(
+        required=False,
+        label=ugettext_noop("Give other domains access.")
+    )
+    authorized_domains = CharField(
+        required=False,
+        label=ugettext_noop("List of authorized domains")
+    )
+    reply_to_phone_number = CharField(
+        required=False,
+        label=ugettext_noop("Reply-To Phone Number"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        button_text = kwargs.pop('button_text', _("Create SMS Connection"))
+        super(BackendForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+               _('General Settings'),
+                crispy.Field('name', css_class='input-xxlarge'),
+                crispy.Field('description', css_class='input-xxlarge', rows="3"),
+                crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+                crispy.Field(
+                    'give_other_domains_access',
+                    data_bind="checked: share_backend"
+                ),
+                crispy.Div(
+                    'authorized_domains',
+                    data_bind="visible: showAuthorizedDomains",
+                ),
+            ),
+            self.gateway_specific_fields,
+            crispy.Fieldset(
+                _("Phone Numbers"),
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'ko-load-balancing-template', "
+                              " data: $data"
+                              "}",
+                ),
+                data_bind="visible: use_load_balancing",
+            ),
+            FormActions(
+                StrictButton(
+                    button_text,
+                    type="submit",
+                    css_class='btn-primary'
+                ),
+            ),
+        )
+
+    @property
+    def gateway_specific_fields(self):
+        return crispy.Div()
 
     def clean_name(self):
         value = self.cleaned_data.get("name")
