@@ -13,7 +13,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from corehq.apps.reports.formdetails.readable import get_readable_form_data, \
     form_key_filter
-from corehq.toggles import READABLE_FORM_DATA
 from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -85,7 +84,6 @@ def render_form(form, domain, options):
     timezone = pytz.utc
     case_id = options.get('case_id')
 
-    readable_form_data = READABLE_FORM_DATA.enabled(domain)
     use_old_reason = ''
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
@@ -95,12 +93,13 @@ def render_form(form, domain, options):
     form_dict = form.top_level_tags()
     form_dict.pop('change', None)  # this data already in Case Changes tab
     # Form Data tab
-    if readable_form_data:
-        try:
-            form_data = get_readable_form_data(form)
-        except QuestionListNotFound as e:
-            readable_form_data = False
-            use_old_reason = e.message
+    try:
+        form_data = get_readable_form_data(form)
+    except QuestionListNotFound as e:
+        readable_form_data = False
+        use_old_reason = e.message
+    else:
+        readable_form_data = True
 
     if not readable_form_data:
         form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
