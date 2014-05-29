@@ -138,5 +138,8 @@ def get_or_create_mapping(domain, mapping_name, date_range=2):
     mapping.active = True
     mapping.couch_date_range = date_range
     mapping.couch_view_params = {}
+    mapping.schedule_type = 'hourly'
+    mapping.schedule_hour = -1
+    mapping.schedule_day = -1
 
     return mapping
