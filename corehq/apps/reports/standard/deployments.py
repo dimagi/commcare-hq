@@ -47,7 +47,8 @@ class ApplicationStatusReport(DeploymentsReport):
             last_seen = self.table_cell(-1, _("Never"))
             app_name = None
 
-            key = make_form_couch_key(self.domain, user_id=user.get('user_id'), app_id=selected_app if selected_app else None)
+            key = make_form_couch_key(self.domain, user_id=user.user_id,
+                                      app_id=selected_app or None)
             data = XFormInstance.view(
                 "reports_forms/all_forms",
                 startkey=key+[{}],
@@ -77,5 +78,7 @@ class ApplicationStatusReport(DeploymentsReport):
             if app_name is None and selected_app:
                 continue
 
-            rows.append([user.get('username_in_report'), last_seen, app_name or "---"])
+            rows.append(
+                [user.username_in_report, last_seen, app_name or "---"]
+            )
         return rows

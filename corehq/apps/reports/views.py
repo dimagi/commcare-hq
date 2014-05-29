@@ -66,7 +66,8 @@ from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFor
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.reports.util import get_all_users_by_domain, \
+    users_matching_filter
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -162,11 +163,11 @@ def export_data(req, domain):
     user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x.get('user_id'),
-                                    get_all_users_by_domain(domain, user_filter=user_filter, simplified=True))
+        filtered_users = users_matching_filter(domain, user_filter)
+
         def _ufilter(user):
             try:
-                return user['form']['meta']['userID'] in users_matching_filter
+                return user['form']['meta']['userID'] in filtered_users
             except KeyError:
                 return False
         filter = _ufilter

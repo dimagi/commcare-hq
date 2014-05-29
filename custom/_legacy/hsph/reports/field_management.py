@@ -126,7 +126,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
         weeks = (to_date(enddate) - to_date(startdate)).days // 7
 
         for user in self.users:
-            user_id = user.get('user_id')
+            user_id = user.user_id
 
             row = db.view('hsph/fida_performance',
                 startkey=["all", self.domain, user_id, startdate],
@@ -143,7 +143,7 @@ class FIDAPerformanceReport(GenericTabularReport, CustomProjectReport,
             workingDays = set(workingDays)
 
             row['fidaName'] = self.table_cell(
-                    user.get('raw_username'), user.get('username_in_report'))
+                user.raw_username, user.username_in_report)
 
             dctl = user_data['user_parent_map'][user['user_id']]
             row['teamLeaderName'] = self.table_cell(
@@ -257,7 +257,7 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
 
         for user in self.users:
             for site_id in facilities:
-                key = [self.domain, user.get('user_id'), site_id]
+                key = [self.domain, user.user_id, site_id]
                 data = db.view('hsph/facility_registrations',
                     startkey=key + [self.datespan.startdate_param_utc],
                     endkey=key + [self.datespan.enddate_param_utc],
@@ -270,8 +270,8 @@ class FacilityRegistrationsReport(GenericTabularReport, CustomProjectReport,
                     rows.append([
                         self.facility_name_map[site_id],
                         self.table_cell(
-                            user.get('raw_username'),
-                            user.get('username_in_report')),
+                            user.raw_username,
+                            user.username_in_report),
                         self.table_cell(
                             dctl.raw_username,
                             dctl.username_in_report),
