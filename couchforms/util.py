@@ -203,10 +203,10 @@ def create_and_lock_xform(instance, attachments=None, process=None,
                 content_type=value.content_type,
                 content_length=value.size
             )
-    except Exception, e:
-        logging.exception("Problem with form %s" % xform.get_id)
+    except Exception as e:
+        logging.exception("Problem with form %s" % doc_id)
         # "rollback" by changing the doc_type to XFormError
-        xform = XFormError.get(xform.get_id)
+        xform = XFormError.get(doc_id)
         xform.problem = unicode(e)
         xform.save()
         release_lock(lock, degrade_gracefully=True)
