@@ -7,6 +7,7 @@ from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.models import get_app, Application
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
+from django.utils.translation import ugettext_lazy as _
 
 
 class FormQuestionOption(JsonObject):
@@ -60,32 +61,47 @@ def form_key_filter(key):
     return True
 
 
-def get_readable_form_data(xform):
-    app_id = xform.build_id or xform.app_id
-    domain = xform.domain
-    xmlns = xform.xmlns
+def get_questions(domain, app_id, xmlns):
+    if not app_id:
+        raise QuestionListNotFound(
+            _("This form is not associated with an app")
+        )
     try:
         app = get_app(domain, app_id)
     except Http404:
         raise QuestionListNotFound(
-            "No app with id {} could be found".format(app_id)
+            _("No app with id {} could be found").format(app_id)
         )
     if not isinstance(app, Application):
         raise QuestionListNotFound(
-            "The app we found for id {} is not a {}, which are not supported."
+            _("The app we found for id {} is not a {}, "
+              "which are not supported.")
             .format(app_id, app.__class__.__name__)
         )
+
     form = app.get_form_by_xmlns(xmlns)
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
-    questions = [FormQuestionResponse(q) for q in questions]
+    return [FormQuestionResponse(q) for q in questions]
 
+
+def get_readable_form_data(xform):
+    app_id = xform.build_id or xform.app_id
+    domain = xform.domain
+    xmlns = xform.xmlns
+
+    try:
+        questions = get_questions(domain, app_id, xmlns)
+        questions_error = None
+    except QuestionListNotFound as e:
+        questions = []
+        questions_error = e
     return zip_form_data_and_questions(
         strip_form_data(xform.form),
         questions_in_hierarchy(questions),
         path_context='/%s/' % xform.form.get('#type', 'data'),
         process_label=_html_interpolate_output_refs,
-    )
+    ), questions_error
 
 
 def strip_form_data(data):

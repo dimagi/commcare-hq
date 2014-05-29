@@ -237,7 +237,15 @@ requires imports/proptable.html to be included in the main template
             </p>
         </div>
 
-        {% if readable_form_data %}
+        {% if question_list_not_found %}
+        <div class="row-fluid">
+            <div class="alert alert-warning clear-fix span6">
+                <strong>{{ question_list_not_found.message }}.</strong>
+                <br/>
+                {% trans "Listing everything as Unrecognized Data." %}
+            </div>
+        </div>
+        {% else %}
         <ul class="nav nav-pills formDisplayToggle">
             <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
             <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
@@ -252,6 +260,7 @@ requires imports/proptable.html to be included in the main template
                    data-trigger="hover"></i>
             </a>
         </label>
+        {% endif %}
         <div class="row-fluid">
             <table class="table table-bordered span6">
                 <tr>
@@ -264,13 +273,6 @@ requires imports/proptable.html to be included in the main template
                 {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
             </table>
         </div>
-        {% else %}
-            {% if use_old_reason %}
-                {% comment %}This is for debugging{% endcomment %}
-                <div class="alert alert-info">{{ use_old_reason }}. Showing old view instead</div>
-            {% endif %}
-            {% render_tables form_data form_table_options %}
-        {% endif %}
     </div>
 
     {% if cases %}
