@@ -32,7 +32,6 @@
     {% endif %}
 {% endblock pretable %}
 {% block reporttable %}
-{% include report_partial %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
 {% else %}

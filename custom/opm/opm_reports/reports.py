@@ -854,7 +854,7 @@ class HealthMapSource(HealthStatusReport):
         return new_rows
 
 
-class HealthMapReport(ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
+class HealthMapReport(HealthStatusMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 
@@ -922,6 +922,7 @@ class HealthMapReport(ElasticSearchMapReport, GetParamsMixin, CustomProjectRepor
         ]
         return {
             "detail_columns": columns[0:5],
+            "display_columns": columns[4:],
             "table_columns": columns,
             "column_titles": title_mapping,
             "metrics": [{"color": {"column": column}} for column in columns[:4]] + [
@@ -935,3 +936,30 @@ class HealthMapReport(ElasticSearchMapReport, GetParamsMixin, CustomProjectRepor
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
+
+    @property
+    def rows(self):
+        data = self._get_data()
+        columns = self.display_config['table_columns']
+        display_columns = self.display_config['display_columns']
+        rows = []
+
+        for feature in data['features']:
+            row = []
+            for column in columns:
+                if column in feature['properties'] and column not in display_columns:
+                    row.append(feature['properties'][column])
+                else:
+                    disp_col = '__disp_' + column
+                    if disp_col in feature['properties']:
+                        row.append(feature['properties'][disp_col])
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        columns = self.display_config['table_columns']
+        headers = DataTablesHeader(*[
+            DataTablesColumn(name=name, sortable=False) for name in columns]
+        )
+        return headers

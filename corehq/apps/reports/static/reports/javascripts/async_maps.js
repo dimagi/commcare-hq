@@ -55,23 +55,47 @@ MetricsControl = L.Control.extend({
     }
 });
 
+function clearMap() {
+    for(var i in map_obj._layers) {
+        if(map_obj._layers[i]._path != undefined) {
+            try {
+                map_obj.removeLayer(map_obj._layers[i]);
+            }
+            catch(e) {
+                console.log("problem with " + e + map_obj._layers[i]);
+            }
+        }
+    }
+}
+
+function clearPoints() {
+    for (var point in points._layers) {
+        if (points._layers.hasOwnProperty(point)){
+            map_obj.removeLayer(points._layers[point]);
+        }
+    }
+}
+
 // main entry point
 function mapsInit(context) {
-    if (map_obj === undefined) {
-        var map = initMap($('#map'), context.layers, [30., 0.], 2);
-    } else {
-        map = map_obj;
+    var map = undefined;
+    if (map_obj !== undefined) {
+        clearPoints();
+        clearMap();
+    }
+    try {
+        map = initMap($('#map'), context.layers, [30., 0.], 2);
+    } catch(e) {
+        map = map_obj
     }
     initData(context.data, context.config);
     $.each(context.data.features, function(i, e) {
         e.$tr = $($(".tabular tbody tr")[i])
     });
-    for (var point in points._layers) {
-        if (points._layers.hasOwnProperty(point)){
-            map.removeLayer(points._layers[point]);
-        }
-    }
+
     initMetrics(map, undefined, context.data, context.config);
+    $('#zoomtofit').css('display', 'block');
+    $('#toggletable').css('display', 'block');
     return map;
 }
 
