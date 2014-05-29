@@ -62,6 +62,8 @@ function mapsInit(context) {
     initData(context.data, context.config);
     var table = initTable(context.data, context.config);
     initMetrics(map, table, context.data, context.config);
+    $('#zoomtofit').css('display', 'block');
+    $('#toggletable').css('display', 'block');
     return map;
 }
 
