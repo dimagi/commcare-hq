@@ -16,7 +16,7 @@ def get_default_consumption(domain, product_id, location_type, case_id):
     )
     results = results[0] if results else None
     if results and results['value']:
-        return Decimal(results['value'])
+        return Decimal(float(results['value']) / 30)
     else:
         return None
 
