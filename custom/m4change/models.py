@@ -320,10 +320,12 @@ class McctStatus(models.Model):
     immunized = models.BooleanField(null=False, default=False)
     is_booking = models.BooleanField(null=False, default=False)
     modified_on = models.DateTimeField(auto_now=True)
+    user = models.CharField(max_length=255, null=True)
 
-    def update_status(self, new_status, reason):
+    def update_status(self, new_status, reason, user):
         self.status = new_status
         self.reason = reason
+        self.user = user
         self.save()
 
     @classmethod

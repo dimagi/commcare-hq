@@ -439,9 +439,10 @@ class McctClientLogPage(McctProjectReview):
             data = calculate_form_data(self, form)
             try:
                 status_data = McctStatus.objects.get(domain=self.domain, form_id=data.get('form_id'))
-                status, reason, status_date = (status_data.status, status_data.reason, status_data.modified_on)
+                status, reason, status_date, username = (status_data.status, status_data.reason,
+                                                         status_data.modified_on, status_data.user)
             except:
-                status, reason, status_date = ('eligible', None, None)
+                status, reason, status_date, username = ('eligible', None, None, None)
             row = [
                 status_date.strftime("%Y-%m-%d %H:%M") if status_date is not None else EMPTY_FIELD,
                 self._get_case_name_html(data.get('case'), with_checkbox),
@@ -453,7 +454,7 @@ class McctClientLogPage(McctProjectReview):
                 data.get('amount_due'),
                 status,
                 REJECTION_REASON_DISPLAY_NAMES[reason] if reason is not None else '',
-                form["form"]["meta"]["username"]
+                username if username else form["form"]["meta"]["username"]
             ]
             yield row
 
