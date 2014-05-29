@@ -240,9 +240,9 @@ requires imports/proptable.html to be included in the main template
         {% if question_list_not_found %}
         <div class="row-fluid">
             <div class="alert alert-warning clear-fix span6">
-                <strong>{{ question_list_not_found.message }}.</strong>
+                <strong>{{ question_list_not_found.message }}</strong>
                 <br/>
-                {% trans "Listing everything as Unrecognized Data." %}
+                {% trans "All data is listed as Unrecognized Data." %}
             </div>
         </div>
         {% else %}

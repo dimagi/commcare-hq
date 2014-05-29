@@ -70,13 +70,11 @@ def get_questions(domain, app_id, xmlns):
         app = get_app(domain, app_id)
     except Http404:
         raise QuestionListNotFound(
-            _("No app with id {} could be found").format(app_id)
+            _("No app could be found")
         )
     if not isinstance(app, Application):
         raise QuestionListNotFound(
-            _("The app we found for id {} is not a {}, "
-              "which are not supported.")
-            .format(app_id, app.__class__.__name__)
+            _("Remote apps are not supported")
         )
 
     form = app.get_form_by_xmlns(xmlns)
