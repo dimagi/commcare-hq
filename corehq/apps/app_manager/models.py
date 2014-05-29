@@ -484,37 +484,7 @@ class CachedStringProperty(object):
 
     @classmethod
     def set(cls, key, value):
-        cache.set(key, value, 12*60*60)
-
-
-class CouchCache(Document):
-
-    value = StringProperty(default=None)
-
-
-class CouchCachedStringProperty(CachedStringProperty):
-
-    @classmethod
-    def _get(cls, key):
-        try:
-            c = CouchCache.get(key)
-            assert(c.doc_type == CouchCache.__name__)
-        except ResourceNotFound:
-            c = CouchCache(_id=key)
-        return c
-
-    @classmethod
-    def get(cls, key):
-        return cls._get(key).value
-
-    @classmethod
-    def set(cls, key, value):
-        c = cls._get(key)
-        c.value = value
-        try:
-            c.save()
-        except ResourceConflict:
-            cls.set(key, value)
+        cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
 class FormBase(DocumentSchema):
@@ -531,7 +501,7 @@ class FormBase(DocumentSchema):
     xmlns = StringProperty()
     version = IntegerProperty()
     source = FormSource()
-    validation_cache = CouchCachedStringProperty(
+    validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
