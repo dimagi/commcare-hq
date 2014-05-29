@@ -22,7 +22,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -3318,12 +3318,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             original_app = get_db().get(app_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
         if not domain:
             try:
                 domain = original_app['domain']
             except Exception:
-                raise Http404
+                raise Http404()
 
         if original_app.get('copy_of'):
             parent_app_id = original_app.get('copy_of')
@@ -3348,10 +3348,13 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             app = get_db().get(app_id)
         except Exception:
-            raise Http404
+            raise Http404()
     if domain and app['domain'] != domain:
-        raise Http404
-    cls = wrap_cls or get_correct_app_class(app)
+        raise Http404()
+    try:
+        cls = wrap_cls or get_correct_app_class(app)
+    except DocTypeError:
+        raise Http404()
     app = cls.wrap(app)
     return app
 
