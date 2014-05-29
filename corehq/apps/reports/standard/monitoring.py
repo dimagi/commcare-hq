@@ -446,13 +446,19 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             [u['fields'] for u in result['hits']['hits']]
         ), key=lambda u: u['username_in_report'])
 
+    def paginate_list(self, data_list):
+        if self.pagination:
+            start = self.pagination.start
+            end = start + self.pagination.count
+            return data_list[start:end]
+        else:
+            return data_list
+
     def users_by_username(self, order):
-        start = self.pagination.start
-        end = start + self.pagination.count
         users = self.all_users
         if order == "desc":
             users.reverse()
-        return users[start:end]
+        return self.paginate_list(users)
 
     def users_by_range(self, start, end, order):
         results = FormData.objects \
@@ -483,9 +489,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             users_with_forms.sort(reverse=True)
             sorted_users = map(lambda u: u[1], users_with_forms)
             sorted_users += users_without_forms
-        start = self.pagination.start
-        end = start + self.pagination.count
-        return sorted_users[start:end]
+
+        return self.paginate_list(sorted_users)
 
     @property
     def column_count(self):
