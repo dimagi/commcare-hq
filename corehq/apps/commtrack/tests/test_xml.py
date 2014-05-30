@@ -19,7 +19,7 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml,
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
+from corehq.apps.commtrack.tests.util import make_loc, make_supply_point, DAYS_IN_MONTH
 from corehq.apps.commtrack.requisitions import get_notification_message
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
@@ -98,7 +98,7 @@ class CommTrackOTATest(CommTrackTest):
         self.ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'}
         )
-        set_default_consumption_for_domain(self.domain.name, 5)
+        set_default_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')

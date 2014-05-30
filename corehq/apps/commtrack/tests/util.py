@@ -28,6 +28,8 @@ TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
 TEST_BACKEND = 'test-backend'
 
+DAYS_IN_MONTH = 30.0
+
 ROAMING_USER = {
     'username': TEST_USER + '-roaming',
     'phone_number': TEST_NUMBER,

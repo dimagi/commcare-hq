@@ -9,6 +9,7 @@ product_id = 'test-product'
 type_id = 'facilities'
 supply_point_id = 'test-facility'
 
+DAYS_IN_MONTH = 30
 
 class ConsumptionTestBase(TestCase):
     def setUp(self):
@@ -127,20 +128,20 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
 
 
 def _create_domain_consumption(amt, domain=domain):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_DOMAIN).save()
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_DOMAIN).save()
 
 
 def _create_product_consumption(amt, domain=domain, product_id=product_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_PRODUCT, product_id=product_id).save()
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_PRODUCT, product_id=product_id).save()
 
 
 def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=type_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
                        supply_point_type=type_id).save()
 
 
 def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_point_id=supply_point_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT, product_id=product_id,
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT, product_id=product_id,
                        supply_point_id=supply_point_id).save()
 
 
