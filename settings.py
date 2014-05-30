@@ -968,6 +968,9 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
+# The number of seconds to use as a timeout when making gateway requests
+SMS_GATEWAY_TIMEOUT = 30
+
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
 # If the function is not in here, it will not be called.

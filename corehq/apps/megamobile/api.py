@@ -6,6 +6,7 @@ from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SMSLog
 from couchdbkit.ext.django.schema import *
 from corehq.apps.megamobile.forms import MegamobileBackendForm
+from django.conf import settings
 
 DEFAULT_PID = "0"
 
@@ -56,5 +57,5 @@ class MegamobileBackend(SMSBackend):
         })
         api_account_name = quote(self.api_account_name)
         url = "http://api.mymegamobile.com/%s?%s" % (api_account_name, params)
-        response = urlopen(url).read()
+        response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
