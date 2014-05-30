@@ -775,7 +775,7 @@ class MetReport(BaseReport):
         Returns the report for printing.
         """
         self.is_rendered_as_email = True
-        self.use_datatables = False
+        self.use_datatables = True
         self.override_template = "opm/print_report.html"
         return HttpResponse(self._async_context()['report'])
 

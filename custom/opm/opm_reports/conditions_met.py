@@ -203,9 +203,9 @@ class ConditionsMet(object):
         elif self.status == 'mother':
             self.preg_month = EMPTY_FIELD
             if child_age != -1:
-                self.month = child_age
+                self.child_age = child_age
             else:
-                self.month = EMPTY_FIELD
+                self.child_age = EMPTY_FIELD
 
             self.one = img_elem % C_ATTENDANCE_Y if 0 <= child_age <= 1 else img_elem % C_ATTENDANCE_N
             self.two = img_elem % C_WEIGHT_Y if child_age % 3 == 0 else img_elem % C_WEIGHT_N
