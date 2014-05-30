@@ -642,6 +642,24 @@ class MetReport(BaseReport):
     filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
 
     @property
+    def report_subtitles(self):
+        subtitles = ["For filters:",]
+        if self.block:
+            subtitles.append("Block - %s" % self.block)
+        if self.filter_data.get('awcs', []):
+            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
+        if self.filter_data.get('gp', ''):
+            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
+        startdate = self.datespan.startdate_param_utc
+        enddate = self.datespan.enddate_param_utc
+        if startdate and enddate:
+            sd = parser.parse(startdate)
+            ed = parser.parse(enddate)
+            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        return subtitles
+
+
+    @property
     def block(self):
         block = self.request_params.get("block")
         if block:
