@@ -74,7 +74,7 @@ $.showMessage = function (message, level) {
 
 $.fn.disableOnSubmit = function () {
     $(this).submit(function () {
-        $(this).find('button[type="submit"]')
+        $(this).find('[type="submit"]')
                .prepend('<i class="icon-refresh icon-spin"></i> ')
                .attr('disabled', 'disabled')
                .addClass('disabled');
