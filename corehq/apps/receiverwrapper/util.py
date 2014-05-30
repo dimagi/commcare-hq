@@ -77,28 +77,56 @@ def _get_version_from_build_id(domain, build_id):
         return build.version
 
 
-def get_build_version(xform):
+def get_version_from_appversion_text(appversion_text):
     """
-    there are a bunch of unreliable places to look for a build version
-    this abstracts that out
+    >>> # these first two could certainly be replaced
+    >>> # with more realistic examples, but I didn't have any on hand
+    >>> get_version_from_appversion_text('foofoo #102 barbar')
+    102
+    >>> get_version_from_appversion_text('foofoo b[99] barbar')
+    99
+    >>> get_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.11.0"(29272). App v65. '
+    ...     'CommCare Version 2.11. Build 29272, built on: February-14-2014'
+    ... )
+    65
+    >>> get_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.4.1"(10083). App v19.'
+    ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
+    ... )
+    19
 
     """
+
     patterns = [
         r' #(\d+) ',
         'b\[(\d+)\]',
+        r'App v(\d+).',
     ]
-
-    version = get_version_from_build_id(xform.domain, xform.build_id)
-    if version:
-        return version
-
-    appversion_text = get_meta_appversion_text(xform)
     if appversion_text:
         for pattern in patterns:
             match = re.search(pattern, appversion_text)
             if match:
                 build_number, = match.groups()
                 return int(build_number)
+
+
+def get_build_version(xform):
+    """
+    there are a bunch of unreliable places to look for a build version
+    this abstracts that out
+
+    """
+
+    version = get_version_from_build_id(xform.domain, xform.build_id)
+    if version:
+        return version
+
+    version = get_version_from_appversion_text(
+        get_meta_appversion_text(xform)
+    )
+    if version:
+        return version
 
     xform_version = xform.version
     if xform_version and xform_version != '1':

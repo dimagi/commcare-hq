@@ -1,4 +1,6 @@
 import logging
+from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
+
 try:
     from .test_repeater import *
     from .test_submissions import *
@@ -10,3 +12,7 @@ except ImportError, e:
     # otherwise debugging is a pain
     logging.exception(e)
     raise(e)
+
+__test__ = {
+    'get_version_from_appversion_text': get_version_from_appversion_text,
+}
