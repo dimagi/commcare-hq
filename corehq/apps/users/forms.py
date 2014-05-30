@@ -67,16 +67,24 @@ class BaseUpdateUserForm(forms.Form):
             existing_user.save()
             is_update_successful = True
 
-        if existing_user.subscribed_to_commcare_users:
+        if 'email' in self.cleaned_data:
             old_email = existing_user.email
             new_email = self.cleaned_data['email']
             if old_email != new_email:
-                handle_changed_mailchimp_email(
-                    existing_user,
-                    old_email,
-                    new_email,
-                    settings.MAILCHIMP_COMMCARE_USERS_ID
-                )
+                if existing_user.subscribed_to_commcare_users:
+                    handle_changed_mailchimp_email(
+                        existing_user,
+                        old_email,
+                        new_email,
+                        settings.MAILCHIMP_COMMCARE_USERS_ID
+                    )
+                if not existing_user.email_opt_out:
+                    handle_changed_mailchimp_email(
+                        existing_user,
+                        old_email,
+                        new_email,
+                        settings.MAILCHIMP_MASS_EMAIL_ID
+                    )
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])

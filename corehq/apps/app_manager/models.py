@@ -22,7 +22,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -340,10 +340,6 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
-    @property
-    def requires_casedb(self):
-        return not self.auto_select or self.auto_select.mode in [AUTO_SELECT_CASE, AUTO_SELECT_RAW]
-
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
@@ -488,37 +484,7 @@ class CachedStringProperty(object):
 
     @classmethod
     def set(cls, key, value):
-        cache.set(key, value, 12*60*60)
-
-
-class CouchCache(Document):
-
-    value = StringProperty(default=None)
-
-
-class CouchCachedStringProperty(CachedStringProperty):
-
-    @classmethod
-    def _get(cls, key):
-        try:
-            c = CouchCache.get(key)
-            assert(c.doc_type == CouchCache.__name__)
-        except ResourceNotFound:
-            c = CouchCache(_id=key)
-        return c
-
-    @classmethod
-    def get(cls, key):
-        return cls._get(key).value
-
-    @classmethod
-    def set(cls, key, value):
-        c = cls._get(key)
-        c.value = value
-        try:
-            c.save()
-        except ResourceConflict:
-            cls.set(key, value)
+        cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
 class FormBase(DocumentSchema):
@@ -535,7 +501,7 @@ class FormBase(DocumentSchema):
     xmlns = StringProperty()
     version = IntegerProperty()
     source = FormSource()
-    validation_cache = CouchCachedStringProperty(
+    validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
@@ -2351,6 +2317,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_build(self):
         return self.build_spec.get_build()
 
+    @property
+    def build_version(self):
+        # `LooseVersion`s are smart!
+        # LooseVersion('2.12.0') > '2.2'
+        # (even though '2.12.0' < '2.2')
+        return LooseVersion(self.build_spec.version)
+
     def get_preview_build(self):
         preview = self.get_build()
 
@@ -2483,7 +2456,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.8':
+        if self.build_version < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -2765,7 +2738,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def suite_loc(self):
-        return "suite.xml"
+        if self.enable_relative_suite_path:
+            return './suite.xml'
+        else:
+            return "jr://resource/suite.xml"
 
     @absolute_url_property
     def media_suite_url(self):
@@ -2773,14 +2749,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def media_suite_loc(self):
-        return "media_suite.xml"
+        if self.enable_relative_suite_path:
+            return "./media_suite.xml"
+        else:
+            return "jr://resource/media_suite.xml"
+
+    @property
+    def enable_relative_suite_path(self):
+        return self.build_version >= '2.12'
 
     @property
     def enable_multi_sort(self):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        return LooseVersion(self.build_spec.version) >= '2.2'
+        return self.build_version >= '2.2'
 
     @property
     def enable_multimedia_case_property(self):
@@ -2898,12 +2881,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app': self,
             'profile_url': profile_url,
             'app_profile': app_profile,
-            'suite_url': self.suite_url,
-            'suite_loc': self.suite_loc,
-            'post_url': self.post_url,
-            'key_server_url': self.key_server_url,
-            'post_test_url': self.post_url,
-            'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
             'descriptor': u"Profile File"
@@ -2930,7 +2907,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
-        return suite_xml.SuiteGenerator(self).generate_suite(sections=['media_resources'], is_media=True)
+        return suite_xml.MediaSuiteGenerator(self).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
@@ -3373,12 +3350,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             original_app = get_db().get(app_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
         if not domain:
             try:
                 domain = original_app['domain']
             except Exception:
-                raise Http404
+                raise Http404()
 
         if original_app.get('copy_of'):
             parent_app_id = original_app.get('copy_of')
@@ -3403,10 +3380,13 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             app = get_db().get(app_id)
         except Exception:
-            raise Http404
+            raise Http404()
     if domain and app['domain'] != domain:
-        raise Http404
-    cls = wrap_cls or get_correct_app_class(app)
+        raise Http404()
+    try:
+        cls = wrap_cls or get_correct_app_class(app)
+    except DocTypeError:
+        raise Http404()
     app = cls.wrap(app)
     return app
 

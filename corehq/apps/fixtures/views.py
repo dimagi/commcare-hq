@@ -813,7 +813,7 @@ def run_upload(request, domain, workbook, replace=False):
 
                 for raw_username in di.get('user', []):
                     try:
-                        username = normalize_username(raw_username, domain)
+                        username = normalize_username(str(raw_username), domain)
                     except ValidationError:
                         messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
                         continue

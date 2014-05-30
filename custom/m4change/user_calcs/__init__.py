@@ -13,8 +13,8 @@ def get_received_on(form):
     return form.received_on.date()
 
 
-def form_passes_filter_date_delivery(form, namespaces):
-    return (form.xmlns in namespaces and get_date_delivery(form) is not None)
+def form_passes_filter_date_delivery(form):
+    return get_date_delivery(form) is not None
 
 
 def string_to_numeric(string, type=int):

@@ -1,6 +1,6 @@
 import os
 
-from django.test import TestCase
+from django.test import SimpleTestCase as TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.app_manager.models import Application, Module, APP_V2
@@ -98,8 +98,6 @@ class GetFormQuestionsTest(TestCase):
             with open(path) as f:
                 return f.read()
 
-        create_domain(self.domain)
-
         self.app = app = Application.new_app(
                 self.domain, "Test", application_version=APP_V2)
         app.add_module(Module.new_module("Module", 'en'))
@@ -110,7 +108,6 @@ class GetFormQuestionsTest(TestCase):
                 attachment=read('case_in_form.xml'))
 
         self.form_unique_id = form.unique_id
-        app.save()
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)

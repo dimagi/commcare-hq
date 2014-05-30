@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.models import _parse_xml
 import os
 

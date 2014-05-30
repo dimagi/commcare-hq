@@ -25,8 +25,9 @@ class Command(BaseCommand):
         for user in CouchUser.all():
             doc_json = CouchUser.get_db().get(user.get_id)
             if (doc_json.get('doc_type', None) == 'WebUser'
-                    and user.created_on >= datetime.datetime(
-                        *[int(_) for _ in args[0:3]])):
+                    and (user.created_on is not None
+                         and user.created_on >= datetime.datetime(
+                             *[int(_) for _ in args[0:3]]))):
                 if user.email_opt_out:
                     if run_fix:
                         user.email_opt_out = False

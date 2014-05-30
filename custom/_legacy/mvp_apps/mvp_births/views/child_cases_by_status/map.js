@@ -5,9 +5,9 @@ function (doc) {
         function delivered_infacility(place, extra_no) {
             var i,
                 result,
-                arr = ["hospital", "facility", "centre", "clinic", "yes"];
+                arr = ["hospital", "facility", "centre", "post", "clinic", "yes"];
             if (extra_no) {
-                arr.push("no");
+                arr.push("no", "home", "other", "road");
             }
             for (i=0; i < arr.length; i++) {
                 result = arr[i];
