@@ -1,4 +1,6 @@
 from django.utils.translation import ugettext as _, ugettext_noop
+import dateutil
+
 
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
@@ -52,3 +54,13 @@ def get_form_dict(case, form_xmlns):
         if form_xmlns == form_dict["@xmlns"]:
             return form_dict
     return None
+
+
+def format_date(date_string, OUTPUT_FORMAT):
+    date_obj = date_string
+    if isinstance(date_string, basestring):
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+        except (AttributeError, ValueError):
+            return _("Bad Date Format!")
+    return date_obj.strftime(OUTPUT_FORMAT)
