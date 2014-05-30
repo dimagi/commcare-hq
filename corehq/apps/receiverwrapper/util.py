@@ -1,3 +1,4 @@
+import json
 import re
 from couchdbkit import ResourceNotFound
 from django.core.cache import cache
@@ -44,6 +45,38 @@ def get_meta_appversion_text(xform):
         return None
 
 
+def get_version_from_build_id(domain, build_id):
+    """
+    fast lookup of app version number given build_id
+
+    implemented as simple caching around _get_version_from_build_id
+
+    """
+    if not build_id:
+        return None
+    cache_key = 'build_id_to_version/{}/{}'.format(domain, build_id)
+    cache_value = cache.get(cache_key)
+    if not cache_value:
+        # serialize as json to distinguish cache miss (None)
+        # from a None value ('null')
+        cache_value = json.dumps(_get_version_from_build_id(domain, build_id))
+        cache.set(cache_key, cache_value, 24*60*60)
+    return json.loads(cache_value)
+
+
+def _get_version_from_build_id(domain, build_id):
+    try:
+        build = ApplicationBase.get(build_id)
+    except ResourceNotFound:
+        return None
+    if not build.copy_of:
+        return None
+    elif build.domain != domain:
+        return None
+    else:
+        return build.version
+
+
 def get_build_version(xform):
     """
     there are a bunch of unreliable places to look for a build version
@@ -54,6 +87,10 @@ def get_build_version(xform):
         r' #(\d+) ',
         'b\[(\d+)\]',
     ]
+
+    version = get_version_from_build_id(xform.domain, xform.build_id)
+    if version:
+        return version
 
     appversion_text = get_meta_appversion_text(xform)
     if appversion_text:
