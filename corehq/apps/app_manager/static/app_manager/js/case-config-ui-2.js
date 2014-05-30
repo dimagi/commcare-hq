@@ -101,6 +101,23 @@ var CaseConfig = (function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
+            self.forceRefreshTextchangeBinding();
+        };
+
+        self.forceRefreshTextchangeBinding = function () {
+            // This is a hack that I do not understand,
+            // and really shouldn't be necessary.
+            // For some reason, $home.on('textchange', 'input', blah)
+            // loses track of the input element __answer__ in
+            // "Only if the answer to __question__ is __answer__".
+            // Flicking that input's textchange binding seems to
+            // jigger that relationship back into place. #weird
+            // (this is potentially expensive just because it's O(N)
+            // but I'd be surprised if other things weren't too)
+            var x = function () {};
+            $('#case-config-ko').find('input')
+                .off('textchange', x)
+                .on('textchange', x);
         };
 
         self.init = function () {
@@ -112,7 +129,9 @@ var CaseConfig = (function () {
                      .on('change', 'select, input[type="hidden"]', self.change)
                      .on('click', 'a', self.change);
                 self.ensureBlankProperties();
+                self.forceRefreshTextchangeBinding();
             });
+
         };
     };
 
