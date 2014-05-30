@@ -972,6 +972,7 @@ SMS_LOADED_BACKENDS = [
 
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
+IVR_GATEWAY_TIMEOUT = 60
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
