@@ -111,6 +111,13 @@ def get_version_from_appversion_text(appversion_text):
                 return int(build_number)
 
 
+class BuildVersionSource:
+    BUILD_ID = object()
+    APPVERSION_TEXT = object()
+    XFORM_VERSION = object()
+    NONE = object()
+
+
 def get_build_version(xform):
     """
     there are a bunch of unreliable places to look for a build version
@@ -120,17 +127,19 @@ def get_build_version(xform):
 
     version = get_version_from_build_id(xform.domain, xform.build_id)
     if version:
-        return version
+        return version, BuildVersionSource.BUILD_ID
 
     version = get_version_from_appversion_text(
         get_meta_appversion_text(xform)
     )
     if version:
-        return version
+        return version, BuildVersionSource.APPVERSION_TEXT
 
     xform_version = xform.version
     if xform_version and xform_version != '1':
-        return int(xform_version)
+        return int(xform_version), BuildVersionSource.XFORM_VERSION
+
+    return None, BuildVersionSource.NONE
 
 
 def get_app_and_build_ids(domain, build_or_app_id):
