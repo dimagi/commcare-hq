@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block main_column %}
-    <form class="form-horizontal" method="post">
+    <form id="update-project-info" class="form-horizontal" method="post">
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Internal Settings" %}
         <div class="form-actions">
@@ -15,6 +15,11 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+
+    $(function () {
+        $('#update-project-info').disableOnSubmit();
+    });
+
     var areas = {{ areas|JSON }};
     function update_subareas() {
         var $subarea = $subarea || $('[name="sub_area"]');
