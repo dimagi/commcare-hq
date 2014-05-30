@@ -266,7 +266,7 @@ class OpmHealthStatusSqlData(SqlData):
         else:
             return None
 
-class BaseReport(CustomProjectReport, ElasticTabularReport, MonthYearMixin):
+class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport, ):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -289,7 +289,7 @@ class BaseReport(CustomProjectReport, ElasticTabularReport, MonthYearMixin):
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter]
+        return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
 
     @property
     def report_subtitles(self):
