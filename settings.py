@@ -288,6 +288,8 @@ HQ_APPS = (
     'custom.succeed',
 
     'custom.uth',
+
+    'custom.colalife',
 )
 
 TEST_APPS = ()
