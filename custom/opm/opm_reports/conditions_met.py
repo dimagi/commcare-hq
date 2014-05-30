@@ -36,6 +36,7 @@ class ConditionsMet(object):
         "atri": [
             ('name', "List of Beneficiary", True),
             ('awc_name', "AWC Name", True),
+            ('block_name', "Block Name", True),
             ('husband_name', "Husband Name", True),
             ('month', "Month", True),
             ('window', "Window", True),
@@ -46,12 +47,12 @@ class ConditionsMet(object):
             ('five', "5", True),
             ('cash', "Cash to be transferred", True),
             ('owner_id', "Owner Id", False),
-            ('block_name', "Block Name", False),
             ('closed', 'Closed', False)
         ],
         'wazirganj': [
             ('name', "List of Beneficiary", True),
             ('awc_name', "AWC Name", True),
+            ('block_name', "Block Name", True),
             ('status', "Current status", True),
             ('month', "Month", True),
             ('window', "Window", True),
@@ -61,7 +62,6 @@ class ConditionsMet(object):
             ('five', "4", True),
             ('cash', "Cash to be transferred", True),
             ('owner_id', "Owner Id", False),
-            ('block_name', "Block Name", False),
             ('closed', 'Closed', False)
         ]
     }
