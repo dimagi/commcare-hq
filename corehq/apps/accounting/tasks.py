@@ -103,12 +103,18 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
     today = datetime.date.today()
+
+    # now, make sure that we send out LAST month's invoices if we did
+    # not specify a month or year.
+    today = utils.get_previous_month_date_range(today)[0]
+
     month = month or today.month
     year = year or today.year
 
     from corehq.apps.accounting.interface import InvoiceInterface
     request = HttpRequest()
     params = urlencode((
+        ('report_filter_statement_period_use_filter', 'on'),
         ('report_filter_statement_period_month', month),
         ('report_filter_statement_period_year', year),
     ))
@@ -127,6 +133,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         'accounting/bookkeeper_email.html', email_context)
     email_content_plaintext = render_to_string(
         'accounting/bookkeeper_email_plaintext.html', email_context)
+
     format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {
         'title': 'Invoices_%(period)s.%(extension)s' % {
