@@ -51,6 +51,7 @@ class BranchConfig(jsonobject.JsonObject):
         for submodule, subconfig in self.submodules.items():
             subconfig.trunk = subconfig.trunk or self.trunk
             subconfig.name = subconfig.name or self.name
+            subconfig.normalize()
 
     def span_configs(self, path=('.',)):
         for submodule, subconfig in self.submodules.items():
@@ -126,7 +127,7 @@ def sync_local_copies(config):
         print "All branches up-to-date."
 
 
-def check_merges(config):
+def check_merges(config, print_details=True):
     merge_conflicts = []
     base_config = config
     for path, config in base_config.span_configs():
@@ -157,7 +158,8 @@ def check_merges(config):
                 trunk=trunk,
             )
             git = get_git(cwd)
-            print_merge_details(branch, trunk, git)
+            if print_details:
+                print_merge_details(branch, trunk, git)
         exit(1)
     else:
         print "No merge conflicts"
