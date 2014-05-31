@@ -107,17 +107,15 @@ class ExportConfiguration(object):
 
 
 def get_writer(format):
-    if format == Format.CSV:
-        return writers.CsvExportWriter()
-    elif format == Format.HTML:
-        return writers.HtmlExportWriter()
-    elif format == Format.JSON:
-        return writers.JsonExportWriter()
-    elif format == Format.XLS:
-        return writers.Excel2003ExportWriter()
-    elif format == Format.XLS_2007:
-        return writers.Excel2007ExportWriter()
-    else:
+    try:
+        return {
+            Format.CSV: writers.CsvExportWriter,
+            Format.HTML: writers.HtmlExportWriter,
+            Format.JSON: writers.JsonExportWriter,
+            Format.XLS: writers.Excel2003ExportWriter,
+            Format.XLS_2007: writers.Excel2007ExportWriter,
+        }[format]()
+    except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
 
 def export_from_tables(tables, file, format, max_column_size=2000):
