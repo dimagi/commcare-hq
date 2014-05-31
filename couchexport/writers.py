@@ -181,6 +181,23 @@ class CsvExportWriter(ExportWriter):
         archive.close()
         self.file.seek(0)
 
+
+class UnzippedCsvExportWriter(CsvExportWriter):
+    """
+    CSV writer that doesn't zip things up - just serves the first table as a csv
+    """
+
+    def _close(self):
+        for i, (index, name) in enumerate(self.table_names.items()):
+            csvfile, path = self.table_files[index]
+            csvfile.close()
+            if i == 0:
+                with open(path, 'rb') as f:
+                    for line in f.readlines():
+                        self.file.write(line)
+        self.file.seek(0)
+
+
 class Excel2007ExportWriter(ExportWriter):
     max_table_name_size = 31
 
