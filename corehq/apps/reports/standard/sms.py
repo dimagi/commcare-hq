@@ -15,6 +15,8 @@ from casexml.apps.case.models import CommCareCase
 from django.conf import settings
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
+from corehq.apps.users.views import EditWebUserView
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -107,7 +109,8 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     slug = 'message_log'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
-    
+    contact_url_cache = {}
+
     @property
     def headers(self):
         header = DataTablesHeader(
@@ -119,26 +122,26 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         )
         header.custom_sort = [[0, 'desc']]
         return header
-    
+
     @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
-        
+
         username_map = {} # Store the results of username lookups for faster loading
-        
+
         direction_map = {
             INCOMING: _("Incoming"),
             OUTGOING: _("Outgoing"),
         }
-        
+
         # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
-        
+
         for message in data:
             if message.direction == OUTGOING and not message.processed:
                 continue
@@ -156,27 +159,57 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
                         username = CouchUser.get_by_user_id(recipient_id).username
                 except Exception:
                     pass
-               
+
                 username_map[recipient_id] = username
-            
+
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
-            
+
             timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
                 self._fmt_timestamp(timestamp),
-                self._fmt(username),
+                self._fmt_contact_link(message, username),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
             ])
-        
+
         return result
-    
+
+    def get_contact_url(self, msg):
+        if msg.couch_recipient:
+            if msg.couch_recipient not in self.contact_url_cache:
+                if msg.couch_recipient_doc_type == "CommCareCase":
+                    url = reverse("case_details",
+                        args=[self.domain, msg.couch_recipient])
+                elif msg.couch_recipient_doc_type == "WebUser":
+                    url = reverse(EditWebUserView.urlname,
+                        args=[self.domain, msg.couch_recipient])
+                elif msg.couch_recipient_doc_type == "CommCareUser":
+                    url = reverse(EditCommCareUserView.urlname,
+                        args=[self.domain, msg.couch_recipient])
+                else:
+                    url = None
+                self.contact_url_cache[msg.couch_recipient] = url
+            else:
+                url = self.contact_url_cache[msg.couch_recipient]
+            return url
+        else:
+            return None
+
     def _fmt(self, val):
         return format_datatables_data(val, val)
-    
+
+    def _fmt_contact_link(self, msg, username):
+        url = self.get_contact_url(msg)
+        if url:
+            ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
+            ret['raw'] = username
+        else:
+            ret = self.table_cell(username, username)
+        return ret
+
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
