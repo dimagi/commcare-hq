@@ -63,9 +63,7 @@ class RestoreConfig(object):
                     and sync_log.doc_type == 'SyncLog':
                 return sync_log
             else:
-                res = HttpResponse()
-                res.status_code = 412
-                return res
+                raise Http404()
         else:
             return None
 
