@@ -445,9 +445,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         for module in self.modules:
             for form in module.get_forms():
-                form_command = self.id_strings.form_command(form)
-                module_id, form_id = form_command.split('-')
                 if form.post_form_workflow != WORKFLOW_DEFAULT:
+                    form_command = self.id_strings.form_command(form)
+                    module_id, form_id = form_command.split('-')
+
                     entry = self.get_form_entry(suite, form_command)
                     entry.stack = Stack()
                     frame = CreateFrame()
@@ -465,12 +466,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                         frame_children.append(self.id_strings.form_command(form))
                         frame_children.extend(remaining_datums)
 
-                        while True:
+                        last = frame_children.pop()
+                        while isinstance(last, DatumMeta) and last.function:
+                            # keep removing last element until we hit a command
+                            # or a non-autoselect datum
                             last = frame_children.pop()
-                            if isinstance(last, basestring) or last.nodeset:
-                                # keep removing last element until we hit a command
-                                # or a datum with a nodeset (i.e. not an autoload)
-                                break
 
                         for child in frame_children:
                             if isinstance(child, basestring):
@@ -763,8 +763,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
-        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS
-
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
             if 'open_case' in actions and autoset_owner_id_for_open_case(actions):
