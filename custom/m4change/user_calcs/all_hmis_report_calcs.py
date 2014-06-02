@@ -42,7 +42,7 @@ class FormComparisonCalculator(fluff.Calculator):
 
 def _get_child_date_delivery(form):
     child_date_delivery = form.form.get("child_date_delivery", None)
-    return datetime.strptime(child_date_delivery, "%Y-%m-%d").date() if child_date_delivery else None
+    return child_date_delivery if child_date_delivery else None
 
 
 class InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months(fluff.Calculator):
