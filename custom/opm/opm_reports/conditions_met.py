@@ -36,8 +36,11 @@ class ConditionsMet(object):
         "atri": [
             ('name', "List of Beneficiary", True),
             ('awc_name', "AWC Name", True),
+            ('block_name', "Block Name", True),
             ('husband_name', "Husband Name", True),
-            ('month', "Month", True),
+            ('status', "Current status", True),
+            ('preg_month', 'Pregnancy Month', True),
+            ('child_age', "Child Age", True),
             ('window', "Window", True),
             ('one', "1", True),
             ('two', "2", True),
@@ -45,23 +48,25 @@ class ConditionsMet(object):
             ('four', "4", True),
             ('five', "5", True),
             ('cash', "Cash to be transferred", True),
+            ('case_id', 'Case ID', True),
             ('owner_id', "Owner Id", False),
-            ('block_name', "Block Name", False),
             ('closed', 'Closed', False)
         ],
         'wazirganj': [
             ('name', "List of Beneficiary", True),
             ('awc_name', "AWC Name", True),
+            ('block_name', "Block Name", True),
             ('status', "Current status", True),
-            ('month', "Month", True),
+            ('preg_month', 'Pregnancy Month', True),
+            ('child_age', "Child Age", True),
             ('window', "Window", True),
             ('one', "1", True),
             ('two', "2", True),
             ('four', "3", True),
             ('five', "4", True),
             ('cash', "Cash to be transferred", True),
+            ('case_id', 'Case ID', True),
             ('owner_id', "Owner Id", False),
-            ('block_name', "Block Name", False),
             ('closed', 'Closed', False)
         ]
     }
@@ -125,6 +130,7 @@ class ConditionsMet(object):
             return met_properties
 
         case_obj = CommCareCase.get(case['_source']['_id'])
+        self.case_id = get_property(case_obj, '_id', '')
         self.block_name = get_property(case_obj, 'block_name', '')
         self.owner_id = get_property(case_obj, 'owner_id', '')
         self.closed = get_property(case_obj, 'closed', False)
@@ -184,7 +190,8 @@ class ConditionsMet(object):
         self.husband_name = get_property(case_obj, 'husband_name')
         self.window = get_property(case_obj, 'which_window')
         if self.status == 'pregnant':
-            self.month = get_property(case_obj, 'pregnancy_month')
+            self.preg_month = get_property(case_obj, 'pregnancy_month')
+            self.child_age = EMPTY_FIELD
             self.one = img_elem % M_ATTENDANCE_Y if preg_month == '9' else img_elem % M_ATTENDANCE_N
             self.two = img_elem % M_WEIGHT_Y if preg_month in ['6', '9'] else img_elem % M_WEIGHT_N
             self.three = img_elem % IFA_Y if int(preg_month) < 7 else img_elem % IFA_N
@@ -198,10 +205,11 @@ class ConditionsMet(object):
                 self.five = ''
 
         elif self.status == 'mother':
+            self.preg_month = EMPTY_FIELD
             if child_age != -1:
-                self.month = child_age
+                self.child_age = child_age
             else:
-                self.month = EMPTY_FIELD
+                self.child_age = EMPTY_FIELD
 
             self.one = img_elem % C_ATTENDANCE_Y if 0 <= child_age <= 1 else img_elem % C_ATTENDANCE_N
             self.two = img_elem % C_WEIGHT_Y if child_age % 3 == 0 else img_elem % C_WEIGHT_N

@@ -82,7 +82,7 @@
   widget: bool
   default: false
 #  contingent_default: [{"condition": "{$parent.commtrack_enabled}=true", "value": "true"}]
-  requires: "{$parent.doc_type}='Application'"
+  requires: "{$parent.commtrack_enabled}=true"
   hide_if_not_enabled: true
   since: "2.0"
   preview: true

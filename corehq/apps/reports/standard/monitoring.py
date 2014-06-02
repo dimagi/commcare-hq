@@ -49,14 +49,6 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         user_link = self.get_raw_user_link(user)
         return self.table_cell(user.raw_username, user_link)
 
-    @property
-    def report_context(self):
-        return super(WorkerMonitoringReportTableBase, self).report_context
-
-    @property
-    def export_table(self):
-        return super(WorkerMonitoringReportTableBase, self).export_table
-
 
 class MultiFormDrilldownMixin(object):
     """

@@ -9,7 +9,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -85,12 +85,12 @@ class PatientListReportDisplay(CaseDisplay):
     def edit_link(self):
         module = self.app_dict['modules'][CM_APP_CM_MODULE]
         form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
-        return html.mark_safe("<a class='ajax_dialog' href='%s'>Edit</a>") \
+        return html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
             % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
                                                  app_build_id=self.latest_build,
                                                  module_id=CM_APP_CM_MODULE,
                                                  form_id=form_idx,
-                                                 case_id=self.case_id) + '/enter')
+                                                 case_id=self.case_id) + '/enter/')
 
     @property
     def case_detail_url(self):
@@ -147,7 +147,7 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def patient_info(self):
-        if self.last_interaction != EMPTY_FIELD:
+        if getattr(self, 'last_interaction', False) and self.last_interaction != EMPTY_FIELD:
             date = datetime.strptime(self.last_interaction, "%Y-%m-%dT%H:%M:%SZ")
             return date.strftime(OUTPUT_DATE_FORMAT)
         else:
@@ -344,8 +344,14 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
             users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
-            terms = {"terms": {"user_id": users, "minimum_should_match": 1}}
+            terms = {"terms": {"user_id": users}}
             es_filters["bool"]["must"].append(terms)
+        else:
+            user = self.request.couch_user
+            if not user.is_web_user():
+                groups = user.get_group_ids()
+                terms = {"terms": {"owner_id": groups}}
+                es_filters["bool"]["must"].append(terms)
 
         if self.case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})

@@ -84,12 +84,6 @@ REMINDERS_UI_PREVIEW = StaticToggle(
     'New reminders UI'
 )
 
-READABLE_FORM_DATA = StaticToggle(
-    'readable_form_data',
-    'Readable Form Data Page',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
     'Show UI-based case rebuild option',

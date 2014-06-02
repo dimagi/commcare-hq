@@ -216,6 +216,16 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     ]
             ),
             dict(
+                title="Vital Events",
+                indicators=[
+                    dict(slug="maternal_deaths", expected="--"),
+                    dict(slug="neonatal_deaths", expected="--"),
+                    dict(slug="infant_deaths", expected="--"),
+                    dict(slug="under5_deaths", expected="--"),
+                    dict(slug="over5_deaths", expected="--"),
+                ]
+            ),
+            dict(
                 title="Stats",
                 indicators=[
                     dict(slug="days_since_last_transmission", expected="--"),
