@@ -3,6 +3,7 @@ from corehq.apps.consumption.shortcuts import (get_default_consumption, set_defa
     set_default_consumption_for_product, set_default_consumption_for_supply_point
 )
 from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 
 domain = 'consumption-test'
 product_id = 'test-product'
@@ -127,20 +128,20 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
 
 
 def _create_domain_consumption(amt, domain=domain):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_DOMAIN).save()
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_DOMAIN).save()
 
 
 def _create_product_consumption(amt, domain=domain, product_id=product_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_PRODUCT, product_id=product_id).save()
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_PRODUCT, product_id=product_id).save()
 
 
 def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=type_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
                        supply_point_type=type_id).save()
 
 
 def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_point_id=supply_point_id):
-    DefaultConsumption(domain=domain, default_consumption=amt, type=TYPE_SUPPLY_POINT, product_id=product_id,
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT, product_id=product_id,
                        supply_point_id=supply_point_id).save()
 
 
