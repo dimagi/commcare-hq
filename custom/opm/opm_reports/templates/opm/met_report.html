@@ -20,7 +20,14 @@
                 src="{% static 'opm/img/logo.jpg' %}">
             </div>
             <h1 class="media-heading">{{ report.report_title }}</h1>
+            <h4 class="media-heading">
+                {% for subtitle in report.report_subtitles %}
+                <br/><small>{{ subtitle }}</small>
+                {% endfor %}
+            </h4>
         </div>
-        <br/><br/>
+    {% if rendered_as == 'print' %}
+        <br/><br/><br/><br/>
+    {% endif %}
 {% endif %}
 {% endblock %}
