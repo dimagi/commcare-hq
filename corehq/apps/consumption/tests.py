@@ -3,13 +3,13 @@ from corehq.apps.consumption.shortcuts import (get_default_consumption, set_defa
     set_default_consumption_for_product, set_default_consumption_for_supply_point
 )
 from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 
 domain = 'consumption-test'
 product_id = 'test-product'
 type_id = 'facilities'
 supply_point_id = 'test-facility'
 
-DAYS_IN_MONTH = 30
 
 class ConsumptionTestBase(TestCase):
     def setUp(self):

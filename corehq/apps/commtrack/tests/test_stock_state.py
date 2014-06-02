@@ -1,7 +1,8 @@
 from corehq.apps.commtrack.models import StockState
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
-from corehq.apps.commtrack.tests.util import CommTrackTest, DAYS_IN_MONTH
+from corehq.apps.commtrack.tests.util import CommTrackTest
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from datetime import datetime
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
 

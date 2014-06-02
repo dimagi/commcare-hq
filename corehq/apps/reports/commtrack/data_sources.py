@@ -9,6 +9,7 @@ from casexml.apps.stock.models import StockTransaction
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -105,7 +106,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         SLUG_LOCATION_ID: lambda s: SupplyPointCase.get(s.case_id).location_[-1],
         # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
         SLUG_CURRENT_STOCK: 'stock_on_hand',
-        SLUG_CONSUMPTION: lambda s: s.get_consumption() * 30 if s.get_consumption() is not None else None,
+        SLUG_CONSUMPTION: lambda s: s.get_consumption() * DAYS_IN_MONTH if s.get_consumption() is not None else None,
         SLUG_MONTHS_REMAINING: 'months_remaining',
         SLUG_CATEGORY: 'stock_category',
         # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
@@ -169,7 +170,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield {
                 'category': state.stock_category,
                 'product_id': product._id,
-                'consumption': state.get_consumption() * 30 if state.get_consumption() is not None else None,
+                'consumption': state.get_consumption() * Decimal(DAYS_IN_MONTH) if state.get_consumption() is not None else None,
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
@@ -188,9 +189,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
 
                 if product['consumption'] is None:
-                    product['consumption'] = state.get_consumption() * 30
+                    product['consumption'] = state.get_consumption() * Decimal(DAYS_IN_MONTH)
                 elif state.get_consumption() is not None:
-                    product['consumption'] += state.get_consumption() * 30
+                    product['consumption'] += state.get_consumption() * Decimal(DAYS_IN_MONTH)
 
                 product['count'] += 1
 
@@ -205,7 +206,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
             else:
                 product = Product.get(state.product_id)
-                consumption = state.get_consumption() * 30
+                consumption = state.get_consumption() * Decimal(DAYS_IN_MONTH)
 
                 product_aggregation[state.product_id] = {
                     'product_id': product._id,

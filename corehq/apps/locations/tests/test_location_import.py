@@ -1,5 +1,6 @@
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, DAYS_IN_MONTH
+from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.bulk import import_location
 from mock import patch
