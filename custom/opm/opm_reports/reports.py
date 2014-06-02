@@ -587,10 +587,6 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
 
     @property
-    def fixed_cols_spec(self):
-        return dict(num=2, width=200)
-
-    @property
     def export_table(self):
         """
         Exports the report as excel.

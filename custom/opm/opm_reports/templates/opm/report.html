@@ -30,32 +30,3 @@
     {% endif %}
 {% endif %}
 {% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        $(document).ajaxStop(function () {
-            // Solution to fix innaprobiate widths of fixed columns
-            var widths = [];
-
-            // first fix widths on tbody ...
-            $('.DTFC_LeftBodyWrapper thead th').each(
-                function(){
-                    $(this).css('width', $(this).width());
-            });
-
-            // ... now save the actual widths on array
-            $('.DTFC_LeftBodyWrapper thead th').each(
-                function(){
-                    widths.push($(this).width());
-            });
-
-            // ... and now update widths on thead
-            $('.DTFC_LeftHeadWrapper thead th').each(
-                function(i, val){
-                    $(this).css('width', widths[i]);
-            });
-        });
-
-    </script>
-
-{% endblock %}
