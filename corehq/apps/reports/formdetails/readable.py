@@ -129,6 +129,8 @@ def path_relative_to_context(path, path_context):
     assert path_context.endswith('/')
     if path.startswith(path_context):
         return path[len(path_context):]
+    elif path + '/' == path_context:
+        return ''
     else:
         raise ValueError('{path} does not start with {path_context}'.format(
             path=path,
@@ -261,19 +263,19 @@ def _flatten_json(json, result=None, path=()):
 
 
 def questions_in_hierarchy(questions):
-    partition = defaultdict(list)
+    # It turns out that questions isn't quite enough to reconstruct
+    # the hierarchy if there are groups that share the same ref
+    # as their parent (like for grouping on the screen but not the data).
+    # This currently does a best-effort by always nesting the group under
+    # the last group with the same xpath.
+    # That will display, but it'll be overzealously nested in the case that
+    # there are two appearance groups on the same level.
+    # Real solution is to get rid of this function and instead have
+    # get_questions preserve hierarchy to begin with
+    result = []
+    question_lists_by_group = {None: result}
     for question in questions:
-        partition[question.group].append(question)
-    for question in questions:
-        if question.type in ('Group', 'Repeat'):
-            try:
-                question.children = partition.pop(question.value)
-            except KeyError:
-                logging.error(
-                    'Failed to find group {group}.'
-                    'Questions: {questions}'.format(
-                        group=question.value,
-                        questions=questions,
-                    )
-                )
-    return partition[None]
+        question_lists_by_group[question.group].append(question)
+        if question.type in ('Group', 'Repeat', 'FieldList'):
+            question_lists_by_group[question.value] = question.children
+    return question_lists_by_group[None]
