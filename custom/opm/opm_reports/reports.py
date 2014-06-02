@@ -587,6 +587,17 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
 
     @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/hsr_print.html"
+        return HttpResponse(self._async_context()['report'])
+
+    @property
     def export_table(self):
         """
         Exports the report as excel.
