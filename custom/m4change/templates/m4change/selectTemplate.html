@@ -82,6 +82,7 @@
                     <button id="reject_button" class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
                     <label for="reject_reason">{% trans 'Reason' %}:</label>
                     <select id="reject_reason" disabled="disabled" data-bind="value: reject_reason">
+                        <option value="none">{% trans 'None' %}</option>
                         <option value="phone_number">{% trans 'Incorrect phone number' %}</option>
                         <option value="double">{% trans 'Double entry' %}</option>
                         <option value="other">{% trans 'Other errors' %}</option>

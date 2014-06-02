@@ -110,79 +110,79 @@ class McctMonthlyAggregateReport(MonthYearMixin, CaseListReport, M4ChangeReport)
     def get_initial_row_data(self):
         return {
             "all_eligible_clients_total": {
-                "s/n": 1, "label": _("All eligible clients"), "value": 0
+                "s/n": 1, "label": _("All eligible beneficiaries"), "value": 0
             },
             "all_reviewed_clients_total": {
-                "s/n": 2, "label": _("All reviewed clients"), "value": 0
+                "s/n": 2, "label": _("All reviewed beneficiaries"), "value": 0
             },
             "all_approved_clients_total": {
-                "s/n": 3, "label": _("All approved clients"), "value": 0
+                "s/n": 3, "label": _("All approved beneficiaries"), "value": 0
             },
             "all_rejected_clients_total": {
-                "s/n": 4, "label": _("All rejected clients"), "value": 0
+                "s/n": 4, "label": _("All rejected beneficiaries"), "value": 0
             },
             "all_paid_clients_total": {
-                "s/n": 5, "label": _("Paid clients for the month"), "value": 0
+                "s/n": 5, "label": _("Paid beneficiaries for the month"), "value": 0
             },
             "status_eligible_due_to_registration": {
-                "s/n": 6, "label": _("Eligible clients due to registration"), "value": 0
+                "s/n": 6, "label": _("Eligible beneficiaries due to registration"), "value": 0
             },
             "status_eligible_due_to_4th_visit": {
-                "s/n": 7, "label": _("Eligible clients due to 4th visit"), "value": 0
+                "s/n": 7, "label": _("Eligible beneficiaries due to 4th visit"), "value": 0
             },
             "status_eligible_due_to_delivery": {
-                "s/n": 8, "label": _("Eligible clients due to delivery"), "value": 0
+                "s/n": 8, "label": _("Eligible beneficiaries due to delivery"), "value": 0
             },
             "status_eligible_due_to_immun_or_pnc_visit": {
-                "s/n": 9, "label": _("Eligible clients due to immunization or PNC visit"), "value": 0
+                "s/n": 9, "label": _("Eligible beneficiaries due to immunization or PNC visit"), "value": 0
             },
             "status_reviewed_due_to_registration": {
-                "s/n": 10, "label": _("Reviewed clients due to registration"), "value": 0
+                "s/n": 10, "label": _("Reviewed beneficiaries due to registration"), "value": 0
             },
             "status_reviewed_due_to_4th_visit": {
-                "s/n": 11, "label": _("Reviewed clients due to 4th visit"), "value": 0
+                "s/n": 11, "label": _("Reviewed beneficiaries due to 4th visit"), "value": 0
             },
             "status_reviewed_due_to_delivery": {
-                "s/n": 12, "label": _("Reviewed clients due to delivery"), "value": 0
+                "s/n": 12, "label": _("Reviewed beneficiaries due to delivery"), "value": 0
             },
             "status_reviewed_due_to_immun_or_pnc_visit": {
-                "s/n": 13, "label": _("Reviewed clients due to immunization or PNC visit"), "value": 0
+                "s/n": 13, "label": _("Reviewed beneficiaries due to immunization or PNC visit"), "value": 0
             },
             "status_approved_due_to_registration": {
-                "s/n": 14, "label": _("Approved clients due to registration"), "value": 0
+                "s/n": 14, "label": _("Approved beneficiaries due to registration"), "value": 0
             },
             "status_approved_due_to_4th_visit": {
-                "s/n": 15, "label": _("Approved clients due to 4th visit"), "value": 0
+                "s/n": 15, "label": _("Approved beneficiaries due to 4th visit"), "value": 0
             },
             "status_approved_due_to_delivery": {
-                "s/n": 16, "label": _("Approved clients due to delivery"), "value": 0
+                "s/n": 16, "label": _("Approved beneficiaries due to delivery"), "value": 0
             },
             "status_approved_due_to_immun_or_pnc_visit": {
-                "s/n": 17, "label": _("Approved clients due to immunization or PNC visit"), "value": 0
+                "s/n": 17, "label": _("Approved beneficiaries due to immunization or PNC visit"), "value": 0
             },
             "status_paid_due_to_registration": {
-                "s/n": 18, "label": _("Paid clients due to registration"), "value": 0
+                "s/n": 18, "label": _("Paid beneficiaries due to registration"), "value": 0
             },
             "status_paid_due_to_4th_visit": {
-                "s/n": 19, "label": _("Paid clients due to 4th visit"), "value": 0
+                "s/n": 19, "label": _("Paid beneficiaries due to 4th visit"), "value": 0
             },
             "status_paid_due_to_delivery": {
-                "s/n": 20, "label": _("Paid clients due to delivery"), "value": 0
+                "s/n": 20, "label": _("Paid beneficiaries due to delivery"), "value": 0
             },
             "status_paid_due_to_immun_or_pnc_visit": {
-                "s/n": 21, "label": _("Paid clients due to immunization or PNC visit"), "value": 0
+                "s/n": 21, "label": _("Paid beneficiaries due to immunization or PNC visit"), "value": 0
             },
             "status_rejected_due_to_incorrect_phone_number": {
-                "s/n": 22, "label": _("Rejected clients due to incorrect phone number"), "value": 0
+                "s/n": 22, "label": _("Rejected beneficiaries due to incorrect phone number"), "value": 0
             },
             "status_rejected_due_to_double_entry": {
-                "s/n": 23, "label": _("Rejected clients due to double entry"), "value": 0
+                "s/n": 23, "label": _("Rejected beneficiaries due to double entry"), "value": 0
             },
             "status_rejected_due_to_other_errors": {
-                "s/n": 24, "label": _("Rejected clients due to other errors"), "value": 0
+                "s/n": 24, "label": _("Rejected beneficiaries due to other errors"), "value": 0
             },
             "all_clients_status_view_total": {
-                "s/n": 26, "label": _("All clients status view"), "value": 0
+                "s/n": 26, "label": _("All beneficiaries status view"), "value": 0
             },
         }
 

@@ -58,6 +58,7 @@ PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS = PNC_CHILD_IMMUNIZATION_FOR
 EMPTY_FIELD = "---"
 
 REJECTION_REASON_DISPLAY_NAMES = {
+    "none": _("None"),
     "phone_number": _("Incorrect phone number"),
     "double": _("Double entry"),
     "other": _("Other errors")
