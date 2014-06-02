@@ -8,6 +8,7 @@ from urllib import urlencode
 import pytz
 from couchdbkit.ext.django.schema import *
 from corehq.apps.unicel.forms import UnicelBackendForm
+from django.conf import settings
 
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
 
@@ -76,7 +77,8 @@ class UnicelBackend(SMSBackend):
             params.append((OutboundParams.MESSAGE, encoded))
 
         try:
-            data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+            data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
+                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         except Exception:
             data = None
 

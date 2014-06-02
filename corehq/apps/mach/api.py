@@ -50,7 +50,7 @@ class MachBackend(SMSBackend):
             params["msg"] = msg.text.encode("utf-16-be").encode("hex")
             params["encoding"] = "ucs"
         url = "%s?%s" % (MACH_URL, urllib.urlencode(params))
-        resp = urllib2.urlopen(url).read()
+        resp = urllib2.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
         create_billable_for_sms(msg, MachBackend.get_api_id(), delay=delay, response=resp)
 

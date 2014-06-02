@@ -4,6 +4,7 @@ from couchdbkit.ext.django.schema import *
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.telerivet.forms import TelerivetBackendForm
+from django.conf import settings
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -52,6 +53,7 @@ class TelerivetBackend(SMSBackend):
             auth=(str(self.api_key), ''),
             data=params,
             verify=True,
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
 
         result = result.json()

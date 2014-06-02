@@ -348,7 +348,13 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True, descending=True)
+        return cls.view('fixtures/data_items_by_domain_type',
+            startkey=[domain, {}],
+            endkey=[domain],
+            reduce=False,
+            include_docs=True,
+            descending=True
+        )
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
