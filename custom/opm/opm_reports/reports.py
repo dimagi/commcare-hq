@@ -529,6 +529,7 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
 
     name = "Health Status Report"
     slug = "health_status_report"
+    fix_left_col = True
     model = HealthStatus
 
     @property
@@ -584,6 +585,10 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         else:
             raise InvalidRow
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=200)
 
     @property
     def export_table(self):
