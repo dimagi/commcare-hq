@@ -38,6 +38,7 @@ class ConditionsMet(object):
             ('awc_name', "AWC Name", True),
             ('block_name', "Block Name", True),
             ('husband_name', "Husband Name", True),
+            ('status', "Current status", True),
             ('preg_month', 'Pregnancy Month', True),
             ('child_age', "Child Age", True),
             ('window', "Window", True),
