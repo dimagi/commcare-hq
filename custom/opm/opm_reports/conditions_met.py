@@ -48,6 +48,7 @@ class ConditionsMet(object):
             ('four', "4", True),
             ('five', "5", True),
             ('cash', "Cash to be transferred", True),
+            ('case_id', 'Case ID', True),
             ('owner_id', "Owner Id", False),
             ('closed', 'Closed', False)
         ],
@@ -64,6 +65,7 @@ class ConditionsMet(object):
             ('four', "3", True),
             ('five', "4", True),
             ('cash', "Cash to be transferred", True),
+            ('case_id', 'Case ID', True),
             ('owner_id', "Owner Id", False),
             ('closed', 'Closed', False)
         ]
@@ -128,6 +130,7 @@ class ConditionsMet(object):
             return met_properties
 
         case_obj = CommCareCase.get(case['_source']['_id'])
+        self.case_id = get_property(case_obj, '_id', '')
         self.block_name = get_property(case_obj, 'block_name', '')
         self.owner_id = get_property(case_obj, 'owner_id', '')
         self.closed = get_property(case_obj, 'closed', False)
