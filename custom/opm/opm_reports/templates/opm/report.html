@@ -17,7 +17,7 @@
             <h1 class="media-heading">{{ report.report_title }}</h1>
             <div class="pull-right">
                 <img id="opm-logo" class="media-object pull-right"
-                src="{% static 'opm/img/opm-small.jpg' %}">
+                src="{% static 'opm/img/logo.jpg' %}">
             </div>
             <h4 class="media-heading">
                 {% for subtitle in report.report_subtitles %}
@@ -25,5 +25,37 @@
                 {% endfor %}
             </h4>
         </div>
+    {% if rendered_as == 'print' %}
+        <br/><br/><br/><br/>
+    {% endif %}
 {% endif %}
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(document).ajaxStop(function () {
+            // Solution to fix innaprobiate widths of fixed columns
+            var widths = [];
+
+            // first fix widths on tbody ...
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    $(this).css('width', $(this).width());
+            });
+
+            // ... now save the actual widths on array
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    widths.push($(this).width());
+            });
+
+            // ... and now update widths on thead
+            $('.DTFC_LeftHeadWrapper thead th').each(
+                function(i, val){
+                    $(this).css('width', widths[i]);
+            });
+        });
+
+    </script>
+
 {% endblock %}
