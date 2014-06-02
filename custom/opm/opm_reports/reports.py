@@ -788,7 +788,7 @@ class MetReport(BaseReport):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "opm/print_report.html"
+        self.override_template = "opm/met_print_report.html"
         return HttpResponse(self._async_context()['report'])
 
 
