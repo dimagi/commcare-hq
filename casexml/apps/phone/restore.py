@@ -22,6 +22,7 @@ from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse, Http404
 from casexml.apps.phone.checksum import CaseStateHash
+from no_exceptions.exceptions import HttpException
 
 
 class StockSettings(object):
@@ -63,7 +64,7 @@ class RestoreConfig(object):
                     and sync_log.doc_type == 'SyncLog':
                 return sync_log
             else:
-                raise Http404()
+                raise HttpException(412)
         else:
             return None
 
