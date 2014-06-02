@@ -40,6 +40,7 @@ class Format(object):
     XLS_2007 = "xlsx"
     HTML = "html"
     JSON = "json"
+    UNZIPPED_CSV = 'unzipped-csv'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
@@ -58,7 +59,12 @@ class Format(object):
                           "download": False},
                    JSON: {"mimetype": "application/json",
                           "extension": "json",
-                          "download": False}}
+                          "download": False},
+                   UNZIPPED_CSV: {"mimetype": "text/csv",
+                                  "extension": "csv",
+                                  "download": True},
+
+    }
 
     VALID_FORMATS = FORMAT_DICT.keys()
 
