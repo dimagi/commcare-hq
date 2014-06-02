@@ -1,4 +1,5 @@
 from collections import namedtuple, defaultdict
+from functools import total_ordering
 from os.path import commonprefix
 from corehq.apps.app_manager import id_strings
 import urllib
@@ -343,7 +344,28 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
-DatumMeta = namedtuple('Datum', SessionDatum.ORDER)
+@total_ordering
+class DatumMeta(object):
+    """
+    Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
+    to SessionDatum.nodeset and SessionDatum.function attributes.
+    """
+    def __init__(self, session_datum):
+        self.id = session_datum.id
+        self.nodeset = session_datum.nodeset
+        self.function = session_datum.function
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return 'DatumMeta(id={})'.format(self.id)
 
 
 def get_detail_column_infos(detail, include_sort):
@@ -462,7 +484,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         common_datums = commonprefix(datums_list)
                         remaining_datums = form_datums[len(common_datums):]
 
-                        frame_children = common_datums
+                        frame_children = list(common_datums)
                         frame_children.append(self.id_strings.form_command(form))
                         frame_children.extend(remaining_datums)
 
@@ -496,8 +518,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             if form_id != 'case-list':
                 entries[command] = e
                 for d in e.datums:
-                    datum = DatumMeta(**{field: getattr(d, field) for field in SessionDatum.ORDER})
-                    datums[module_id][form_id].append(datum)
+                    datums[module_id][form_id].append(DatumMeta(d))
 
         return entries, datums
 
