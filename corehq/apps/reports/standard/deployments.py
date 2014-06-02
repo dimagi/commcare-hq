@@ -85,7 +85,7 @@ class ApplicationStatusReport(DeploymentsReport):
 
             key = make_form_couch_key(self.domain, user_id=user.user_id,
                                       app_id=selected_app or None)
-            data = XFormInstance.view(
+            xform = XFormInstance.view(
                 "reports_forms/all_forms",
                 startkey=key+[{}],
                 endkey=key,
