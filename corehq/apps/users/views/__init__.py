@@ -231,17 +231,10 @@ class EditWebUserView(BaseEditUserView):
         return form
 
     @property
-    def editable_user(self):
-        #  the same method as above, just without memoization
-        try:
-            return WebUser.get(self.editable_user_id)
-        except (ResourceNotFound, CouchUser.AccountTypeError):
-            raise Http404()
-
-    @property
     def form_user_update_permissions(self):
-        is_super_user = self.editable_user.is_superuser
-        is_user_staff = self.editable_user.is_staff
+        user = self.editable_user
+        is_super_user = user.is_superuser
+        is_user_staff = user.is_staff
 
         return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user, 'staff_user': is_user_staff})
 
@@ -258,6 +251,9 @@ class EditWebUserView(BaseEditUserView):
         }
         if self.request.project.commtrack_enabled:
             ctx.update({'update_form': self.commtrack_form})
+        if self.request.couch_user.is_superuser:
+            ctx.update({'update_permissions': True})
+
         return ctx
 
     @method_decorator(require_can_edit_web_users)
@@ -270,10 +266,11 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "update-user-permissions":
+        if self.request.POST['form_type'] == "update-user-permissions" and request.couch_user.is_superuser:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
             is_staff_user = True if  'staff_user' in self.request.POST and self.request.POST['staff_user'] == 'on' else False
-            if self.form_user_update_permissions.update_user_permission(editable_user=self.editable_user,
+            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
+                                                                        editable_user=self.editable_user,
                                                                         is_super_user=is_super_user, is_staff_user=is_staff_user):
                 messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)

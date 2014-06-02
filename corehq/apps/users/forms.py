@@ -132,19 +132,12 @@ class UpdateUserPermissionForm(forms.Form):
     super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
     staff_user = forms.BooleanField(label=ugettext_lazy('System Staff User'), required=False)
 
-    def update_user_permission(self, editable_user=None, is_super_user=None, is_staff_user=None):
+    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None, is_staff_user=None):
         is_update_successful = False
-        if editable_user:
-            from django.contrib.auth.models import User
-            django_user = User.objects.get_by_natural_key(editable_user.username)
-            django_user.is_superuser = is_super_user
-            django_user.is_staff = is_staff_user
-            django_user.save()
-
-            existing_user = CouchUser.from_django_user(django_user)
-            existing_user.is_superuser = is_super_user
-            existing_user.is_staff = is_staff_user
-            existing_user.save()
+        if editable_user and couch_user.is_superuser:
+            editable_user.is_superuser = is_super_user
+            editable_user.is_staff = is_staff_user
+            editable_user.save()
             is_update_successful = True
 
         return is_update_successful
