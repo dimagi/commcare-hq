@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -265,5 +266,14 @@ def questions_in_hierarchy(questions):
         partition[question.group].append(question)
     for question in questions:
         if question.type in ('Group', 'Repeat'):
-            question.children = partition.pop(question.value)
+            try:
+                question.children = partition.pop(question.value)
+            except KeyError:
+                logging.error(
+                    'Failed to find group {group}.'
+                    'Questions: {questions}'.format(
+                        group=question.value,
+                        questions=questions,
+                    )
+                )
     return partition[None]
