@@ -908,7 +908,9 @@ def form_data(request, domain, instance_id):
 def case_form_data(request, domain, case_id, xform_id):
     context = _get_form_context(request, domain, xform_id)
     context['case_id'] = case_id
+    context['side_pane'] = True
     return HttpResponse(render_form(context['instance'], domain, options=context))
+
 
 @require_form_view_permission
 @login_and_domain_required

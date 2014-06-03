@@ -261,8 +261,8 @@ requires imports/proptable.html to be included in the main template
             </a>
         </label>
         {% endif %}
-        <div class="row-fluid">
-            <table class="table table-bordered span6">
+        <div{% if not side_pane %} class="row-fluid"{% endif %}>
+            <table class="table table-bordered {% if not side_pane %}span6{% endif %}">
                 <tr>
                     <th class="span6">
                         <span class="form-data-readable">{% trans "Question" %}</span>
