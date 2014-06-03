@@ -751,6 +751,214 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         self.schedule_form.save(self.reminder_handler)
 
 
+class AddStructuredKeywordView(BaseMessagingSectionView):
+    urlname = 'add_structured_keyword'
+    page_title = ugettext_noop("New Structured Keyword")
+    template_name = 'reminders/keyword.html'
+    process_structured_message = True
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': KeywordsListView.page_title,
+                'url': reverse(KeywordsListView.urlname, args=[self.domain]),
+            },
+        ]
+
+    @property
+    @memoized
+    def keyword(self):
+        return SurveyKeyword(domain=self.domain)
+
+    @property
+    def keyword_form(self):
+        raise NotImplementedError("you must implement keyword_form")
+
+    @property
+    def page_context(self):
+        def _fmt_choices(val, text):
+            return {'value': val, 'text': text}
+        return {
+            'form': self.keyword_form,
+            'form_list': get_form_list(self.domain),
+        }
+
+    @property
+    def group_choices(self):
+        return [(g._id, g.name) for g in Group.by_domain(self.domain)]
+
+    @property
+    def form_choices(self):
+        available_forms = get_form_list(self.domain)
+        return [(a['code'], a['name']) for a in available_forms]
+
+    @property
+    @memoized
+    def keyword_form(self):
+        if self.request.method == 'POST':
+            return KeywordForm(
+                self.request.POST, domain=self.domain,
+                process_structured=self.process_structured_message,
+                content_type_choices=KEYWORD_CONTENT_CHOICES,
+                recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
+                group_choices=self.group_choices,
+                form_choices=self.form_choices,
+            )
+        return KeywordForm(
+            domain=self.domain,
+            process_structured=self.process_structured_message,
+            content_type_choices=KEYWORD_CONTENT_CHOICES,
+            recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
+            group_choices=self.group_choices,
+            form_choices=self.form_choices,
+        )
+
+    def post(self, request, *args, **kwargs):
+        if self.keyword_form.is_valid():
+            self.keyword.keyword = self.keyword_form.cleaned_data['keyword']
+            self.keyword.description = self.keyword_form.cleaned_data['description']
+            self.keyword.delimiter = self.keyword_form.cleaned_data['delimiter']
+            self.keyword.override_open_sessions = self.keyword_form.cleaned_data['override_open_sessions']
+
+            self.keyword.initiator_doc_type_filter = []
+            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'user':
+                self.keyword.initiator_doc_type_filter.append('CommCareUser')
+            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'case':
+                self.keyword.initiator_doc_type_filter.append('CommCareCase')
+
+            self.keyword.actions = [
+                SurveyKeywordAction(
+                    recipient=RECIPIENT_SENDER,
+                    action=self.keyword_form.cleaned_data['sender_content_type'],
+                    message_content=self.keyword_form.cleaned_data['sender_message'],
+                    form_unique_id=self.keyword_form.cleaned_data['sender_form_unique_id'],
+                ),
+            ]
+            if self.process_structured_message:
+                self.keyword.actions.append(
+                    SurveyKeywordAction(
+                        recipient=RECIPIENT_SENDER,
+                        action=METHOD_STRUCTURED_SMS,
+                        form_unique_id=self.keyword_form.cleaned_data['structured_sms_form_unique_id'],
+                        use_named_args=self.keyword_form.cleaned_data['use_named_args'],
+                        named_args=self.keyword_form.cleaned_data['named_args'],
+                        named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
+                    )
+                )
+            if self.keyword_form.cleaned_data['notify_others']:
+                self.keyword.actions.append(
+                    SurveyKeywordAction(
+                        recipient=self.keyword_form.cleaned_data['other_recipient_type'],
+                        recipient_id=self.keyword_form.cleaned_data['other_recipient_id'],
+                        action=self.keyword_form.cleaned_data['other_recipient_content_type'],
+                        message_content=self.keyword_form.cleaned_data['other_recipient_message'],
+                        form_unique_id=self.keyword_form.cleaned_data['other_recipient_form_unique_id'],
+                    )
+                )
+            self.keyword.save()
+            return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class AddNormalKeywordView(AddStructuredKeywordView):
+    urlname = 'add_normal_keyword'
+    page_title = ugettext_noop("New Keyword")
+    process_structured_message = False
+
+
+class EditStructuredKeywordView(AddStructuredKeywordView):
+    urlname = 'edit_structured_keyword'
+    page_title = ugettext_noop("Edit Structured Keyword")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.keyword_id])
+
+    @property
+    def keyword_id(self):
+        return self.kwargs.get('keyword_id')
+
+    @property
+    @memoized
+    def keyword(self):
+        if self.keyword_id is None:
+            raise Http404()
+        sk = SurveyKeyword.get(self.keyword_id)
+        if sk.domain != self.domain:
+            raise Http404()
+        return sk
+
+    @property
+    @memoized
+    def keyword_form(self):
+        initial = self.get_initial_values()
+        if self.request.method == 'POST':
+            form = KeywordForm(
+                self.request.POST, domain=self.domain, initial=initial,
+                process_structured=self.process_structured_message,
+                content_type_choices=KEYWORD_CONTENT_CHOICES,
+                recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
+                group_choices=self.group_choices,
+                form_choices=self.form_choices,
+            )
+            form._sk_id = self.keyword_id
+            return form
+        return KeywordForm(
+            domain=self.domain, initial=initial,
+            process_structured=self.process_structured_message,
+            content_type_choices=KEYWORD_CONTENT_CHOICES,
+            recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
+            group_choices=self.group_choices,
+            form_choices=self.form_choices,
+        )
+
+    def get_initial_values(self):
+        initial = {
+            'keyword': self.keyword.keyword,
+            'description': self.keyword.description,
+            'delimiter': self.keyword.delimiter,
+            'override_open_sessions': self.keyword.override_open_sessions,
+            'restrict_keyword_initiation': len(self.keyword.initiator_doc_type_filter) > 0,
+            'allow_initiation_by_case': "CommCareCase" in self.keyword.initiator_doc_type_filter,
+            'allow_initiation_by_mobile_worker': "CommCareUser" in self.keyword.initiator_doc_type_filter,
+        }
+        for action in self.keyword.actions:
+            if action.action == METHOD_STRUCTURED_SMS:
+                if self.process_structured_message:
+                    initial.update({
+                        'process_structured_sms': True,
+                        'structured_sms_form_unique_id': action.form_unique_id,
+                        'use_custom_delimiter': self.keyword.delimiter is not None,
+                        'use_named_args_separator': action.named_args_separator is not None,
+                        'use_named_args': action.use_named_args,
+                        'named_args_separator': action.named_args_separator,
+                        'named_args': [{"name" : k, "xpath" : v} for k, v in action.named_args.items()],
+                    })
+            elif action.recipient == RECIPIENT_SENDER:
+                initial.update({
+                    'sender_content_type': action.action,
+                    'sender_message': action.message_content,
+                    'sender_form_unique_id': action.form_unique_id,
+                })
+            else:
+                initial.update({
+                    'notify_others': True,
+                    'other_recipient_type': action.recipient,
+                    'other_recipient_id': action.recipient_id,
+                    'other_recipient_content_type': action.action,
+                    'other_recipient_message': action.message_content,
+                    'other_recipient_form_unique_id': action.form_unique_id,
+                })
+        return initial
+
+
+class EditNormalKeywordView(EditStructuredKeywordView):
+    urlname = 'edit_normal_keyword'
+    page_title = ugettext_noop("Edit Normal Keyword")
+    process_structured_message = False
+
+
 @reminders_framework_permission
 def manage_keywords(request, domain):
     context = {
