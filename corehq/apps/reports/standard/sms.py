@@ -178,36 +178,53 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         return result
 
     def get_contact_url(self, msg):
+        contact_type = _("Unknown")
+        url = None
         if msg.couch_recipient:
             if msg.couch_recipient not in self.contact_url_cache:
                 if msg.couch_recipient_doc_type == "CommCareCase":
                     url = reverse("case_details",
                         args=[self.domain, msg.couch_recipient])
+                    contact_type = _("Case")
                 elif msg.couch_recipient_doc_type == "WebUser":
                     url = reverse(EditWebUserView.urlname,
                         args=[self.domain, msg.couch_recipient])
+                    contact_type = _("Web User")
                 elif msg.couch_recipient_doc_type == "CommCareUser":
                     url = reverse(EditCommCareUserView.urlname,
                         args=[self.domain, msg.couch_recipient])
+                    contact_type = _("Mobile Worker")
                 else:
                     url = None
-                self.contact_url_cache[msg.couch_recipient] = url
+                self.contact_url_cache[msg.couch_recipient] = (url, contact_type)
             else:
-                url = self.contact_url_cache[msg.couch_recipient]
-            return url
-        else:
-            return None
+                url, contact_type = self.contact_url_cache[msg.couch_recipient]
+        return (url, contact_type)
+
+    @property
+    def export_table(self):
+        result = super(MessageLogReport, self).export_table
+        table = result[0][1]
+        table[0].append(_("Contact Type"))
+        table[0].append(_("Contact Id"))
+        for row in table[1:]:
+            contact_info = row[1].split("|||")
+            row[1] = contact_info[0]
+            row.append(contact_info[1])
+            row.append(contact_info[2])
+        return result
 
     def _fmt(self, val):
         return format_datatables_data(val, val)
 
     def _fmt_contact_link(self, msg, username):
-        url = self.get_contact_url(msg)
+        url, contact_type = self.get_contact_url(msg)
+        key = "|||".join([username, contact_type, msg.couch_recipient or ""])
         if url:
             ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
-            ret['raw'] = username
         else:
             ret = self.table_cell(username, username)
+        ret['raw'] = key
         return ret
 
     def _fmt_timestamp(self, timestamp):
