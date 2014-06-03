@@ -1635,6 +1635,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
         return [
             _("Keyword"),
             _("Description"),
+            _("Action"),
         ]
 
     @property
@@ -1649,14 +1650,39 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             skip=self.skip,
         ):
             yield {
-                'itemData': {
-                    'id': keyword._id,
-                    'keyword': keyword.keyword,
-                    'description': keyword.description,
-                    'editUrl': reverse('edit_keyword', args=[self.domain, keyword._id]),
-                },
+                'itemData': self._fmt_keyword_data(keyword),
                 'template': 'keyword-row-template',
             }
+
+    def _fmt_keyword_data(self, keyword):
+        actions = [a.action for a in keyword.actions]
+        is_structured = METHOD_STRUCTURED_SMS in actions
+        return {
+            'id': keyword._id,
+            'keyword': keyword.keyword,
+            'description': keyword.description,
+            'editUrl': reverse(
+                EditStructuredKeywordView.urlname,
+                args=[self.domain, keyword._id]
+            ) if is_structured else reverse(
+                EditNormalKeywordView.urlname,
+                args=[self.domain, keyword._id]
+            ),
+            'deleteModalId': 'delete-%s' % keyword._id,
+        }
+
+    def get_deleted_item_data(self, item_id):
+        try:
+            s = SurveyKeyword.get(item_id)
+        except ResourceNotFound:
+            raise Http404()
+        if s.domain != self.domain or s.doc_type != "SurveyKeyword":
+            raise Http404()
+        s.retire()
+        return {
+            'itemData': self._fmt_keyword_data(s),
+            'template': 'keyword-deleted-template',
+        }
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
