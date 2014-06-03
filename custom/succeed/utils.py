@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.domain.models import Domain
 
 
 SUCCEED_DOMAIN = 'succeed'
@@ -45,6 +47,15 @@ def is_pm_or_pi(user):
 def has_any_role(user):
     return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'],
                                                                       CONFIG['cm_role'], CONFIG['chw_role']] else False
+
+
+def get_app_build(app_dict):
+    domain = Domain._get_by_name(app_dict['domain'])
+    if domain.use_cloudcare_releases:
+        return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
+    else:
+        return ApplicationBase.get_latest_build(app_dict['domain'], app_dict['_id'])['_id']
+    return None
 
 
 def get_form_dict(case, form_xmlns):

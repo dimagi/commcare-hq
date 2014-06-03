@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
@@ -18,7 +17,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientInfoReport
-from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -46,7 +45,7 @@ class PatientListReportDisplay(CaseDisplay):
         if last_inter:
             self.last_interaction = last_inter['date']
         self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
-        self.latest_build = ApplicationBase.get_latest_build(report.domain, self.app_dict['_id'])['_id']
+        self.latest_build = get_app_build(self.app_dict)
         super(PatientListReportDisplay, self).__init__(report, case_dict)
         self.update_target_date_case_properties()
 
