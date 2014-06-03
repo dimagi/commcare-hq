@@ -27,6 +27,8 @@ setup(
         'simplejson',
         'Pillow==2.0.0',
         'unittest2',  # Actually a missing dimagi-utils dep?
+        'django-redis==3.3',
+        'redis==2.8.0',
     ],
     tests_require=[
         'coverage',
