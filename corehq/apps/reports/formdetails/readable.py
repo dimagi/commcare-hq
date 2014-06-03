@@ -266,16 +266,15 @@ def questions_in_hierarchy(questions):
     # It turns out that questions isn't quite enough to reconstruct
     # the hierarchy if there are groups that share the same ref
     # as their parent (like for grouping on the screen but not the data).
-    # This currently does a best-effort by always nesting the group under
-    # the last group with the same xpath.
-    # That will display, but it'll be overzealously nested in the case that
-    # there are two appearance groups on the same level.
+    # In this case, ignore nesting and put all sub questions on the top level,
+    # along with the group itself.
     # Real solution is to get rid of this function and instead have
     # get_questions preserve hierarchy to begin with
     result = []
     question_lists_by_group = {None: result}
     for question in questions:
         question_lists_by_group[question.group].append(question)
-        if question.type in ('Group', 'Repeat', 'FieldList'):
+        if question.type in ('Group', 'Repeat', 'FieldList') \
+                and question.value not in question_lists_by_group:
             question_lists_by_group[question.value] = question.children
     return question_lists_by_group[None]
