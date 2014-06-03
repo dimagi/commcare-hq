@@ -46,7 +46,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ## saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
     ## Full Excel export
-    url(r'^full_excel_export/(?P<export_hash>[\w\-]+)$', "export_report", name="export_report"),
+    url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', "export_report", name="export_report"),
 
     # once off email
     url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
