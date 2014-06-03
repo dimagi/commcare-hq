@@ -1,6 +1,7 @@
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse
-from tastypie.resources import convert_post_to_patch
+from tastypie.paginator import Paginator
+from tastypie.resources import convert_post_to_patch, ModelResource
 from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
@@ -18,6 +19,7 @@ from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
 from . import JsonResource, DomainSpecificResourceMixin
+from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
@@ -331,3 +333,23 @@ class GroupResource(v0_4.GroupResource):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
         return bundle
+
+
+class DeviceReportResource(JsonResource, ModelResource):
+    class Meta:
+        queryset = DeviceReportEntry.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'device-log'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        paginator_class = Paginator
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "user_id": ('exact',),
+            "username": ('exact',),
+            "type": ('exact',),
+            "xform_id": ('exact',),
+            "device_id": ('exact',),
+        }
