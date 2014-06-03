@@ -34,6 +34,10 @@ class FRIReport(CustomProjectReport, GenericTabularReport):
     _domain_obj = None
 
     @property
+    def timezone(self):
+        return pytz.timezone(self.domain_obj.default_timezone)
+
+    @property
     def domain_obj(self):
         if not self._domain_obj:
             self._domain_obj = Domain.get_by_name(self.domain, strict=True)
