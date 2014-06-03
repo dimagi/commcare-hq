@@ -63,7 +63,7 @@ def month_fixture(user, version, last_sync):
 def payment_fixture(user, version, last_sync):
     if user.domain in INTRAHEALTH_DOMAINS:
         commtrack_user = CommTrackUser.wrap(user.to_json())
-        sup_ids = [supply_point._id for supply_point in commtrack_user.supply_points]
+        sup_ids = [supply_point._id for supply_point in commtrack_user.get_linked_supply_points()]
 
         root = ElementTree.Element('fixture',
                                    attrib={'id': 'intrahealth:payments',

@@ -1122,6 +1122,7 @@
            }
        ],
        "real_date": "2017-08-21",
+       "real_date_repeat": "2017-08-21",
        "product_ix_1": "9",
        "@name": "Bon de commande-livraison Real",
        "num_products": "9",
