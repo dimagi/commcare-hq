@@ -105,3 +105,7 @@ class InlineColumnField(InlineField):
         return super(InlineColumnField, self).render(
             form, form_style, context, template_pack=template_pack
         )
+
+
+class ErrorsOnlyField(Field):
+    template = 'hqwebapp/crispy/field/errors_only_field.html'
