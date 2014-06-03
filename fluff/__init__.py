@@ -1,4 +1,5 @@
 from collections import defaultdict
+import functools
 import logging
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
@@ -7,6 +8,7 @@ import sqlalchemy
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
+from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
@@ -28,8 +30,10 @@ class base_emitter(object):
         self.reduce_type = reduce_type
 
     def __call__(self, fn):
+        @functools.wraps(fn)
         def wrapped_f(*args):
-            for v in fn(*args):
+            generator = fn(*args)
+            for v in generator:
                 if isinstance(v, dict):
                     if 'value' not in v:
                         v['value'] = 1
@@ -43,8 +47,10 @@ class base_emitter(object):
                     v = dict(date=v[0], value=v[1], group_by=None)
                 else:
                     v = dict(date=v, value=1, group_by=None)
-
-                self.validate(v)
+                try:
+                    self.validate(v)
+                except EmitterValidationError as e:
+                    generator.throw(e)
                 yield v
 
         wrapped_f._reduce_type = self.reduce_type
@@ -60,8 +66,13 @@ class custom_date_emitter(base_emitter):
 
     def validate(self, value):
         def validate_date(dateval):
-            assert dateval is not None
-            assert isinstance(dateval, (datetime.date, datetime.datetime))
+            if not isinstance(dateval, (datetime.date, datetime.datetime)):
+                raise EmitterValidationError(
+                    'Emitted value must be '
+                    'a date or datetime object: {}'.format(
+                        dateval
+                    )
+                )
 
         validate_date(value.get('date'))
         if isinstance(value['date'], datetime.datetime):
@@ -76,7 +87,10 @@ class custom_null_emitter(base_emitter):
             if 'date' not in value:
                 value['date'] = None
             else:
-                assert value['date'] is None
+                if value['date'] is not None:
+                    raise EmitterValidationError(
+                        'Emitted value must be None: {}'.format(value['date']))
+
 
 date_emitter = custom_date_emitter()
 null_emitter = custom_null_emitter()
