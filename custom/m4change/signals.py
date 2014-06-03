@@ -101,28 +101,28 @@ def handle_m4change_forms(sender, xform, cases, **kwargs):
 cases_received.connect(handle_m4change_forms)
 
 
-def handle_fixture_location_update(sender, doc_id, diff, backend, **kwargs):
-    xform = XFormInstance.get(doc_id)
-    if hasattr(xform, "domain") and xform.domain in M4CHANGE_DOMAINS \
-            and hasattr(xform, "xmlns") and xform.xmlns in ALL_M4CHANGE_FORMS:
-        location_id = xform.form.get("location_id", None)
-        if not location_id:
-            return
-        client = get_redis_client()
-        redis_key = REDIS_FIXTURE_KEYS[xform.domain]
-        redis_lock_key = REDIS_FIXTURE_LOCK_KEYS[xform.domain]
-        lock = client.lock(redis_lock_key, timeout=5)
-        if lock.acquire(blocking=True):
-            try:
-                location_ids_str = client.get(redis_key)
-                location_ids = []
-                if location_ids_str:
-                    location_ids = json.loads(location_ids_str)
-                if location_id not in location_ids:
-                    location_ids.append(location_id)
-                client.set(redis_key, json.dumps(location_ids))
-            finally:
-                lock.release()
+def handle_fixture_location_update(sender, doc, diff, backend, **kwargs):
+    if doc.get('doc_type') == 'XFormInstance' and doc.get('domain') in M4CHANGE_DOMAINS:
+        xform = XFormInstance.wrap(doc)
+        if hasattr(xform, "xmlns") and xform.xmlns in ALL_M4CHANGE_FORMS:
+            location_id = xform.form.get("location_id", None)
+            if not location_id:
+                return
+            client = get_redis_client()
+            redis_key = REDIS_FIXTURE_KEYS[xform.domain]
+            redis_lock_key = REDIS_FIXTURE_LOCK_KEYS[xform.domain]
+            lock = client.lock(redis_lock_key, timeout=5)
+            if lock.acquire(blocking=True):
+                try:
+                    location_ids_str = client.get(redis_key)
+                    location_ids = []
+                    if location_ids_str:
+                        location_ids = json.loads(location_ids_str)
+                    if location_id not in location_ids:
+                        location_ids.append(location_id)
+                    client.set(redis_key, json.dumps(location_ids))
+                finally:
+                    lock.release()
 
 
 indicator_document_updated.connect(handle_fixture_location_update)

@@ -125,10 +125,9 @@ class JadJar(object):
 
         # pack files into jar
         buffer = StringIO(self.jar)
-        zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
-        for path in files:
-            zipper.writestr(path, files[path])
-        zipper.close()
+        with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
+            for path in files:
+                zipper.writestr(path, files[path])
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()

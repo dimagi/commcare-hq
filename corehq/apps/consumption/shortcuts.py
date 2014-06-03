@@ -1,5 +1,6 @@
 from decimal import Decimal
 from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 from dimagi.utils.couch.cache import cache_core
 
 
@@ -16,7 +17,7 @@ def get_default_consumption(domain, product_id, location_type, case_id):
     )
     results = results[0] if results else None
     if results and results['value']:
-        return Decimal(results['value'])
+        return Decimal(float(results['value']) / DAYS_IN_MONTH)
     else:
         return None
 

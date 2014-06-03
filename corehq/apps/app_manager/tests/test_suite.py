@@ -1,4 +1,4 @@
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
     LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -107,7 +107,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             auto_select=AutoSelectCase(
                 mode=AUTO_SELECT_CASE,
                 value_source=load_update_cases[0].case_tag,
-                value_key='case_id_prop'
+                value_key='case_id_index'
             )
         ))
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
@@ -119,7 +119,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
 
-class RegexTest(TestCase):
+class RegexTest(SimpleTestCase):
 
     def testRegex(self):
         replacement = "@case_id stuff"

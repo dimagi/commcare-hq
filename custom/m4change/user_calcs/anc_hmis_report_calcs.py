@@ -40,7 +40,7 @@ class AncSyphilisTestDoneCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS \
+        if form.xmlns in BOOKING_AND_FOLLOW_UP_FORMS \
                 and "syphilis" in form.form.get("tests_conducted", ""):
             yield [form.received_on.date(), 1]
 

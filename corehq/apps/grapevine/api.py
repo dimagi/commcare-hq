@@ -65,7 +65,7 @@ class GrapevineBackend(SMSBackend):
 
         url = "http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload"
         req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req)
+        response = urllib2.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
         resp = response.read()
 
 

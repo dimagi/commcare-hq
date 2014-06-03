@@ -26,3 +26,9 @@
         </div>
     </div>
 {% endblock %}
+
+{% block reportcontent %}
+    <link rel="stylesheet" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    <link rel="stylesheet" href="{% static 'm4change/css/reports.css' %}"/>
+    {{ block.super }}
+{% endblock %}

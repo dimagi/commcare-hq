@@ -115,12 +115,12 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     def rows(self):
         rows = []
         for user in self.users:
-            row = [self.table_cell(user.get("raw_username"),
-                user.get('username_in_report'))]
+            row = [self.table_cell(user.raw_username,
+                   user.username_in_report)]
             for col in self.adm_columns:
-                val = col.raw_value(**user)
+                val = col.raw_value(**user._asdict())
                 row.append(self.table_cell(col.clean_value(val),
-                    col.html_value(val)))
+                                           col.html_value(val)))
             rows.append(row)
         self.statistics_rows = [["Total"], ["Average"]]
         for ind, col in enumerate(self.adm_columns):

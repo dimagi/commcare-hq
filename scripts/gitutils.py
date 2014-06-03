@@ -32,6 +32,15 @@ def git_current_branch(git=None):
     return branch
 
 
+def git_submodules(git=None):
+    git = git or get_git()
+    submodules = []
+    for line in git.submodule().split('\n')[:-1]:
+        path = line[1:].split()[1]
+        submodules.append(path)
+    return submodules
+
+
 def git_check_merge(branch1, branch2, git=None):
     """
     returns True if branch1 would auto-merge cleanly into branch2,

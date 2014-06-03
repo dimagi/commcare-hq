@@ -386,7 +386,7 @@ def get_open_form_sessions(user, skip=0, limit=10):
 
 def get_cloudcare_form_url(domain, app_build_id=None, module_id=None, form_id=None, case_id=None):
     url_root = reverse("cloudcare_main", args=[domain, ""])
-    url = url_root + "/"
+    url = url_root
     if app_build_id != None:
         url = url + "view/" + str(app_build_id)
         if module_id != None:
@@ -394,5 +394,5 @@ def get_cloudcare_form_url(domain, app_build_id=None, module_id=None, form_id=No
             if form_id != None:
                 url = url + "/" + str(form_id)
                 if case_id != None:
-                    url = url + "/" + str(case_id)
+                    url = url + "/case/" + str(case_id)
     return url

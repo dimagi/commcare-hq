@@ -10,6 +10,8 @@ from couchdbkit.ext.django.schema import *
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from django.utils.translation import ugettext as _, ugettext_noop
+from crispy_forms import layout as crispy
+from django.conf import settings
 
 BANNED_URL_REGEX = (
     r".*://.*commcarehq.org.*",
@@ -20,13 +22,32 @@ BANNED_URL_REGEX = (
     r".*://.*localhost.*",
 )
 
+
 class HttpBackendForm(BackendForm):
-    url = TrimmedCharField()
-    message_param = TrimmedCharField()
-    number_param = TrimmedCharField()
-    include_plus = BooleanField(required=False)
-    method = ChoiceField(choices=(("GET","GET"),("POST","POST")))
-    additional_params = RecordListField(input_name="additional_params")
+    url = TrimmedCharField(
+        label=ugettext_noop("URL"),
+    )
+    message_param = TrimmedCharField(
+        label=ugettext_noop("Message Parameter"),
+    )
+    number_param = TrimmedCharField(
+        label=ugettext_noop("Phone Number Parameter"),
+    )
+    include_plus = BooleanField(
+        required=False,
+        label=ugettext_noop("Include '+' in Phone Number"),
+    )
+    method = ChoiceField(
+        label=ugettext_noop("HTTP Request Method"),
+        choices=(
+            ("GET","GET"),
+            ("POST","POST")
+        ),
+    )
+    additional_params = RecordListField(
+        input_name="additional_params",
+        label=ugettext_noop("Additional Parameters"),
+    )
 
     def __init__(self, *args, **kwargs):
         if "initial" in kwargs and "additional_params" in kwargs["initial"]:
@@ -53,6 +74,19 @@ class HttpBackendForm(BackendForm):
                 raise ValidationError("Parameter name entered twice: %s" % name)
             result[name] = value
         return result
+
+    @property
+    def gateway_specific_fields(self):
+        return crispy.Fieldset(
+            _("Unicel Settings"),
+            'url',
+            'method',
+            'message_param',
+            'number_param',
+            'include_plus',
+            'additional_params',
+        )
+
 
 class HttpBackend(SMSBackend):
     url = StringProperty() # the url to send to
@@ -99,7 +133,9 @@ class HttpBackend(SMSBackend):
         
         url_params = urlencode(params)
         if self.method == "GET":
-            response = urlopen("%s?%s" % (self.url, url_params)).read()
+            response = urlopen("%s?%s" % (self.url, url_params),
+                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         else:
-            response = urlopen(self.url, url_params).read()
+            response = urlopen(self.url, url_params,
+                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 

@@ -186,6 +186,7 @@
         <locale id="forms.m1f0"/>
       </text>
     </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="table_tags" src="jr://fixture/item-list:table_tag" />
     <session>
       <datum id="case_id_case_clinic" function="instance('table_tags')/table_tag_list/table_tag/field_name"/>
@@ -193,7 +194,21 @@
     <assertions>
       <assert test="count(instance('table_tags')/table_tag_list/table_tag) = 1">
         <text>
-          <locale id="case_autoload.exactly_one_fixture"/>
+          <locale id="case_autoload.fixture.exactly_one_fixture">
+            <argument>table_tag</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('table_tags')/table_tag_list/table_tag/field_name) = 1">
+        <text>
+          <locale id="case_autoload.fixture.property_missing">
+            <argument>field_name</argument>
+          </locale>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('table_tags')/table_tag_list/table_tag/field_name]) = 1">
+        <text>
+          <locale id="case_autoload.fixture.case_missing"/>
         </text>
       </assert>
     </assertions>

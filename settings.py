@@ -287,6 +287,9 @@ HQ_APPS = (
     'custom.m4change',
     'custom.succeed',
     'custom.intrahealth',
+    'custom.uth',
+
+    'custom.colalife',
 )
 
 TEST_APPS = ()
@@ -767,6 +770,11 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
+# Mailchimp
+MAILCHIMP_APIKEY = ''
+MAILCHIMP_COMMCARE_USERS_ID = ''
+MAILCHIMP_MASS_EMAIL_ID = ''
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -871,6 +879,7 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
+    'uth',
 
     # custom reports
     'penn_state',
@@ -962,6 +971,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.twilio.models.TwilioBackend",
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
+
+# The number of seconds to use as a timeout when making gateway requests
+SMS_GATEWAY_TIMEOUT = 30
+IVR_GATEWAY_TIMEOUT = 60
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
@@ -1064,6 +1077,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
+    'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

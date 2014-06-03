@@ -12,7 +12,6 @@ WORKFLOWS = [WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST]
 NA = 'N/A'
 
 class BaseSystemOverviewReport(CommConnectReport):
-    need_group_ids = True
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseGroupFilter',

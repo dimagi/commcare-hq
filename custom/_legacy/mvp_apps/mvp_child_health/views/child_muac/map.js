@@ -13,6 +13,10 @@ function (doc) {
                 visit_date = new Date(meta.timeEnd),
                 case_id = get_case_id(doc);
 
+            if (visit_date >= last_muac_date) {
+                var visit_diff = visit_date.getTime() - last_muac_date.getTime();
+            }
+
             if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY) {
                 if (indicators.cur_muac && indicators.cur_muac.value) {
                     try {
@@ -25,16 +29,13 @@ function (doc) {
                         // do nothing
                     }
                 }
-                if (visit_date >= last_muac_date
-                    && indicators.muac && indicators.muac.value) {
-                    var visit_diff = visit_date.getTime() - last_muac_date.getTime();
-                    if (visit_diff < 30*MS_IN_DAY) {
-                        visit_indicators["routine_muac"] = case_id;
-                    }
+                if (indicators.muac && indicators.muac.value && visit_diff < 30*MS_IN_DAY) {
+                    visit_indicators["routine_muac"] = case_id;
                 }
             }
 
-            if (age < 1825*MS_IN_DAY && indicators.cur_muac && indicators.cur_muac.value) {
+            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY && indicators.cur_muac
+                && indicators.cur_muac.value && visit_diff < 30*MS_IN_DAY) {
                 try {
                     var cur_muac_under5 = parseFloat(indicators.cur_muac.value);
                     visit_indicators["active_gam"] = {

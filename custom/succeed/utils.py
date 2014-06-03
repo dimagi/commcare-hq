@@ -1,4 +1,8 @@
 from django.utils.translation import ugettext as _, ugettext_noop
+import dateutil
+from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.domain.models import Domain
+
 
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
@@ -45,6 +49,15 @@ def has_any_role(user):
                                                                       CONFIG['cm_role'], CONFIG['chw_role']] else False
 
 
+def get_app_build(app_dict):
+    domain = Domain._get_by_name(app_dict['domain'])
+    if domain.use_cloudcare_releases:
+        return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
+    else:
+        return ApplicationBase.get_latest_build(app_dict['domain'], app_dict['_id'])['_id']
+    return None
+
+
 def get_form_dict(case, form_xmlns):
     forms = case.get_forms()
     for form in forms:
@@ -52,3 +65,13 @@ def get_form_dict(case, form_xmlns):
         if form_xmlns == form_dict["@xmlns"]:
             return form_dict
     return None
+
+
+def format_date(date_string, OUTPUT_FORMAT):
+    date_obj = date_string
+    if isinstance(date_string, basestring):
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+        except (AttributeError, ValueError):
+            return _("Bad Date Format!")
+    return date_obj.strftime(OUTPUT_FORMAT)

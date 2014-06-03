@@ -1,11 +1,12 @@
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 
-class Location(Document):
+class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     location_type = StringProperty()
@@ -118,7 +119,7 @@ class Location(Document):
     def children(self):
         """return list of immediate children of this location"""
         startkey, endkey = self._key_bounds
-        depth = len(self.path) + 2 # 1 for domain, 1 for next location level
+        depth = len(self.path) + 2  # 1 for domain, 1 for next location level
         q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()

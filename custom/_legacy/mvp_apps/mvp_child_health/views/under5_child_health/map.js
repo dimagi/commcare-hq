@@ -51,7 +51,7 @@ function(doc) {
                         complicated_fever = true;
                     }
                 }
-                if ((danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) || 
+                if ((danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) ||
                     (danger_signs.indexOf('sign_diarrhea') >= 0 && danger_signs.length === 1)) {
                     diarrhea_only = true;
                 }
@@ -63,7 +63,7 @@ function(doc) {
 
                 var category = "",
                     category_keys = [];
-                if (uncomplicated_fever && meta.timeEnd) {
+                if (uncomplicated_fever && meta.timeEnd && age > 180*MS_IN_DAY) {
                     category = "under5_fever ";
                     if (rdt_test_received)
                         category_keys.push('rdt_test_received');
@@ -79,7 +79,7 @@ function(doc) {
                         indicator_keys.push(category+"rdt_not_available");
                     }
 
-                } else if (complicated_fever && meta.timeEnd) {
+                } else if (complicated_fever && meta.timeEnd && age > 180*MS_IN_DAY) {
                     category = "under5_complicated_fever ";
 
                     if (doc.form.patient_available.referral_given === 'yes' ||
@@ -87,7 +87,7 @@ function(doc) {
                         category_keys.push('referred');
                     }
 
-                } else if (diarrhea_only && meta.timeEnd) {
+                } else if (diarrhea_only && meta.timeEnd && age > 60*MS_IN_DAY) {
                     category = "under5_diarrhea ";
 
                     if (diarrhea_medication_received)

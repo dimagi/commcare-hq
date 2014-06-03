@@ -1,3 +1,4 @@
+from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import SMSBackend
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from couchdbkit.ext.django.schema import *
@@ -17,6 +18,14 @@ class TestBackend(SMSBackend):
         """
         if self.to_console:
             print msg
+
+    @classmethod
+    def get_form_class(cls):
+        return BackendForm
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Test Backend"
 
 def bootstrap(id=None, to_console=True):
     """
