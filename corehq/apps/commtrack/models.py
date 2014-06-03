@@ -27,7 +27,7 @@ from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
@@ -1353,6 +1353,13 @@ class StockState(models.Model):
                 self.product_id,
                 config
             )
+
+    def get_monthly_consumption(self):
+        consumption = self.get_consumption()
+        if consumption is not None:
+            return consumption * Decimal(DAYS_IN_MONTH)
+        else:
+            return None
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')
