@@ -37,15 +37,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
-                                                            CaseListReport.get_url(domain=self.domain)),
-                                          "user_id": user.get('user_id'),
-                                          "username": user.get('username_in_report')}
+        user_link = user_link_template % {
+            'link': "%s%s" % (get_url_base(),
+                              CaseListReport.get_url(domain=self.domain)),
+            'user_id': user.user_id,
+            'username': user.username_in_report,
+        }
         return user_link
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.get('raw_username'), user_link)
+        return self.table_cell(user.raw_username, user_link)
 
 
 class MultiFormDrilldownMixin(object):
@@ -102,7 +104,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         def active_count(self):
             """Open clients seen in the last 120 days"""
             return self.report.get_number_cases(
-                user_id=self.user.get('user_id'),
+                user_id=self.user.user_id,
                 modified_after=self.report.utc_now - self.report.milestone,
                 modified_before=self.report.utc_now,
                 closed=False,
@@ -112,7 +114,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         def inactive_count(self):
             """Open clients not seen in the last 120 days"""
             return self.report.get_number_cases(
-                user_id=self.user.get('user_id'),
+                user_id=self.user.user_id,
                 modified_before=self.report.utc_now - self.report.milestone,
                 closed=False,
             )
@@ -120,7 +122,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         def modified_count(self, startdate=None, enddate=None):
             enddate = enddate or self.report.utc_now
             return self.report.get_number_cases(
-                user_id=self.user.get('user_id'),
+                user_id=self.user.user_id,
                 modified_after=startdate,
                 modified_before=enddate,
             )
@@ -128,7 +130,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         def closed_count(self, startdate=None, enddate=None):
             enddate = enddate or self.report.utc_now
             return self.report.get_number_cases(
-                user_id=self.user.get('user_id'),
+                user_id=self.user.user_id,
                 modified_after=startdate,
                 modified_before=enddate,
                 closed=True
@@ -213,8 +215,9 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        rows = [self.Row(self, user) for user in users_data["combined_users"]]
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
+        rows = [self.Row(self, user) for user in users_data.combined_users]
 
         total_row = self.TotalRow(rows, _("All Users"))
 
@@ -326,13 +329,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         totals = [0] * (len(self.all_relevant_forms) + 1)
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
             self.domain, self.request, True, True)
-        for user in users_data["combined_users"]:
+        for user in users_data.combined_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(
                         self._get_num_submissions(
-                            user.get('user_id'), form['xmlns'], form['app_id'])
+                            user.user_id, form['xmlns'], form['app_id'])
                     )
                 row_sum = sum(row)
                 row = (
@@ -523,10 +526,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             .filter(**self.date_filter(self.startdate, self.enddate))
 
         if user:
-            results = results.filter(user_id=user.get('user_id'))
+            results = results.filter(user_id=user.user_id)
             values.append('user_id')
         else:
-            user_ids = [user_a.get('user_id') for user_a in self.all_users]
+            user_ids = [user_a.user_id for user_a in self.all_users]
             results = results.filter(user_id__in=user_ids)
 
         results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
@@ -558,7 +561,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
     def get_user_link(self, user):
 
         params = {
-            'select_mw': user.get('user_id'),
+            'select_mw': user.user_id,
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
             "form_status": self.request.GET.get("form_status", ''),
@@ -574,9 +577,11 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
         user_link_template = '<a href="%(link)s">%(username)s</a>'
         base_link = "%s%s" % (get_url_base(), SubmitHistory.get_url(domain=self.domain))
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        user_link = user_link_template % {"link": link,
-                                          "username": user.get('username_in_report')}
-        return self.table_cell(user.get('raw_username'), user_link)
+        user_link = user_link_template % {
+            'link': link,
+            'username': user.username_in_report,
+        }
+        return self.table_cell(user.raw_username, user_link)
 
     @property
     @memoized
@@ -664,13 +669,14 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
                     Count('duration')
                 )
 
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        user_ids = [user.get('user_id') for user in users_data["combined_users"]]
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
+        user_ids = [user.user_id for user in users_data.combined_users]
 
         data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
 
-        for user in users_data["combined_users"]:
-            stats = data_map.get(user.get('user_id'), {})
+        for user in users_data.combined_users:
+            stats = data_map.get(user.user_id, {})
             rows.append([self.get_user_link(user),
                          _fmt_ts(stats.get('duration__avg')),
                          _fmt_ts(stats.get('duration__stddev')),
@@ -717,11 +723,13 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
+            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+                self.domain, self.request, True, True)
 
             placeholders = []
             params = []
-            user_map = dict([(user.get('user_id'), user) for user in users_data["combined_users"] if user.get('user_id')])
+            user_map = {user.user_id: user
+                        for user in users_data.combined_users if user.user_id}
             form_map = {}
             for form in self.all_relevant_forms.values():
                 placeholders.append('(%s,%s)')
@@ -838,11 +846,17 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(self.domain, self.request, True, True)
-        for user in users_data["combined_users"]:
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True)
+        for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
-                key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
-                   xmlns=info['xmlns'], app_id=info['app_id'], by_submission_time=self.by_submission_time)
+                key = make_form_couch_key(
+                    self.domain,
+                    user_id=user.user_id,
+                    xmlns=info['xmlns'],
+                    app_id=info['app_id'],
+                    by_submission_time=self.by_submission_time,
+                )
                 data = get_db().view("reports_forms/all_forms",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
