@@ -29,7 +29,9 @@ from corehq.apps.reminders.forms import (
     CaseReminderEventMessageForm,
     KEYWORD_CONTENT_CHOICES,
     KEYWORD_RECIPIENT_CHOICES,
-    ComplexScheduleCaseReminderForm)
+    ComplexScheduleCaseReminderForm,
+    NewKeywordForm,
+)
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
@@ -785,41 +787,16 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
         }
 
     @property
-    def group_choices(self):
-        return [(g._id, g.name) for g in Group.by_domain(self.domain)]
-
-    @property
-    def form_choices(self):
-        available_forms = get_form_list(self.domain)
-        return [(a['code'], a['name']) for a in available_forms]
-
-    @property
-    def content_type_choices(self):
-        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
-        choices.append(
-            ('none', _("No Response"))
-        )
-        return choices
-
-    @property
     @memoized
     def keyword_form(self):
         if self.request.method == 'POST':
-            return KeywordForm(
+            return NewKeywordForm(
                 self.request.POST, domain=self.domain,
                 process_structured=self.process_structured_message,
-                content_type_choices=self.content_type_choices,
-                recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
-                group_choices=self.group_choices,
-                form_choices=self.form_choices,
             )
-        return KeywordForm(
+        return NewKeywordForm(
             domain=self.domain,
             process_structured=self.process_structured_message,
-            content_type_choices=self.content_type_choices,
-            recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
-            group_choices=self.group_choices,
-            form_choices=self.form_choices,
         )
 
     def post(self, request, *args, **kwargs):
@@ -830,9 +807,9 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
             self.keyword.override_open_sessions = self.keyword_form.cleaned_data['override_open_sessions']
 
             self.keyword.initiator_doc_type_filter = []
-            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'user':
+            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'users':
                 self.keyword.initiator_doc_type_filter.append('CommCareUser')
-            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'case':
+            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'cases':
                 self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
             self.keyword.actions = []
@@ -856,7 +833,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 )
-            if self.keyword_form.cleaned_data['notify_others']:
+            if self.keyword_form.cleaned_data['other_recipient_content_type'] != 'none':
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
@@ -869,6 +846,8 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
             self.keyword.save()
             return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
+        else:
+            print self.keyword_form.errors
         return self.get(request, *args, **kwargs)
 
 
@@ -905,23 +884,15 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
     def keyword_form(self):
         initial = self.get_initial_values()
         if self.request.method == 'POST':
-            form = KeywordForm(
+            form = NewKeywordForm(
                 self.request.POST, domain=self.domain, initial=initial,
                 process_structured=self.process_structured_message,
-                content_type_choices=self.content_type_choices,
-                recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
-                group_choices=self.group_choices,
-                form_choices=self.form_choices,
             )
             form._sk_id = self.keyword_id
             return form
-        return KeywordForm(
+        return NewKeywordForm(
             domain=self.domain, initial=initial,
             process_structured=self.process_structured_message,
-            content_type_choices=self.content_type_choices,
-            recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
-            group_choices=self.group_choices,
-            form_choices=self.form_choices,
         )
 
     def get_initial_values(self):
@@ -930,15 +901,21 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             'description': self.keyword.description,
             'delimiter': self.keyword.delimiter,
             'override_open_sessions': self.keyword.override_open_sessions,
-            'restrict_keyword_initiation': len(self.keyword.initiator_doc_type_filter) > 0,
-            'allow_initiation_by_case': "CommCareCase" in self.keyword.initiator_doc_type_filter,
-            'allow_initiation_by_mobile_worker': "CommCareUser" in self.keyword.initiator_doc_type_filter,
         }
+        is_case_filter = "CommCareCase" in self.keyword.initiator_doc_type_filter
+        is_user_filter = "CommCareUser" in self.keyword.initiator_doc_type_filter
+        if is_case_filter and not is_user_filter:
+            initial.update({
+                'allow_keyword_use_by': 'cases',
+            })
+        elif is_user_filter and not is_case_filter:
+            initial.update({
+                'allow_keyword_use_by': 'users',
+            })
         for action in self.keyword.actions:
             if action.action == METHOD_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
-                        'process_structured_sms': True,
                         'structured_sms_form_unique_id': action.form_unique_id,
                         'use_custom_delimiter': self.keyword.delimiter is not None,
                         'use_named_args_separator': action.named_args_separator is not None,
@@ -967,6 +944,15 @@ class EditNormalKeywordView(EditStructuredKeywordView):
     urlname = 'edit_normal_keyword'
     page_title = ugettext_noop("Edit Normal Keyword")
     process_structured_message = False
+
+    @property
+    @memoized
+    def keyword(self):
+        sk = super(EditNormalKeywordView, self).keyword
+        # don't allow structured keywords to be edited in this view.
+        if METHOD_STRUCTURED_SMS in [a.action for a in sk.actions]:
+            raise Http404()
+        return sk
 
 
 @reminders_framework_permission

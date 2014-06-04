@@ -15,13 +15,14 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
-from corehq.apps.reminders.util import DotExpandedDict
+from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from dimagi.utils.decorators.memoized import memoized
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -2128,331 +2129,36 @@ class ListField(Field):
 class RemindersInErrorForm(Form):
     selected_reminders = ListField(required=False)
 
+
 class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
-    keyword = CharField(label=_("Keyword"))
-    description = TrimmedCharField(label=_("Description"))
-    override_open_sessions = BooleanField(
-        required=False,
-        initial=False,
-        label=_("Override open SMS Surveys"),
-    )
-    allow_initiation_by_case = BooleanField(
-        required=False,
-        initial=False,
-        label=_("Allow cases to initiate keywords"),
-    )
-    allow_initiation_by_mobile_worker = BooleanField(
-        required=False,
-        initial=False,
-        label=_("Allow mobile workers to initiate keywords"),
-    )
-    restrict_keyword_initiation = BooleanField(
-        required=False,
-        initial=False,
-    )
-    allow_keyword_use_by = ChoiceField(
-        required=False,
-        label=_("Allow Keyword Use By"),
-        choices=(
-            ('any', _("Both Mobile Workers and Cases")),
-            ('users', _("Mobile Workers Only")),
-            ('cases', _("Cases Only")),
-        )
-    )
-    sender_content_type = ChoiceField(
-        label=_("Send to Sender"),
-    )
-    sender_message = TrimmedCharField(
-        required=False,
-        label=_("Message"),
-    )
-    sender_form_unique_id = ChoiceField(
-        required=False,
-        label=_("Survey"),
-    )
-    notify_others = BooleanField(
-        required=False,
-        initial=False,
-        label=_("Notify Another Person"),
-    )
-    other_recipient_type = ChoiceField(
-        required=False,
-        initial=False,
-        label=_("Recipient"),
-    )
-    other_recipient_id = ChoiceField(
-        required=False,
-        label=_("Group Name"),
-    )
-    other_recipient_content_type = ChoiceField(
-        required=False,
-        label=_("Notify Another Person"),
-    )
-    other_recipient_message = TrimmedCharField(
-        required=False,
-        label=_("Message"),
-    )
-    other_recipient_form_unique_id = ChoiceField(
-        required=False,
-        label=_("Survey"),
-    )
-    process_structured_sms = BooleanField(
-        required=False,
-        label=_("Process incoming keywords as a Structured Message"),
-    )
-    structured_sms_form_unique_id = ChoiceField(
-        required=False,
-        label=_("Survey"),
-    )
-    use_custom_delimiter = BooleanField(
-        required=False,
-        label=_("Use Custom Delimiter"),
-    )
-    delimiter = TrimmedCharField(
-        required=False,
-        label=_("Please Specify Delimiter"),
-    )
-    use_named_args_separator = BooleanField(
-        required=False,
-        label=_("Use Joining Character"),
-    )
-    use_named_args = BooleanField(
-        required=False,
-        label=_("Use Named Answers"),
-    )
-    named_args_separator = TrimmedCharField(
-        required=False,
-        label=_("Please Specify Joining Characcter"),
-    )
-    named_args = RecordListField(
-        input_name="named_args",
-        initial=[],
-    )
-
-    def __init__(self, *args, **kwargs):
-        """
-
-        :param args:
-        :param kwargs:
-        """
-        if 'domain' in kwargs:
-            self._cchq_domain = kwargs.pop('domain')
-        if 'process_structured' in kwargs:
-            self.process_structured = kwargs.pop('process_structured')
-
-        self.content_type_choices = []
-        self.recipient_type_choices = []
-        self.group_choices = []
-        self.form_choices = []
-
-        if 'content_type_choices' in kwargs:
-            self.content_type_choices = kwargs.pop('content_type_choices')
-        if 'recipient_type_choices' in kwargs:
-            self.recipient_type_choices = kwargs.pop('recipient_type_choices')
-        if 'group_choices' in  kwargs:
-            self.group_choices = kwargs.pop('group_choices')
-        if 'form_choices' in  kwargs:
-            self.form_choices = kwargs.pop('form_choices')
-
-        super(KeywordForm, self).__init__(*args, **kwargs)
-        if hasattr(self, 'process_structured'):
-            self.fields['process_structured_sms'].initial = self.process_structured
-            self.fields['notify_others'].widget = forms.HiddenInput()
-            self.fields['other_recipient_content_type'].initial = 'none'
-            if self.process_structured:
-                self.fields['process_structured_sms'].widget = forms.HiddenInput()
-
-        self.fields['sender_content_type'].choices = self.content_type_choices
-        self.fields['other_recipient_content_type'].choices = self.content_type_choices
-        self.fields['other_recipient_type'].choices = self.recipient_type_choices
-        self.fields['other_recipient_id'].choices = self.group_choices
-        self.fields['sender_form_unique_id'].choices = self.form_choices
-        self.fields['other_recipient_form_unique_id'].choices = self.form_choices
-        self.fields['structured_sms_form_unique_id'].choices = self.form_choices
-
-        from corehq.apps.reminders.views import KeywordsListView
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
-
-        layout_fields = [
-            crispy.Fieldset(
-                _('Basic Information'),
-                crispy.Field(
-                    'keyword',
-                    data_bind="value: keyword, "
-                              "valueUpdate: 'afterkeydown', "
-                              "event: {keyup: updateExampleStructuredSMS}",
-                ),
-                crispy.Field(
-                    'description',
-                    data_bind="text: description",
-                ),
-            ),
-        ]
-        if hasattr(self, 'process_structured') and self.process_structured:
-            layout_fields.append(
-                crispy.Fieldset(
-                    _("Structured Message Options"),
-                    InlineField('process_structured_sms'),
-                    crispy.Field(
-                        'structured_sms_form_unique_id',
-                        data_bind="value: structured_sms_form_unique_id",
-                    ),
-                    BootstrapMultiField(
-                        _("Delimiters"),
-                        crispy.Div(
-                            InlineColumnField(
-                                'use_custom_delimiter',
-                                data_bind="checked: use_custom_delimiter, "
-                                          "click: updateExampleStructuredSMS",
-                                block_css_class="span2",
-                            ),
-                            InlineField(
-                                'delimiter',
-                                data_bind="value: delimiter, "
-                                          "valueUpdate: 'afterkeydown', "
-                                          "event: {keyup: updateExampleStructuredSMS},"
-                                          "visible: use_custom_delimiter",
-                                block_css_class="span4",
-                            ),
-                            css_class="controls-row",
-                        ),
-                    ),
-                    BootstrapMultiField(
-                        _("Named Answers"),
-                        InlineField(
-                            'use_named_args',
-                            data_bind="checked: use_named_args, "
-                                      "click: updateExampleStructuredSMS",
-                        ),
-                        ErrorsOnlyField('named_args'),
-                        crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'ko-template-named-args', "
-                                      " data: $data"
-                                      "}, "
-                                      "visible: use_named_args",
-                        ),
-                    ),
-                    BootstrapMultiField(
-                        _("Joining Characters"),
-                        crispy.Div(
-                            InlineColumnField(
-                                'use_named_args_separator',
-                                data_bind="checked: use_named_args_separator, "
-                                          "click: updateExampleStructuredSMS",
-                                block_css_class="span2",
-                            ),
-                            InlineField(
-                                'named_args_separator',
-                                data_bind="value: named_args_separator, "
-                                          "valueUpdate: 'afterkeydown', "
-                                          "event: {keyup: updateExampleStructuredSMS},"
-                                          "visible: useJoiningCharacter",
-                                block_css_class="span4",
-                            ),
-                            css_class="controls-row",
-                        ),
-                        data_bind="visible: use_named_args",
-                    ),
-                    BootstrapMultiField(
-                        _("Example Structured Message"),
-                        crispy.HTML('<pre style="background: white;" '
-                                    'data-bind="text: example_structured_sms">'
-                                    '</pre>'),
-                    ),
-                ),
-            )
-        layout_fields.extend([
-            crispy.Fieldset(
-                _("Response"),
-                crispy.Field(
-                    'sender_content_type',
-                    data_bind="value: sender_content_type",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'sender_message',
-                        data_bind="text: sender_message",
-                    ),
-                    data_bind="visible: isMessageSMS",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'sender_form_unique_id',
-                        data_bind="value: sender_form_unique_id"
-                    ),
-                    data_bind="visible: isMessageSurvey",
-                ),
-                crispy.Field(
-                    'other_recipient_content_type',
-                    data_bind="value: other_recipient_content_type",
-                ),
-                BootstrapMultiField(
-                    "",
-                    InlineField(
-                        'notify_others',
-                        data_bind="value: notify_others",
-                    ),
-                    crispy.Div(
-                        crispy.HTML(
-                            '<h4 style="margin-bottom: 20px;">%s</h4>'
-                            % ugettext("Recipient Information"),
-                        ),
-                        crispy.Field(
-                            'other_recipient_type',
-                            data_bind="value: other_recipient_type",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_id',
-                                data_bind="value: other_recipient_id",
-                            ),
-                            data_bind="visible: showRecipientGroup",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_message',
-                                data_bind="value: other_recipient_message",
-                            ),
-                            data_bind="visible: other_recipient_content_type() == 'sms'",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_form_unique_id',
-                                data_bind="value: other_recipient_form_unique_id",
-                            ),
-                            data_bind="visible: other_recipient_content_type() == 'survey'",
-                        ),
-                        css_class="well",
-                        data_bind="visible: notify_others",
-                    ),
-                ),
-            ),
-            crispy.Fieldset(
-                _("Advanced Options"),
-                crispy.Field(
-                    'override_open_sessions',
-                    data_bind="checked: override_open_sessions",
-                ),
-                'allow_keyword_use_by',
-            ),
-            FormActions(
-                StrictButton(
-                    _("Save Keyword"),
-                    css_class='btn-primary',
-                    type='submit',
-                ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
-                            % reverse(KeywordsListView.urlname, args=[self._cchq_domain]))
-            ),
-        ])
-        self.helper.layout = crispy.Layout(*layout_fields)
+    keyword = CharField()
+    description = TrimmedCharField()
+    override_open_sessions = BooleanField(required=False)
+    allow_initiation_by_case = BooleanField(required=False)
+    allow_initiation_by_mobile_worker = BooleanField(required=False)
+    restrict_keyword_initiation = BooleanField(required=False)
+    sender_content_type = CharField()
+    sender_message = TrimmedCharField(required=False)
+    sender_form_unique_id = CharField(required=False)
+    notify_others = BooleanField(required=False)
+    other_recipient_type = CharField(required=False)
+    other_recipient_id = CharField(required=False)
+    other_recipient_content_type = CharField(required=False)
+    other_recipient_message = TrimmedCharField(required=False)
+    other_recipient_form_unique_id = CharField(required=False)
+    process_structured_sms = BooleanField(required=False)
+    structured_sms_form_unique_id = CharField(required=False)
+    use_custom_delimiter = BooleanField(required=False)
+    delimiter = TrimmedCharField(required=False)
+    use_named_args_separator = BooleanField(required=False)
+    use_named_args = BooleanField(required=False)
+    named_args_separator = TrimmedCharField(required=False)
+    named_args = RecordListField(input_name="named_args")
 
     def _check_content_type(self, value):
-        content_types = [a[0] for a in KEYWORD_CONTENT_CHOICES] + ['none']
+        content_types = [a[0] for a in KEYWORD_CONTENT_CHOICES]
         if value not in content_types:
             raise ValidationError(_("Invalid content type."))
         return value
@@ -2602,6 +2308,467 @@ class KeywordForm(Form):
         if not self.cleaned_data.get("notify_others", False):
             return None
         value = self.cleaned_data.get("other_recipient_id", None)
+        recipient_type = self.cleaned_data.get("other_recipient_type", None)
+        if recipient_type == RECIPIENT_USER_GROUP:
+            try:
+                g = Group.get(value)
+                assert g.doc_type == "Group"
+                assert g.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError("Invalid Group.")
+            return value
+        else:
+            return None
+
+
+class NewKeywordForm(Form):
+    _cchq_domain = None
+    _sk_id = None
+    keyword = CharField(label=_("Keyword"))
+    description = TrimmedCharField(label=_("Description"))
+    override_open_sessions = BooleanField(
+        required=False,
+        initial=False,
+        label=_("Override open SMS Surveys"),
+    )
+    allow_keyword_use_by = ChoiceField(
+        required=False,
+        label=_("Allow Keyword Use By"),
+        initial='any',
+        choices=(
+            ('any', _("Both Mobile Workers and Cases")),
+            ('users', _("Mobile Workers Only")),
+            ('cases', _("Cases Only")),
+        )
+    )
+    sender_content_type = ChoiceField(
+        label=_("Send to Sender"),
+    )
+    sender_message = TrimmedCharField(
+        required=False,
+        label=_("Message"),
+    )
+    sender_form_unique_id = ChoiceField(
+        required=False,
+        label=_("Survey"),
+    )
+    other_recipient_content_type = ChoiceField(
+        required=False,
+        label=_("Notify Another Person"),
+        initial='none',
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=_("Group Name"),
+    )
+    other_recipient_type = ChoiceField(
+        required=False,
+        initial=False,
+        label=_("Recipient"),
+        choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_message = TrimmedCharField(
+        required=False,
+        label=_("Message"),
+    )
+    other_recipient_form_unique_id = ChoiceField(
+        required=False,
+        label=_("Survey"),
+    )
+    process_structured_sms = BooleanField(
+        required=False,
+        label=_("Process incoming keywords as a Structured Message"),
+    )
+    structured_sms_form_unique_id = ChoiceField(
+        required=False,
+        label=_("Survey"),
+    )
+    use_custom_delimiter = BooleanField(
+        required=False,
+        label=_("Use Custom Delimiter"),
+    )
+    delimiter = TrimmedCharField(
+        required=False,
+        label=_("Please Specify Delimiter"),
+    )
+    use_named_args_separator = BooleanField(
+        required=False,
+        label=_("Use Joining Character"),
+    )
+    use_named_args = BooleanField(
+        required=False,
+        label=_("Use Named Answers"),
+    )
+    named_args_separator = TrimmedCharField(
+        required=False,
+        label=_("Please Specify Joining Characcter"),
+    )
+    named_args = RecordListField(
+        input_name="named_args",
+        initial=[],
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' in kwargs:
+            self._cchq_domain = kwargs.pop('domain')
+
+        self.process_structured_sms = False
+        if 'process_structured' in kwargs:
+            self.process_structured_sms = kwargs.pop('process_structured')
+
+        super(NewKeywordForm, self).__init__(*args, **kwargs)
+
+        self.fields['sender_content_type'].choices = self.content_type_choices
+        self.fields['other_recipient_content_type'].choices = self.content_type_choices
+
+        self.fields['other_recipient_id'].choices = self.group_choices
+        self.fields['sender_form_unique_id'].choices = self.form_choices
+        self.fields['other_recipient_form_unique_id'].choices = self.form_choices
+        self.fields['structured_sms_form_unique_id'].choices = self.form_choices
+
+        from corehq.apps.reminders.views import KeywordsListView
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+
+        layout_fields = [
+            crispy.Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'keyword',
+                    data_bind="value: keyword, "
+                              "valueUpdate: 'afterkeydown', "
+                              "event: {keyup: updateExampleStructuredSMS}",
+                ),
+                crispy.Field(
+                    'description',
+                    data_bind="text: description",
+                ),
+            ),
+        ]
+        if self.process_structured_sms:
+            layout_fields.append(
+                crispy.Fieldset(
+                    _("Structured Message Options"),
+                    crispy.Field(
+                        'structured_sms_form_unique_id',
+                        data_bind="value: structured_sms_form_unique_id",
+                    ),
+                    BootstrapMultiField(
+                        _("Delimiters"),
+                        crispy.Div(
+                            InlineColumnField(
+                                'use_custom_delimiter',
+                                data_bind="checked: use_custom_delimiter, "
+                                          "click: updateExampleStructuredSMS",
+                                block_css_class="span2",
+                            ),
+                            InlineField(
+                                'delimiter',
+                                data_bind="value: delimiter, "
+                                          "valueUpdate: 'afterkeydown', "
+                                          "event: {keyup: updateExampleStructuredSMS},"
+                                          "visible: use_custom_delimiter",
+                                block_css_class="span4",
+                            ),
+                            css_class="controls-row",
+                        ),
+                    ),
+                    BootstrapMultiField(
+                        _("Named Answers"),
+                        InlineField(
+                            'use_named_args',
+                            data_bind="checked: use_named_args, "
+                                      "click: updateExampleStructuredSMS",
+                        ),
+                        ErrorsOnlyField('named_args'),
+                        crispy.Div(
+                            data_bind="template: {"
+                                      " name: 'ko-template-named-args', "
+                                      " data: $data"
+                                      "}, "
+                                      "visible: use_named_args",
+                        ),
+                    ),
+                    BootstrapMultiField(
+                        _("Joining Characters"),
+                        crispy.Div(
+                            InlineColumnField(
+                                'use_named_args_separator',
+                                data_bind="checked: use_named_args_separator, "
+                                          "click: updateExampleStructuredSMS",
+                                block_css_class="span2",
+                            ),
+                            InlineField(
+                                'named_args_separator',
+                                data_bind="value: named_args_separator, "
+                                          "valueUpdate: 'afterkeydown', "
+                                          "event: {keyup: updateExampleStructuredSMS},"
+                                          "visible: useJoiningCharacter",
+                                block_css_class="span4",
+                            ),
+                            css_class="controls-row",
+                        ),
+                        data_bind="visible: use_named_args",
+                    ),
+                    BootstrapMultiField(
+                        _("Example Structured Message"),
+                        crispy.HTML('<pre style="background: white;" '
+                                    'data-bind="text: example_structured_sms">'
+                                    '</pre>'),
+                    ),
+                ),
+            )
+        layout_fields.extend([
+            crispy.Fieldset(
+                _("Response"),
+                crispy.Field(
+                    'sender_content_type',
+                    data_bind="value: sender_content_type",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_message',
+                        data_bind="text: sender_message",
+                    ),
+                    data_bind="visible: isMessageSMS",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_form_unique_id',
+                        data_bind="value: sender_form_unique_id"
+                    ),
+                    data_bind="visible: isMessageSurvey",
+                ),
+                crispy.Field(
+                    'other_recipient_content_type',
+                    data_bind="value: other_recipient_content_type",
+                ),
+                BootstrapMultiField(
+                    "",
+                    crispy.Div(
+                        crispy.HTML(
+                            '<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % ugettext("Recipient Information"),
+                        ),
+                        crispy.Field(
+                            'other_recipient_type',
+                            data_bind="value: other_recipient_type",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_id',
+                                data_bind="value: other_recipient_id",
+                            ),
+                            data_bind="visible: showRecipientGroup",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_message',
+                                data_bind="value: other_recipient_message",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'sms'",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_form_unique_id',
+                                data_bind="value: other_recipient_form_unique_id",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'survey'",
+                        ),
+                        css_class="well",
+                        data_bind="visible: notify_others",
+                    ),
+                ),
+            ),
+            crispy.Fieldset(
+                _("Advanced Options"),
+                crispy.Field(
+                    'override_open_sessions',
+                    data_bind="checked: override_open_sessions",
+                ),
+                'allow_keyword_use_by',
+            ),
+            FormActions(
+                StrictButton(
+                    _("Save Keyword"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
+                            % reverse(KeywordsListView.urlname, args=[self._cchq_domain]))
+            ),
+        ])
+        self.helper.layout = crispy.Layout(*layout_fields)
+
+    @property
+    @memoized
+    def content_type_choices(self):
+        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
+        choices.append(
+            ('none', _("No Response"))
+        )
+        return choices
+
+    @property
+    def group_choices(self):
+        return [(g._id, g.name) for g in Group.by_domain(self._cchq_domain)]
+
+    @property
+    def form_choices(self):
+        available_forms = get_form_list(self._cchq_domain)
+        return [(a['code'], a['name']) for a in available_forms]
+
+    @property
+    def current_values(self):
+        values = {}
+        for field_name in self.fields.keys():
+            values[field_name] = self[field_name].value()
+        return values
+
+    def clean_keyword(self):
+        value = self.cleaned_data.get("keyword")
+        if value is not None:
+            value = value.strip().upper()
+        if value is None or value == "":
+            raise ValidationError(_("This field is required."))
+        if len(value.split()) > 1:
+            raise ValidationError(_("Keyword should be one word."))
+        duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
+        if duplicate is not None and duplicate._id != self._sk_id:
+            raise ValidationError(_("Keyword already exists."))
+        return value
+
+    def clean_sender_message(self):
+        value = self.cleaned_data.get("sender_message")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_sender_form_unique_id(self):
+        value = self.cleaned_data.get("sender_form_unique_id")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then add a keyword "
+                    "for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_message(self):
+        value = self.cleaned_data.get("other_recipient_message")
+        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_form_unique_id(self):
+        value = self.cleaned_data.get("other_recipient_form_unique_id")
+        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then "
+                    "add a keyword for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_structured_sms_form_unique_id(self):
+        value = self.cleaned_data.get("structured_sms_form_unique_id")
+        if self.process_structured_sms:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then add a "
+                    "keyword for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_delimiter(self):
+        value = self.cleaned_data.get("delimiter", None)
+        if self.process_structured_sms and self.cleaned_data["use_custom_delimiter"]:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_named_args(self):
+        if self.process_structured_sms and self.cleaned_data["use_named_args"]:
+            use_named_args_separator = self.cleaned_data["use_named_args_separator"]
+            value = self.cleaned_data.get("named_args")
+            data_dict = {}
+            for d in value:
+                name = d["name"].strip().upper()
+                xpath = d["xpath"].strip()
+                if name == "" or xpath == "":
+                    raise ValidationError(_(
+                        "Name and xpath are both required fields."
+                    ))
+                for k, v in data_dict.items():
+                    if (not use_named_args_separator
+                        and (k.startswith(name) or name.startswith(k))
+                    ):
+                        raise ValidationError(
+                            _("Cannot have two names overlap: ") + "(%s, %s)"
+                            % (k, name)
+                        )
+                    if use_named_args_separator and k == name:
+                        raise ValidationError(
+                            _("Cannot use the same name twice: ") + name
+                        )
+                    if v == xpath:
+                        raise ValidationError(
+                            _("Cannot reference the same xpath twice: ") + xpath
+                        )
+                data_dict[name] = xpath
+            return data_dict
+        else:
+            return {}
+
+    def clean_named_args_separator(self):
+        value = self.cleaned_data["named_args_separator"]
+        if (self.process_structured_sms
+            and self.cleaned_data["use_named_args"]
+            and self.cleaned_data["use_named_args_separator"]
+        ):
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            if value == self.cleaned_data["delimiter"]:
+                raise ValidationError(_(
+                    "Delimiter and joining character cannot be the same."
+                ))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_type(self):
+        if self.cleaned_data['other_recipient_content_type'] == 'none':
+            return None
+        value = self.cleaned_data["other_recipient_type"]
+        if value == RECIPIENT_OWNER:
+            if self.cleaned_data['allow_keyword_use_by'] != 'cases':
+                raise ValidationError(_(
+                    "In order to send to the case's owner you must restrict "
+                    "keyword initiation only to cases."
+                ))
+        return value
+
+    def clean_other_recipient_id(self):
+        if self.cleaned_data['other_recipient_content_type'] == 'none':
+            return None
+        value = self.cleaned_data["other_recipient_id"]
         recipient_type = self.cleaned_data.get("other_recipient_type", None)
         if recipient_type == RECIPIENT_USER_GROUP:
             try:
