@@ -896,6 +896,10 @@ def _migrate():
 @roles(*ROLES_DB_ONLY)
 def migrate():
     """run south migration on remote environment"""
+    if not console.confirm(
+            'Are you sure you want to run south migrations on '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Task aborted.')
     _require_target()
     execute(stop_pillows)
     execute(stop_celery_tasks)
