@@ -2188,7 +2188,7 @@ class KeywordForm(Form):
     )
     other_recipient_content_type = ChoiceField(
         required=False,
-        label=_("Send"),
+        label=_("Notify Another Person"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
@@ -2241,10 +2241,12 @@ class KeywordForm(Form):
             self._cchq_domain = kwargs.pop('domain')
         if 'process_structured' in kwargs:
             self.process_structured = kwargs.pop('process_structured')
+
         self.content_type_choices = []
         self.recipient_type_choices = []
         self.group_choices = []
         self.form_choices = []
+
         if 'content_type_choices' in kwargs:
             self.content_type_choices = kwargs.pop('content_type_choices')
         if 'recipient_type_choices' in kwargs:
@@ -2253,11 +2255,15 @@ class KeywordForm(Form):
             self.group_choices = kwargs.pop('group_choices')
         if 'form_choices' in  kwargs:
             self.form_choices = kwargs.pop('form_choices')
+
         super(KeywordForm, self).__init__(*args, **kwargs)
         if hasattr(self, 'process_structured'):
             self.fields['process_structured_sms'].initial = self.process_structured
+            self.fields['notify_others'].widget = forms.HiddenInput()
+            self.fields['other_recipient_content_type'].initial = 'none'
             if self.process_structured:
                 self.fields['process_structured_sms'].widget = forms.HiddenInput()
+
         self.fields['sender_content_type'].choices = self.content_type_choices
         self.fields['other_recipient_content_type'].choices = self.content_type_choices
         self.fields['other_recipient_type'].choices = self.recipient_type_choices
@@ -2282,71 +2288,6 @@ class KeywordForm(Form):
                 crispy.Field(
                     'description',
                     data_bind="text: description",
-                ),
-            ),
-            crispy.Fieldset(
-                _("Respond to Sender"),
-                crispy.Field(
-                    'sender_content_type',
-                    data_bind="value: sender_content_type",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'sender_message',
-                        data_bind="text: sender_message",
-                    ),
-                    data_bind="visible: isMessageSMS",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'sender_form_unique_id',
-                        data_bind="value: sender_form_unique_id"
-                    ),
-                    data_bind="visible: isMessageSurvey",
-                ),
-                BootstrapMultiField(
-                    "",
-                    InlineField(
-                        'notify_others',
-                        data_bind="checked: notify_others",
-                    ),
-                    crispy.Div(
-                        crispy.HTML(
-                            '<h4 style="margin-bottom: 20px;">%s</h4>'
-                            % ugettext("Recipient Information"),
-                        ),
-                        crispy.Field(
-                            'other_recipient_type',
-                            data_bind="value: other_recipient_type",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_id',
-                                data_bind="value: other_recipient_id",
-                            ),
-                            data_bind="visible: showRecipientGroup",
-                        ),
-                        crispy.Field(
-                            'other_recipient_content_type',
-                            data_bind="value: other_recipient_content_type",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_message',
-                                data_bind="value: other_recipient_message",
-                            ),
-                            data_bind="visible: other_recipient_content_type() == 'sms'",
-                        ),
-                        crispy.Div(
-                            crispy.Field(
-                                'other_recipient_form_unique_id',
-                                data_bind="value: other_recipient_form_unique_id",
-                            ),
-                            data_bind="visible: other_recipient_content_type() == 'survey'",
-                        ),
-                        css_class="well",
-                        data_bind="visible: notify_others",
-                    ),
                 ),
             ),
         ]
@@ -2426,6 +2367,71 @@ class KeywordForm(Form):
             )
         layout_fields.extend([
             crispy.Fieldset(
+                _("Response"),
+                crispy.Field(
+                    'sender_content_type',
+                    data_bind="value: sender_content_type",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_message',
+                        data_bind="text: sender_message",
+                    ),
+                    data_bind="visible: isMessageSMS",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_form_unique_id',
+                        data_bind="value: sender_form_unique_id"
+                    ),
+                    data_bind="visible: isMessageSurvey",
+                ),
+                crispy.Field(
+                    'other_recipient_content_type',
+                    data_bind="value: other_recipient_content_type",
+                ),
+                BootstrapMultiField(
+                    "",
+                    InlineField(
+                        'notify_others',
+                        data_bind="checked: notify_others",
+                    ),
+                    crispy.Div(
+                        crispy.HTML(
+                            '<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % ugettext("Recipient Information"),
+                        ),
+                        crispy.Field(
+                            'other_recipient_type',
+                            data_bind="value: other_recipient_type",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_id',
+                                data_bind="value: other_recipient_id",
+                            ),
+                            data_bind="visible: showRecipientGroup",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_message',
+                                data_bind="value: other_recipient_message",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'sms'",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_form_unique_id',
+                                data_bind="value: other_recipient_form_unique_id",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'survey'",
+                        ),
+                        css_class="well",
+                        data_bind="visible: notify_others",
+                    ),
+                ),
+            ),
+            crispy.Fieldset(
                 _("Advanced Options"),
                 crispy.Field(
                     'override_open_sessions',
@@ -2446,7 +2452,7 @@ class KeywordForm(Form):
         self.helper.layout = crispy.Layout(*layout_fields)
 
     def _check_content_type(self, value):
-        content_types = [a[0] for a in KEYWORD_CONTENT_CHOICES]
+        content_types = [a[0] for a in KEYWORD_CONTENT_CHOICES] + ['none']
         if value not in content_types:
             raise ValidationError(_("Invalid content type."))
         return value

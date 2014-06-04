@@ -794,13 +794,21 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
         return [(a['code'], a['name']) for a in available_forms]
 
     @property
+    def content_type_choices(self):
+        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
+        choices.append(
+            ('none', _("No Response"))
+        )
+        return choices
+
+    @property
     @memoized
     def keyword_form(self):
         if self.request.method == 'POST':
             return KeywordForm(
                 self.request.POST, domain=self.domain,
                 process_structured=self.process_structured_message,
-                content_type_choices=KEYWORD_CONTENT_CHOICES,
+                content_type_choices=self.content_type_choices,
                 recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
                 group_choices=self.group_choices,
                 form_choices=self.form_choices,
@@ -808,7 +816,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
         return KeywordForm(
             domain=self.domain,
             process_structured=self.process_structured_message,
-            content_type_choices=KEYWORD_CONTENT_CHOICES,
+            content_type_choices=self.content_type_choices,
             recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
             group_choices=self.group_choices,
             form_choices=self.form_choices,
@@ -827,14 +835,16 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
             if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'case':
                 self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
-            self.keyword.actions = [
-                SurveyKeywordAction(
-                    recipient=RECIPIENT_SENDER,
-                    action=self.keyword_form.cleaned_data['sender_content_type'],
-                    message_content=self.keyword_form.cleaned_data['sender_message'],
-                    form_unique_id=self.keyword_form.cleaned_data['sender_form_unique_id'],
-                ),
-            ]
+            self.keyword.actions = []
+            if self.keyword_form.cleaned_data['sender_content_type'] != 'none':
+                self.keyword.actions.append(
+                    SurveyKeywordAction(
+                        recipient=RECIPIENT_SENDER,
+                        action=self.keyword_form.cleaned_data['sender_content_type'],
+                        message_content=self.keyword_form.cleaned_data['sender_message'],
+                        form_unique_id=self.keyword_form.cleaned_data['sender_form_unique_id'],
+                    )
+                )
             if self.process_structured_message:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
@@ -846,7 +856,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 )
-            if self.keyword_form.cleaned_data['notify_others']:
+            if self.keyword_form.cleaned_data['other_recipient_type'] != 'none':
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
@@ -856,6 +866,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         form_unique_id=self.keyword_form.cleaned_data['other_recipient_form_unique_id'],
                     )
                 )
+
             self.keyword.save()
             return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
@@ -897,7 +908,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             form = KeywordForm(
                 self.request.POST, domain=self.domain, initial=initial,
                 process_structured=self.process_structured_message,
-                content_type_choices=KEYWORD_CONTENT_CHOICES,
+                content_type_choices=self.content_type_choices,
                 recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
                 group_choices=self.group_choices,
                 form_choices=self.form_choices,
@@ -907,7 +918,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
         return KeywordForm(
             domain=self.domain, initial=initial,
             process_structured=self.process_structured_message,
-            content_type_choices=KEYWORD_CONTENT_CHOICES,
+            content_type_choices=self.content_type_choices,
             recipient_type_choices=KEYWORD_RECIPIENT_CHOICES,
             group_choices=self.group_choices,
             form_choices=self.form_choices,
@@ -943,7 +954,6 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                 })
             else:
                 initial.update({
-                    'notify_others': True,
                     'other_recipient_type': action.recipient,
                     'other_recipient_id': action.recipient_id,
                     'other_recipient_content_type': action.action,

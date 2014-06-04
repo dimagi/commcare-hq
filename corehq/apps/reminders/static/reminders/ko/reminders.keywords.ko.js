@@ -17,7 +17,7 @@ var KeywordActionsViewModel = function (initial_values) {
 
     self.sender_message = ko.observable(initial_values.sender_message);
     self.sender_form_unique_id = ko.observable(initial_values.sender_form_unique_id);
-    self.notify_others = ko.observable(initial_values.notify_others);
+    self.notify_others = ko.observable(initial_values.other_recipient_type !== 'none');
 
     self.other_recipient_type = ko.observable(initial_values.other_recipient_type);
     self.showRecipientGroup = ko.computed(function () {
@@ -26,6 +26,11 @@ var KeywordActionsViewModel = function (initial_values) {
 
     self.other_recipient_id = ko.observable(initial_values.other_recipient_id);
     self.other_recipient_content_type = ko.observable(initial_values.other_recipient_content_type);
+    self.notify_others = ko.computed(function () {
+        return (self.other_recipient_content_type() === 'sms'
+            || self.other_recipient_content_type() === 'survey');
+    });
+
     self.other_recipient_message = ko.observable(initial_values.other_recipient_message);
     self.other_recipient_form_unique_id = ko.observable(initial_values.other_recipient_form_unique_id);
     self.process_structured_sms = ko.observable(initial_values.process_structured_sms);
