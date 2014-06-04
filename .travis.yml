@@ -11,6 +11,8 @@ install:
  - "pip install -e ."
  - "pip install coverage coveralls"
  - "pip install git+https://github.com/dimagi/xml2json.git"
+ - "git clone https://github.com/dimagi/django-no-exceptions.git"
+ - "export PYTHONPATH=$PYTHONPATH:django-no-exceptions/"
 script: coverage run `which django-admin.py` test --settings settings --traceback case phone stock
 after_success:
  - coveralls
