@@ -1,4 +1,5 @@
 from tastypie import http
+from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse
 from tastypie.paginator import Paginator
 from tastypie.resources import convert_post_to_patch, ModelResource
@@ -335,6 +336,11 @@ class GroupResource(v0_4.GroupResource):
         return bundle
 
 
+class DomainAuthorization(ReadOnlyAuthorization):
+    def read_list(self, object_list, bundle):
+        return object_list.filter(domain=bundle.request.domain)
+
+
 class DeviceReportResource(JsonResource, ModelResource):
     class Meta:
         queryset = DeviceReportEntry.objects.all()
@@ -342,6 +348,7 @@ class DeviceReportResource(JsonResource, ModelResource):
         detail_allowed_methods = ['get']
         resource_name = 'device-log'
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization()
         paginator_class = Paginator
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
