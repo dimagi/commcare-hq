@@ -116,7 +116,7 @@ class PatientInfoDisplay(object):
 
         def _get_field_value(label, value, is_date=None):
             val = getattr(self.case, value, EMPTY_FIELD)
-            if val and format:
+            if val and is_date:
                 val = format_date(val, OUTPUT_DATE_FORMAT)
             return _(label) + ': ' + str(val)
 
