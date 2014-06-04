@@ -2162,7 +2162,7 @@ class KeywordForm(Form):
         )
     )
     sender_content_type = ChoiceField(
-        label=_("Send"),
+        label=_("Send to Sender"),
     )
     sender_message = TrimmedCharField(
         required=False,
