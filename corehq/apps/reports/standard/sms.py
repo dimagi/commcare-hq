@@ -198,12 +198,14 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
             username, contact_type, url = (doc_info.display,
                 doc_info.type_display, doc_info.link)
         else:
-            username, contact_type, url = ("-", None, None)
+            username, contact_type, url = (None, None, None)
+        username = username or "-"
+        contact_type = contact_type or _("Unknown")
         if url:
             ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
         else:
             ret = self.table_cell(username, username)
-        ret['raw'] = "|||".join([username, contact_type or _("Unknown"),
+        ret['raw'] = "|||".join([username, contact_type,
             msg.couch_recipient or ""])
         return ret
 
