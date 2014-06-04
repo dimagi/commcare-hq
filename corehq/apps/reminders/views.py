@@ -856,7 +856,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 )
-            if self.keyword_form.cleaned_data['other_recipient_type'] != 'none':
+            if self.keyword_form.cleaned_data['notify_others']:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],

@@ -2394,7 +2394,7 @@ class KeywordForm(Form):
                     "",
                     InlineField(
                         'notify_others',
-                        data_bind="checked: notify_others",
+                        data_bind="value: notify_others",
                     ),
                     crispy.Div(
                         crispy.HTML(
