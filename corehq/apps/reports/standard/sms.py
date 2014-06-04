@@ -17,6 +17,7 @@ from dimagi.utils.timezones import utils as tz_utils
 import pytz
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
+from corehq.apps.hqwebapp.doc_info import get_doc_info
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -109,7 +110,6 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     slug = 'message_log'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
-    contact_url_cache = {}
 
     @property
     def headers(self):
@@ -130,8 +130,6 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
 
-        username_map = {} # Store the results of username lookups for faster loading
-
         direction_map = {
             INCOMING: _("Incoming"),
             OUTGOING: _("Outgoing"),
@@ -142,25 +140,27 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
+        contact_cache = {}
+
         for message in data:
             if message.direction == OUTGOING and not message.processed:
                 continue
             recipient_id = message.couch_recipient
-            if recipient_id in [None, ""]:
-                username = "-"
-            elif recipient_id in username_map:
-                username = username_map.get(recipient_id)
-            else:
-                username = "-"
+            doc = None
+            if recipient_id not in [None, ""]:
                 try:
                     if message.couch_recipient_doc_type == "CommCareCase":
-                        username = CommCareCase.get(recipient_id).name
+                        doc = CommCareCase.get(recipient_id)
                     else:
-                        username = CouchUser.get_by_user_id(recipient_id).username
+                        doc = CouchUser.get_by_user_id(recipient_id)
                 except Exception:
                     pass
 
-                username_map[recipient_id] = username
+            if doc:
+                doc_info = get_doc_info(doc.to_json(), self.domain,
+                    contact_cache)
+            else:
+                doc_info = None
 
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
@@ -169,37 +169,13 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
             timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
                 self._fmt_timestamp(timestamp),
-                self._fmt_contact_link(message, username),
+                self._fmt_contact_link(message, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
             ])
 
         return result
-
-    def get_contact_url(self, msg):
-        contact_type = _("Unknown")
-        url = None
-        if msg.couch_recipient:
-            if msg.couch_recipient not in self.contact_url_cache:
-                if msg.couch_recipient_doc_type == "CommCareCase":
-                    url = reverse("case_details",
-                        args=[self.domain, msg.couch_recipient])
-                    contact_type = _("Case")
-                elif msg.couch_recipient_doc_type == "WebUser":
-                    url = reverse(EditWebUserView.urlname,
-                        args=[self.domain, msg.couch_recipient])
-                    contact_type = _("Web User")
-                elif msg.couch_recipient_doc_type == "CommCareUser":
-                    url = reverse(EditCommCareUserView.urlname,
-                        args=[self.domain, msg.couch_recipient])
-                    contact_type = _("Mobile Worker")
-                else:
-                    url = None
-                self.contact_url_cache[msg.couch_recipient] = (url, contact_type)
-            else:
-                url, contact_type = self.contact_url_cache[msg.couch_recipient]
-        return (url, contact_type)
 
     @property
     def export_table(self):
@@ -217,14 +193,18 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     def _fmt(self, val):
         return format_datatables_data(val, val)
 
-    def _fmt_contact_link(self, msg, username):
-        url, contact_type = self.get_contact_url(msg)
-        key = "|||".join([username, contact_type, msg.couch_recipient or ""])
+    def _fmt_contact_link(self, msg, doc_info):
+        if doc_info:
+            username, contact_type, url = (doc_info.display,
+                doc_info.type_display, doc_info.link)
+        else:
+            username, contact_type, url = ("-", None, None)
         if url:
             ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
         else:
             ret = self.table_cell(username, username)
-        ret['raw'] = key
+        ret['raw'] = "|||".join([username, contact_type or _("Unknown"),
+            msg.couch_recipient or ""])
         return ret
 
     def _fmt_timestamp(self, timestamp):
