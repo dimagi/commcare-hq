@@ -15,7 +15,7 @@ from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
-from dimagi.utils.couch import LockableMixIn
+from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.multithreading import process_fast
 from random import randint
@@ -796,6 +796,11 @@ class CaseReminderHandler(Document):
             return False
 
     def case_changed(self, case, now=None, schedule_changed=False, prev_definition=None):
+        key = "rule-update-definition-%s-case-%s" % self._id, case._id
+        with CriticalSection([key]):
+            self._case_changed(case, now, schedule_changed, prev_definition)
+
+    def _case_changed(self, case, now, schedule_changed, prev_definition):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == CASE_CRITERIA.
         
@@ -947,15 +952,19 @@ class CaseReminderHandler(Document):
                 self.datetime_definition_changed(send_immediately=send_immediately)
     
     @classmethod
-    def get_handlers(cls, domain, case_type=None):
+    def get_handlers(cls, domain, case_type=None, ids_only=False):
         key = [domain]
         if case_type:
             key.append(case_type)
-        return cls.view('reminders/handlers_by_domain_case_type',
+        result = cls.view('reminders/handlers_by_domain_case_type',
             startkey=key,
             endkey=key + [{}],
-            include_docs=True,
+            include_docs=(not ids_only),
         )
+        if ids_only:
+            return [row["id"] for row in result]
+        else:
+            return result
 
     @classmethod
     def get_referenced_forms(cls, domain):
