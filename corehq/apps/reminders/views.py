@@ -846,8 +846,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
             self.keyword.save()
             return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
-        else:
-            print self.keyword_form.errors
         return self.get(request, *args, **kwargs)
 
 
