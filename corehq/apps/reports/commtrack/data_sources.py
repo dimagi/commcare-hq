@@ -303,32 +303,34 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             )
 
             if transactions:
-                last_transaction = sorted(
+                transactions = sorted(
                     transactions,
                     key=lambda trans: trans.report.date
-                )[-1]
-            else:
-                last_transaction = None
+                )
 
             if self.all_relevant_forms:
                 forms_xmlns = []
+
                 for form in self.all_relevant_forms.values():
                     forms_xmlns.append(form['xmlns'])
-                if last_transaction:
-                    form = XFormInstance.get(last_transaction.report.form_id)
-                    if form.xmlns in forms_xmlns:
-                        yield {
-                            'loc_id': loc._id,
-                            'loc_path': loc.path,
-                            'name': loc.name,
-                            'type': loc.location_type,
-                            'reporting_status': reporting_status(
-                                last_transaction,
-                                self.start_date,
-                                self.end_date
-                            ),
-                            'geo': loc._geopoint,
-                        }
+
+                form_filtered_transactions = [
+                    t for t in transactions if XFormInstance.get(t.report.form_id).xmlns in forms_xmlns
+                ]
+
+                if form_filtered_transactions:
+                    yield {
+                        'loc_id': loc._id,
+                        'loc_path': loc.path,
+                        'name': loc.name,
+                        'type': loc.location_type,
+                        'reporting_status': reporting_status(
+                            form_filtered_transactions[-1],
+                            self.start_date,
+                            self.end_date
+                        ),
+                        'geo': loc._geopoint,
+                    }
                 else:
                     yield {
                         'loc_id': loc._id,
