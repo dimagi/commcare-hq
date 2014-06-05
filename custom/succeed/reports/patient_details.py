@@ -17,6 +17,7 @@ from custom.succeed.reports import PD1, PD2, PM3, PM4, HUD2, CM6, CHW3
 from custom.succeed.reports.patient_Info import PatientInfoDisplay
 from custom.succeed.utils import format_date, SUCCEED_CM_APPNAME, is_pm_or_pi, is_cm, is_pi, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, is_chw, SUCCEED_DOMAIN, get_app_build
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -189,7 +190,10 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             ret['interaction_table'] = []
             for visit_key, visit in enumerate(VISIT_SCHEDULE):
                 if case["randomization_date"]:
-                    target_date = (case["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT)
+                    try:
+                        target_date = format_date(case["randomization_date"] + timedelta(days=visit['days']), OUTPUT_DATE_FORMAT)
+                    except TypeError:
+                        target_date = _("Bad Date Format!")
                 else:
                     target_date = EMPTY_FIELD
                 interaction = {
@@ -202,7 +206,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 }
                 for key, action in enumerate(case['actions']):
                     if visit['xmlns'] == action['xform_xmlns']:
-                        interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
+                        interaction['received_date'] = format_date(action['date'], INTERACTION_OUTPUT_DATE_FORMAT)
                         try:
                             user = CouchUser.get(action['user_id'])
                             interaction['completed_by'] = user.raw_username

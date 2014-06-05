@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
@@ -70,10 +69,10 @@ def get_form_dict(case, form_xmlns):
 
 
 def format_date(date_string, OUTPUT_FORMAT):
-    if date_string is None or date_string == '' or date_string == EMPTY_FIELD:
-        return ''
+    if date_string is None or date_string == '' or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
+        return _("Bad Date Format!")
 
-    if type(date_string) is not datetime.date:
+    if isinstance(date_string, basestring):
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
