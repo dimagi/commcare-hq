@@ -50,7 +50,7 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         client = TwilioRestClient(self.account_sid, self.auth_token,
             timeout=settings.SMS_GATEWAY_TIMEOUT)
         to = msg.phone_number
-        from_ = orig_phone_number
+        from_ = orig_phone_number or self.phone_numbers[0]
         body = msg.text
         message = client.messages.create(
             body=body,
