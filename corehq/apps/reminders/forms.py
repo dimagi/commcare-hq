@@ -748,7 +748,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label="Start Reminder",
+        label=ugettext_noop("Send Reminder"),
         required=False,
         choices=(
             (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
