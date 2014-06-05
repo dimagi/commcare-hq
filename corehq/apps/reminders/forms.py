@@ -924,13 +924,23 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     force_surveys_to_use_triggered_case = forms.BooleanField(
         required=False,
-        label=_(ugettext_noop("For Surveys, force answers to affect "
-                              "case sending the survey.")),
+        label=ugettext_noop("For Surveys, force answers to affect "
+                              "case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False,
+    use_custom_content_handler = BooleanField(
+        required=False,
+        label=ugettext_noop("Use Custom Content Handler")
+    )
+    custom_content_handler = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Please Specify Custom Content Handler")
+    )
+
+    def __init__(self, data=None, is_previewer=False, is_superuser=False,
                  domain=None, is_edit=False, can_use_survey=False,
-                 *args, **kwargs
+                 can_use_custom_content_handler=False,
+                 custom_content_handler=None, *args, **kwargs
     ):
         self.initial_event = {
             'day_num': 1,
@@ -951,6 +961,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.is_edit = is_edit
+        self.is_superuser = is_superuser
+        self.can_use_custom_content_handler = can_use_custom_content_handler
+        self.custom_content_handler = custom_content_handler
 
         self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
 
@@ -1292,8 +1305,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
+            crispy.Div(*self.additional_advanced_options),
             active=False,
         )
+
+    @property
+    def additional_advanced_options(self):
+        return []
 
     @property
     def current_values(self):
@@ -1608,6 +1626,25 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return False
         return self.cleaned_data['force_surveys_to_use_triggered_case']
 
+    def clean_use_custom_content_handler(self):
+        if self.is_superuser:
+            return self.cleaned_data["use_custom_content_handler"]
+        else:
+            return self.can_use_custom_content_handler
+
+    def clean_custom_content_handler(self):
+        if self._cchq_is_superuser:
+            value = self.cleaned_data["custom_content_handler"]
+            if self.cleaned_data["use_custom_content_handler"]:
+                if value in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
+                    return value
+                else:
+                    raise ValidationError(_("Invalid custom content handler."))
+            else:
+                return None
+        else:
+            return self.custom_content_handler
+
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
             raise ValueError(_(
@@ -1650,6 +1687,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'default_lang',
             'max_question_retries',
             'force_surveys_to_use_triggered_case',
+            'custom_content_handler',
         ]:
             value = self.cleaned_data[field]
             if field == 'recipient' and value == RECIPIENT_ALL_SUBCASES:
@@ -1833,6 +1871,23 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
                                    "option is useful, for example, if the recipient has chosen a "
                                    "specific time to receive the message.")
+            ),
+        ]
+
+    @property
+    def additional_advanced_options(self):
+        return [
+            BootstrapMultiField(
+                "",
+                InlineField(
+                    'use_custom_content_handler',
+                    data_bind="checked: use_custom_content_handler",
+                ),
+                InlineField(
+                    'custom_content_handler',
+                    css_class="input-xxlarge",
+                    data_bind="visible: use_custom_content_handler",
+                ),
             ),
         ]
 

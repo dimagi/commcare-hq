@@ -528,10 +528,12 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
+                is_superuser=self.request.couch_user.is_superuser,
                 can_use_survey=can_use_survey_reminders(self.request),
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
+            is_superuser=self.request.couch_user.is_superuser,
             domain=self.domain,
             can_use_survey=can_use_survey_reminders(self.request),
         )
@@ -549,7 +551,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return [
             {
                 'title': _("Reminders"),
-                'url': reverse('list_reminders', args=[self.domain]),
+                'url': reverse(RemindersListView.urlname, args=[self.domain]),
             },
         ]
 
@@ -709,6 +711,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 domain=self.domain,
                 is_edit=True,
                 can_use_survey=can_use_survey_reminders(self.request),
+                can_use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+                custom_content_handler=self.reminder_handler.custom_content_handler,
             )
         return self.reminder_form_class(
             initial=initial,
@@ -716,6 +720,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             domain=self.domain,
             is_edit=True,
             can_use_survey=can_use_survey_reminders(self.request),
+            can_use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+            custom_content_handler=self.reminder_handler.custom_content_handler,
         )
 
     @property

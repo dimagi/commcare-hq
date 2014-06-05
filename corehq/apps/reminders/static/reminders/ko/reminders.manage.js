@@ -105,6 +105,8 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
+    self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
