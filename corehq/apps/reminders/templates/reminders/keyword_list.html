@@ -41,11 +41,17 @@
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h4>
+                        {% blocktrans %}
                         Delete the keyword '<span data-bind="text: keyword"></span>'.
+                        {% endblocktrans %}
                     </h4>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete the SMS Keyword '<span data-bind="text: keyword"></span>'?</p>
+                    <p>
+                        {% blocktrans %}
+                        Are you sure you want to delete the SMS Keyword '<span data-bind="text: keyword"></span>'?
+                        {% endblocktrans %}
+                    </p>
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn btn-danger delete-item-confirm">
