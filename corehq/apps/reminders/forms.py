@@ -844,7 +844,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
 
     event_timing = forms.ChoiceField(
-        label="Timing",
+        label=ugettext_noop("Time of Day"),
     )
 
     event_interpretation = forms.ChoiceField(
@@ -1135,7 +1135,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                "Time",
+                _("Time of Day"),
                 InlineField(
                     'event_timing',
                     data_bind="value: event_timing",
@@ -1666,7 +1666,7 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                _("Time"),
+                _("Time of Day"),
                 InlineField(
                     'event_timing',
                     data_bind="value: event_timing",
@@ -1718,7 +1718,7 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                _("Time"),
+                _("Time of Day"),
                 InlineField(
                     'event_timing',
                     data_bind="value: event_timing",
