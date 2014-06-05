@@ -983,6 +983,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_start(self):
         return crispy.Fieldset(
             'Start',
+            crispy.HTML(
+                '<p style="padding: 0; margin-bottom: 1.5em;">'
+                '<i class="icon-info-sign"></i> %s</p>' % _(
+                    "Choose what will cause this reminder to be sent"
+                ),
+            ),
             *self.section_start_fields
         )
 
