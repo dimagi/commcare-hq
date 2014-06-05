@@ -1467,7 +1467,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     if not msg:
                         del translations[lang]
                 if not translations:
-                    raise ValidationError("You must have at least one message filled in.")
+                    raise ValidationError("Please provide an SMS message.")
 
             # clean form_unique_id:
             if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
