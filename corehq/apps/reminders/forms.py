@@ -1202,6 +1202,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.HTML('<p class="help-inline">day(s)</p>'),
                 data_bind="visible: isScheduleLengthVisible",
             ),
+        )
+
+    @property
+    def section_advanced(self):
+        return FieldsetAccordionGroup(
+            "Advanced Options",
             BootstrapMultiField(
                 "Stop Condition",
                 InlineField(
@@ -1222,13 +1228,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                    "a case property that is going to be set to Ok.  Reminders will always stop if "
                                    "the start condition is no longer true."),
                 css_id="stop-condition-group",
-            )
-        )
-
-    @property
-    def section_advanced(self):
-        return FieldsetAccordionGroup(
-            "Advanced Options",
+            ),
             BootstrapMultiField(
                 "Default Language",
                 InlineField(
