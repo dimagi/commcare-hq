@@ -66,33 +66,24 @@ class FormData(models.Model):
         self.device_id = instance.metadata.deviceID
         self.user_id = instance.metadata.userID
         self.username = instance.metadata.username
-        try:
-            self.app_id = instance.app_id or MISSING_APP_ID
-        except AttributeError:
-            self.app_id = MISSING_APP_ID
+        self.app_id = instance.app_id or MISSING_APP_ID
         self.xmlns = instance.xmlns
 
     def matches_exact(self, instance):
-        match = self.doc_type == instance.doc_type and \
-               self.domain == instance.domain and \
-               self.instance_id == instance.get_id and \
-               self.time_start == instance.metadata.timeStart and \
-               self.time_end == instance.metadata.timeEnd and \
-               self.device_id == instance.metadata.deviceID and \
-               self.user_id == instance.metadata.userID and \
-               self.username == instance.metadata.username and \
-               self.xmlns == instance.xmlns and \
-               self.received_on == instance.received_on
+        return (
+            self.doc_type == instance.doc_type and
+            self.domain == instance.domain and
+            self.instance_id == instance.get_id and
+            self.time_start == instance.metadata.timeStart and
+            self.time_end == instance.metadata.timeEnd and
+            self.device_id == instance.metadata.deviceID and
+            self.user_id == instance.metadata.userID and
+            self.username == instance.metadata.username and
+            self.xmlns == instance.xmlns and
+            self.received_on == instance.received_on and
+            self.app_id == (instance.app_id or MISSING_APP_ID)
+        )
 
-        if match:
-            try:
-                app_id = instance.app_id or MISSING_APP_ID
-            except AttributeError:
-                app_id = MISSING_APP_ID
-
-            match = self.app_id == app_id
-
-        return match
     @classmethod
     def from_xforminstance(cls, instance):
         """
