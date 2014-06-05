@@ -23,6 +23,9 @@ requires imports/proptable.html to be included in the main template
 .form-data-readable, .form-data-raw {
     display: none;
 }
+.form-data-table, .form-data-group-table {
+    overflow: scroll;
+}
 </style>
 <script>
     $(function () {
@@ -262,7 +265,7 @@ requires imports/proptable.html to be included in the main template
         </label>
         {% endif %}
         <div{% if not side_pane %} class="row-fluid"{% endif %}>
-            <table class="table table-bordered {% if not side_pane %}span6{% endif %}">
+            <table class="table table-bordered form-data-table {% if not side_pane %}span6{% endif %}">
                 <tr>
                     <th class="span6">
                         <span class="form-data-readable">{% trans "Question" %}</span>

@@ -79,6 +79,16 @@ def get_questions(domain, app_id, xmlns):
         )
 
     form = app.get_form_by_xmlns(xmlns)
+    if not form:
+        if xmlns == 'http://code.javarosa.org/devicereport':
+            raise QuestionListNotFound(
+                _("This is a Device Report")
+            )
+        else:
+            raise QuestionListNotFound(
+                _("We could not find the question list "
+                  "associated with this form")
+            )
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
     return [FormQuestionResponse(q) for q in questions]
