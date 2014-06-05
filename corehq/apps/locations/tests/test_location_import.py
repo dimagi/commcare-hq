@@ -209,12 +209,12 @@ class LocationImportTest(CommTrackTest):
         import_location(self.domain.name, 'state', data)
 
         self.assertEqual(
-            get_default_consumption(
+            float(get_default_consumption(
                 self.domain.name,
                 Product.get_by_code(self.domain.name, 'pp')._id,
                 'state',
                 sp._id,
-            ),
+            )),
             77 / DAYS_IN_MONTH
         )
 
