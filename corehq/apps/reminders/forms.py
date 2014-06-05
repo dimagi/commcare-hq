@@ -1264,10 +1264,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
-            FieldWithHelpBubble(
-                'submit_partial_forms',
-                help_bubble_text=_("For surveys, this will let forms be saved even if the survey has not "
-                                   "been completed and the user is not responding.")
+            crispy.Div(
+                FieldWithHelpBubble(
+                    'submit_partial_forms',
+                    help_bubble_text=_(
+                        "For surveys, this will let forms be saved even if "
+                        "the survey has not been completed and the user is "
+                        "not responding."
+                    ),
+                ),
+                data_bind="visible: isPartialSubmissionsVisible",
             ),
             FieldWithHelpBubble(
                 'include_case_side_effects',
