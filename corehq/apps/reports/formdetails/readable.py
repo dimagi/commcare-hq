@@ -186,7 +186,7 @@ def zip_form_data_and_questions(data, questions, path_context='',
         node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
-        if question.type == 'Group':
+        if question.type in ('Group', 'FieldList'):
             children = question_data.pop('children')
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
