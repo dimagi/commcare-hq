@@ -20,7 +20,7 @@ function (doc) {
                 indicator_emits["anc_visit_120"] = case_id;
                 if (indicators.cur_num_anc) {
                     try {
-                        var cur_anc = (indicators.cur_num_anc.value) ? parseInt(indicators) : 0;
+                        var cur_anc = (indicators.cur_num_anc.value) ? parseInt(indicators.cur_num_anc.value) : 0;
                         if (cur_anc === 0) {
                             indicator_emits["no_anc"] = case_id;
                         }

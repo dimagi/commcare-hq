@@ -145,7 +145,7 @@ class BaseSqlData(SqlData):
 
     @property
     def filter_values(self):
-        users = tuple([user.get('user_id') for user in self.users])
+        users = tuple([user.user_id for user in self.users])
         return dict(startdate=self.datespan.startdate,
                     enddate=self.datespan.enddate,
                     users=users)
@@ -192,12 +192,12 @@ class BaseSqlData(SqlData):
         if self.group_by_district:
             return [[g.get_id] for g in Group.by_domain(self.domain) if g.get_id != ALL_CVSU_GROUP]
         else:
-            return [[user.get('user_id')] for user in self.users]
+            return [[user.user_id] for user in self.users]
 
     @property
     @memoized
     def usernames(self):
-        return dict([(user.get('user_id'), user.get('raw_username')) for user in self.users])
+        return {user.user_id: user.raw_username for user in self.users}
 
     def username(self, user_id):
         try:

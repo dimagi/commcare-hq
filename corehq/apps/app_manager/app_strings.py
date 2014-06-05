@@ -1,11 +1,9 @@
-from distutils.version import LooseVersion
 import functools
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -14,13 +12,12 @@ def non_empty_only(dct):
 
 
 def _create_custom_app_strings(app, lang):
-    from corehq.apps.app_manager.models import Module
 
     def trans(d):
         return clean_trans(d, langs)
 
     def maybe_add_index(text):
-        if LooseVersion(app.build_spec.version) >= '2.8':
+        if app.build_version >= '2.8':
             numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
             if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
@@ -47,8 +44,7 @@ def _create_custom_app_strings(app, lang):
                 label = trans(module.referral_label)
             yield id_strings.detail_title_locale(module, detail_type), label
 
-            detail_column_infos = get_detail_column_infos(detail, include_sort=detail_type == 'case_short')
-            for (column, sort_element, order) in detail_column_infos:
+            for column in detail.get_columns():
                 if not is_sort_only_column(column):
                     yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 

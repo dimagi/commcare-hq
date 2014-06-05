@@ -31,12 +31,19 @@ def get_doc_info_by_id(domain, id):
     return get_doc_info(doc, domain_hint=domain)
 
 
-def get_doc_info(doc, domain_hint=None):
+def get_doc_info(doc, domain_hint=None, cache=None):
+    """
+    cache is just a dictionary that you can keep passing in to speed up info
+    retrieval.
+    """
     domain = doc.get('domain') or domain_hint
     doc_type = doc.get('doc_type')
     doc_id = doc.get('_id')
 
     assert doc.get('domain') == domain or domain in doc.get('domains', ())
+
+    if cache and doc_id in cache:
+        return cache[doc_id]
 
     if doc_type in ('Application', 'RemoteApp'):
         if doc.get('copy_of'):
@@ -98,5 +105,8 @@ def get_doc_info(doc, domain_hint=None):
     doc_info.id = doc_id
     doc_info.domain = domain
     doc_info.type = doc_type
+
+    if cache:
+        cache[doc_id] = doc_info
 
     return doc_info

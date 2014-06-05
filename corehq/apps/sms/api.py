@@ -172,12 +172,15 @@ def store_billable(msg):
             SmsBillable.create(msg)
 
 
-def send_message_via_backend(msg, backend=None, onerror=lambda: None):
+def send_message_via_backend(msg, backend=None, orig_phone_number=None,
+    onerror=lambda: None):
     """send sms using a specific backend
 
     msg - outbound message object
     backend - MobileBackend object to use for sending; if None, use
       msg.outbound_backend
+    orig_phone_number - the originating phone number to use when sending; this
+      is sent in if the backend supports load balancing
     onerror - error handler; mostly useful for logging a custom message to the
       error log
     """
@@ -196,7 +199,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             msg.backend_id = backend._id
 
         if backend.domain_is_authorized(msg.domain):
-            backend.send(msg)
+            backend.send(msg, orig_phone_number=orig_phone_number)
         else:
             raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
 

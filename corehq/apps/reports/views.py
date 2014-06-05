@@ -66,7 +66,8 @@ from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFor
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.reports.util import get_all_users_by_domain, \
+    users_matching_filter
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -162,11 +163,11 @@ def export_data(req, domain):
     user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x.get('user_id'),
-                                    get_all_users_by_domain(domain, user_filter=user_filter, simplified=True))
+        filtered_users = users_matching_filter(domain, user_filter)
+
         def _ufilter(user):
             try:
-                return user['form']['meta']['userID'] in users_matching_filter
+                return user['form']['meta']['userID'] in filtered_users
             except KeyError:
                 return False
         filter = _ufilter
@@ -908,7 +909,9 @@ def form_data(request, domain, instance_id):
 def case_form_data(request, domain, case_id, xform_id):
     context = _get_form_context(request, domain, xform_id)
     context['case_id'] = case_id
+    context['side_pane'] = True
     return HttpResponse(render_form(context['instance'], domain, options=context))
+
 
 @require_form_view_permission
 @login_and_domain_required
@@ -1018,19 +1021,22 @@ def clear_report_caches(request, domain):
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
-def export_report(request, domain, export_hash):
+def export_report(request, domain, export_hash, format):
     cache = get_redis_client()
 
     if cache.exists(export_hash):
-        content = cache.get(export_hash)
-        file = ContentFile(content)
-        response = HttpResponse(file, 'application/vnd.ms-excel')
-        response['Content-Length'] = file.size
-        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-            filename=export_hash,
-            extension=Format.XLS
-        )
-        return response
+        if format in Format.VALID_FORMATS:
+            content = cache.get(export_hash)
+            file = ContentFile(content)
+            response = HttpResponse(file, Format.FORMAT_DICT[format])
+            response['Content-Length'] = file.size
+            response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+                filename=export_hash,
+                extension=Format.FORMAT_DICT[format]['extension']
+            )
+            return response
+        else:
+            return HttpResponseNotFound(_("We don't support this format"))
     else:
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))

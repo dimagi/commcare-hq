@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 
 PM1 = 'http://openrosa.org/formdesigner/111B09EB-DFFA-4613-9A16-A19BA6ED7D04'
 PM2 = 'http://openrosa.org/formdesigner/4B52ADB2-AA79-4056-A13E-BB34871876A1'
+PM_PM2 = 'http://openrosa.org/formdesigner/31ad9d386120d25238327f0315ada53d9e0f60d9'
 PM3 = 'http://openrosa.org/formdesigner/5250590B-2EB2-46A8-9943-B7008CDA2BB9'
 PM4 = 'http://openrosa.org/formdesigner/876cec8f07c0e29b9f9e2bd0b33c5c85bf0192ee'
 CM1 = 'http://openrosa.org/formdesigner/9946952C-A2EB-43D5-A500-B386C56A49A7'
@@ -28,7 +29,6 @@ CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f654
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
 AP2 = 'http://openrosa.org/formdesigner/58ba18b4bd2054419bfa8da8ec2d08f6c547c91b'
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
-
 EMPTY_FIELD = "---"
 
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"

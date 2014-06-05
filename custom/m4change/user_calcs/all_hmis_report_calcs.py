@@ -11,15 +11,14 @@ def _get_comparison_results(field_value, comparison_operator, expected_value):
             if not comparison_operator(field_value, expected_value_item):
                 result = False
                 break
-    else:
-        if not comparison_operator(field_value, expected_value):
-            result = False
+    elif not comparison_operator(field_value, expected_value):
+        result = False
     return result
 
 
 class FormComparisonCalculator(fluff.Calculator):
 
-    def __init__(self, comparisons, namespaces, filter_function = None, *args, **kwargs):
+    def __init__(self, comparisons, namespaces, filter_function=None, *args, **kwargs):
         self.comparisons = comparisons
         self.namespaces = namespaces
         self.filter_function = filter_function
@@ -28,7 +27,7 @@ class FormComparisonCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if self.filter_function is None or self.filter_function(form, self.namespaces):
+        if form.xmlns in self.namespaces and (self.filter_function is None or self.filter_function(form)):
             all_filters_passed = True
             for comparison in self.comparisons:
                 field_value = form.form.get(comparison[0], "")
@@ -43,7 +42,7 @@ class FormComparisonCalculator(fluff.Calculator):
 
 def _get_child_date_delivery(form):
     child_date_delivery = form.form.get("child_date_delivery", None)
-    return datetime.strptime(child_date_delivery, "%Y-%m-%d").date() if child_date_delivery else None
+    return child_date_delivery if child_date_delivery else None
 
 
 class InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months(fluff.Calculator):

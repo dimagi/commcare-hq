@@ -1,3 +1,4 @@
+import json
 import re
 from couchdbkit import ResourceNotFound
 from django.core.cache import cache
@@ -44,18 +45,64 @@ def get_meta_appversion_text(xform):
         return None
 
 
-def get_build_version(xform):
+def get_version_from_build_id(domain, build_id):
     """
-    there are a bunch of unreliable places to look for a build version
-    this abstracts that out
+    fast lookup of app version number given build_id
+
+    implemented as simple caching around _get_version_from_build_id
 
     """
+    if not build_id:
+        return None
+    cache_key = 'build_id_to_version/{}/{}'.format(domain, build_id)
+    cache_value = cache.get(cache_key)
+    if not cache_value:
+        # serialize as json to distinguish cache miss (None)
+        # from a None value ('null')
+        cache_value = json.dumps(_get_version_from_build_id(domain, build_id))
+        cache.set(cache_key, cache_value, 24*60*60)
+    return json.loads(cache_value)
+
+
+def _get_version_from_build_id(domain, build_id):
+    try:
+        build = ApplicationBase.get(build_id)
+    except ResourceNotFound:
+        return None
+    if not build.copy_of:
+        return None
+    elif build.domain != domain:
+        return None
+    else:
+        return build.version
+
+
+def get_version_from_appversion_text(appversion_text):
+    """
+    >>> # these first two could certainly be replaced
+    >>> # with more realistic examples, but I didn't have any on hand
+    >>> get_version_from_appversion_text('foofoo #102 barbar')
+    102
+    >>> get_version_from_appversion_text('foofoo b[99] barbar')
+    99
+    >>> get_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.11.0"(29272). App v65. '
+    ...     'CommCare Version 2.11. Build 29272, built on: February-14-2014'
+    ... )
+    65
+    >>> get_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.4.1"(10083). App v19.'
+    ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
+    ... )
+    19
+
+    """
+
     patterns = [
         r' #(\d+) ',
         'b\[(\d+)\]',
+        r'App v(\d+).',
     ]
-
-    appversion_text = get_meta_appversion_text(xform)
     if appversion_text:
         for pattern in patterns:
             match = re.search(pattern, appversion_text)
@@ -63,9 +110,36 @@ def get_build_version(xform):
                 build_number, = match.groups()
                 return int(build_number)
 
+
+class BuildVersionSource:
+    BUILD_ID = object()
+    APPVERSION_TEXT = object()
+    XFORM_VERSION = object()
+    NONE = object()
+
+
+def get_build_version(xform):
+    """
+    there are a bunch of unreliable places to look for a build version
+    this abstracts that out
+
+    """
+
+    version = get_version_from_build_id(xform.domain, xform.build_id)
+    if version:
+        return version, BuildVersionSource.BUILD_ID
+
+    version = get_version_from_appversion_text(
+        get_meta_appversion_text(xform)
+    )
+    if version:
+        return version, BuildVersionSource.APPVERSION_TEXT
+
     xform_version = xform.version
     if xform_version and xform_version != '1':
-        return int(xform_version)
+        return int(xform_version), BuildVersionSource.XFORM_VERSION
+
+    return None, BuildVersionSource.NONE
 
 
 def get_app_and_build_ids(domain, build_or_app_id):

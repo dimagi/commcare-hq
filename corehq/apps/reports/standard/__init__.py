@@ -125,7 +125,7 @@ class ProjectReportParametersMixin(object):
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
-            self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
+            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         """
         return self.request_params.get('individual', '')
 
@@ -166,13 +166,12 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def user_ids(self):
-        return [user.get('user_id') for user in self.users]
+        return [user.user_id for user in self.users]
 
-    _usernames = None
     @property
     @memoized
     def usernames(self):
-        return dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
+        return {user.user_id: user.username_in_report for user in self.users}
 
     @property
     @memoized
@@ -216,7 +215,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def admins_and_demo_user_ids(self):
-        return [user.get('user_id') for user in self.admins_and_demo_users]
+        return [user.user_id for user in self.admins_and_demo_users]
 
 
     @property
@@ -231,7 +230,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def combined_user_ids(self):
-        return [user.get('user_id') for user in self.combined_users]
+        return [user.user_id for user in self.combined_users]
 
     @property
     @memoized

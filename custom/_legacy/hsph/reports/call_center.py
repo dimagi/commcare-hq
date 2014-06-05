@@ -236,7 +236,7 @@ class CATITeamLeaderReport(GenericTabularReport, CustomProjectReport,
         enddate = self.datespan.enddate_param_utc
         
         for user in self.users:
-            user_id = user.get('user_id')
+            user_id = user.user_id
 
             row = db.view('hsph/cati_team_leader',
                 startkey=["all", self.domain, user_id, startdate],
@@ -246,7 +246,7 @@ class CATITeamLeaderReport(GenericTabularReport, CustomProjectReport,
             ).first() or {}
 
             row['catiTlName'] = self.table_cell(
-                    user.get('raw_username'), user.get('username_in_report'))
+                user.raw_username, user.username_in_report)
 
             # These queries can fail if startdate is less than N days before
             # enddate.  We just catch and supply a default value.

@@ -49,7 +49,7 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
-    'Advanced / CommTrack module'
+    'Advanced Module in App-Builder'
 )
 
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
@@ -82,12 +82,6 @@ OFFLINE_CLOUDCARE = StaticToggle(
 REMINDERS_UI_PREVIEW = StaticToggle(
     'reminders_ui_preview',
     'New reminders UI'
-)
-
-READABLE_FORM_DATA = StaticToggle(
-    'readable_form_data',
-    'Readable Form Data Page',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 CASE_REBUILD = StaticToggle(

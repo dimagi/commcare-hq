@@ -1,11 +1,10 @@
 from corehq.apps.commtrack.models import StockState
 from casexml.apps.stock.models import DocDomainMapping
-from casexml.apps.stock.tests.base import StockTestBase, _stock_report
+from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from datetime import datetime
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
-from casexml.apps.stock.consumption import ConsumptionConfiguration
-from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig, StockRestoreConfig
 
 
 class StockStateTest(CommTrackTest):
@@ -74,7 +73,7 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50, state.get_consumption())
+        self.assertEqual(50 / DAYS_IN_MONTH, state.get_consumption())
 
     def test_defaults_set_after_report(self):
         self.report(25, 0)
@@ -86,4 +85,4 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50, state.get_consumption())
+        self.assertEqual(50 / DAYS_IN_MONTH, state.get_consumption())

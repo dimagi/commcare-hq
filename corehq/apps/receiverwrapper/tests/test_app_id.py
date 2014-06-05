@@ -2,6 +2,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.util import get_version_from_build_id
 from couchforms.models import XFormInstance
 from couchforms.util import spoof_submission
 
@@ -10,10 +11,10 @@ class TestAppId(TestCase):
     def test(self):
         self.domain = 'alskdjfablasdkffsdlkfjabas'
         project = create_domain(name=self.domain)
-        app = Application(domain=self.domain)
+        app = Application(domain=self.domain, version=4)
         app.save()
         app_id = app.get_id
-        build = Application(domain=self.domain)
+        build = Application(domain=self.domain, version=3)
         build.copy_of = app_id
         build.save()
         build_id = build.get_id
@@ -28,7 +29,10 @@ class TestAppId(TestCase):
             self._test(build_id, app_id, build_id)
             build.delete_app()
             cache.clear()
-            self._test(build_id, app_id, build_id)
+            form = self._test(build_id, app_id, build_id)
+            self._test_app_version(self.domain, form, build)
+            # (test cache hit)
+            self._test_app_version(self.domain, form, build)
         finally:
             project.delete()
 
@@ -42,3 +46,9 @@ class TestAppId(TestCase):
         form = XFormInstance.get(form_id)
         self.assertEqual(form.app_id, expected_app_id)
         self.assertEqual(form.build_id, expected_build_id)
+        return form
+
+    def _test_app_version(self, domain, form, build):
+        self.assertEqual(build.version, 3)
+        self.assertEqual(get_version_from_build_id(domain, form.build_id),
+                         build.version)

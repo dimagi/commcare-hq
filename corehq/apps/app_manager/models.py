@@ -22,7 +22,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -484,37 +484,7 @@ class CachedStringProperty(object):
 
     @classmethod
     def set(cls, key, value):
-        cache.set(key, value, 12*60*60)
-
-
-class CouchCache(Document):
-
-    value = StringProperty(default=None)
-
-
-class CouchCachedStringProperty(CachedStringProperty):
-
-    @classmethod
-    def _get(cls, key):
-        try:
-            c = CouchCache.get(key)
-            assert(c.doc_type == CouchCache.__name__)
-        except ResourceNotFound:
-            c = CouchCache(_id=key)
-        return c
-
-    @classmethod
-    def get(cls, key):
-        return cls._get(key).value
-
-    @classmethod
-    def set(cls, key, value):
-        c = cls._get(key)
-        c.value = value
-        try:
-            c.save()
-        except ResourceConflict:
-            cls.set(key, value)
+        cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
 class FormBase(DocumentSchema):
@@ -531,7 +501,7 @@ class FormBase(DocumentSchema):
     xmlns = StringProperty()
     version = IntegerProperty()
     source = FormSource()
-    validation_cache = CouchCachedStringProperty(
+    validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
@@ -2322,6 +2292,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_build(self):
         return self.build_spec.get_build()
 
+    @property
+    def build_version(self):
+        # `LooseVersion`s are smart!
+        # LooseVersion('2.12.0') > '2.2'
+        # (even though '2.12.0' < '2.2')
+        return LooseVersion(self.build_spec.version)
+
     def get_preview_build(self):
         preview = self.get_build()
 
@@ -2454,7 +2431,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if LooseVersion(self.build_spec.version) < '2.8':
+        if self.build_version < '2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -2754,14 +2731,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def enable_relative_suite_path(self):
-        return LooseVersion(self.build_spec.version) >= '2.12'
+        return self.build_version >= '2.12'
 
     @property
     def enable_multi_sort(self):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        return LooseVersion(self.build_spec.version) >= '2.2'
+        return self.build_version >= '2.2'
 
     @property
     def default_language(self):
@@ -3341,12 +3318,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             original_app = get_db().get(app_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404()
         if not domain:
             try:
                 domain = original_app['domain']
             except Exception:
-                raise Http404
+                raise Http404()
 
         if original_app.get('copy_of'):
             parent_app_id = original_app.get('copy_of')
@@ -3371,10 +3348,13 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         try:
             app = get_db().get(app_id)
         except Exception:
-            raise Http404
+            raise Http404()
     if domain and app['domain'] != domain:
-        raise Http404
-    cls = wrap_cls or get_correct_app_class(app)
+        raise Http404()
+    try:
+        cls = wrap_cls or get_correct_app_class(app)
+    except DocTypeError:
+        raise Http404()
     app = cls.wrap(app)
     return app
 

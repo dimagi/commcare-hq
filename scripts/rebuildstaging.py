@@ -51,6 +51,7 @@ class BranchConfig(jsonobject.JsonObject):
         for submodule, subconfig in self.submodules.items():
             subconfig.trunk = subconfig.trunk or self.trunk
             subconfig.name = subconfig.name or self.name
+            subconfig.normalize()
 
     def span_configs(self, path=('.',)):
         for submodule, subconfig in self.submodules.items():
@@ -126,8 +127,9 @@ def sync_local_copies(config):
         print "All branches up-to-date."
 
 
-def check_merges(config):
+def check_merges(config, print_details=True):
     merge_conflicts = []
+    not_found = []
     base_config = config
     for path, config in base_config.span_configs():
         git = get_git(path)
@@ -137,17 +139,32 @@ def check_merges(config):
             for branch in config.branches:
                 if not has_local(git, branch):
                     branch = origin(branch)
-                git.checkout(branch)
                 print "  [{cwd}] {trunk} => {branch}".format(
                     cwd=format_cwd(path),
                     trunk=trunk,
                     branch=branch,
                 ),
+                try:
+                    git.checkout(branch)
+                except sh.ErrorReturnCode_1 as e:
+                    assert (
+                        "error: pathspec '%s' did not "
+                        "match any file(s) known to git." % branch) in e.stderr
+                    not_found.append((path, branch))
+                    print "NOT FOUND"
+                    continue
                 if not git_check_merge(config.name, branch, git=git):
                     merge_conflicts.append((path, origin(config.trunk), branch))
                     print "FAIL"
                 else:
                     print "ok"
+    if not_found:
+        print "You must remove the following branches before rebuilding:"
+        for cwd, branch in not_found:
+            print "  [{cwd}] {branch}".format(
+                cwd=format_cwd(cwd),
+                branch=branch,
+            )
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
         for cwd, trunk, branch in merge_conflicts:
@@ -157,7 +174,10 @@ def check_merges(config):
                 trunk=trunk,
             )
             git = get_git(cwd)
-            print_merge_details(branch, trunk, git)
+            if print_details:
+                print_merge_details(branch, trunk, git)
+
+    if merge_conflicts or not_found:
         exit(1)
     else:
         print "No merge conflicts"

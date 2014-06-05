@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timedelta, time
 import re
 import json
+from couchdbkit import ResourceNotFound
 import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -35,7 +36,8 @@ from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
     LastReadMessage,
 )
-from corehq.apps.sms.mixin import SMSBackend, BackendMapping, VerifiedNumber
+from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
+    SMSLoadBalancingMixin)
 from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
@@ -57,6 +59,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
 from django.conf import settings
+from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
@@ -451,15 +454,29 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
     if not (request.couch_user.is_superuser or is_global or backend_class_name == "TelerivetBackend"):
         raise Http404
     backend_classes = get_available_backends()
-    backend_class = backend_classes[backend_class_name]
-
+    backend_class = None
     backend = None
+
     if backend_id is not None:
-        backend = backend_class.get(backend_id)
+        try:
+            backend = SMSBackend.get(backend_id)
+        except ResourceNotFound:
+            raise Http404
+        if backend.doc_type not in backend_classes:
+            raise Http404
+        backend_class = backend_classes[backend.doc_type]
+        backend = backend_class.wrap(backend.to_json())
         if not is_global and backend.domain != domain:
             raise Http404
 
-    ignored_fields = ["give_other_domains_access"]
+    if backend_class is None:
+        if backend_class_name in backend_classes:
+            backend_class = backend_classes[backend_class_name]
+        else:
+            raise Http404
+
+    use_load_balancing = issubclass(backend_class, SMSLoadBalancingMixin)
+    ignored_fields = ["give_other_domains_access", "phone_numbers"]
     if request.method == "POST":
         form = backend_class.get_form_class()(request.POST)
         form._cchq_domain = domain
@@ -470,6 +487,8 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
             for key, value in form.cleaned_data.items():
                 if key not in ignored_fields:
                     setattr(backend, key, value)
+            if use_load_balancing:
+                backend.x_phone_numbers = form.cleaned_data["phone_numbers"]
             backend.save()
             if is_global:
                 return HttpResponseRedirect(reverse("list_backends"))
@@ -488,6 +507,9 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
                 initial["give_other_domains_access"] = True
             else:
                 initial["give_other_domains_access"] = False
+            if use_load_balancing:
+                initial["phone_numbers"] = json.dumps(
+                    [{"phone_number": p} for p in backend.phone_numbers])
         form = backend_class.get_form_class()(initial=initial)
     context = {
         "is_global" : is_global,
@@ -496,6 +518,7 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
         "backend_class_name" : backend_class_name,
         "backend_generic_name" : backend_class.get_generic_name(),
         "backend_id" : backend_id,
+        "use_load_balancing": use_load_balancing,
     }
     return render(request, backend_class.get_template(), context)
 
@@ -854,6 +877,7 @@ def api_last_read_message(request, domain):
         result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
     return HttpResponse(json.dumps(result))
 
+
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends_new'
@@ -886,7 +910,9 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def column_names(self):
         return [
             _("Connection"),
-            _("Default"),
+            _("Description"),
+            _("Status"),
+            _("Actions"),
         ]
 
     @property
@@ -946,10 +972,30 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return {
             'id': backend._id,
             'name': backend.name,
+            'description': backend.description,
             'editUrl': reverse(
-                'edit_domain_backend',
+                EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
             ) if not backend.is_global else "",
+            'canDelete': not backend.is_global,
+            'deleteModalId': 'delete_%s' % backend._id,
+        }
+
+    def get_deleted_item_data(self, item_id):
+        try:
+            backend = SMSBackend.get(item_id)
+        except ResourceNotFound:
+            raise Http404()
+        if backend.domain != self.domain or backend.base_doc != "MobileBackend":
+            raise Http404()
+        if self.domain_object.default_sms_backend_id == backend._id:
+            self.domain_object.default_sms_backend_id = None
+            self.domain_object.save()
+        # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
+        backend.retire()
+        return {
+            'itemData': self._fmt_backend_data(backend),
+            'template': 'gateway-deleted-template',
         }
 
     def refresh_item(self, item_id):
@@ -967,12 +1013,150 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def post(self, request, *args, **kwargs):
         if self.action == 'new_backend':
             backend_type = request.POST['backend_type']
-            return HttpResponseRedirect(reverse('add_domain_backend', args=[self.domain, backend_type]))
+            return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, backend_type]))
         return self.paginate_crud_response
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
+
+class AddDomainGatewayView(BaseMessagingSectionView):
+    urlname = 'add_domain_gateway'
+    template_name = 'sms/add_gateway.html'
+    page_title = ugettext_noop("Add SMS Connection")
+
+    @property
+    def backend_class_name(self):
+        return self.kwargs.get('backend_class_name')
+
+    @property
+    def ignored_fields(self):
+        return [
+            'give_other_domains_access',
+        ]
+
+    @property
+    @memoized
+    def backend_class(self):
+        backend_classes = get_available_backends()
+        try:
+            return backend_classes[self.backend_class_name]
+        except KeyError:
+            raise Http404()
+
+    @property
+    def use_load_balancing(self):
+        return issubclass(self.backend_class, SMSLoadBalancingMixin)
+
+    @property
+    @memoized
+    def backend(self):
+        return self.backend_class(domain=self.domain, is_global=False)
+
+    @property
+    def page_name(self):
+        return _("Add %s Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def button_text(self):
+        return _("Create %s SMS Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.backend_class_name])
+
+    @property
+    @memoized
+    def backend_form(self):
+        form_class = self.backend_class.get_form_class()
+        if self.request.method == 'POST':
+            form = form_class(self.request.POST, button_text=self.button_text)
+            form._cchq_domain = self.domain
+            return form
+        return form_class(button_text=self.button_text)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.backend_form,
+            'button_text': self.button_text,
+            'use_load_balancing': self.use_load_balancing,
+        }
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': DomainSmsGatewayListView.page_title,
+            'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        if self.backend_form.is_valid():
+            for key, value in self.backend_form.cleaned_data.items():
+                if key not in self.ignored_fields:
+                    setattr(self.backend, key, value)
+                self.backend.save()
+            return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AddDomainGatewayView, self).dispatch(request, *args, **kwargs)
+
+
+class EditDomainGatewayView(AddDomainGatewayView):
+    urlname = 'edit_domain_gateway'
+    page_title = ugettext_noop("Edit SMS Connection")
+
+    @property
+    def backend_id(self):
+        return self.kwargs['backend_id']
+
+    @property
+    @memoized
+    def backend(self):
+        try:
+            backend = self.backend_class.get(self.backend_id)
+        except ResourceNotFound:
+            raise Http404()
+        if backend.domain != self.domain:
+            raise Http404()
+        return backend
+
+    @property
+    @memoized
+    def backend_form(self):
+        form_class = self.backend_class.get_form_class()
+        initial = {}
+        for field in form_class():
+            if field.name not in self.ignored_fields:
+                if field.name == 'authorized_domains':
+                    initial[field.name] = ','.join(self.backend.authorized_domains)
+                else:
+                    initial[field.name] = getattr(self.backend, field.name, None)
+            initial['give_other_domains_access'] = len(self.backend.authorized_domains) > 0
+        if self.request.method == 'POST':
+            form = form_class(self.request.POST, initial=initial,
+                              button_text=self.button_text)
+            form._cchq_domain = self.domain
+            form._cchq_backend_id = self.backend._id
+            return form
+        return form_class(initial=initial, button_text=self.button_text)
+
+    @property
+    def page_name(self):
+        return _("Edit %s Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def button_text(self):
+        return _("Update %s SMS Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs=self.kwargs)
+
 
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"

@@ -24,6 +24,7 @@ from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, Da
     ProjectReportParametersMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
@@ -283,6 +284,7 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport, ):
     default_rows = 50
     printable = True
     exportable = True
+    exportable_all = True
     export_format_override = "csv"
     block = ''
     filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
@@ -410,6 +412,12 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport, ):
         self.override_template = "opm/print_report.html"
         return HttpResponse(self._async_context()['report'])
 
+    @property
+    @request_cache("export")
+    def export_response(self):
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
+
+        return HttpResponse()
 
 class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
@@ -537,6 +545,7 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
     asynchronous = True
     name = "Health Status Report"
     slug = "health_status_report"
+    fix_left_col = True
     model = HealthStatus
 
     @property
@@ -600,6 +609,17 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
 
     @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/hsr_print.html"
+        return HttpResponse(self._async_context()['report'])
+
+    @property
     def export_table(self):
         """
         Exports the report as excel.
@@ -654,6 +674,24 @@ class MetReport(BaseReport):
     exportable = False
     default_case_type = "Pregnancy"
     filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
+
+    @property
+    def report_subtitles(self):
+        subtitles = ["For filters:",]
+        if self.block:
+            subtitles.append("Block - %s" % self.block)
+        if self.filter_data.get('awcs', []):
+            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
+        if self.filter_data.get('gp', ''):
+            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
+        startdate = self.datespan.startdate_param_utc
+        enddate = self.datespan.enddate_param_utc
+        if startdate and enddate:
+            sd = parser.parse(startdate)
+            ed = parser.parse(enddate)
+            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        return subtitles
+
 
     @property
     def block(self):
@@ -772,7 +810,7 @@ class MetReport(BaseReport):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "opm/print_report.html"
+        self.override_template = "opm/met_print_report.html"
         return HttpResponse(self._async_context()['report'])
 
 

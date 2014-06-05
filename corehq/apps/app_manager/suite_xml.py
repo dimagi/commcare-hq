@@ -1,5 +1,4 @@
 from collections import namedtuple
-from distutils.version import LooseVersion
 from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
@@ -435,7 +434,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 local=path,
                 remote=path,
             )
-            if form_stuff['type'] == 'module_form' and LooseVersion(self.app.build_spec.version) >= '2.9':
+            if form_stuff['type'] == 'module_form' and self.app.build_version >= '2.9':
                 resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
                     module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
                     form_name=trans(form["name"], langs=[self.app.default_language])
@@ -459,7 +458,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 local=path,
                 remote=path,
             )
-            if LooseVersion(self.app.build_spec.version) >= '2.9':
+            if self.app.build_version >= '2.9':
                 unknown_lang_txt = u"Unknown Language (%s)" % lang
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
