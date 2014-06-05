@@ -52,7 +52,7 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         to = msg.phone_number
         from_ = orig_phone_number
         body = msg.text
-        message = client.sms.messages.create(
+        message = client.messages.create(
             body=body,
             to=to,
             from_=from_
