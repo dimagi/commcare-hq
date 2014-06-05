@@ -60,8 +60,7 @@ RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
-    RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_ALL_SUBCASES,
-    RECIPIENT_USER_GROUP,
+    RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
 ]
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
@@ -1107,13 +1106,6 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
                     subcase = CommConnectCase.get(index.referenced_id)
                     if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
                         recipients.append(subcase)
-        elif handler.recipient == RECIPIENT_ALL_SUBCASES:
-            indices = self.case.reverse_indices
-            recipients = []
-            for index in indices:
-                if index.identifier == "parent":
-                    subcase = CommConnectCase.get(index.referenced_id)
-                    recipients.append(subcase)
             return recipients
         elif handler.recipient == RECIPIENT_USER_GROUP:
             return Group.get(handler.user_group_id)

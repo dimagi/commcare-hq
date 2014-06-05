@@ -1423,11 +1423,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if not case_property:
                 raise ValidationError("You must specify a case property for the case's child case.")
             return case_property
+        if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
+            return '_id'
         return None
 
     def clean_recipient_case_match_type(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
             return self.cleaned_data['recipient_case_match_type']
+        if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
+            return MATCH_ANY_VALUE
         return None
 
     def clean_case_match_value(self):
@@ -1610,7 +1614,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'max_question_retries',
             'force_surveys_to_use_triggered_case',
         ]:
-            setattr(reminder_handler, field, self.cleaned_data[field])
+            value = self.cleaned_data[field]
+            if field == 'recipient' and value == RECIPIENT_ALL_SUBCASES:
+                value = RECIPIENT_SUBCASE
+            setattr(reminder_handler, field, value)
 
         start_property_offset = self.cleaned_data['start_property_offset']
         start_date_offset = self.cleaned_data['start_date_offset']
@@ -1641,6 +1648,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
+                if (field == 'recipient'
+                    and reminder_handler.recipient_case_match_property == '_id'
+                    and reminder_handler.recipient_case_match_type == MATCH_ANY_VALUE
+                ):
+                    current_val = RECIPIENT_ALL_SUBCASES
                 if current_val is not Ellipsis:
                     initial[field] = current_val
             except AttributeError:
