@@ -63,7 +63,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext_lazy as _, ugettext
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
@@ -2325,84 +2325,84 @@ class KeywordForm(Form):
 class NewKeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
-    keyword = CharField(label=_("Keyword"))
-    description = TrimmedCharField(label=_("Description"))
+    keyword = CharField(label=ugettext_noop("Keyword"))
+    description = TrimmedCharField(label=ugettext_noop("Description"))
     override_open_sessions = BooleanField(
         required=False,
         initial=False,
-        label=_("Override open SMS Surveys"),
+        label=ugettext_noop("Override open SMS Surveys"),
     )
     allow_keyword_use_by = ChoiceField(
         required=False,
-        label=_("Allow Keyword Use By"),
+        label=ugettext_noop("Allow Keyword Use By"),
         initial='any',
         choices=(
-            ('any', _("Both Mobile Workers and Cases")),
-            ('users', _("Mobile Workers Only")),
-            ('cases', _("Cases Only")),
+            ('any', ugettext_noop("Both Mobile Workers and Cases")),
+            ('users', ugettext_noop("Mobile Workers Only")),
+            ('cases', ugettext_noop("Cases Only")),
         )
     )
     sender_content_type = ChoiceField(
-        label=_("Send to Sender"),
+        label=ugettext_noop("Send to Sender"),
     )
     sender_message = TrimmedCharField(
         required=False,
-        label=_("Message"),
+        label=ugettext_noop("Message"),
     )
     sender_form_unique_id = ChoiceField(
         required=False,
-        label=_("Survey"),
+        label=ugettext_noop("Survey"),
     )
     other_recipient_content_type = ChoiceField(
         required=False,
-        label=_("Notify Another Person"),
+        label=ugettext_noop("Notify Another Person"),
         initial='none',
     )
     other_recipient_id = ChoiceField(
         required=False,
-        label=_("Group Name"),
+        label=ugettext_noop("Group Name"),
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
-        label=_("Recipient"),
+        label=ugettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
     )
     other_recipient_message = TrimmedCharField(
         required=False,
-        label=_("Message"),
+        label=ugettext_noop("Message"),
     )
     other_recipient_form_unique_id = ChoiceField(
         required=False,
-        label=_("Survey"),
+        label=ugettext_noop("Survey"),
     )
     process_structured_sms = BooleanField(
         required=False,
-        label=_("Process incoming keywords as a Structured Message"),
+        label=ugettext_noop("Process incoming keywords as a Structured Message"),
     )
     structured_sms_form_unique_id = ChoiceField(
         required=False,
-        label=_("Survey"),
+        label=ugettext_noop("Survey"),
     )
     use_custom_delimiter = BooleanField(
         required=False,
-        label=_("Use Custom Delimiter"),
+        label=ugettext_noop("Use Custom Delimiter"),
     )
     delimiter = TrimmedCharField(
         required=False,
-        label=_("Please Specify Delimiter"),
+        label=ugettext_noop("Please Specify Delimiter"),
     )
     use_named_args_separator = BooleanField(
         required=False,
-        label=_("Use Joining Character"),
+        label=ugettext_noop("Use Joining Character"),
     )
     use_named_args = BooleanField(
         required=False,
-        label=_("Use Named Answers"),
+        label=ugettext_noop("Use Named Answers"),
     )
     named_args_separator = TrimmedCharField(
         required=False,
-        label=_("Please Specify Joining Characcter"),
+        label=ugettext_noop("Please Specify Joining Characcter"),
     )
     named_args = RecordListField(
         input_name="named_args",
@@ -2549,7 +2549,7 @@ class NewKeywordForm(Form):
                     crispy.Div(
                         crispy.HTML(
                             '<h4 style="margin-bottom: 20px;">%s</h4>'
-                            % ugettext("Recipient Information"),
+                            % _("Recipient Information"),
                         ),
                         crispy.Field(
                             'other_recipient_type',
