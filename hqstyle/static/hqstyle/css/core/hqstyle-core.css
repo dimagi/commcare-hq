@@ -798,8 +798,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline > li,
-ol.inline > li {
+ul.inline  > li,
+ol.inline  > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
@@ -1947,6 +1947,9 @@ legend + .control-group {
 }
 .alert form:last-child {
   margin-bottom: 0;
+}
+.form-horizontal .controls .help-inline:first-child {
+  padding-left: 0px;
 }
 table {
   max-width: 100%;
@@ -3602,7 +3605,7 @@ th.header > div {
 .open {
   *z-index: 1000;
 }
-.open > .dropdown-menu {
+.open  > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
