@@ -52,6 +52,7 @@ from .models import (
     RECIPIENT_USER_GROUP,
     UI_SIMPLE_FIXED,
     UI_COMPLEX,
+    RECIPIENT_ALL_SUBCASES,
 )
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -803,11 +804,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # Fieldset: Recipient
     recipient = forms.ChoiceField(
         choices=(
-            (RECIPIENT_CASE, "Case"),
-            (RECIPIENT_OWNER, "Case Owner"),
-            (RECIPIENT_USER, "User Last Modifying Case"),
-            (RECIPIENT_PARENT_CASE, "Case's Parent Case"),
-            (RECIPIENT_SUBCASE, "Case's Child Cases"),
+            (RECIPIENT_CASE, ugettext_noop("Case")),
+            (RECIPIENT_OWNER, ugettext_noop("Case Owner")),
+            (RECIPIENT_USER, _("Last User Who Modified Case")),
+            (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
+            (RECIPIENT_ALL_SUBCASES, _("All Child Cases")),
+            (RECIPIENT_SUBCASE, _("Specific Child Case")),
+            (RECIPIENT_PARENT_CASE, _("Parent Case")),
         ),
     )
     ## recipient = RECIPIENT_SUBCASE
@@ -822,6 +825,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
     recipient_case_match_value = forms.CharField(
         label="Value",
         required=False
+    )
+    ## recipient = RECIPIENT_USER_GROUP
+    user_group_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Mobile Worker Group"),
     )
 
     # Fieldset: Message Content
@@ -943,6 +951,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.is_edit = is_edit
+
+        self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
 
         if can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -1110,6 +1120,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     data_bind="visible: isRecipientCaseValueVisible",
                 ),
                 data_bind="visible: isRecipientSubcase",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_id',
+                    css_class="input-xlarge",
+                ),
+                data_bind="visible: isRecipientGroup"
             ),
         )
 
@@ -1291,6 +1308,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'START_REMINDER_ON_CASE_DATE': START_REMINDER_ON_CASE_DATE,
             'RECIPIENT_CASE': RECIPIENT_CASE,
             'RECIPIENT_SUBCASE': RECIPIENT_SUBCASE,
+            'RECIPIENT_USER_GROUP': RECIPIENT_USER_GROUP,
             'METHOD_SMS': METHOD_SMS,
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
@@ -1375,6 +1393,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 return -start_date_offset
             return start_date_offset
         return None
+
+    def clean_user_group_id(self):
+        if self.cleaned_data['recipient'] == RECIPIENT_USER_GROUP:
+            value = self.cleaned_data['user_group_id']
+            return clean_group_id(value, self.domain)
+        else:
+            return None
 
     def clean_recipient_case_match_property(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
@@ -1552,6 +1577,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'start_value',
             'start_date',
             'recipient',
+            'user_group_id',
             'recipient_case_match_property',
             'recipient_case_match_type',
             'recipient_case_match_value',
