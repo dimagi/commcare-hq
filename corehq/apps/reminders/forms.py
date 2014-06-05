@@ -841,7 +841,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
 
     global_timeouts = forms.CharField(
-        label="Timeouts",
+        label=_("Timeouts"),
         required=False,
     )
 
@@ -1243,10 +1243,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                             'data-toggle="modal">Manage Languages</a>'),
             ),
             crispy.Div(
-                crispy.Field(
+                FieldWithHelpBubble(
                     'global_timeouts',
                     data_bind="value: global_timeouts",
                     placeholder="e.g. 30,60,180",
+                    help_bubble_text=_(
+                        "Will repeat the last message or question if the "
+                        "user does not respond.  Specify each interval "
+                        "(in minutes) separated by a comma. "
+                        "After the last interval, the survey will be closed. "
+                    ),
                 ),
                 data_bind="visible: isGlobalTimeoutsVisible",
             ),
