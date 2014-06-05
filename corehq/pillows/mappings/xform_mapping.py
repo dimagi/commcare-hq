@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_6xx892jdu629mm9uj39rd95b8g2sd9hu"
+XFORM_INDEX="xforms_1cce1f049a1b4d864c9c25dc42648a45"
 
 
 XFORM_MAPPING = {
@@ -35,6 +35,7 @@ XFORM_MAPPING = {
         "path": {"type": "string", "index": "not_analyzed"},
         "submit_ip": {"type": "ip"},
         "app_id": {"type": "string", "index": "not_analyzed"},
+        "build_id": {"type": "string", "index": "not_analyzed"},
         "received_on": {
             "type": "date",
             "format": DATE_FORMATS_STRING
