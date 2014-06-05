@@ -440,6 +440,15 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     pregnant_hiv_positive_women_received_mother_sdnvp = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "mother_sdnvp")], PMTCT_CLIENTS_FORM
     )
+    pregnant_positive_women_received_arv_for_pmtct = all_hmis_report_calcs.FormComparisonCalculator(
+        [
+            ("commenced_drugs", operator.contains, "mother_sdnvp"),
+            ("commenced_drugs", operator.contains, "azt"),
+            ("commenced_drugs", operator.contains, ["3tc", "mother_sdnvp"]),
+            ("commenced_drugs", operator.contains, "3tc")
+        ],
+        PMTCT_CLIENTS_FORM, joint=False
+    )
     infants_hiv_women_cotrimoxazole_lt_2_months = \
         all_hmis_report_calcs.InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months()
     infants_hiv_women_cotrimoxazole_gte_2_months = \
