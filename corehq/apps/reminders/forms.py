@@ -956,7 +956,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Field('nickname'),
+            crispy.Field(
+                'nickname',
+                css_class='input-large',
+            ),
             self.section_start,
             self.section_recipient,
             self.section_message,
@@ -988,7 +991,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return [
             crispy.Field(
                 'case_type',
-                css_class="input-large",
+                css_class="input-xlarge",
                 data_bind="value: case_type",
                 data_placeholder=_("Enter a Case Type")
             ),
@@ -1005,7 +1008,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     "When Case Property",
                     InlineField(
                         'start_property',
-                        css_class="input-large",
+                        css_class="input-xlarge",
                     ),
                     InlineField(
                         'start_match_type',
@@ -1022,6 +1025,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'start_property_offset_type',
                         data_bind="value: start_property_offset_type",
+                        css_class="input-xlarge",
                     ),
                     InlineField(
                         'start_property_offset',
@@ -1041,11 +1045,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.Field(
                     'start_date',
                     data_placeholder="Enter a Case Property",
-                    css_class="input-large",
+                    css_class="input-xlarge",
                 ),
                 BootstrapMultiField(
                     "",
-                    InlineField('start_date_offset_type'),
+                    InlineField(
+                        'start_date_offset_type',
+                        css_class="input-xlarge",
+                    ),
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
@@ -1070,14 +1077,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 help_bubble_text=("The contact related to the case that reminder should go to.  The Case "
                                   "Owners are any mobile workers for which the case appears on their phone. "
                                   "For cases with child or parent cases, you can also send the message to those "
-                                  "contacts. ")
+                                  "contacts. "),
+                css_class="input-xlarge",
             ),
             BootstrapMultiField(
                 "When Case Property",
                 InlineField(
                     'recipient_case_match_property',
                     placeholder="Enter a Case Property",
-                    css_class="input-large",
+                    css_class="input-xlarge",
                 ),
                 InlineField(
                     'recipient_case_match_type',
@@ -1106,7 +1114,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="value: method",
                 help_bubble_text=("Send a single SMS message or an interactive SMS survey. "
                                   "SMS surveys are designed in the Surveys or Application "
-                                  "section. ")
+                                  "section. "),
+                css_class="input-xlarge",
             ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
@@ -1117,7 +1126,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return [
             BootstrapMultiField(
                 "Time",
-                InlineField('event_timing', data_bind="value: event_timing"),
+                InlineField(
+                    'event_timing',
+                    data_bind="value: event_timing",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     style="display: inline;",
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
@@ -1137,20 +1150,34 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_repeat(self):
         return crispy.Fieldset(
             "Repeat",
-            crispy.Field('repeat_type', data_bind="value: repeat_type"),
+            crispy.Field(
+                'repeat_type',
+                data_bind="value: repeat_type",
+                css_class="input-xlarge",
+            ),
             crispy.Div(
-                crispy.Field('max_iteration_count'),
+                crispy.Field(
+                    'max_iteration_count',
+                    css_class="input-medium",
+                ),
                 data_bind="visible: isMaxIterationCountVisible",
             ),
             BootstrapMultiField(
                 "Repeat Every",
-                InlineField('schedule_length'),
+                InlineField(
+                    'schedule_length',
+                    css_class="input-medium",
+                ),
                 crispy.HTML('<p class="help-inline">day(s)</p>'),
                 data_bind="visible: isScheduleLengthVisible",
             ),
             BootstrapMultiField(
                 "Stop Condition",
-                InlineField('stop_condition', data_bind="value: stop_condition"),
+                InlineField(
+                    'stop_condition',
+                    data_bind="value: stop_condition",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     InlineField(
                         'until',
@@ -1178,6 +1205,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     data_bind="options: available_languages, "
                               "value: default_lang, "
                               "optionsText: 'name', optionsValue: 'langcode'",
+                    css_class="input-xlarge",
                 ),
                 crispy.HTML('<a href="#add-language-modal" '
                             'class="btn btn-primary" style="margin-left: 5px;" '
@@ -1629,7 +1657,11 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         return [
             BootstrapMultiField(
                 _("Time"),
-                InlineField('event_timing', data_bind="value: event_timing"),
+                InlineField(
+                    'event_timing',
+                    data_bind="value: event_timing",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     style="display: inline;",
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
@@ -1680,6 +1712,7 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 InlineField(
                     'event_timing',
                     data_bind="value: event_timing",
+                    css_class="input-xlarge",
                 ),
                 css_id="timing_block",
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
