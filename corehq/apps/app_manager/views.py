@@ -645,7 +645,7 @@ def paginate_releases(request, domain, app_id):
         request.user.username
     )
     for app in saved_apps:
-        app['include_media'] = include_media and app.doc_type != 'RemoteApp'
+        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 
