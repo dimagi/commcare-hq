@@ -11,7 +11,7 @@ def flat_field(fn):
 class CouvertureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     domains = INTRAHEALTH_DOMAINS
-    group_by = ('domain', 'date', 'location_id')
+    group_by = ('domain', 'date')
     save_direct_to_sql = True
 
 
