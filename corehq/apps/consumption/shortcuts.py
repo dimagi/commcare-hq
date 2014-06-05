@@ -4,7 +4,7 @@ from corehq.apps.consumption.const import DAYS_IN_MONTH
 from dimagi.utils.couch.cache import cache_core
 
 
-def get_default_consumption(domain, product_id, location_type, case_id):
+def get_default_monthly_consumption(domain, product_id, location_type, case_id):
     keys = [
         [domain, product_id, {}, case_id],
         [domain, product_id, location_type, None],
@@ -12,12 +12,26 @@ def get_default_consumption(domain, product_id, location_type, case_id):
         [domain, None, None, None],
     ]
 
-    results = cache_core.cached_view(DefaultConsumption.get_db(), 'consumption/consumption_index',
-        keys=keys, reduce=False, limit=1, descending=True,
+    results = cache_core.cached_view(
+        DefaultConsumption.get_db(),
+        'consumption/consumption_index',
+        keys=keys,
+        reduce=False,
+        limit=1,
+        descending=True,
     )
     results = results[0] if results else None
     if results and results['value']:
-        return Decimal(float(results['value']) / DAYS_IN_MONTH)
+        return Decimal(results['value'])
+    else:
+        return None
+
+
+def get_default_consumption(domain, product_id, location_type, case_id):
+    consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
+
+    if consumption:
+        return consumption / Decimal(DAYS_IN_MONTH)
     else:
         return None
 

@@ -73,7 +73,7 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50 / DAYS_IN_MONTH, state.get_consumption())
+        self.assertEqual(50 / DAYS_IN_MONTH, float(state.get_consumption()))
 
     def test_defaults_set_after_report(self):
         self.report(25, 0)
@@ -85,4 +85,4 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50 / DAYS_IN_MONTH, state.get_consumption())
+        self.assertEqual(50 / DAYS_IN_MONTH, float(state.get_consumption()))
