@@ -928,7 +928,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                               "case sending the survey.")),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, *args, **kwargs):
+    def __init__(self, data=None, is_previewer=False,
+                 domain=None, is_edit=False, can_use_survey=False,
+                 *args, **kwargs
+    ):
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -943,10 +946,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                                                  FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
                 'events': json.dumps([self.initial_event])
             }
-
-        can_use_survey = False
-        if 'can_use_survey' in kwargs:
-            can_use_survey = kwargs.pop('can_use_survey')
 
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
