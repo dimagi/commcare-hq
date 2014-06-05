@@ -1,5 +1,8 @@
 from django.db import models
-from corehq.apps.sofabed.exceptions import InvalidMetaBlockException, InvalidFormUpdateException
+from corehq.apps.sofabed.exceptions import (
+    InvalidFormUpdateException,
+    InvalidMetaBlockException,
+)
 
 MISSING_APP_ID = '_MISSING_APP_ID'
 
@@ -8,12 +11,13 @@ class FormData(models.Model):
     """
     Data about a form submission.
     """
-    
+
     doc_type = models.CharField(max_length=255, db_index=True)
     domain = models.CharField(max_length=255, db_index=True)
     received_on = models.DateTimeField(db_index=True)
 
-    instance_id = models.CharField(unique=True, primary_key=True, max_length=255)
+    instance_id = models.CharField(unique=True, primary_key=True,
+                                   max_length=255)
     time_start = models.DateTimeField()
     time_end = models.DateTimeField(db_index=True)
     duration = models.IntegerField()
@@ -25,35 +29,45 @@ class FormData(models.Model):
 
     def __unicode__(self):
         return "FormData: %s" % self.instance_id
-        
+
     def update(self, instance):
         """
         Update this object based on an XFormInstance doc
         """
         if not instance.metadata:
-            raise InvalidMetaBlockException("Instance %s didn't have a meta block!" % instance.get_id)
-        
-        if instance.metadata.instanceID and instance.metadata.instanceID != instance.get_id:
+            raise InvalidMetaBlockException(
+                "Instance %s didn't have a meta block!" % instance.get_id)
+
+        if (instance.metadata.instanceID and
+                instance.metadata.instanceID != instance.get_id):
             # we never want to differentiate between these two ids
-            raise InvalidMetaBlockException("Instance had doc id (%s) different from meta instanceID (%s)!" %\
-                                            (instance.get_id, instance.metadata.instanceID))
-        
+            raise InvalidMetaBlockException(
+                "Instance had doc id (%s) different "
+                "from meta instanceID (%s)!" % (
+                    instance.get_id, instance.metadata.instanceID)
+            )
+
         if self.instance_id and self.instance_id != instance.get_id:
             # we never allow updates to change the instance ID
-            raise InvalidFormUpdateException("Tried to update formdata %s with different instance id %s!" %\
-                                             (self.instance_id, instance.get_id))
-        
+            raise InvalidFormUpdateException(
+                "Tried to update formdata %s with different "
+                "instance id %s!" % (self.instance_id, instance.get_id)
+            )
+
         if not instance.metadata.timeStart or not instance.metadata.timeStart:
             # we don't allow these fields to be empty
-            raise InvalidFormUpdateException("No timeStart or timeEnd found in instance %s!" %\
-                                             (instance.get_id))
-        
+            raise InvalidFormUpdateException(
+                "No timeStart or timeEnd found in instance %s!" % (
+                    instance.get_id)
+            )
+
         if not instance.received_on:
             # we don't allow this field to be empty
-            raise InvalidFormUpdateException("No received_on date found in instance %s!" %\
-                                             (instance.get_id))
-        
-        
+            raise InvalidFormUpdateException(
+                "No received_on date found in instance %s!" % (
+                    instance.get_id)
+            )
+
         self.doc_type = instance.doc_type
         self.domain = instance.domain
         self.received_on = instance.received_on
@@ -92,7 +106,7 @@ class FormData(models.Model):
         ret = cls()
         ret.update(instance)
         return ret
-    
+
     @classmethod
     def create_or_update_from_xforminstance(cls, instance):
         """
@@ -102,9 +116,9 @@ class FormData(models.Model):
             val = cls.objects.get(instance_id=instance.get_id)
         except cls.DoesNotExist:
             val = cls()
-        
+
         if not val.matches_exact(instance):
             val.update(instance)
             val.save()
-        
+
         return val
