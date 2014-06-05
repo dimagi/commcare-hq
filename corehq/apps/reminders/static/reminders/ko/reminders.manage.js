@@ -99,6 +99,7 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
+    self.submit_partial_forms = ko.observable(initial.submit_partial_forms);
     self.isPartialSubmissionsVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_IVR_SURVEY ||
                 self.method() === self.choices.METHOD_SMS_SURVEY);
