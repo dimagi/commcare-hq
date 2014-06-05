@@ -1634,11 +1634,16 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         super(SimpleScheduleCaseReminderForm, self).__init__(*args, **kwargs)
 
         event_timing_choices = (
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
+             _("Immediately When Triggered")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None),
+             _("At a Specific Time")),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None),
+             _("Delay After Start")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None),
+             _("Time Specific in Case")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None),
+             _("Random Time in Window")),
         )
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
@@ -1694,10 +1699,15 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         super(ComplexScheduleCaseReminderForm, self).__init__(*args, **kwargs)
 
         event_timing_choices = (
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None),
+             _("At a Specific Time")),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None),
+             _("Delay After Start By")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None),
+             _("Time Specific in Case")
+            ),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None),
+             _("Random Time in Window")),
         )
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
