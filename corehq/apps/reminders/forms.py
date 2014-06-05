@@ -58,7 +58,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
@@ -745,7 +745,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # simple has start_condition_type = CASE_CRITERIA by default
     case_type = forms.CharField(
         required=False,
-        label="Case Type",
+        label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
         label="Start Reminder",
@@ -995,11 +995,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_start_fields(self):
         return [
-            crispy.Field(
+            FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
                 data_bind="value: case_type",
-                data_placeholder=_("Enter a Case Type")
+                data_placeholder=_("Enter a Case Type"),
+                help_bubble_text=_(
+                    "Choose which case type this reminder will be "
+                    "sent out for."
+                ),
             ),
             FieldWithHelpBubble(
                 'start_reminder_on',
