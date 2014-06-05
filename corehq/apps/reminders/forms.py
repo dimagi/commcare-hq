@@ -22,6 +22,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
@@ -2601,7 +2602,6 @@ class NewKeywordForm(Form):
         self.helper.layout = crispy.Layout(*layout_fields)
 
     @property
-    @memoized
     def content_type_choices(self):
         choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
         choices.append(
@@ -2610,10 +2610,16 @@ class NewKeywordForm(Form):
         return choices
 
     @property
+    @memoized
     def group_choices(self):
-        return [(g._id, g.name) for g in Group.by_domain(self._cchq_domain)]
+        group_ids = Group.ids_by_domain(self._cchq_domain)
+        groups = []
+        for group_doc in iter_docs(Group.get_db(), group_ids):
+            groups.append((group_doc['_id'], group_doc['name']))
+        return groups
 
     @property
+    @memoized
     def form_choices(self):
         available_forms = get_form_list(self._cchq_domain)
         return [(a['code'], a['name']) for a in available_forms]
