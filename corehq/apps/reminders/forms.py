@@ -774,8 +774,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
     start_property_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            (START_PROPERTY_OFFSET_DELAY, "Delay By"),
             (START_PROPERTY_OFFSET_IMMEDIATE, "Immediately"),
+            (START_PROPERTY_OFFSET_DELAY, "Delay By"),
         )
     )
     # becomes start_offset
