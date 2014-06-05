@@ -46,7 +46,6 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
 
     def send(self, msg, *args, **kwargs):
         orig_phone_number = kwargs.get("orig_phone_number")
-        msg.system_phone_number = orig_phone_number
         client = TwilioRestClient(self.account_sid, self.auth_token,
             timeout=settings.SMS_GATEWAY_TIMEOUT)
         to = msg.phone_number
@@ -57,6 +56,7 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
             to=to,
             from_=from_
         )
+        msg.system_phone_number = from_
         msg.backend_message_id = message.sid
         msg.save()
 
