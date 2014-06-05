@@ -21,6 +21,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
@@ -278,6 +279,7 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
     default_rows = 50
     printable = True
     exportable = True
+    exportable_all = True
     export_format_override = "csv"
     block = ''
     filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
@@ -405,6 +407,12 @@ class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
         self.override_template = "opm/print_report.html"
         return HttpResponse(self._async_context()['report'])
 
+    @property
+    @request_cache("export")
+    def export_response(self):
+        export_all_rows_task.delay(self.__class__, self.__getstate__())
+
+        return HttpResponse()
 
 class BeneficiaryPaymentReport(BaseReport):
     name = "Beneficiary Payment Report"
@@ -585,6 +593,17 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
         else:
             raise InvalidRow
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
+
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/hsr_print.html"
+        return HttpResponse(self._async_context()['report'])
 
     @property
     def export_table(self):
@@ -777,7 +796,7 @@ class MetReport(BaseReport):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "opm/print_report.html"
+        self.override_template = "opm/met_print_report.html"
         return HttpResponse(self._async_context()['report'])
 
 

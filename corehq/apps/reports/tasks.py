@@ -206,7 +206,7 @@ def export_all_rows_task(ReportClass, report_state):
 
 def _send_email(to, report, hash_id):
     domain = Site.objects.get_current().domain
-    link = "http://%s%s" % (domain, reverse("export_report", args=[report.domain, str(hash_id)]))
+    link = "http://%s%s" % (domain, reverse("export_report", args=[report.domain, str(hash_id), report.export_format]))
 
     title = "%s: Requested export excel data"
     body = "The export you requested for the '%s' report is ready.<br>" \

@@ -1021,19 +1021,22 @@ def clear_report_caches(request, domain):
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
-def export_report(request, domain, export_hash):
+def export_report(request, domain, export_hash, format):
     cache = get_redis_client()
 
     if cache.exists(export_hash):
-        content = cache.get(export_hash)
-        file = ContentFile(content)
-        response = HttpResponse(file, 'application/vnd.ms-excel')
-        response['Content-Length'] = file.size
-        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-            filename=export_hash,
-            extension=Format.XLS
-        )
-        return response
+        if format in Format.VALID_FORMATS:
+            content = cache.get(export_hash)
+            file = ContentFile(content)
+            response = HttpResponse(file, Format.FORMAT_DICT[format])
+            response['Content-Length'] = file.size
+            response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+                filename=export_hash,
+                extension=Format.FORMAT_DICT[format]['extension']
+            )
+            return response
+        else:
+            return HttpResponseNotFound(_("We don't support this format"))
     else:
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))
