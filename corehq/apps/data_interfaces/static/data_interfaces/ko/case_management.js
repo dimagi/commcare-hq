@@ -1,3 +1,5 @@
+/* globals _, ko, casexml, $ */
+
 var CaseManagement = function (o) {
     'use strict';
     var self = this;
@@ -10,10 +12,10 @@ var CaseManagement = function (o) {
         'user': o.users
     };
     if (o.groups) {
-        self.owners_by_type['group'] = o.groups;
+        self.owners_by_type.group = o.groups;
     }
     self.owner_types = _.keys(self.owners_by_type);
-    self.is_only_user_reassign = self.owner_types.length == 1;
+    self.is_only_user_reassign = self.owner_types.length === 1;
 
     // What's checked in the table below
     self.selected_cases = ko.observableArray();
@@ -62,7 +64,7 @@ var CaseManagement = function (o) {
             var $row = $checkbox.parent().parent(),
                 group_label = '';
 
-            if (owner_type == 'group') {
+            if (owner_type === 'group') {
                 group_label = ' <span class="label label-inverse" title="'+username+'">group</span>';
             }
 

@@ -17,6 +17,7 @@ FULFILLMENT_CASE_TYPE = 'commtrack-fulfillment'
 RECEIVED_CASE_TYPE = 'commtrack-received'
 ORDER_CASE_TYPE = 'commtrack-order'
 
+DAYS_IN_MONTH = 30.0
 
 def is_commtrack_case(case):
     return case.type in [

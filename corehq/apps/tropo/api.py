@@ -5,6 +5,7 @@ from corehq.apps.sms.util import create_billable_for_sms, clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 from corehq.apps.tropo.forms import TropoBackendForm
+from django.conf import settings
 
 class TropoBackend(SMSBackend):
     messaging_token = StringProperty()
@@ -25,6 +26,9 @@ class TropoBackend(SMSBackend):
     def get_form_class(cls):
         return TropoBackendForm
 
+    def get_sms_interval(self):
+        return 1
+
     def send(self, msg, delay=True, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
         text = msg.text.encode("utf-8")
@@ -36,7 +40,7 @@ class TropoBackend(SMSBackend):
             "_send_sms" : "true",
         })
         url = "https://api.tropo.com/1.0/sessions?%s" % params
-        response = urlopen(url).read()
+        response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
         create_billable_for_sms(msg, TropoBackend.get_api_id(), delay=delay, response=response)
 

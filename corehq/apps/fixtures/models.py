@@ -167,6 +167,14 @@ class FixtureDataItem(Document):
         return fields
 
     @property
+    def try_fields_without_attributes(self):
+        """This is really just for the API"""
+        try:
+            return self.fields_without_attributes
+        except FixtureVersionError:
+            return self.fields
+
+    @property
     def data_type(self):
         if not hasattr(self, '_data_type'):
             self._data_type = FixtureDataType.get(self.data_type_id)
@@ -348,7 +356,13 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True, descending=True)
+        return cls.view('fixtures/data_items_by_domain_type',
+            startkey=[domain, {}],
+            endkey=[domain],
+            reduce=False,
+            include_docs=True,
+            descending=True
+        )
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):

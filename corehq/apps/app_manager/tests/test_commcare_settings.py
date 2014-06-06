@@ -1,5 +1,5 @@
 from collections import defaultdict
-from django.test import TestCase
+from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.commcare_settings import parse_condition_string, check_condition, circular_dependencies, SETTINGS, SETTINGS_LOOKUP
 from corehq.apps.app_manager.models import Application
 

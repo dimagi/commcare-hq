@@ -5,8 +5,12 @@ from lxml import etree
 import os
 import re
 import json
+import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
+from django.http import HttpResponse
+from django.core.servers.basehttp import FileWrapper
+import tempfile
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -21,6 +25,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
+from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -36,7 +41,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, RegexURLResolver
+from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
 from dimagi.utils.django.cached_object import CachedObject
@@ -280,6 +285,18 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         _clear_app_cache(req, domain)
         name = req.POST.get('name')
         compressed = req.POST.get('compressed')
+
+        valid_request = True
+        if not name:
+            messages.error(req, _("You must submit a name for the application you are importing."))
+            valid_request = False
+        if not compressed:
+            messages.error(req, _("You must submit the source data."))
+            valid_request = False
+
+        if not valid_request:
+            return render(req, template, {'domain': domain})
+
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
@@ -311,7 +328,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
             app = None
 
         return render(req, template, {
-            'domain': domain, 
+            'domain': domain,
             'app': app,
             'is_superuser': req.couch_user.is_superuser
         })
@@ -595,7 +612,8 @@ def get_apps_base_context(request, domain, app):
                                and not app.has_careplan_module
                                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
             'show_advanced': (v2_app
-                               and toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)),
+                               and (toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                                    or getattr(app, 'commtrack_enabled', False))),
         })
 
     return context
@@ -623,8 +641,11 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    include_media = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(
+        request.user.username
+    )
     for app in saved_apps:
-        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
+        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 
@@ -768,12 +789,18 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 form = app.get_user_registration()
 
         if module_id:
-            module = app.get_module(module_id)
+            try:
+                module = app.get_module(module_id)
+            except ModuleNotFoundException:
+                raise Http404()
             if not module.unique_id:
                 module.get_or_create_unique_id()
                 app.save()
         if form_id:
-            form = module.get_form(form_id)
+            try:
+                form = module.get_form(form_id)
+            except IndexError:
+                raise Http404()
     except ModuleNotFoundException:
         return bail(req, domain, app_id)
 
@@ -817,7 +844,13 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        module_context["enable_calc_xpaths"] = (
+            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
+        )
+        module_context["enable_enum_image"] = (
+            req.couch_user.is_previewer or
+            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
+        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -886,7 +919,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     else:
         try:
             module = app.get_module(module_id)
-        except IndexError:
+        except ModuleNotFoundException:
             return bail(req, domain, app_id, not_found="module")
         try:
             form = module.get_form(form_id)
@@ -1912,6 +1945,27 @@ def delete_copy(req, domain, app_id):
 
 BAD_BUILD_MESSAGE = "Sorry: this build is invalid. Try deleting it and rebuilding. If error persists, please contact us at commcarehq-support@dimagi.com"
 
+
+def _download_index_files(request):
+    files = []
+    if request.app.copy_of:
+        files = [(path[len('files/'):], request.app.fetch_attachment(path))
+                 for path in request.app._attachments
+                 if path.startswith('files/')]
+    else:
+        try:
+            files = sorted(request.app.create_all_files().items())
+        except Exception:
+            messages.error(request, _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click <strong>Make New Version</strong> "
+                "under <strong>Deploy</strong> "
+                "for feedback on how to fix these errors."
+            ), extra_tags='html')
+    return files
+
+
 @safe_download
 def download_index(req, domain, app_id, template="app_manager/download_index.html"):
     """
@@ -1919,24 +1973,31 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
-    files = []
-    if req.app.copy_of:
-        files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
-    else:
-        try:
-            files = sorted(req.app.create_all_files().items())
-        except Exception:
-            messages.error(req, _(
-                "We were unable to get your files "
-                "because your Application has errors. "
-                "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
-                "for feedback on how to fix these errors."
-            ), extra_tags='html')
     return render(req, template, {
         'app': req.app,
-        'files': files,
+        'files': _download_index_files(req),
     })
+
+
+def _make_zip_payload(files):
+    buffer = StringIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
+        for filename, f in files:
+            z.writestr(filename, f)
+    return buffer.getvalue()
+
+
+@safe_download
+def download_ccz(req, domain, app_id):
+    files = ((name, f.encode('utf-8'))
+             for name, f in _download_index_files(req))
+    response = HttpResponse(
+        _make_zip_payload(files),
+        content_type='application/x-zip-compressed',
+    )
+    set_file_download(response, 'commcare.ccz')
+    return response
+
 
 @safe_download
 def download_file(req, domain, app_id, path):
@@ -1958,6 +2019,10 @@ def download_file(req, domain, app_id, path):
         full_path = path
     else:
         full_path = 'files/%s' % path
+
+    def resolve_path(path):
+        return RegexURLResolver(
+            r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
         assert req.app.copy_of
@@ -1989,10 +2054,28 @@ def download_file(req, domain, app_id, path):
                 req.app.save()
                 return download_file(req, domain, app_id, path)
             else:
-                notify_exception(req, 'Build resource not found')
+                try:
+                    resolve_path(path)
+                except Resolver404:
+                    # ok this was just a url that doesn't exist
+                    logging.error(
+                        'Unknown build resource %s not found' % path)
+                    pass
+                else:
+                    # this resource should exist but doesn't
+                    logging.error(
+                        'Expected build resource %s not found' % path)
+                    req.app.build_broken = True
+                    req.app.build_broken_reason = 'incomplete-build'
+                    req.app.save()
                 raise Http404()
-        callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+        try:
+            callback, callback_args, callback_kwargs = resolve_path(path)
+        except Resolver404:
+            raise Http404()
+
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
+
 
 @safe_download
 def download_profile(req, domain, app_id):

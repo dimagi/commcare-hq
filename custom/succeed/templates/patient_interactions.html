@@ -3,11 +3,11 @@
 {% load i18n %}
 {% block patient-tab-container %}
     <div style="display: inline">
-        <span><a href="{{ problem_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Problem List" %}</a></span>
-        <span><a href="{{ huddle_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up Huddle" %}</a></span>
-        <span><a href="{{ cm_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Phone Call" %}</a></span>
-        <span><a href="{{ chw_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CHW Phone Call" %}</a></span>
-        <span><a href="{{ cm_visits_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Clinic Visit" %}</a></span>
+        <span><a target="_blank" href="{{ problem_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Problem List" %}</a></span>
+        <span><a target="_blank" href="{{ huddle_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up Huddle" %}</a></span>
+        <span><a target="_blank" href="{{ cm_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Phone Call" %}</a></span>
+        <span><a target="_blank" href="{{ chw_phone_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CHW Phone Call" %}</a></span>
+        <span><a target="_blank" href="{{ cm_visits_url }}" class="btn btn-md btn-success" style="margin: 2%">{% trans "Follow-up CM Clinic Visit" %}</a></span>
     </div>
     <table class="table">
         <thead>
@@ -24,7 +24,7 @@
             {% for visit in interaction_table %}
                 <tr>
                     {% if visit.url %}
-                        <td><a class="btn btn-info" href="{{ visit.url }}">{% trans "Open Form" %}</a></td>
+                        <td><a target="_blank" class="btn btn-info" href="{{ visit.url }}">{% trans "Open Form" %}</a></td>
                     {% else %}
                         <td></td>
                     {%  endif %}
@@ -44,13 +44,13 @@
         <thead>
             <tr>
                 <th></th>
-                <th style="text-align: center;"><a href="{{ anti_thrombotic_url }}" class="btn btn-md btn-success">{% trans "Anti-thrombotic" %}</a></th>
-                <th style="text-align: center;"><a href="{{ blood_pressure_url }}" class="btn btn-md btn-success">{% trans "Blood Pressure" %}</a></th>
-                <th style="text-align: center;"><a href="{{ cholesterol_url }}" class="btn btn-md btn-success">{% trans "Cholesterol" %}</a></th>
-                <th style="text-align: center;"><a href="{{ depression_url }}" class="btn btn-md btn-success">{% trans "Depression" %}</a></th>
-                <th style="text-align: center;"><a href="{{ diabetes_url }}" class="btn btn-md btn-success">{% trans "Diabetes" %}</a></th>
-                <th style="text-align: center;"><a href="{{ smoking_cessation_url }}" class="btn btn-md btn-success">{% trans "Smoking Cessation" %}</a></th>
-                <th style="text-align: center;"><a href="{{ other_meds_url }}" class="btn btn-md btn-success">{% trans "Other Meds" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ anti_thrombotic_url }}" class="btn btn-md btn-success">{% trans "Anti-thrombotic" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ blood_pressure_url }}" class="btn btn-md btn-success">{% trans "Blood Pressure" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ cholesterol_url }}" class="btn btn-md btn-success">{% trans "Cholesterol" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ depression_url }}" class="btn btn-md btn-success">{% trans "Depression" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ diabetes_url }}" class="btn btn-md btn-success">{% trans "Diabetes" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ smoking_cessation_url }}" class="btn btn-md btn-success">{% trans "Smoking Cessation" %}</a></th>
+                <th style="text-align: center;"><a target="_blank" href="{{ other_meds_url }}" class="btn btn-md btn-success">{% trans "Other Meds" %}</a></th>
             </tr>
         </thead>
         <tbody>

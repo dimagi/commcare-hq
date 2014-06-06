@@ -5,6 +5,7 @@ from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
@@ -247,6 +248,15 @@ class EmwfMixin(object):
         return basics
 
 
+_UserData = namedtupledict('_UserData', (
+    'users',
+    'admin_and_demo_users',
+    'groups',
+    'users_by_group',
+    'combined_users',
+))
+
+
 class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_noop("Groups or Users")
@@ -350,6 +360,8 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         query_filter = {"and": [
             {"terms": {"doc_type": doc_types_to_include}},
             {"term": {"domain": domain}},
+            {"term": {"is_active": True}},
+            {"term": {"base_doc": "couchuser"}},
         ]}
         if "t__0" not in emws:
             or_filter = {"or": [
@@ -391,11 +403,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
         groups = [Group.get(g) for g in group_ids]
 
-        ret = {
-            "users": users + other_users,
-            "admin_and_demo_users": other_users,
-            "groups": groups,
-        }
+        all_users = users + other_users
 
         if combined:
             user_dict = {}
@@ -407,9 +415,18 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
             users_in_groups = [user for sublist in user_dict.values() for user in sublist]
 
-            ret["users_by_group"] = user_dict
-            ret["combined_users"] = remove_dups(ret["users"] + users_in_groups, "user_id")
-        return ret
+            users_by_group = user_dict
+            combined_users = remove_dups(all_users + users_in_groups, "user_id")
+        else:
+            users_by_group = None
+            combined_users = None
+        return _UserData(
+            users=all_users,
+            admin_and_demo_users=other_users,
+            groups=groups,
+            users_by_group=users_by_group,
+            combined_users=combined_users,
+        )
 
     @property
     def options(self):

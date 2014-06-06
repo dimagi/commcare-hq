@@ -70,7 +70,6 @@ class ProjectReportParametersMixin(object):
     # set this to set the report's user ids from within the report
     # (i.e. based on a filter's return value).
     override_user_ids = None
-    need_group_ids = False
 
     @property
     @memoized
@@ -126,7 +125,7 @@ class ProjectReportParametersMixin(object):
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
-            self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
+            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         """
         return self.request_params.get('individual', '')
 
@@ -167,13 +166,12 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def user_ids(self):
-        return [user.get('user_id') for user in self.users]
+        return [user.user_id for user in self.users]
 
-    _usernames = None
     @property
     @memoized
     def usernames(self):
-        return dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
+        return {user.user_id: user.username_in_report for user in self.users}
 
     @property
     @memoized
@@ -185,10 +183,6 @@ class ProjectReportParametersMixin(object):
                 user_filter=tuple(self.default_user_filter),
                 simplified=True
             )
-        if self.need_group_ids:
-            for users in user_dict.values():
-                for u in users:
-                    u["group_ids"] = Group.by_user(u['user_id'], False)
 
         return user_dict
 
@@ -200,10 +194,6 @@ class ProjectReportParametersMixin(object):
         for mw in self.mobile_worker_ids:
             user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
 
-        if self.need_group_ids:
-            for user in user_dict.values():
-                user["group_ids"] = Group.by_user(user["user_id"], False)
-
         return user_dict
 
     def get_admins_and_demo_users(self, ufilters=None):
@@ -213,10 +203,6 @@ class ProjectReportParametersMixin(object):
             user_filter=tuple(HQUserType.use_filter(ufilters)),
             simplified=True
         ) if ufilters else []
-
-        if self.need_group_ids:
-            for u in users:
-                u["group_ids"] = Group.by_user(u, False)
         return users
 
     @property
@@ -229,7 +215,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def admins_and_demo_user_ids(self):
-        return [user.get('user_id') for user in self.admins_and_demo_users]
+        return [user.user_id for user in self.admins_and_demo_users]
 
 
     @property
@@ -244,7 +230,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def combined_user_ids(self):
-        return [user.get('user_id') for user in self.combined_users]
+        return [user.user_id for user in self.combined_users]
 
     @property
     @memoized

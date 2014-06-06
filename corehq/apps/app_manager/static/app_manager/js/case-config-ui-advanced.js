@@ -81,7 +81,7 @@ var AdvancedCase = (function () {
             ];
             if (index > 0) {
                 modes.push({
-                    label: 'Case property',
+                    label: 'Case Index',
                     value: 'case'
                 });
             }
@@ -471,6 +471,9 @@ var AdvancedCase = (function () {
                     closeSnip + "</span>",
                     action, {variable: 'action'});
             } else {
+                if (action.auto_select) {
+                    nameSnip = "<%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
+                }
                 return _.template(nameSnip + spanSnip +
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +

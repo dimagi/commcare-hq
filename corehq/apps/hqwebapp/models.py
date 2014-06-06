@@ -657,7 +657,11 @@ class MessagingTab(UITab):
 
         can_use_survey = can_use_survey_reminders(self._request)
         if can_use_survey:
-            from corehq.apps.reminders.views import KeywordsListView
+            from corehq.apps.reminders.views import (
+                KeywordsListView, AddNormalKeywordView,
+                AddStructuredKeywordView, EditNormalKeywordView,
+                EditStructuredKeywordView,
+            )
             if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
                 keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
             else:
@@ -666,14 +670,30 @@ class MessagingTab(UITab):
                 'title': _("Keywords"),
                 'url': keyword_list_url,
                 'subpages': [
-                {
-                    'title': keyword_subtitle,
-                    'urlname': 'edit_keyword'
-                },
-                {
-                    'title': _("New Keyword"),
-                    'urlname': 'add_keyword',
-                },
+                    {
+                        'title': keyword_subtitle,
+                        'urlname': 'edit_keyword'
+                    },
+                    {
+                        'title': _("New Keyword"),
+                        'urlname': 'add_keyword',
+                    },
+                    {
+                        'title': AddNormalKeywordView.page_title,
+                        'urlname': AddNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': AddStructuredKeywordView.page_title,
+                        'urlname': AddStructuredKeywordView.urlname,
+                    },
+                    {
+                        'title': EditNormalKeywordView.page_title,
+                        'urlname': EditNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': EditStructuredKeywordView.page_title,
+                        'urlname': EditStructuredKeywordView.urlname,
+                    },
                 ],
             })
 
@@ -713,29 +733,10 @@ class MessagingTab(UITab):
                 },
             ])
         if self.can_access_sms:
-            from corehq.apps.sms.views import DomainSmsGatewayListView
-            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
-                sms_connectivity_url = reverse(DomainSmsGatewayListView.urlname, args=[self.domain])
-            else:
-                sms_connectivity_url = reverse('list_domain_backends', args=[self.domain])
             messages_urls.extend([
                 {
                     'title': _('Message Log'),
                     'url': MessageLogReport.get_url(domain=self.domain)
-                },
-                {
-                    'title': _('SMS Connectivity'),
-                    'url': sms_connectivity_url,
-                    'subpages': [
-                        {
-                            'title': _('Add Connection'),
-                            'urlname': 'add_domain_backend'
-                        },
-                        {
-                            'title': _('Edit Connection'),
-                            'urlname': 'edit_domain_backend'
-                        },
-                    ]
                 },
             ])
         if messages_urls:
@@ -785,15 +786,51 @@ class MessagingTab(UITab):
                 ])
             )
 
-        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
-            items.append(
-                (_("Settings"), [
-                    {'title': ugettext_lazy("General Settings"),
-                     'url': reverse('sms_settings', args=[self.domain])},
-                    {'title': ugettext_lazy("Languages"),
-                     'url': reverse('sms_languages', args=[self.domain])},
-                ])
+        settings_pages = []
+        if self.can_access_sms:
+            from corehq.apps.sms.views import (
+                DomainSmsGatewayListView, AddDomainGatewayView,
+                EditDomainGatewayView,
             )
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                sms_connectivity_url = reverse(
+                    DomainSmsGatewayListView.urlname, args=[self.domain]
+                )
+            else:
+                sms_connectivity_url = reverse(
+                    'list_domain_backends', args=[self.domain]
+                )
+            settings_pages.append({
+                'title': _('SMS Connectivity'),
+                'url': sms_connectivity_url,
+                'subpages': [
+                    {
+                        'title': _('Add Connection'),
+                        'urlname': 'add_domain_backend'
+                    },
+                    {
+                        'title': _("Add Connection"),
+                        'urlname': AddDomainGatewayView.urlname,
+                    },
+                    {
+                        'title': _('Edit Connection'),
+                        'urlname': 'edit_domain_backend'
+                    },
+                    {
+                        'title': _("Edit Connection"),
+                        'urlname': EditDomainGatewayView.urlname,
+                    },
+                ],
+            })
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+            settings_pages.extend([
+                {'title': ugettext_lazy("General Settings"),
+                 'url': reverse('sms_settings', args=[self.domain])},
+                {'title': ugettext_lazy("Languages"),
+                 'url': reverse('sms_languages', args=[self.domain])},
+            ])
+        if settings_pages:
+            items.append((_("Settings"), settings_pages))
 
         return items
 

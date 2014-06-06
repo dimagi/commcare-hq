@@ -21,6 +21,11 @@
                 <td>{{ form.sender_id }}</td>
                 <td>{{ form.sender_id.errors }}</td>
             </tr>
+            <tr>
+                <td><label for="id_max_sms_per_second">{% trans "Max Outgoing SMS Per Second (as per account contract)" %}</label></td>
+                <td>{{ form.max_sms_per_second }}</td>
+                <td>{{ form.max_sms_per_second.errors }}</td>
+            </tr>
         </tbody>
     </table>
 </div>

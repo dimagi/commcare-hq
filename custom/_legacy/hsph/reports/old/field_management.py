@@ -67,7 +67,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
             if self.selected_dctl and (self.selected_dctl != dctl_id):
                 continue
 
-            key = [user.get('user_id')]
+            key = [user.user_id]
             num_facilities = 0
             num_fac_visits = 0
             num_fac_visits_lt2 = 0
@@ -101,7 +101,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
                 num_home_completed = data.get('numHomeVisitsCompleted', 0)
                 num_home_21days = data.get('numHomeVisitsOpenAt21', 0)
             rows.append([
-                self.table_cell(user.get('raw_username'), user.get('username_in_report')),
+                self.table_cell(user.raw_username, user.username_in_report),
                 dctl_name,
                 num_facilities,
                 num_fac_visits,
@@ -169,7 +169,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
                 if self.selected_dctl and (self.selected_dctl != dctl_id):
                     continue
 
-                key = [facility, user.get('user_id')]
+                key = [facility, user.user_id]
                 data = get_db().view('hsph/field_data_collection_activity_old',
                         startkey = key + [self.datespan.startdate_param_utc],
                         endkey = key + [self.datespan.enddate_param_utc],
@@ -182,7 +182,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
                     num_births_no_contact = data.get('totalBirthsWithoutContact', 0)
                     rows.append([
                         self.facility_name_map[facility],
-                        self.table_cell(user.get('raw_username'), user.get('username_in_report')),
+                        self.table_cell(user.raw_username, user.username_in_report),
                         dctl_name,
                         num_visits,
                         num_births,
@@ -254,7 +254,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
             if self.selected_dctl and (self.selected_dctl != dctl_id):
                 continue
 
-            keys = self.generate_keys(prefix=["by_site", user.get('user_id')])
+            keys = self.generate_keys(prefix=["by_site", user.user_id])
             for key in keys:
                 data = self.get_data(key)
                 for item in data:
@@ -265,14 +265,14 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
                             region,
                             district,
                             site,
-                            user.get('username_in_report'),
+                            user.username_in_report,
                             dctl_name,
                             item.get('totalBirths', 0),
                             item.get('totalFollowedUpByCallCenter', 0),
                             item.get('totalFollowedUpByDCO', 0),
                             self.get_hv_range(key),
-                            self.get_hv_range(key, [8,14]),
-                            self.get_hv_range(key, [21,-1])
+                            self.get_hv_range(key, [8, 14]),
+                            self.get_hv_range(key, [21, -1])
                         ])
 
         return rows
@@ -334,7 +334,7 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
             else:
                 filter_by = "all"
 
-            prefix = [filter_by, user.get('user_id')]
+            prefix = [filter_by, user.user_id]
             if self.case_status:
                 prefix.append(self.case_status)
 
@@ -380,7 +380,7 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
                             item.get('nameMother', data_not_found_text),
                             item.get('address', data_not_found_text),
                             dctl_name,
-                            user.get('username_in_report'),
+                            user.username_in_report,
                             start_date.strftime('%d-%b'),
                             end_date.strftime('%d-%b'),
                             visited_date.strftime('%d-%b') if visited_date else no_data_text,

@@ -34,12 +34,12 @@ class UserLocMapTest(CommTrackTest):
         self.assertEqual(len(self.ct_user.locations), 1)
 
     def test_removing_a_location(self):
-        self.mapping.to_remove.add(self.loc.site_code)
-
         # first make sure there is one to remove
         self.ct_user.add_location(self.loc)
         self.assertEqual(len(self.ct_user.locations), 1)
-        self.mapping.save()
+
+        self.mapping.to_remove.add(self.loc.site_code)
+        ret = self.mapping.save()
         self.assertEqual(len(self.ct_user.locations), 0)
 
     def test_should_not_add_what_is_already_there(self):

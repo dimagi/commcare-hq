@@ -28,6 +28,7 @@
                 $("input#group-data").val(JSON.stringify(this.val()));
             });
             $("#group-data-form").prepend(customDataEditor.ui);
+            $("#group-data-form, #edit_membership").disableOnSubmit();
 
             // user selection form
             $("#id_selected_ids").width(800).height(400).multiselect();

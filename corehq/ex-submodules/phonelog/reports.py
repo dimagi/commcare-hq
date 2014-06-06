@@ -18,7 +18,7 @@ from corehq.apps.reports.datatables import (
     DTSortDirection,
     DTSortType,
 )
-from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
@@ -118,7 +118,12 @@ class FormErrorReport(PhonelogReport):
                 '%s@%s.commcarehq.org' % (username, self.domain))
             if user:
                 return _report_user_dict(user)
-            return {"raw_username": username, "username_in_report": username}
+            return SimplifiedUserInfo(
+                raw_username=username,
+                username_in_report=username,
+                user_id=None,
+                is_active=None,
+            )
 
         return [make_user(u) for u in usernames]
 
@@ -129,9 +134,9 @@ class FormErrorReport(PhonelogReport):
         child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
         for user in self.users_to_show:
             error_count = self.error_logs.filter(
-                username__exact=user.get('raw_username')).count()
+                username__exact=user.raw_username).count()
             warning_count = self.warning_logs.filter(
-                username__exact=user.get('raw_username')).count()
+                username__exact=user.raw_username).count()
 
             formatted_warning_count = (
                 '<span class="label label-warning">%d</span>' % warning_count
@@ -151,8 +156,8 @@ class FormErrorReport(PhonelogReport):
                 "url": child_report_url,
                 "error_slug": DeviceLogTagFilter.errors_only_slug,
                 "username_slug": DeviceLogUsersFilter.slug,
-                "username": user.get('username_in_report'),
-                "raw_username": user.get('raw_username'),
+                "username": user.username_in_report,
+                "raw_username": user.raw_username,
                 "query_string": "%s&" % query_string if query_string else ""
             }
             rows.append([username_formatted, formatted_warning_count,

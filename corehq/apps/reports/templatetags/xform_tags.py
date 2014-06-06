@@ -10,10 +10,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
-from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
-from corehq.apps.reports.formdetails.readable import get_readable_form_data, \
-    form_key_filter
-from corehq.toggles import READABLE_FORM_DATA
+from corehq.apps.reports.formdetails.readable import get_readable_form_data
 from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -84,27 +81,14 @@ def render_form(form, domain, options):
     # todo: we should revisit this when we properly handle timezones in form processing.
     timezone = pytz.utc
     case_id = options.get('case_id')
-
-    readable_form_data = READABLE_FORM_DATA.enabled(domain)
-    use_old_reason = ''
+    side_pane = options.get('side_pane', False)
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
-    form_dict = form.top_level_tags()
-    form_dict.pop('change', None)  # this data already in Case Changes tab
     # Form Data tab
-    if readable_form_data:
-        try:
-            form_data = get_readable_form_data(form)
-        except QuestionListNotFound as e:
-            readable_form_data = False
-            use_old_reason = e.message
-
-    if not readable_form_data:
-        form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
-        form_data = _get_tables_as_columns(form_dict, get_definition(form_keys))
+    form_data, question_list_not_found = get_readable_form_data(form)
 
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
@@ -138,7 +122,7 @@ def render_form(form, domain, options):
         })
 
     # Form Metadata tab
-    meta = form_dict.pop('meta', {})
+    meta = form.top_level_tags().get('meta', {})
     definition = get_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
     if 'auth_context' in form:
@@ -172,8 +156,7 @@ def render_form(form, domain, options):
         "instance": form,
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
-        'readable_form_data': readable_form_data,
-        'use_old_reason': use_old_reason,
+        'question_list_not_found': question_list_not_found,
         "form_data": form_data,
         "cases": cases,
         "form_table_options": {
@@ -184,4 +167,5 @@ def render_form(form, domain, options):
         "auth_context": auth_context,
         "auth_user_info": auth_user_info,
         "user_info": user_info,
+        "side_pane": side_pane,
     })

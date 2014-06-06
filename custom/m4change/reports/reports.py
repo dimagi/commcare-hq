@@ -35,16 +35,12 @@ class M4ChangeReportDataSource(ReportDataSource):
         from custom.m4change.reports.ld_hmis_report import LdHmisReport
         from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
         from custom.m4change.reports.all_hmis_report import AllHmisReport
-        from custom.m4change.reports.project_indicators_report import ProjectIndicatorsReport
-        from custom.m4change.reports.mcct_monthly_aggregate_report import McctMonthlyAggregateReport
 
         return [
             AncHmisReport,
             LdHmisReport,
             ImmunizationHmisReport,
-            AllHmisReport,
-            ProjectIndicatorsReport,
-            McctMonthlyAggregateReport
+            AllHmisReport
         ]
 
     @memoized

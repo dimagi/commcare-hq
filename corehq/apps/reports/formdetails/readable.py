@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -7,6 +8,7 @@ from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.models import get_app, Application
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
+from django.utils.translation import ugettext_lazy as _
 
 
 class FormQuestionOption(JsonObject):
@@ -60,32 +62,55 @@ def form_key_filter(key):
     return True
 
 
-def get_readable_form_data(xform):
-    app_id = xform.build_id or xform.app_id
-    domain = xform.domain
-    xmlns = xform.xmlns
+def get_questions(domain, app_id, xmlns):
+    if not app_id:
+        raise QuestionListNotFound(
+            _("This form is not associated with an app")
+        )
     try:
         app = get_app(domain, app_id)
     except Http404:
         raise QuestionListNotFound(
-            "No app with id {} could be found".format(app_id)
+            _("No app could be found")
         )
     if not isinstance(app, Application):
         raise QuestionListNotFound(
-            "The app we found for id {} is not a {}, which are not supported."
-            .format(app_id, app.__class__.__name__)
+            _("Remote apps are not supported")
         )
+
     form = app.get_form_by_xmlns(xmlns)
+    if not form:
+        if xmlns == 'http://code.javarosa.org/devicereport':
+            raise QuestionListNotFound(
+                _("This is a Device Report")
+            )
+        else:
+            raise QuestionListNotFound(
+                _("We could not find the question list "
+                  "associated with this form")
+            )
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
-    questions = [FormQuestionResponse(q) for q in questions]
+    return [FormQuestionResponse(q) for q in questions]
 
+
+def get_readable_form_data(xform):
+    app_id = xform.build_id or xform.app_id
+    domain = xform.domain
+    xmlns = xform.xmlns
+
+    try:
+        questions = get_questions(domain, app_id, xmlns)
+        questions_error = None
+    except QuestionListNotFound as e:
+        questions = []
+        questions_error = e
     return zip_form_data_and_questions(
         strip_form_data(xform.form),
         questions_in_hierarchy(questions),
         path_context='/%s/' % xform.form.get('#type', 'data'),
         process_label=_html_interpolate_output_refs,
-    )
+    ), questions_error
 
 
 def strip_form_data(data):
@@ -114,6 +139,8 @@ def path_relative_to_context(path, path_context):
     assert path_context.endswith('/')
     if path.startswith(path_context):
         return path[len(path_context):]
+    elif path + '/' == path_context:
+        return ''
     else:
         raise ValueError('{path} does not start with {path_context}'.format(
             path=path,
@@ -169,7 +196,7 @@ def zip_form_data_and_questions(data, questions, path_context='',
         node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
-        if question.type == 'Group':
+        if question.type in ('Group', 'FieldList'):
             children = question_data.pop('children')
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
@@ -219,10 +246,11 @@ def zip_form_data_and_questions(data, questions, path_context='',
 
     if data:
         for key, response in sorted(_flatten_json(data).items()):
+            joined_key = '/'.join(map(unicode, key))
             result.append(
                 FormQuestionResponse(
-                    label='/'.join(key),
-                    value='%s%s' % (path_context, '/'.join(key)),
+                    label=joined_key,
+                    value='%s%s' % (path_context, joined_key),
                     response=response,
                 )
             )
@@ -245,10 +273,18 @@ def _flatten_json(json, result=None, path=()):
 
 
 def questions_in_hierarchy(questions):
-    partition = defaultdict(list)
+    # It turns out that questions isn't quite enough to reconstruct
+    # the hierarchy if there are groups that share the same ref
+    # as their parent (like for grouping on the screen but not the data).
+    # In this case, ignore nesting and put all sub questions on the top level,
+    # along with the group itself.
+    # Real solution is to get rid of this function and instead have
+    # get_questions preserve hierarchy to begin with
+    result = []
+    question_lists_by_group = {None: result}
     for question in questions:
-        partition[question.group].append(question)
-    for question in questions:
-        if question.type in ('Group', 'Repeat'):
-            question.children = partition.pop(question.value)
-    return partition[None]
+        question_lists_by_group[question.group].append(question)
+        if question.type in ('Group', 'Repeat', 'FieldList') \
+                and question.value not in question_lists_by_group:
+            question_lists_by_group[question.value] = question.children
+    return question_lists_by_group[None]

@@ -1,5 +1,5 @@
 import json
-from django.test import TestCase
+from django.test import SimpleTestCase as TestCase
 import os
 from corehq.apps.app_manager.models import Application
 

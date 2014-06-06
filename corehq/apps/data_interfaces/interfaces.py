@@ -53,7 +53,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
     @property
     def rows(self):
-        checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
+        checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
         for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
             display = CaseDisplay(self, case)
@@ -70,7 +70,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         context = super(CaseReassignmentInterface, self).report_context
         active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
         context.update(
-            users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
+            users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups],

@@ -42,21 +42,9 @@
     </ul>
 {% endblock %}
 
-{% block sidebar %}
-    {{ block.super }}
-    {% if report.is_exportable %}
-        <hr />
-        <ul class="nav">
-            <a href="#" class="btn" id="export-report-excel">
-                <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-            </a>
-        </ul>
-    {% endif %}
-{% endblock %}
-
 {% block main_column %}
     {% if not hide_filters %}
-        {% include "reports/partials/generic_filters.html" %}
+        {% include "hqadmin/hqadmin_base_filters.html" %}
     {% endif %}
     <div id="report-content">
         {% block reportcontent %}{% endblock %}

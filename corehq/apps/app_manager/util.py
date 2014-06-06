@@ -1,6 +1,7 @@
 import functools
 import json
 import itertools
+from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
@@ -213,12 +214,15 @@ def is_sort_only_column(column):
 
 def get_correct_app_class(doc):
     from corehq.apps.app_manager.models import Application, RemoteApp
-    return {
-        'Application': Application,
-        'Application-Deleted': Application,
-        "RemoteApp": RemoteApp,
-        "RemoteApp-Deleted": RemoteApp,
-    }[doc['doc_type']]
+    try:
+        return {
+            'Application': Application,
+            'Application-Deleted': Application,
+            "RemoteApp": RemoteApp,
+            "RemoteApp-Deleted": RemoteApp,
+        }[doc['doc_type']]
+    except KeyError:
+        raise DocTypeError()
 
 
 def all_apps_by_domain(domain):

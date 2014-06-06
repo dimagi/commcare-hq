@@ -1,53 +1,61 @@
 import fluff
-import operator
 from custom.m4change.constants import PMTCT_CLIENTS_FORM
 from custom.m4change.user_calcs import get_date_delivery, form_passes_filter_date_delivery, get_received_on
 from datetime import datetime
 
 
-def _get_comparison_results(field_value, comparison_operator, value):
+def _get_comparison_results(field_value, comparison_operator, expected_value):
     result = True
-    is_contains_operator = (comparison_operator == operator.contains)
-    if isinstance(value, list):
-        for value_item in value:
-            value_tuple = (value_item, field_value) if is_contains_operator else (field_value, value_item)
-            if not comparison_operator(value_tuple[0], value_tuple[1]):
+    if isinstance(expected_value, list):
+        for expected_value_item in expected_value:
+            if not comparison_operator(field_value, expected_value_item):
                 result = False
                 break
-    else:
-        value_tuple = (value, field_value) if is_contains_operator else (field_value, value)
-        if not comparison_operator(value_tuple[0], value_tuple[1]):
-            result = False
+    elif not comparison_operator(field_value, expected_value):
+        result = False
     return result
 
 
 class FormComparisonCalculator(fluff.Calculator):
 
-    def __init__(self, comparisons, namespaces, filter_function = None, *args, **kwargs):
+    def __init__(self, comparisons, namespaces, filter_function=None, joint=True, *args, **kwargs):
         self.comparisons = comparisons
         self.namespaces = namespaces
         self.filter_function = filter_function
         self.get_date_function = get_date_delivery if self.filter_function is form_passes_filter_date_delivery else get_received_on
+        self.joint = joint
         super(FormComparisonCalculator, self).__init__(*args, **kwargs)
 
     @fluff.date_emitter
     def total(self, form):
-        if self.filter_function is None or self.filter_function(form, self.namespaces):
+        if form.xmlns in self.namespaces and (self.filter_function is None or self.filter_function(form)):
             all_filters_passed = True
-            for comparison in self.comparisons:
-                field_value = form.form.get(comparison[0], "")
-                if field_value is None:
-                    field_value = ""
-                if not _get_comparison_results(field_value, comparison[1], comparison[2]):
-                    all_filters_passed = False
-                    break
-            if all_filters_passed:
-                yield [self.get_date_function(form), 1]
+            if self.joint:
+                for comparison in self.comparisons:
+                    field_value = form.form.get(comparison[0], "")
+                    if field_value is None:
+                        field_value = ""
+                    if not _get_comparison_results(field_value, comparison[1], comparison[2]):
+                        all_filters_passed = False
+                        break
+                if all_filters_passed:
+                    yield [self.get_date_function(form), 1]
+            else:
+                all_filters_passed = False
+                for comparison in self.comparisons:
+                    field_value = form.form.get(comparison[0], "")
+                    if field_value is None:
+                        field_value = ""
+                    if _get_comparison_results(field_value, comparison[1], comparison[2]):
+                        all_filters_passed = True
+                        break
+                if all_filters_passed:
+                    yield [self.get_date_function(form), 1]
 
 
 def _get_child_date_delivery(form):
     child_date_delivery = form.form.get("child_date_delivery", None)
-    return datetime.strptime(child_date_delivery, "%Y-%m-%d").date() if child_date_delivery else None
+    return child_date_delivery if child_date_delivery else None
 
 
 class InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months(fluff.Calculator):
