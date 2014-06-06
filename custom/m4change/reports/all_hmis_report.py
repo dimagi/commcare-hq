@@ -24,6 +24,11 @@ def _get_rows(row_data, form_data, key):
                                           + rows.get("attendance_after_20_weeks_total")
     rows["hiv_positive_pregnant_women_assessed_for_art_eligibility_clinical_cd4"] = \
         rows.get("assessed_for_clinical_stage_eligibility_total") + rows.get("assessed_for_clinical_cd4_eligibility_total")
+    rows["pregnant_positive_women_received_arv_for_pmtct"] = \
+        rows.get("pregnant_hiv_positive_women_received_art_total") +\
+        rows.get("pregnant_hiv_positive_women_received_arv_total") +\
+        rows.get("pregnant_hiv_positive_women_received_azt_total") +\
+        rows.get("pregnant_hiv_positive_women_received_mother_sdnvp_total")
     return rows
 
 

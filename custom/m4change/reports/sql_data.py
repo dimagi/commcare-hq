@@ -347,8 +347,6 @@ class AllHmisCaseSqlData(SqlData):
                            SumColumn("pregnant_hiv_positive_women_received_azt_total")),
             DatabaseColumn(_("Pregnant positive women who received ARV prophylaxis(SdNvP in Labor + (AZT + 3TC))"),
                            SumColumn("pregnant_hiv_positive_women_received_mother_sdnvp_total")),
-            DatabaseColumn(_("Pregant positive woman who received ARV prophylaxis for PMTCT(Total) = (171 + 172 + 173 + 174)"),
-                           SumColumn("pregnant_positive_women_received_arv_for_pmtct")),
             DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis within 2 months"),
                            SumColumn("infants_hiv_women_cotrimoxazole_lt_2_months_total")),
             DatabaseColumn(_("Infants born to HIV infected women started on cotrimoxazole prophylaxis 2 months & above"),
