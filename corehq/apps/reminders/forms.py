@@ -939,7 +939,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def __init__(self, data=None, is_previewer=False, is_superuser=False,
                  domain=None, is_edit=False, can_use_survey=False,
-                 can_use_custom_content_handler=False,
+                 use_custom_content_handler=False,
                  custom_content_handler=None, *args, **kwargs
     ):
         self.initial_event = {
@@ -962,7 +962,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.domain = domain
         self.is_edit = is_edit
         self.is_superuser = is_superuser
-        self.can_use_custom_content_handler = can_use_custom_content_handler
+        self.use_custom_content_handler = use_custom_content_handler
         self.custom_content_handler = custom_content_handler
 
         self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
@@ -1630,7 +1630,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         if self.is_superuser:
             return self.cleaned_data["use_custom_content_handler"]
         else:
-            return self.can_use_custom_content_handler
+            return self.use_custom_content_handler
 
     def clean_custom_content_handler(self):
         if self._cchq_is_superuser:

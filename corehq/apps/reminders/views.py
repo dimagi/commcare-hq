@@ -711,7 +711,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 domain=self.domain,
                 is_edit=True,
                 can_use_survey=can_use_survey_reminders(self.request),
-                can_use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+                use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
                 custom_content_handler=self.reminder_handler.custom_content_handler,
             )
         return self.reminder_form_class(
@@ -720,7 +720,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             domain=self.domain,
             is_edit=True,
             can_use_survey=can_use_survey_reminders(self.request),
-            can_use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+            use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
             custom_content_handler=self.reminder_handler.custom_content_handler,
         )
 
