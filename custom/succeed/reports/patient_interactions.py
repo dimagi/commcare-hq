@@ -1,10 +1,11 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import timedelta
-from corehq.apps.reports.generic import ElasticProjectInspectionReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.users.models import CouchUser
 from custom.succeed.reports import *
 from custom.succeed.reports.patient_details import PatientDetailsReport
+from dimagi.utils.decorators.memoized import memoized
+from custom.succeed.utils import format_date
 
 
 class PatientInteractionsReport(PatientDetailsReport):
@@ -33,7 +34,10 @@ class PatientInteractionsReport(PatientDetailsReport):
         ret['interaction_table'] = []
         for visit_key, visit in enumerate(VISIT_SCHEDULE):
             if ret['patient']["randomization_date"]:
-                target_date = (ret['patient']["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT)
+                try:
+                    target_date = (ret['patient']["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT)
+                except TypeError:
+                    target_date = _("Bad Date Format!")
             else:
                 target_date = EMPTY_FIELD
             interaction = {
@@ -48,7 +52,7 @@ class PatientInteractionsReport(PatientDetailsReport):
                 if visit['xmlns'] == action['xform_xmlns']:
                     interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
                     try:
-                        user = CouchUser.get(action['user_id'])
+                        user = self.get_user(action['user_id'])
                         interaction['completed_by'] = user.raw_username
                     except ResourceNotFound:
                         interaction['completed_by'] = EMPTY_FIELD
@@ -57,7 +61,7 @@ class PatientInteractionsReport(PatientDetailsReport):
             if visit['show_button']:
                 interaction['url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, visit['module_idx'], visit['xmlns'], ret['patient']['_id'])
             if 'scheduled_source' in visit and ret['patient'].get_case_property(visit['scheduled_source']):
-                interaction['scheduled_date'] = format_date(case.get_case_property(visit['scheduled_source']), INTERACTION_OUTPUT_DATE_FORMAT)
+                interaction['scheduled_date'] = format_date(ret['patient'].get_case_property(visit['scheduled_source']), INTERACTION_OUTPUT_DATE_FORMAT)
 
             ret['interaction_table'].append(interaction)
 
@@ -66,3 +70,7 @@ class PatientInteractionsReport(PatientDetailsReport):
                 medication.append(getattr(ret['patient'], med_prop, EMPTY_FIELD))
             ret['medication_table'] = medication
         return ret
+
+    @memoized
+    def get_user(self, user_id):
+        return CouchUser.get(user_id)

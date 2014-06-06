@@ -8,7 +8,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -345,7 +345,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
-            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if user.get_role()['name'] == responsible_party.upper()]
+            users = []
+            for user in CommCareUser.by_domain(domain=self.domain):
+                role = user.get_role(domain=self.domain)
+                if role and role.name == responsible_party:
+                    users.append(user.get_id)
+
             terms = {"terms": {"user_id": users}}
             es_filters["bool"]["must"].append(terms)
 

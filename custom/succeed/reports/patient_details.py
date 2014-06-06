@@ -20,9 +20,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     fields = []
     es_results=None
 
-    @property
-    def render_next(self):
-        return None if self.rendered_as == "async" else self.rendered_as
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -36,17 +33,17 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         return CommCareCase.get(self.request.GET['patient_id'])
 
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
-                try:
-                    module = app_dict['modules'][module_idx]
-                    form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
-                except IndexError:
-                    form_idx = None
+        try:
+            module = app_dict['modules'][module_idx]
+            form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
+        except IndexError:
+            form_idx = None
 
-                return html.escape(get_cloudcare_form_url(domain=self.domain,
-                                                          app_build_id=app_build_id,
-                                                          module_id=module_idx,
-                                                          form_id=form_idx,
-                                                          case_id=case_id) + '/enter/')
+        return html.escape(get_cloudcare_form_url(domain=self.domain,
+                                                  app_build_id=app_build_id,
+                                                  module_id=module_idx,
+                                                  form_id=form_idx,
+                                                  case_id=case_id) + '/enter/')
 
     @property
     def report_context(self):
@@ -88,6 +85,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         return ret
 
     @property
+    @memoized
     def get_available_report_list(self):
         return self.request.couch_user.get_role().permissions.view_report_list
 
