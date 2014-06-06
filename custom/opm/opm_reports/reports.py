@@ -17,19 +17,24 @@ from corehq.apps.reports.cache import request_cache
 from django.http import HttpResponse
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, SqlData, SummingSqlTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin, \
+    ProjectReportParametersMixin
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
+from custom.opm import HealthStatusMixin
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
+from dimagi.utils.decorators.memoized import memoized
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
@@ -37,7 +42,7 @@ from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
 import logging
-from corehq.apps.reports.standard.maps import GenericMapReport
+from corehq.apps.reports.standard.maps import GenericMapReport, ElasticSearchMapReport
 
 
 class OpmCaseSqlData(SqlData):
@@ -262,7 +267,7 @@ class OpmHealthStatusSqlData(SqlData):
         else:
             return None
 
-class BaseReport(MonthYearMixin, SqlTabularReport, CustomProjectReport):
+class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport, ):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -533,8 +538,11 @@ def get_report(ReportClass, month=None, year=None, block=None):
 
     return Report()
 
-class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
 
+class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, DatespanMixin):
+
+    ajax_pagination = True
+    asynchronous = True
     name = "Health Status Report"
     slug = "health_status_report"
     fix_left_col = True
@@ -550,7 +558,9 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
     def fields(self):
         return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
 
-    def get_rows(self, dataspan):
+    @property
+    @memoized
+    def es_results(self):
         q = {
             "query": {
                 "filtered": {
@@ -564,16 +574,16 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
                         }
                     }
                 }
-            }
+            },
+            "size": self.pagination.count,
+            "from": self.pagination.start,
         }
         es_filters = q["query"]["filtered"]["filter"]
-        blocks = self.request.GET.getlist('blocks')
-        if blocks:
-            block_lower = [block.lower() for block in blocks]
+        if self.blocks:
+            block_lower = [block.lower() for block in self.blocks]
             es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
-        awcs = self.request.GET.getlist('awcs')
-        if awcs:
-            awcs_lower = [awc.lower() for awc in awcs]
+        if self.awcs:
+            awcs_lower = [awc.lower() for awc in self.awcs]
             awc_term = {
                 "or":
                     [{"and": [{"term": {"user_data.awc": term}} for term in re.split('\s', awc)
@@ -583,7 +593,11 @@ class HealthStatusReport(DatespanMixin, BaseReport, SummingSqlTabularReport):
             es_filters["bool"]["must"].append(awc_term)
         q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
+                        start_at=self.pagination.start, size=self.pagination.count)
+
+    def get_rows(self, dataspan):
+        return self.es_results['hits'].get('hits', [])
 
 
     def get_row_data(self, row):
@@ -821,19 +835,19 @@ class HealthMapSource(HealthStatusReport):
         return None
 
 
-    #TODO Hot fix - we should change this to ElasticSearch - we working on this
     @property
     @memoized
     def get_users(self):
-        return CommCareUser.by_domain(DOMAIN)
+        return super(HealthMapSource, self).es_results['hits'].get('hits', [])
 
     @property
     def gps_mapping(self):
         users = self.get_users
         mapping = {}
         for user in users:
-            aww_name = user.first_name + " " + user.last_name
-            meta_data = user.user_data
+            user_src = user['_source']
+            aww_name = user_src['first_name'] + " " + user_src['last_name']
+            meta_data = user_src['user_data']
             awc = meta_data.get("awc", "")
             block = meta_data.get("block", "")
             gp = meta_data.get("gp", "")
@@ -878,7 +892,7 @@ class HealthMapSource(HealthStatusReport):
         return new_rows
 
 
-class HealthMapReport(GenericMapReport, CustomProjectReport):
+class HealthMapReport(HealthStatusMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 
@@ -946,6 +960,7 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
         ]
         return {
             "detail_columns": columns[0:5],
+            "display_columns": columns[4:],
             "table_columns": columns,
             "column_titles": title_mapping,
             "metrics": [{"color": {"column": column}} for column in columns[:4]] + [
@@ -960,3 +975,29 @@ class HealthMapReport(GenericMapReport, CustomProjectReport):
             }
         }
 
+    @property
+    def rows(self):
+        data = self._get_data()
+        columns = self.display_config['table_columns']
+        display_columns = self.display_config['display_columns']
+        rows = []
+
+        for feature in data['features']:
+            row = []
+            for column in columns:
+                if column in feature['properties'] and column not in display_columns:
+                    row.append(feature['properties'][column])
+                else:
+                    disp_col = '__disp_' + column
+                    if disp_col in feature['properties']:
+                        row.append(feature['properties'][disp_col])
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        columns = self.display_config['table_columns']
+        headers = DataTablesHeader(*[
+            DataTablesColumn(name=name, sortable=False) for name in columns]
+        )
+        return headers
