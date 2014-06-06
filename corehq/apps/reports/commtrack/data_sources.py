@@ -50,11 +50,11 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        return self.config.get('start_date') or (datetime.now() - timedelta(30)).date()
+        return self.config.get('startdate') or (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
-        return self.config.get('end_date') or datetime.now().date()
+        return self.config.get('enddate') or datetime.now().date()
 
     @property
     def request(self):

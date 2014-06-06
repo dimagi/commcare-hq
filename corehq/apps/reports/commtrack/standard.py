@@ -230,8 +230,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
-                'start_date': self.datespan.startdate_utc,
-                'end_date': self.datespan.enddate_utc,
+                'startdate': self.datespan.startdate_utc,
+                'enddate': self.datespan.enddate_utc,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -294,8 +294,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.request.GET.get('program'),
-            'start_date': self.datespan.startdate_utc,
-            'end_date': self.datespan.enddate_utc,
+            'startdate': self.datespan.startdate_utc,
+            'enddate': self.datespan.enddate_utc,
             'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
