@@ -162,6 +162,11 @@
           <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id])"/>
         </text>
       </template>
+      <sort type="int" order="2" direction="descending">
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_clinic]/section[@section-id='stock']/entry[@id=current()/@id])"/>
+        </text>
+      </sort>
     </field>
   </detail>
   <detail id="m2_case_short">
@@ -241,6 +246,11 @@
           <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']/entry[@id=current()/@id])"/>
         </text>
       </template>
+      <sort type="int" order="2" direction="descending">
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-requested']/entry[@id=current()/@id])"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -253,6 +263,11 @@
           <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']/entry[@id=current()/@id])"/>
         </text>
       </template>
+      <sort type="int" order="3" direction="descending">
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='ct-approved']/entry[@id=current()/@id])"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -265,6 +280,11 @@
           <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id])"/>
         </text>
       </template>
+      <sort type="int" order="4" direction="descending">
+        <text>
+          <xpath function="if(count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']) = 0 or count(instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id]) = 0, '', instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/case_id_case_requisition]/section[@section-id='stock']/entry[@id=current()/@id])"/>
+        </text>
+      </sort>
     </field>
   </detail>
   <entry>

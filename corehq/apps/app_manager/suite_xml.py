@@ -342,13 +342,39 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
+def get_default_sort_elements(detail):
+    from corehq.apps.app_manager.models import SortElement
+
+    if not detail.columns:
+        return []
+
+    def get_sort_params(column):
+        if column.field_type == FIELD_TYPE_LEDGER:
+            return dict(type='int', direction='descending')
+        else:
+            return dict(type='string', direction='ascending')
+
+    col_0 = detail.get_column(0)
+    sort_elements = [SortElement(
+        field=col_0.field,
+        **get_sort_params(col_0)
+    )]
+
+    for column in detail.columns[1:]:
+        if column.field_type == FIELD_TYPE_LEDGER:
+            sort_elements.append(SortElement(
+                field=column.field,
+                **get_sort_params(column)
+            ))
+
+    return sort_elements
+
+
 def get_detail_column_infos(detail, include_sort):
     """
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    from corehq.apps.app_manager.models import SortElement
-
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
     if not include_sort:
@@ -356,14 +382,8 @@ def get_detail_column_infos(detail, include_sort):
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
-    elif detail.columns:
-        sort_elements = [SortElement(
-            field=detail.get_column(0).field,
-            type='string',
-            direction='ascending',
-        )]
     else:
-        sort_elements = []
+        sort_elements = get_default_sort_elements(detail)
 
     # order is 1-indexed
     sort_elements = dict((s.field, (s, i + 1))
