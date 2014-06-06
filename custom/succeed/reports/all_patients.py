@@ -345,12 +345,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
             terms = {"terms": {"user_id": users}}
             es_filters["bool"]["must"].append(terms)
-        else:
-            user = self.request.couch_user
-            if not user.is_web_user():
-                groups = user.get_group_ids()
-                terms = {"terms": {"owner_id": groups}}
-                es_filters["bool"]["must"].append(terms)
+
+        user = self.request.couch_user
+        if not user.is_web_user():
+            groups = user.get_group_ids()
+            terms = {"terms": {"owner_id": groups}}
+            es_filters["bool"]["must"].append(terms)
 
         if self.case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
