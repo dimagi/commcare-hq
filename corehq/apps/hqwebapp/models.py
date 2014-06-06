@@ -657,7 +657,11 @@ class MessagingTab(UITab):
 
         can_use_survey = can_use_survey_reminders(self._request)
         if can_use_survey:
-            from corehq.apps.reminders.views import KeywordsListView
+            from corehq.apps.reminders.views import (
+                KeywordsListView, AddNormalKeywordView,
+                AddStructuredKeywordView, EditNormalKeywordView,
+                EditStructuredKeywordView,
+            )
             if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
                 keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
             else:
@@ -666,14 +670,30 @@ class MessagingTab(UITab):
                 'title': _("Keywords"),
                 'url': keyword_list_url,
                 'subpages': [
-                {
-                    'title': keyword_subtitle,
-                    'urlname': 'edit_keyword'
-                },
-                {
-                    'title': _("New Keyword"),
-                    'urlname': 'add_keyword',
-                },
+                    {
+                        'title': keyword_subtitle,
+                        'urlname': 'edit_keyword'
+                    },
+                    {
+                        'title': _("New Keyword"),
+                        'urlname': 'add_keyword',
+                    },
+                    {
+                        'title': AddNormalKeywordView.page_title,
+                        'urlname': AddNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': AddStructuredKeywordView.page_title,
+                        'urlname': AddStructuredKeywordView.urlname,
+                    },
+                    {
+                        'title': EditNormalKeywordView.page_title,
+                        'urlname': EditNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': EditStructuredKeywordView.page_title,
+                        'urlname': EditStructuredKeywordView.urlname,
+                    },
                 ],
             })
 
