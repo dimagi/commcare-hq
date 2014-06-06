@@ -24,7 +24,7 @@
             {% for visit in interaction_table %}
                 <tr>
                     {% if visit.url %}
-                        <td><a class="btn btn-info" href="{{ visit.url }}">{% trans "Open Form" %}</a></td>
+                        <td><a target="_blank" class="btn btn-info" href="{{ visit.url }}">{% trans "Open Form" %}</a></td>
                     {% else %}
                         <td></td>
                     {%  endif %}

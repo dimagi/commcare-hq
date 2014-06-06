@@ -4,7 +4,6 @@ from django.core.urlresolvers import reverse
 from django.http.response import Http404
 from django.utils import html
 from corehq.apps.api.es import ReportXFormES
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
@@ -16,8 +15,9 @@ from custom.succeed.reports import DrilldownReportMixin, VISIT_SCHEDULE, CM_APP_
     EMPTY_FIELD, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT, PM2, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, CHW_APP_PD_MODULE, SUBMISSION_SELECT_FIELDS, MEDICATION_DETAILS, INTERACTION_OUTPUT_DATE_FORMAT, CM_APP_MEDICATIONS_MODULE, PD2AM, PD2BPM, PD2CHM, PD2DIABM, PD2DEPM, PD2SCM, PD2OM, CM_APP_APPOINTMENTS_MODULE, AP2, PM_PM2
 from custom.succeed.reports import PD1, PD2, PM3, PM4, HUD2, CM6, CHW3
 from custom.succeed.reports.patient_Info import PatientInfoDisplay
-from custom.succeed.utils import format_date, SUCCEED_CM_APPNAME, is_pm_or_pi, is_cm, is_pi, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, is_chw, SUCCEED_DOMAIN
+from custom.succeed.utils import format_date, SUCCEED_CM_APPNAME, is_pm_or_pi, is_cm, is_pi, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, is_chw, SUCCEED_DOMAIN, get_app_build
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -118,11 +118,11 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
 
         try:
             cm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CM_APPNAME)
-            latest_cm_build = ApplicationBase.get_latest_build(case['domain'], cm_app_dict['_id'])['_id']
+            latest_cm_build = get_app_build(cm_app_dict)
             pm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_PM_APPNAME)
-            latest_pm_build = ApplicationBase.get_latest_build(case['domain'], pm_app_dict['_id'])['_id']
+            latest_pm_build = get_app_build(pm_app_dict)
             chw_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CHW_APPNAME)
-            latest_chw_build = ApplicationBase.get_latest_build(case['domain'], chw_app_dict['_id'])['_id']
+            latest_chw_build = get_app_build(pm_app_dict)
         except ResourceNotFound as ex:
             self.report_template_path = "patient_error.html"
             ret['error_message'] = ex.message
@@ -190,7 +190,10 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
             ret['interaction_table'] = []
             for visit_key, visit in enumerate(VISIT_SCHEDULE):
                 if case["randomization_date"]:
-                    target_date = (case["randomization_date"] + timedelta(days=visit['days'])).strftime(OUTPUT_DATE_FORMAT)
+                    try:
+                        target_date = format_date(case["randomization_date"] + timedelta(days=visit['days']), OUTPUT_DATE_FORMAT)
+                    except TypeError:
+                        target_date = _("Bad Date Format!")
                 else:
                     target_date = EMPTY_FIELD
                 interaction = {
@@ -203,7 +206,7 @@ class PatientInfoReport(CustomProjectReport, DrilldownReportMixin, ElasticProjec
                 }
                 for key, action in enumerate(case['actions']):
                     if visit['xmlns'] == action['xform_xmlns']:
-                        interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
+                        interaction['received_date'] = format_date(action['date'], INTERACTION_OUTPUT_DATE_FORMAT)
                         try:
                             user = CouchUser.get(action['user_id'])
                             interaction['completed_by'] = user.raw_username

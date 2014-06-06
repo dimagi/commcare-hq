@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
-from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -237,7 +237,7 @@ def get_default_column_data(domain, location_types):
                     sp = SupplyPointCase.get_or_create_by_location(loc)
 
                     data['values'][loc._id] = [
-                        get_default_consumption(
+                        get_default_monthly_consumption(
                             domain,
                             p._id,
                             loc_type,

@@ -179,7 +179,7 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                 if self.facility_type and self.facility_type != ihf_chf:
                     continue
 
-                key = key_prefix + site + [user.get('user_id')] + key_suffix
+                key = key_prefix + site + [user.user_id] + key_suffix
                 data = get_db().view('hsph/pm_implementation_status_old',
                         reduce=True,
                         startkey=key+[self.datespan.startdate_param_utc],
@@ -198,7 +198,7 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                             region,
                             district,
                             ihf_chf,
-                            user.get('username_in_report'),
+                            user.username_in_report,
                             site,
                             FacilityStatusField.options[fac_stat+1]['text'],
                             tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)

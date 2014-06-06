@@ -267,7 +267,7 @@ def production():
 
     class Servers(object):
         db = ['hqdb0.internal.commcarehq.org']
-        celery = ['hqcelery0.internal.commcarehq.org']
+        celery = ['hqcelery1.internal.commcarehq.org']
         touch = ['hqtouch0.internal.commcarehq.org']
         django = ['hqdjango3.internal.commcarehq.org',
                   'hqdjango4.internal.commcarehq.org',
@@ -755,7 +755,7 @@ def deploy():
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
-            execute(migrate)
+            execute(_migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
         execute(version_static)
@@ -883,13 +883,33 @@ def services_restart():
 
 
 @roles(*ROLES_DB_ONLY)
-def migrate():
+def _migrate():
     """run south migration on remote environment"""
     _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
+
+
+@task
+@roles(*ROLES_DB_ONLY)
+def migrate():
+    """run south migration on remote environment"""
+    if not console.confirm(
+            'Are you sure you want to run south migrations on '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Task aborted.')
+    _require_target()
+    execute(stop_pillows)
+    execute(stop_celery_tasks)
+    with cd(env.code_root):
+        sudo(
+            '%(virtualenv_root)s/bin/python manage.py migrate --noinput ' % env
+            + env.get('app', ''),
+            user=env.sudo_user
+        )
+    _supervisor_command('start all')
 
 
 @roles(*ROLES_DB_ONLY)

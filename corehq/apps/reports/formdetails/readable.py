@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -78,6 +79,16 @@ def get_questions(domain, app_id, xmlns):
         )
 
     form = app.get_form_by_xmlns(xmlns)
+    if not form:
+        if xmlns == 'http://code.javarosa.org/devicereport':
+            raise QuestionListNotFound(
+                _("This is a Device Report")
+            )
+        else:
+            raise QuestionListNotFound(
+                _("We could not find the question list "
+                  "associated with this form")
+            )
     questions = form.wrapped_xform().get_questions(
         app.langs, include_triggers=True, include_groups=True)
     return [FormQuestionResponse(q) for q in questions]
@@ -128,6 +139,8 @@ def path_relative_to_context(path, path_context):
     assert path_context.endswith('/')
     if path.startswith(path_context):
         return path[len(path_context):]
+    elif path + '/' == path_context:
+        return ''
     else:
         raise ValueError('{path} does not start with {path_context}'.format(
             path=path,
@@ -183,7 +196,7 @@ def zip_form_data_and_questions(data, questions, path_context='',
         node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
-        if question.type == 'Group':
+        if question.type in ('Group', 'FieldList'):
             children = question_data.pop('children')
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
@@ -260,10 +273,18 @@ def _flatten_json(json, result=None, path=()):
 
 
 def questions_in_hierarchy(questions):
-    partition = defaultdict(list)
+    # It turns out that questions isn't quite enough to reconstruct
+    # the hierarchy if there are groups that share the same ref
+    # as their parent (like for grouping on the screen but not the data).
+    # In this case, ignore nesting and put all sub questions on the top level,
+    # along with the group itself.
+    # Real solution is to get rid of this function and instead have
+    # get_questions preserve hierarchy to begin with
+    result = []
+    question_lists_by_group = {None: result}
     for question in questions:
-        partition[question.group].append(question)
-    for question in questions:
-        if question.type in ('Group', 'Repeat'):
-            question.children = partition.pop(question.value)
-    return partition[None]
+        question_lists_by_group[question.group].append(question)
+        if question.type in ('Group', 'Repeat', 'FieldList') \
+                and question.value not in question_lists_by_group:
+            question_lists_by_group[question.value] = question.children
+    return question_lists_by_group[None]

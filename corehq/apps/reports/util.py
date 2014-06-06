@@ -344,6 +344,14 @@ def group_filter(doc, group):
         return True
 
 
+def users_matching_filter(domain, user_filters):
+    return [
+        user.user_id
+        for user in get_all_users_by_domain(
+            domain, user_filter=user_filters, simplified=True)
+    ]
+
+
 def create_export_filter(request, domain, export_type='form'):
     from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
@@ -354,9 +362,9 @@ def create_export_filter(request, domain, export_type='form'):
 
     if export_type == 'case':
         if user_filters and use_user_filters:
-            users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
-                user_filter=user_filters, simplified=True))
-            filter = SerializableFunction(case_users_filter, users=users_matching_filter)
+            filtered_users = users_matching_filter(domain, user_filters)
+            filter = SerializableFunction(case_users_filter,
+                                          users=filtered_users)
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
@@ -366,9 +374,8 @@ def create_export_filter(request, domain, export_type='form'):
             datespan.set_timezone(get_timezone(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if user_filters and use_user_filters:
-            users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
-                user_filter=user_filters, simplified=True))
-            filter &= SerializableFunction(users_filter, users=users_matching_filter)
+            filtered_users = users_matching_filter(domain, user_filters)
+            filter &= SerializableFunction(users_filter, users=filtered_users)
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter

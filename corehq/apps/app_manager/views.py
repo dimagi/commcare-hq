@@ -612,7 +612,8 @@ def get_apps_base_context(request, domain, app):
                                and not app.has_careplan_module
                                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
             'show_advanced': (v2_app
-                               and toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)),
+                               and (toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                                    or getattr(app, 'commtrack_enabled', False))),
         })
 
     return context
@@ -640,8 +641,11 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    include_media = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(
+        request.user.username
+    )
     for app in saved_apps:
-        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
+        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 

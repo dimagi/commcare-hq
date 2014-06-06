@@ -167,6 +167,14 @@ class FixtureDataItem(Document):
         return fields
 
     @property
+    def try_fields_without_attributes(self):
+        """This is really just for the API"""
+        try:
+            return self.fields_without_attributes
+        except FixtureVersionError:
+            return self.fields
+
+    @property
     def data_type(self):
         if not hasattr(self, '_data_type'):
             self._data_type = FixtureDataType.get(self.data_type_id)

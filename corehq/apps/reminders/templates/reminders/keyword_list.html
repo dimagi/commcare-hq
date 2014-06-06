@@ -10,19 +10,63 @@
         provide data or notify other users.
     {% endblocktrans %}
     </p>
-    <p>
-        <a href="{% url 'add_keyword' domain %}"
-           class="btn btn-success">
-            <i class="icon-plus"></i> {% trans 'Add Keyword' %}
-        </a>
-    </p>
+    <div class="btn-group">
+        <a href="{% url 'add_normal_keyword' domain %}" class="btn btn-success">
+            <i class="icon-plus"></i>
+            {% trans 'Add Keyword' %}</a>
+        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            <li><a href="{% url 'add_normal_keyword' domain %}">
+                {% trans 'Add Normal Keyword' %}
+            </a></li>
+            <li><a href="{% url 'add_structured_keyword' domain %}">
+                {% trans 'Add Structured Keyword' %}</a></li>
+        </ul>
+    </div>
 {% endblock %}
 
 {% block pagination_templates %}
     <script type="text/html" id="keyword-row-template">
-        <td class="span6">
+        <td class="span5">
             <a data-bind="attr: { href: editUrl }, text: keyword"></a>
         </td>
-        <td class="span6" data-bind="text: description"></td>
+        <td class="span5" data-bind="text: description"></td>
+        <td class="span2">
+            <a data-bind="attr: {href: '#' + deleteModalId }"
+               class="btn btn-danger"
+               data-toggle="modal"><i class="icon-remove"></i> {% trans 'Delete' %}</a>
+            <div class="modal hide fade" data-bind="attr: {id: deleteModalId}">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h4>
+                        {% blocktrans %}
+                        Delete the keyword '<span data-bind="text: keyword"></span>'.
+                        {% endblocktrans %}
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        {% blocktrans %}
+                        Are you sure you want to delete the SMS Keyword '<span data-bind="text: keyword"></span>'?
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-danger delete-item-confirm">
+                        <i class="icon-remove"></i> {% trans "Delete" %}
+                    </a>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                </div>
+            </div>
+        </td>
+    </script>
+    <script type="text/html" id="keyword-deleted-template">
+        <td class="span5">
+            <a data-bind="attr: { href: editUrl }, text: keyword"></a>
+        </td>
+        <td class="span5" data-bind="text: description"></td>
+        <td class="span2"><span class="label label-inverse">{% trans 'DELETED' %}</span></td>
     </script>
 {% endblock %}

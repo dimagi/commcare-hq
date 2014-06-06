@@ -81,6 +81,7 @@ def render_form(form, domain, options):
     # todo: we should revisit this when we properly handle timezones in form processing.
     timezone = pytz.utc
     case_id = options.get('case_id')
+    side_pane = options.get('side_pane', False)
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
@@ -166,4 +167,5 @@ def render_form(form, domain, options):
         "auth_context": auth_context,
         "auth_user_info": auth_user_info,
         "user_info": user_info,
+        "side_pane": side_pane,
     })
