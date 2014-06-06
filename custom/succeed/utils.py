@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
+from custom.succeed.reports import EMPTY_FIELD
 
 
 SUCCEED_DOMAIN = 'succeed'
@@ -68,10 +69,13 @@ def get_form_dict(case, form_xmlns):
 
 
 def format_date(date_string, OUTPUT_FORMAT):
-    date_obj = date_string
+    if date_string is None or date_string == '' or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
+        return _("Bad Date Format!")
+
     if isinstance(date_string, basestring):
         try:
-            date_obj = dateutil.parser.parse(date_string)
+            date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
             return _("Bad Date Format!")
-    return date_obj.strftime(OUTPUT_FORMAT)
+
+    return date_string.strftime(OUTPUT_FORMAT)
