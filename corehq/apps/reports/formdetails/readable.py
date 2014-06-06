@@ -89,8 +89,12 @@ def get_questions(domain, app_id, xmlns):
                 _("We could not find the question list "
                   "associated with this form")
             )
-    questions = form.wrapped_xform().get_questions(
-        app.langs, include_triggers=True, include_groups=True)
+    return get_questions_from_xform_node(form.wrapped_xform(), app.langs)
+
+
+def get_questions_from_xform_node(xform, langs):
+    questions = xform.get_questions(
+        langs, include_triggers=True, include_groups=True)
     return [FormQuestionResponse(q) for q in questions]
 
 

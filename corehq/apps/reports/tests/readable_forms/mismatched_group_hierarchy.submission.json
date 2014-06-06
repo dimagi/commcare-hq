@@ -1,0 +1,107 @@
+{
+   "#type": "data",
+   "fada_monthly_number": "36",
+   "meta": {
+       "@xmlns": "http://openrosa.org/jr/xforms",
+       "username": "xxx",
+       "instanceID": "xxx",
+       "userID": "xxx",
+       "timeEnd": "2014-01-01T01:01:01Z",
+       "appVersion": {
+           "@xmlns": "http://commcarehq.org/xforms",
+           "#text": "CommCare ODK, version \"2.12\"(30706). App v24. CommCare Version 2.12. Build 30706, built on: May-21-2014"
+       },
+       "timeStart": "2014-01-01T01:01:01Z",
+       "deviceID": "355136055347861"
+   },
+   "fada_date_admission": "2014-01-01",
+   "@xmlns": "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B",
+   "@name": "Process Data",
+   "facility_number_usage": "1",
+   "fada_stillbirth_neonatal_death": "2",
+   "fada_highlight_record": "no",
+   "fada_healthworker_assent": "3",
+   "fada_csection": "4",
+   "@uiVersion": "5",
+   "fada_facility_id": "600",
+   "fada_yearly_number": "7",
+   "fada_gps_location": "8.8888888 -9.9999999 0.0 30.000",
+   "fada_obv1": {
+       "fada_maternal_temp": "0",
+       "fada_maternal_bp": "0",
+       "fada_birth_companion_present_obv1": "0",
+       "fada_checklist_picked_up_obv1": "0",
+       "fada_checklist_poster_used_obv1": "yes",
+       "fada_checklist_used_after_care_obv1": "0",
+       "fada_partograph": "0",
+       "fada_assisted_by_obv1": "0"
+   },
+   "patient_number_padded": "01225",
+   "fada_other_observations": {
+       "fada_ab_mother": "1",
+       "fada_arv_mother": "1",
+       "fada_arv_baby": "1",
+       "fada_magnesium": "1",
+       "fada_ab_baby": "1",
+       "fada_maternal_bp_anytime": "1",
+       "fada_maternal_temp_anytime": "1"
+   },
+   "fada_maternal_death": "0",
+   "case": {
+       "@xmlns": "http://commcarehq.org/case/transaction/v2",
+       "@date_modified": "2014-01-01T01:01:01Z",
+       "create": {
+           "case_type": "fada_person",
+           "case_name": "98123475098127",
+           "owner_id": "-"
+       },
+       "@user_id": "xxx",
+       "update": {
+           "owner_id": ""
+       },
+       "@case_id": "xxx"
+   },
+   "fada_obv3": {
+       "fada_oxycotin_administered_obv3": "1",
+       "fada_assisted_by_obv3": "1 1",
+       "fada_birth_companion_present_obv3": "1",
+       "fada_neonatal_bag_usage": "1"
+   },
+   "fada_obv2": {
+       "fada_oxycotin_administration_location": "1",
+       "fada_soap_usage": "1",
+       "fada_checklist_picked_up_obv2": "1",
+       "fada_scissors_blade": "1",
+       "fada_cord_tie": "1",
+       "fada_oxycotin_administered_obv2": "1",
+       "fada_checklist_poster_used_obv2": "yes",
+       "fada_mucus_extractor": "1",
+       "fada_checklist_used_after_care_obv2": "1",
+       "fada_clean_gloves": "1",
+       "fada_pads": "1",
+       "fada_clean_towel": "1",
+       "fada_water_usage": "1",
+       "fada_neonatal_bag": "1",
+       "fada_alcohol_rub": "1",
+       "fada_assisted_by_obv2": "1 1"
+   },
+   "facility_owner_id": "",
+   "fada_obv4": {
+       "fada_breastfeeding": "1",
+       "fada_baby_wt": "1",
+       "fada_baby_temp": "1",
+       "fada_checklist_used_after_care_obv4": "1",
+       "fada_checklist_poster_used_obv4": "yes",
+       "fada_baby_skin_to_skin_for_1_hour": "1",
+       "fada_checklist_picked_up_obv4": "1",
+       "fada_baby_skin_to_skin": "1",
+       "fada_assisted_by_obv4": "1 1"
+   },
+   "fada_patient_id": "2093402934",
+   "fada_observation_points_observed": "1 2 3 4",
+   "fada_mother_referred": "1",
+   "whole_form": "",
+   "current_site_confirm": "1",
+   "patient_number": "1234",
+   "@version": "23424"
+}
