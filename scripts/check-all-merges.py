@@ -1,4 +1,6 @@
+import argparse
 import sh
+import yaml
 from gitutils import get_git, git_submodules, OriginalBranch
 from rebuildstaging import BranchConfig, check_merges
 
@@ -38,6 +40,38 @@ def make_full_config(path=None):
     return config
 
 
+def subtract_branch_config(config_1, config_2):
+    for branch_2 in config_2.branches:
+        if branch_2 in config_1.branches:
+            config_1.branches.remove(branch_2)
+    for submodule_2, subconfig_2 in config_2.submodules.items():
+        subtract_branch_config(config_1.submodules[submodule_2], subconfig_2)
+
+
 if __name__ == '__main__':
-    config = make_full_config()
-    check_merges(config, print_details=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'command',
+        nargs='?',
+        default='check'
+    )
+    parser.add_argument(
+        '--config',
+        help='yaml config of remote branches to test'
+    )
+    parser.add_argument(
+        '--exclude',
+        help='yaml config branches to exclude from the merge testing'
+    )
+    args = parser.parse_args()
+    if args.config:
+        config = BranchConfig(yaml.load(open(args.config)))
+    else:
+        config = make_full_config()
+    if args.exclude:
+        exclude_config = BranchConfig(yaml.load(open(args.exclude)))
+        subtract_branch_config(config, exclude_config)
+    if args.command == 'check':
+        check_merges(config, print_details=False)
+    elif args.command == 'remote-branches':
+        print yaml.safe_dump(config.to_json())
