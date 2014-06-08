@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
@@ -122,6 +123,14 @@ class Group(UndoableDocument):
             include_docs=True,
             #stale=settings.COUCH_STALE_QUERY,
         ).all()
+
+    @classmethod
+    def choices_by_domain(cls, domain):
+        group_ids = cls.ids_by_domain(domain)
+        group_choices = []
+        for group_doc in iter_docs(cls.get_db(), group_ids):
+            group_choices.append((group_doc['_id'], group_doc['name']))
+        return group_choices
 
     @classmethod
     def ids_by_domain(cls, domain):
