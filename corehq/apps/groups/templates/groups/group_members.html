@@ -28,7 +28,6 @@
                 $("input#group-data").val(JSON.stringify(this.val()));
             });
             $("#group-data-form").prepend(customDataEditor.ui);
-            $("#group-data-form, #edit_membership").disableOnSubmit();
 
             // user selection form
             $("#id_selected_ids").width(800).height(400).multiselect();
@@ -117,13 +116,14 @@
 
 {% block group-view %}
     <div class="row-fluid">
-        <form class="form" id="edit_membership" action="{% url "update_group_membership" domain group.get_id %}" method='post'>
+        <form class="form disable-on-submit" id="edit_membership"
+              action="{% url "update_group_membership" domain group.get_id %}" method='post'>
                 <legend>{% trans 'Edit Group Membership' %}</legend>
                 {% crispy user_form %}
         </form>
     </div>
     <h3>{% trans "Group Data" %}</h3>
-    <form id="group-data-form" class="form form-horizontal" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+    <form id="group-data-form" class="form form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
         <input name="group-data" id="group-data" type="hidden" value='{{ group.metadata|JSON }}'></input>
         <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Information" %}</button></div>
     </form>
