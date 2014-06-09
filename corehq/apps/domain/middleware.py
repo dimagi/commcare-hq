@@ -23,11 +23,8 @@ class CCHQPRBACMiddleware(object):
     """
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-
         self.process_request(request)
-
         return None
-
 
     @classmethod
     def process_request(cls, request):
