@@ -98,6 +98,7 @@ class GroupToUserPillow(BulkPillow):
     def send_bulk(self, payload):
         pass
 
+
 class UnknownUsersPillow(BulkPillow):
     """
         This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
@@ -113,17 +114,20 @@ class UnknownUsersPillow(BulkPillow):
         self.es = get_es()
 
     def get_fields(self, changes_or_emitted_dict):
-        if "doc" in changes_or_emitted_dict:
-            form_meta = changes_or_emitted_dict["doc"].get("form", {}).get("meta", {})
-            user_id, username = form_meta.get("userID"), form_meta.get("username")
-            domain = changes_or_emitted_dict["doc"].get("domain")
-            xform_id = changes_or_emitted_dict["doc"].get("_id")
+        if 'doc' in changes_or_emitted_dict:
+            doc = changes_or_emitted_dict['doc']
+            form_meta = doc.get('form', {}).get('meta', {})
+            domain = doc.get('domain')
+            user_id = form_meta.get('userID')
+            username = form_meta.get('username')
+            xform_id = doc.get('_id')
         else:
-            emitted = changes_or_emitted_dict["value"]
-            user_id, username, domain = emitted["user_id"], emitted["username"], changes_or_emitted_dict["key"][1]
-            xform_id = changes_or_emitted_dict["id"]
-
-        user_id = None if user_id in WEIRD_USER_IDS else user_id
+            domain = changes_or_emitted_dict['key'][1]
+            user_id = changes_or_emitted_dict['value']['user_id']
+            username = changes_or_emitted_dict['value']['username']
+            xform_id = changes_or_emitted_dict['id']
+        if user_id in WEIRD_USER_IDS:
+            user_id = None
         return user_id, username, domain, xform_id
 
     def change_trigger(self, changes_dict):
