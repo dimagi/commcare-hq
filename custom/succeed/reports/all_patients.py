@@ -8,7 +8,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -16,7 +16,7 @@ import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
-from custom.succeed.reports.patient_details import PatientInfoReport
+from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
 import logging
 import simplejson
@@ -169,6 +169,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+
         if user and (is_succeed_admin(user) or has_any_role(user)):
             return True
         return False
@@ -342,7 +345,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
-            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
+            users = []
+            for user in CommCareUser.by_domain(domain=self.domain):
+                role = user.get_role(domain=self.domain)
+                if role and role.name == responsible_party:
+                    users.append(user.get_id)
+
             terms = {"terms": {"user_id": users}}
             es_filters["bool"]["must"].append(terms)
 

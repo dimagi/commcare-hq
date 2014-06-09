@@ -13,9 +13,6 @@
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
     $(function() {
-        if ($('#paramSelectorForm').find('#view_field').length == 0) {
-            $('<input>').attr({id: 'view_field', type: 'hidden', name: 'view', value: 'submissions' }).appendTo('#paramSelectorForm');
-        }
         if ($('#paramSelectorForm').find('#patient_id_field').length == 0) {
             $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: '{{ patient_id }}' }).appendTo('#paramSelectorForm');
         }

@@ -18,36 +18,35 @@ CONFIG = {
         dict(val="rancho", text=ugettext_noop("Rancho Los Amigos")),
     ],
     'succeed_admin': 'SUCCEED Admin',
-    'pm_role': 'PM',
-    'pi_role': 'PI',
-    'cm_role': 'CM',
-    'chw_role': 'CHW'
+    'pm_role': 'Project Manager',
+    'pi_role': 'Principal Investigator',
+    'cm_role': 'Care Manager',
+    'chw_role': 'Community Health Worker'
 }
 
 
 def is_succeed_admin(user):
-    return True if user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin'] else False
+    return user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin']
 
 
 def is_pi(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pi_role']] else False
+    return user.get_role()['name'] in [CONFIG['pi_role']]
 
 
 def is_cm(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['cm_role']] else False
+    return user.get_role()['name'] in [CONFIG['cm_role']]
 
 
 def is_chw(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['chw_role']] else False
+    return user.get_role()['name'] in [CONFIG['chw_role']]
 
 
 def is_pm_or_pi(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
+    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role']]
 
 
 def has_any_role(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'],
-                                                                      CONFIG['cm_role'], CONFIG['chw_role']] else False
+    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role'], CONFIG['cm_role'], CONFIG['chw_role']]
 
 
 def get_app_build(app_dict):
