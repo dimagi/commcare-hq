@@ -1,4 +1,7 @@
+from celery.utils.functional import memoize
 import dateutil.parser
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import format_username
 from pillowtop.listener import SQLPillow
 from couchforms.models import XFormInstance
 from phonelog.models import UserEntry, DeviceReportEntry
@@ -19,6 +22,18 @@ class PhoneLogPillow(SQLPillow):
     document_class = XFormInstance
     couch_filter = 'phonelog/all_logs'
 
+    @memoize(maxsize=2048)
+    def get_user_id(self, username, domain):
+        cc_username = format_username(username, domain)
+        result = CouchUser.view(
+            'users/by_username',
+            key=cc_username,
+            include_docs=False,
+        )
+        row = result.one()
+        if row:
+            return row["id"]
+
     def process_sql(self, doc_dict):
         xform_id = doc_dict.get('_id')
         form = doc_dict.get('form', {})
@@ -38,13 +53,21 @@ class PhoneLogPillow(SQLPillow):
 
         domain = doc_dict.get('domain')
         logs = get_logs(form, 'log_subreport', 'log')
-        logged_in_user = None
+        logged_in_username = None
+        logged_in_user_id = None
         to_save = []
         for i, log in enumerate(force_list(logs)):
             if not log:
                 continue
             if log["type"] == 'login':
-                logged_in_user = log["msg"].split('-')[1]
+                # j2me log = user_id_prefix-username
+                logged_in_username = log["msg"].split('-')[1]
+                logged_in_user_id = self.get_user_id(logged_in_username, domain)
+            elif log["type"] == 'user' and log["msg"][:5] == 'login':
+                # android log = login|username|user_id
+                msg_split = log["msg"].split('|')
+                logged_in_username = msg_split[1]
+                logged_in_user_id = msg_split[2]
 
             to_save.append(DeviceReportEntry(
                 xform_id=xform_id,
@@ -56,6 +79,7 @@ class PhoneLogPillow(SQLPillow):
                 date=dateutil.parser.parse(log["@date"]).replace(tzinfo=None),
                 app_version=form.get('app_version'),
                 device_id=form.get('device_id'),
-                username=logged_in_user,
+                username=logged_in_username,
+                user_id=logged_in_user_id,
             ))
         DeviceReportEntry.objects.bulk_create(to_save)
