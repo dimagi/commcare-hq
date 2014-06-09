@@ -19,7 +19,8 @@ function(doc) {
                 var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'negative'),
                     rdt_test_positive = (rdt_result === 'positive'),
                     rdt_test_negative = (rdt_result === 'negative'),
-                    rdt_not_available = (rdt_result === 'rdt_not_available' || rdt_result === 'rdt_not_conducted'),
+                    rdt_not_available = (rdt_result === 'rdt_not_available'
+                                         || rdt_result === 'not_available' || rdt_result === 'rdt_not_conducted'),
                     uncomplicated_fever = false,
                     complicated_fever = false,
                     diarrhea_only = false,
