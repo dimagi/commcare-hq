@@ -380,7 +380,7 @@ class ReportConfig(Document):
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
         # Make sure the request gets processed by PRBAC Middleware
-        CCHQPRBACMiddleware.process_request(request)
+        CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
