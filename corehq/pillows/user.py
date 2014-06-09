@@ -110,6 +110,7 @@ class UnknownUsersPillow(BulkPillow):
         super(UnknownUsersPillow, self).__init__(**kwargs)
         self.couch_db = XFormInstance.get_db()
         self.user_db = CouchUser.get_db()
+        self.es = get_es()
 
     def get_fields(self, changes_or_emitted_dict):
         if "doc" in changes_or_emitted_dict:
@@ -127,9 +128,9 @@ class UnknownUsersPillow(BulkPillow):
 
     def change_trigger(self, changes_dict):
         user_id, username, domain, xform_id = self.get_fields(changes_dict)
-        es = get_es()
         es_path = USER_INDEX + "/user/"
-        if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
+        if (user_id and not self.user_db.doc_exist(user_id)
+                and not self.es.head(es_path + user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
@@ -140,7 +141,7 @@ class UnknownUsersPillow(BulkPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            es.put(es_path + user_id, data=doc)
+            self.es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
         pass
