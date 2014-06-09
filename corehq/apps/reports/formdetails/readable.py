@@ -130,7 +130,7 @@ def pop_from_form_data(relative_data, absolute_data, path):
     path = path.split('/')
     if path and path[0] == '':
         data = absolute_data
-        # path[2:] will be ['', 'data'] so remove
+        # path[:2] will be ['', 'data'] so remove
         path = path[2:]
     else:
         data = relative_data
