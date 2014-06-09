@@ -119,7 +119,7 @@ class UnknownUsersPillow(BulkPillow):
             xform_id = changes_or_emitted_dict["doc"].get("_id")
         else:
             emitted = changes_or_emitted_dict["value"]
-            user_id, username, domain = emitted["user_id"], emitted["username"], emitted["domain"]
+            user_id, username, domain = emitted["user_id"], emitted["username"], changes_or_emitted_dict["key"][1]
             xform_id = changes_or_emitted_dict["id"]
 
         user_id = None if user_id in WEIRD_USER_IDS else user_id
