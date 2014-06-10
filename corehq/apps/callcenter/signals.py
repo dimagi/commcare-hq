@@ -9,7 +9,7 @@ from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import commcare_user_post_save
-from corehq.elastic import es_query
+from corehq.elastic import es_query, ESError
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def catch_signal(app, **kwargs):
                 except ResourceNotFound:
                     _log("Couldn't find domain {dom} during call center sync".format(dom=hit['_id']))
 
-        except RequestException:
+        except (RequestException, ESError):
             _log('Unable to query ES for call-center domains during syncdb')
 
 signals.post_syncdb.connect(catch_signal)
