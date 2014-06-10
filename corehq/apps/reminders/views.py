@@ -296,7 +296,9 @@ def copy_one_time_reminder(request, domain, handler_id):
         "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
         "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
     }
-    return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
+    form = OneTimeReminderForm(initial=initial,
+        can_use_survey=can_use_survey_reminders(request))
+    return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
 def delete_reminder(request, domain, handler_id):
