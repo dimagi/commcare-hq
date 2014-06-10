@@ -20,8 +20,17 @@ def _simple_fixture_generator(user, name, fields, data_fn):
         list_elem.append(item_elem)
         for field_name in fields:
             field_elem = ElementTree.Element(field_name)
+
             val = getattr(data_item, field_name, None)
-            field_elem.text = unicode(val if val is not None else '')
+            if isinstance(val, dict):
+                for k, v in getattr(data_item, field_name, {}).items():
+                    sub_el = ElementTree.Element("data")
+                    sub_el.text = unicode(v if v is not None else '')
+                    sub_el.attrib = {"key": k}
+                    field_elem.append(sub_el)
+            else:
+                field_elem.text = unicode(val if val is not None else '')
+
             item_elem.append(field_elem)
 
     return [root]
@@ -35,7 +44,8 @@ def product_fixture_generator(user, version, last_sync):
         'description',
         'category',
         'program_id',
-        'cost'
+        'cost',
+        'product_data'
     ]
     data_fn = lambda: Product.by_domain(user.domain)
     return _simple_fixture_generator(user, "product", fields, data_fn)
