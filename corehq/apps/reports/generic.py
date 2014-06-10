@@ -277,11 +277,8 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def filter_classes(self):
-        # todo messy...fix eventually
         filters = []
-        fields = self.override_fields
-        if not fields:
-            fields = self.fields
+        fields = self.fields
         for field in fields or []:
             if isinstance(field, basestring):
                 klass = to_function(field, failhard=True)
@@ -289,14 +286,6 @@ class GenericReportView(CacheableRequestMixIn):
                 klass = field
             filters.append(klass(self.request, self.domain, self.timezone))
         return filters
-
-    @property
-    def override_fields(self):
-        """
-            Return a list of fields here if you want to override the class property self.fields
-            after this report has already been instantiated.
-        """
-        return None
 
     @property
     @memoized
