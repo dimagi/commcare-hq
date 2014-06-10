@@ -65,16 +65,16 @@ class GenericReportView(CacheableRequestMixIn):
 
     """
     # required to create a report based on this
-    name = None         # string. the name of the report that shows up in the heading and the
-    slug = None         # string. the report_slug_in_the_url
-    section_name = None # string. ex: "Reports"
-    dispatcher = None   # ReportDispatcher subclass
+    name = None  # Human-readable name to be used in the UI
+    slug = None  # Name to be used in the URL (with lowercase and underscores)
+    section_name = None  # string. ex: "Reports"
+    dispatcher = None  # ReportDispatcher subclass
 
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()
 
     # not required
-    description = None  # description of the report
+    description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
 
