@@ -52,11 +52,12 @@ var uiElement;
 (function () {
     'use strict';
 
-    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue) {
+    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue, noEditTransform) {
         var that = this;
         eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
+        this.noEditTransform = noEditTransform || function (value) { return value; };
         this.edit = true;
         this.getElemValue = function () {
             return getElemValue($elem);
@@ -75,7 +76,7 @@ var uiElement;
 
         this.on('change', function () {
             this.value = this.getElemValue();
-            this.$noedit_view.text(this.value);
+            this.$noedit_view.text(this.noEditTransform(this.value));
         });
         this.setEdit(this.edit);
     };
@@ -107,7 +108,7 @@ var uiElement;
                 });
             } else
                 this.setElemValue(translated.value);
-            this.$noedit_view.text(translated.value);
+            this.$noedit_view.text(this.noEditTransform(translated.value));
             if (icon) {
                 this.$noedit_view.text(" " + this.$noedit_view.text());
                 $('<i></i>').addClass(icon).prependTo(this.$noedit_view);
@@ -127,14 +128,14 @@ var uiElement;
     };
 
     uiElement = {
-        input: function () {
+        input: function (noEditTransform) {
             return new Input($('<input type="text"/>'), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val(value);
             }, function ($elem, value){
                 return $elem.attr('placeholder', value);
-            });
+            }, noEditTransform);
         },
         textarea: function () {
             return new Input($('<textarea/>'), function ($elem) {

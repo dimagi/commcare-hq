@@ -129,6 +129,13 @@ var DetailScreenConfig = (function () {
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
+    function attachmentPrefixTransform(value) {
+        if (value && value.indexOf("attachment:") === 0) {
+            value = value.substring(11);
+        }
+        return value;
+    }
+
     Column = (function () {
         function Column(col, screen) {
             /*
@@ -167,7 +174,7 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
-            this.field = uiElement.input().val(this.original.field);
+            this.field = uiElement.input(attachmentPrefixTransform).val(this.original.field);
             this.format_warning = field_format_warning.clone().hide();
 
             (function () {
@@ -415,9 +422,9 @@ var DetailScreenConfig = (function () {
             function getPropertyInfo(property) {
                 // Strip "<prefix>:" before converting to title case.
                 // This is aimed at prefixes like ledger: and attachment:
-                var title = property.replace(/^.*?:/, '');
+                var i = property.indexOf(":");
                 return {
-                    title: toTitleCase(title),
+                    title: toTitleCase(i < 0 ? property : property.substring(i + 1)),
                     icon: (property.indexOf("attachment:") === 0
                            ? COMMCAREHQ.icons.PAPERCLIP : null)
                 }
