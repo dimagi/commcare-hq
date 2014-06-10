@@ -1,6 +1,6 @@
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter, AsyncDrillableFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat, calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -35,26 +35,29 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         return context
 
     def get_report_context(self, data_provider):
+
         headers = DataTablesHeader(*[c.data_tables_column for c in data_provider.columns])
 
+        total_row = []
+        charts = []
         if self.needs_filters:
             rows = []
-            charts = []
-            total_row = []
         else:
             formatter = DataFormatter(TableDataFormat(data_provider.columns, no_value=self.no_value))
             rows = list(formatter.format(data_provider.data, keys=data_provider.keys, group_by=data_provider.group_by))
-            charts = list(self.get_chart(
-                rows,
-                data_provider.columns,
-                x_label=data_provider.chart_x_label,
-                y_label=data_provider.chart_y_label,
-                has_total_column=False
-            ))
 
-            total_row = list(calculate_total_row(rows))
-            if total_row:
-                total_row[0] = 'Total'
+            if data_provider.show_charts:
+                charts = list(self.get_chart(
+                    rows,
+                    data_provider.columns,
+                    x_label=data_provider.chart_x_label,
+                    y_label=data_provider.chart_y_label,
+                    has_total_column=False
+                ))
+            if data_provider.show_total:
+                total_row = list(calculate_total_row(rows))
+                if total_row:
+                    total_row[0] = 'Total'
 
         context = dict(
             report_table=dict(
@@ -90,23 +93,32 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
             chart.add_dataset(s, [{'x': xfn(d[0]), 'y': yfn(d[start_index + i])} for d in data])
 
 class TableuDeBoardReport(MultiReport):
-    title = "TABLEU DE BORD INDICATEURS - RAPPORT IPM"
+    title = ""
     fields = [DatespanFilter, AsyncLocationFilter]
-    name = "TABLEU DE BORD INDICATEURS - RAPPORT IPM"
+    name = "Tableu De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
 
     @property
-    def locations_id(self):
-        return AsyncLocationFilter.get_value(self.request, self.domain)
+    def location(self):
+        loc = Location.get(self.request.GET.get('location_id'))
+        return loc
 
     @property
     def report_config(self):
         config = dict(
             domain=self.domain,
-            datespan=self.datespan,
-            locations_id=self.locations_id,
+            startdate=self.datespan.startdate,
+            enddate=self.datespan.enddate,
+            visit="''",
         )
+        if self.request.GET.get('location_id', ''):
+            if self.location.location_type.lower() == 'district':
+                config.update(dict(district_id=self.location._id))
+            else:
+                config.update(dict(region_id=self.location._id))
+        print config
+
         return config
 
     @property
@@ -115,5 +127,5 @@ class TableuDeBoardReport(MultiReport):
         config = self.report_config
         return [
             ConventureData(config=config),
-            DispDesProducts(config=config),
+            # DispDesProducts(config=config),
         ]
