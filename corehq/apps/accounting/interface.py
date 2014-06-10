@@ -715,7 +715,7 @@ class PaymentRecordInterface(GenericTabularReport):
 
     @property
     def payment_records(self):
-        return PaymentRecord.objects.filter(**self.filters).all()
+        return PaymentRecord.objects.filter(**self.filters)
 
     @property
     def rows(self):
