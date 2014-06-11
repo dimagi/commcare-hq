@@ -1658,7 +1658,7 @@ class XForm(WrappedNode):
                     case_name=form.name_path,
                     case_type=form.case_type,
                     autoset_owner_id=False,
-                    case_id=session_var('case_id_goal')
+                    case_id=session_var('case_id_goal_new')
                 )
 
                 case_block.add_update_block(form.case_updates())
