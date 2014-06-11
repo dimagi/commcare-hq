@@ -7,6 +7,7 @@ from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from django.core.urlresolvers import reverse
+import json
 
 
 class CurrencyField(forms.DecimalField):
@@ -77,6 +78,8 @@ class ProductForm(forms.Form):
 
         for field in ('name', 'code', 'program_id', 'unit', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
+
+        product.product_data = json.loads(self.data['product_data'])
 
         if commit:
             product.save()

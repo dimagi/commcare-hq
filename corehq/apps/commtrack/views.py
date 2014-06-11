@@ -26,6 +26,7 @@ from couchdbkit import ResourceNotFound
 import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
+import copy
 
 @domain_admin_required
 def default(request, domain):
@@ -174,6 +175,7 @@ class NewProductView(BaseCommTrackManageView):
         return {
             'product': self.product,
             'form': self.new_product_form,
+            'custom_product_data': copy.copy(dict(self.product.product_data)),
         }
 
     def post(self, request, *args, **kwargs):
