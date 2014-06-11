@@ -210,6 +210,33 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         )
         return headers
 
+    def get_visit_script(self, order, responsible_party):
+        return {
+            "script":
+                """
+                    next_visit=visits_list[0];
+                    before_action=null;
+                    count=0;
+                    foreach(visit : visits_list) {
+                        skip = false;
+                        foreach(action : _source.actions) {
+                            if (!skip && visit.xmlns.equals(action.xform_xmlns) && !action.xform_id.equals(before_action)) {
+                                next_visit=visits_list[count+1];
+                                before_visit=action.xform_id;
+                                skip=true;
+                                count++;
+                            }
+                            before_visit=action.xform_id;
+                        }
+                    }
+                    return next_visit.get('responsible_party').equals(responsible_party);
+                """,
+            "params": {
+                "visits_list": VISIT_SCHEDULE,
+                "responsible_party": responsible_party
+            }
+        }
+
     @property
     @memoized
     def es_results(self):
@@ -345,23 +372,23 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
-            users = []
-            for user in CommCareUser.by_domain(domain=self.domain):
-                role = user.get_role(domain=self.domain)
-                if role and role.name == responsible_party:
-                    users.append(user.get_id)
-
-            terms = {"terms": {"user_id": users}}
-            es_filters["bool"]["must"].append(terms)
+            del es_filters['bool']
+            es_filters['and'] = [{"term": { "domain.exact": "succeed" }}]
+            es_filters['and'].append({"script": self.get_visit_script(order=order, responsible_party=responsible_party)})
 
         user = self.request.couch_user
         if not user.is_web_user():
             groups = user.get_group_ids()
             terms = {"terms": {"owner_id": groups}}
-            es_filters["bool"]["must"].append(terms)
-
+            if responsible_party:
+                es_filters["and"].append(terms)
+            else:
+                es_filters["bool"]["must"].append(terms)
         if self.case_type:
-            es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
+            if responsible_party:
+                es_filters["and"].append({"term": {"type.exact": 'participant'}})
+            else:
+                es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block

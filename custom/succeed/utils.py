@@ -2,8 +2,8 @@ from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
-from custom.succeed.reports import EMPTY_FIELD
 
+EMPTY_FIELD = "---"
 
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
