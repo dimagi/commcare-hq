@@ -255,8 +255,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 }
             },
             'sort': self.get_sorting_block(),
-            'from': self.pagination.start,
-            'size': self.pagination.count,
+            'from': self.pagination.start if self.pagination else None,
+            'size': self.pagination.count if self.pagination else None,
         }
         sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
         order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
@@ -396,7 +396,14 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             q["query"]["filtered"]["query"] = {"match_all": {}}
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        if self.pagination:
+            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False, start_at=self.pagination.start)
+        else:
+            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+
+    @property
+    def get_all_rows(self):
+        return self.rows
 
     @property
     def rows(self):
