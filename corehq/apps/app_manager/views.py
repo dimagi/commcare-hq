@@ -388,6 +388,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                 raise
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
+        else:
+            # remove upload questions (attachemnts) until MM Case Properties
+            # are released to general public
+            is_previewer = request.couch_user.is_previewer
+            xform_questions = [q for q in xform_questions
+                                 if not (q["tag"] == "upload" and is_previewer)]
 
         try:
             form_action_errors = form.validate_for_build()
