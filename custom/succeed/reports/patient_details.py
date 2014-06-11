@@ -86,13 +86,21 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
 
     @property
     @memoized
+    def is_all_reports_enabled(self):
+        return self.request.couch_user.get_role().permissions.view_reports
+
+    @property
+    @memoized
     def get_available_report_list(self):
         return self.request.couch_user.get_role().permissions.view_report_list
+
+    def get_class_path(self, report_class):
+        return unicode(report_class.__module__+'.'+report_class.__name__)
 
     @property
     def patient_info_url(self):
         from custom.succeed.reports.patient_Info import PatientInfoReport
-        if unicode(PatientInfoReport.__module__+'.'+PatientInfoReport.__name__) in self.get_available_report_list:
+        if self.is_all_reports_enabled or self.get_class_path(PatientInfoReport) in self.get_available_report_list:
             return html.escape(
                 PatientInfoReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         return EMPTY_URL
@@ -100,7 +108,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     @property
     def patient_submission_url(self):
         from custom.succeed.reports.patient_submissions import PatientSubmissionReport
-        if unicode(PatientSubmissionReport.__module__+'.'+PatientSubmissionReport.__name__) in self.get_available_report_list:
+        if self.is_all_reports_enabled or self.get_class_path(PatientSubmissionReport) in self.get_available_report_list:
             return html.escape(
                 PatientSubmissionReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
@@ -109,7 +117,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     @property
     def patient_interactions_url(self):
         from custom.succeed.reports.patient_interactions import PatientInteractionsReport
-        if unicode(PatientInteractionsReport.__module__+'.'+PatientInteractionsReport.__name__) in self.get_available_report_list:
+        if self.is_all_reports_enabled or self.get_class_path(PatientInteractionsReport) in self.get_available_report_list:
             return html.escape(
                 PatientInteractionsReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
@@ -118,7 +126,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     @property
     def patient_careplan_url(self):
         from custom.succeed.reports.patient_careplan import PatientCarePlanReport
-        if unicode(PatientCarePlanReport.__module__+'.'+PatientCarePlanReport.__name__) in self.get_available_report_list:
+        if self.is_all_reports_enabled or unicode(PatientCarePlanReport.__module__+'.'+PatientCarePlanReport.__name__) in self.get_available_report_list:
             return html.escape(
                 PatientCarePlanReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
@@ -127,7 +135,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     @property
     def patient_status_url(self):
         from custom.succeed.reports.patient_status import PatientStatusReport
-        if unicode(PatientStatusReport.__module__+'.'+PatientStatusReport.__name__) in self.get_available_report_list:
+        if self.is_all_reports_enabled or self.get_class_path(PatientStatusReport) in self.get_available_report_list:
             return html.escape(
                 PatientStatusReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
