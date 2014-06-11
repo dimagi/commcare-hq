@@ -106,6 +106,7 @@ class Product(Document):
     category = StringProperty()
     program_id = StringProperty()
     cost = DecimalProperty()
+    product_data = DictProperty()
 
     @property
     def code(self):
@@ -203,11 +204,8 @@ class Product(Document):
         from corehq.apps.commtrack.util import encode_if_needed
         property_dict = {}
 
-        if hasattr(self, 'product_data'):
-            for prop, val in self.product_data.iteritems():
-                property_dict['data: ' + prop] = encode_if_needed(
-                    self.product_data[prop]
-                )
+        for prop, val in self.product_data.iteritems():
+            property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict
 
