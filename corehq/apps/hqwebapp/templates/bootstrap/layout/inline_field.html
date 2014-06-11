@@ -12,7 +12,7 @@
     {% endif %}
 {% else %}
     {% if field|is_checkbox %}
-        <div id="div_{{ field.auto_id }}" class="checkbox">
+        <div id="div_{{ field.auto_id }}" class="checkbox{% if block_css_class %} {{ block_css_class }}{% endif %}">
             <label for="{{ field.id_for_label }}" class="{% if field.field.required %} requiredField{% endif %}">
                 {% crispy_field field 'class' 'checkbox' %}
                 {{ field.label|safe }}

@@ -423,10 +423,10 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
         [("partner_hiv_status", operator.eq, "positive")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_stage_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "clinical_stage")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "clinical_stage")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_cd4_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "cd4")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "cd4")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_art = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "3tc")], PMTCT_CLIENTS_FORM

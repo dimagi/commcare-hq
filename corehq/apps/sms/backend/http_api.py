@@ -11,6 +11,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from django.utils.translation import ugettext as _, ugettext_noop
 from crispy_forms import layout as crispy
+from django.conf import settings
 
 BANNED_URL_REGEX = (
     r".*://.*commcarehq.org.*",
@@ -132,7 +133,9 @@ class HttpBackend(SMSBackend):
         
         url_params = urlencode(params)
         if self.method == "GET":
-            response = urlopen("%s?%s" % (self.url, url_params)).read()
+            response = urlopen("%s?%s" % (self.url, url_params),
+                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         else:
-            response = urlopen(self.url, url_params).read()
+            response = urlopen(self.url, url_params,
+                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 

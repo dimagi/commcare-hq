@@ -49,7 +49,7 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
-    'Advanced / CommTrack module'
+    'Advanced Module in App-Builder'
 )
 
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(

@@ -4,6 +4,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.twilio.forms import TwilioBackendForm
 from couchdbkit.ext.django.schema import *
 from twilio.rest import TwilioRestClient
+from django.conf import settings
 
 class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
     account_sid = StringProperty()
@@ -45,16 +46,17 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
 
     def send(self, msg, *args, **kwargs):
         orig_phone_number = kwargs.get("orig_phone_number")
-        msg.system_phone_number = orig_phone_number
-        client = TwilioRestClient(self.account_sid, self.auth_token)
+        client = TwilioRestClient(self.account_sid, self.auth_token,
+            timeout=settings.SMS_GATEWAY_TIMEOUT)
         to = msg.phone_number
-        from_ = orig_phone_number
+        from_ = orig_phone_number or self.phone_numbers[0]
         body = msg.text
-        message = client.sms.messages.create(
+        message = client.messages.create(
             body=body,
             to=to,
             from_=from_
         )
+        msg.system_phone_number = from_
         msg.backend_message_id = message.sid
         msg.save()
 

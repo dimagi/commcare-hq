@@ -1,5 +1,6 @@
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.bulk import import_location
 from mock import patch
@@ -208,13 +209,13 @@ class LocationImportTest(CommTrackTest):
         import_location(self.domain.name, 'state', data)
 
         self.assertEqual(
-            get_default_consumption(
+            float(get_default_consumption(
                 self.domain.name,
                 Product.get_by_code(self.domain.name, 'pp')._id,
                 'state',
                 sp._id,
-            ),
-            77
+            )),
+            77 / DAYS_IN_MONTH
         )
 
     def test_import_coordinates(self):

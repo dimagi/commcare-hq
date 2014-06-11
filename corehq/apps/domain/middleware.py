@@ -23,14 +23,11 @@ class CCHQPRBACMiddleware(object):
     """
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-
-        self.process_request(request)
-
+        self.apply_prbac(request)
         return None
 
-
     @classmethod
-    def process_request(cls, request):
+    def apply_prbac(cls, request):
         if hasattr(request, 'domain'):
             try:
                 plan_version, subscription = Subscription.get_subscribed_plan_by_domain(request.domain)

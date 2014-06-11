@@ -48,15 +48,13 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
-    def filter_test_labels(self, test_labels):
-        if not test_labels:
-            test_labels = [self._strip(app) for app in settings.INSTALLED_APPS
-                           if not app in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                           and not app.startswith('django.')]
-        return test_labels
+    def get_all_test_labels(self):
+        return [self._strip(app) for app in settings.INSTALLED_APPS
+                if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
+                and not app.startswith('django.')]
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        test_labels = self.filter_test_labels(test_labels)
+        test_labels = test_labels or self.get_all_test_labels()
         return super(HqTestSuiteRunner, self).run_tests(
             test_labels, extra_tests, **kwargs
         )
@@ -94,12 +92,13 @@ class TwoStageTestRunner(HqTestSuiteRunner):
 
     Based off http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
     """
+    def get_test_labels(self):
+        return self.get_all_test_labels()
 
-    def build_suite(self, *args, **kwargs):
+    def split_suite(self, suite):
         """
         Check if any of the tests to run subclasses TransactionTestCase.
         """
-        suite = super(TwoStageTestRunner, self).build_suite(*args, **kwargs)
         simple_tests = unittest.TestSuite()
         db_tests = TimingTestSuite()
         for test in suite:
@@ -150,9 +149,10 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         Run the unit tests in two groups, those that don't need db access
         first and those that require db access afterwards.
         """
-        test_labels = self.filter_test_labels(test_labels)
+        test_labels = test_labels or self.get_test_labels()
         self.setup_test_environment()
-        simple_suite, db_suite = self.build_suite(test_labels, extra_tests)
+        full_suite = self.build_suite(test_labels, extra_tests)
+        simple_suite, db_suite = self.split_suite(full_suite)
         failures = 0
         if simple_suite.countTestCases():
             failures += self.run_non_db_tests(simple_suite)
@@ -211,16 +211,47 @@ class _OnlySpecificApps(HqTestSuiteRunner):
     # If include is False, then run for all EXCEPT app_labels
     include = True
 
-    def filter_test_labels(self, test_labels):
-        if not test_labels:
-            test_labels = super(_OnlySpecificApps, self).filter_test_labels(test_labels)
-            test_labels = [app_label for app_label in test_labels
-                           if self.include == (app_label in self.app_labels)]
-            print "Running tests for the following apps:"
-            for test_label in sorted(test_labels):
-                print "  {}".format(test_label)
+    def get_test_labels(self):
+        test_labels = self.get_all_test_labels()
+        test_labels = [app_label for app_label in test_labels
+                       if self.include == (app_label in self.app_labels)]
+        print "Running tests for the following apps:"
+        for test_label in sorted(test_labels):
+            print "  {}".format(test_label)
 
         return test_labels
+
+
+class GroupTestRunnerCatchall(_OnlySpecificApps, TwoStageTestRunner):
+    include = False
+
+    @property
+    def app_labels(self):
+        return {app_label
+                for app_labels in settings.TRAVIS_TEST_GROUPS
+                for app_label in app_labels}
+
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        self.setup_test_environment()
+        failures = 0
+
+        # run all non-db tests from ALL apps first irrespective of which app labels get passed in
+        all_test_labels = self.get_all_test_labels()
+        all_suite = self.build_suite(all_test_labels, extra_tests)
+        simple_suite, _ = self.split_suite(all_suite)
+        if simple_suite.countTestCases():
+            failures += self.run_non_db_tests(simple_suite)
+
+        # then run db tests from specified apps
+        db_labels = test_labels or self.get_test_labels()
+        full_suite = self.build_suite(db_labels, extra_tests)
+        _, db_suite = self.split_suite(full_suite)
+
+        if db_suite.countTestCases():
+            failures += self.run_db_tests(db_suite)
+            self.print_test_times(db_suite)
+        self.teardown_test_environment()
+        return failures
 
 
 def _bootstrap_group_test_runners():
@@ -237,12 +268,10 @@ def _bootstrap_group_test_runners():
     manually edit travis.yml have the following env variables:
 
         env:
-            [...] TEST_RUNNER=testrunner.NonDbOnlyTestRunner
+            [...] TEST_RUNNER=testrunner.GroupTestRunnerCatchall
             [...] TEST_RUNNER=testrunner.GroupTestRunner0
             [...] TEST_RUNNER=testrunner.GroupTestRunner1
             ...
-            [...] TEST_RUNNER=testrunner.GroupTestRunnerCatchall
-
     """
     for i, app_labels in enumerate(settings.TRAVIS_TEST_GROUPS):
         class_name = 'GroupTestRunner{}'.format(i)
@@ -253,16 +282,5 @@ def _bootstrap_group_test_runners():
                 'app_labels': settings.TRAVIS_TEST_GROUPS[i]
             }
         )
-    class_name = 'GroupTestRunnerCatchall'
-    globals()[class_name] = type(
-        class_name,
-        (_OnlySpecificApps, DbOnlyTestRunner),
-        {
-            'app_labels': {app_label
-                           for app_labels in settings.TRAVIS_TEST_GROUPS
-                           for app_label in app_labels},
-            'include': False,
-        }
-    )
 
 _bootstrap_group_test_runners()

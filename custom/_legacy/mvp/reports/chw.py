@@ -111,7 +111,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 self.statistics_rows[3].append(_create_stat_cell('total', indicator.slug))
 
         for u, user in enumerate(self.users):
-            row_data = [user.get('username_in_report')]
+            row_data = [user.username_in_report]
             for section in self.indicators:
                 for indicator in section:
                     table_cell = self.table_cell(None, d_text(indicator.slug))
@@ -122,7 +122,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
             rows.append({
                 'data': row_data,
-                'css_id': user.get('user_id'),
+                'css_id': user.user_id,
             })
 
         return rows
@@ -133,7 +133,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     def full_rows(self):
         user_data = {}
         for user in self.users:
-            user_data[user.get('user_id')] = [user.get('username_in_report')]
+            user_data[user.user_id] = [user.username_in_report]
 
         for section in self.indicators:
             for indicator in section:
@@ -216,6 +216,16 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     ]
             ),
             dict(
+                title="Vital Events",
+                indicators=[
+                    dict(slug="maternal_deaths", expected="--"),
+                    dict(slug="neonatal_deaths", expected="--"),
+                    dict(slug="infant_deaths", expected="--"),
+                    dict(slug="under5_deaths", expected="--"),
+                    dict(slug="over5_deaths", expected="--"),
+                ]
+            ),
+            dict(
                 title="Stats",
                 indicators=[
                     dict(slug="days_since_last_transmission", expected="--"),
@@ -242,9 +252,9 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
         for u, user in enumerate(self.users):
             self.datespan.inclusive = False
-            value = indicator.get_value([user.get('user_id')], self.datespan)
-            raw_values[user.get('user_id')] = value
-            user_indices[user.get('user_id')] = u
+            value = indicator.get_value([user.user_id], self.datespan)
+            raw_values[user.user_id] = value
+            user_indices[user.user_id] = u
         all_values = raw_values.values()
         if all_values:
             if isinstance(all_values[0], dict):

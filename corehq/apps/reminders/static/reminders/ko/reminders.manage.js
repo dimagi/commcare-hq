@@ -43,6 +43,9 @@ var ManageRemindersViewModel = function (
     self.isRecipientSubcase = ko.computed(function () {
         return self.recipient() === self.choices.RECIPIENT_SUBCASE;
     });
+    self.isRecipientGroup = ko.computed(function () {
+        return self.recipient() === self.choices.RECIPIENT_USER_GROUP;
+    });
 
     self.recipient_case_match_type = ko.observable(initial.recipient_case_match_type);
     self.isRecipientCaseValueVisible = ko.computed(function () {
@@ -95,6 +98,14 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_IVR_SURVEY ||
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
+
+    self.submit_partial_forms = ko.observable(initial.submit_partial_forms);
+    self.isPartialSubmissionsVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
+    self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
 
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');

@@ -59,8 +59,11 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
     if phone_number.startswith("91"):
         phone_number = "0" + phone_number[2:]
     else:
-        raise InvalidPhoneNumberException("Kookoo can only send to Indian phone numbers.")
-    
+        call_log_entry.error = True
+        call_log_entry.error_message = "Kookoo can only send to Indian phone numbers."
+        call_log_entry.save()
+        return False
+
     form = Form.get_form(call_log_entry.form_unique_id)
     app = form.get_app()
     module = form.get_module()
@@ -97,7 +100,7 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         "callback_url" : url_base + reverse("corehq.apps.kookoo.views.ivr_finished"),
     })
     url = "http://www.kookoo.in/outbound/outbound.php?%s" % params
-    response = urlopen(url).read()
+    response = urlopen(url, timeout=settings.IVR_GATEWAY_TIMEOUT).read()
     
     root = XML(response)
     for child in root:

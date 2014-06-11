@@ -4,7 +4,6 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.suite_xml import get_detail_column_infos
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
@@ -45,8 +44,7 @@ def _create_custom_app_strings(app, lang):
                 label = trans(module.referral_label)
             yield id_strings.detail_title_locale(module, detail_type), label
 
-            detail_column_infos = get_detail_column_infos(detail, include_sort=detail_type == 'case_short')
-            for (column, sort_element, order) in detail_column_infos:
+            for column in detail.get_columns():
                 if not is_sort_only_column(column):
                     yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 

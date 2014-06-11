@@ -6,7 +6,7 @@ from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
-from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -385,40 +385,43 @@ class InvoiceInterface(GenericTabularReport):
     @property
     def headers(self):
         header = DataTablesHeader(
-            DataTablesColumn("Account Name"),
+            DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Subscription"),
             DataTablesColumn("Project Space"),
+            DataTablesColumn("New This Month?"),
+            DataTablesColumn("Company Name"),
+            DataTablesColumn("Emails"),
+            DataTablesColumn("First Name"),
+            DataTablesColumn("Last Name"),
+            DataTablesColumn("Phone Number"),
+            DataTablesColumn("Address Line 1"),
+            DataTablesColumn("Address Line 2"),
+            DataTablesColumn("City"),
+            DataTablesColumn("State/Province/Region"),
+            DataTablesColumn("Postal Code"),
+            DataTablesColumn("Country"),
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumnGroup("Statement Period",
                                   DataTablesColumn("Start"),
                                   DataTablesColumn("End")),
             DataTablesColumn("Date Due"),
+            DataTablesColumn("Plan Cost"),
+            DataTablesColumn("Plan Credits"),
+            DataTablesColumn("SMS Cost"),
+            DataTablesColumn("SMS Credits"),
+            DataTablesColumn("User Cost"),
+            DataTablesColumn("User Credits"),
+            DataTablesColumn("Total"),
+            DataTablesColumn("Total Credits"),
+            DataTablesColumn("Amount Due"),
+            DataTablesColumn("Payment Status"),
+            DataTablesColumn("Do Not Invoice"),
         )
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("Plan Cost (Credits)"))
-            header.add_column(DataTablesColumn("SMS Cost (Credits)"))
-            header.add_column(DataTablesColumn("User Cost (Credits)"))
-            header.add_column(DataTablesColumn("Total (Credits)"))
-        else:
-            header.add_column(DataTablesColumn("Plan Cost"))
-            header.add_column(DataTablesColumn("Plan Credits"))
-            header.add_column(DataTablesColumn("SMS Cost"))
-            header.add_column(DataTablesColumn("SMS Credits"))
-            header.add_column(DataTablesColumn("User Cost"))
-            header.add_column(DataTablesColumn("User Credits"))
-            header.add_column(DataTablesColumn("Total"))
-            header.add_column(DataTablesColumn("Total Credits"))
-
-        header.add_column(DataTablesColumn("Amount Due"))
-        header.add_column(DataTablesColumn("Payment Status"))
-        header.add_column(DataTablesColumn("Hidden"))
 
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
             header.add_column(DataTablesColumn("View Invoice"))
-        else:
-            header.add_column(DataTablesColumn("Contact info"))
         return header
 
     @property
@@ -428,7 +431,16 @@ class InvoiceInterface(GenericTabularReport):
         )
         rows = []
         for invoice in self.invoices:
-            column = [
+            new_this_month = (invoice.date_created.month == invoice.subscription.account.date_created.month
+                              and invoice.date_created.year == invoice.subscription.account.date_created.year)
+            try:
+                contact_info = BillingContactInfo.objects.get(
+                    account=invoice.subscription.account,
+                )
+            except BillingContactInfo.DoesNotExist:
+                contact_info = BillingContactInfo()
+
+            columns = [
                 format_datatables_data(
                     mark_safe(
                         '<a href="%(account_url)s">%(name)s</a>' % {
@@ -453,12 +465,25 @@ class InvoiceInterface(GenericTabularReport):
                     invoice.subscription.plan_version.plan.name
                 ),
                 invoice.subscription.subscriber.domain,
+                "YES" if new_this_month else "no",
+                contact_info.company_name,
+                contact_info.emails,
+                contact_info.first_name,
+                contact_info.last_name,
+                contact_info.phone_number,
+                contact_info.first_line,
+                contact_info.second_line,
+                contact_info.city,
+                contact_info.state_province_region,
+                contact_info.postal_code,
+                contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
                 invoice.date_start.strftime("%d %B %Y"),
                 invoice.date_end.strftime("%d %B %Y"),
                 invoice.date_due.strftime("%d %B %Y"),
             ]
+
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
                 invoice.lineitem_set.get_products().all()
             )
@@ -470,50 +495,37 @@ class InvoiceInterface(GenericTabularReport):
                     FeatureType.USER
                 ).all()
             )
-            if not self.is_rendered_as_email:
-                column.append(
-                    get_exportable_column_cost(plan_subtotal, plan_deduction)
-                )
-                column.append(
-                    get_exportable_column_cost(sms_subtotal, sms_deduction)
-                )
-                column.append(
-                    get_exportable_column_cost(user_subtotal, user_deduction)
-                )
-                column.append(
-                    get_exportable_column_cost(
-                        invoice.subtotal,
-                        invoice.applied_credit
-                    )
-                )
-            else:
-                column.append(get_exportable_column(plan_subtotal))
-                column.append(get_exportable_column(plan_deduction))
-                column.append(get_exportable_column(sms_subtotal))
-                column.append(get_exportable_column(sms_deduction))
-                column.append(get_exportable_column(user_subtotal))
-                column.append(get_exportable_column(user_deduction))
-                column.append(get_exportable_column(invoice.subtotal))
-                column.append(get_exportable_column(invoice.applied_credit))
-            column.append(get_exportable_column(invoice.balance))
-            column.append("Paid" if invoice.date_paid else "Not paid")
-            column.append("YES" if invoice.is_hidden else "no")
+
+            columns.extend([
+                get_exportable_column(plan_subtotal),
+                get_exportable_column(plan_deduction),
+                get_exportable_column(sms_subtotal),
+                get_exportable_column(sms_deduction),
+                get_exportable_column(user_subtotal),
+                get_exportable_column(user_deduction),
+                get_exportable_column(invoice.subtotal),
+                get_exportable_column(invoice.applied_credit),
+                get_exportable_column(invoice.balance),
+                "Paid" if invoice.date_paid else "Not paid",
+                "YES" if invoice.is_hidden else "no",
+            ])
+
             if not self.is_rendered_as_email:
                 # TODO - Create helper function for action button HTML
-                column.append(
+                columns.extend([
                     mark_safe(
                         '<a data-toggle="modal"'
                         '   data-target="#adjustBalanceModal-%(invoice_id)d"'
                         '   href="#adjustBalanceModal-%(invoice_id)d"'
                         '   class="btn">Adjust Balance</a>' % {
                             'invoice_id': invoice.id
-                        }))
-                column.append(mark_safe(
-                    '<a href="%s" class="btn">Go to Invoice</a>'
-                    % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))))
-            else:
-                column.append(unicode(get_address_from_invoice(invoice)))
-            rows.append(column)
+                        }),
+                    mark_safe(
+                        '<a href="%s" class="btn">Go to Invoice</a>'
+                        % reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
+                    )
+                ])
+            rows.append(columns)
         return rows
 
     @property
@@ -645,3 +657,88 @@ class InvoiceInterface(GenericTabularReport):
                 'rows': self.rows,
             }
         )
+
+
+class PaymentRecordInterface(GenericTabularReport):
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Payment Records"
+    description = "A list of all payment records and transaction IDs from " \
+                  "Stripe."
+    slug = "payment_records"
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentTransactionIdFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date Created"),
+            DataTablesColumn("Account"),
+            DataTablesColumn("Project"),
+            DataTablesColumn("Billing Admin"),
+            DataTablesColumn("Stripe Transaction ID"),
+            DataTablesColumn("Amount (USD)"),
+        )
+
+    @property
+    def filters(self):
+        filters = {}
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                payment_method__account__name=account_name,
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            filters.update(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            filters.update(
+                payment_method__billing_admin__domain=subscriber,
+            )
+        transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
+        if transaction_id:
+            filters.update(
+                transaction_id=transaction_id.strip(),
+            )
+        return filters
+
+    @property
+    def payment_records(self):
+        return PaymentRecord.objects.filter(**self.filters)
+
+    @property
+    def rows(self):
+        rows = []
+        for record in self.payment_records:
+            rows.append([
+                format_datatables_data(
+                    text=record.date_created.strftime("%B %m %Y"),
+                    sort_key=record.date_created.isoformat(),
+                ),
+                record.payment_method.account.name,
+                record.payment_method.billing_admin.domain,
+                record.payment_method.billing_admin.web_user,
+                format_datatables_data(
+                    text=mark_safe(
+                        '<a href="https://dashboard.stripe.com/payments/%s"'
+                        '   target="_blank">%s'
+                        '</a>' % (
+                            record.transaction_id,
+                            record.transaction_id,
+                        )),
+                    sort_key=record.transaction_id,
+                ),
+                quantize_accounting_decimal(record.amount),
+            ])
+        return rows

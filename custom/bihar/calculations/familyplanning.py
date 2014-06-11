@@ -83,7 +83,14 @@ class NoFP(TotalCalculator):
     window = datetime.timedelta(days=7)
 
     def filter(self, case):
-        return has_delivered_at_all(case) and getattr(case, 'family_planning_type', "") in ('no_fp_at_delivery', 'no_fp_adopted_at_delivery')
+        return (
+            has_delivered_at_all(case)
+            and getattr(case, 'family_planning_type', '') in (
+                'no_fp_at_delivery',
+                'no_fp_adopted_at_delivery',
+            )
+            and get_add(case)
+        )
 
     @fluff.date_emitter
     def total(self, case):

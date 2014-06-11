@@ -93,6 +93,10 @@ function HQReportDataTables(options) {
                             }
                         }
                         applyBootstrapMagic();
+                        if ('context' in data){
+                            load(data['context'], ICON_PATH);
+                        }
+
                         return result
                     };
 
