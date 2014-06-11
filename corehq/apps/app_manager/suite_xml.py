@@ -933,21 +933,24 @@ class SuiteGenerator(SuiteGeneratorBase):
             frame = CreateFrame()
             e.stack.add_frame(frame)
             if form.case_type == CAREPLAN_GOAL:
+                if form.mode == 'create':
+                    new_goal_id_var = 'case_id_goal_new'
+                    e.datums.append(SessionDatum(id=new_goal_id_var, function='uuid()'))
+                elif form.mode == 'update':
+                    new_goal_id_var = 'case_id_goal'
+                    e.datums.append(session_datum(new_goal_id_var, CAREPLAN_GOAL, 'parent', 'case_id'))
+
                 if not module.display_separately:
-                    open_goal = CaseIDXPath(session_var('case_id_goal')).case().select('@status', 'open')
+                    open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
                     frame.add_command(self.id_strings.menu(parent_module))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
                     frame.add_command(self.id_strings.menu(module))
-                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
+                    frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
                     frame.add_command(self.id_strings.menu(module))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
-                if form.mode == 'create':
-                    e.datums.append(SessionDatum(id='case_id_goal', function='uuid()'))
-                elif form.mode == 'update':
-                    e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
                     frame.add_command(self.id_strings.menu(parent_module))
