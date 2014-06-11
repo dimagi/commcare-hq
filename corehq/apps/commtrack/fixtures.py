@@ -23,14 +23,16 @@ def _simple_fixture_generator(user, name, fields, data_fn):
 
             val = getattr(data_item, field_name, None)
             if isinstance(val, dict):
-                for k, v in getattr(data_item, field_name, {}).items():
-                    sub_el = ElementTree.Element(k)
-                    sub_el.text = unicode(v if v is not None else '')
-                    field_elem.append(sub_el)
+                if val:
+                    for k, v in getattr(data_item, field_name, {}).items():
+                        sub_el = ElementTree.Element(k)
+                        sub_el.text = unicode(v if v is not None else '')
+                        field_elem.append(sub_el)
+
+                    item_elem.append(field_elem)
             else:
                 field_elem.text = unicode(val if val is not None else '')
-
-            item_elem.append(field_elem)
+                item_elem.append(field_elem)
 
     return [root]
 
