@@ -78,7 +78,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     answer_is_valid = False # This will be set to True if IVR validation passes
     error_occurred = False # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
     
-    if call_log_entry is not None:
+    if call_log_entry is not None and backend_module:
         if ivr_event == IVR_EVENT_NEW_CALL and call_log_entry.use_precached_first_response:
             return HttpResponse(call_log_entry.first_response)
         
@@ -158,7 +158,11 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     
     # If not processed, just log the call
-    
+
+    if call_log_entry:
+        # No need to log, already exists
+        return HttpResponse("")
+
     cleaned_number = phone_number
     if cleaned_number is not None and len(cleaned_number) > 0 and cleaned_number[0] == "+":
         cleaned_number = cleaned_number[1:]
@@ -178,10 +182,11 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     # Save the call entry
     msg = CallLog(
-        phone_number    = cleaned_number,
-        direction       = INCOMING,
-        date            = datetime.utcnow(),
-        backend_api     = backend_module.API_ID
+        phone_number=cleaned_number,
+        direction=INCOMING,
+        date=datetime.utcnow(),
+        backend_api=backend_module.API_ID if backend_module else None,
+        gateway_session_id=gateway_session_id,
     )
     if v is not None:
         msg.domain = v.domain
