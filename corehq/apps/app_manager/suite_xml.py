@@ -220,6 +220,16 @@ class Entry(XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
+    def needs_instance(self, *instances):
+        used = {(instance.id, instance.src) for instance in self.instances}
+        for instance in instances:
+            if (instance.id, instance.src) not in used:
+                self.instances.append(
+                    # it's important to make a copy,
+                    # since these can't be reused
+                    Instance(id=instance.id, src=instance.src)
+                )
+
 
 class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
@@ -425,6 +435,14 @@ class SuiteGeneratorBase(object):
         return suite.serializeDocument(pretty=True)
 
 
+GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
+PRODUCTS_INSTANCE = Instance(id='products', src='jr://fixture/commtrack:products')
+LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
+CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
+SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
+LOCATIONS_INSTANCE = Instance(id='commtrack:locations', src='jr://fixture/commtrack:locations')
+
+
 class SuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Suite File"
     sections = (
@@ -619,7 +637,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(module, Module):
                     self.configure_entry_module(module, e, use_filter=False)
                 elif isinstance(module, AdvancedModule):
-                    e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
+                    e.needs_instance(CASE_INSTANCE)
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
                         nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
@@ -634,8 +652,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
-                        e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
-                        e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
+                        e.needs_instance(PRODUCTS_INSTANCE)
+                        e.needs_instance(LEDGER_INSTANCE)
                 yield e
 
     def get_indicator_instances(self, module, form=None):
@@ -654,8 +672,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         for _, detail, _ in module.get_details():
             for column in detail.get_columns():
                 if column.field_type == FIELD_TYPE_LOCATION:
-                    return [Instance(id='commtrack:locations',
-                                     src='jr://fixture/commtrack:locations')]
+                    return [LOCATIONS_INSTANCE]
         return []
 
     def get_fixture_instances(self, module, form=None):
@@ -685,7 +702,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.assertions.append(assertion)
 
     def add_case_sharing_assertion(self, entry):
-        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+        entry.needs_instance(GROUP_INSTANCE)
         self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
 
     def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
@@ -721,17 +738,16 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def configure_entry_module(self, module, e, use_filter=False):
         def get_instances():
-            yield Instance(id='casedb', src='jr://instance/casedb')
+            yield CASE_INSTANCE
             if (any(form.form_filter for form in module.get_forms())
                 and module.all_forms_require_a_case()) \
                 or module.parent_select.active:
-                yield Instance(id='commcaresession',
-                               src='jr://instance/session')
+                yield SESSION_INSTANCE
 
             for instance in self.get_extra_instances(module):
                 yield instance
 
-        e.instances.extend(get_instances())
+        e.needs_instance(*get_instances())
 
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
@@ -770,7 +786,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         def get_instances():
-            yield Instance(id='casedb', src='jr://instance/casedb')
+            yield CASE_INSTANCE
 
             parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
             form_filter = any(form.form_filter for form in module.get_forms())
@@ -778,18 +794,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                     form.actions.auto_select_actions[AUTO_SELECT_USER] or \
                     form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
                     form.actions.auto_select_actions[AUTO_SELECT_RAW]:
-                yield Instance(id='commcaresession', src='jr://instance/session')
+                yield SESSION_INSTANCE
             elif module.get_app().commtrack_enabled:
                 try:
                     if form.actions.load_update_cases[-1].show_product_stock:
-                        yield Instance(id='commcaresession', src='jr://instance/session')
+                        yield SESSION_INSTANCE
                 except IndexError:
                     pass
 
             for instance in self.get_extra_instances(module, form):
                 yield instance
 
-        e.instances.extend(get_instances())
+        e.needs_instance(*get_instances())
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -901,8 +917,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
-                    e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
-                    e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
+                    e.needs_instance(PRODUCTS_INSTANCE)
+                    e.needs_instance(LEDGER_INSTANCE)
             except IndexError:
                 pass
 
@@ -910,8 +926,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
-            e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
+            e.needs_instance(CASE_INSTANCE)
+            e.needs_instance(SESSION_INSTANCE)
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
