@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CommCareUser
+from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
 
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
@@ -17,6 +17,7 @@ COMMANDE_XMLNSES = (
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
         TableuDeBoardReport,
+        FicheConsommationReport
     )),
 )
 
@@ -49,3 +50,4 @@ def get_location_id_by_type(form, type):
 
 def get_real_date(form):
     return form.form['real_date_repeat'] if 'real_date_repeat' in form.form and form.form['real_date_repeat'] else ''
+

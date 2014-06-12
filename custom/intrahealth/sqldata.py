@@ -1,11 +1,12 @@
-from sqlagg.base import BaseColumn, AliasColumn
+from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn
-from sqlagg.filters import AND, EQ, NOT, NOTEQ, BETWEEN
-from corehq.apps.locations.models import Location
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, Column, DataFormatter, \
+
+from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat
-from corehq.apps.reports.util import make_ctable_table_name
+from sqlagg.filters import EQ, NOTEQ, BETWEEN
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
+from django.utils.translation import ugettext as _
 
 
 class BaseSqlData(SqlData):
@@ -113,6 +114,7 @@ class DispDesProducts(BaseSqlData):
     def columns(self):
         a = {'visible': False}
         return [
+
             DatabaseColumn(u"DIU", SumColumn('diu_commandes_total', alias='diu_commandes')),
             DatabaseColumn(u"Implant", SumColumn('implant_commandes_total', alias='implant_commandes')),
             DatabaseColumn(u"Injectable", SumColumn('injectable_commandes_total', alias='injectable_commandes')),
@@ -149,5 +151,55 @@ class DispDesProducts(BaseSqlData):
                             [AliasColumn('cu_commandes'), AliasColumn('cu_recus')], **a),
             AggregateColumn(u"Collier_r", self.percent_fn,
                             [AliasColumn('collier_commandes'), AliasColumn('collier_recus')], **a),
+            ]
+
+class FicheData(BaseSqlData):
+    title = ''
+    table_name = 'fluff_FicheFluff'
+    show_total = True
+
+    @property
+    def group_by(self):
+        return ['location_id', 'PPS_name']
+
+    @property
+    def columns(self):
+        diff = lambda x, y: x - y
+        return [
+            DatabaseColumn(_("LISTE des PPS"), SimpleColumn('PPS_name')),
+
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_diu_total', alias='adiu')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_diu_total', alias='bdiu')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('adiu'), AliasColumn('bdiu')]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_jadelle_total', alias='ajadelle')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_jadelle_total', alias='bjadelle')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('ajadelle'), AliasColumn('bjadelle')]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_depo_total', alias='adepo')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_depo_total', alias='bdepo')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('adepo'), AliasColumn("bdepo")]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_microlut_total', alias='amicrolut')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_microlut_total', alias='bmicrolut')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('amicrolut'), AliasColumn("bmicrolut")]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_microgynon_total', alias='amicrogynon')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_microgynon_total', alias='bmicrogynon')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('amicrogynon'), AliasColumn("bmicrogynon")]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_preservatif_feminin_total', alias='apreservatif_feminin')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_preservatif_feminin_total', alias='bpreservatif_feminin')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('apreservatif_feminin'), AliasColumn("bpreservatif_feminin")]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_preservatif_masculin_total', alias='apreservatif_masculin')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_preservatif_masculin_total', alias='bpreservatif_masculin')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('apreservatif_masculin'), AliasColumn("bpreservatif_masculin")]),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_collier_total', alias='acollier')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_collier_total', alias='bcollier')),
+            AggregateColumn(_("Consommation Non Facturable"), diff,
+                [AliasColumn('acollier'), AliasColumn("bcollier")]),
+
 
         ]

@@ -1,4 +1,3 @@
-from datetime import datetime
 import fluff
 from corehq.apps.locations.models import Location
 from custom.intrahealth import get_location_id_by_type
@@ -55,3 +54,21 @@ class Recus(fluff.Calculator):
                     'date': product['receivedMonthInner'],
                     'value': product['amountReceived']
                 }
+
+class PPSConsumption(fluff.Calculator):
+
+    def __init__(self, productsName, field='actual_consumption'):
+        super(PPSConsumption, self).__init__()
+        self.productsName = productsName
+        self.field = field
+
+    @fluff.date_emitter
+    def total(self, form):
+        sum = 0
+        for product in form.form['products']:
+            if unicode(product['product_name']) in self.productsName:
+                sum += int(product[self.field])
+        yield {
+            'date': form_date(form),
+            'value': sum
+        }

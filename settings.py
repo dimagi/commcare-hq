@@ -1049,6 +1049,7 @@ PILLOWTOPS = {
         'custom.m4change.models.AllHmisCaseFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow'
+        'custom.intrahealth.models.FicheFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
