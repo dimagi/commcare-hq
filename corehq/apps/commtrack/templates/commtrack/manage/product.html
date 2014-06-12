@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
+{% if custom_product_data_enabled %}
 <script>
     $(function () {
         var customDataEditor;
@@ -28,12 +29,15 @@
 
     });
 </script>
+{% endif %}
 {% endblock %}
 
 {% block main_column %}
     <form class="form form-horizontal" name="product" method="post">
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Product Information" %}
+
+        {% if custom_product_data_enabled %}
         <input name="product_data" id="product-data-input" type="hidden" />
 
         <fieldset>
@@ -43,6 +47,7 @@
                 <div class="controls custom-data-controls"></div>
             </div>
         </fieldset>
+        {% endif %}
 
         <div class="form-actions"><button type="submit" class="btn btn-primary">
             {% if product.get_id %}

@@ -79,7 +79,9 @@ class ProductForm(forms.Form):
         for field in ('name', 'code', 'program_id', 'unit', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
 
-        product.product_data = json.loads(self.data['product_data'])
+        product_data = self.data.get('product_data')
+        if product_data:
+            product.product_data = json.loads(product_data)
 
         if commit:
             product.save()

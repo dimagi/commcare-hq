@@ -16,6 +16,7 @@ from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
+from corehq import feature_previews
 from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
@@ -176,6 +177,7 @@ class NewProductView(BaseCommTrackManageView):
             'product': self.product,
             'form': self.new_product_form,
             'custom_product_data': copy.copy(dict(self.product.product_data)),
+            'custom_product_data_enabled': feature_previews.PRODUCT_DATA.enabled(self.domain),
         }
 
     def post(self, request, *args, **kwargs):
