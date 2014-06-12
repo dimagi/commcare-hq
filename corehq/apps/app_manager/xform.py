@@ -988,7 +988,14 @@ class XForm(WrappedNode):
         if condition.type == 'always':
             return 'true()'
         elif condition.type == 'if':
-            return "%s = '%s'" % (self.resolve_path(condition.question), condition.answer)
+            if condition.operator == 'selected':
+                template = "selected({path}, '{answer}')"
+            else:
+                template = "{path} = '{answer}'"
+            return template.format(
+                path=self.resolve_path(condition.question),
+                answer=condition.answer
+            )
         else:
             return 'false()'
 
