@@ -7,7 +7,8 @@ var AdvancedCase = (function () {
         return {
             type: type,
             question: null,
-            answer: null
+            answer: null,
+            operator: null
         };
     };
 
@@ -459,6 +460,7 @@ var AdvancedCase = (function () {
             if (condition.type() !== 'if') {
                 condition.question(null);
                 condition.answer(null);
+                condition.operator(null);
             }
         },
         header: function (action) {
@@ -729,7 +731,15 @@ var AdvancedCase = (function () {
     var OpenCaseAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'name_path', 'case_tag', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
+                include: [
+                    'case_type',
+                    'name_path',
+                    'case_tag',
+                    'parent_tag',
+                    'parent_reference_id',
+                    'open_condition',
+                    'close_condition'
+                ],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
@@ -862,9 +872,9 @@ var AdvancedCase = (function () {
             if (self.parent_tag() && !self.allow_subcase()) {
                 self.parent_tag('');
             }
-            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
+            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
             var x = propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
