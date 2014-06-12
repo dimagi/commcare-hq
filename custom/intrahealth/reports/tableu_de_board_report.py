@@ -13,7 +13,6 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
     title = ''
     report_template_path = "intrahealth/multi_report.html"
     flush_layout = True
-    no_value = {'sort_key': 0, 'html': 0}
 
     @property
     @memoized
@@ -35,17 +34,15 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         return context
 
     def get_report_context(self, data_provider):
-
-        headers = DataTablesHeader(*[c.data_tables_column for c in data_provider.columns])
-
+        columns = data_provider.external_columns + [c.data_tables_column for c in data_provider.columns]
+        headers = DataTablesHeader(*columns)
         total_row = []
         charts = []
         if self.needs_filters:
             rows = []
         else:
-            formatter = DataFormatter(TableDataFormat(data_provider.columns, no_value=self.no_value))
-            rows = list(formatter.format(data_provider.data, keys=data_provider.keys, group_by=data_provider.group_by))
-
+            rows = data_provider.rows
+            
             if data_provider.show_charts:
                 charts = list(self.get_chart(
                     rows,
@@ -93,7 +90,7 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
             chart.add_dataset(s, [{'x': xfn(d[0]), 'y': yfn(d[start_index + i])} for d in data])
 
 class TableuDeBoardReport(MultiReport):
-    title = ""
+    title = "Tableu De Bord"
     fields = [DatespanFilter, AsyncLocationFilter]
     name = "Tableu De Bord"
     slug = 'tableu_de_board'
@@ -117,7 +114,6 @@ class TableuDeBoardReport(MultiReport):
                 config.update(dict(district_id=self.location._id))
             else:
                 config.update(dict(region_id=self.location._id))
-        print config
 
         return config
 
@@ -127,5 +123,5 @@ class TableuDeBoardReport(MultiReport):
         config = self.report_config
         return [
             ConventureData(config=config),
-            # DispDesProducts(config=config),
+            DispDesProducts(config=config),
         ]
