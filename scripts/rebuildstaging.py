@@ -220,17 +220,15 @@ def force_push(git, branch):
     except sh.ErrorReturnCode_128 as e:
         # oops we're using a read-only URL, so change to the suggested url
         try:
-            line = sh.grep(git.remote("-v"), '-E', '^origin.*\(push\)$')
+            line = sh.grep(git.remote("-v"),
+                           '-E', '^origin.https://github\.com/.*\(push\)$')
         except sh.ErrorReturnCode_1:
             raise e
-        if "https://github.com/dimagi/" in line:
-            old_url = line.strip().split()[1]
-            new_url = old_url.replace("https://github.com/dimagi/", "git@github.com:dimagi/")
-            print("    {} -> {}".format(old_url, new_url))
-            git.remote('set-url', 'origin', new_url)
-            git.push('origin', branch, '--force')
-        else:
-            raise e
+        old_url = line.strip().split()[1]
+        new_url = old_url.replace("https://github.com/", "git@github.com:")
+        print("    {} -> {}".format(old_url, new_url))
+        git.remote('set-url', 'origin', new_url)
+        git.push('origin', branch, '--force')
 
 
 def format_cwd(cwd):
