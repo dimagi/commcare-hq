@@ -600,8 +600,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     media_image=form.media_image,
                     media_audio=form.media_audio,
                 )
+                config_entry = {
+                    'module_form': self.configure_entry_module_form,
+                    'advanced_form': self.configure_entry_advanced_form,
+                    'careplan_form': self.configure_entry_careplan_form,
+                }[form.form_type]
 
-                getattr(self, 'configure_entry_{0}'.format(form.form_type))(module, e, form)
+                config_entry(module, e, form)
                 yield e
 
             if hasattr(module, 'case_list') and module.case_list.show:
