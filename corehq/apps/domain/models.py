@@ -174,7 +174,7 @@ class DayTimeWindow(DocumentSchema):
     start_time = TimeProperty()
     end_time = TimeProperty()
 
-class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
+class Domain(Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
