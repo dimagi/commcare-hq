@@ -65,8 +65,23 @@ class FicheFluff(fluff.IndicatorDocument):
     actual_consumption = report_calcs.PPSConsumption()
     billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
 
+class RecapPassageFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
+    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
 
+    domains = INTRAHEALTH_DOMAINS
+    group_by = (fluff.AttributeGetter('product_name', get_products),)
+    save_direct_to_sql = True
+
+    location_id = flat_field(get_location_id)
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+    real_date_repeat = flat_field(get_real_date)
+    PPS_name = flat_field(lambda f: f.form['PPS_name'])
+
+    product = report_calcs.RecapPassage()
 
 CouvertureFluffPillow = CouvertureFluff.pillow()
 FicheFluffPillow = FicheFluff.pillow()
+RecapPassagePillow = RecapPassageFluff.pillow()
 TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()

@@ -178,3 +178,37 @@ class FicheData(BaseSqlData):
             AggregateColumn(_("Consommation Non Facturable"), diff,
                 [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
+
+class RecapPassageData(BaseSqlData):
+    title = ''
+    table_name = 'fluff_RecapPassageFluff'
+    show_total = True
+
+    @property
+    def filters(self):
+        filters = super(RecapPassageData, self).filters
+        if 'PPS_name' in self.config:
+            filters.append(EQ("PPS_name", "PPS_name"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['product_name',]
+
+    @property
+    def columns(self):
+        diff = lambda x, y: x - y
+        return [
+            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
+            DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
+            DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
+            DatabaseColumn(_("Stock Total (disponible + livree)"), SumColumn('product_display_total_stock')),
+            DatabaseColumn(_("Precedent"), SumColumn('product_old_stock_pps')),
+            DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('product_outside_receipts_amount')),
+            AggregateColumn(_("Non Facturable"), diff,
+                [AliasColumn('aconsumption'), AliasColumn("bconsumption")]),
+            DatabaseColumn(_("Facturable"), SumColumn('product_billed_consumption', alias='bconsumption')),
+            DatabaseColumn(_("Reelle"), SumColumn('product_actual_consumption', alias='aconsumption')),
+            DatabaseColumn(_("PPS Restant"), SumColumn('product_pps_restant'))
+        ]

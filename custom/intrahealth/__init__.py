@@ -1,6 +1,7 @@
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
+from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
 
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
@@ -17,7 +18,8 @@ COMMANDE_XMLNSES = (
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
         TableuDeBoardReport,
-        FicheConsommationReport
+        FicheConsommationReport,
+        RecapPassageReport
     )),
 )
 
@@ -58,5 +60,8 @@ def get_real_date(form):
 def get_products(form):
     products = []
     for product in form.form['products']:
-        products.append(product['productName'])
+        if 'productName' in product:
+            products.append(product['productName'])
+        if 'product_name' in product:
+            products.append(product['product_name'])
     return products

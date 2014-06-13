@@ -62,3 +62,87 @@ class PPSConsumption(fluff.Calculator):
                 'value': product[self.field],
                 'group_by': [product['product_name']]
             }
+
+class RecapPassage(fluff.Calculator):
+
+    @fluff.date_emitter
+    def old_stock_total(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['old_stock_total'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def total_stock(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['total_stock'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def livraison(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['top_up']['transfer']['entry']['value']['@quantity'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def display_total_stock(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['display_total_stock'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def old_stock_pps(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['old_stock_pps'],
+                "group_by": [product['product_name']]
+            }
+
+
+    @fluff.date_emitter
+    def outside_receipts_amount(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['outside_receipts_amt'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def actual_consumption(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['actual_consumption'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def billed_consumption(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['billed_consumption'],
+                "group_by": [product['product_name']]
+            }
+
+    @fluff.date_emitter
+    def pps_restant(self, form):
+        for product in form.form['products']:
+            yield {
+                "date": form_date(form),
+                "value": product['billed_consumption'],
+                "group_by": [product['product_name']]
+            }
