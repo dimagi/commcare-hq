@@ -248,9 +248,12 @@ var ExportManager = function (o) {
 
 },
     getFormattedSheetName = function (a, b) {
+        // force to string
+        a = '' + a;
+        b = '' + b;
         b = b.substr(0, 14);
-        a = a.substr(0,28-b.length);
-        return a+" > "+b;
+        a = a.substr(0, 28 - b.length);
+        return a + " > " + b;
     };
 
 ko.bindingHandlers.showBulkExportNotice = {

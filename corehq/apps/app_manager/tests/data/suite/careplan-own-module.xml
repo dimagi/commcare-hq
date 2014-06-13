@@ -275,11 +275,9 @@
       <datum id="case_id_goal_new" function="uuid()"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal_new][@status='open']) = 1">
-        <command>m0</command>
-        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      <create>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal_new"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -297,11 +295,9 @@
       <datum id="case_id_goal" nodeset="instance('casedb')/casedb/case[@case_type='careplan_goal'][index/parent=instance('commcaresession')/session/data/case_id][@status='open']" value="./@case_id" detail-select="m1_careplan_goal_short" detail-confirm="m1_careplan_goal_long"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
-        <command>m0</command>
-        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      <create>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -320,10 +316,8 @@
     </session>
     <stack>
       <create>
-        <command>m0</command>
-        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -342,12 +336,9 @@
       <datum id="case_id_task" nodeset="instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']" value="./@case_id" detail-select="m1_careplan_task_short" detail-confirm="m1_careplan_task_long"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) &gt;= 1">
-        <command>m0</command>
-        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      <create>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
-        <command>m1-f3</command>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -357,16 +348,11 @@
     </text>
     <command id="m0-f0"/>
   </menu>
-  <menu id="m0">
-    <text>
-      <locale id="modules.m0"/>
-    </text>
-    <command id="m1-f0"/>
-  </menu>
-  <menu root="m0" id="m1">
+  <menu id="m1">
     <text>
       <locale id="modules.m1"/>
     </text>
+    <command id="m1-f0"/>
     <command id="m1-f1"/>
     <command id="m1-f2"/>
     <command id="m1-f3"/>

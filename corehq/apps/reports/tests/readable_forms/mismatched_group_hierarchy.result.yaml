@@ -1,0 +1,635 @@
+- group: null
+  label: You first need to log a facility before you can record information.
+  options:
+  - {label: Go back and exit form, value: exit_form}
+  repeat: null
+  response: null
+  tag: select1
+  type: Select
+  value: /data/need_facility_trigger
+- children:
+  - group: /data/whole_form
+    label: 'Registering birth at facility: ____ (____)'
+    options:
+    - {label: 'Yes', value: '1'}
+    - {label: 'No', value: '0'}
+    repeat: null
+    response: '1'
+    tag: select1
+    type: Select
+    value: /data/current_site_confirm
+  - {group: /data/whole_form, label: Yearly Number, repeat: null, response: '7', tag: input,
+    type: Int, value: /data/fada_yearly_number}
+  - {group: /data/whole_form, label: Monthly Number, repeat: null, response: '36',
+    tag: input, type: Int, value: /data/fada_monthly_number}
+  - group: /data/whole_form
+    label: "A patient with this ID (____) has already been registered.\_ Are you sure\
+      \ the entered information is correct?"
+    options:
+    - {label: 'Yes, Continue', value: '1'}
+    - {label: 'No, go back and change the values.', value: '0'}
+    repeat: null
+    response: null
+    tag: select1
+    type: Select
+    value: /data/already_registered
+  - {group: /data/whole_form, label: Date of Admission, repeat: null, response: '2014-01-01',
+    tag: input, type: Date, value: /data/fada_date_admission}
+  - group: /data/whole_form
+    label: 'Observation Points Observed:'
+    options:
+    - {label: '1', value: '1'}
+    - {label: '2', value: '2'}
+    - {label: '3', value: '3'}
+    - {label: '4', value: '4'}
+    repeat: null
+    response: 1 2 3 4
+    tag: select
+    type: MSelect
+    value: /data/fada_observation_points_observed
+  - group: /data/whole_form
+    label: Was the mother referred out at any point during your observation?
+    options:
+    - {label: Yes before delivery, value: '2'}
+    - {label: Yes after delivery, value: '1'}
+    - {label: No not referred, value: '0'}
+    repeat: null
+    response: '1'
+    tag: select1
+    type: Select
+    value: /data/fada_mother_referred
+  - group: /data/whole_form
+    label: Was there a maternal death at any point during your observation?
+    options:
+    - {label: 'Yes', value: '1'}
+    - {label: 'No', value: '0'}
+    repeat: null
+    response: '0'
+    tag: select1
+    type: Select
+    value: /data/fada_maternal_death
+  - group: /data/whole_form
+    label: 'Was there a stillbirth or neonatal death any point during your observation? '
+    options:
+    - {label: 'Yes', value: '1'}
+    - {label: 'No', value: '0'}
+    repeat: null
+    response: '2'
+    tag: select1
+    type: Select
+    value: /data/fada_stillbirth_neonatal_death
+  - group: /data/whole_form
+    label: Was a cesarean section performed?
+    options:
+    - {label: 'Yes', value: '1'}
+    - {label: 'No', value: '0'}
+    repeat: null
+    response: '4'
+    tag: select1
+    type: Select
+    value: /data/fada_csection
+  - group: /data/whole_form
+    label: Did health care worker assent to observation?
+    options:
+    - {label: 'Yes', value: '1'}
+    - {label: 'No', value: '0'}
+    repeat: null
+    response: '3'
+    tag: select1
+    type: Select
+    value: /data/fada_healthworker_assent
+  - children:
+    - group: /data/fada_obv1
+      label: ' Assisted with woman''s care (check all that apply)'
+      options:
+      - {label: Doctor, value: '1'}
+      - {label: Nurse, value: '2'}
+      - {label: ANM, value: '3'}
+      - {label: Others, value: '4'}
+      repeat: null
+      response: '0'
+      tag: select
+      type: MSelect
+      value: /data/fada_obv1/fada_assisted_by_obv1
+    - group: /data/fada_obv1
+      label: Maternal temperature obtained?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_maternal_temp
+    - group: /data/fada_obv1
+      label: Maternal blood pressure obtained?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_maternal_bp
+    - group: /data/fada_obv1
+      label: Was partograph started?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_partograph
+    - group: /data/fada_obv1
+      label: Was the paper checklist picked up during care ?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_checklist_picked_up_obv1
+    - group: /data/fada_obv1
+      label: Was the paper checklist picked up after the care was given?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_checklist_used_after_care_obv1
+    - group: /data/fada_obv1
+      label: Was the checklist poster observed during care?
+      options:
+      - {label: 'Yes', value: 'yes'}
+      - {label: 'No', value: 'no'}
+      repeat: null
+      response: 'yes'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_checklist_poster_used_obv1
+    - group: /data/fada_obv1
+      label: Was a birth companion present?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '0'
+      tag: select1
+      type: Select
+      value: /data/fada_obv1/fada_birth_companion_present_obv1
+    group: /data/whole_form
+    label: 1. On Admission
+    repeat: null
+    response: true
+    tag: group
+    type: Group
+    value: /data/fada_obv1
+  - children:
+    - group: /data/fada_obv2
+      label: ' Assisted with woman''s care (check all that apply)'
+      options:
+      - {label: Doctor, value: '1'}
+      - {label: Nurse, value: '2'}
+      - {label: ANM, value: '3'}
+      - {label: Others, value: '4'}
+      repeat: null
+      response: 1 1
+      tag: select
+      type: MSelect
+      value: /data/fada_obv2/fada_assisted_by_obv2
+    - group: /data/fada_obv2
+      label: Was Oxytocin administered?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_oxycotin_administered_obv2
+    - group: /data/fada_obv2
+      label: Where was oxytocin administered?
+      options:
+      - {label: Intramuscular (IM), value: '1'}
+      - {label: Intravenous (IV), value: '2'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_oxycotin_administration_location
+    - group: /data/fada_obv2
+      label: "Was water used to clean hands\_ just before delivery?"
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_water_usage
+    - group: /data/fada_obv2
+      label: Was soap used to clean hands just before delivery?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_soap_usage
+    - group: /data/fada_obv2
+      label: Was alcohol rub used just before delivery?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_alcohol_rub
+    - group: /data/fada_obv2
+      label: Were clean gloves used at the time of delivery?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_clean_gloves
+    - group: /data/fada_obv2
+      label: Was clean towel available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_clean_towel
+    - group: /data/fada_obv2
+      label: Were sterile scissors/blade to cut cord available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_scissors_blade
+    - group: /data/fada_obv2
+      label: Was a cord ligature/tie available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_cord_tie
+    - group: /data/fada_obv2
+      label: Was an aspiration bulb or mucus extractor available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_mucus_extractor
+    - group: /data/fada_obv2
+      label: Was a neonatal bag and mask available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_neonatal_bag
+    - group: /data/fada_obv2
+      label: Were pads for the mother available at the bedside?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_pads
+    - group: /data/fada_obv2
+      label: Was the paper checklist picked up during care ?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_checklist_picked_up_obv2
+    - group: /data/fada_obv2
+      label: Was the paper checklist picked up after the care was given?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_checklist_used_after_care_obv2
+    - group: /data/fada_obv2
+      label: Was the checklist poster observed during care?
+      options:
+      - {label: 'Yes', value: 'yes'}
+      - {label: 'No', value: 'no'}
+      repeat: null
+      response: 'yes'
+      tag: select1
+      type: Select
+      value: /data/fada_obv2/fada_checklist_poster_used_obv2
+    group: /data/whole_form
+    label: 2. Just before delivery
+    repeat: null
+    response: true
+    tag: group
+    type: Group
+    value: /data/fada_obv2
+  - children:
+    - group: /data/fada_obv3
+      label: Assisted with woman's care (check all that apply)
+      options:
+      - {label: Doctor, value: '1'}
+      - {label: Nurse, value: '2'}
+      - {label: ANM, value: '3'}
+      - {label: Others, value: '4'}
+      repeat: null
+      response: 1 1
+      tag: select
+      type: MSelect
+      value: /data/fada_obv3/fada_assisted_by_obv3
+    - group: /data/fada_obv3
+      label: Was Oxytocin administered?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv3/fada_oxycotin_administered_obv3
+    - group: /data/fada_obv3
+      label: Was neonatal bag and mask used on baby?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv3/fada_neonatal_bag_usage
+    - group: /data/fada_obv3
+      label: Was a birth companion present?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv3/fada_birth_companion_present_obv3
+    group: /data/whole_form
+    label: 3. At one minute after delivery
+    repeat: null
+    response: true
+    tag: group
+    type: Group
+    value: /data/fada_obv3
+  - children:
+    - group: /data/fada_obv4
+      label: Assisted with woman's care (check all that apply)
+      options:
+      - {label: Doctor, value: '1'}
+      - {label: Nurse, value: '2'}
+      - {label: ANM, value: '3'}
+      - {label: Others, value: '4'}
+      repeat: null
+      response: 1 1
+      tag: select
+      type: MSelect
+      value: /data/fada_obv4/fada_assisted_by_obv4
+    - group: /data/fada_obv4
+      label: Was newborn weight taken?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_baby_wt
+    - group: /data/fada_obv4
+      label: Was newborn temperature taken?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_baby_temp
+    - group: /data/fada_obv4
+      label: Was baby placed skin-to-skin on mother's abdomen?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_baby_skin_to_skin
+    - group: /data/fada_obv4
+      label: Was the baby still skin-to-skin after 1 hour?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_baby_skin_to_skin_for_1_hour
+    - group: /data/fada_obv4
+      label: Was breastfeeding initiated?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_breastfeeding
+    - group: /data/fada_obv4
+      label: Was the paper checklist picked up during care ?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_checklist_picked_up_obv4
+    - group: /data/fada_obv4
+      label: Was the paper checklist picked up after the care was given?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_checklist_used_after_care_obv4
+    - group: /data/fada_obv4
+      label: Was the checklist poster observed during care?
+      options:
+      - {label: 'Yes', value: 'yes'}
+      - {label: 'No', value: 'no'}
+      repeat: null
+      response: 'yes'
+      tag: select1
+      type: Select
+      value: /data/fada_obv4/fada_checklist_poster_used_obv4
+    group: /data/whole_form
+    label: 4. At one hour after delivery
+    repeat: null
+    response: true
+    tag: group
+    type: Group
+    value: /data/fada_obv4
+  - children:
+    - group: /data/fada_other_observations
+      label: Was maternal temperature obtained at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_maternal_temp_anytime
+    - group: /data/fada_other_observations
+      label: Was maternal blood pressure obtained at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_maternal_bp_anytime
+    - group: /data/fada_other_observations
+      label: Was magnesium Sulphate given to mother at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_magnesium
+    - group: /data/fada_other_observations
+      label: Was antibiotics given to mother at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_ab_mother
+    - group: /data/fada_other_observations
+      label: Was antibiotics given to baby at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_ab_baby
+    - group: /data/fada_other_observations
+      label: Was antiretroviral to mother at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_arv_mother
+    - group: /data/fada_other_observations
+      label: Was antiretroviral to baby at any time?
+      options:
+      - {label: 'Yes', value: '1'}
+      - {label: 'No', value: '0'}
+      repeat: null
+      response: '1'
+      tag: select1
+      type: Select
+      value: /data/fada_other_observations/fada_arv_baby
+    group: /data/whole_form
+    label: 5.Were any of the following observed at any time?
+    repeat: null
+    response: true
+    tag: group
+    type: FieldList
+    value: /data/fada_other_observations
+  - group: /data/whole_form
+    label: Would you like to highlight this record for your team leader?
+    options:
+    - {label: 1. Yes, value: 'yes'}
+    - {label: 2. No, value: 'no'}
+    repeat: null
+    response: 'no'
+    tag: select1
+    type: Select
+    value: /data/fada_highlight_record
+  - {group: /data/whole_form, label: Comment to supervisor, repeat: null, response: null,
+    tag: input, type: Text, value: /data/fada_highlight_comment}
+  - {group: /data/whole_form, label: GPS Capture, repeat: null, response: 8.8888888
+      -9.9999999 0.0 30.000, tag: input, type: Geopoint, value: /data/fada_gps_location}
+  group: null
+  label: ''
+  repeat: null
+  response: true
+  tag: group
+  type: Group
+  value: /data/whole_form
+- {group: null, label: fada_facility_id, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/fada_facility_id}
+- {group: null, label: fada_patient_id, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/fada_patient_id}
+- {group: null, label: facility_number_usage, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/facility_number_usage}
+- {group: null, label: patient_number, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/patient_number}
+- {group: null, label: patient_number_padded, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/patient_number_padded}
+- {group: null, label: facility_owner_id, repeat: null, response: null, tag: hidden,
+  type: DataBindOnly, value: /data/facility_owner_id}
+- {group: null, label: facility_number_usage, repeat: null, response: '1', tag: null,
+  type: null, value: /facility_number_usage}
+- {group: null, label: facility_owner_id, repeat: null, response: '', tag: null, type: null,
+  value: /facility_owner_id}
+- {group: null, label: fada_facility_id, repeat: null, response: '600', tag: null,
+  type: null, value: /fada_facility_id}
+- {group: null, label: fada_patient_id, repeat: null, response: '2093402934', tag: null,
+  type: null, value: /fada_patient_id}
+- {group: null, label: patient_number, repeat: null, response: '1234', tag: null,
+  type: null, value: /patient_number}
+- {group: null, label: patient_number_padded, repeat: null, response: '01225', tag: null,
+  type: null, value: /patient_number_padded}
+- {group: null, label: whole_form, repeat: null, response: '', tag: null, type: null,
+  value: /whole_form}

@@ -1,13 +1,18 @@
-from unittest import TestCase
+import json
+import os
+from django.test import SimpleTestCase
+import yaml
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
+    get_questions_from_xform_node,
     questions_in_hierarchy,
     strip_form_data,
     zip_form_data_and_questions,
 )
 
 
-class ReadableFormdataTest(TestCase):
+class ReadableFormdataTest(SimpleTestCase):
 
     maxDiff = None
 
@@ -220,3 +225,31 @@ class ReadableFormdataTest(TestCase):
                                                   path_context='/data/')],
             [FormQuestionResponse(q).to_json() for q in expected]
         )
+
+    def test_corpus(self):
+        slug = 'mismatched_group_hierarchy'
+        xform_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.xform.xml'.format(slug))
+        submission_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.submission.json'.format(slug))
+        result_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.result.yaml'.format(slug))
+        with open(xform_file) as f:
+            xform = f.read()
+        with open(submission_file) as f:
+            data = json.load(f)
+        with open(result_file) as f:
+            result = yaml.load(f)
+        questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
+        questions = questions_in_hierarchy(questions)
+        questions = zip_form_data_and_questions(strip_form_data(data),
+                                                questions)
+        self.assertEqual([x.to_json() for x in questions], result)
+
+        # to bootstrap a test and have it print out your yaml result
+        # uncomment this line. Ghetto but it works.
+        # print yaml.safe_dump([json.loads(json.dumps(x.to_json()))
+        #                       for x in questions])

@@ -41,6 +41,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     domain = fields.CharField(attribute='domain')
+    app_id = fields.CharField(attribute='app_id', null=True)
+    build_id = fields.CharField(attribute='build_id', null=True)
 
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                 attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))

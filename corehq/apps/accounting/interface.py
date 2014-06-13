@@ -6,7 +6,7 @@ from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
-from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -657,3 +657,88 @@ class InvoiceInterface(GenericTabularReport):
                 'rows': self.rows,
             }
         )
+
+
+class PaymentRecordInterface(GenericTabularReport):
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Payment Records"
+    description = "A list of all payment records and transaction IDs from " \
+                  "Stripe."
+    slug = "payment_records"
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentTransactionIdFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date Created"),
+            DataTablesColumn("Account"),
+            DataTablesColumn("Project"),
+            DataTablesColumn("Billing Admin"),
+            DataTablesColumn("Stripe Transaction ID"),
+            DataTablesColumn("Amount (USD)"),
+        )
+
+    @property
+    def filters(self):
+        filters = {}
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                payment_method__account__name=account_name,
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            filters.update(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            filters.update(
+                payment_method__billing_admin__domain=subscriber,
+            )
+        transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
+        if transaction_id:
+            filters.update(
+                transaction_id=transaction_id.strip(),
+            )
+        return filters
+
+    @property
+    def payment_records(self):
+        return PaymentRecord.objects.filter(**self.filters)
+
+    @property
+    def rows(self):
+        rows = []
+        for record in self.payment_records:
+            rows.append([
+                format_datatables_data(
+                    text=record.date_created.strftime("%B %m %Y"),
+                    sort_key=record.date_created.isoformat(),
+                ),
+                record.payment_method.account.name,
+                record.payment_method.billing_admin.domain,
+                record.payment_method.billing_admin.web_user,
+                format_datatables_data(
+                    text=mark_safe(
+                        '<a href="https://dashboard.stripe.com/payments/%s"'
+                        '   target="_blank">%s'
+                        '</a>' % (
+                            record.transaction_id,
+                            record.transaction_id,
+                        )),
+                    sort_key=record.transaction_id,
+                ),
+                quantize_accounting_decimal(record.amount),
+            ])
+        return rows

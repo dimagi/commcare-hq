@@ -98,6 +98,7 @@ class GroupToUserPillow(BulkPillow):
     def send_bulk(self, payload):
         pass
 
+
 class UnknownUsersPillow(BulkPillow):
     """
         This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
@@ -110,26 +111,30 @@ class UnknownUsersPillow(BulkPillow):
         super(UnknownUsersPillow, self).__init__(**kwargs)
         self.couch_db = XFormInstance.get_db()
         self.user_db = CouchUser.get_db()
+        self.es = get_es()
 
     def get_fields(self, changes_or_emitted_dict):
-        if "doc" in changes_or_emitted_dict:
-            form_meta = changes_or_emitted_dict["doc"].get("form", {}).get("meta", {})
-            user_id, username = form_meta.get("userID"), form_meta.get("username")
-            domain = changes_or_emitted_dict["doc"].get("domain")
-            xform_id = changes_or_emitted_dict["doc"].get("_id")
+        if 'doc' in changes_or_emitted_dict:
+            doc = changes_or_emitted_dict['doc']
+            form_meta = doc.get('form', {}).get('meta', {})
+            domain = doc.get('domain')
+            user_id = form_meta.get('userID')
+            username = form_meta.get('username')
+            xform_id = doc.get('_id')
         else:
-            emitted = changes_or_emitted_dict["value"]
-            user_id, username, domain = emitted["user_id"], emitted["username"], emitted["domain"]
-            xform_id = changes_or_emitted_dict["id"]
-
-        user_id = None if user_id in WEIRD_USER_IDS else user_id
+            domain = changes_or_emitted_dict['key'][1]
+            user_id = changes_or_emitted_dict['value']['user_id']
+            username = changes_or_emitted_dict['value']['username']
+            xform_id = changes_or_emitted_dict['id']
+        if user_id in WEIRD_USER_IDS:
+            user_id = None
         return user_id, username, domain, xform_id
 
     def change_trigger(self, changes_dict):
         user_id, username, domain, xform_id = self.get_fields(changes_dict)
-        es = get_es()
         es_path = USER_INDEX + "/user/"
-        if user_id and not self.user_db.doc_exist(user_id) and not es.head(es_path + user_id):
+        if (user_id and not self.user_db.doc_exist(user_id)
+                and not self.es.head(es_path + user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
@@ -140,7 +145,7 @@ class UnknownUsersPillow(BulkPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            es.put(es_path + user_id, data=doc)
+            self.es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
         pass

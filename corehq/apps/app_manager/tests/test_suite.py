@@ -58,6 +58,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_careplan_suite(self):
         self._test_generic_suite('careplan')
 
+    def test_careplan_suite_own_module(self):
+        app = Application.wrap(self.get_json('careplan'))
+        app.get_module(1).display_separately = True
+        self.assertXmlEqual(self.get_xml('careplan-own-module'), app.create_suite())
+
     def test_advanced_suite(self):
         self._test_generic_suite('suite-advanced')
 

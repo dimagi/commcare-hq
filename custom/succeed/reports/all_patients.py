@@ -8,7 +8,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
 from django.utils import html
@@ -16,7 +16,7 @@ import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
-from custom.succeed.reports.patient_details import PatientInfoReport
+from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
 import logging
 import simplejson
@@ -169,6 +169,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+
         if user and (is_succeed_admin(user) or has_any_role(user)):
             return True
         return False
@@ -207,6 +210,33 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         )
         return headers
 
+    def get_visit_script(self, order, responsible_party):
+        return {
+            "script":
+                """
+                    next_visit=visits_list[0];
+                    before_action=null;
+                    count=0;
+                    foreach(visit : visits_list) {
+                        skip = false;
+                        foreach(action : _source.actions) {
+                            if (!skip && visit.xmlns.equals(action.xform_xmlns) && !action.xform_id.equals(before_action)) {
+                                next_visit=visits_list[count+1];
+                                before_visit=action.xform_id;
+                                skip=true;
+                                count++;
+                            }
+                            before_visit=action.xform_id;
+                        }
+                    }
+                    return next_visit.get('responsible_party').equals(responsible_party);
+                """,
+            "params": {
+                "visits_list": VISIT_SCHEDULE,
+                "responsible_party": responsible_party
+            }
+        }
+
     @property
     @memoized
     def es_results(self):
@@ -225,8 +255,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                 }
             },
             'sort': self.get_sorting_block(),
-            'from': self.pagination.start,
-            'size': self.pagination.count,
+            'from': self.pagination.start if self.pagination else None,
+            'size': self.pagination.count if self.pagination else None,
         }
         sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
         order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
@@ -342,18 +372,23 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         responsible_party = self.request_params.get('responsible_party', '')
         if responsible_party != '':
-            users = [user.get_id for user in CommCareUser.by_domain(domain=self.domain) if 'role' in user.user_data and user.user_data['role'] == responsible_party.upper()]
-            terms = {"terms": {"user_id": users}}
-            es_filters["bool"]["must"].append(terms)
+            del es_filters['bool']
+            es_filters['and'] = [{"term": { "domain.exact": "succeed" }}]
+            es_filters['and'].append({"script": self.get_visit_script(order=order, responsible_party=responsible_party)})
 
         user = self.request.couch_user
         if not user.is_web_user():
             groups = user.get_group_ids()
             terms = {"terms": {"owner_id": groups}}
-            es_filters["bool"]["must"].append(terms)
-
+            if responsible_party:
+                es_filters["and"].append(terms)
+            else:
+                es_filters["bool"]["must"].append(terms)
         if self.case_type:
-            es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
+            if responsible_party:
+                es_filters["and"].append({"term": {"type.exact": 'participant'}})
+            else:
+                es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
@@ -361,7 +396,14 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             q["query"]["filtered"]["query"] = {"match_all": {}}
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        if self.pagination:
+            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False, start_at=self.pagination.start)
+        else:
+            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+
+    @property
+    def get_all_rows(self):
+        return self.rows
 
     @property
     def rows(self):

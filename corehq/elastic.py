@@ -189,9 +189,13 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
 
     es = get_es()
-    ret_data = es.get(es_url, data=q)
+    result = es.get(es_url, data=q)
 
-    return ret_data
+    if 'error' in result:
+        msg = result['error']
+        raise ESError(msg)
+
+    return result
 
 
 def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
@@ -255,9 +259,6 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     )
 
     # parse results
-    if 'error' in res:
-        msg = res['error']
-        raise ESError(msg)
     if fields is not None:
         hits = [r['fields'] for r in res['hits']['hits']]
     else:

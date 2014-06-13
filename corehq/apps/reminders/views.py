@@ -296,7 +296,9 @@ def copy_one_time_reminder(request, domain, handler_id):
         "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
         "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
     }
-    return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
+    form = OneTimeReminderForm(initial=initial,
+        can_use_survey=can_use_survey_reminders(request))
+    return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
 def delete_reminder(request, domain, handler_id):
@@ -530,10 +532,14 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
+                is_superuser=self.request.couch_user.is_superuser,
+                can_use_survey=can_use_survey_reminders(self.request),
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
+            is_superuser=self.request.couch_user.is_superuser,
             domain=self.domain,
+            can_use_survey=can_use_survey_reminders(self.request),
         )
 
     @property
@@ -549,7 +555,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return [
             {
                 'title': _("Reminders"),
-                'url': reverse('list_reminders', args=[self.domain]),
+                'url': reverse(RemindersListView.urlname, args=[self.domain]),
             },
         ]
 
@@ -709,6 +715,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 domain=self.domain,
                 is_edit=True,
                 can_use_survey=can_use_survey_reminders(self.request),
+                use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+                custom_content_handler=self.reminder_handler.custom_content_handler,
             )
         return self.reminder_form_class(
             initial=initial,
@@ -716,6 +724,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             domain=self.domain,
             is_edit=True,
             can_use_survey=can_use_survey_reminders(self.request),
+            use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+            custom_content_handler=self.reminder_handler.custom_content_handler,
         )
 
     @property

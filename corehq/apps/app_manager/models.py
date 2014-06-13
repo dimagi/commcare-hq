@@ -1173,6 +1173,13 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             include_lang=False
         )
 
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        for form in self.get_forms():
+            form.rename_lang(old_lang, new_lang)
+        for _, detail, _ in self.get_details():
+            detail.rename_lang(old_lang, new_lang)
+
     def validate_detail_columns(self, columns):
         from corehq.apps.app_manager.suite_xml import FIELD_TYPE_LOCATION
         from corehq.apps.locations.util import parent_child
@@ -1316,11 +1323,7 @@ class Module(ModuleBase):
         return self.get_form(index or -1)
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        for form in self.get_forms():
-            form.rename_lang(old_lang, new_lang)
-        for _, detail, _ in self.get_details():
-            detail.rename_lang(old_lang, new_lang)
+        super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
@@ -1636,6 +1639,10 @@ class AdvancedModule(ModuleBase):
         else:
             self.forms.append(new_form)
         return self.get_form(index or -1)
+
+    def rename_lang(self, old_lang, new_lang):
+        super(AdvancedModule, self).rename_lang(old_lang, new_lang)
+        self.case_list.rename_lang(old_lang, new_lang)
 
     def requires_case_details(self):
         if self.case_list.show:

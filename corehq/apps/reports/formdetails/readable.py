@@ -89,8 +89,12 @@ def get_questions(domain, app_id, xmlns):
                 _("We could not find the question list "
                   "associated with this form")
             )
-    questions = form.wrapped_xform().get_questions(
-        app.langs, include_triggers=True, include_groups=True)
+    return get_questions_from_xform_node(form.wrapped_xform(), app.langs)
+
+
+def get_questions_from_xform_node(xform, langs):
+    questions = xform.get_questions(
+        langs, include_triggers=True, include_groups=True)
     return [FormQuestionResponse(q) for q in questions]
 
 
@@ -122,8 +126,15 @@ def strip_form_data(data):
     return data
 
 
-def pop_from_form_data(data, path):
+def pop_from_form_data(relative_data, absolute_data, path):
     path = path.split('/')
+    if path and path[0] == '':
+        data = absolute_data
+        # path[:2] will be ['', 'data'] so remove
+        path = path[2:]
+    else:
+        data = relative_data
+
     while path and data:
         key, path = path[0], path[1:]
         try:
@@ -142,10 +153,7 @@ def path_relative_to_context(path, path_context):
     elif path + '/' == path_context:
         return ''
     else:
-        raise ValueError('{path} does not start with {path_context}'.format(
-            path=path,
-            path_context=path_context,
-        ))
+        return path
 
 
 def _html_interpolate_output_refs(itext_value, context):
@@ -166,8 +174,9 @@ def _html_interpolate_output_refs(itext_value, context):
         return itext_value
 
 
-def zip_form_data_and_questions(data, questions, path_context='',
-                                output_context=None, process_label=None):
+def zip_form_data_and_questions(relative_data, questions, path_context='',
+                                output_context=None, process_label=None,
+                                absolute_data=None):
     """
     The strategy here is to loop through the questions, and at every point
     pull in the corresponding piece of data, removing it from data
@@ -179,18 +188,19 @@ def zip_form_data_and_questions(data, questions, path_context='',
     the list, using the repeat's children as the question list.
 
     """
+    absolute_data = absolute_data or relative_data
     if not path_context.endswith('/'):
         path_context += '/'
     if not output_context:
         output_context = {
             '%s%s' % (path_context, '/'.join(map(unicode, key))): unicode(value)
-            for key, value in _flatten_json(data).items()
+            for key, value in _flatten_json(relative_data).items()
         }
 
     result = []
     for question in questions:
         path = path_relative_to_context(question.value, path_context)
-        node = pop_from_form_data(data, path)
+        node = pop_from_form_data(relative_data, absolute_data, path)
         # response=True on a question with children indicates that one or more
         # child has a response, i.e. that the entire group wasn't skipped
         node_true_or_none = bool(node) or None
@@ -205,10 +215,13 @@ def zip_form_data_and_questions(data, questions, path_context='',
                     path_context=question.value,
                     output_context=output_context,
                     process_label=process_label,
+                    absolute_data=absolute_data,
                 ),
                 response=node_true_or_none,
                 **question_data
             )
+            if form_question.children:
+                form_question.response = True
         elif question.type == 'Repeat':
             if not isinstance(node, list):
                 node = [node]
@@ -222,6 +235,7 @@ def zip_form_data_and_questions(data, questions, path_context='',
                             path_context=question.value,
                             output_context=output_context,
                             process_label=process_label,
+                            absolute_data=absolute_data,
                         ),
                         response=node_true_or_none,
                     )
@@ -244,8 +258,8 @@ def zip_form_data_and_questions(data, questions, path_context='',
                                                  **question_data)
         result.append(form_question)
 
-    if data:
-        for key, response in sorted(_flatten_json(data).items()):
+    if relative_data:
+        for key, response in sorted(_flatten_json(relative_data).items()):
             joined_key = '/'.join(map(unicode, key))
             result.append(
                 FormQuestionResponse(

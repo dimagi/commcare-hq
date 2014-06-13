@@ -65,16 +65,16 @@ class GenericReportView(CacheableRequestMixIn):
 
     """
     # required to create a report based on this
-    name = None         # string. the name of the report that shows up in the heading and the
-    slug = None         # string. the report_slug_in_the_url
-    section_name = None # string. ex: "Reports"
-    dispatcher = None   # ReportDispatcher subclass
+    name = None  # Human-readable name to be used in the UI
+    slug = None  # Name to be used in the URL (with lowercase and underscores)
+    section_name = None  # string. ex: "Reports"
+    dispatcher = None  # ReportDispatcher subclass
 
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()
 
     # not required
-    description = None  # description of the report
+    description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
 
@@ -277,11 +277,8 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def filter_classes(self):
-        # todo messy...fix eventually
         filters = []
-        fields = self.override_fields
-        if not fields:
-            fields = self.fields
+        fields = self.fields
         for field in fields or []:
             if isinstance(field, basestring):
                 klass = to_function(field, failhard=True)
@@ -289,14 +286,6 @@ class GenericReportView(CacheableRequestMixIn):
                 klass = field
             filters.append(klass(self.request, self.domain, self.timezone))
         return filters
-
-    @property
-    def override_fields(self):
-        """
-            Return a list of fields here if you want to override the class property self.fields
-            after this report has already been instantiated.
-        """
-        return None
 
     @property
     @memoized

@@ -39,13 +39,11 @@ class ResponsibleParty(ReportSelectField):
                 chw
             ]
         else:
-            role = user.user_data['role']
+            role = user.get_role()['name']
             if role == CONFIG['cm_role']:
                 options.append(cm)
-                self.selected = cm['val']
             elif role == CONFIG['chw_role']:
                 options.append(chw)
-                self.selected = chw['val']
         return options
 
 
