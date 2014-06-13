@@ -7,6 +7,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
         CustomProjectReportDispatcher, BasicReportDispatcher)
 
 # from .filters.urls import urlpatterns as filter_urls
+from .testreport import TestReport
 from .filters import urls as filter_urls
 
 
@@ -15,6 +16,7 @@ custom_report_urls = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
+    url(r'^test_report$', TestReport.as_view(), name="test_report"),
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),

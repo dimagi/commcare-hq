@@ -12,6 +12,9 @@ class ReportDataSource(object):
          }
         """
         self.config = config or {}
+        self.report_context = {}
+        for name, filter in self.filters.items():
+            self.report_context[name] = filter(self.config)
 
     def configure(self, config):
         """
