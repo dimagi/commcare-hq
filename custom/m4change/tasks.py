@@ -22,8 +22,6 @@ def generate_production_fixtures():
         generate_fixtures_for_domain(domain, db, data_source)
 
 def generate_fixtures_for_domain(domain, db, data_source):
-    # Remove all FixtureReportResult instances, as they would either be deleted or replaced anyway
-    db.delete_docs(FixtureReportResult.by_domain(domain=domain))
 
     location_ids = [location.get_id for location in Location.by_domain(domain)]
     dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
@@ -63,11 +61,6 @@ def generate_fixtures_for_locations():
             finally:
                 lock.release()
         for location_id in location_ids:
-            results_for_last_month = FixtureReportResult.get_report_results_by_key(domain=domain,
-                                                                                   location_id=location_id,
-                                                                                   start_date=start_date.strftime("%Y-%m-%d"),
-                                                                                   end_date=end_date.strftime("%Y-%m-%d"))
-            db.delete_docs(results_for_last_month)
 
             data_source.configure(config={
                 "startdate": start_date,
