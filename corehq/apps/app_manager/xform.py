@@ -765,7 +765,7 @@ class XForm(WrappedNode):
         elif 'bind' in node.attrib:
             bind_id = node.attrib['bind']
             bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
-            if not bind.xml:
+            if not bind.exists():
                 raise BindNotFound('No binding found for %s' % bind_id)
             path = bind.attrib['nodeset']
         elif node.tag_name == "group":
