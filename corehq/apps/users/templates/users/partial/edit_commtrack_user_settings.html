@@ -15,6 +15,7 @@
     </div>
 </form>
 
+{% comment "CommTrack user roles are not doing anything for now" %}
 <form class="form form-horizontal"
       method="post"
       action="{% url "update_user_data" domain couch_user.user_id %}">
@@ -44,3 +45,4 @@
         </button>
     </div>
 </form>
+{% endcomment %}
