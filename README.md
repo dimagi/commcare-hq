@@ -41,6 +41,9 @@ class VisitCalculator(fluff.Calculator):
     
     @fluff.date_emitter
     def group_list(self, case):
+        # Note that you can override the group_by values as follows.
+        # They MUST always match up in number and ordering to what is defined
+        # in the IndicatorDocument class that this calculator is included in.
         yield dict(date=date(2013, 1, 1), value=3, group_by=['abc', 'xyz'])
 
 
