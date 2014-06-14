@@ -1,5 +1,6 @@
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
+from numpy import random
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
@@ -88,8 +89,8 @@ class DatespanFilter(BaseFilter):
         try:
             startdate = date_or_nothing(startdate)
             enddate = date_or_nothing(enddate)
-        except ValueError as e:
-            raise FilterValueException(e.message)
+        except (ValueError, TypeError) as e:
+            raise FilterValueException('Error parsing date parameters: {}'.format(e.message))
 
         if startdate or enddate:
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
@@ -100,17 +101,26 @@ class DatespanFilter(BaseFilter):
 
 class TestReportData(ReportDataSource):
     filters = {
-        'datespan': DatespanFilter(required=True)
+        'datespan': DatespanFilter(required=False)
     }
+
+    def slugs(self):
+        return [
+            'date',
+            'people_tested'
+        ]
+
+    def daterange(self):
+        for n in range(int((self.datespan.enddate - self.datespan.startdate).days)):
+            yield self.datespan.startdate + timedelta(n)
 
     def get_data(self):
         if self.datespan:
-            return {
-                "startdate": self.datespan.startdate_param,
-                "enddate": self.datespan.enddate_param
-            }
-        else:
-            return {}
+            for date in self.daterange():
+                yield {
+                    'date': date,
+                    'people_tested': random.randint(0, 50)
+                }
 
 
 class TestReport(JSONResponseMixin, View):
@@ -127,8 +137,8 @@ class TestReport(JSONResponseMixin, View):
         return True
 
     def get(self, request, **kwargs):
-        report = self.get_json()
-        return self.render_json_response(report)
+        report_data = self.get_json()
+        return self.render_json_response(report_data)
 
     def get_json(self):
         filter_params = json_request(self.request.GET)
@@ -139,7 +149,11 @@ class TestReport(JSONResponseMixin, View):
             return {
                 'error': e.message
             }
-        return data.get_data()
+
+        return {
+            'data_keys': data.slugs(),
+            'data': list(data.get_data())
+        }
 
     def _get_initial(self, request, **kwargs):
         pass
