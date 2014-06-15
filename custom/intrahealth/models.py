@@ -3,7 +3,7 @@ from couchforms.models import XFormInstance
 from fluff.filters import ORFilter
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES
+    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products
 
 
 def _get_all_forms():
@@ -67,38 +67,19 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     collier_commandes = report_calcs.Commandes([u"collier"])
     collier_recus = report_calcs.Recus([u"collier"])
 
-
 class FicheFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
-
     domains = INTRAHEALTH_DOMAINS
-    group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
-    save_direct_to_sql = True
-
-    location_id = flat_field(get_location_id)
+    group_by = (fluff.AttributeGetter('product_name', get_products),)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    real_date_repeat = flat_field(get_real_date)
-
     PPS_name = flat_field(lambda f: f.form['PPS_name'])
-    actual_consumption_collier = report_calcs.PPSConsumption(['Collier'])
-    actual_consumption_depo = report_calcs.PPSConsumption([u'D\xe9po-Provera', 'Depo-Provera'])
-    actual_consumption_diu = report_calcs.PPSConsumption(['DIU'])
-    actual_consumption_jadelle = report_calcs.PPSConsumption(['Jadelle'])
-    actual_consumption_microlut = report_calcs.PPSConsumption(['Microlut/Ovrette'])
-    actual_consumption_microgynon = report_calcs.PPSConsumption(['Microgynon/Lof.'])
-    actual_consumption_preservatif_feminin= report_calcs.PPSConsumption([u'Pr\xe9servatif F\xe9minin', 'Preservatif Feminin'])
-    actual_consumption_preservatif_masculin = report_calcs.PPSConsumption([u'Pr\xe9servatif Masculin', 'Preservatif Masculin'])
+    location_id = flat_field(get_location_id)
+    actual_consumption = report_calcs.PPSConsumption()
+    billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
+    save_direct_to_sql = True
 
-    billed_consumption_collier = report_calcs.PPSConsumption(['Collier'], 'billed_consumption')
-    billed_consumption_depo = report_calcs.PPSConsumption([u'D\xe9po-Provera', 'Depo-Provera'], 'billed_consumption')
-    billed_consumption_diu = report_calcs.PPSConsumption(['DIU'], 'billed_consumption')
-    billed_consumption_jadelle = report_calcs.PPSConsumption(['Jadelle'], 'billed_consumption')
-    billed_consumption_microlut = report_calcs.PPSConsumption(['Microlut/Ovrette'], 'billed_consumption')
-    billed_consumption_microgynon = report_calcs.PPSConsumption(['Microgynon/Lof.'], 'billed_consumption')
-    billed_consumption_preservatif_feminin= report_calcs.PPSConsumption([u'Pr\xe9servatif F\xe9minin', 'Preservatif Feminin'], 'billed_consumption')
-    billed_consumption_preservatif_masculin = report_calcs.PPSConsumption([u'Pr\xe9servatif Masculin', 'Preservatif Masculin'], 'billed_consumption')
 
 CouvertureFluffPillow = CouvertureFluff.pillow()
 FicheFluffPillow = FicheFluff.pillow()

@@ -57,18 +57,16 @@ class Recus(fluff.Calculator):
 
 class PPSConsumption(fluff.Calculator):
 
-    def __init__(self, productsName, field='actual_consumption'):
+    def __init__(self, field='actual_consumption'):
         super(PPSConsumption, self).__init__()
-        self.productsName = productsName
         self.field = field
 
+    #TODO Some products has two different names(with and without unicode characters)
     @fluff.date_emitter
     def total(self, form):
-        sum = 0
         for product in form.form['products']:
-            if unicode(product['product_name']) in self.productsName:
-                sum += int(product[self.field])
-        yield {
-            'date': form_date(form),
-            'value': sum
-        }
+            yield {
+                'date': form_date(form),
+                'value': product[self.field],
+                'group_by': [product['product_name']]
+            }

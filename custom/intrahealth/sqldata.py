@@ -160,46 +160,15 @@ class FicheData(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['location_id', 'PPS_name']
+        return ['product_name', 'PPS_name']
 
     @property
     def columns(self):
         diff = lambda x, y: x - y
         return [
             DatabaseColumn(_("LISTE des PPS"), SimpleColumn('PPS_name')),
-
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_diu_total', alias='adiu')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_diu_total', alias='bdiu')),
+            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_total', alias='actual_consumption')),
+            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_total', alias='billed_consumption')),
             AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('adiu'), AliasColumn('bdiu')]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_jadelle_total', alias='ajadelle')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_jadelle_total', alias='bjadelle')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('ajadelle'), AliasColumn('bjadelle')]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_depo_total', alias='adepo')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_depo_total', alias='bdepo')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('adepo'), AliasColumn("bdepo")]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_microlut_total', alias='amicrolut')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_microlut_total', alias='bmicrolut')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('amicrolut'), AliasColumn("bmicrolut")]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_microgynon_total', alias='amicrogynon')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_microgynon_total', alias='bmicrogynon')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('amicrogynon'), AliasColumn("bmicrogynon")]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_preservatif_feminin_total', alias='apreservatif_feminin')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_preservatif_feminin_total', alias='bpreservatif_feminin')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('apreservatif_feminin'), AliasColumn("bpreservatif_feminin")]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_preservatif_masculin_total', alias='apreservatif_masculin')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_preservatif_masculin_total', alias='bpreservatif_masculin')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('apreservatif_masculin'), AliasColumn("bpreservatif_masculin")]),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_collier_total', alias='acollier')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_collier_total', alias='bcollier')),
-            AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('acollier'), AliasColumn("bcollier")]),
-
-
+                [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]

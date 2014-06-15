@@ -3,7 +3,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGro
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
+from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from custom.intrahealth.sqldata import FicheData
 
@@ -12,8 +12,8 @@ class FicheConsommationReport(DatespanMixin, GenericTabularReport, CustomProject
     slug = 'fiche_consommation'
     report_title = "Fiche Consommation"
     fields = [DatespanFilter, AsyncLocationFilter]
-    GROUPS = ['DIU', 'Jadelle', u'D\xe9po', 'Microlut', 'Microgynon', 'Cond. Masc', 'Cond. Fem', 'Collier']
-    no_value = {'sort_key': 0, 'html': '--'}
+    no_value = {'sort_key': 0, 'html': '0'}
+    groups = []
 
     @property
     def location(self):
@@ -33,19 +33,17 @@ class FicheConsommationReport(DatespanMixin, GenericTabularReport, CustomProject
                 config.update(dict(district_id=self.location._id))
             else:
                 config.update(dict(region_id=self.location._id))
-        print config
-
         return config
 
     @property
     def headers(self):
         header = DataTablesHeader()
-        i = 1
-        header.add_column(DataTablesColumnGroup('', self.model.columns[0].data_tables_column))
-        for group in self.GROUPS:
-            header.add_column(DataTablesColumnGroup(group, *[self.model.columns[j].data_tables_column for j in xrange(i, i + 3)]))
-            #header.add_column(DataTablesColumnGroup(group, *[c.data_tables_column for c in self.model.columns]))
-
+        columns = self.model.columns
+        header.add_column(DataTablesColumnGroup('', columns[0].data_tables_column))
+        self.groups = sorted(list(set(zip(*self.model.data.keys())[0])))
+        for group in self.groups:
+            header.add_column(DataTablesColumnGroup(group,
+                                                    *[columns[j].data_tables_column for j in xrange(1, len(columns))]))
         return header
 
     @property
@@ -54,5 +52,19 @@ class FicheConsommationReport(DatespanMixin, GenericTabularReport, CustomProject
 
     @property
     def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.model.columns, no_value=self.no_value))
-        return list(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
+        data = self.model.data
+        ppss = sorted(list(set(zip(*data.keys())[1])))
+        rows = []
+
+        formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
+        data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
+        for pps in ppss:
+            row = [pps]
+            for group in self.groups:
+                if (group, pps) in data:
+                    product = data[(group, pps)]
+                    row += [product['actual_consumption'], product['billed_consumption'], product['consommation-non-facturable']]
+                else:
+                    row += [self.no_value, self.no_value, self.no_value]
+            rows.append(row)
+        return rows
