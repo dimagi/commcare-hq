@@ -42,30 +42,14 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
         ])
 
     domains = INTRAHEALTH_DOMAINS
-    # group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
+    group_by = (fluff.AttributeGetter('product_name', get_products),)
     save_direct_to_sql = True
 
     # location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    diu_commandes = report_calcs.Commandes([u"diu"])
-    diu_recus = report_calcs.Recus([u"diu"])
-    implant_commandes = report_calcs.Commandes([u"jadelle"])
-    implant_recus = report_calcs.Recus([u"jadelle"])
-    injectable_commandes = report_calcs.Commandes([u"d\xe9po-provera", u"depo-provera"])
-    injectable_recus = report_calcs.Recus([u"d\xe9po-provera", u"depo-provera"])
-    microlut_commandes = report_calcs.Commandes([u"microlut/ovrette"])
-    microlut_recus = report_calcs.Recus([u"microlut/ovrette"])
-    microgynon_commandes = report_calcs.Commandes([u"microgynon/lof."])
-    microgynon_recus = report_calcs.Recus([u"microgynon/lof."])
-    masculin_commandes = report_calcs.Commandes([u"pr\xe9servatif masculin", u"preservatif masculin"])
-    masculin_recus = report_calcs.Recus([u"pr\xe9servatif masculin", u"preservatif masculin"])
-    feminin_commandes = report_calcs.Commandes([u"pr\xe9servatif f\xe9minin", u"preservatif feminin"])
-    feminin_recus = report_calcs.Recus([u"pr\xe9servatif f\xe9minin", u"preservatif feminin"])
-    cu_commandes = report_calcs.Commandes([u"cu"])
-    cu_recus = report_calcs.Recus([u"cu"])
-    collier_commandes = report_calcs.Commandes([u"collier"])
-    collier_recus = report_calcs.Recus([u"collier"])
+    commandes = report_calcs.Commandes()
+    recus = report_calcs.Recus()
 
 class FicheFluff(fluff.IndicatorDocument):
     document_class = XFormInstance

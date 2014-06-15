@@ -1,13 +1,25 @@
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn
+from corehq.apps.commtrack.models import Product
 
-from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat
 from sqlagg.filters import EQ, NOTEQ, BETWEEN
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 
+PRODUCT_NAMES = {
+    u'diu': [u"diu"],
+    u'jadelle': [u"jadelle"],
+    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
+    u'microlut/ovrette': [u"microlut/ovrette"],
+    u'microgynon/lof.': [u"microgynon/lof."],
+    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
+    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin"],
+    u'cu': [u"cu"],
+    u'collier': [u"collier"]
+}
 
 class BaseSqlData(SqlData):
     show_charts = False
@@ -86,16 +98,13 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def group_by(self):
+        group_by = []
         if 'region_id' in self.config:
-            return ['region_id']
+            group_by.append('region_id')
         elif 'district_id' in self.config:
-            return ['district_id']
-        else:
-            return []
-
-    @property
-    def external_rows(self):
-        return [[u'Command\xe9e'], [u'Reau'], [u'Taux']]
+            group_by.append('district_id')
+        group_by.append('product_name')
+        return group_by
 
     @property
     def external_columns(self):
@@ -103,54 +112,51 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def rows(self):
-        rows = super(DispDesProducts, self).rows
-        def chunk(rows, n):
-            for i in xrange(0, len(rows), n):
-                yield rows[i:i+n]
 
-        return map(list.__add__, self.external_rows, chunk(rows[0], len(rows[0])/3)) if rows else [[]]
+        def row_in_names(row, names):
+            if row in names:
+                return True, names.index(row)+1
+            else:
+                for idx, val in enumerate(names):
+                    if unicode(row).lower() in PRODUCT_NAMES[val]:
+                        return True, idx+1
+            return False, 0
+
+        commandes = ['Comanndes']
+        raux = ['Recu']
+        taux = ['Taux']
+        products = Product.by_domain(self.config['domain'])
+        for product in products:
+            commandes.append(0)
+            raux.append(0)
+            taux.append(0)
+        names = []
+
+        for product in products:
+            names.append(unicode(product.name).lower())
+        rows = super(DispDesProducts, self).rows
+        for row in rows:
+            exits, index = row_in_names(row[0], names)
+            if exits:
+                commandes[index] = row[1]
+                raux[index] = row[2]
+                print row[2]['html']
+                taux[index] = "%d%%" % (100*row[2]['html']/row[1]['html'])
+        return [commandes, raux, taux]
+
+    @property
+    def headers(self):
+        columns = [DataTablesColumn('Quantity')]
+        for product in Product.by_domain(self.config['domain']):
+            columns.append(DataTablesColumn(product.name))
+        return columns
 
     @property
     def columns(self):
-        a = {'visible': False}
         return [
-
-            DatabaseColumn(u"DIU", SumColumn('diu_commandes_total', alias='diu_commandes')),
-            DatabaseColumn(u"Implant", SumColumn('implant_commandes_total', alias='implant_commandes')),
-            DatabaseColumn(u"Injectable", SumColumn('injectable_commandes_total', alias='injectable_commandes')),
-            DatabaseColumn(u"Microlut", SumColumn('microlut_commandes_total', alias='microlut_commandes')),
-            DatabaseColumn(u"Microgynon", SumColumn('microgynon_commandes_total', alias='microgynon_commandes')),
-            DatabaseColumn(u"Pr\xe9servatif Masculin", SumColumn('masculin_commandes_total', alias='masculin_commandes')),
-            DatabaseColumn(u"Pr\xe9servatif F\xe9minin", SumColumn('feminin_commandes_total', alias='feminin_commandes')),
-            DatabaseColumn(u"CU", SumColumn('cu_commandes_total', alias='cu_commandes')),
-            DatabaseColumn(u"Collier", SumColumn('collier_commandes_total', alias='collier_commandes')),
-            DatabaseColumn(u"DIU_r", SumColumn('diu_recus_total', alias='diu_recus'), **a),
-            DatabaseColumn(u"Implant_r", SumColumn('implant_recus_total', alias='implant_recus'), **a),
-            DatabaseColumn(u"Injectable_r", SumColumn('injectable_recus_total', alias='injectable_recus'), **a),
-            DatabaseColumn(u"Microlut_r", SumColumn('microlut_recus_total', alias='microlut_recus'), **a),
-            DatabaseColumn(u"Microgynon_r", SumColumn('microgynon_recus_total', alias='microgynon_recus'), **a),
-            DatabaseColumn(u"Pr\xe9servatif Masculin_r", SumColumn('masculin_recus_total', alias='masculin_recus'), **a),
-            DatabaseColumn(u"Pr\xe9servatif F\xe9minin_r", SumColumn('feminin_recus_total', alias='feminin_recus'), **a),
-            DatabaseColumn(u"CU_r", SumColumn('cu_recus_total', alias='cu_recus'), **a),
-            DatabaseColumn(u"Collier_r", SumColumn('collier_recus_total', alias='collier_recus'), **a),
-            AggregateColumn(u"DIU_t", self.percent_fn,
-                            [AliasColumn('diu_commandes'), AliasColumn('diu_recus')], **a),
-            AggregateColumn(u"Implant_r", self.percent_fn,
-                            [AliasColumn('implant_commandes'), AliasColumn('implant_recus')], **a),
-            AggregateColumn(u"Injectable_r", self.percent_fn,
-                            [AliasColumn('injectable_commandes'), AliasColumn('injectable_recus')], **a),
-            AggregateColumn(u"Microlut_r", self.percent_fn,
-                            [AliasColumn('microlut_commandes'), AliasColumn('microlut_recus')], **a),
-            AggregateColumn(u"Microgynon_r", self.percent_fn,
-                            [AliasColumn('microgynon_commandes'), AliasColumn('microgynon_recus')], **a),
-            AggregateColumn(u"Pr\xe9servatif Masculin_r", self.percent_fn,
-                            [AliasColumn('masculin_commandes'), AliasColumn('masculin_recus')], **a),
-            AggregateColumn(u"Pr\xe9servatif F\xe9minin_r", self.percent_fn,
-                            [AliasColumn('feminin_commandes'), AliasColumn('feminin_recus')], **a),
-            AggregateColumn(u"CU_r", self.percent_fn,
-                            [AliasColumn('cu_commandes'), AliasColumn('cu_recus')], **a),
-            AggregateColumn(u"Collier_r", self.percent_fn,
-                            [AliasColumn('collier_commandes'), AliasColumn('collier_recus')], **a),
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn("Commandes", SumColumn('commandes_total')),
+            DatabaseColumn("Recu", SumColumn('recus_total'))
             ]
 
 class FicheData(BaseSqlData):

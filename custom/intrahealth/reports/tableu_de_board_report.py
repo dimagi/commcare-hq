@@ -1,8 +1,8 @@
-from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter, AsyncDrillableFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
-from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat, calculate_total_row
+from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
 from custom.intrahealth.sqldata import *
@@ -34,7 +34,10 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         return context
 
     def get_report_context(self, data_provider):
-        columns = data_provider.external_columns + [c.data_tables_column for c in data_provider.columns]
+        if isinstance(data_provider, DispDesProducts):
+            columns = data_provider.headers
+        else:
+            columns = data_provider.external_columns + [c.data_tables_column for c in data_provider.columns]
         headers = DataTablesHeader(*columns)
         total_row = []
         charts = []

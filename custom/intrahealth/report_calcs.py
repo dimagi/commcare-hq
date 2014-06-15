@@ -26,34 +26,26 @@ class PPSPlaned(fluff.Calculator):
         }
 
 class Commandes(fluff.Calculator):
-    def __init__(self, product_name, *args, **kwargs):
-        self.product_name = product_name
-        super(Commandes, self).__init__(*args, **kwargs)
-
     @fluff.date_emitter
     def total(self, form):
         products = form.form['products']
         for product in products:
-            if unicode(product['productName']).lower() in self.product_name:
-                yield {
-                    'date': product['receivedMonthInner'],
-                    'value': product['amountOrdered']
-                }
+            yield {
+                'date': product['receivedMonthInner'],
+                'value': product['amountOrdered'],
+                'group_by': [product['productName']]
+            }
 
 class Recus(fluff.Calculator):
-    def __init__(self, product_name, *args, **kwargs):
-        self.product_name = product_name
-        super(Recus, self).__init__(*args, **kwargs)
-
     @fluff.date_emitter
     def total(self, form):
         products = form.form['products']
         for product in products:
-            if unicode(product['productName']).lower() in self.product_name:
-                yield {
-                    'date': product['receivedMonthInner'],
-                    'value': product['amountReceived']
-                }
+            yield {
+                'date': product['receivedMonthInner'],
+                'value': product['amountReceived'],
+                'group_by': [product['productName']]
+            }
 
 class PPSConsumption(fluff.Calculator):
 
