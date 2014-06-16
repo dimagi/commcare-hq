@@ -84,15 +84,14 @@ class LocationImportTest(CommTrackTest):
         self.assertTrue('references a location in another project' in result['message'])
 
     def test_change_parent(self):
-        parent = make_loc('original parent', type='village')
+        parent = make_loc('originalparent', type='village')
         existing = make_loc('existingloc', type='outlet', parent=parent)
 
         new_parent = make_loc('new parent', type='village')
         self.assertNotEqual(parent._id, new_parent._id)
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': existing.name,
-            'site_code': 'wat',
             'outlet_type': 'SHG',
             'parent_id': new_parent._id,
         }
@@ -108,9 +107,8 @@ class LocationImportTest(CommTrackTest):
 
         new_parent = make_loc('new parent', type='state')
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': existing.name,
-            'site_code': 'wat',
             'outlet_type': 'SHG',
             'parent_id': new_parent._id,
         }
@@ -127,25 +125,24 @@ class LocationImportTest(CommTrackTest):
         existing = make_loc('existingloc', type='outlet', parent=parent)
 
         data = {
-            'id': existing._id,
-            'name': existing.name,
-            'site_code': 'wat',
+            'site_code': existing.site_code,
+            'name': 'new_name',
             'outlet_type': 'SHG'
         }
 
-        self.assertNotEqual(existing.site_code, data['site_code'])
+        self.assertNotEqual(existing.name, data['name'])
 
         loc_id = import_location(self.domain.name, 'outlet', data).get('id', None)
         new_loc = Location.get(loc_id)
 
         self.assertEqual(existing._id, loc_id)
-        self.assertEqual(new_loc.site_code, data['site_code'])
+        self.assertEqual(new_loc.name, data['name'])
 
     def test_given_id_matches_type(self):
         existing = make_loc('existingloc', type='state')
 
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': 'new_name',
         }
 
@@ -162,9 +159,8 @@ class LocationImportTest(CommTrackTest):
         existing.save()
 
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': existing.name,
-            'site_code': 'wat',
             'outlet_type': 'SHG',
         }
 
@@ -183,9 +179,8 @@ class LocationImportTest(CommTrackTest):
         existing.save()
 
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': 'newname',
-            'site_code': 'wat',
             'outlet_type': 'SHG',
         }
 
@@ -201,7 +196,7 @@ class LocationImportTest(CommTrackTest):
         sp = make_supply_point(self.loc.domain, existing)
 
         data = {
-            'id': existing._id,
+            'site_code': existing.site_code,
             'name': 'existingloc',
             'default_pp': 77
         }

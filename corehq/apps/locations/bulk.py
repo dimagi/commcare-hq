@@ -48,6 +48,8 @@ def import_locations(domain, worksheets, task=None):
     processed = 0
     total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
 
+    location_site_codes = Location.all_site_codes(domain)
+
     for worksheet in worksheets:
         location_type = worksheet.worksheet.title
         if location_type not in defined_location_types(domain):
@@ -56,7 +58,12 @@ def import_locations(domain, worksheets, task=None):
             data = list(worksheet)
 
             for loc in data:
-                yield import_location(domain, location_type, loc)['message']
+                yield import_location(
+                    domain,
+                    location_type,
+                    loc,
+                    location_site_codes
+                )['message']
                 if task:
                     processed += 1
                     DownloadBase.set_progress(task, processed, total_rows)
@@ -65,7 +72,9 @@ def import_locations(domain, worksheets, task=None):
 def import_location(domain, location_type, location_data):
     data = dict(location_data)
 
-    existing_id = data.pop('id', None)
+    provided_code = data.get('site_code', None)
+
+    # TODO make sure site_code isn't duplicated in the file
 
     parent_id = data.pop('parent_id', None)
 
@@ -81,27 +90,20 @@ def import_location(domain, location_type, location_data):
             )
         }
 
-    if existing_id:
-        try:
-            existing = Location.get(existing_id)
-        except ResourceNotFound:
-            return {
-                'id': None,
-                'message': _("Location with id {0} was not found").format(
-                    existing_id
-                )
-            }
-        if existing.location_type != location_type:
-            return {
-                'id': None,
-                'message': _("Existing location type error, type of {0} is not {1}").format(
-                    existing.name, location_type
-                )
-            }
-        parent = parent_id or existing.parent_id
-    else:
-        existing = None
-        parent = parent_id
+    existing = None
+    parent = parent_id
+    if provided_code:
+        existing = Location.by_site_code(domain, provided_code)
+        if existing:
+            if existing.location_type != location_type:
+                return {
+                    'id': None,
+                    'message': _("Existing location type error, type of {0} is not {1}").format(
+                        existing.name, location_type
+                    )
+                }
+
+            parent = parent_id or existing.parent_id
 
     form_data['parent_id'] = parent
     form_data['name'] = data.pop('name')
