@@ -469,5 +469,9 @@ class McctClientLogPage(McctProjectReview):
 class McctPaidClientsPage(McctClientApprovalPage):
     name = 'mCCT Paid Beneficiary Page'
     slug = 'mcct_paid_clients_page'
-    report_template_path = 'm4change/activateStatus.html'
+    report_template_path = 'm4change/report_content.html'
     display_status = 'paid'
+
+    @property
+    def rows(self):
+        return self.make_rows(self.es_results, with_checkbox=False)
