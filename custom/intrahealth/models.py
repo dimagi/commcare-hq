@@ -42,10 +42,9 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
         ])
 
     domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', get_products),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),)
     save_direct_to_sql = True
 
-    # location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     commandes = report_calcs.Commandes()
@@ -55,8 +54,8 @@ class FicheFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
     domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', get_products),)
     save_direct_to_sql = True
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
@@ -70,7 +69,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
     document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
 
     domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', get_products),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
     save_direct_to_sql = True
 
     location_id = flat_field(get_location_id)
@@ -81,7 +80,54 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
     product = report_calcs.RecapPassage()
 
+class ConsommationFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
+    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    domains = INTRAHEALTH_DOMAINS
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
+    save_direct_to_sql = True
+
+    PPS_name = flat_field(lambda f: f.form['PPS_name'])
+    district_name = flat_field(lambda f: f.form['district_name'])
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+
+    consumption = report_calcs.PPSConsumption()
+
+class TauxConsommationFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
+    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    domains = INTRAHEALTH_DOMAINS
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
+    save_direct_to_sql = True
+
+    PPS_name = flat_field(lambda f: f.form['PPS_name'])
+    district_name = flat_field(lambda f: f.form['district_name'])
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+
+    consumption = report_calcs.PPSConsumption()
+    stock = report_calcs.PPSConsumption('old_stock_total')
+
+class NombreFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
+    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    domains = INTRAHEALTH_DOMAINS
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
+    save_direct_to_sql = True
+
+    PPS_name = flat_field(lambda f: f.form['PPS_name'])
+    district_name = flat_field(lambda f: f.form['district_name'])
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+
+    quantity = report_calcs.PPSConsumption('display_total_stock')
+    cmm = report_calcs.PPSConsumption('default_consumption')
+
 CouvertureFluffPillow = CouvertureFluff.pillow()
 FicheFluffPillow = FicheFluff.pillow()
 RecapPassagePillow = RecapPassageFluff.pillow()
 TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()
+ConsommationFluffPillow = ConsommationFluff.pillow()
+TauxConsommationFluffPillow = TauxConsommationFluff.pillow()
+NombreFluffPillow = NombreFluff.pillow()

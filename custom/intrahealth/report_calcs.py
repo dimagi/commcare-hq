@@ -146,3 +146,4 @@ class RecapPassage(fluff.Calculator):
                 "value": product['billed_consumption'],
                 "group_by": [product['product_name']]
             }
+

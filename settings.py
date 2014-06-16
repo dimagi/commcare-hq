@@ -1051,6 +1051,9 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.FicheFluffPillow',
         'custom.intrahealth.models.RecapPassagePillow'
+        'custom.intrahealth.models.ConsommationFluffPillow',
+        'custom.intrahealth.models.TauxConsommationFluffPillow',
+        'custom.intrahealth.models.NombreFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',

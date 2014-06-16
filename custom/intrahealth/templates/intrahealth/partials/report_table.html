@@ -13,12 +13,13 @@
     </div>
 {% endif %}
 
-<table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
     <thead>
-        {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
-        <tr>
-            {% for header in report_table.headers %}
-                {% if header.visible %}
+        {%  if report_table.headers.complex %}
+            {{ report_table.headers.render_html|safe }}
+        {% else %}
+            <tr>
+                {% for header in report_table.headers %}
                     <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
                         <i class="icon-white"></i>
                         {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
@@ -26,9 +27,9 @@
                             <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
                         {% endif %}
                     </th>
-                {% endif %}
-            {% endfor %}
-        </tr>
+                {% endfor %}
+            </tr>
+        {% endif %}
     </thead>
     <tbody>
     {% block tabular-body %}
@@ -57,18 +58,22 @@
         </tr>
         </tfoot>
     {% endif %}
-    {% if report_table.statistics_rows and report_table.rows %}
-        <tfoot>
-            {% for stats in report_table.statistics_rows %}
-                <tr>
-                {% for col in stats %}
-                    {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
-                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                    {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
-                {% endfor %}
-                </tr>
-            {% endfor %}
-        </tfoot>
+</table>
+
+<script type="text/javascript">
+   {% if report_table and report_table.datatables %}
+        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+
+        var params = {
+                sDom: dataTablesDom,
+                "sPaginationType": "bootstrap",
+                iDisplayLength: 10,
+                iDisplayStart: 0,
+                sScrollX: "100%"
+            };
+
+        var id = '#report_table_{{ report_table.slug }}';
+        $(id).dataTable(params);
 
     {% endif %}
-</table>
+</script>

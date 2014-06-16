@@ -24,8 +24,8 @@ CUSTOM_REPORTS = (
 )
 
 
-def get_products(form):
-    return map(lambda product: product['product_name'], form.form['products'])
+def get_products(form, property):
+    return map(lambda product: product[property], form.form['products'])
 
 def _get_location(form):
     if 'location_id' in form.form:
@@ -56,12 +56,3 @@ def get_location_id_by_type(form, type):
 
 def get_real_date(form):
     return form.form['real_date_repeat'] if 'real_date_repeat' in form.form and form.form['real_date_repeat'] else ''
-
-def get_products(form):
-    products = []
-    for product in form.form['products']:
-        if 'productName' in product:
-            products.append(product['productName'])
-        if 'product_name' in product:
-            products.append(product['product_name'])
-    return products

@@ -34,39 +34,45 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         return context
 
     def get_report_context(self, data_provider):
-        if isinstance(data_provider, DispDesProducts):
-            columns = data_provider.headers
+        if isinstance(data_provider, ConventureData):
+            columns = [c.data_tables_column for c in data_provider.columns]
+            headers = DataTablesHeader(*columns)
         else:
-            columns = data_provider.external_columns + [c.data_tables_column for c in data_provider.columns]
-        headers = DataTablesHeader(*columns)
+            headers = data_provider.headers
         total_row = []
         charts = []
         if self.needs_filters:
             rows = []
         else:
             rows = data_provider.rows
-            
+
+            if data_provider.show_total:
+                if data_provider.custom_total_calculate:
+                    total_row = data_provider.calculate_total_row(rows)
+                else:
+                    total_row = list(calculate_total_row(rows))
+                    if total_row:
+                        total_row[0] = 'Total'
+
             if data_provider.show_charts:
                 charts = list(self.get_chart(
-                    rows,
-                    data_provider.columns,
+                    total_row,
+                    data_provider.headers,
                     x_label=data_provider.chart_x_label,
                     y_label=data_provider.chart_y_label,
                     has_total_column=False
                 ))
-            if data_provider.show_total:
-                total_row = list(calculate_total_row(rows))
-                if total_row:
-                    total_row[0] = 'Total'
 
         context = dict(
             report_table=dict(
                 title=data_provider.title,
+                slug=data_provider.slug,
                 headers=headers,
                 rows=rows,
                 total_row=total_row,
                 default_rows=self.default_rows,
-                datatables=True
+                datatables=data_provider.datatables,
+                start_at_row=0,
             ),
             charts=charts,
             chart_span=12
@@ -79,18 +85,18 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         end = len(columns)
         if has_total_column:
             end -= 1
-        categories = [c.data_tables_column.html for c in columns[1:end]]
+        categories = [c.html for c in columns.header[1:end]]
         chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
         chart.rotateLabels = -45
         chart.marginBottom = 120
         self._chart_data(chart, categories, rows)
         return [chart]
 
-    def _chart_data(self, chart, series, data, start_index=1, x_fn=None, y_fn=None):
-        xfn = x_fn or (lambda x: x['html'])
-        yfn = y_fn or (lambda y: y['sort_key'])
+    def _chart_data(self, chart, series, data):
+        charts = []
         for i, s in enumerate(series):
-            chart.add_dataset(s, [{'x': xfn(d[0]), 'y': yfn(d[start_index + i])} for d in data])
+            charts.append({'x': s, 'y': data[i+1]})
+        chart.add_dataset('products', charts)
 
 class TableuDeBoardReport(MultiReport):
     title = "Tableu De Bord"
@@ -127,4 +133,7 @@ class TableuDeBoardReport(MultiReport):
         return [
             ConventureData(config=config),
             DispDesProducts(config=config),
+            ConsommationData(config=config),
+            TauxConsommationData(config=config),
+            NombreData(config=config)
         ]
