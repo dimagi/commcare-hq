@@ -50,7 +50,7 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     commandes = report_calcs.Commandes()
     recus = report_calcs.Recus()
 
-class FicheFluff(fluff.IndicatorDocument):
+class IntraHealthFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
     domains = INTRAHEALTH_DOMAINS
@@ -60,9 +60,14 @@ class FicheFluff(fluff.IndicatorDocument):
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     PPS_name = flat_field(lambda f: f.form['PPS_name'])
+    district_name = flat_field(lambda f: f.form['district_name'])
     location_id = flat_field(get_location_id)
+
     actual_consumption = report_calcs.PPSConsumption()
     billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
+    stock = report_calcs.PPSConsumption('old_stock_total')
+    quantity = report_calcs.PPSConsumption('display_total_stock')
+    cmm = report_calcs.PPSConsumption('default_consumption')
 
 class RecapPassageFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
@@ -80,54 +85,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
     product = report_calcs.RecapPassage()
 
-class ConsommationFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
-    domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
-    save_direct_to_sql = True
-
-    PPS_name = flat_field(lambda f: f.form['PPS_name'])
-    district_name = flat_field(lambda f: f.form['district_name'])
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-
-    consumption = report_calcs.PPSConsumption()
-
-class TauxConsommationFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
-    domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
-    save_direct_to_sql = True
-
-    PPS_name = flat_field(lambda f: f.form['PPS_name'])
-    district_name = flat_field(lambda f: f.form['district_name'])
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-
-    consumption = report_calcs.PPSConsumption()
-    stock = report_calcs.PPSConsumption('old_stock_total')
-
-class NombreFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
-    domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
-    save_direct_to_sql = True
-
-    PPS_name = flat_field(lambda f: f.form['PPS_name'])
-    district_name = flat_field(lambda f: f.form['district_name'])
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-
-    quantity = report_calcs.PPSConsumption('display_total_stock')
-    cmm = report_calcs.PPSConsumption('default_consumption')
-
 CouvertureFluffPillow = CouvertureFluff.pillow()
-FicheFluffPillow = FicheFluff.pillow()
 RecapPassagePillow = RecapPassageFluff.pillow()
+IntraHealthFluffPillow = IntraHealthFluff.pillow()
 TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()
-ConsommationFluffPillow = ConsommationFluff.pillow()
-TauxConsommationFluffPillow = TauxConsommationFluff.pillow()
-NombreFluffPillow = NombreFluff.pillow()

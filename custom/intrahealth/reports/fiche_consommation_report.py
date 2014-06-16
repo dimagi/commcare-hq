@@ -1,24 +1,17 @@
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import FicheData
 
-class FicheConsommationReport(DatespanMixin, GenericTabularReport, CustomProjectReport):
+class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularReport, CustomProjectReport):
     name = "Fiche Consommation"
     slug = 'fiche_consommation'
     report_title = "Fiche Consommation"
     fields = [DatespanFilter, AsyncLocationFilter]
-    no_value = {'sort_key': 0, 'html': 0}
-    groups = []
-    PRODUCT_NAMES = {
-        'Preservatif Feminin': u'Pr\xe9servatif F\xe9minin',
-        'Preservatif Masculin': u'Pr\xe9servatif Masculin',
-        'Depo-Provera': u'D\xe9po-Provera',
-    }
+    col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
 
     @property
     def location(self):
@@ -40,46 +33,6 @@ class FicheConsommationReport(DatespanMixin, GenericTabularReport, CustomProject
                 config.update(dict(region_id=self.location._id))
         return config
 
-    def _safe_get(self, dictionary, element):
-            return dictionary[element] if element in dictionary else None
-
-    @property
-    def headers(self):
-        header = DataTablesHeader()
-        columns = self.model.columns
-        header.add_column(DataTablesColumnGroup('', columns[0].data_tables_column))
-        self.groups = list(set(zip(*self.model.data.keys())[0]))
-        self.groups = sorted(set(map(lambda group: self._safe_get(self.PRODUCT_NAMES, group) or group, self.groups)))
-        for group in self.groups:
-            header.add_column(DataTablesColumnGroup(group,
-                                                    *[columns[j].data_tables_column for j in xrange(1, len(columns))]))
-        return header
-
     @property
     def model(self):
         return FicheData(config=self.report_config)
-
-    @property
-    def rows(self):
-        data = self.model.data
-        ppss = sorted(list(set(zip(*data.keys())[1])))
-        rows = []
-
-        formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
-        data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
-        reversed_map = dict(zip(self.PRODUCT_NAMES.values(), self.PRODUCT_NAMES.keys()))
-        for pps in ppss:
-            row = [pps]
-            for group in self.groups:
-                if (group, pps) in data:
-                    product = data[(group, pps)]
-                    row += [product['actual_consumption'],
-                                    product['billed_consumption'], product['consommation-non-facturable']]
-                elif (self._safe_get(reversed_map, group), pps) in data:
-                    product = data[(reversed_map[group], pps)]
-                    row += [product['actual_consumption'],
-                            product['billed_consumption'], product['consommation-non-facturable']]
-                else:
-                    row += [self.no_value, self.no_value, self.no_value]
-            rows.append(row)
-        return rows

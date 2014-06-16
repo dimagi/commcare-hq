@@ -73,7 +73,13 @@
             };
 
         var id = '#report_table_{{ report_table.slug }}';
-        $(id).dataTable(params);
+        var datatable = $(id).dataTable(params);
 
+       {% if report_table.fix_column %}
+            new FixedColumns(datatable, {
+               iLeftColumns: 1,
+               iLeftWidth: 130
+            });
+       {% endif %}
     {% endif %}
 </script>

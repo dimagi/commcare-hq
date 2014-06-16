@@ -5,10 +5,11 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
+from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import *
 
 
-class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersMixin, DatespanMixin):
 
     title = ''
     report_template_path = "intrahealth/multi_report.html"
@@ -34,18 +35,25 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
         return context
 
     def get_report_context(self, data_provider):
-        if isinstance(data_provider, ConventureData):
-            columns = [c.data_tables_column for c in data_provider.columns]
-            headers = DataTablesHeader(*columns)
-        else:
-            headers = data_provider.headers
+
         total_row = []
         charts = []
         if self.needs_filters:
+            headers = []
             rows = []
         else:
-            rows = data_provider.rows
-
+            if isinstance(data_provider, ConventureData):
+                columns = [c.data_tables_column for c in data_provider.columns]
+                headers = DataTablesHeader(*columns)
+                rows = data_provider.rows
+            elif isinstance(data_provider, DispDesProducts):
+                headers = data_provider.headers
+                rows = data_provider.rows
+            else:
+                self.model = data_provider
+                headers = self.headers
+                rows = self.rows
+            print rows
             if data_provider.show_total:
                 if data_provider.custom_total_calculate:
                     total_row = data_provider.calculate_total_row(rows)
@@ -57,7 +65,7 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
             if data_provider.show_charts:
                 charts = list(self.get_chart(
                     total_row,
-                    data_provider.headers,
+                    headers,
                     x_label=data_provider.chart_x_label,
                     y_label=data_provider.chart_y_label,
                     has_total_column=False
@@ -73,6 +81,7 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMix
                 default_rows=self.default_rows,
                 datatables=data_provider.datatables,
                 start_at_row=0,
+                fix_column=data_provider.fix_left_col
             ),
             charts=charts,
             chart_span=12

@@ -28,6 +28,7 @@ class BaseSqlData(SqlData):
     show_total = True
     custom_total_calculate = False
     no_value = {'sort_key': 0, 'html': 0}
+    fix_left_col = False
 
     def percent_fn(self, x, y):
         return "%(p)s%%" % \
@@ -47,11 +48,6 @@ class BaseSqlData(SqlData):
     @property
     def group_by(self):
         return []
-
-    @property
-    def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
 
 class ConventureData(BaseSqlData):
@@ -90,6 +86,11 @@ class ConventureData(BaseSqlData):
             AggregateColumn("Exhaustivite des donnees", self.percent_fn,
                             [AliasColumn('visited'), AliasColumn('submitted')]),
         ]
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
 
 class DispDesProducts(BaseSqlData):
@@ -159,8 +160,10 @@ class DispDesProducts(BaseSqlData):
 
 class FicheData(BaseSqlData):
     title = ''
-    table_name = 'fluff_FicheFluff'
+    table_name = 'fluff_IntraHealthFluff'
     show_total = True
+    col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
+    have_groups = True
 
     @property
     def group_by(self):
@@ -214,12 +217,14 @@ class RecapPassageData(BaseSqlData):
 class ConsommationData(BaseSqlData):
     slug = 'consommation'
     title = 'Consommation'
-    table_name = 'fluff_ConsommationFluff'
+    table_name = 'fluff_IntraHealthFluff'
     show_charts = True
     chart_x_label = 'Products'
     chart_y_label = 'Number of consumption'
-    products = []
     datatables = True
+    fix_left_col = True
+    col_names = ['consumption_total']
+    have_groups = False
 
     @property
     def group_by(self):
@@ -239,45 +244,19 @@ class ConsommationData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Consumption"), SumColumn('consumption_total')))
+        columns.append(DatabaseColumn(_("Consumption"), SumColumn('actual_consumption_total')))
         return columns
 
-    @property
-    def headers(self):
-        header = DataTablesHeader()
-        columns = self.columns
-        header.add_column(columns[0].data_tables_column)
-        self.products = sorted(list(set(zip(*self.data.keys())[0])))
-        for product in self.products:
-            header.add_column(DataTablesColumn(product))
-        return header
-
-    @property
-    def rows(self):
-        data = self.data
-        locs = sorted(list(set(zip(*data.keys())[1])))
-        rows = []
-
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
-        data = dict(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
-        for loc in locs:
-            row = [loc]
-            for prd in self.products:
-                if (prd, loc) in data:
-                    product = data[(prd, loc)]
-                    row.append(product['consumption_total'])
-                else:
-                    row.append(self.no_value)
-            rows.append(row)
-        return rows
 
 class TauxConsommationData(BaseSqlData):
     slug = 'taux_consommation'
     title = 'Taux de Consommation'
-    table_name = 'fluff_TauxConsommationFluff'
-    products = []
+    table_name = 'fluff_IntraHealthFluff'
     datatables = True
     custom_total_calculate = True
+    fix_left_col = True
+    col_names = ['consumption', 'stock', 'taux-consommation']
+    have_groups = True
 
     @property
     def group_by(self):
@@ -296,45 +275,12 @@ class TauxConsommationData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Consommation reelle"), SumColumn('consumption_total', alias="consumption")))
+        columns.append(DatabaseColumn(_("Consommation reelle"), SumColumn('actual_consumption_total', alias="consumption")))
         columns.append(DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('stock_total', alias="stock")))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
                                    [AliasColumn('stock'), AliasColumn('consumption')]))
         return columns
 
-    @property
-    def headers(self):
-        header = DataTablesHeader()
-        columns = self.columns
-        header.add_column(DataTablesColumnGroup('', columns[0].data_tables_column))
-        self.products = sorted(list(set(zip(*self.data.keys())[0])))
-        for prd in self.products:
-            header.add_column(DataTablesColumnGroup(prd,
-                                                    *[columns[j].data_tables_column for j in xrange(1, len(columns))]))
-
-        return header
-
-    @property
-    @memoized
-    def rows(self):
-        data = self.data
-        ppss = sorted(list(set(zip(*data.keys())[1])))
-        rows = []
-
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
-        data = dict(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
-        for pps in ppss:
-            row = [pps]
-            for prd in self.products:
-                if (prd, pps) in data:
-                    product = data[(prd, pps)]
-                    row += [product['consumption'], product['stock'], product['taux-consommation']]
-                else:
-                    row += [self.no_value, self.no_value, self.no_value]
-            rows.append(row)
-        return rows
-
-    @property
     def calculate_total_row(self, rows):
         total_row = []
         if len(rows) > 0:
@@ -356,10 +302,12 @@ class TauxConsommationData(BaseSqlData):
 class NombreData(BaseSqlData):
     slug = 'nombre'
     title = 'Nombre de mois de stock disponibles et utilisables aux PPS'
-    table_name = 'fluff_NombreFluff'
-    products = []
+    table_name = 'actual_consumption_total'
     datatables = True
     custom_total_calculate = True
+    fix_left_col = True
+    col_names = ['quantity', 'cmm', 'nombre-mois-stock-disponible-et-utilisable']
+    have_groups = True
 
     @property
     def group_by(self):
@@ -385,48 +333,20 @@ class NombreData(BaseSqlData):
                                    [AliasColumn('quantity'), AliasColumn('cmm')]))
         return columns
 
-    @property
-    def headers(self):
-        header = DataTablesHeader()
-        columns = self.columns
-        header.add_column(DataTablesColumnGroup('', columns[0].data_tables_column))
-        self.products = sorted(list(set(zip(*self.data.keys())[0])))
-        for prd in self.products:
-            header.add_column(DataTablesColumnGroup(prd,
-                                                    *[columns[j].data_tables_column for j in xrange(1, len(columns))]))
-
-        return header
-
-    @property
-    def rows(self):
-        data = self.data
-        ppss = sorted(list(set(zip(*data.keys())[1])))
-        rows = []
-
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
-        data = dict(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
-        for pps in ppss:
-            row = [pps]
-            for prd in self.products:
-                if (prd, pps) in data:
-                    product = data[(prd, pps)]
-                    row += [product['quantity'], product['cmm'], product['nombre-mois-stock-disponible-et-utilisable']]
-                else:
-                    row += [self.no_value, self.no_value, self.no_value]
-            rows.append(row)
-        return rows
-
-    @property
     def calculate_total_row(self, rows):
         total_row = []
         if len(rows) > 0:
             num_cols = len(rows[0])
             for i in range(num_cols):
-                colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
-                if len(columns):
-                    total_row.append(reduce(lambda x, y: x + y, columns, 0))
+                if i != 0 and i % 3 == 0:
+                    cp = total_row[-2:]
+                    total_row.append("%0.3f" % (cp[0] / (float(cp[1]) or 1.0)))
                 else:
-                    total_row.append('')
+                    colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                    if len(columns):
+                        total_row.append(reduce(lambda x, y: x + y, columns, 0))
+                    else:
+                        total_row.append('')
 
         return total_row

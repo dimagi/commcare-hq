@@ -1,5 +1,7 @@
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
+from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
