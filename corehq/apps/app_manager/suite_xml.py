@@ -1,4 +1,5 @@
 from collections import namedtuple
+import re
 from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
@@ -323,6 +324,17 @@ class Detail(IdNode):
 
     variables = property(get_variables, set_variables)
 
+    def get_all_xpaths(self):
+        result = set()
+        if self._variables:
+            for variable in self.variables:
+                result.add(variable.function)
+        for field in self.fields:
+            result.add(field.header.text.xpath_function)
+            result.add(field.template.text.xpath_function)
+        result.discard(None)
+        return result
+
 
 class Fixture(IdNode):
     ROOT_NAME = 'fixture'
@@ -441,6 +453,18 @@ LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
 CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
 SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
 LOCATIONS_INSTANCE = Instance(id='commtrack:locations', src='jr://fixture/commtrack:locations')
+
+INSTANCE_BY_ID = {
+    instance.id: instance
+    for instance in (
+        GROUP_INSTANCE,
+        PRODUCTS_INSTANCE,
+        LEDGER_INSTANCE,
+        CASE_INSTANCE,
+        SESSION_INSTANCE,
+        LOCATIONS_INSTANCE,
+    )
+}
 
 
 class SuiteGenerator(SuiteGeneratorBase):
@@ -593,26 +617,52 @@ class SuiteGenerator(SuiteGeneratorBase):
         return select_chain
 
     @memoized
-    def get_detail_ids(self):
-        return [detail.id for detail in self.details]
+    def get_detail_mapping(self):
+        return {detail.id: detail for detail in self.details}
 
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
             module=module,
             detail_type=detail_type,
         )
-        return detail_id if detail_id in self.get_detail_ids() else None
+        return detail_id if detail_id in self.get_detail_mapping() else None
+
+    @staticmethod
+    def add_referenced_instances(entry, details_by_id):
+        detail_ids = set()
+        instance_re = r"""instance\(['"](\w+)['"]\)"""
+        for datum in entry.datums:
+            detail_ids.add(datum.detail_confirm)
+            detail_ids.add(datum.detail_select)
+        details = [details_by_id[detail_id] for detail_id in detail_ids
+                   if detail_id]
+
+        xpaths = set()
+        for detail in details:
+            xpaths.update(detail.get_all_xpaths())
+
+        instances = set()
+        for xpath in xpaths:
+            instance_names = re.findall(instance_re, xpath)
+            for instance_name in instance_names:
+                instance = INSTANCE_BY_ID.get(instance_name)
+                if instance:
+                    instances.add(instance)
+
+        for instance in instances:
+            entry.require_instance(instance)
 
     @property
     def entries(self):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
-
+        results = []
+        details_by_id = self.get_detail_mapping()
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command=Command(
+                e.command = Command(
                     id=self.id_strings.form_command(form),
                     locale_id=self.id_strings.form_locale(form),
                     media_image=form.media_image,
@@ -623,9 +673,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'advanced_form': self.configure_entry_advanced_form,
                     'careplan_form': self.configure_entry_careplan_form,
                 }[form.form_type]
-
                 config_entry(module, e, form)
-                yield e
+                results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
                 e = Entry(
@@ -654,7 +703,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ))
                         e.require_instance(PRODUCTS_INSTANCE)
                         e.require_instance(LEDGER_INSTANCE)
-                yield e
+                results.append(e)
+        for e in results:
+            self.add_referenced_instances(e, details_by_id)
+        return results
 
     def get_indicator_instances(self, module, form=None):
         indicator_sets = []
