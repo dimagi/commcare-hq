@@ -252,7 +252,6 @@ HQ_APPS = (
     'soil',
     'toggle',
     'touchforms.formplayer',
-    'hqbilling',
     'phonelog',
     'hutch',
     'pillowtop',
@@ -871,7 +870,6 @@ COUCHDB_APPS = [
     'phonelog',
     'registration',
     'hutch',
-    'hqbilling',
     'wisepill',
     'fri',
     'crs_reports',
@@ -1164,6 +1162,6 @@ TRAVIS_TEST_GROUPS = (
         'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqbilling', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )
