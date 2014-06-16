@@ -31,13 +31,29 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
             product_id = product._id
-            product_name  = self.product_names.next()
+            product_name = self.product_names.next()
             product_unit = self._random_string(20)
             product_code = self._random_string(20)
             product_description = self._random_string(20)
             product_category = self._random_string(20)
             product_program_id = self._random_string(20)
             product_cost = 0 if i == 0 else float('%g' % random.uniform(1, 100))
+
+            # only set this on one product, so we can also test that
+            # this node doesn't get sent down on every product
+            if i == 0:
+                product_data = {
+                    'special_number': '555111'
+                }
+
+                custom_data_xml = '''
+                    <product_data>
+                        <special_number>555111</special_number>
+                    </product_data>
+                '''
+            else:
+                product_data = {}
+                custom_data_xml = ''
 
             products += '''
                 <product id="{id}">
@@ -48,6 +64,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                     <category>{category}</category>
                     <program_id>{program_id}</program_id>
                     <cost>{cost}</cost>
+                    {custom_data}
                 </product>
             '''.format(
                 id=product_id,
@@ -57,7 +74,8 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                 description=product_description,
                 category=product_category,
                 program_id=product_program_id,
-                cost=product_cost
+                cost=product_cost,
+                custom_data=custom_data_xml
             )
 
             product.name = product_name
@@ -67,6 +85,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
             product.category = product_category
             product.program_id = product_program_id
             product.cost = product_cost
+            product.product_data = product_data
             product.save()
         fixture = product_fixture_generator(user, V1, None)
 

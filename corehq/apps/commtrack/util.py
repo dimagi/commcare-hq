@@ -285,3 +285,7 @@ def wrap_commtrack_case(case_json):
 
 def unicode_slug(text):
     return slugify(unicode(unidecode(text)))
+
+
+def encode_if_needed(val):
+    return val.encode("utf8") if isinstance(val, unicode) else val

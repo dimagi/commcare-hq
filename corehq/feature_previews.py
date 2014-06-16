@@ -74,6 +74,16 @@ ENUM_IMAGE = FeaturePreview(
     help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
 )
 
+PRODUCT_DATA = FeaturePreview(
+    slug='product_data',
+    label=_('Enable Custom Product Data'),
+    description=_(
+        "Enables custom product data, similar to custom user registration "
+        "data, that can be configured on the product page and "
+        "accessed via the product fixture on the phone."
+    ),
+)
+
 
 def commtrackify(domain_name, checked):
     from corehq.apps.domain.models import Domain
