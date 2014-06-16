@@ -56,13 +56,15 @@ class FicheFluff(fluff.IndicatorDocument):
     document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', get_products),)
+    save_direct_to_sql = True
+
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     PPS_name = flat_field(lambda f: f.form['PPS_name'])
     location_id = flat_field(get_location_id)
     actual_consumption = report_calcs.PPSConsumption()
     billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
-    save_direct_to_sql = True
+
 
 
 CouvertureFluffPillow = CouvertureFluff.pillow()
