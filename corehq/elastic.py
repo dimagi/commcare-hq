@@ -61,6 +61,10 @@ class ESError(Exception):
     pass
 
 
+def run_query(url, q):
+    return get_es().get(url, data=q)
+
+
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
@@ -196,102 +200,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         raise ESError(msg)
 
     return result
-
-
-class ESQuery(object):
-    """
-    Usage:
-    query = ESQuery('users')
-    query.query = <arbitrary json>
-    query.domain('my_project')
-    results = query.run()
-    """
-    # extension notes:
-    # to add a new filter or query, the usage should be es_query(parameter)
-    match_all = {'match_all': {}}
-    query = {}
-    index = None
-
-    def __init__(self, index, **params):
-        if index not in ES_URLS:
-            msg = "%s is not a valid ES index.  Available options are: %s" % (
-                index, ', '.join(ES_URLS.keys()))
-            raise IndexError(msg)
-        self.index = index
-        for fn, val in params.items():
-            gettattr(self, fn)(val)
-
-    def is_normal(self):
-        try:
-            self.query['query']['filtered']['filter']['and']
-            self.query['query']['filtered']['query']['bool']['must']
-            assert list(self.query['query']) == ['filtered']
-        except (KeyError, AssertionError):
-            return False
-        else:
-            return True
-
-    def normalize(self):
-        """
-        structure this to be of the form:
-        {"query": {
-            "filtered": {
-                "filter": {
-                    "and": []
-                },
-                "query": {
-                    "bool": {
-                        "must": []
-                    }
-                }
-            }
-        }}
-        """
-        if self.is_normal():
-            return
-        query = self.query.get('query', {})
-        miscreants = []
-        for k, v in query.items():
-            if k != "filtered":
-                miscreants.append((k, v))
-        filtered = query.get('filtered', {})
-        existing_filter = filtered.get('filter', {})
-        and_filter = existing_filter.pop('and', [])
-        if existing_filter:
-            and_filter.append(existing_filter)
-        # and_filter.append(filter)
-        # filtered['filter'] = {'and': and_filter}
-        query['filtered'] = filtered
-        self.query['query'] = query
-
-    @property
-    def filters(self):
-        self.normalize()
-        return self.query['query']['filtered']['filter']['and']
-
-    @property
-    def queries(self):
-        self.normalize()
-        return self.query['query']['filtered']['query']['bool']['must']
-
-    def url(self):
-        return ES_URLS[index],
-
-    def fuzzy_query(self, q):
-        self.queries.append({"fuzzy_like_this": {"like_text": q}})
-
-    def doc_type(self, doc_type):
-        self.filters.append({"term": {"doc_type": doc_type}})
-
-    def domain(self, domain):
-        if self.index == "users":
-            filter = {"or": [
-                {"term": {"domain.exact": domain}},
-                {"term": {"domain_memberships.domain.exact": domain}},
-            ]}
-        else:
-            filter = {"term": {"domain.exact": domain}}
-        self.filters.append(filter)
 
 
 def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
