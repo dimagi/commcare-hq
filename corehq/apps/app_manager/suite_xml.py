@@ -220,7 +220,7 @@ class Entry(XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
-    def needs_instance(self, *instances):
+    def require_instance(self, *instances):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
             if (instance.id, instance.src) not in used:
@@ -637,7 +637,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(module, Module):
                     self.configure_entry_module(module, e, use_filter=False)
                 elif isinstance(module, AdvancedModule):
-                    e.needs_instance(CASE_INSTANCE)
+                    e.require_instance(CASE_INSTANCE)
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
                         nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
@@ -652,8 +652,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
-                        e.needs_instance(PRODUCTS_INSTANCE)
-                        e.needs_instance(LEDGER_INSTANCE)
+                        e.require_instance(PRODUCTS_INSTANCE)
+                        e.require_instance(LEDGER_INSTANCE)
                 yield e
 
     def get_indicator_instances(self, module, form=None):
@@ -702,7 +702,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.assertions.append(assertion)
 
     def add_case_sharing_assertion(self, entry):
-        entry.needs_instance(GROUP_INSTANCE)
+        entry.require_instance(GROUP_INSTANCE)
         self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
 
     def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
@@ -747,7 +747,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             for instance in self.get_extra_instances(module):
                 yield instance
 
-        e.needs_instance(*get_instances())
+        e.require_instance(*get_instances())
 
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
@@ -805,7 +805,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             for instance in self.get_extra_instances(module, form):
                 yield instance
 
-        e.needs_instance(*get_instances())
+        e.require_instance(*get_instances())
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -917,8 +917,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
-                    e.needs_instance(PRODUCTS_INSTANCE)
-                    e.needs_instance(LEDGER_INSTANCE)
+                    e.require_instance(PRODUCTS_INSTANCE)
+                    e.require_instance(LEDGER_INSTANCE)
             except IndexError:
                 pass
 
@@ -926,8 +926,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            e.needs_instance(CASE_INSTANCE)
-            e.needs_instance(SESSION_INSTANCE)
+            e.require_instance(CASE_INSTANCE)
+            e.require_instance(SESSION_INSTANCE)
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
