@@ -222,7 +222,7 @@ class ConsommationData(BaseSqlData):
     chart_y_label = 'Number of consumption'
     datatables = True
     fix_left_col = True
-    col_names = ['consumption_total']
+    col_names = ['actual_consumption_total']
     have_groups = False
 
     @property
@@ -301,7 +301,7 @@ class TauxConsommationData(BaseSqlData):
 class NombreData(BaseSqlData):
     slug = 'nombre'
     title = 'Nombre de mois de stock disponibles et utilisables aux PPS'
-    table_name = 'actual_consumption_total'
+    table_name = 'fluff_IntraHealthFluff'
     datatables = True
     custom_total_calculate = True
     fix_left_col = True

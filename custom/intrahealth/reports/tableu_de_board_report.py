@@ -54,7 +54,6 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
                 self.model = data_provider
                 headers = self.headers
                 rows = self.rows
-            print rows
             if data_provider.show_total:
                 if data_provider.custom_total_calculate:
                     total_row = data_provider.calculate_total_row(rows)

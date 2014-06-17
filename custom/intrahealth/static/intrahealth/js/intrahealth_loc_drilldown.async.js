@@ -31,7 +31,7 @@ function IntrahealthLocModel(data, root, depth) {
         //'all choices' meta-entry; annoying that we have to stuff this in
         //the children list, but all my attempts to make computed observables
         //based of children() caused infinite loops.
-        if (this.depth != 0) {
+        if (this.depth > REQUIRED) {
             children.splice(0, 0, {name: '_all'});
         }
       }
