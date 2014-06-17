@@ -12,8 +12,8 @@ def get_ex_tb(message, ex_class=None):
         return e, sys.exc_info()[2]
 
 
-def create_error(id='123', message='message', attempts=0, pillow=None, ex_class=None):
-    error = PillowError.get_or_create({'id': id}, pillow or FakePillow())
+def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
+    error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
     return error
@@ -25,13 +25,16 @@ class PillowRetryTestCase(TestCase):
 
     def test_id(self):
         id = '12345'
-        error = create_error(id)
+        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        error = create_error(change_dict)
         self.assertEqual(error.doc_id, id)
         self.assertEqual(error.pillow, 'pillow_retry.tests.FakePillow')
+        self.assertEqual(error.change_dict, change_dict)
+
 
     def test_attempts(self):
         message = 'ex message'
-        error = create_error(message=message, attempts=1)
+        error = create_error({'id': '123'}, message=message, attempts=1)
         self.assertEqual(error.total_attempts, 1)
         self.assertEqual(error.current_attempt, 1)
         self.assertTrue(message in error.error_traceback)
@@ -46,7 +49,7 @@ class PillowRetryTestCase(TestCase):
     def test_get_or_create(self):
         message = 'abcd'
         id = '12335'
-        error = create_error(id, message=message, attempts=2)
+        error = create_error({'id': id}, message=message, attempts=2)
         error.save()
 
         get = PillowError.get_or_create({'id': id}, FakePillow())
@@ -61,7 +64,7 @@ class PillowRetryTestCase(TestCase):
     def test_get_errors_to_process(self):
         date = datetime.utcnow()
         for i in range(0, 5):
-            error = create_error(id=i, attempts=i+1)
+            error = create_error({'id': i}, attempts=i+1)
             error.date_next_attempt = date.replace(day=i+1)
             error.save()
 
@@ -73,7 +76,6 @@ class PillowRetryTestCase(TestCase):
         errors = PillowError.get_errors_to_process(
             date.replace(day=3),
         ).all()
-        self.assertEqual(len(errors), 3)
 
 
 class FakePillow(BasicPillow):
