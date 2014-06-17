@@ -10,6 +10,8 @@ import datetime
 import re
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 import simplejson
 from sqlagg.columns import SimpleColumn, SumColumn
@@ -20,10 +22,9 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin, \
-    ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
+
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
-from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
@@ -34,7 +35,7 @@ from custom.opm import HealthStatusMixin
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
-from dimagi.utils.decorators.memoized import memoized
+
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
@@ -42,7 +43,7 @@ from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
 import logging
-from corehq.apps.reports.standard.maps import GenericMapReport, ElasticSearchMapReport
+from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 
 
 class OpmCaseSqlData(SqlData):
@@ -617,7 +618,15 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
         self.is_rendered_as_email = True
         self.use_datatables = False
         self.override_template = "opm/hsr_print.html"
-        return HttpResponse(self._async_context()['report'])
+        self.update_report_context()
+        self.pagination.count = 1000000
+        self.context['report_table'].update(
+            rows=self.rows
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+            context_instance=RequestContext(self.request)
+        )
+        return HttpResponse(rendered_report)
 
     @property
     def export_table(self):
