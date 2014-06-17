@@ -651,6 +651,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         xpaths = set()
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
+        for assertion in entry.assertions:
+            if assertion.test:
+                xpaths.add(assertion.test)
 
         instances = set()
         for xpath in xpaths:
@@ -764,8 +767,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.assertions.append(assertion)
 
     def add_case_sharing_assertion(self, entry):
-        entry.require_instance(GROUP_INSTANCE)
-        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
+        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1",
+                           'case_sharing.exactly_one_group')
 
     def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
         self.add_assertion(
