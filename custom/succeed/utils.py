@@ -97,7 +97,7 @@ def update_patient_target_dates(case):
             next_visit = VISIT_SCHEDULE[visit_key + 1]
         except IndexError:
             next_visit = 'last'
-        if next_visit != 'last':
+        if next_visit != 'last' and case.get_case_property("randomization_date") is not None:
             rand_date = dateutil.parser.parse(get_randomization_date(case))
             tg_date = rand_date.date() + timedelta(days=next_visit['days'])
             case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
