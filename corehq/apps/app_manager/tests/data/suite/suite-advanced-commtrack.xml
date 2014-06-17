@@ -349,6 +349,7 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="products" src="jr://fixture/commtrack:products"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
       <datum id="product_id" nodeset="instance('products')/products/product" value="./@id" detail-select="m1_product_short"/>
