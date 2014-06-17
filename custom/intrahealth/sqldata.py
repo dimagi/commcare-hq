@@ -49,6 +49,10 @@ class BaseSqlData(SqlData):
     def group_by(self):
         return []
 
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
 class ConventureData(BaseSqlData):
     slug = 'conventure'
@@ -86,11 +90,6 @@ class ConventureData(BaseSqlData):
             AggregateColumn("Exhaustivite des donnees", self.percent_fn,
                             [AliasColumn('visited'), AliasColumn('submitted')]),
         ]
-
-    @property
-    def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
 
 class DispDesProducts(BaseSqlData):

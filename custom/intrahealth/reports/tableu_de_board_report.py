@@ -5,6 +5,7 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
+from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import *
 
@@ -109,7 +110,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
 
 class TableuDeBoardReport(MultiReport):
     title = "Tableu De Bord"
-    fields = [DatespanFilter, AsyncLocationFilter]
+    fields = [DatespanFilter, LocationFilter]
     name = "Tableu De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
