@@ -7,7 +7,6 @@ from django import forms
 from django.core.urlresolvers import reverse
 import re
 from django.dispatch import receiver
-from django.db.models.signals import post_save
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -45,6 +44,22 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
+
+    def save(self, *args, **kwargs):
+        if not self.site_code:
+            matcher = re.compile("[\W\d]+")
+            name_slug = matcher.sub('_', self.name.lower()).strip('_')
+            postfix = ''
+
+            while name_slug + postfix in Location.site_codes_for_domain(self.domain):
+                if postfix:
+                    postfix = str(int(postfix) + 1)
+                else:
+                    postfix = '1'
+
+            self.site_code = name_slug + postfix
+
+        return super(Location, self).save(*args, **kwargs)
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
@@ -158,23 +173,6 @@ class Location(CachedCouchDocumentMixin, Document):
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
-
-
-@receiver(post_save, sender=Location)
-def generate_site_code(sender, instance, *args, **kwargs):
-    if not instance.site_code:
-        matcher = re.compile("[\W\d]+")
-        name_slug = matcher.sub('_', self.name.lower()).strip('_')
-        postfix = ''
-
-        while name_slug + postfix in Location.site_codes_for_domain(self.domain):
-            if postfix:
-                postfix = str(int(postfix) + 1)
-            else:
-                postfix = '1'
-
-        instance.site_code = name_slug + postfix
-        instance.save()
 
 def root_locations(domain):
     results = Location.get_db().view('locations/hierarchy',

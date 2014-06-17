@@ -139,8 +139,8 @@ def location_custom_properties(domain, loc_type):
     prop_site_code = CustomProperty(
         name='site_code',
         label='SMS Code',
-        required=True,
         unique='global',
+        help_text='A unique system code for this location. Leave this blank to have it auto generated'
     )
 
     try:
@@ -149,8 +149,10 @@ def location_custom_properties(domain, loc_type):
         properties = []
 
     loc_config = get_loc_config(domain)
-    if not loc_config[loc_type].administrative:
-        properties.insert(0, prop_site_code)
+
+    if loc_config[loc_type].administrative:
+        prop_site_code['label'] = 'Site Code'
+    properties.insert(0, prop_site_code)
 
     return properties
 
