@@ -1,4 +1,6 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+from functools import total_ordering
+from os.path import commonprefix
 import re
 from corehq.apps.app_manager import id_strings
 import urllib
@@ -364,6 +366,30 @@ class Suite(XmlObject):
     descriptor = StringField('@descriptor')
 
 
+@total_ordering
+class DatumMeta(object):
+    """
+    Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
+    to SessionDatum.nodeset and SessionDatum.function attributes.
+    """
+    def __init__(self, session_datum):
+        self.id = session_datum.id
+        self.nodeset = session_datum.nodeset
+        self.function = session_datum.function
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return 'DatumMeta(id={})'.format(self.id)
+
+
 def get_default_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
 
@@ -444,7 +470,11 @@ class SuiteGeneratorBase(object):
             getattr(suite, attr).extend(getattr(self, attr))
 
         map(add_to_suite, self.sections)
+        self.post_process(suite)
         return suite.serializeDocument(pretty=True)
+
+    def post_process(self, suite):
+        pass
 
 
 GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
@@ -477,6 +507,89 @@ class SuiteGenerator(SuiteGeneratorBase):
         'menus',
         'fixtures',
     )
+
+    def post_process(self, suite):
+        self.add_form_workflow(suite)
+
+    def add_form_workflow(self, suite):
+        """
+        post_form_workflow = 'module':
+          * Add stack frame and a command with value = "module command"
+
+        post_form_workflow = 'previous_screen':
+          * Add stack frame and a command with value = "module command"
+          * Find longest list of common datums between form entries for the module and add datums
+            to the stack frame for each.
+          * Add a command to the frame with value = "form command"
+          * Add datums to the frame for any remaining datums for that form.
+          * Remove any autoselect items from the end of the stack frame.
+          * Finally remove the last item from the stack frame.
+        """
+        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS
+
+        for module in self.modules:
+            for form in module.get_forms():
+                if form.post_form_workflow != WORKFLOW_DEFAULT:
+                    form_command = self.id_strings.form_command(form)
+                    module_id, form_id = form_command.split('-')
+
+                    entry = self.get_form_entry(suite, form_command)
+                    entry.stack = Stack()
+                    frame = CreateFrame()
+                    frame.add_command(self.id_strings.menu(module))
+                    entry.stack.add_frame(frame)
+
+                    if form.post_form_workflow == WORKFLOW_PREVIOUS:
+                        module_datums = self.get_module_datums(suite, module_id)
+                        form_datums = module_datums[form_id]
+                        datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+                        common_datums = commonprefix(datums_list)
+                        remaining_datums = form_datums[len(common_datums):]
+
+                        frame_children = list(common_datums)
+                        frame_children.append(self.id_strings.form_command(form))
+                        frame_children.extend(remaining_datums)
+
+                        last = frame_children.pop()
+                        while isinstance(last, DatumMeta) and last.function:
+                            # keep removing last element until we hit a command
+                            # or a non-autoselect datum
+                            last = frame_children.pop()
+
+                        requires_session = False
+                        for child in frame_children:
+                            if isinstance(child, basestring):
+                                frame.add_command(child)
+                            else:
+                                frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+                                requires_session = True
+
+                        if requires_session and not any(i for i in entry.instances if i.id == 'commcaresession'):
+                                entry.instances.append(
+                                    Instance(id='commcaresession', src='jr://instance/session')
+                                )
+
+    def get_module_datums(self, suite, module_id):
+        _, datums = self._get_entries_datums(suite)
+        return datums[module_id]
+
+    def get_form_entry(self, suite, form_command):
+        entries, _ = self._get_entries_datums(suite)
+        return entries[form_command]
+
+    @memoized
+    def _get_entries_datums(self, suite):
+        datums = defaultdict(lambda: defaultdict(list))
+        entries = {}
+        for e in suite.entries:
+            command = e.node.find('command').get('id')
+            module_id, form_id = command.split('-', 1)
+            if form_id != 'case-list':
+                entries[command] = e
+                for d in e.datums:
+                    datums[module_id][form_id].append(DatumMeta(d))
+
+        return entries, datums
 
     @property
     def xform_resources(self):

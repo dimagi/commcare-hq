@@ -1424,6 +1424,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.put_in_root = True if put_in_root == "True" else False
     if should_edit('form_filter'):
         form.form_filter = req.POST['form_filter']
+    if should_edit('post_form_workflow'):
+        form.post_form_workflow = req.POST['post_form_workflow']
 
     _handle_media_edits(req, form, should_edit, resp)
 
