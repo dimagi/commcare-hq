@@ -64,7 +64,7 @@ class LocationsListView(BaseLocationView):
 
 class LocationSettingsView(BaseCommTrackManageView):
     urlname = 'location_settings'
-    page_title = ugettext_noop("Locations (Advanced)")
+    page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
 
     @property

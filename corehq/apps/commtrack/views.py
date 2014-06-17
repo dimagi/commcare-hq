@@ -50,7 +50,7 @@ class BaseCommTrackManageView(BaseDomainView):
 
 class CommTrackSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_settings'
-    page_title = ugettext_noop("Project Settings")
+    page_title = ugettext_noop("Advanced Settings")
     template_name = 'domain/admin/commtrack_settings.html'
 
     @property
@@ -133,7 +133,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Default Consumption")
+    page_title = ugettext_noop("Consumption")
 
     @property
     @memoized
