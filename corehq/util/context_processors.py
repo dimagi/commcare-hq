@@ -2,8 +2,6 @@ from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
 from corehq.apps.accounting.utils import domain_has_privilege
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
 from corehq import toggles, privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
