@@ -644,19 +644,20 @@ class SuiteGenerator(SuiteGeneratorBase):
     @staticmethod
     def add_referenced_instances(entry, details_by_id):
         detail_ids = set()
+        xpaths = set()
         instance_re = r"""instance\(['"](\w+)['"]\)"""
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
+            xpaths.add(datum.nodeset)
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
 
-        xpaths = set()
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
         for assertion in entry.assertions:
-            if assertion.test:
-                xpaths.add(assertion.test)
+            xpaths.add(assertion.test)
+        xpaths.discard(None)
 
         instances = set()
         for xpath in xpaths:
@@ -805,17 +806,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_module(self, module, e, use_filter=False):
-        def get_instances():
-            yield CASE_INSTANCE
-            if (any(form.form_filter for form in module.get_forms())
-                and module.all_forms_require_a_case()) \
-                or module.parent_select.active:
-                yield SESSION_INSTANCE
-
-            for instance in self.get_extra_instances(module):
-                yield instance
-
-        e.require_instance(*get_instances())
+        e.require_instance(*self.get_extra_instances(module))
 
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
