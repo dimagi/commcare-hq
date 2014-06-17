@@ -28,3 +28,12 @@ def case_changed(case_id, handler_ids):
                 for subcase in subcases:
                     handler.case_changed(subcase)
 
+@task(queue="reminder_rule_queue")
+def process_reminder_rule(handler, schedule_changed, prev_definition,
+    send_immediately):
+    try:
+        handler.process_rule(schedule_changed, prev_definition, send_immediately)
+    except:
+        pass
+    handler.save(unlock=True)
+
