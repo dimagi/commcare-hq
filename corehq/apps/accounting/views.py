@@ -264,6 +264,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'edit_subscription'
     async_handlers = [
         Select2SubscriptionInfoHandler,
+        Select2BillingInfoHandler,
     ]
 
     @property
