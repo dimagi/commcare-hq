@@ -7,11 +7,10 @@ import traceback
 from celery.task import periodic_task
 from celery.schedules import crontab
 from celery.task.base import task
-from dimagi.utils.decorators.memoized import memoized
+
 from django.conf import settings
-from corehq.apps.reports import util
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.users.models import CouchUser, WebUser
+
+from corehq.apps.users.models import WebUser
 from custom.opm.opm_tasks import DEVELOPERS_EMAILS
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
