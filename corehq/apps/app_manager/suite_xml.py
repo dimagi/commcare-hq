@@ -650,6 +650,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
             xpaths.add(datum.nodeset)
+            xpaths.add(datum.function)
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
 
