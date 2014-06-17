@@ -307,11 +307,11 @@ class CommTrackSetupTab(UITab):
 
         dropdown_items = [(_(view.page_title), view) for view in (
                 ProductListView,
-                ProgramListView,
-                DefaultConsumptionView,
-                SMSSettingsView,
                 LocationsListView,
                 LocationSettingsView,
+                ProgramListView,
+                SMSSettingsView,
+                DefaultConsumptionView,
                 CommTrackSettingsView,
             )
         ]
@@ -369,31 +369,6 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-            # programs
-            {
-                'title': ProgramListView.page_title,
-                'url': reverse(ProgramListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewProgramView.page_title,
-                        'urlname': NewProgramView.urlname,
-                    },
-                    {
-                        'title': EditProgramView.page_title,
-                        'urlname': EditProgramView.urlname,
-                    },
-                ]
-            },
-            # consumption
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            },
-            # sms
-            {
-                'title': SMSSettingsView.page_title,
-                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
-            },
             # locations
             {
                 'title': LocationsListView.page_title,
@@ -421,6 +396,31 @@ class CommTrackSetupTab(UITab):
             {
                 'title': LocationSettingsView.page_title,
                 'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # programs
+            {
+                'title': ProgramListView.page_title,
+                'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProgramView.page_title,
+                        'urlname': NewProgramView.urlname,
+                    },
+                    {
+                        'title': EditProgramView.page_title,
+                        'urlname': EditProgramView.urlname,
+                    },
+                ]
+            },
+            # sms
+            {
+                'title': SMSSettingsView.page_title,
+                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+            },
+            # consumption
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
             },
             # settings
             {
