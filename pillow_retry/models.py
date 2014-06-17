@@ -1,3 +1,4 @@
+import json
 import traceback
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -31,6 +32,11 @@ class PillowError(models.Model):
     current_attempt = models.IntegerField(default=0, db_index=True)
     error_type = models.CharField(max_length=255, null=True)
     error_traceback = models.TextField(null=True)
+    change = models.TextField(null=True)
+
+    @property
+    def change_dict(self):
+        return json.loads(self.change) if self.change else {'id': self.doc_id}
 
     class Meta:
         unique_together = ('doc_id', 'pillow',)
@@ -57,6 +63,7 @@ class PillowError(models.Model):
     def get_or_create(cls, change, pillow):
         pillow_path = path_from_object(pillow)
 
+        change.pop('doc', None)
         doc_id = change['id']
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
@@ -68,6 +75,7 @@ class PillowError(models.Model):
                 date_created=now,
                 date_last_attempt=now,
                 date_next_attempt=now,
+                change=json.dumps(change)
             )
 
         return error

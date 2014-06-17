@@ -1,3 +1,4 @@
+import json
 from celery.task import task
 import sys
 from django.conf import settings
@@ -27,7 +28,6 @@ def process_pillow_retry(error_doc_id):
         except PillowError.DoesNotExist:
             return
 
-        doc_id = error_doc.doc_id
         pillow_class = error_doc.pillow
         try:
             pillow = import_pillow_string(pillow_class)
@@ -39,7 +39,8 @@ def process_pillow_retry(error_doc_id):
         try:
             if not pillow:
                 raise ValueError("Could not find pillowtop class '%s'" % pillow_class)
-            pillow.process_change({'id': doc_id}, is_retry_attempt=True)
+            change = error_doc.change_dict
+            pillow.process_change(change, is_retry_attempt=True)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
