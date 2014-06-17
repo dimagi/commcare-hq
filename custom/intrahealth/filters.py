@@ -43,3 +43,12 @@ class LocationFilter(AsyncLocationFilter):
 
 class FicheLocationFilter(LocationFilter):
     required = 1
+
+class RecapPassageLocationFilter(LocationFilter):
+    required = 2
+
+    @property
+    def filter_context(self):
+        context = super(RecapPassageLocationFilter, self).filter_context
+        context.update(dict(hierarchy=location_hierarchy_config(self.domain)))
+        return context

@@ -5,6 +5,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
+from custom.intrahealth.filters import RecapPassageLocationFilter
 from custom.intrahealth.sqldata import RecapPassageData
 
 
@@ -12,7 +13,7 @@ class RecapPassageReport(DatespanMixin, GenericTabularReport, CustomProjectRepor
     name = "Recap Passage"
     slug = 'recap_passage'
     report_title = "Recap Passage"
-    fields = [DatespanFilter, AsyncLocationFilter]
+    fields = [DatespanFilter, RecapPassageLocationFilter]
 
     @property
     def location(self):
