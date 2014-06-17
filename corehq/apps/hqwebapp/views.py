@@ -273,8 +273,8 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
 
     return render(request, template_name, {'next': next})
 
-def _login(req, domain, domain_type, template_name, domain_context=None):
-    from corehq.apps.registration.views import get_domain_context
+
+def _login(req, domain, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
@@ -291,29 +291,44 @@ def _login(req, domain, domain_type, template_name, domain_context=None):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
-    context = domain_context or get_domain_context(domain_type)
-    context['domain'] = domain
+
+    context = {}
     if domain:
-        context['next'] = req.REQUEST.get('next', '/a/%s/' % domain)
+        context.update({
+            'domain': domain,
+            'next': req.REQUEST.get('next', '/a/%s/' % domain),
+        })
 
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
                         extra_context=context)
-    
+
+
 def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     domain = req.REQUEST.get('domain', None)
-    return _login(req, domain, domain_type, "login_and_password/login.html")
-    
+
+    from corehq.apps.domain.utils import get_dummy_domain
+    # For showing different logos based on CommTrack, CommConnect, CommCare...
+    dummy_domain = get_dummy_domain(domain_type)
+    req.project = dummy_domain
+
+    return _login(req, domain, "login_and_password/login.html")
+
+
 def domain_login(req, domain, template_name="login_and_password/login.html"):
-    from corehq.util.context_processors import get_per_domain_context
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
-    return _login(req, domain, project.domain_type, template_name,
-            domain_context=get_per_domain_context(project))
+
+    # FYI, the domain context_processor will pick this up and apply the
+    # necessary domain contexts:
+    req.project = project
+
+    return _login(req, domain, template_name)
+
 
 def is_mobile_url(url):
     # Minor hack
