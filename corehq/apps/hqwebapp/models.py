@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
@@ -295,6 +294,7 @@ class CommTrackSetupTab(UITab):
     def dropdown_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             DefaultConsumptionView,
             ProgramListView,
@@ -306,6 +306,7 @@ class CommTrackSetupTab(UITab):
         )
 
         dropdown_items = [
+            (_(CommTrackSettingsView.page_title), CommTrackSettingsView),
             (_("Products"), ProductListView),
             (_("Programs"), ProgramListView),
             (_("Consumption"), DefaultConsumptionView),
@@ -329,6 +330,7 @@ class CommTrackSetupTab(UITab):
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             NewProductView,
             EditProductView,
@@ -351,6 +353,11 @@ class CommTrackSetupTab(UITab):
         items = []
 
         items.append([_('CommTrack Setup'), [
+            # settings
+            {
+                'title': CommTrackSettingsView.page_title,
+                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
+            },
             # products
             {
                 'title': ProductListView.page_title,
@@ -1014,17 +1021,6 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import CommTrackSettingsView
-
-            if self.project.commtrack_enabled:
-                commtrack_settings = [
-                    {
-                        'title': _(CommTrackSettingsView.page_title),
-                        'url': reverse(CommTrackSettingsView.urlname, args=[self.domain])
-                    },
-                ]
-                items.append((_('CommTrack'), commtrack_settings))
-
             administration = [
                 {
                     'title': _('CommCare Exchange'),

@@ -4,9 +4,8 @@ from corehq.apps.commtrack.views import (
     ProductListView, FetchProductListView, NewProductView, EditProductView,
     ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,
     FetchProductForProgramListView, DefaultConsumptionView, UploadProductView,
-    ProductImportStatusView, SMSSettingsView
+    ProductImportStatusView, SMSSettingsView, CommTrackSettingsView,
 )
-from corehq.apps.domain.views import CommTrackSettingsView
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
     url(r'^debug/bootstrap/$', 'bootstrap'),
