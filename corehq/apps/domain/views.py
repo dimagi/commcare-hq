@@ -1915,18 +1915,15 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
+class CommTrackSettingsView(BaseAdminProjectSettingsView):
+    urlname = 'commtrack_settings'
+    page_title = ugettext_lazy("CommTrack Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
 
     @property
     @memoized
     def commtrack_settings(self):
         return self.domain_object.commtrack_settings
-
-
-class CommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'commtrack_settings'
-    page_title = ugettext_lazy("CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings.html'
 
     @property
     def page_context(self):
