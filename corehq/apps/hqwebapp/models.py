@@ -305,14 +305,15 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        dropdown_items = [
-            (_(CommTrackSettingsView.page_title), CommTrackSettingsView),
-            (_("Products"), ProductListView),
-            (_("Programs"), ProgramListView),
-            (_("Consumption"), DefaultConsumptionView),
-            (_("SMS"), SMSSettingsView),
-            (_("Locations"), LocationsListView),
-            (_("Locations (Advanced)"), LocationSettingsView),
+        dropdown_items = [(_(view.page_title), view) for view in (
+                ProductListView,
+                ProgramListView,
+                DefaultConsumptionView,
+                SMSSettingsView,
+                LocationsListView,
+                LocationSettingsView,
+                CommTrackSettingsView,
+            )
         ]
 
         return [
@@ -353,11 +354,6 @@ class CommTrackSetupTab(UITab):
         items = []
 
         items.append([_('CommTrack Setup'), [
-            # settings
-            {
-                'title': CommTrackSettingsView.page_title,
-                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
-            },
             # products
             {
                 'title': ProductListView.page_title,
@@ -425,6 +421,11 @@ class CommTrackSetupTab(UITab):
             {
                 'title': LocationSettingsView.page_title,
                 'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # settings
+            {
+                'title': CommTrackSettingsView.page_title,
+                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
             },
             # external sync
             {
