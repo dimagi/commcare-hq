@@ -230,6 +230,17 @@ class Entry(XmlObject):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
+                if len(self.instances) == 1:
+                    # insert instance_node right after command_node
+                    instance_node = self.node.find('instance')
+                    command_node = self.node.find('command')
+                    self.node.remove(instance_node)
+                    self.node.insert(self.node.index(command_node) + 1,
+                                     instance_node)
+        sorted_instances = sorted(self.instances,
+                                  key=lambda instance: instance.id)
+        if sorted_instances != self.instances:
+            self.instances = sorted_instances
 
 
 class Menu(DisplayNode, IdNode):
@@ -649,8 +660,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if instance:
                     instances.add(instance)
 
-        for instance in instances:
-            entry.require_instance(instance)
+        entry.require_instance(*instances)
 
     @property
     def entries(self):
