@@ -704,7 +704,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(module, Module):
                     self.configure_entry_module(module, e, use_filter=False)
                 elif isinstance(module, AdvancedModule):
-                    e.require_instance(CASE_INSTANCE)
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
                         nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
@@ -719,8 +718,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
-                        e.require_instance(PRODUCTS_INSTANCE)
-                        e.require_instance(LEDGER_INSTANCE)
                 results.append(e)
         for e in results:
             self.add_referenced_instances(e, details_by_id)
@@ -737,14 +734,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
                                        src='jr://fixture/indicators:%s' % indicator_set)
 
-    def get_location_instances(self, module, form=None):
-        # will return an empty list or a list containing the one location instance
-        for _, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                if column.field_type == FIELD_TYPE_LOCATION:
-                    return [LOCATIONS_INSTANCE]
-        return []
-
     def get_fixture_instances(self, module, form=None):
         from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE
         if form and hasattr(form, 'actions'):
@@ -755,8 +744,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_extra_instances(self, module, form=None):
         for instance in self.get_indicator_instances(module, form):
-            yield instance
-        for instance in self.get_location_instances(module, form):
             yield instance
         for instance in self.get_fixture_instances(module, form):
             yield instance
@@ -844,28 +831,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if 'owner_id' in action.case_properties:
                     return True
             return False
-
-        def get_instances():
-            yield CASE_INSTANCE
-
-            parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
-            form_filter = any(form.form_filter for form in module.get_forms())
-            if parent_select or (form_filter and module.all_forms_require_a_case()) or \
-                    form.actions.auto_select_actions[AUTO_SELECT_USER] or \
-                    form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
-                    form.actions.auto_select_actions[AUTO_SELECT_RAW]:
-                yield SESSION_INSTANCE
-            elif module.get_app().commtrack_enabled:
-                try:
-                    if form.actions.load_update_cases[-1].show_product_stock:
-                        yield SESSION_INSTANCE
-                except IndexError:
-                    pass
-
-            for instance in self.get_extra_instances(module, form):
-                yield instance
-
-        e.require_instance(*get_instances())
+        e.require_instance(*self.get_extra_instances(module, form))
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -977,8 +943,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
-                    e.require_instance(PRODUCTS_INSTANCE)
-                    e.require_instance(LEDGER_INSTANCE)
             except IndexError:
                 pass
 
@@ -986,9 +950,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            e.require_instance(CASE_INSTANCE)
-            e.require_instance(SESSION_INSTANCE)
-
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
                 id='case_id',
