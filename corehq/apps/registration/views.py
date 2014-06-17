@@ -30,9 +30,8 @@ def get_domain_context(domain_type='commcare'):
     Set context variables that are normally set based on the domain type
     according to what user/domain type is being registered.
     """
-
-    dummy_domain = Domain()
-    dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
+    from corehq.apps.domain.utils import get_dummy_domain
+    dummy_domain = get_dummy_domain(domain_type)
     return get_per_domain_context(dummy_domain)
 
 def registration_default(request):

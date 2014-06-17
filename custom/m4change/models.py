@@ -481,6 +481,13 @@ class FixtureReportResult(Document, QueryMixin):
             return None
 
     @classmethod
+    def all_by_composite_key(cls, domain, location_id, start_date, end_date, report_slug):
+        return cls.view("m4change/fixture_by_composite_key",
+                        startkey=[domain, location_id, start_date, end_date, report_slug],
+                        endkey=[domain, location_id, start_date, end_date, report_slug],
+                        include_docs=True).all()
+
+    @classmethod
     def by_domain(cls, domain):
         return cls.view("m4change/fixture_by_composite_key", startkey=[domain], endkey=[domain, {}], include_docs=True).all()
 

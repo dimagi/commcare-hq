@@ -174,6 +174,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
+    operator = StringProperty(choices=['=', 'selected'], default='=')
 
 
 class FormAction(DocumentSchema):
