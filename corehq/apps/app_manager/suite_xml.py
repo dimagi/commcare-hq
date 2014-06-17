@@ -358,8 +358,9 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
-class Suite(XmlObject):
+class Suite(OrderedXmlObject):
     ROOT_NAME = 'suite'
+    ORDER = ('version', 'descriptor')
 
     version = IntegerField('@version')
 
@@ -448,8 +449,10 @@ class SuiteGeneratorBase(object):
         self.id_strings = id_strings
 
     def generate_suite(self):
-        suite = Suite(descriptor=self.descriptor)
-        suite.version = self.app.version
+        suite = Suite(
+            version=self.app.version,
+            descriptor=self.descriptor,
+        )
 
         def add_to_suite(attr):
             getattr(suite, attr).extend(getattr(self, attr))
