@@ -1,9 +1,11 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.views.generic.base import TemplateView, TemplateResponseMixin, ContextMixin
 from numpy import random
 from django.views.generic import View
 
-from braces.views import JSONResponseMixin
+from braces.views import JSONResponseMixin, AjaxResponseMixin
 from dimagi.utils.dates import DateSpan
 
 from .api import ReportDataSource
@@ -123,25 +125,29 @@ class TestReportData(ReportDataSource):
                 }
 
 
-class TestReport(JSONResponseMixin, View):
+class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
+    template_name = 'reports/base_template_new.html'
     data_model = TestReportData
 
     def dispatch(self, request, domain=None, **kwargs):
         user = request.couch_user
         if self.has_permissions(domain, user):
-            return super(TestReport, self).dispatch(request, **kwargs)
+            if 'format' in request.GET and request.GET['format'] == 'json':
+                return self.get_ajax(request, domain, **kwargs)
+
+            # hack to override the content type set in JSONResponseMixin
+            self.content_type = None
+            return super(TestReport, self).dispatch(request, domain, **kwargs)
         else:
             raise Http403()
 
     def has_permissions(self, domain, user):
         return True
 
-    def get(self, request, **kwargs):
-        report_data = self.get_json()
-        return self.render_json_response(report_data)
-
-    def get_json(self):
+    def get_ajax(self, request, domain=None, **kwargs):
         filter_params = json_request(self.request.GET)
+        filter_params['domain'] = domain
+
         # get a dict of params in some way
         try:
             data = self.data_model(filter_params)
@@ -150,10 +156,10 @@ class TestReport(JSONResponseMixin, View):
                 'error': e.message
             }
 
-        return {
+        return self.render_json_response({
             'data_keys': data.slugs(),
             'data': list(data.get_data())
-        }
+        })
 
     def _get_initial(self, request, **kwargs):
         pass
