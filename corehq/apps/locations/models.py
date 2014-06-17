@@ -6,6 +6,8 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 import re
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -40,9 +42,6 @@ class Location(CachedCouchDocumentMixin, Document):
             del kwargs['parent']
 
         super(Document, self).__init__(*args, **kwargs)
-
-        if not self.site_code and 'site_code' not in kwargs:
-            self.site_code = self.generate_code()
 
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
@@ -160,7 +159,10 @@ class Location(CachedCouchDocumentMixin, Document):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
 
-    def generate_code(self):
+
+@receiver(post_save, sender=Location)
+def generate_site_code(sender, instance, *args, **kwargs):
+    if not instance.site_code:
         matcher = re.compile("[\W\d]+")
         name_slug = matcher.sub('_', self.name.lower()).strip('_')
         postfix = ''
@@ -171,9 +173,8 @@ class Location(CachedCouchDocumentMixin, Document):
             else:
                 postfix = '1'
 
-        return name_slug + postfix
-
-
+        instance.site_code = name_slug + postfix
+        instance.save()
 
 def root_locations(domain):
     results = Location.get_db().view('locations/hierarchy',
