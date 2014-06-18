@@ -10,6 +10,8 @@ import datetime
 import re
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 import simplejson
 from sqlagg.columns import SimpleColumn, SumColumn
@@ -20,10 +22,9 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin, \
-    ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
+
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
-from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
 from dimagi.utils.dates import DateSpan
@@ -42,7 +43,7 @@ from .incentive import Worker
 from .constants import *
 from .filters import BlockFilter, AWCFilter
 import logging
-from corehq.apps.reports.standard.maps import GenericMapReport, ElasticSearchMapReport
+from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 
 
 class OpmCaseSqlData(SqlData):
@@ -300,6 +301,8 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport, ):
             subtitles.append("Blocks - %s" % ", ".join(self.filter_data.get('blocks', [])))
         if self.filter_data.get('awcs', []):
             subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
+        if self.filter_data.get('gp', ''):
+            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
         if startdate and enddate:
@@ -460,6 +463,11 @@ class IncentivePaymentReport(BaseReport):
     slug = 'incentive_payment_report'
     model = Worker
 
+
+    @property
+    def fields(self):
+        return [BlockFilter, AWCFilter, GramPanchayatFilter] + super(BaseReport, self).fields
+
     @property
     @memoized
     def last_month_totals(self):
@@ -547,6 +555,8 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
     slug = "health_status_report"
     fix_left_col = True
     model = HealthStatus
+    flush_layout = True
+    report_template_path = "opm/hsr_report.html"
 
     @property
     def rows(self):
@@ -556,7 +566,7 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+        return [BlockFilter, AWCFilter, GramPanchayatFilter, SelectOpenCloseFilter, DatespanFilter]
 
     @property
     @memoized
@@ -591,6 +601,9 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
                     } for awc in awcs_lower]
             }
             es_filters["bool"]["must"].append(awc_term)
+
+        if self.gp:
+            es_filters["bool"]["must"].append({"term": {"user_data.gp": self.gp.lower()}})
         q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
@@ -609,6 +622,10 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
 
     @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=300)
+
+    @property
     @request_cache("raw")
     def print_response(self):
         """
@@ -617,7 +634,15 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
         self.is_rendered_as_email = True
         self.use_datatables = False
         self.override_template = "opm/hsr_print.html"
-        return HttpResponse(self._async_context()['report'])
+        self.update_report_context()
+        self.pagination.count = 1000000
+        self.context['report_table'].update(
+            rows=self.rows
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+            context_instance=RequestContext(self.request)
+        )
+        return HttpResponse(rendered_report)
 
     @property
     def export_table(self):

@@ -1,7 +1,15 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import suite_xml as sx
 from corehq.apps.app_manager.util import is_sort_only_column
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseXPath, IndicatorXpath, LedgerdbXpath, LocationXpath
+from corehq.apps.app_manager.xpath import (
+    CaseXPath,
+    CommCareSession,
+    IndicatorXpath,
+    LedgerdbXpath,
+    LocationXpath,
+    XPath,
+    dot_interpolate,
+)
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -373,7 +381,25 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         case = CaseXPath('')
         for index in indexes:
             case = case.index_id(index).case()
-        return case.property(property)
+
+        if property == '#owner_name':
+            return self.owner_name(case.property('owner_id'))
+        else:
+            return case.property(property)
+
+    @staticmethod
+    def owner_name(owner_id):
+        groups = XPath(u"instance('groups')/groups/group")
+        group = groups.select('@id', owner_id)
+        return XPath.if_(
+            group.count(),
+            group.slash('name'),
+            XPath.if_(
+                CommCareSession.userid.equal(owner_id),
+                CommCareSession.username,
+                XPath.string('')
+            )
+        )
 
 
 @register_type_processor(sx.FIELD_TYPE_INDICATOR)

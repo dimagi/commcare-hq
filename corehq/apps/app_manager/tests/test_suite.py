@@ -100,7 +100,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_RAW,
-            value_key='some xpath expression'
+            value_key=("some xpath expression "
+                       "containing instance('casedb') "
+                       "and instance('commcaresession')")
         )
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
 
