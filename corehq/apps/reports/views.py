@@ -23,7 +23,7 @@ from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
 from casexml.apps.case.cleanup import rebuild_case
-from corehq import toggles, Domain
+from corehq import toggles
 
 import couchexport
 from couchexport import views as couchexport_views

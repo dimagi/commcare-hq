@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles, privileges, Domain
+from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.domain.utils import get_adm_enabled_domains
