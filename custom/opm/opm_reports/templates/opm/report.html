@@ -30,3 +30,53 @@
     {% endif %}
 {% endif %}
 {% endblock %}
+
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var reportContent = $('#report-content');
+
+            // a bit hackish, but allows to display table content with sticky headers and vertical
+            // and horizontal content scrolls, without need to scroll entire page
+            $('.DTFC_LeftBodyWrapper').css('height', reportContent.height());
+            $('.dataTables_scrollBody').css('height', reportContent.height());
+        });
+
+        $(document).ajaxStop(function () {
+            // Solution to fix innaprobiate widths of fixed columns
+            var widths = [];
+
+            // first fix widths on tbody ...
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    $(this).css('width', 50);
+            });
+
+            // ... now save the actual widths on array
+            $('.DTFC_LeftBodyWrapper thead th').each(
+                function(){
+                    widths.push($(this).width());
+            });
+
+            // ... and now update widths on thead
+            $('.DTFC_LeftHeadWrapper thead th').each(
+                function(i, val){
+                    $(this).css('width', widths[i]);
+            });
+
+            $('.dataTables_scrollHead').css('width', '100%');
+            $('.dataTables_scrollBody').css('width', '100%');
+            var elements = $('tfoot td').slice(0,2);
+            console.log('test')
+            var $tfoot = $('<tfoot></tfoot>');
+            for (var idx = 0; idx < elements.length; idx++) {
+                $tfoot.append($(elements[idx]).detach());
+            }
+            $($('.DTFC_Cloned')[1]).append($tfoot);
+        });
+
+    </script>
+
+{% endblock %}
+

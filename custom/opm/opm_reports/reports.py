@@ -547,6 +547,7 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
     slug = "health_status_report"
     fix_left_col = True
     model = HealthStatus
+    flush_layout = True
 
     @property
     def rows(self):
@@ -607,6 +608,10 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport, Datespan
         else:
             raise InvalidRow
         return self.model(row['_source'], self, basic_info.data, sql_data.data)
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=300)
 
     @property
     @request_cache("raw")
