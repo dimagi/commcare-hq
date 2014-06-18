@@ -15,6 +15,13 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+# clone http://github.com/mwhite/Vellum into submodules/vellum/Vellum and set
+# this to True to use non-built files on the form designer page.  However, you
+# should probably just use the standalone test page unless you have a reason.
+VELLUM_DEBUG = False
+# enables all plugins, including ones that haven't been released on production
+# yet
+VELLUM_PRERELEASE = False
 
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
@@ -77,7 +84,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
+    ('vellum', os.path.join(FILEPATH, 'submodules', 'vellum')),
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")

@@ -37,9 +37,6 @@
 [submodule "submodules/python-digest"]
 	path = submodules/python-digest
 	url = git://github.com/dimagi/python-digest.git
-[submodule "submodules/formdesigner"]
-	path = submodules/formdesigner
-	url = git://github.com/dimagi/Vellum.git
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
