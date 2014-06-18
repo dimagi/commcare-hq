@@ -19,7 +19,7 @@ class ReportDataSource(object):
          Overrides any config supplied to the constructor.
         """
         self.config = config or {}
-        if hasattr(self, 'filters') and isinstance(self.filters, dict):
+        if hasattr(self, 'filters'):
             for name, filter in self.filters:
                 if hasattr(self, name):
                     raise Exception("Conflicting property name: {}".format(name))
@@ -46,3 +46,6 @@ class ReportDataSource(object):
         """
 
         return {}
+
+    def get_total_records(self):
+        return 0
