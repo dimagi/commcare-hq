@@ -21,6 +21,7 @@ function HQReportDataTables(options) {
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
     self.datatable = null;
+    self.rendered = false;
 
     this.render_footer_row = (function() {
         var $dataTableElem = $(self.dataTableElem);
@@ -40,6 +41,14 @@ function HQReportDataTables(options) {
     })();
 
     this.render = function () {
+        if (self.rendered) {
+            $(self.dataTableElem).each(function () {
+                $(this).dataTable().fnReloadAjax();
+            });
+            return;
+        }
+        
+        self.rendered = true;
 
         $('[data-datatable-highlight-closest]').each(function () {
            $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
@@ -190,12 +199,6 @@ function HQReportDataTables(options) {
             $(".dataTables_length select").change(function () {
                 $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
             });
-        });
-    };
-
-    this.refresh = function() {
-        $(self.dataTableElem).each(function(){
-          $(this).dataTable().fnReloadAjax();
         });
     };
 }
