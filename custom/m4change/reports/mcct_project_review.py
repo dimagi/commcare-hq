@@ -257,7 +257,7 @@ class McctProjectReview(BaseReport):
             ]
             if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-formid="%(form_id)s" '
                                      'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
                 row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
                                            service_type=data.get('service_type')))
@@ -369,7 +369,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
             ]
             if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-formid="%(form_id)s" '
                                      'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
                 row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
                                            service_type=data.get('service_type')))
@@ -469,5 +469,9 @@ class McctClientLogPage(McctProjectReview):
 class McctPaidClientsPage(McctClientApprovalPage):
     name = 'mCCT Paid Beneficiary Page'
     slug = 'mcct_paid_clients_page'
-    report_template_path = 'm4change/activateStatus.html'
+    report_template_path = 'm4change/report_content.html'
     display_status = 'paid'
+
+    @property
+    def rows(self):
+        return self.make_rows(self.es_results, with_checkbox=False)

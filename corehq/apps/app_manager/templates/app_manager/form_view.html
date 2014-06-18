@@ -206,6 +206,18 @@
                     },
                     $('#form-filter').get(0)
                 );
+
+                ko.applyBindings({
+                        workflow: ko.observable('{{ form.post_form_workflow }}'),
+                        form_workflow_options: [
+                            {value: "default", label: "{% trans "* Home Screen" %}" },
+                            {value: "module", label: "{% trans "Module:" %} {{ module.name|trans:langs }}" },
+                            {value: "previous_screen", label: "{% trans "Previous Screen" %}" }
+                        ]
+                    },
+                    $('#form-workflow').get(0)
+                );
+
             {% endif %}
         {% endif %}
         });
@@ -375,6 +387,7 @@
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with item=form %}
                 {% include "app_manager/partials/form_filter.html" %}
+                {% include "app_manager/partials/form_workflow.html" %}
             </form>
         </div>
     {% endif %}

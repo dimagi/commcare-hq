@@ -149,7 +149,7 @@ def check_merges(config, print_details=True):
                 except sh.ErrorReturnCode_1 as e:
                     assert (
                         "error: pathspec '%s' did not "
-                        "match any file(s) known to git." % branch) in e.stderr
+                        "match any file(s) known to git." % branch) in e.stderr, e.stderr
                     not_found.append((path, branch))
                     print "NOT FOUND"
                     continue
@@ -219,9 +219,15 @@ def force_push(git, branch):
         git.push('origin', branch, '--force')
     except sh.ErrorReturnCode_128 as e:
         # oops we're using a read-only URL, so change to the suggested url
-        line = sh.grep('  Use ', _in=e.stderr)
-        edit_url = line.strip().split()[1]
-        git.remote('set-url', 'origin', edit_url)
+        try:
+            line = sh.grep(git.remote("-v"),
+                           '-E', '^origin.https://github\.com/.*\(push\)$')
+        except sh.ErrorReturnCode_1:
+            raise e
+        old_url = line.strip().split()[1]
+        new_url = old_url.replace("https://github.com/", "git@github.com:")
+        print("    {} -> {}".format(old_url, new_url))
+        git.remote('set-url', 'origin', new_url)
         git.push('origin', branch, '--force')
 
 

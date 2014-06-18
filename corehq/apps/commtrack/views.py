@@ -16,6 +16,7 @@ from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
+from corehq import feature_previews
 from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
@@ -26,6 +27,7 @@ from couchdbkit import ResourceNotFound
 import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
+import copy
 
 @domain_admin_required
 def default(request, domain):
@@ -174,6 +176,8 @@ class NewProductView(BaseCommTrackManageView):
         return {
             'product': self.product,
             'form': self.new_product_form,
+            'custom_product_data': copy.copy(dict(self.product.product_data)),
+            'custom_product_data_enabled': feature_previews.PRODUCT_DATA.enabled(self.domain),
         }
 
     def post(self, request, *args, **kwargs):
@@ -266,15 +270,20 @@ def product_importer_job_poll(request, domain, download_id, template="hqwebapp/p
 
 
 def download_products(request, domain):
-    def _iter_product_rows(domain):
+    def _get_products(domain):
         for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
-            p = Product.wrap(p_doc)
-            yield p.to_csv()
+            yield Product.wrap(p_doc)
+
+    def _build_row(keys, product):
+        row = []
+        for key in keys:
+            row.append(product.get(key, ''))
+
+        return row
 
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
-        writer = csv.writer(file, dialect=csv.excel)
-        writer.writerow([
+        product_keys = [
             'id',
             'name',
             'unit',
@@ -283,9 +292,27 @@ def download_products(request, domain):
             'category',
             'program_id',
             'cost',
-        ])
-        for row in _iter_product_rows(domain):
-            writer.writerow(row)
+        ]
+
+        data_keys = set()
+
+        products = []
+        for product in _get_products(domain):
+            product_dict = product.to_dict()
+
+            custom_properties = product.custom_property_dict()
+            data_keys.update(custom_properties.keys())
+            product_dict.update(custom_properties)
+
+            products.append(product_dict)
+
+        keys = product_keys + list(data_keys)
+
+        writer = csv.writer(file, dialect=csv.excel)
+        writer.writerow(keys)
+
+        for product in products:
+            writer.writerow(_build_row(keys, product))
 
     response = HttpResponse(open(path, 'rb').read())
     response['Content-Disposition'] = 'attachment; filename="{domain}-products.csv"'.format(domain=domain)

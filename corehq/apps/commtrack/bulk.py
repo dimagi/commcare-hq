@@ -55,10 +55,10 @@ def import_stock_reports(domain, f):
 def import_products(domain, download, task):
     messages = []
     products = []
-    data = download.get_content().split('\n')[1:]
+    data = download.get_content().split('\n')
     processed = 0
-    total_rows = len(data)
-    reader = csv.reader(data)
+    total_rows = len(data) - 1
+    reader = csv.DictReader(data)
     for row in reader:
         try:
             p = Product.from_csv(row)

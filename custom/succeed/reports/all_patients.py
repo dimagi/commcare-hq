@@ -17,7 +17,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_Info import PatientInfoReport
-from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, get_randomization_date
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -47,7 +47,6 @@ class PatientListReportDisplay(CaseDisplay):
         self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
         self.latest_build = get_app_build(self.app_dict)
         super(PatientListReportDisplay, self).__init__(report, case_dict)
-        self.update_target_date_case_properties()
 
     def get_property(self, key):
         if key in self.case:
@@ -66,19 +65,6 @@ class PatientListReportDisplay(CaseDisplay):
             return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.case_name)))
         else:
             return "%s (bad ID format)" % self.case_name
-
-    def update_target_date_case_properties(self):
-        case = CommCareCase.get(self.case_id)
-        for visit_key, visit in enumerate(VISIT_SCHEDULE):
-            try:
-                next_visit = VISIT_SCHEDULE[visit_key + 1]
-            except IndexError:
-                next_visit = 'last'
-            if next_visit != 'last':
-                rand_date = dateutil.parser.parse(self.randomization_date)
-                tg_date = rand_date.date() + timedelta(days=next_visit['days'])
-                case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
-        case.save()
 
     @property
     def edit_link(self):
