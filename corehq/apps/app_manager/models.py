@@ -72,6 +72,10 @@ from .exceptions import (
     LocationXpathValidationError)
 from corehq.apps.app_manager import id_strings
 
+WORKFLOW_DEFAULT = 'default'
+WORKFLOW_MODULE = 'module'
+WORKFLOW_PREVIOUS = 'previous_screen'
+
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
@@ -504,6 +508,10 @@ class FormBase(DocumentSchema):
     source = FormSource()
     validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
+    )
+    post_form_workflow = StringProperty(
+        default=WORKFLOW_DEFAULT,
+        choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
 
     @classmethod

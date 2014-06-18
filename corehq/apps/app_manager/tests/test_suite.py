@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -124,6 +124,35 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
+    def test_form_workflow_previous(self):
+        """
+        m0 - standard module - no case
+            f0 - no case management
+            f1 - no case management
+        m1 - standard module - patient case
+            f0 - register case
+            f1 - update case
+        m2 - standard module - patient case
+            f0 - update case
+            f1 - update case
+        m3 - standard module - child case
+            f0 - update child case
+            f1 - update child case
+        m4 - advanced module - patient case
+            f0 - load a -> b
+            f1 - load a -> b -> c
+            f2 - load a -> b -> autoselect
+        """
+        self._test_generic_suite('suite-workflow', 'suite-workflow-previous')
+
+    def test_form_workflow_module(self):
+        app = Application.wrap(self.get_json('suite-workflow'))
+        for module in app.get_modules():
+            for form in module.get_forms():
+                form.post_form_workflow = WORKFLOW_MODULE
+
+        self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
 
 
 class RegexTest(SimpleTestCase):
