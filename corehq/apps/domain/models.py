@@ -291,6 +291,8 @@ class Domain(Document, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
+    default_mobile_worker_redirect = StringProperty(default=None)
+
     @property
     def domain_type(self):
         """

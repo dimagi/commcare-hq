@@ -128,7 +128,9 @@ class ReportDispatcher(View):
         cls = self.get_report(domain, report_slug)
         class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
 
-        if cls and self.permissions_check(class_name, request, domain=domain):
+        from corehq.apps.reports.util import is_mobile_worker_with_report_access
+        if (cls and self.permissions_check(class_name, request, domain=domain)
+                or is_mobile_worker_with_report_access(request.couch_user, request.domain)):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
@@ -175,7 +177,9 @@ class ReportDispatcher(View):
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
                 if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
-                    continue
+                    from corehq.apps.reports.util import is_mobile_worker_with_report_access
+                    if not is_mobile_worker_with_report_access(couch_user, domain):
+                        continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
                     if hasattr(report, 'override_navigation_list'):

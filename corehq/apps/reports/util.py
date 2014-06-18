@@ -520,3 +520,10 @@ def make_ctable_table_name(name):
         return '{0}_{1}'.format(settings.CTABLE_PREFIX, name)
 
     return name
+
+
+def is_mobile_worker_with_report_access(couch_user, domain):
+    return (
+        couch_user.is_commcare_user and
+        Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
+    )

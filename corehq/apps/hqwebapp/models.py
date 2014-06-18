@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles, privileges
+from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.domain.utils import get_adm_enabled_domains
@@ -14,6 +14,7 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -106,13 +107,20 @@ class UITab(object):
         raise NotImplementedError()
 
     @property
+    def mobile_worker_redirect(self):
+        return (
+            is_mobile_worker_with_report_access(self.couch_user, self.domain)
+            and isinstance(self, ProjectReportsTab)
+        )
+
+    @property
     @memoized
     def real_is_viewable(self):
         if self.subtabs:
             return any(st.real_is_viewable for st in self.subtabs)
         else:
             try:
-                return self.is_viewable
+                return self.is_viewable or self.mobile_worker_redirect
             except AttributeError:
                 return False
 
