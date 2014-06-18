@@ -21,6 +21,14 @@ FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 
 
+class XPathField(StringField):
+    """
+    A string field that is supposed to contain an arbitrary xpath expression
+
+    """
+    pass
+
+
 class OrderedXmlObject(XmlObject):
     ORDER = ()
 
@@ -48,7 +56,7 @@ class XpathVariable(XmlObject):
 
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
-    function = StringField('@function')
+    function = XPathField('@function')
     variables = NodeListField('variable', XpathVariable)
 
 
@@ -80,7 +88,7 @@ class Text(XmlObject):
     ROOT_NAME = 'text'
 
     xpath = NodeField('xpath', Xpath)
-    xpath_function = StringField('xpath/@function')
+    xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
     locale_id = StringField('locale/@id')
@@ -154,9 +162,9 @@ class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
     ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm')
 
-    nodeset = StringField('@nodeset')
+    nodeset = XPathField('@nodeset')
     value = StringField('@value')
-    function = StringField('@function')
+    function = XPathField('@function')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
 
@@ -164,18 +172,18 @@ class SessionDatum(IdNode, OrderedXmlObject):
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
-    value = StringField('@value')
+    value = XPathField('@value')
 
 
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
-    value = StringField('@value')
+    value = XPathField('@value')
     command = StringField('.')
 
 
 class BaseFrame(XmlObject):
-    if_clause = StringField('@if')
+    if_clause = XPathField('@if')
 
 
 class CreatePushBase(IdNode, BaseFrame):
@@ -226,7 +234,7 @@ class Stack(XmlObject):
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
-    test = StringField('@test')
+    test = XPathField('@test')
     text = NodeListField('text', Text)
 
 
@@ -306,7 +314,7 @@ class Field(OrderedXmlObject):
 
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
-    function = StringField('@function')
+    function = XPathField('@function')
 
     def get_name(self):
         return self.node.tag
