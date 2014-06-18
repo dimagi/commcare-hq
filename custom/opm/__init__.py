@@ -7,3 +7,7 @@ class HealthStatusMixin(object):
     @property
     def awcs(self):
         return self.request.GET.getlist('awcs', [])
+
+    @property
+    def gp(self):
+        return self.request.GET.get('gp', None)
