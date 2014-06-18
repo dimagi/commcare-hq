@@ -39,7 +39,12 @@
             {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
 
             ajaxSource: '{{ url }}',
-            ajaxParams: {{ report_table.pagination.params|JSON }},
+            ajaxParams: function() {
+                return [
+                    {"name": "startdate", "value": "2014-01-01"},
+                    {"name": "enddate", "value": "2014-04-01"}
+                ];
+            },
 
             {% if report_table.left_col.is_fixed %}
                 fixColumns: true,

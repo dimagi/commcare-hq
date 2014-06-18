@@ -71,8 +71,10 @@ function HQReportDataTables(options) {
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                    for (var p in self.ajaxParams) {
-                        var currentParam = self.ajaxParams[p];
+                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                    console.log(ajaxParams);
+                    for (var p in ajaxParams) {
+                        var currentParam = ajaxParams[p];
                         if(_.isObject(currentParam.value)) {
                             for (var j=0; j < currentParam.value.length; j++) {
                                 aoData.push({
