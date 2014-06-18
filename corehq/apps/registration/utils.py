@@ -3,7 +3,6 @@ import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
-from corehq import toggles
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -21,12 +20,21 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
 
+class MailChimpNotConfiguredError(Exception):
+    pass
+
+
 def get_mailchimp_api():
-    return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    if settings.MAILCHIMP_APIKEY:
+        return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    return None
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    get_mailchimp_api().lists.subscribe(
+    api = get_mailchimp_api()
+    if not api:
+        raise MailChimpNotConfiguredError('Mailchimp is not configured')
+    api.lists.subscribe(
         list_id,
         {'email': email or user.email},
         double_optin=False,
@@ -44,9 +52,10 @@ def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
     try:
         subscribe_user_to_mailchimp_list(user, list_id, email)
     except (
-            mailchimp.ListAlreadySubscribedError,
-            mailchimp.ListInvalidImportError,
-            mailchimp.ValidationError,
+        mailchimp.ListAlreadySubscribedError,
+        mailchimp.ListInvalidImportError,
+        mailchimp.ValidationError,
+        MailChimpNotConfiguredError,
     ):
         pass
     except mailchimp.Error as e:
@@ -67,6 +76,7 @@ def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
         unsubscribe_user_from_mailchimp_list(user, list_id, email)
     except (
         mailchimp.ListNotSubscribedError,
+        MailChimpNotConfiguredError,
     ):
         pass
     except mailchimp.Error as e:
