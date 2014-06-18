@@ -475,3 +475,17 @@ class McctPaidClientsPage(McctClientApprovalPage):
     @property
     def rows(self):
         return self.make_rows(self.es_results, with_checkbox=False)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Beneficiary Name"), sortable=False),
+            DataTablesColumn(_("Service Type"), sortable=False),
+            DataTablesColumn(_("Health Facility"), sortable=False),
+            DataTablesColumn(_("Card No."), sortable=False),
+            DataTablesColumn(_("LGA"), sortable=False),
+            DataTablesColumn(_("Phone No."), sortable=False),
+            DataTablesColumn(_("Amount"), sortable=False),
+            DataTablesColumn(_("Status"), sortable=False))
+        return headers
