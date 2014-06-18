@@ -55,7 +55,6 @@
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
         });
-
         $('#report-filters').submit(function(event) {
             var postData = $(this).serialize();
             console.log(postData);
@@ -73,6 +72,7 @@
                 }
             });
             event.preventDefault();
+            reportTables.render();
         });
 
     });
@@ -92,7 +92,7 @@
 {% endblock %}
 
 {% block main_column %}
-<div class="form-controls">
+<div class="report-controls">
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
             <legend><span>{% trans "Report Filters" %}</span></legend>
@@ -101,7 +101,8 @@
                 {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
             {% endfor %}
         </fieldset>
-        <div class="filter-actions">
+
+        <div class="report-filter-actions">
             {% block report_filter_actions %}
             <button type="submit" class="btn btn-primary"
                     data-loading-text="{% trans "Generating Report..." %}"
@@ -111,6 +112,31 @@
             {% endblock %}
         </div>
     </form>
+
+    <div class="report-actions">
+        {% if report.show_filters %}
+            <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
+                data-close-text="{% trans "Hide Filter Options" %}">
+                {% trans "Filter Options" %}
+            </a>
+        {% endif %}
+        {% if report.is_exportable %}
+            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+            </a>
+        {% endif %}
+        {% if report.is_emailable %}
+            <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                <i class="icon icon-envelope"></i> {% trans "Email report" %}
+            </a>
+        {% endif %}
+        {% if report.is_printable %}
+            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                <i class="icon icon-print"></i> {% trans "Print" %}
+            </a>
+        {% endif %}
+    </div>
 </div>
 
 {% block reporttable %}
