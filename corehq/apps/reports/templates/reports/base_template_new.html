@@ -2,12 +2,53 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
+        var base_url = "{{ url }}";
+        function get_report_url() {
+            return base_url;
+        }
+
+         // raw datatables version
+{#        $(document).ready(function() {#}
+{#            $('#report_table_{{ report.slug }}').dataTable({#}
+{#                "bProcessing": true,#}
+{#                "bServerSide": true,#}
+{#                "sAjaxSource": "{{ url }}",#}
+{#                "sAjaxDataProp": "aaData",#}
+{#                "bPaginate": true,#}
+{#                "aoColumns": {{ headers.render_aoColumns|JSON }}#}
+{#            });#}
+{#        });#}
+
+    $(function(){
+        var reportTables = new HQReportDataTables({
+            dataTableElem: '#report_table_{{ report.slug }}',
+            defaultRows: {{ report_table.default_rows|default:10 }},
+            startAtRowNum: {{ report_table.start_at_row|default:0 }},
+            showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+
+            {% if report.headers.render_aoColumns %}aoColumns: {{ report.headers.render_aoColumns|JSON }},{% endif %}
+            autoWidth: {{ report.headers.auto_width|JSON }},
+            {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
+
+            ajaxSource: '{{ url }}',
+            ajaxParams: {{ report_table.pagination.params|JSON }},
+
+            {% if report_table.left_col.is_fixed %}
+                fixColumns: true,
+                fixColsNumLeft: {{ report_table.left_col.fixed.num }},
+                fixColsWidth: {{ report_table.left_col.fixed.width }},
+            {% endif %}
+        });
+        reportTables.render();
+    });
     </script>
 {% endblock %}
 
@@ -32,6 +73,14 @@
         {% endfor %}
     </fieldset>
 </div>
-<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 
+{% block reporttable %}
+<table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+    <thead>
+    {{ headers.render_html|safe }}
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+{% endblock reporttable %}
 {% endblock %}

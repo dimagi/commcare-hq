@@ -16,7 +16,7 @@ custom_report_urls = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
-    url(r'^test_report$', TestReport.as_view(), name="test_report"),
+    TestReport.url_pattern(),
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),

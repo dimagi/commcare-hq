@@ -1,11 +1,11 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-from django.shortcuts import render
+from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from numpy import random
-from django.views.generic import View
 
 from braces.views import JSONResponseMixin, AjaxResponseMixin
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.dates import DateSpan
 
 from .api import ReportDataSource
@@ -114,16 +114,22 @@ class DatespanFilter(BaseFilter):
 
 class TestReportData(ReportDataSource):
     title = "Test Report"
+    slug = "test_report"
     filters = [
         # (slug, class)
         ('datespan', DatespanFilter(required=False)),
     ]
 
     def slugs(self):
-        return [
-            'date',
-            'people_tested'
-        ]
+        return [c.data_slug for c in self.headers]
+
+    @property
+    def headers(self):
+        # not sure if this belongs here
+        return DataTablesHeader(
+            DataTablesColumn("Date", data_slug='date'),
+            DataTablesColumn("People Tested", data_slug='people_tested'),
+        )
 
     def daterange(self):
         for n in range(int((self.datespan.enddate - self.datespan.startdate).days)):
@@ -137,10 +143,15 @@ class TestReportData(ReportDataSource):
                     'people_tested': random.randint(0, 50)
                 }
 
+    def get_total_records(self):
+        return len(list(self.daterange()))
+
 
 class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
     template_name = 'reports/base_template_new.html'
     data_model = TestReportData
+
+    content_type = None
 
     def dispatch(self, request, domain=None, **kwargs):
         user = request.couch_user
@@ -148,8 +159,6 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
             if 'format' in request.GET and request.GET['format'] == 'json':
                 return self.get_ajax(request, domain, **kwargs)
 
-            # hack to override the content type set in JSONResponseMixin
-            self.content_type = None
             return super(TestReport, self).dispatch(request, domain, **kwargs)
         else:
             raise Http403()
@@ -163,16 +172,21 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         for _, filter in self.data_model.filters:
             filter_context[filter.css_id] = filter.context(self.filter_params)
         return {
-            'project': self.filter_params.get('domain', None),
+            'project': self.domain,
             'report': self.data_model,
             'filter_context': filter_context,
+            'url': self.reverse(self.domain, self.filter_params),
         }
+
+    @property
+    def domain(self):
+        return getattr(self.request, 'domain', None)
 
     @property
     # @memoized
     def filter_params(self):
         params = json_request(self.request.GET)
-        params['domain'] = getattr(self.request, 'domain', None)
+        params['domain'] = self.domain
         return params
 
     def get_ajax(self, request, domain=None, **kwargs):
@@ -183,13 +197,25 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
                 'error': e.message
             }
 
+        self.content_type = u"application/json"
+        total_records = data.get_total_records()
         return self.render_json_response({
             'data_keys': data.slugs(),
-            'data': list(data.get_data())
+            'aaData': list(data.get_data()),
+            "sEcho": 2,
+            "iTotalRecords": total_records,
+            "iTotalDisplayRecords": total_records,
         })
 
     def _get_initial(self, request, **kwargs):
         pass
 
-    def reverse(self, params):
-        return "#"
+    @classmethod
+    def reverse(cls, domain, params=None):
+        return reverse(cls.data_model.slug, args=[domain])
+
+    @classmethod
+    def url_pattern(cls):
+        from django.conf.urls import url
+        pattern = r'^{slug}$'.format(slug=cls.data_model.slug)
+        return url(pattern, cls.as_view(), name=cls.data_model.slug)
