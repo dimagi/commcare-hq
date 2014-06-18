@@ -168,15 +168,18 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         if ('account_basic' in self.request.POST
                 and self.basic_account_form.is_valid()):
             self.basic_account_form.update_basic_info(self.account)
+            messages.success(request, "Account successfully updated.")
             return HttpResponseRedirect(self.page_url)
         elif ('account_contact' in self.request.POST
               and self.contact_form.is_valid()):
             self.contact_form.update_contact_info(self.account)
+            messages.success(request, "Account Contact Info successfully updated.")
             return HttpResponseRedirect(self.page_url)
         elif ('adjust_credit' in self.request.POST
               and self.credit_form.is_valid()):
             try:
                 if self.credit_form.adjust_credit():
+                    messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
                 logger.error(
