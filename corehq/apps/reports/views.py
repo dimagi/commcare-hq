@@ -215,12 +215,12 @@ def export_data_async(request, domain):
 
 @login_or_digest
 @datespan_default
-@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
-    deid = request.GET.get('deid') == 'true'
+    r = request.GET if request.method == "GET" else request.POST
+    deid = r.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
     else:
@@ -235,20 +235,21 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    async = request.GET.get('async') == 'true'
-    next = request.GET.get("next", "")
-    format = request.GET.get("format", "")
-    export_type = request.GET.get("type", "form")
-    previous_export_id = request.GET.get("previous_export", None)
-    filename = request.GET.get("filename", None)
-    max_column_size = int(request.GET.get("max_column_size", 2000))
-    limit = int(request.GET.get("limit", 0))
+    req = request.GET if request.method == 'GET' else request.POST
+    async = req.get('async') == 'true'
+    next = req.get("next", "")
+    format = req.get("format", "")
+    export_type = req.get("type", "form")
+    previous_export_id = req.get("previous_export", None)
+    filename = req.get("filename", None)
+    max_column_size = int(req.get("max_column_size", 2000))
+    limit = int(req.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
         try:
-            is_custom = json.loads(request.GET.get("is_custom", "false"))
-            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+            is_custom = json.loads(req.get("is_custom", "false"))
+            export_tags = json.loads(req.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
 
@@ -279,7 +280,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             # FakeSavedExportSchema a download_data function (called below)
             return HttpResponseBadRequest()
         try:
-            export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+            export_tag = json.loads(req.get("export_tag", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)

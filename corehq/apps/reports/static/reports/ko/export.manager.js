@@ -101,6 +101,24 @@ var ExportManager = function (o) {
             error: displayDownloadError
         });
     };
+
+    self.downloadBulkExport = function(downloadUrl, data) {
+        var displayDownloadError = function (response) {
+            displayModalError('Sorry, something unexpected went wrong and your download ' +
+                    'could not be completed. Please try again and report an issue if the problem ' +
+                    'persists.'
+            );
+        };
+        $.ajax({
+            dataType: 'json',
+            url: downloadUrl,
+            type: 'POST',
+            data: data,
+            success: updateModal,
+            error: displayDownloadError
+        });
+    };
+        
     self.requestBulkDownload = function(data, event) {
         resetModal("Bulk "+self.bulk_download_notice_text, false);
         var prepareExport = new Object();
@@ -154,13 +172,19 @@ var ExportManager = function (o) {
             return;
         }
 
-        var downloadUrl = self.bulkDownloadUrl +
-            "?"+self.exportFilters +
-            "&export_tags="+encodeURIComponent(JSON.stringify(prepareExport)) +
-            "&is_custom="+self.is_custom +
-            "&async=true";
+        var params = {
+            'export_tags': JSON.stringify(prepareExport),
+            'is_custom': self.is_custom,
+            'async': true
+        };
 
-        self.downloadExport(downloadUrl);
+        //Convert filters url string to object
+        var hash, hashes = self.exportFilters.slice(self.exportFilters.indexOf('?') + 1).split('&');
+        for(var i = 0; i < hashes.length; i++) {
+            hash = hashes[i].split('=');
+            params[hash[0]] = hash[1];
+        }
+        self.downloadBulkExport(self.bulkDownloadUrl, params);
     };
 
     self._requestDownload = function(event, options) {
