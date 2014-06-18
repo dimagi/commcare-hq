@@ -33,6 +33,8 @@ tmp.sh
 app_builder_live_test/*/
 dump.rdb
 
+submodules/vellum/Vellum
+
 ptop*.txt
 ptop*.json
 
