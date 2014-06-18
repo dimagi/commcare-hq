@@ -13,7 +13,7 @@ from pact.reports.dot_calendar import DOTCalendarReporter
 
 class PactDOTPatientField(BaseSingleOptionFilter):
     slug = "dot_patient"
-    name = "DOT Patient"
+    label = "DOT Patient"
     default_option = "Select DOT Patient"
 
     @property
@@ -46,7 +46,7 @@ class PactDOTPatientField(BaseSingleOptionFilter):
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin,
                     DatespanMixin):
-    name = "DOT Patient List"
+    label = "DOT Patient List"
     slug = "dots"
 
     report_template_path = "pact/dots/dots_report.html"

@@ -271,10 +271,20 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
-            return [{
+            defaults = [{
                 'id': 't__0',
                 'text': _("[All mobile workers]"),
             }]
+
+            if self.request.project.commtrack_enabled:
+                commtrack_tuple = self.basics[HQUserType.COMMTRACK]
+
+                defaults.append({
+                    'id': commtrack_tuple[0],
+                    'text': commtrack_tuple[1]
+                })
+
+            return defaults
 
         basics = dict(self.basics)
         selected = []

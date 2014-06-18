@@ -1,4 +1,7 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+from functools import total_ordering
+from os.path import commonprefix
+import re
 from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
@@ -220,6 +223,16 @@ class Entry(XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
+    def require_instance(self, *instances):
+        used = {(instance.id, instance.src) for instance in self.instances}
+        for instance in instances:
+            if (instance.id, instance.src) not in used:
+                self.instances.append(
+                    # it's important to make a copy,
+                    # since these can't be reused
+                    Instance(id=instance.id, src=instance.src)
+                )
+
 
 class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
@@ -313,6 +326,17 @@ class Detail(IdNode):
 
     variables = property(get_variables, set_variables)
 
+    def get_all_xpaths(self):
+        result = set()
+        if self._variables:
+            for variable in self.variables:
+                result.add(variable.function)
+        for field in self.fields:
+            result.add(field.header.text.xpath_function)
+            result.add(field.template.text.xpath_function)
+        result.discard(None)
+        return result
+
 
 class Fixture(IdNode):
     ROOT_NAME = 'fixture'
@@ -340,6 +364,30 @@ class Suite(XmlObject):
 
     fixtures = NodeListField('fixture', Fixture)
     descriptor = StringField('@descriptor')
+
+
+@total_ordering
+class DatumMeta(object):
+    """
+    Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
+    to SessionDatum.nodeset and SessionDatum.function attributes.
+    """
+    def __init__(self, session_datum):
+        self.id = session_datum.id
+        self.nodeset = session_datum.nodeset
+        self.function = session_datum.function
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return 'DatumMeta(id={})'.format(self.id)
 
 
 def get_default_sort_elements(detail):
@@ -422,7 +470,31 @@ class SuiteGeneratorBase(object):
             getattr(suite, attr).extend(getattr(self, attr))
 
         map(add_to_suite, self.sections)
+        self.post_process(suite)
         return suite.serializeDocument(pretty=True)
+
+    def post_process(self, suite):
+        pass
+
+
+GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
+PRODUCTS_INSTANCE = Instance(id='products', src='jr://fixture/commtrack:products')
+LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
+CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
+SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
+LOCATIONS_INSTANCE = Instance(id='commtrack:locations', src='jr://fixture/commtrack:locations')
+
+INSTANCE_BY_ID = {
+    instance.id: instance
+    for instance in (
+        GROUP_INSTANCE,
+        PRODUCTS_INSTANCE,
+        LEDGER_INSTANCE,
+        CASE_INSTANCE,
+        SESSION_INSTANCE,
+        LOCATIONS_INSTANCE,
+    )
+}
 
 
 class SuiteGenerator(SuiteGeneratorBase):
@@ -435,6 +507,89 @@ class SuiteGenerator(SuiteGeneratorBase):
         'menus',
         'fixtures',
     )
+
+    def post_process(self, suite):
+        self.add_form_workflow(suite)
+
+    def add_form_workflow(self, suite):
+        """
+        post_form_workflow = 'module':
+          * Add stack frame and a command with value = "module command"
+
+        post_form_workflow = 'previous_screen':
+          * Add stack frame and a command with value = "module command"
+          * Find longest list of common datums between form entries for the module and add datums
+            to the stack frame for each.
+          * Add a command to the frame with value = "form command"
+          * Add datums to the frame for any remaining datums for that form.
+          * Remove any autoselect items from the end of the stack frame.
+          * Finally remove the last item from the stack frame.
+        """
+        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS
+
+        for module in self.modules:
+            for form in module.get_forms():
+                if form.post_form_workflow != WORKFLOW_DEFAULT:
+                    form_command = self.id_strings.form_command(form)
+                    module_id, form_id = form_command.split('-')
+
+                    entry = self.get_form_entry(suite, form_command)
+                    entry.stack = Stack()
+                    frame = CreateFrame()
+                    frame.add_command(self.id_strings.menu(module))
+                    entry.stack.add_frame(frame)
+
+                    if form.post_form_workflow == WORKFLOW_PREVIOUS:
+                        module_datums = self.get_module_datums(suite, module_id)
+                        form_datums = module_datums[form_id]
+                        datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+                        common_datums = commonprefix(datums_list)
+                        remaining_datums = form_datums[len(common_datums):]
+
+                        frame_children = list(common_datums)
+                        frame_children.append(self.id_strings.form_command(form))
+                        frame_children.extend(remaining_datums)
+
+                        last = frame_children.pop()
+                        while isinstance(last, DatumMeta) and last.function:
+                            # keep removing last element until we hit a command
+                            # or a non-autoselect datum
+                            last = frame_children.pop()
+
+                        requires_session = False
+                        for child in frame_children:
+                            if isinstance(child, basestring):
+                                frame.add_command(child)
+                            else:
+                                frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+                                requires_session = True
+
+                        if requires_session and not any(i for i in entry.instances if i.id == 'commcaresession'):
+                                entry.instances.append(
+                                    Instance(id='commcaresession', src='jr://instance/session')
+                                )
+
+    def get_module_datums(self, suite, module_id):
+        _, datums = self._get_entries_datums(suite)
+        return datums[module_id]
+
+    def get_form_entry(self, suite, form_command):
+        entries, _ = self._get_entries_datums(suite)
+        return entries[form_command]
+
+    @memoized
+    def _get_entries_datums(self, suite):
+        datums = defaultdict(lambda: defaultdict(list))
+        entries = {}
+        for e in suite.entries:
+            command = e.node.find('command').get('id')
+            module_id, form_id = command.split('-', 1)
+            if form_id != 'case-list':
+                entries[command] = e
+                for d in e.datums:
+                    datums[module_id][form_id].append(DatumMeta(d))
+
+        return entries, datums
 
     @property
     def xform_resources(self):
@@ -575,34 +730,64 @@ class SuiteGenerator(SuiteGeneratorBase):
         return select_chain
 
     @memoized
-    def get_detail_ids(self):
-        return [detail.id for detail in self.details]
+    def get_detail_mapping(self):
+        return {detail.id: detail for detail in self.details}
 
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
             module=module,
             detail_type=detail_type,
         )
-        return detail_id if detail_id in self.get_detail_ids() else None
+        return detail_id if detail_id in self.get_detail_mapping() else None
+
+    @staticmethod
+    def add_referenced_instances(entry, details_by_id):
+        detail_ids = set()
+        instance_re = r"""instance\(['"](\w+)['"]\)"""
+        for datum in entry.datums:
+            detail_ids.add(datum.detail_confirm)
+            detail_ids.add(datum.detail_select)
+        details = [details_by_id[detail_id] for detail_id in detail_ids
+                   if detail_id]
+
+        xpaths = set()
+        for detail in details:
+            xpaths.update(detail.get_all_xpaths())
+
+        instances = set()
+        for xpath in xpaths:
+            instance_names = re.findall(instance_re, xpath)
+            for instance_name in instance_names:
+                instance = INSTANCE_BY_ID.get(instance_name)
+                if instance:
+                    instances.add(instance)
+
+        for instance in instances:
+            entry.require_instance(instance)
 
     @property
     def entries(self):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
-
+        results = []
+        details_by_id = self.get_detail_mapping()
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command=Command(
+                e.command = Command(
                     id=self.id_strings.form_command(form),
                     locale_id=self.id_strings.form_locale(form),
                     media_image=form.media_image,
                     media_audio=form.media_audio,
                 )
-
-                getattr(self, 'configure_entry_{0}'.format(form.form_type))(module, e, form)
-                yield e
+                config_entry = {
+                    'module_form': self.configure_entry_module_form,
+                    'advanced_form': self.configure_entry_advanced_form,
+                    'careplan_form': self.configure_entry_careplan_form,
+                }[form.form_type]
+                config_entry(module, e, form)
+                results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
                 e = Entry(
@@ -614,7 +799,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(module, Module):
                     self.configure_entry_module(module, e, use_filter=False)
                 elif isinstance(module, AdvancedModule):
-                    e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
+                    e.require_instance(CASE_INSTANCE)
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
                         nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
@@ -629,9 +814,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
-                        e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
-                        e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
-                yield e
+                        e.require_instance(PRODUCTS_INSTANCE)
+                        e.require_instance(LEDGER_INSTANCE)
+                results.append(e)
+        for e in results:
+            self.add_referenced_instances(e, details_by_id)
+        return results
 
     def get_indicator_instances(self, module, form=None):
         indicator_sets = []
@@ -649,8 +837,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         for _, detail, _ in module.get_details():
             for column in detail.get_columns():
                 if column.field_type == FIELD_TYPE_LOCATION:
-                    return [Instance(id='commtrack:locations',
-                                     src='jr://fixture/commtrack:locations')]
+                    return [LOCATIONS_INSTANCE]
         return []
 
     def get_fixture_instances(self, module, form=None):
@@ -680,7 +867,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.assertions.append(assertion)
 
     def add_case_sharing_assertion(self, entry):
-        entry.instances.append(Instance(id='groups', src='jr://fixture/user-groups'))
+        entry.require_instance(GROUP_INSTANCE)
         self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
 
     def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
@@ -716,17 +903,16 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def configure_entry_module(self, module, e, use_filter=False):
         def get_instances():
-            yield Instance(id='casedb', src='jr://instance/casedb')
+            yield CASE_INSTANCE
             if (any(form.form_filter for form in module.get_forms())
                 and module.all_forms_require_a_case()) \
                 or module.parent_select.active:
-                yield Instance(id='commcaresession',
-                               src='jr://instance/session')
+                yield SESSION_INSTANCE
 
             for instance in self.get_extra_instances(module):
                 yield instance
 
-        e.instances.extend(get_instances())
+        e.require_instance(*get_instances())
 
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
@@ -765,7 +951,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         def get_instances():
-            yield Instance(id='casedb', src='jr://instance/casedb')
+            yield CASE_INSTANCE
 
             parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
             form_filter = any(form.form_filter for form in module.get_forms())
@@ -773,18 +959,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                     form.actions.auto_select_actions[AUTO_SELECT_USER] or \
                     form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
                     form.actions.auto_select_actions[AUTO_SELECT_RAW]:
-                yield Instance(id='commcaresession', src='jr://instance/session')
+                yield SESSION_INSTANCE
             elif module.get_app().commtrack_enabled:
                 try:
                     if form.actions.load_update_cases[-1].show_product_stock:
-                        yield Instance(id='commcaresession', src='jr://instance/session')
+                        yield SESSION_INSTANCE
                 except IndexError:
                     pass
 
             for instance in self.get_extra_instances(module, form):
                 yield instance
 
-        e.instances.extend(get_instances())
+        e.require_instance(*get_instances())
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -896,8 +1082,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
-                    e.instances.append(Instance(id='products', src='jr://fixture/commtrack:products'))
-                    e.instances.append(Instance(id='ledgerdb', src='jr://instance/ledgerdb'))
+                    e.require_instance(PRODUCTS_INSTANCE)
+                    e.require_instance(LEDGER_INSTANCE)
             except IndexError:
                 pass
 
@@ -905,8 +1091,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            e.instances.append(Instance(id='casedb', src='jr://instance/casedb'))
-            e.instances.append(Instance(id='commcaresession', src='jr://instance/session'))
+            e.require_instance(CASE_INSTANCE)
+            e.require_instance(SESSION_INSTANCE)
 
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(

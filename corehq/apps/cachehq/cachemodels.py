@@ -14,7 +14,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/fields_by_prefix",
         "domain/by_status",
         "domain/by_organization",
-        "hqbilling/domains_marked_for_billing",
     ]
 
 class UserGenerationCache(GenerationCache):

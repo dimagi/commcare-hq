@@ -81,60 +81,6 @@ def cached_property(method):
             return self.cached_properties[method.__name__]
     return find_cached
 
-class HQBillingAddress(DocumentSchema):
-    """
-        A billing address for clients
-    """
-    country = StringProperty()
-    postal_code = StringProperty()
-    state_province = StringProperty()
-    city = StringProperty()
-    address = ListProperty()
-    name = StringProperty()
-
-    @property
-    def html_address(self):
-        template = """<address>
-            <strong>%(name)s</strong><br />
-            %(address)s<br />
-            %(city)s%(state)s %(postal_code)s<br />
-            %(country)s
-        </address>"""
-        filtered_address = [a for a in self.address if a]
-        address = template % dict(
-            name=self.name,
-            address="<br />\n".join(filtered_address),
-            city=self.city,
-            state=", %s" % self.state_province if self.state_province else "",
-            postal_code=self.postal_code,
-            country=self.country
-        )
-        return mark_safe(address)
-
-    def update_billing_address(self, **kwargs):
-        self.country = kwargs.get('country','')
-        self.postal_code = kwargs.get('postal_code','')
-        self.state_province = kwargs.get('state_province', '')
-        self.city = kwargs.get('city', '')
-        self.address = kwargs.get('address', [''])
-        self.name = kwargs.get('name', '')
-
-class HQBillingDomainMixin(DocumentSchema):
-    """
-        This contains all the attributes required to bill a client for CommCare HQ services.
-    """
-    billing_address = SchemaProperty(HQBillingAddress)
-    billing_number = StringProperty()
-    currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
-
-    # used to bill client
-    is_sms_billable = BooleanProperty()
-    billable_client = StringProperty()
-
-    def update_billing_info(self, **kwargs):
-        self.billing_number = kwargs.get('phone_number','')
-        self.billing_address.update_billing_address(**kwargs)
-        self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
 class UpdatableSchema():
     def update(self, new_dict):
@@ -228,7 +174,7 @@ class DayTimeWindow(DocumentSchema):
     start_time = TimeProperty()
     end_time = TimeProperty()
 
-class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
+class Domain(Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to

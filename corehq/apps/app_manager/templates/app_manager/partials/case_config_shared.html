@@ -10,12 +10,18 @@
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "Only if the answer to" %}
         <input class="input-large" type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
+            questionsSelect: $root.getQuestions('select select1', false, $parent.case_transaction.allow.repeats()),
             value: question,
             optionsCaption: ' ',
             edit: $root.edit"
         />
-        {% trans "is" %}
+        <select class="input-medium" data-bind="
+                optstr: [
+                    {label:'{% trans "is" %}',value:'='},
+                    {label:'{% trans "has selected" %}',value:'selected'}
+                ],
+                value: operator,
+                edit: $root.edit"></select>
         <span data-bind="if: $root.getAnswers({question: question()}).length">
             <select data-bind="
                 optstr: $root.getAnswers({question: question()}),

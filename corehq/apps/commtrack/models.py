@@ -106,6 +106,7 @@ class Product(Document):
     category = StringProperty()
     program_id = StringProperty()
     cost = DecimalProperty()
+    product_data = DictProperty()
 
     @property
     def code(self):
@@ -165,7 +166,6 @@ class Product(Document):
         )
         return [row['id'] for row in view_results]
 
-
     @classmethod
     def count_by_domain(cls, domain):
         """
@@ -174,11 +174,9 @@ class Product(Document):
         # todo: we should add a reduce so we can get this out of couch
         return len(cls.ids_by_domain(domain))
 
-
     @classmethod
     def _csv_attrs(cls):
         return [
-            '_id',
             'name',
             'unit',
             'code_',
@@ -188,32 +186,57 @@ class Product(Document):
             ('cost', lambda a: Decimal(a) if a else None),
         ]
 
-    def to_csv(self):
-        def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
+    def to_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        product_dict = {}
 
-        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
-                for attr in self._csv_attrs()]
+        product_dict['id'] = self._id
+
+        for attr in self._csv_attrs():
+            real_attr = attr[0] if isinstance(attr, tuple) else attr
+            product_dict[real_attr] = encode_if_needed(
+                getattr(self, real_attr)
+            )
+
+        return product_dict
+
+    def custom_property_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        property_dict = {}
+
+        for prop, val in self.product_data.iteritems():
+            property_dict['data: ' + prop] = encode_if_needed(val)
+
+        return property_dict
 
     @classmethod
     def from_csv(cls, row):
         if not row:
             return None
-        id, row = row[0], row[1:]
+
+        id = row.get('id')
         if id:
             p = cls.get(id)
         else:
             p = cls()
-        for i, attr in enumerate(cls._csv_attrs()[1:]):
-            try:
-                val = row[i].decode('utf-8')
-            except IndexError:
-                break
-            else:
+
+        for attr in cls._csv_attrs():
+            if attr in row or (isinstance(attr, tuple) and attr[0] in row):
+                val = row.get(attr, '').decode('utf-8')
                 if isinstance(attr, tuple):
                     attr, f = attr
                     val = f(val)
                 setattr(p, attr, val)
+            else:
+                break
+
+        # pack and add custom data items
+        product_data = {}
+        for k, v in row.iteritems():
+            if str(k).startswith('data: '):
+                product_data[k[6:]] = v
+
+        setattr(p, 'product_data', product_data)
 
         return p
 

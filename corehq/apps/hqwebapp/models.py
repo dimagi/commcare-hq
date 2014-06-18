@@ -22,7 +22,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
-from hqbilling.dispatcher import BillingInterfaceDispatcher
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
 
@@ -1214,16 +1213,6 @@ class GlobalADMConfigTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class BillingTab(UITab):
-    title = ugettext_noop("Billing")
-    view = "billing_default"
-    dispatcher = BillingInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
@@ -1317,7 +1306,6 @@ class AdminTab(UITab):
     subtab_classes = (
         AdminReportsTab,
         GlobalADMConfigTab,
-        BillingTab,
         SMSAdminTab,
         AnnouncementsTab,
         AccountingTab,

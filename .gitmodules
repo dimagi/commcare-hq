@@ -46,9 +46,6 @@
 [submodule "submodules/hutch-src"]
 	path = submodules/hutch-src
 	url = git://github.com/dimagi/hutch.git
-[submodule "submodules/payments"]
-	path = submodules/payments
-	url = git://github.com/dimagi/payments.git
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
