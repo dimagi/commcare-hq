@@ -82,7 +82,7 @@
 {% block reporttable %}
 <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
     <thead>
-    {{ headers.render_html|safe }}
+    {{ report.headers.render_html|safe }}
     </thead>
     <tbody>
     </tbody>

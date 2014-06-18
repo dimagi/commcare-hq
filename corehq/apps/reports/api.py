@@ -24,7 +24,7 @@ class ReportDataSource(object):
                 if hasattr(self, name):
                     raise Exception("Conflicting property name: {}".format(name))
 
-                setattr(self, name, filter.get_value(self.config))
+                setattr(self, name, self.config.get(name, None))
 
     def slugs(self):
         """
