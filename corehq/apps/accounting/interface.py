@@ -47,6 +47,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.NameFilter',
               'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
               'corehq.apps.accounting.interface.AccountTypeFilter',
+              'corehq.apps.accounting.interface.ActiveStatusFilter',
               ]
     hide_filters = False
 
@@ -65,6 +66,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Date Created"),
             DataTablesColumn("Account Type"),
+            DataTablesColumn("Active Status"),
         )
 
     @property
@@ -92,12 +94,20 @@ class AccountingInterface(AddItemInterface):
             filters.update(
                 account_type=account_type,
             )
+        is_active = ActiveStatusFilter.get_value(self.request, self.domain)
+        if is_active is not None:
+            filters.update(
+                is_active=is_active == ActiveStatusFilter.active,
+            )
 
         for account in BillingAccount.objects.filter(**filters):
-            rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
-                         account.salesforce_account_id,
-                         account.date_created.date(),
-                         account.account_type])
+            rows.append([
+                mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
+                account.salesforce_account_id,
+                account.date_created.date(),
+                account.account_type,
+                "Active" if account.is_active else "Inactive",
+            ])
         return rows
 
     @property

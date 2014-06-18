@@ -255,6 +255,7 @@ class BillingAccount(models.Model):
         default=BillingAccountType.CONTRACT,
         choices=BillingAccountType.CHOICES,
     )
+    is_active = models.BooleanField(default=True)
 
     @property
     def balance(self):
