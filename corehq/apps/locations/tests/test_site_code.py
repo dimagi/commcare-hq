@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from django.test import TestCase
 from corehq.apps.locations.models import Location
@@ -14,14 +17,18 @@ class SiteCodeTest(TestCase):
             location_type="type"
         )
 
+        location.save()
+
         self.assertEqual(location.site_code, 'some_location')
 
     def testOtherCharacters(self):
         location = Location(
-            name="Some$ #Location (Old)",
+            name=u"Somé$ #Location (Old)",
             domain=self.domain.name,
             location_type="type"
         )
+
+        location.save()
 
         self.assertEqual(location.site_code, 'some_location_old')
 
@@ -31,6 +38,7 @@ class SiteCodeTest(TestCase):
             domain=self.domain.name,
             location_type="type"
         )
+
         location.save()
 
         self.assertEqual(location.site_code, 'location')
@@ -40,5 +48,7 @@ class SiteCodeTest(TestCase):
             domain=self.domain.name,
             location_type="type"
         )
+
+        location.save()
 
         self.assertEqual(location.site_code, 'location1')

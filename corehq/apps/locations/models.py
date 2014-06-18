@@ -7,6 +7,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 import re
 from django.dispatch import receiver
+from unidecode import unidecode
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -48,7 +49,10 @@ class Location(CachedCouchDocumentMixin, Document):
     def save(self, *args, **kwargs):
         if not self.site_code:
             matcher = re.compile("[\W\d]+")
-            name_slug = matcher.sub('_', self.name.lower()).strip('_')
+            name_slug = matcher.sub(
+                '_',
+                unidecode(self.name.lower())
+            ).strip('_')
             postfix = ''
 
             while name_slug + postfix in Location.site_codes_for_domain(self.domain):
