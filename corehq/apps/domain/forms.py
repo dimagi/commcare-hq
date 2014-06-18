@@ -979,6 +979,7 @@ class ProBonoForm(forms.Form):
         try:
             params = {
                 'pro_bono_form': self,
+                'domain': domain,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
