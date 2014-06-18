@@ -289,15 +289,12 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 'id': 't__0',
                 'text': _("[All mobile workers]"),
             }]
-
             if self.request.project.commtrack_enabled:
-                commtrack_tuple = self.user_types[HQUserType.COMMTRACK]
-
+                commtrack_tuple = self.user_type_tuple(HQUserType.COMMTRACK)
                 defaults.append({
                     'id': commtrack_tuple[0],
                     'text': commtrack_tuple[1]
                 })
-
             return defaults
 
         user_ids = self.selected_user_ids(self.request)
