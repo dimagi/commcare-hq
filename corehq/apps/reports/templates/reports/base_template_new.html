@@ -2,104 +2,36 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    {% block reports-js %}
-    {% include "imports/datatables.html" %}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-    <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
-    {% endblock %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-{% block reports-js-inline %}
     <script type="text/javascript">
     </script>
-{% endblock %}
 {% endblock %}
 
 {% block head %}
     {{ block.super }}
-    {% block reports-css %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    {% endblock %}
 {% endblock %}
 
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page-title %}
-{#  TODO:  BREADCRUMBS #}
+<div class="breadcrumb">
+    <div id="report-title">{{ report.title }}</div>
+</div>
 {% endblock %}
 
 {% block main_column %}
-    <div class="hq-accordion-control" id="reportFiltersAccordion">
-        <div id="reportFilters" class="accordion-body collapse">
-            <div class="accordion-inner">
-                <form method="get" id="paramSelectorForm" class="form-horizontal">
-                    <div id="hq-report-filters">
-                        {% include "reports/async/filters.html" %}
-                    </div>
-                    <div class="form-actions">
-                        {% block report_filter_actions %}
-                        <button type="submit" class="btn disabled"
-                                data-loading-text="{% trans "Generating Report..." %}"
-                                data-standard-text="{% trans "Apply" %}">
-                            {% trans "Apply" %}
-                        </button>
-                        {% endblock %}
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="accordion-heading">
-            <div class="accordion-actions">
-                {% if report.show_filters %}
-                    <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                       data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
-                       data-close-text="{% trans "Hide Filter Options" %}">
-                        {% trans "Filter Options" %}
-                    </a>
-                {% endif %}
+<div class="form-horizontal">
+    <fieldset>
+        <legend><span>{% trans "Report Filters" %}</span></legend>
+        {% for slug, filter in report.filters %}
+            {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+        {% endfor %}
+    </fieldset>
+</div>
+<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 
-                {% if report.is_exportable %}
-                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
-                        <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-                    </a>
-                {% endif %}
-
-                {% if report.is_emailable %}
-                    <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
-                        <i class="icon icon-envelope"></i> {% trans "Email report" %}
-                    </a>
-                {% endif %}
-
-                {% if report.is_printable %}
-                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
-                        <i class="icon icon-print"></i> {% trans "Print" %}
-                    </a>
-                {% endif %}
-
-            </div>
-            <div id="extra-filter-info" class="accordion-extra"></div>
-        </div>
-    </div>
-
-    {% if report.special_notice %}
-    <div class="alert alert-info" style="margin-bottom: 2px">
-        <h4>{% trans 'Notice' %}</h4>
-        <p>{{ report.special_notice }}</p>
-    </div>
-    {% endif %}
-    <div id="report-content">
-        {% block reportcontent %}
-            report content
-        {% endblock %}
-    </div>
 {% endblock %}
-
-{% block column_style %}{% if layout_flush_content %}hq-flush-content{% endif %}{% endblock %}

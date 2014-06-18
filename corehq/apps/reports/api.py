@@ -20,7 +20,7 @@ class ReportDataSource(object):
         """
         self.config = config or {}
         if hasattr(self, 'filters') and isinstance(self.filters, dict):
-            for name, filter in self.filters.items():
+            for name, filter in self.filters:
                 if hasattr(self, name):
                     raise Exception("Conflicting property name: {}".format(name))
 
