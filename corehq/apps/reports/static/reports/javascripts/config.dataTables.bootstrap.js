@@ -36,7 +36,7 @@ function HQReportDataTables(options) {
                     $row.append('<td>' + row[i] + '</td>');
                 }
             }
-        }
+        };
     })();
 
     this.render = function () {
@@ -190,6 +190,12 @@ function HQReportDataTables(options) {
             $(".dataTables_length select").change(function () {
                 $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
             });
+        });
+    };
+
+    this.refresh = function() {
+        $(self.dataTableElem).each(function(){
+          $(this).dataTable().fnReloadAjax();
         });
     };
 }
