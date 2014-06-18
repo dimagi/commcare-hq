@@ -35,7 +35,7 @@ from custom.opm import HealthStatusMixin
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
 from custom.opm.opm_reports.health_status import HealthStatus
-
+from dimagi.utils.decorators.memoized import memoized
 
 from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary
