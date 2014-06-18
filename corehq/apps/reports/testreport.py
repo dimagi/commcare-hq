@@ -225,7 +225,6 @@ class TestReport(JSONResponseMixin, TemplateView):
                 for name, filter in self.data_model.filters}
 
     def get_ajax(self, request, domain=None, **kwargs):
-        print "*"*40, 'ESOE: get_ajax', "*"*40
         try:
             data = self.data_model()
             params = self.filter_params
