@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from numpy import random
 
-from braces.views import JSONResponseMixin, AjaxResponseMixin
+from braces.views import JSONResponseMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.dates import DateSpan
 
@@ -42,6 +42,8 @@ class BaseFilter(object):
         self.required = required
 
     def get_value(self, context):
+        from pprint import pprint
+        pprint(context)
         context_ok = self.check_context(context)
         if self.required and not context_ok:
             required_slugs = ', '.join([slug.name for slug in self.params if slug.required])
@@ -121,6 +123,8 @@ class DatespanFilter(BaseFilter):
         }
 
 
+Column = namedtuple("Column", ["slug", "display_name", "sortable"])
+
 class TestReportData(ReportDataSource):
     title = "Test Report"
     slug = "test_report"
@@ -129,16 +133,11 @@ class TestReportData(ReportDataSource):
         ('datespan', DatespanFilter(required=False)),
     ]
 
-    def slugs(self):
-        return [c.data_slug for c in self.headers]
-
-    @property
-    def headers(self):
-        # not sure if this belongs here
-        return DataTablesHeader(
-            DataTablesColumn("Date", data_slug='date'),
-            DataTablesColumn("People Tested", data_slug='people_tested', sortable=False),
-        )
+    def columns(self):
+        return [
+            Column(slug="date", display_name="Date", sortable=True),
+            Column(slug="people_tested", display_name="People Tested", sortable=False),
+        ]
 
     @property
     def total_days(self):
@@ -157,7 +156,8 @@ class TestReportData(ReportDataSource):
                 yield self.datespan.startdate + timedelta(n)
 
     def get_data(self):
-        if self.datespan:
+        # replace this with a generic has_parameter method
+        if hasattr(self, 'datespan'):
             for date in self.daterange():
                 yield {
                     'date': date,
@@ -168,18 +168,16 @@ class TestReportData(ReportDataSource):
         return self.total_days
 
 
-class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
+class TestReport(JSONResponseMixin, TemplateView):
     template_name = 'reports/base_template_new.html'
     data_model = TestReportData
-
-    content_type = None
 
     def dispatch(self, request, domain=None, **kwargs):
         user = request.couch_user
         if self.has_permissions(domain, user):
-            if 'format' in request.GET and request.GET['format'] == 'json':
+            if request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(request, domain, **kwargs)
-
+            self.content_type = None
             return super(TestReport, self).dispatch(request, domain, **kwargs)
         else:
             raise Http403()
@@ -197,7 +195,16 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
             'report': self.data_model,
             'filter_context': filter_context,
             'url': self.reverse(self.domain),
+            'headers': self.headers,
         }
+
+    @property
+    def headers(self):
+        data = self.data_model()
+        def make_column(col):
+            return DataTablesColumn(col.display_name, data_slug=col.slug, sortable=col.sortable) 
+        columns = map(make_column, data.columns())
+        return DataTablesHeader(*columns)
 
     @property
     def domain(self):
@@ -221,7 +228,7 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         try:
             data = self.data_model()
             params = self.filter_params
-            params['ordering'] = datatables_ordering(self.request_dict, data.slugs())
+            params['ordering'] = datatables_ordering(self.request_dict, data.columns())
             params['pagination'] = datatables_paging(self.request_dict)
             data.configure(params)
         except FilterException as e:
@@ -229,7 +236,6 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
                 'error': e.message
             }
 
-        self.content_type = u"application/json"
         total_records = data.get_total_records()
         return self.render_json_response({
             'data_keys': data.slugs(),
@@ -249,7 +255,7 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
-        pattern = r'^{slug}$'.format(slug=cls.data_model.slug)
+        pattern = r'^{slug}/$'.format(slug=cls.data_model.slug)
         return url(pattern, cls.as_view(), name=cls.data_model.slug)
 
 
@@ -273,7 +279,7 @@ def datatables_ordering(request_dict, columns):
         s_sort_dir = request_dict.get('sSortDir_%s' % i)
         desc = s_sort_dir == 'desc'
 
-        slug = columns[i_sort_col]
+        slug = columns[i_sort_col].slug
         ordering[slug] = OrderedColumn(slug, desc=desc)
 
     return ordering
