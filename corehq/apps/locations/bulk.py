@@ -48,8 +48,6 @@ def import_locations(domain, worksheets, task=None):
     processed = 0
     total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
 
-    location_site_codes = Location.all_site_codes(domain)
-
     for worksheet in worksheets:
         location_type = worksheet.worksheet.title
         if location_type not in defined_location_types(domain):
@@ -61,8 +59,7 @@ def import_locations(domain, worksheets, task=None):
                 yield import_location(
                     domain,
                     location_type,
-                    loc,
-                    location_site_codes
+                    loc
                 )['message']
                 if task:
                     processed += 1
@@ -76,12 +73,14 @@ def import_location(domain, location_type, location_data):
 
     # TODO make sure site_code isn't duplicated in the file
 
-    parent_id = data.pop('parent_id', None)
+    parent_site_code = data.pop('parent_site_code', None)
 
     form_data = {}
 
     try:
-        _check_parent_id(parent_id, domain, location_type)
+        parent_id = _process_parent_site_code(
+            parent_site_code, domain, location_type
+        )
     except LocationImportError as e:
         return {
             'id': None,
@@ -139,23 +138,24 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
     )
 
 
-def _check_parent_id(parent_id, domain, location_type):
-    if parent_id:
-        try:
-            parent_obj = Location.get(parent_id)
-        except ResourceNotFound:
-            raise LocationImportError(_('Parent with id {0} does not exist').format(parent_id))
+def _process_parent_site_code(parent_site_code, domain, location_type):
+    if not parent_site_code:
+        return None
 
-        if parent_obj.domain != domain:
-            raise LocationImportError(
-                _('Parent ID {0} references a location in another project').format(parent_id)
-            )
-
+    parent_obj = Location.by_site_code(domain, parent_site_code)
+    if parent_obj:
         parent_relationships = parent_child(domain)
         if invalid_location_type(location_type, parent_obj, parent_relationships):
             raise LocationImportError(
-                _('Invalid parent type of {0} for child type {1}').format(parent_obj.location_type, location_type)
+                _('Invalid parent type of {0} for child type {1}').format(
+                    parent_obj.location_type,
+                    location_type
+                )
             )
+        else:
+            return parent_obj._id
+    else:
+        raise LocationImportError(_('Parent with id {0} does not exist in this project').format(parent_site_code))
 
 
 def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
