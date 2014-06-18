@@ -167,11 +167,22 @@ class StackDatum(IdNode):
     value = StringField('@value')
 
 
+class StackCommand(XmlObject):
+    ROOT_NAME = 'command'
+
+    value = StringField('@value')
+    command = StringField('.')
+
+
 class BaseFrame(XmlObject):
     if_clause = StringField('@if')
 
 
 class CreatePushBase(IdNode, BaseFrame):
+
+    datums = NodeListField('datum', StackDatum)
+    commands = NodeListField('command', StackCommand)
+
     def add_command(self, command):
         node = etree.SubElement(self.node, 'command')
         node.text = command
@@ -194,8 +205,19 @@ class ClearFrame(BaseFrame):
     frame = StringField('@frame')
 
 
+FRAME_CLASSES = (CreateFrame, PushFrame, ClearFrame)
+FRAME_CLASSES_BY_ROOT = {frame_type.ROOT_NAME: frame_type
+                         for frame_type in FRAME_CLASSES}
+
+
+def _wrap_frame(frame):
+    return FRAME_CLASSES_BY_ROOT[frame.tag](frame)
+
+
 class Stack(XmlObject):
     ROOT_NAME = 'stack'
+
+    frames = NodeListField('*', _wrap_frame)
 
     def add_frame(self, frame):
         self.node.append(frame.node)
@@ -658,6 +680,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             xpaths.update(detail.get_all_xpaths())
         for assertion in entry.assertions:
             xpaths.add(assertion.test)
+        if entry.stack:
+            for frame in entry.stack.frames:
+                xpaths.add(frame.if_clause)
+                if hasattr(frame, 'datums'):
+                    for datum in frame.datums:
+                        xpaths.add(datum.value)
         xpaths.discard(None)
 
         instances = set()
