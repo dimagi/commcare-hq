@@ -34,16 +34,19 @@
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
 
-            {% if report.headers.render_aoColumns %}aoColumns: {{ report.headers.render_aoColumns|JSON }},{% endif %}
-            autoWidth: {{ report.headers.auto_width|JSON }},
-            {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
+            {% if headers.render_aoColumns %}aoColumns: {{ headers.render_aoColumns|JSON }},{% endif %}
+            autoWidth: {{ headers.auto_width|JSON }},
+            {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
 
             ajaxSource: '{{ url }}',
+            {# ajaxParams: function() { #}
+                {# return [ #}
+                    {# {"name": "startdate", "value": "2014-01-01"}, #}
+                    {# {"name": "enddate", "value": "2014-04-01"} #}
+                {# ]; #}
+            {# }, #}
             ajaxParams: function() {
-                return [
-                    {"name": "startdate", "value": "2014-01-01"},
-                    {"name": "enddate", "value": "2014-04-01"}
-                ];
+                pass
             },
 
             {% if report_table.left_col.is_fixed %}
@@ -82,7 +85,7 @@
 {% block reporttable %}
 <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
     <thead>
-    {{ report.headers.render_html|safe }}
+    {{ headers.render_html|safe }}
     </thead>
     <tbody>
     </tbody>
