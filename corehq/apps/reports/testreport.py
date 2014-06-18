@@ -148,8 +148,8 @@ class TestReportData(ReportDataSource):
         p = self.config['pagination']
         days = range(self.total_days)[p.start:p.offset]
 
-        order = self.config['ordering']
-        desc = order and order[0].index == 0 and order[0].desc
+        order = self.config['ordering'].get('date', None)
+        desc = order and order.desc
         for n in days:
             if desc:
                 yield self.datespan.enddate - timedelta(n)
@@ -219,10 +219,11 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
 
     def get_ajax(self, request, domain=None, **kwargs):
         try:
+            data = self.data_model()
             params = self.filter_params
-            params['ordering'] = datatables_ordering(self.request_dict)
+            params['ordering'] = datatables_ordering(self.request_dict, data.slugs())
             params['pagination'] = datatables_paging(self.request_dict)
-            data = self.data_model(params)
+            data.configure(params)
         except FilterException as e:
             return {
                 'error': e.message
@@ -252,16 +253,16 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         return url(pattern, cls.as_view(), name=cls.data_model.slug)
 
 
-OrderingSpec = namedtuple("OrderingSpec", ["index", "desc"])
+OrderedColumn = namedtuple("OrderedColumn", ["slug", "desc"])
 PaginationSpec = namedtuple("PaginationSpec", ["start", "limit", "offset"])
 
-def datatables_ordering(request_dict):
+def datatables_ordering(request_dict, columns):
     try:
         i_sorting_cols = int(request_dict.get('iSortingCols', 0))
     except ValueError:
         i_sorting_cols = 0
 
-    ordering = []
+    ordering = {}
     for i in range(i_sorting_cols):
         try:
             i_sort_col = int(request_dict.get('iSortCol_%s' % i))
@@ -272,7 +273,8 @@ def datatables_ordering(request_dict):
         s_sort_dir = request_dict.get('sSortDir_%s' % i)
         desc = s_sort_dir == 'desc'
 
-        ordering.append(OrderingSpec(index=i_sort_col, desc=desc))
+        slug = columns[i_sort_col]
+        ordering[slug] = OrderedColumn(slug, desc=desc)
 
     return ordering
 
