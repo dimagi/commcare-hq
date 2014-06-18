@@ -1,7 +1,7 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from django.shortcuts import render
-from django.views.generic.base import TemplateView, TemplateResponseMixin, ContextMixin
+from django.views.generic.base import TemplateView
 from numpy import random
 from django.views.generic import View
 
@@ -77,6 +77,9 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
+    label = "Datespan Filter"
+    template = "reports/filter_new.html"
+    css_id = 'datespan'
     params = [
         FilterParam('startdate', True),
         FilterParam('enddate', True),
@@ -100,11 +103,21 @@ class DatespanFilter(BaseFilter):
     def default_value(self):
         return DateSpan.since(7)
 
+    def context(self, config):
+        return {
+            'label': self.label,
+            'css_id': self.css_id,
+            'value': self.get_value(config),
+            'timezone': None
+        }
+
 
 class TestReportData(ReportDataSource):
-    filters = {
-        'datespan': DatespanFilter(required=False)
-    }
+    title = "Test Report"
+    filters = [
+        # (slug, class)
+        ('datespan', DatespanFilter(required=False)),
+    ]
 
     def slugs(self):
         return [
@@ -144,13 +157,27 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
     def has_permissions(self, domain, user):
         return True
 
-    def get_ajax(self, request, domain=None, **kwargs):
-        filter_params = json_request(self.request.GET)
-        filter_params['domain'] = domain
+    def get_context_data(self, **kwargs):
+        # get filter context namespaced by slug
+        filter_context = {}
+        for _, filter in self.data_model.filters:
+            filter_context[filter.css_id] = filter.context(self.filter_params)
+        return {
+            'project': self.filter_params.get('domain', None),
+            'report': self.data_model,
+            'filter_context': filter_context,
+        }
 
-        # get a dict of params in some way
+    @property
+    # @memoized
+    def filter_params(self):
+        params = json_request(self.request.GET)
+        params['domain'] = getattr(self.request, 'domain', None)
+        return params
+
+    def get_ajax(self, request, domain=None, **kwargs):
         try:
-            data = self.data_model(filter_params)
+            data = self.data_model(self.filter_params)
         except FilterException as e:
             return {
                 'error': e.message
