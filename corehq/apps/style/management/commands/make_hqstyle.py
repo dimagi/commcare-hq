@@ -8,10 +8,10 @@ class Command(BaseCommand):
     help = "Compiles all the files necessary for the UI of CommCare HQ from HQ Bootstrap. Make sure lessc and uglifyjs are installed"
 
     less_files = [
-        "core/hqstyle-core",
+        "hqstyle-core",
         "legacy/app_manager",
         "legacy/core",
-        "mobile/c2/hqstyle-mobile-c2",
+        "hqstyle-mobile-c2",
     ]
     # NOTE: Order matters for the bootstrap js files.
     js_bootstrap = [
@@ -38,9 +38,9 @@ class Command(BaseCommand):
         "timepicker",
     ]
 
-    hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
-    font_awesome_src = "submodules/hqstyle-src/font_awesome"
-    hqstyle_src = "submodules/hqstyle-src/hqstyle"
+    hqstyle_src = "corehq/apps/style/"
+    hq_bootstrap_src = "%s/static/style/lib/bootstrap" % hqstyle_src
+    font_awesome_src = "%s/static/style/lib/fontawesome" % hqstyle_src
     destination = "%s/static/hqstyle" % hqstyle_src
 
     lessc = "lessc"
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         print "-- HQ Bootstrap ----"
         self.concat_files(all_js, self.js_bootstrap, self.hq_bootstrap_src, "js/bootstrap-%s.js")
         print "-- HQ Style ----"
-        self.concat_files(all_js, self.js_plugins, self.hqstyle_src, "_plugins/bootstrap-%s.js")
+        self.concat_files(all_js, self.js_plugins, self.hqstyle_src, "static/style/js/bootstrap-%s.js")
         all_js.close()
 
         self.compile_file(self.uglifyjs,
@@ -90,7 +90,7 @@ class Command(BaseCommand):
         print "\nCompiling CSS from LESS Files in HQStyle"
         for less_file in self.less_files:
             self.compile_file(self.lessc,
-                os.path.join(self.hqstyle_src, "_less/%s.less" % less_file),
+                os.path.join(self.hqstyle_src, "static/style/less/%s.less" % less_file),
                 os.path.join(self.destination, "css/%s.css" % less_file))
 
     def copy_bootstrap_images(self):
