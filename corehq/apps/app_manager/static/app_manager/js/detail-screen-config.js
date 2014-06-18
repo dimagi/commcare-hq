@@ -125,7 +125,9 @@ var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
-    var field_val_re = RegExp('^('+word+':)*'+word+'(\\/'+word+')*$');
+    var field_val_re = RegExp(
+        '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
+    );
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -408,6 +410,7 @@ var DetailScreenConfig = (function () {
                     .replace(/_/g, ' ')
                     .replace(/-/g, ' ')
                     .replace(/\//g, ' ')
+                    .replace(/#/g, '')
                 ).replace(/\w\S*/g, function (txt) {
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
