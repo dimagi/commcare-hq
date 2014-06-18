@@ -326,6 +326,10 @@ class SubscriptionForm(forms.Form):
     auto_generate_credits = forms.BooleanField(
         label=_("Auto-generate Plan Credits"), required=False
     )
+    active_accounts = forms.CharField(
+        label=_("Transfer Subscription To"),
+        required=False,
+    )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -452,11 +456,21 @@ class SubscriptionForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_text_inline = True
+        transfer_fields = []
+        if self.is_existing:
+            transfer_fields.extend([
+                crispy.Field(
+                    'active_accounts',
+                    css_class='input-xxlarge',
+                    placeholder="Select Active Account",
+                ),
+            ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '%s Subscription' % ('Edit' if self.is_existing
                                      else 'New'),
                 account_field,
+                crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
                 delay_invoice_until_field,
@@ -515,6 +529,13 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
         )
 
+    def clean_active_accounts(self):
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account and transfer_account == self.subscription.account.name:
+            raise ValidationError("Please select an account other than the "
+                                  "current account to transfer to.")
+        return transfer_account
+
     def update_subscription(self):
         self.subscription.update_subscription(
             date_end=self.cleaned_data['end_date'],
@@ -524,6 +545,11 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user
         )
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account:
+            acct = BillingAccount.objects.get(name=transfer_account)
+            self.subscription.account = acct
+            self.subscription.save()
 
 
 class ChangeSubscriptionForm(forms.Form):
