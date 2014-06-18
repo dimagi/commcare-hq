@@ -75,6 +75,18 @@ class BaseFilter(object):
         """
         return None
 
+    def context(self, value):
+        context = {
+            'label': self.label,
+            'css_id': self.css_id,
+            'value': value,
+        }
+        context.update(self.filter_context())
+        return context
+
+    def filter_context(self):
+        return {}
+
 
 class DatespanFilter(BaseFilter):
     label = "Datespan Filter"
@@ -103,11 +115,8 @@ class DatespanFilter(BaseFilter):
     def default_value(self):
         return DateSpan.since(7)
 
-    def context(self, config):
+    def filter_context(self):
         return {
-            'label': self.label,
-            'css_id': self.css_id,
-            'value': self.get_value(config),
             'timezone': None
         }
 
@@ -128,12 +137,24 @@ class TestReportData(ReportDataSource):
         # not sure if this belongs here
         return DataTablesHeader(
             DataTablesColumn("Date", data_slug='date'),
-            DataTablesColumn("People Tested", data_slug='people_tested'),
+            DataTablesColumn("People Tested", data_slug='people_tested', sortable=False),
         )
 
+    @property
+    def total_days(self):
+        return int((self.datespan.enddate - self.datespan.startdate).days)
+
     def daterange(self):
-        for n in range(int((self.datespan.enddate - self.datespan.startdate).days)):
-            yield self.datespan.startdate + timedelta(n)
+        p = self.config['pagination']
+        days = range(self.total_days)[p.start:p.offset]
+
+        order = self.config['ordering']
+        desc = order and order[0].index == 0 and order[0].desc
+        for n in days:
+            if desc:
+                yield self.datespan.enddate - timedelta(n)
+            else:
+                yield self.datespan.startdate + timedelta(n)
 
     def get_data(self):
         if self.datespan:
@@ -144,7 +165,7 @@ class TestReportData(ReportDataSource):
                 }
 
     def get_total_records(self):
-        return len(list(self.daterange()))
+        return self.total_days
 
 
 class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
@@ -169,13 +190,13 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
     def get_context_data(self, **kwargs):
         # get filter context namespaced by slug
         filter_context = {}
-        for _, filter in self.data_model.filters:
-            filter_context[filter.css_id] = filter.context(self.filter_params)
+        for name, filter in self.data_model.filters:
+            filter_context[filter.css_id] = filter.context(self.filter_params[name])
         return {
             'project': self.domain,
             'report': self.data_model,
             'filter_context': filter_context,
-            'url': self.reverse(self.domain, self.filter_params),
+            'url': self.reverse(self.domain),
         }
 
     @property
@@ -183,15 +204,25 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         return getattr(self.request, 'domain', None)
 
     @property
-    # @memoized
-    def filter_params(self):
+    @memoized
+    def request_dict(self):
         params = json_request(self.request.GET)
         params['domain'] = self.domain
         return params
 
+    @property
+    @memoized
+    def filter_params(self):
+        request_dict = self.request_dict
+        return {name: filter.get_value(request_dict)
+                for name, filter in self.data_model.filters}
+
     def get_ajax(self, request, domain=None, **kwargs):
         try:
-            data = self.data_model(self.filter_params)
+            params = self.filter_params
+            params['ordering'] = datatables_ordering(self.request_dict)
+            params['pagination'] = datatables_paging(self.request_dict)
+            data = self.data_model(params)
         except FilterException as e:
             return {
                 'error': e.message
@@ -202,7 +233,7 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         return self.render_json_response({
             'data_keys': data.slugs(),
             'aaData': list(data.get_data()),
-            "sEcho": 2,
+            "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         })
@@ -211,7 +242,7 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         pass
 
     @classmethod
-    def reverse(cls, domain, params=None):
+    def reverse(cls, domain):
         return reverse(cls.data_model.slug, args=[domain])
 
     @classmethod
@@ -219,3 +250,36 @@ class TestReport(JSONResponseMixin, AjaxResponseMixin, TemplateView):
         from django.conf.urls import url
         pattern = r'^{slug}$'.format(slug=cls.data_model.slug)
         return url(pattern, cls.as_view(), name=cls.data_model.slug)
+
+
+OrderingSpec = namedtuple("OrderingSpec", ["index", "desc"])
+PaginationSpec = namedtuple("PaginationSpec", ["start", "limit", "offset"])
+
+def datatables_ordering(request_dict):
+    try:
+        i_sorting_cols = int(request_dict.get('iSortingCols', 0))
+    except ValueError:
+        i_sorting_cols = 0
+
+    ordering = []
+    for i in range(i_sorting_cols):
+        try:
+            i_sort_col = int(request_dict.get('iSortCol_%s' % i))
+        except ValueError:
+            i_sort_col = 0
+
+        # sorting order
+        s_sort_dir = request_dict.get('sSortDir_%s' % i)
+        desc = s_sort_dir == 'desc'
+
+        ordering.append(OrderingSpec(index=i_sort_col, desc=desc))
+
+    return ordering
+
+def datatables_paging(request_dict):
+    limit = int(request_dict.get('iDisplayLength', 10))
+    start = int(request_dict.get('iDisplayStart', 0))
+    offset = start + limit
+
+    return PaginationSpec(start=start, limit=limit, offset=offset)
+
