@@ -46,7 +46,7 @@
                 {# ]; #}
             {# }, #}
             ajaxParams: function() {
-                pass
+                return $('#report-filters').serialize();
             },
 
             {% if report_table.left_col.is_fixed %}
@@ -55,10 +55,25 @@
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
         });
-        reportTables.render();
 
-        // on submit of forms call this
-{#        reportTables.refresh();#}
+        $('#report-filters').submit(function(event) {
+            var postData = $(this).serialize();
+            console.log(postData);
+            $.ajax({
+                url: $(this).attr("action"),
+                type: $(this).attr("method"),
+                data: postData,
+                headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
+                success: function(data, textStatus, jqXHR) {
+                    console.log("submit successful");
+                    reportTables.render();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log("wah waaaah");
+                }
+            });
+            event.preventDefault();
+        });
 
     });
     </script>
@@ -77,13 +92,25 @@
 {% endblock %}
 
 {% block main_column %}
-<div class="form-horizontal">
-    <fieldset>
-        <legend><span>{% trans "Report Filters" %}</span></legend>
-        {% for slug, filter in report.filters %}
-            {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
-        {% endfor %}
-    </fieldset>
+<div class="form-controls">
+    <form id="report-filters" class="form-horizontal" method="GET" action="">
+        <fieldset>
+            <legend><span>{% trans "Report Filters" %}</span></legend>
+            <input type="hidden" name="format" value="json"/>
+            {% for slug, filter in report.filters %}
+                {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+            {% endfor %}
+        </fieldset>
+        <div class="filter-actions">
+            {% block report_filter_actions %}
+            <button type="submit" class="btn btn-primary"
+                    data-loading-text="{% trans "Generating Report..." %}"
+                    data-standard-text="{% trans "Apply" %}">
+                {% trans "Apply" %}
+            </button>
+            {% endblock %}
+        </div>
+    </form>
 </div>
 
 {% block reporttable %}
