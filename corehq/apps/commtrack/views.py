@@ -368,7 +368,7 @@ def download_products(request, domain):
             'id',
             'name',
             'unit',
-            'code',
+            'product_id',
             'description',
             'category',
             'program_id',
