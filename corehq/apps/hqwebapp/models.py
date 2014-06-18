@@ -585,7 +585,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_access_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        )
+        ) and self.couch_user.can_edit_data()
 
     @property
     @memoized
