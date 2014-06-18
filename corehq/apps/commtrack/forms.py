@@ -25,11 +25,10 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label="SMS Code", max_length=10)
-    description = forms.CharField(max_length=500, required=False,
-        widget=forms.Textarea)
-    unit = forms.CharField(label="Default Unit", max_length=100, required=False)
-    program_id = forms.ChoiceField(label="Program", choices=(), required=True)
+    code = forms.CharField(label=ugettext_noop("Code"), max_length=10)
+    description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
+    unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
+    program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):
