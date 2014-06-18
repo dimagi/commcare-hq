@@ -14,11 +14,12 @@ from corehq.apps.app_manager.xpath import (
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
     # the corresponding map in cloudcare
-    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
+    # (corehq/apps/cloudcare/static/cloudcare/js/backbone/cases.js)
     'external-id': 'external_id',
     'date-opened': 'date_opened',
     'status': '@status',
     'name': 'case_name',
+    'owner_id': '@owner_id',
 }
 
 
@@ -366,12 +367,17 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         property = parts.pop()
         indexes = parts
 
-        case = CaseXPath('')
+        use_relative = property != '#owner_name'
+        if use_relative:
+            case = CaseXPath('')
+        else:
+            case = CaseXPath(u'current()')
+
         for index in indexes:
             case = case.index_id(index).case()
 
         if property == '#owner_name':
-            return self.owner_name(case.property('owner_id'))
+            return self.owner_name(case.property('@owner_id'))
         else:
             return case.property(property)
 
@@ -380,10 +386,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         groups = XPath(u"instance('groups')/groups/group")
         group = groups.select('@id', owner_id)
         return XPath.if_(
-            group.count(),
+            group.count().not_equals(0),
             group.slash('name'),
             XPath.if_(
-                CommCareSession.userid.equal(owner_id),
+                CommCareSession.userid.equals(owner_id),
                 CommCareSession.username,
                 XPath.string('')
             )
