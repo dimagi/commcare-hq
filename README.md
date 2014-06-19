@@ -43,7 +43,9 @@ individual project sites when necessary.
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7). The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
++ [elasticsearch][elasticsearch] (including Java 7).
+  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
+  - `brew install homebrew/versions/elasticsearch090` works well on mac
 + memcached
 + redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
