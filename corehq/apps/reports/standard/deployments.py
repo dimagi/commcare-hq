@@ -95,7 +95,7 @@ class ApplicationStatusReport(DeploymentsReport):
             else:
                 return self.table_cell(date.toordinal(), '<span class="{cls}">{text}</span>'.format(
                     cls=_timedelta_class(datetime.utcnow() - date),
-                    text=naturaltime(date)
+                    text=naturaltime(date),
                 ))
 
         for user in self.users:

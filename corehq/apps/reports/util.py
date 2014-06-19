@@ -403,19 +403,6 @@ def get_possible_reports(domain_name):
     return reports
 
 
-def format_relative_date(date, tz=pytz.utc):
-    #todo cleanup
-    now = datetime.now(tz=tz)
-    time = datetime.replace(date, tzinfo=tz)
-    dtime = now - time
-    if dtime.days < 1:
-        dtext = "Today"
-    elif dtime.days < 2:
-        dtext = "Yesterday"
-    else:
-        dtext = "%s days ago" % dtime.days
-    return format_datatables_data(dtext, dtime.days)
-
 def friendly_timedelta(td):
     hours, remainder = divmod(td.seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
