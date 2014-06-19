@@ -64,7 +64,13 @@ def import_products(domain, download, task):
             p = Product.from_csv(row)
             if p:
                 if p.domain:
-                    assert p.domain == domain, _('domain matched uploaded domain')
+                    if p.domain != domain:
+                        messages.append(
+                            _("Product {product_name} belongs to another domain and was not updated").format(
+                                product_name=p.name
+                            )
+                        )
+                        continue
                 else:
                     p.domain = domain
                 products.append(p)

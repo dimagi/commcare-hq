@@ -39,7 +39,7 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -979,6 +979,7 @@ class ProBonoForm(forms.Form):
         try:
             params = {
                 'pro_bono_form': self,
+                'domain': domain,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
