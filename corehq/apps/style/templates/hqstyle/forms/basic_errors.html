@@ -1,0 +1,5 @@
+{% for global_error in form.non_field_errors %}
+    <div class="alert alert-error">
+        {{ global_error }}
+    </div>
+{% endfor %}
