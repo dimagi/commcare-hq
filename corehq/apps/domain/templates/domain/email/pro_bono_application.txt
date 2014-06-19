@@ -2,6 +2,8 @@ Contact email: {{ pro_bono_form.contact_email.value }}
 
 Organization: {{ pro_bono_form.organization.value }}
 
+Project Space: {{ domain }}
+
 Project overview: {{ pro_bono_form.project_overview.value }}
 
 Pay only features needed: {{ pro_bono_form.pay_only_features_needed.value }}
