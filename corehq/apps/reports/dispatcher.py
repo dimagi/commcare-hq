@@ -176,10 +176,10 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
-                    from corehq.apps.reports.util import is_mobile_worker_with_report_access
-                    if not is_mobile_worker_with_report_access(couch_user, domain):
-                        continue
+                from corehq.apps.reports.util import is_mobile_worker_with_report_access
+                if not (dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True)
+                        or is_mobile_worker_with_report_access(couch_user, domain)):
+                    continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
                     if hasattr(report, 'override_navigation_list'):
