@@ -851,6 +851,7 @@ var DetailScreenConfig = (function () {
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
         PICTURE_FORMAT: 'Picture',
+        AUDIO_FORMAT: 'Audio',
         CALC_XPATH_FORMAT: 'Calculate',
         CALC_XPATH_EXTRA_LABEL: '',
 
@@ -879,6 +880,7 @@ var DetailScreenConfig = (function () {
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
         {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
+        {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT},
         {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT}
     ];
 

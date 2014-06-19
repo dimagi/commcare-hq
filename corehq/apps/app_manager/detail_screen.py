@@ -353,6 +353,11 @@ class Picture(FormattedDetailColumn):
     template_form = 'image'
 
 
+@register_format_type('audio')
+class Audio(FormattedDetailColumn):
+    template_form = 'audio'
+
+
 @register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
 class AttachmentXpathGenerator(BaseXpathGenerator):
     @property
