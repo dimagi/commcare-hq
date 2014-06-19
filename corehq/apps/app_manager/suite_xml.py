@@ -23,6 +23,14 @@ FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 
 
+class XPathField(StringField):
+    """
+    A string field that is supposed to contain an arbitrary xpath expression
+
+    """
+    pass
+
+
 class OrderedXmlObject(XmlObject):
     ORDER = ()
 
@@ -50,7 +58,7 @@ class XpathVariable(XmlObject):
 
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
-    function = StringField('@function')
+    function = XPathField('@function')
     variables = NodeListField('variable', XpathVariable)
 
 
@@ -82,7 +90,7 @@ class Text(XmlObject):
     ROOT_NAME = 'text'
 
     xpath = NodeField('xpath', Xpath)
-    xpath_function = StringField('xpath/@function')
+    xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
     locale_id = StringField('locale/@id')
@@ -156,9 +164,9 @@ class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
     ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm')
 
-    nodeset = StringField('@nodeset')
+    nodeset = XPathField('@nodeset')
     value = StringField('@value')
-    function = StringField('@function')
+    function = XPathField('@function')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
 
@@ -166,14 +174,25 @@ class SessionDatum(IdNode, OrderedXmlObject):
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
-    value = StringField('@value')
+    value = XPathField('@value')
+
+
+class StackCommand(XmlObject):
+    ROOT_NAME = 'command'
+
+    value = XPathField('@value')
+    command = StringField('.')
 
 
 class BaseFrame(XmlObject):
-    if_clause = StringField('@if')
+    if_clause = XPathField('@if')
 
 
 class CreatePushBase(IdNode, BaseFrame):
+
+    datums = NodeListField('datum', StackDatum)
+    commands = NodeListField('command', StackCommand)
+
     def add_command(self, command):
         node = etree.SubElement(self.node, 'command')
         node.text = command
@@ -196,8 +215,19 @@ class ClearFrame(BaseFrame):
     frame = StringField('@frame')
 
 
+FRAME_CLASSES = (CreateFrame, PushFrame, ClearFrame)
+FRAME_CLASSES_BY_ROOT = {frame_type.ROOT_NAME: frame_type
+                         for frame_type in FRAME_CLASSES}
+
+
+def _wrap_frame(frame):
+    return FRAME_CLASSES_BY_ROOT[frame.tag](frame)
+
+
 class Stack(XmlObject):
     ROOT_NAME = 'stack'
+
+    frames = NodeListField('*', _wrap_frame)
 
     def add_frame(self, frame):
         self.node.append(frame.node)
@@ -206,7 +236,7 @@ class Stack(XmlObject):
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
-    test = StringField('@test')
+    test = XPathField('@test')
     text = NodeListField('text', Text)
 
 
@@ -232,6 +262,17 @@ class Entry(XmlObject):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
+                if len(self.instances) == 1:
+                    # insert instance_node right after command_node
+                    instance_node = self.node.find('instance')
+                    command_node = self.node.find('command')
+                    self.node.remove(instance_node)
+                    self.node.insert(self.node.index(command_node) + 1,
+                                     instance_node)
+        sorted_instances = sorted(self.instances,
+                                  key=lambda instance: instance.id)
+        if sorted_instances != self.instances:
+            self.instances = sorted_instances
 
 
 class Menu(DisplayNode, IdNode):
@@ -275,7 +316,7 @@ class Field(OrderedXmlObject):
 
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
-    function = StringField('@function')
+    function = XPathField('@function')
 
     def get_name(self):
         return self.node.tag
@@ -349,8 +390,9 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
-class Suite(XmlObject):
+class Suite(OrderedXmlObject):
     ROOT_NAME = 'suite'
+    ORDER = ('version', 'descriptor')
 
     version = IntegerField('@version')
 
@@ -463,8 +505,10 @@ class SuiteGeneratorBase(object):
         self.id_strings = id_strings
 
     def generate_suite(self):
-        suite = Suite(descriptor=self.descriptor)
-        suite.version = self.app.version
+        suite = Suite(
+            version=self.app.version,
+            descriptor=self.descriptor,
+        )
 
         def add_to_suite(attr):
             getattr(suite, attr).extend(getattr(self, attr))
@@ -743,16 +787,27 @@ class SuiteGenerator(SuiteGeneratorBase):
     @staticmethod
     def add_referenced_instances(entry, details_by_id):
         detail_ids = set()
+        xpaths = set()
         instance_re = r"""instance\(['"](\w+)['"]\)"""
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
+            xpaths.add(datum.nodeset)
+            xpaths.add(datum.function)
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
 
-        xpaths = set()
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
+        for assertion in entry.assertions:
+            xpaths.add(assertion.test)
+        if entry.stack:
+            for frame in entry.stack.frames:
+                xpaths.add(frame.if_clause)
+                if hasattr(frame, 'datums'):
+                    for datum in frame.datums:
+                        xpaths.add(datum.value)
+        xpaths.discard(None)
 
         instances = set()
         for xpath in xpaths:
@@ -762,8 +817,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if instance:
                     instances.add(instance)
 
-        for instance in instances:
-            entry.require_instance(instance)
+        entry.require_instance(*instances)
 
     @property
     def entries(self):
@@ -799,7 +853,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if isinstance(module, Module):
                     self.configure_entry_module(module, e, use_filter=False)
                 elif isinstance(module, AdvancedModule):
-                    e.require_instance(CASE_INSTANCE)
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
                         nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
@@ -814,8 +867,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
-                        e.require_instance(PRODUCTS_INSTANCE)
-                        e.require_instance(LEDGER_INSTANCE)
                 results.append(e)
         for e in results:
             self.add_referenced_instances(e, details_by_id)
@@ -832,14 +883,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
                                        src='jr://fixture/indicators:%s' % indicator_set)
 
-    def get_location_instances(self, module, form=None):
-        # will return an empty list or a list containing the one location instance
-        for _, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                if column.field_type == FIELD_TYPE_LOCATION:
-                    return [LOCATIONS_INSTANCE]
-        return []
-
     def get_fixture_instances(self, module, form=None):
         from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE
         if form and hasattr(form, 'actions'):
@@ -850,8 +893,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def get_extra_instances(self, module, form=None):
         for instance in self.get_indicator_instances(module, form):
-            yield instance
-        for instance in self.get_location_instances(module, form):
             yield instance
         for instance in self.get_fixture_instances(module, form):
             yield instance
@@ -867,8 +908,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.assertions.append(assertion)
 
     def add_case_sharing_assertion(self, entry):
-        entry.require_instance(GROUP_INSTANCE)
-        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1", 'case_sharing.exactly_one_group')
+        self.add_assertion(entry, "count(instance('groups')/groups/group) = 1",
+                           'case_sharing.exactly_one_group')
 
     def add_auto_select_assertion(self, entry, case_id_xpath, mode, locale_arguments=None):
         self.add_assertion(
@@ -902,17 +943,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_module(self, module, e, use_filter=False):
-        def get_instances():
-            yield CASE_INSTANCE
-            if (any(form.form_filter for form in module.get_forms())
-                and module.all_forms_require_a_case()) \
-                or module.parent_select.active:
-                yield SESSION_INSTANCE
-
-            for instance in self.get_extra_instances(module):
-                yield instance
-
-        e.require_instance(*get_instances())
+        e.require_instance(*self.get_extra_instances(module))
 
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
@@ -949,28 +980,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if 'owner_id' in action.case_properties:
                     return True
             return False
-
-        def get_instances():
-            yield CASE_INSTANCE
-
-            parent_select = any(action.parent_tag for action in form.actions.load_update_cases)
-            form_filter = any(form.form_filter for form in module.get_forms())
-            if parent_select or (form_filter and module.all_forms_require_a_case()) or \
-                    form.actions.auto_select_actions[AUTO_SELECT_USER] or \
-                    form.actions.auto_select_actions[AUTO_SELECT_CASE] or \
-                    form.actions.auto_select_actions[AUTO_SELECT_RAW]:
-                yield SESSION_INSTANCE
-            elif module.get_app().commtrack_enabled:
-                try:
-                    if form.actions.load_update_cases[-1].show_product_stock:
-                        yield SESSION_INSTANCE
-                except IndexError:
-                    pass
-
-            for instance in self.get_extra_instances(module, form):
-                yield instance
-
-        e.require_instance(*get_instances())
+        e.require_instance(*self.get_extra_instances(module, form))
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -1082,8 +1092,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
-                    e.require_instance(PRODUCTS_INSTANCE)
-                    e.require_instance(LEDGER_INSTANCE)
             except IndexError:
                 pass
 
@@ -1091,9 +1099,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            e.require_instance(CASE_INSTANCE)
-            e.require_instance(SESSION_INSTANCE)
-
             parent_module = self.get_module_by_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
                 id='case_id',
