@@ -91,16 +91,41 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Product'),
-                    _('# Facilities'),
-                    _('Stocked Out'),
-                    _('Understocked'),
-                    _('Adequate Stock'),
-                    _('Overstocked'),
-                    #_('Non-reporting'),
-                    _('Insufficient Data'),
-                ]))
+        columns = [
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('# Facilities')),
+            DataTablesColumn(
+                _('Stocked Out'),
+                help_text=_("A facility is counted as stocked out when its \
+                            stock is below the emergency level during the date \
+                            range selected.")),
+            DataTablesColumn(
+                _('Understocked'),
+                help_text=_("A facility is counted as under stocked when its \
+                            stock is above the emergency level but below the \
+                            low stock level during the date range selected.")),
+            DataTablesColumn(
+                _('Adequate Stock'),
+                help_text=_("A facility is counted as adequately stocked when \
+                            its stock is above the low level but below the \
+                            overstock level during the date range selected.")),
+            DataTablesColumn(
+                _('Overstocked'),
+                help_text=_("A facility is counted as overstocked when \
+                            its stock is above the overstock level \
+                            during the date range selected.")),
+            #DataTablesColumn(_('Non-reporting')),
+            DataTablesColumn(
+                _('Insufficient Data'),
+                help_text=_("A facility is marked as insufficient data when \
+                            there is no known consumption amount or there \
+                            has never been a stock report at the location. \
+                            Consumption amount can be unknown if there is \
+                            either no default consumption value or the reporting \
+                            history does not meet the calculation settings \
+                            for the project."))
+        ]
+        return DataTablesHeader(*columns)
 
     @property
     def product_data(self):

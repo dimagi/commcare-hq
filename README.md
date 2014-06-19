@@ -43,7 +43,9 @@ individual project sites when necessary.
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7)
++ [elasticsearch][elasticsearch] (including Java 7).
+  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
+  - `brew install homebrew/versions/elasticsearch090` works well on mac
 + memcached
 + redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
@@ -52,7 +54,7 @@ individual project sites when necessary.
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
- [elasticsearch]: http://www.elasticsearch.org/download/
+ [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
 #### Elasticsearch Configuration
@@ -95,6 +97,10 @@ Once all the dependencies are in order, please do the following:
     mkdir pip_cache
     pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
+
+There is also a separate collection of Dimagi dev oriented tools that you can install:
+
+  pip install -r requirements/dev-requirements.txt
 
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
 log file settings are correct, as well as any settings required by any other
