@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 {% load hq_shared_tags %}
+{% load compress %}
 
 <html>
 <head>
-    <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/hqstyle-core.css' %}"/>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="screen" href="{% static 'style/less/hqstyle-core.less' %}"/>
+    {% endcompress %}
     <title>Edit Builds Menu</title>
 </head>
 

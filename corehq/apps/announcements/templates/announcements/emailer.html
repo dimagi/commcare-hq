@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 {% load hq_shared_tags %}
+{% load compress %}
 
 <html>
 
 <head>
     <title>CommCareHQ - Templated Bulk Emailer</title>
-    <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/hqstyle-core.css' %}"/>
-    <style>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="screen" href="{% static 'style/less/hqstyle-core.less' %}"/>
+    <style type="text/css">
 	textarea {
 	    height: 2em;
 	    width: 100%;
@@ -20,6 +22,7 @@
 	    color: red;
 	}
     </style>
+    {% endcompress %}
 </head>
 
 <body>

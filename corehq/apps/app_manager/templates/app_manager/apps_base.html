@@ -17,8 +17,11 @@
     </ul>
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+    <link type="text/less" rel="stylesheet" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+{% endblock %}
+
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
 {% endblock %}
 

@@ -2,6 +2,7 @@
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
+{% load compress %}
 {% load i18n %}
 
 {% block pretable %}
@@ -28,7 +29,9 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/hqstyle-core.css' %}"/>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" href="{% static 'style/less/hqstyle-core.less' %}"/>
     <link rel="stylesheet" href="{% static 'm4change/css/reports.css' %}"/>
+    {% endcompress %}
     {{ block.super }}
 {% endblock %}

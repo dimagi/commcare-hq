@@ -1,6 +1,7 @@
 {% extends original_template %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
@@ -40,7 +41,8 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/hqstyle-core.css' %}"/>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" href="{% static 'style/less/hqstyle-core.less' %}"/>
     <style>
         @page {
             size: A4 landscape;
@@ -49,7 +51,7 @@
             page-break-after: always;
         }
     </style>
-
+    {% endcompress %}
 {{ block.super }}
 {% endblock %}
 

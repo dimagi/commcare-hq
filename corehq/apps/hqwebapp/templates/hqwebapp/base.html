@@ -22,7 +22,9 @@
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/core.css' %}"/>
+            {% compress css %}
+            <link type="text/css" rel="stylesheet" href="{% static 'style/less/legacy/core.less' %}"/>
+            {% endcompress %}
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
