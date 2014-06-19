@@ -57,7 +57,7 @@ individual project sites when necessary.
  [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
-#### Elasticsearch Configuration
+#### Elasticsearch Configuration (optional)
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
