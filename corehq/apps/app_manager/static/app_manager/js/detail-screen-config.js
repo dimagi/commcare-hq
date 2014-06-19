@@ -123,6 +123,17 @@ function ParentSelect(init) {
 
 var DetailScreenConfig = (function () {
     "use strict";
+
+    function toTitleCase(str) {
+        return (str
+            .replace(/_/g, ' ')
+            .replace(/-/g, ' ')
+            .replace(/\//g, ' ')
+            .replace(/#/g, '')
+        ).replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
     var field_val_re = RegExp(
@@ -405,17 +416,6 @@ var DetailScreenConfig = (function () {
                 return column;
             }
 
-            function toTitleCase(str) {
-                return (str
-                    .replace(/_/g, ' ')
-                    .replace(/-/g, ' ')
-                    .replace(/\//g, ' ')
-                    .replace(/#/g, '')
-                ).replace(/\w\S*/g, function (txt) {
-                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                });
-            }
-
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
 
@@ -594,10 +594,16 @@ var DetailScreenConfig = (function () {
                     var parts = text.split('/');
                     // wrap all parts but the last in a label style
                     for (var j = 0; j < parts.length - 1; j++) {
-                        parts[j] = '<span class="label label-info">' +
-                            parts[j] + '</span>'
+                        parts[j] = ('<span class="label label-info">'
+                                    + parts[j] + '</span>');
                     }
-                    parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
+                    if (parts[j][0] == '#') {
+                        parts[j] = ('<span class="label label-info">'
+                                    + toTitleCase(parts[j]) + '</span>');
+                    } else {
+                        parts[j] = ('<code style="display: inline-block;">'
+                                    + parts[j] + '</code>');
+                    }
                     column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
                 }
                 var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
