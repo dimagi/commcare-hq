@@ -717,10 +717,10 @@ def release_build(request, domain, app_id, saved_app_id):
 
 
 def get_module_view_context_and_template(app, module):
-    builder = ParentCasePropertyBuilder(
-        app,
-        defaults=('name', 'date-opened', 'status')
-    )
+    defaults = ('name', 'date-opened', 'status')
+    if app.case_sharing:
+        defaults += ('#owner_name',)
+    builder = ParentCasePropertyBuilder(app, defaults=defaults)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids

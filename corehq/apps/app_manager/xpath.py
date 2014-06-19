@@ -27,14 +27,17 @@ class XPath(unicode):
         if quote is None:
             quote = not isinstance(value, XPath)
         if quote:
-            value = string(value)
+            value = XPath.string(value)
         return XPath("{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def count(self):
         return XPath('count({self})'.format(self=self))
 
-    def equal(self, b):
+    def equals(self, b):
         return XPath(u'{} = {}'.format(self, b))
+
+    def not_equals(self, b):
+        return XPath(u'{} != {}'.format(self, b))
 
     @staticmethod
     def if_(a, b, c):
