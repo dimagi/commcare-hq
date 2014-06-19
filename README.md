@@ -96,6 +96,10 @@ Once all the dependencies are in order, please do the following:
     pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
+There is also a separate collection of Dimagi dev oriented tools that you can install:
+
+  pip install -r requirements/dev-requirements.txt
+
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
 log file settings are correct, as well as any settings required by any other
 functionality you want to use, such as SMS sending and Google Analytics.
