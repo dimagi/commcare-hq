@@ -247,7 +247,9 @@ def submit_mapping_case_block(user, index):
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
-            index=index
+            index=index,
+            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
+            user_id=const.COMMTRACK_USERNAME,
         )
 
     submit_case_blocks(
