@@ -1,10 +1,17 @@
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
-    <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/hqstyle-mobile-c2.css' %}"/>
+
+    {% compress css %}
+    <link rel="stylesheet" media="screen" href="{% static 'styles/less/hqstyle-mobile-c2.less' %}"/>
+    {% block stylesheets %}
+    {% endblock %}
+    {% endcompress %}
+
     <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 {% block head %}{% endblock %}
 </head>
