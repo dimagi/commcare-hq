@@ -74,7 +74,8 @@ LOCALE_PATHS = (
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder"
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    'compressor.finders.CompressorFinder',
 )
 
 STATICFILES_DIRS = (
@@ -166,6 +167,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -1191,3 +1193,10 @@ TRAVIS_TEST_GROUPS = (
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )
+
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'lessc {infile} {outfile}'),
+)
+COMPRESS_ENABLED = True
+
