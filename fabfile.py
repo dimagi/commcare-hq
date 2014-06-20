@@ -763,6 +763,7 @@ def _deploy_without_asking():
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
+        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
         execute(version_static)
@@ -971,6 +972,14 @@ def flip_es_aliases():
 
 @parallel
 @roles(*ROLES_STATIC)
+def _do_compress():
+    """Run Django Compressor after a code update"""
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py compress' % env, user=env.sudo_user)
+
+
+@parallel
+@roles(*ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
@@ -1007,6 +1016,7 @@ def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
     update_code()
+    _do_compress()
     _do_collectstatic()
 
 
