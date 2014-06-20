@@ -8,6 +8,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
@@ -158,7 +159,8 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         if domain and project and user is None:
             return True
 
-        if user and (is_succeed_admin(user) or has_any_role(user)):
+        if user and (is_succeed_admin(user) or has_any_role(user)
+                     or is_mobile_worker_with_report_access(user, domain)):
             return True
         return False
 

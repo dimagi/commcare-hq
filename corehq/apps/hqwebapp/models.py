@@ -13,6 +13,7 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -105,13 +106,20 @@ class UITab(object):
         raise NotImplementedError()
 
     @property
+    def mobile_worker_redirect(self):
+        return (
+            is_mobile_worker_with_report_access(self.couch_user, self.domain)
+            and isinstance(self, ProjectReportsTab)
+        )
+
+    @property
     @memoized
     def real_is_viewable(self):
         if self.subtabs:
             return any(st.real_is_viewable for st in self.subtabs)
         else:
             try:
-                return self.is_viewable
+                return self.is_viewable or self.mobile_worker_redirect
             except AttributeError:
                 return False
 
