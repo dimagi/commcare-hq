@@ -12,7 +12,7 @@ from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_def
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
-from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
@@ -455,7 +455,7 @@ class CommtrackConfig(Document):
                     facility_type = supply_point.location.location_type
                 except ResourceNotFound:
                     pass
-            return get_default_consumption(self.domain, product_id, facility_type, case_id)
+            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
 
         return ConsumptionConfiguration(
             min_periods=self.consumption_config.min_transactions,

@@ -121,7 +121,7 @@ class CommTrackOTATest(CommTrackTest):
             balance_ota_block(
                 self.sp,
                 'consumption',
-                [(p._id, 5) for p in self.products],
+                [(p._id, 150) for p in self.products],
                 datestring=json_format_datetime(report.date),
             ),
              consumption_block,
