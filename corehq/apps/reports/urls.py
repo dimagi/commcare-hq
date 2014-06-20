@@ -37,15 +37,15 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Download Exports
     # todo should eventually be moved to corehq.apps.export
-    ## Custom
+    # Custom
     url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", 'export_default_or_custom_data', name="export_custom_data"),
-    ## Default
+    # Default
     url(r"^export/default/download/$", "export_default_or_custom_data", name="export_default_data"),
-    ## Bulk
+    # Bulk
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
-    ## saved
+    # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
-    ## Full Excel export
+    # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', "export_report", name="export_report"),
 
     # once off email
