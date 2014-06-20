@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
@@ -295,6 +294,7 @@ class CommTrackSetupTab(UITab):
     def dropdown_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             DefaultConsumptionView,
             ProgramListView,
@@ -305,13 +305,15 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        dropdown_items = [
-            (_("Products"), ProductListView),
-            (_("Programs"), ProgramListView),
-            (_("Consumption"), DefaultConsumptionView),
-            (_("SMS"), SMSSettingsView),
-            (_("Locations"), LocationsListView),
-            (_("Locations (Advanced)"), LocationSettingsView),
+        dropdown_items = [(_(view.page_title), view) for view in (
+                ProductListView,
+                LocationsListView,
+                LocationSettingsView,
+                ProgramListView,
+                SMSSettingsView,
+                DefaultConsumptionView,
+                CommTrackSettingsView,
+            )
         ]
 
         return [
@@ -329,6 +331,7 @@ class CommTrackSetupTab(UITab):
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             NewProductView,
             EditProductView,
@@ -366,31 +369,6 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-            # programs
-            {
-                'title': ProgramListView.page_title,
-                'url': reverse(ProgramListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewProgramView.page_title,
-                        'urlname': NewProgramView.urlname,
-                    },
-                    {
-                        'title': EditProgramView.page_title,
-                        'urlname': EditProgramView.urlname,
-                    },
-                ]
-            },
-            # consumption
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            },
-            # sms
-            {
-                'title': SMSSettingsView.page_title,
-                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
-            },
             # locations
             {
                 'title': LocationsListView.page_title,
@@ -418,6 +396,36 @@ class CommTrackSetupTab(UITab):
             {
                 'title': LocationSettingsView.page_title,
                 'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # programs
+            {
+                'title': ProgramListView.page_title,
+                'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProgramView.page_title,
+                        'urlname': NewProgramView.urlname,
+                    },
+                    {
+                        'title': EditProgramView.page_title,
+                        'urlname': EditProgramView.urlname,
+                    },
+                ]
+            },
+            # sms
+            {
+                'title': SMSSettingsView.page_title,
+                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+            },
+            # consumption
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            },
+            # settings
+            {
+                'title': CommTrackSettingsView.page_title,
+                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
             },
             # external sync
             {
@@ -1014,17 +1022,6 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import CommTrackSettingsView
-
-            if self.project.commtrack_enabled:
-                commtrack_settings = [
-                    {
-                        'title': _(CommTrackSettingsView.page_title),
-                        'url': reverse(CommTrackSettingsView.urlname, args=[self.domain])
-                    },
-                ]
-                items.append((_('CommTrack'), commtrack_settings))
-
             administration = [
                 {
                     'title': _('CommCare Exchange'),
