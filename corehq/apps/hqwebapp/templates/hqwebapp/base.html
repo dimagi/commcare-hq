@@ -37,6 +37,7 @@
             _gaq.push(['_setDomainName', 'none']);
             _gaq.push(['_trackPageview']);
             _gaq.push(['_setCustomVar', 1, 'is_dimagi', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}', 3]);
+            {% if request.couch_user %}_gaq.push(['_setCustomVar', 2, 'user_id', '{{ request.couch_user.userID }}', 3]);{% endif %}
 
             (function() {
                 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
