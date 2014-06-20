@@ -76,8 +76,7 @@ class ConventureData(BaseSqlData):
             DatabaseColumn("No de PPS planifie (number of PPS planned)", MaxColumn('planned_total')),
             DatabaseColumn("No de PPS avec livrasion cet mois (number of PPS visited this month)",
                 CountColumn('real_date_repeat',
-                    alias="visited",
-                    filters=self.filters + [NOTEQ("real_date_repeat", "visit")]
+                    alias="visited"
                 )
             ),
             AggregateColumn("Taux de couverture (coverage ratio)", self.percent_fn,
@@ -85,7 +84,7 @@ class ConventureData(BaseSqlData):
             DatabaseColumn("No de PPS avec donnees soumises (number of PPS which submitted data)",
                  CountColumn('real_date_repeat',
                      alias="submitted",
-                     filters=self.filters + [EQ("real_date_repeat", "visit")]
+                     filters=self.filters + [NOTEQ("real_date_repeat", "visit")]
                  )),
             AggregateColumn("Exhaustivite des donnees", self.percent_fn,
                             [AliasColumn('visited'), AliasColumn('submitted')]),

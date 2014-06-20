@@ -51,6 +51,6 @@ class RecapPassageReport(DatespanMixin, GenericTabularReport, CustomProjectRepor
                row[-1] = 0
             return row
 
-        rows = [ _format_pps_restant(row) for row in self.model.rows ]
+        rows = [ _format_pps_restant(row) for row in self.model.rows]
         self.total_row = list(calculate_total_row(rows))
         return rows

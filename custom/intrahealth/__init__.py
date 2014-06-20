@@ -57,4 +57,9 @@ def get_location_id_by_type(form, type):
             return loc._id
 
 def get_real_date(form):
-    return form.form['real_date_repeat'] if 'real_date_repeat' in form.form and form.form['real_date_repeat'] else ''
+    date = ""
+    for product in form.form['products']:
+        if 'real_date_repeat' in product:
+            date = product['real_date_repeat']
+            break
+    return date

@@ -125,7 +125,7 @@ class TableuDeBoardReport(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
-            visit="''",
+            visit="",
         )
         if self.request.GET.get('location_id', ''):
             if self.location.location_type.lower() == 'district':

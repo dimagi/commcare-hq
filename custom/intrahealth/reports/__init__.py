@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.models import Product
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 
@@ -25,8 +26,11 @@ class IntraHealtMixin(object):
         else:
             header.add_column(columns[0].data_tables_column)
 
-        self.groups = list(set(zip(*self.model.data.keys())[0]))
-        self.groups = sorted(set(map(lambda group: self._safe_get(self.PRODUCT_NAMES, group) or group, self.groups)))
+        if self.model.data.keys():
+            grps = list(set(zip(*self.model.data.keys())[0]))
+            self.groups = sorted(set(map(lambda group: self._safe_get(self.PRODUCT_NAMES, group) or group, grps)))
+        else:
+            self.groups = [group.name for group in Product.by_domain(self.domain)]
         for group in self.groups:
             if self.model.have_groups:
                 header.add_column(DataTablesColumnGroup(group,
@@ -39,7 +43,8 @@ class IntraHealtMixin(object):
     @property
     def rows(self):
         data = self.model.data
-        ppss = sorted(list(set(zip(*data.keys())[1])))
+        ppss = sorted(list(set(zip(*data.keys())[1]))) if data.keys() else []
+
         rows = []
 
         formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
