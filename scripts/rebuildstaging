@@ -18,7 +18,7 @@ function rebuildstaging() {
 }
 
 if [[ $deploy = "y" ]]; then
-    rebuildstaging && fab --linewise staging preindex_views && printf 'y\ny\n' | fab --linewise staging deploy
+    rebuildstaging && fab --linewise staging awesome_deploy
 else
     rebuildstaging
 fi
