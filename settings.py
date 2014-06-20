@@ -758,6 +758,12 @@ LOGGING = {
     }
 }
 
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
+
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
@@ -1194,9 +1200,4 @@ TRAVIS_TEST_GROUPS = (
     ),
 )
 
-# Django Compressor
-COMPRESS_PRECOMPILERS = (
-   ('text/less', 'lessc {infile} {outfile}'),
-)
-COMPRESS_ENABLED = True
 
