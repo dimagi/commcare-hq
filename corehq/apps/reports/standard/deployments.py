@@ -1,13 +1,13 @@
 # coding=utf-8
-import functools
-from pydoc import html
+from datetime import datetime, timedelta
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from casexml.apps.phone.models import SyncLog
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import get_app
-from corehq.apps.reports import util
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -69,9 +69,11 @@ class ApplicationStatusReport(DeploymentsReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("Username")),
-            DataTablesColumn(_("Last Seen (UTC)"),
+            DataTablesColumn(_("Last Submission"),
                              sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Application (Deployed Build)"))
+            DataTablesColumn(_("Last Sync"),
+                             sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Application (Deployed Version)"))
         )
 
     @property
@@ -79,9 +81,25 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
 
+        def _fmt_date(date):
+            def _timedelta_class(delta):
+                if delta > timedelta(days=7):
+                    return "label label-important"
+                elif delta > timedelta(days=3):
+                    return "label label-warning"
+                else:
+                    return "label label-success"
+
+            if not date:
+                return self.table_cell(-1, '<span class="label">{0}</span>'.format(_("Never")))
+            else:
+                return self.table_cell(date.toordinal(), '<span class="{cls}">{text}</span>'.format(
+                    cls=_timedelta_class(datetime.utcnow() - date),
+                    text=naturaltime(date),
+                ))
+
         for user in self.users:
-            last_seen = self.table_cell(-1, _("Never"))
-            app_name = None
+            last_seen = last_sync = app_name = None
 
             key = make_form_couch_key(self.domain, user_id=user.user_id,
                                       app_id=selected_app or None)
@@ -96,7 +114,7 @@ class ApplicationStatusReport(DeploymentsReport):
             ).first()
 
             if xform:
-                last_seen = util.format_relative_date(xform.received_on)
+                last_seen = xform.received_on
                 build_version, build_version_source = get_build_version(xform)
 
                 if xform.app_id:
@@ -118,7 +136,11 @@ class ApplicationStatusReport(DeploymentsReport):
             if app_name is None and selected_app:
                 continue
 
+            last_sync_log = SyncLog.last_for_user(user.user_id)
+            if last_sync_log:
+                last_sync = last_sync_log.date
+
             rows.append(
-                [user.username_in_report, last_seen, app_name or "---"]
+                [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
             )
         return rows
