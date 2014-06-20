@@ -9,6 +9,7 @@ var ExportManager = function (o) {
     self.downloadUrl = o.downloadUrl;
     self.bulkDownloadUrl = o.bulkDownloadUrl;
     self.exportFilters = o.exportFilters;
+    self.jsonExportFilters = o.jsonExportFilters;
 
     self.exportModal = o.modal || "#export-download-status";
     self.$modal = $(self.exportModal);
@@ -178,12 +179,14 @@ var ExportManager = function (o) {
             'async': true
         };
 
-        //Convert filters url string to object
-        var hash, hashes = self.exportFilters.slice(self.exportFilters.indexOf('?') + 1).split('&');
-        for(var i = 0; i < hashes.length; i++) {
-            hash = hashes[i].split('=');
-            params[hash[0]] = hash[1];
+        filters = JSON.parse(self.jsonExportFilters);
+
+        for(filter in filters) {
+            if(filters.hasOwnProperty(filter)) {
+                params[filter] = filters[filter];
+            }
         }
+
         self.downloadBulkExport(self.bulkDownloadUrl, params);
     };
 

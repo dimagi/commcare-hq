@@ -16,6 +16,7 @@
         var customExportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            jsonExportFilters: '{{ get_filter_params|JSON }}',
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             is_custom: true
         } );
