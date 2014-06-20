@@ -391,7 +391,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
-LOGGEDOUT_TEMPLATE = "loggedout.html"
+LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "user@domain.com"
