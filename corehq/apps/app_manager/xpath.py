@@ -23,13 +23,30 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
-    def select(self, ref, value, quote=True):
+    def select(self, ref, value, quote=None):
+        if quote is None:
+            quote = not isinstance(value, XPath)
         if quote:
-            value = "'{val}'".format(val=value)
+            value = XPath.string(value)
         return XPath("{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def count(self):
         return XPath('count({self})'.format(self=self))
+
+    def equals(self, b):
+        return XPath(u'{} = {}'.format(self, b))
+
+    def not_equals(self, b):
+        return XPath(u'{} != {}'.format(self, b))
+
+    @staticmethod
+    def if_(a, b, c):
+        return XPath(u"if({}, {}, {})".format(a, b, c))
+
+    @staticmethod
+    def string(a):
+        # todo: escape text
+        return XPath(u"'{}'".format(a))
 
 
 class CaseSelectionXPath(XPath):
@@ -175,3 +192,8 @@ class FixtureXpath(XPath):
 
     def table(self):
         return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))
+
+
+class CommCareSession(object):
+    username = XPath(u"instance('commcaresession')/session/context/username")
+    userid = XPath(u"instance('commcaresession')/session/context/userid")
