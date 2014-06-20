@@ -16,6 +16,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+LESS_DEBUG = DEBUG
 
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
@@ -1200,4 +1201,10 @@ TRAVIS_TEST_GROUPS = (
     ),
 )
 
+#### Django Compressor Stuff after localsettings overrides ####
 
+# This makes sure that Django Compressor does not run at all
+# when LESS_DEBUG is set to True.
+if LESS_DEBUG:
+    COMPRESS_ENABLED = False
+    COMPRESS_PRECOMPILERS = ()
