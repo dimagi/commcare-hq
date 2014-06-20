@@ -181,7 +181,7 @@ var ExportManager = function (o) {
 
         filters = JSON.parse(self.jsonExportFilters);
 
-        for(filter in filters) {
+        for(var filter in filters) {
             if(filters.hasOwnProperty(filter)) {
                 params[filter] = filters[filter];
             }
