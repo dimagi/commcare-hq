@@ -391,6 +391,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -1208,3 +1209,10 @@ TRAVIS_TEST_GROUPS = (
 if LESS_DEBUG:
     COMPRESS_ENABLED = False
     COMPRESS_PRECOMPILERS = ()
+
+COMPRESS_OFFLINE_CONTEXT = {
+    'base_template': BASE_TEMPLATE,
+    'login_template': LOGIN_TEMPLATE,
+    'original_template': BASE_ASYNC_TEMPLATE,
+    'less_debug': LESS_DEBUG,
+}
