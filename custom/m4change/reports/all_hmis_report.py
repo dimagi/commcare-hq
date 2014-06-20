@@ -130,7 +130,7 @@ class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
             },
             "pregnant_mothers_tested_for_hiv_total": {
                 "hmis_code": 144,
-                "label": _("Pregnant Mothers tested for HIV"),
+                "label": _("Pregnant mothers tested positive for HIV"),
                 "value": 0
             },
             "pregnant_mothers_with_confirmed_malaria_total": {
