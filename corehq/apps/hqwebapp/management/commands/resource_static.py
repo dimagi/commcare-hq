@@ -52,5 +52,4 @@ class Command(LabelCommand):
     def get_hash(self, filename):
         with open(filename) as f:
             hash = hashlib.sha1(f.read()).hexdigest()[:7]
-        print filename, hash
         return hash
