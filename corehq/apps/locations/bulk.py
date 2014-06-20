@@ -44,26 +44,70 @@ class LocationCache(object):
                 self._existing_by_type[key][location.name] = location
 
 
+def top_level_location_types(domain):
+    """
+    Return all location types which do not have
+    any potential parents
+    """
+    from corehq.apps.locations.util import location_hierarchy_config
+    hierarchy = location_hierarchy_config(domain)
+    return [t[0] for t in hierarchy if t[1] == [None]]
+
+
+def import_worksheet(domain, worksheet, total_rows, task):
+    processed = 0
+    location_type = worksheet.worksheet.title
+    results = []
+    if location_type not in defined_location_types(domain):
+        return (0, "location with type %s not found, this worksheet will not be imported" % location_type)
+    else:
+        data = list(worksheet)
+
+        for loc in data:
+            results.append(import_location(domain, location_type, loc)['message'])
+            if task:
+                processed += 1
+                DownloadBase.set_progress(task, processed, total_rows)
+
+    return (processed, results)
+
+
+def import_loc_type(loc_type, types, domain, worksheets, total_rows, task):
+    processed = 0
+    results = []
+    if loc_type in types:
+        result = import_worksheet(
+            domain,
+            worksheets[types.index(loc_type)],
+            total_rows,
+            task
+        )
+        processed += result[0]
+        results += result[1]
+
+        if loc_type in parent_child(domain):
+            for child_type in parent_child(domain)[loc_type]:
+                result = import_loc_type(child_type, types, domain, worksheets, total_rows, task)
+                processed += result[0]
+                results += result[1]
+
+    return (processed, results)
+
+
 def import_locations(domain, worksheets, task=None):
     processed = 0
     total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
+    results = []
 
-    for worksheet in worksheets:
-        location_type = worksheet.worksheet.title
-        if location_type not in defined_location_types(domain):
-            yield "location with type %s not found, this worksheet will not be imported" % location_type
-        else:
-            data = list(worksheet)
+    types = [ws.worksheet.title for ws in worksheets]
+    top_level_types = top_level_location_types(domain)
 
-            for loc in data:
-                yield import_location(
-                    domain,
-                    location_type,
-                    loc
-                )['message']
-                if task:
-                    processed += 1
-                    DownloadBase.set_progress(task, processed, total_rows)
+    for loc_type in top_level_types:
+        result = import_loc_type(loc_type, types, domain, worksheets, total_rows, task)
+        processed += result[0]
+        results += result[1]
+
+    return iter(results)
 
 
 def import_location(domain, location_type, location_data):
