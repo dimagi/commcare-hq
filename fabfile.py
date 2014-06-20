@@ -790,16 +790,13 @@ def awesome_deploy():
 
     @roles(*ROLES_DB_ONLY)
     def preindex_complete():
-        env.warn_only = True
-        try:
+        with settings(warn_only=True):
             return sudo(
                 '%(virtualenv_root_preindex)s/bin/python '
                 '%(code_root_preindex)s/manage.py preindex_everything '
                 '--check' % env,
                 user=env.sudo_user,
             ).succeeded
-        finally:
-            env.warn_only = False
 
     done = False
     while not done and datetime.datetime.utcnow() - start < max_wait:
