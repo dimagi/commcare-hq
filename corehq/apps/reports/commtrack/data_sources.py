@@ -50,18 +50,47 @@ class CommtrackDataSourceMixin(object):
 
     @property
     def start_date(self):
-        return self.config.get('startdate') or (datetime.now() - timedelta(30)).date()
+        """
+        Map reports send start date as a string formatted
+        as "yyyy-mm-dd" but with standard reports, it comes as a
+        datetime object, so these two must be treated differently.
+
+        The datetime variety is converted to UTC to make sure we have
+        the correct localized date so we need to manipulate the datetime
+        object to be at the actual start of given day.
+        """
+        config_date = self.config.get('startdate') or datetime.now() - timedelta(30)
+        if isinstance(config_date, datetime):
+            date = config_date.date()
+            return datetime(date.year, date.month, date.day, 0, 0, 0)
+        else:
+            date = [int(x) for x in config_date.split('-')]
+            return datetime(date[0], date[1], date[2], 0, 0, 0)
 
     @property
     def end_date(self):
-        return self.config.get('enddate') or datetime.now().date()
+        """
+        Map reports send end date as a string formatted
+        as "yyyy-mm-dd" but with standard reports, it comes as a
+        datetime object, so these two must be treated differently
+
+        The datetime variety is converted to UTC to make sure we have
+        the correct localized date so we need to manipulate the datetime
+        object to be at the actual end of given day.
+        """
+        config_date = self.config.get('enddate')
+        if isinstance(config_date, datetime):
+            date = config_date.date() or datetime.now().date()
+            return datetime(date.year, date.month, date.day, 23, 59, 59)
+        else:
+            date = [int(x) for x in config_date.split('-')]
+            return datetime(date[0], date[1], date[2], 23, 59, 59)
 
     @property
     def request(self):
         request = self.config.get('request')
         if request:
             return request
-
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
