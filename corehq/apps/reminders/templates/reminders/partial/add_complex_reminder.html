@@ -100,28 +100,16 @@
             $(".for_sms").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_survey").show();
-            if(recipient == "USER" || recipient == "OWNER") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         } else if (value == "callback") {
             $(".for_sms").hide();
             $(".for_sms_survey").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_callback").show();
-            if(recipient != "CASE") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         } else if (value == "ivr_survey") {
             $(".for_sms").hide();
             $(".for_sms_survey").hide();
             $(".for_sms_callback").hide();
             $(".for_ivr_survey").show();
-            if(recipient != "CASE") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         }
         use_custom_content_handler_changed();
     }
