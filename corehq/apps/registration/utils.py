@@ -27,13 +27,11 @@ class MailChimpNotConfiguredError(Exception):
 def get_mailchimp_api():
     if settings.MAILCHIMP_APIKEY:
         return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
-    return None
+    raise MailChimpNotConfiguredError('Mailchimp is not configured')
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
     api = get_mailchimp_api()
-    if not api:
-        raise MailChimpNotConfiguredError('Mailchimp is not configured')
     api.lists.subscribe(
         list_id,
         {'email': email or user.email},
