@@ -22,15 +22,12 @@ from corehq.apps.sms.models import (
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
-from corehq.apps.ivr.api import initiate_outbound_call
+from corehq.apps.ivr.tasks import initiate_outbound_call
 from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
-
-DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
-DEFAULT_OUTBOUND_RETRIES = 2
 
 ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
 ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
@@ -315,47 +312,56 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         return True
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
-    if handler.recipient == RECIPIENT_CASE:
-        # If there are no recipients, just move to the next reminder event
-        if len(recipients) == 0:
-            return True
-        
-        # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we can
-        # skip the lookup for the answered call since no call went out yet.
-        if reminder.last_fired is not None and reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-            reminder.skip_remaining_timeouts = True
-            return True
-        verified_number = verified_numbers[recipients[0].get_id]
-        if verified_number is not None:
-            if initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries):
-                return True
-            else:
-                reminder = CaseReminder.get(reminder._id)
-                reminder.error_retry_count += 1
-                if reminder.error_retry_count > getattr(settings, "IVR_OUTBOUND_RETRIES", DEFAULT_OUTBOUND_RETRIES):
-                    return True
-                else:
-                    reminder.next_fire += timedelta(minutes=getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL", DEFAULT_OUTBOUND_RETRY_INTERVAL))
-                    reminder.save()
-                    return False
-        else:
-            raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-            return False
-    else:
-        # TODO: Implement ivr survey for RECIPIENT_USER, RECIPIENT_OWNER, and RECIPIENT_SURVEY_SAMPLE
-        return False
+    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
+    for recipient in recipients:
+        initiate_call = True
+        if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
+            initiate_call = not CallLog.answered_call_exists(
+                recipient.doc_type, recipient.get_id,
+                reminder.event_initiation_timestamp)
 
-"""
-This method is meant to report runtime warnings which are caused by configuration errors to a project contact.
-"""
+        if initiate_call:
+            verified_number, unverified_number = get_recipient_phone_number(
+                reminder, recipient, verified_numbers)
+            if verified_number:
+                initiate_outbound_call.delay(
+                    recipient,
+                    reminder.current_event.form_unique_id,
+                    handler.submit_partial_forms,
+                    handler.include_case_side_effects,
+                    handler.max_question_retries,
+                    verified_number=verified_number,
+                )
+            elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
+                initiate_outbound_call.delay(
+                    recipient,
+                    reminder.current_event.form_unique_id,
+                    handler.submit_partial_forms,
+                    handler.include_case_side_effects,
+                    handler.max_question_retries,
+                    unverified_number=unverified_number,
+                )
+            else:
+                #No phone number to send to
+                pass
+
+    return True
+
+
 def raise_warning():
+    """
+    This method is meant to report runtime warnings which are caused by
+    configuration errors to a project contact.
+    """
     # For now, just a stub.
     pass
 
-"""
-Put the reminder in an error state, which filters it out of the reminders queue.
-"""
+
 def raise_error(reminder, error_msg):
+    """
+    Put the reminder in an error state, which filters it out of the reminders
+    queue.
+    """
     reminder.error = True
     reminder.error_msg = error_msg
     reminder.save()
