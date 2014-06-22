@@ -1,7 +1,6 @@
 from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
     METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL, 
-    METHOD_TEST, METHOD_SMS_CALLBACK_TEST, RECIPIENT_USER, 
-    RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
+    RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
@@ -105,72 +104,67 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
         reminder_id=reminder._id,
     )
     current_event = reminder.current_event
-    if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-        template_params = {}
-        case = reminder.case
-        if case is not None:
-            template_params["case"] = case.case_properties()
-        for recipient in recipients:
-            try:
-                lang = recipient.get_language_code()
-            except Exception:
-                lang = None
+    template_params = {}
+    case = reminder.case
+    if case is not None:
+        template_params["case"] = case.case_properties()
+    for recipient in recipients:
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
 
-            if handler.custom_content_handler is not None:
-                if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
-                    try:
-                        content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
-                    except Exception:
-                        raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
-                        return False
-                    message = content_handler(reminder, handler, recipient)
-                    # If the content handler returns None or empty string,
-                    # don't send anything
-                    if not message:
-                        return True
-                else:
-                    raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
-                    return False
-            else:
-                message = current_event.message.get(lang, current_event.message[handler.default_lang])
+        if handler.custom_content_handler is not None:
+            if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
                 try:
-                    message = Message.render(message, **template_params)
+                    content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
                 except Exception:
-                    if len(recipients) == 1:
-                        raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
-                        return False
-                    else:
-                        raise_warning() # ERROR_RENDERING_MESSAGE
-                        continue
-
-            verified_number, unverified_number = get_recipient_phone_number(
-                reminder, recipient, verified_numbers)
-
-            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
-            if verified_number is not None:
-                result = send_sms_to_verified_number(verified_number,
-                    message, metadata)
-            elif isinstance(recipient, CouchUser) and unverified_number:
-                result = send_sms(reminder.domain, recipient, unverified_number,
-                    message, metadata)
-            elif (isinstance(recipient, CommCareCase) and unverified_number and
-                domain_obj.send_to_duplicated_case_numbers):
-                result = send_sms(reminder.domain, recipient, unverified_number,
-                    message, metadata)
+                    raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
+                    return False
+                message = content_handler(reminder, handler, recipient)
+                # If the content handler returns None or empty string,
+                # don't send anything
+                if not message:
+                    return True
             else:
+                raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
+                return False
+        else:
+            message = current_event.message.get(lang, current_event.message[handler.default_lang])
+            try:
+                message = Message.render(message, **template_params)
+            except Exception:
                 if len(recipients) == 1:
-                    raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-                result = False
+                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
+                    return False
+                else:
+                    raise_warning() # ERROR_RENDERING_MESSAGE
+                    continue
 
+        verified_number, unverified_number = get_recipient_phone_number(
+            reminder, recipient, verified_numbers)
+
+        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
+        if verified_number is not None:
+            result = send_sms_to_verified_number(verified_number,
+                message, metadata)
+        elif isinstance(recipient, CouchUser) and unverified_number:
+            result = send_sms(reminder.domain, recipient, unverified_number,
+                message, metadata)
+        elif (isinstance(recipient, CommCareCase) and unverified_number and
+            domain_obj.send_to_duplicated_case_numbers):
+            result = send_sms(reminder.domain, recipient, unverified_number,
+                message, metadata)
+        else:
             if len(recipients) == 1:
-                return result
+                raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
+            result = False
 
-        # For multiple recipients, always move to the next event
-        return True
+        if len(recipients) == 1:
+            return result
 
-    elif handler.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
-        # Used for automated tests
-        return True
+    # For multiple recipients, always move to the next event
+    return True
 
 
 def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
@@ -390,8 +384,6 @@ EVENT_HANDLER_MAP = {
     METHOD_SMS_CALLBACK : fire_sms_callback_event,
     METHOD_SMS_SURVEY : fire_sms_survey_event,
     METHOD_IVR_SURVEY : fire_ivr_survey_event,
-    METHOD_TEST : fire_sms_event,
-    METHOD_SMS_CALLBACK_TEST : fire_sms_callback_event,
     # METHOD_EMAIL is a placeholder at the moment; it's not implemented yet anywhere in the framework
 }
 

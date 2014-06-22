@@ -4,23 +4,45 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.apps.sms.test_backend import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
+from corehq.apps.domain.models import Domain
 
-class ReminderTestCase(TestCase):
+
+class BaseReminderTestCase(TestCase):
+    def setUp(self):
+        self.domain_obj = Domain(name="test")
+        self.domain_obj.save()
+        # Prevent resource conflict
+        self.domain_obj = Domain.get(self.domain_obj._id)
+
+        self.sms_backend = TestSMSBackend(named="MOBILE_BACKEND_TEST", is_global=True)
+        self.sms_backend.save()
+
+        self.sms_backend_mapping = BackendMapping(is_global=True,prefix="*",backend_id=self.sms_backend._id)
+        self.sms_backend_mapping.save()
+
+    def tearDown(self):
+        self.sms_backend_mapping.delete()
+        self.sms_backend.delete()
+        self.domain_obj.delete()
+
+
+class ReminderTestCase(BaseReminderTestCase):
     """
     This is the original use case and tests a fixed reminder schedule.
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.case_type = "my_case_type"
-        cls.message = "Hey you're getting this message."
-        cls.handler = CaseReminderHandler(
-            domain=cls.domain,
-            case_type=cls.case_type,
-            method="test",
+    def setUp(self):
+        super(ReminderTestCase, self).setUp()
+        self.domain = "test"
+        self.case_type = "my_case_type"
+        self.message = "Hey you're getting this message."
+        self.handler = CaseReminderHandler(
+            domain=self.domain,
+            case_type=self.case_type,
+            method=METHOD_SMS,
             start_property='start_sending',
             start_value="ok",
             start_date=None,
@@ -35,24 +57,24 @@ class ReminderTestCase(TestCase):
                 CaseReminderEvent(
                     day_num = 0
                    ,fire_time = time(0,0,0)
-                   ,message={"en":cls.message}
+                   ,message={"en":self.message}
                    ,callback_timeout_intervals=[]
                 )
             ]
         )
-        cls.handler.save()
-        cls.user_id = "USER-ID-109347"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob', '****', uuid=cls.user_id)
-        cls.case = CommCareCase(
-            domain=cls.domain,
-            type=cls.case_type,
-            user_id=cls.user_id,
+        self.handler.save()
+        self.user_id = "USER-ID-109347"
+        self.user = CommCareUser.create(self.domain, 'chw.bob', '****', uuid=self.user_id, phone_number="99912345")
+        self.case = CommCareCase(
+            domain=self.domain,
+            type=self.case_type,
+            user_id=self.user_id,
         )
-        cls.case.save()
+        self.case.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(ReminderTestCase, self).tearDown()
 
     def test_ok(self):
         self.assertEqual(self.handler.events[0].message['en'], self.message)
@@ -121,7 +143,7 @@ class ReminderTestCase(TestCase):
         self.assertEqual(reminder.active, False)
 
 
-class ReminderIrregularScheduleTestCase(TestCase):
+class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
     """
     This use case represents an irregular reminder schedule which is repeated twice:
 
@@ -133,17 +155,17 @@ class ReminderIrregularScheduleTestCase(TestCase):
     Week2: Day4: 11:00 Message 2
     Week2: Day4: 11:30 Message 3
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.case_type = "my_case_type"
-        cls.message_1 = "Message 1"
-        cls.message_2 = "Message 2"
-        cls.message_3 = "Message 3"
-        cls.handler = CaseReminderHandler(
-            domain=cls.domain,
-            case_type=cls.case_type,
-            method="test",
+    def setUp(self):
+        super(ReminderIrregularScheduleTestCase, self).setUp()
+        self.domain = "test"
+        self.case_type = "my_case_type"
+        self.message_1 = "Message 1"
+        self.message_2 = "Message 2"
+        self.message_3 = "Message 3"
+        self.handler = CaseReminderHandler(
+            domain=self.domain,
+            case_type=self.case_type,
+            method=METHOD_SMS,
             start_property='start_sending',
             start_value=None,
             start_date=None,
@@ -158,36 +180,36 @@ class ReminderIrregularScheduleTestCase(TestCase):
                 CaseReminderEvent(
                     day_num = 0
                    ,fire_time = time(10,00,00)
-                   ,message={"en":cls.message_1}
+                   ,message={"en":self.message_1}
                    ,callback_timeout_intervals=[]
                 )
                ,CaseReminderEvent(
                     day_num = 3
                    ,fire_time = time(11,00,00)
-                   ,message={"en":cls.message_2}
+                   ,message={"en":self.message_2}
                    ,callback_timeout_intervals=[]
                 )
                ,CaseReminderEvent(
                     day_num = 3
                    ,fire_time = time(11,30,00)
-                   ,message={"en":cls.message_3}
+                   ,message={"en":self.message_3}
                    ,callback_timeout_intervals=[]
                 )
             ]
         )
-        cls.handler.save()
-        cls.user_id = "USER-ID-109348"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob2', '****', uuid=cls.user_id)
-        cls.case = CommCareCase(
-            domain=cls.domain,
-            type=cls.case_type,
-            user_id=cls.user_id,
+        self.handler.save()
+        self.user_id = "USER-ID-109348"
+        self.user = CommCareUser.create(self.domain, 'chw.bob2', '****', uuid=self.user_id, phone_number="99912345")
+        self.case = CommCareCase(
+            domain=self.domain,
+            type=self.case_type,
+            user_id=self.user_id,
         )
-        cls.case.save()
+        self.case.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(ReminderIrregularScheduleTestCase, self).tearDown()
 
 
     def test_ok(self):
@@ -276,7 +298,7 @@ class ReminderIrregularScheduleTestCase(TestCase):
         self.assertEqual(reminder.active, False)
 
 
-class ReminderCallbackTestCase(TestCase):
+class ReminderCallbackTestCase(BaseReminderTestCase):
     """
     This use case represents a reminder schedule with an expected callback:
 
@@ -291,16 +313,16 @@ class ReminderCallbackTestCase(TestCase):
 
     This case also tests handling of time zones using the timezone of Africa/Nairobi (UTC+3).
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.case_type = "my_case_type"
-        cls.message_1 = "Callback Message 1"
-        cls.message_2 = "Callback Message 2"
-        cls.handler = CaseReminderHandler(
-            domain=cls.domain,
-            case_type=cls.case_type,
-            method="callback_test",
+    def setUp(self):
+        super(ReminderCallbackTestCase, self).setUp()
+        self.domain = "test"
+        self.case_type = "my_case_type"
+        self.message_1 = "Callback Message 1"
+        self.message_2 = "Callback Message 2"
+        self.handler = CaseReminderHandler(
+            domain=self.domain,
+            case_type=self.case_type,
+            method=METHOD_SMS_CALLBACK,
             start_property='start_sending',
             start_value=None,
             start_date=None,
@@ -315,33 +337,33 @@ class ReminderCallbackTestCase(TestCase):
                 CaseReminderEvent(
                     day_num = 0
                    ,fire_time = time(10,00,00)
-                   ,message={"en":cls.message_1}
+                   ,message={"en":self.message_1}
                    ,callback_timeout_intervals=[]
                 )
                ,CaseReminderEvent(
                     day_num = 0
                    ,fire_time = time(11,00,00)
-                   ,message={"en":cls.message_2}
+                   ,message={"en":self.message_2}
                    ,callback_timeout_intervals=[15,30]
                 )
             ]
         )
-        cls.handler.save()
-        cls.user_id = "USER-ID-109349"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob3', '****', uuid=cls.user_id)
-        cls.user.user_data["time_zone"]="Africa/Nairobi"
-        cls.user.save()
-        cls.case = CommCareCase(
-            domain=cls.domain,
-            type=cls.case_type,
-            user_id=cls.user_id
+        self.handler.save()
+        self.user_id = "USER-ID-109349"
+        self.user = CommCareUser.create(self.domain, 'chw.bob3', '****', uuid=self.user_id, phone_number="99912345")
+        self.user.user_data["time_zone"]="Africa/Nairobi"
+        self.user.save()
+        self.case = CommCareCase(
+            domain=self.domain,
+            type=self.case_type,
+            user_id=self.user_id
         )
-        cls.case.save()
-        cls.user.save_verified_number("test", "14445551234", True, None)
+        self.case.save()
+        self.user.save_verified_number("test", "14445551234", True, None)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(ReminderCallbackTestCase, self).tearDown()
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -394,9 +416,19 @@ class ReminderCallbackTestCase(TestCase):
             date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
         c.save()
-        
-        # Day1, 11:15 timeout (should move on to next day)
+
+        # Day1, 11:15 timeout (should move on to next event)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=1, hour=8, minute=15)
+        CaseReminderHandler.fire_reminders()
+        reminder = self.handler.get_reminder(self.case)
+        self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder.next_fire, datetime(year=2012, month=1, day=1, hour=8, minute=45))
+        self.assertEqual(reminder.schedule_iteration_num, 1)
+        self.assertEqual(reminder.current_event_sequence_num, 1)
+        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+
+        # Day1, 11:45 timeout (should move on to next event)
+        CaseReminderHandler.now = datetime(year=2012, month=1, day=1, hour=8, minute=45)
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
         self.assertNotEqual(reminder, None)
@@ -404,13 +436,13 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
+
         event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
                                               key=["test", json_format_datetime(datetime(year=2012, month=1, day=1, hour=8, minute=1)), self.user_id],
                                               include_docs=True).one()
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_RECEIVED)
-        
+
         ######################
         # Day2, 10:00 reminder
         CaseReminderHandler.now = datetime(year=2012, month=1, day=2, hour=7, minute=0)
@@ -540,17 +572,17 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(event.status, CALLBACK_RECEIVED)
 
 
-class CaseTypeReminderTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.user_id = "USER-ID-109350"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob4', '****', uuid=cls.user_id)
+class CaseTypeReminderTestCase(BaseReminderTestCase):
+    def setUp(self):
+        super(CaseTypeReminderTestCase, self).setUp()
+        self.domain = "test"
+        self.user_id = "USER-ID-109350"
+        self.user = CommCareUser.create(self.domain, 'chw.bob4', '****', uuid=self.user_id, phone_number="99912345")
         
-        cls.handler1 = CaseReminderHandler(
-            domain=cls.domain,
+        self.handler1 = CaseReminderHandler(
+            domain=self.domain,
             case_type="case_type_a",
-            method="test",
+            method=METHOD_SMS,
             start_property='start_sending1',
             start_value=None,
             start_date=None,
@@ -570,12 +602,12 @@ class CaseTypeReminderTestCase(TestCase):
                 )
             ]
         )
-        cls.handler1.save()
+        self.handler1.save()
         
-        cls.handler2 = CaseReminderHandler(
-            domain=cls.domain,
+        self.handler2 = CaseReminderHandler(
+            domain=self.domain,
             case_type="case_type_a",
-            method="test",
+            method=METHOD_SMS,
             start_property='start_sending2',
             start_value=None,
             start_date=None,
@@ -595,12 +627,12 @@ class CaseTypeReminderTestCase(TestCase):
                 )
             ]
         )
-        cls.handler2.save()
+        self.handler2.save()
         
-        cls.handler3 = CaseReminderHandler(
-            domain=cls.domain,
+        self.handler3 = CaseReminderHandler(
+            domain=self.domain,
             case_type="case_type_a",
-            method="test",
+            method=METHOD_SMS,
             start_property='start_sending3',
             start_value=None,
             start_date=None,
@@ -620,25 +652,25 @@ class CaseTypeReminderTestCase(TestCase):
                 )
             ]
         )
-        cls.handler3.save()
+        self.handler3.save()
         
-        cls.case1 = CommCareCase(
-            domain=cls.domain,
+        self.case1 = CommCareCase(
+            domain=self.domain,
             type="case_type_a",
-            user_id=cls.user_id
+            user_id=self.user_id
         )
-        cls.case1.save()
+        self.case1.save()
         
-        cls.case2 = CommCareCase(
-            domain=cls.domain,
+        self.case2 = CommCareCase(
+            domain=self.domain,
             type="case_type_b",
-            user_id=cls.user_id
+            user_id=self.user_id
         )
-        cls.case2.save()
+        self.case2.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(CaseTypeReminderTestCase, self).tearDown()
 
     def test_ok(self):
         # Initial condition
@@ -748,17 +780,17 @@ class CaseTypeReminderTestCase(TestCase):
            ,prev_now + timedelta(days=self.handler2.start_offset)
         )
 
-class StartConditionReminderTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.user_id = "USER-ID-109351"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob5', '****', uuid=cls.user_id)
+class StartConditionReminderTestCase(BaseReminderTestCase):
+    def setUp(self):
+        super(StartConditionReminderTestCase, self).setUp()
+        self.domain = "test"
+        self.user_id = "USER-ID-109351"
+        self.user = CommCareUser.create(self.domain, 'chw.bob5', '****', uuid=self.user_id, phone_number="99912345")
         
-        cls.handler1 = CaseReminderHandler(
-            domain=cls.domain,
+        self.handler1 = CaseReminderHandler(
+            domain=self.domain,
             case_type="case_type_a",
-            method="test",
+            method=METHOD_SMS,
             start_property='start_sending1',
             start_value="^(ok|OK|\d\d\d\d-\d\d-\d\d)",
             start_date='start_sending1',
@@ -778,18 +810,18 @@ class StartConditionReminderTestCase(TestCase):
                 )
             ]
         )
-        cls.handler1.save()
+        self.handler1.save()
         
-        cls.case1 = CommCareCase(
-            domain=cls.domain,
+        self.case1 = CommCareCase(
+            domain=self.domain,
             type="case_type_a",
-            user_id=cls.user_id
+            user_id=self.user_id
         )
-        cls.case1.save()
+        self.case1.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(StartConditionReminderTestCase, self).tearDown()
 
 
     def test_ok(self):
@@ -969,17 +1001,17 @@ class StartConditionReminderTestCase(TestCase):
         self.assertEqual(reminder, None)
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
 
-class ReminderLockTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = "test"
-        cls.user_id = "USER-ID-109352"
-        cls.user = CommCareUser.create(cls.domain, 'chw.bob6', '****', uuid=cls.user_id)
+class ReminderLockTestCase(BaseReminderTestCase):
+    def setUp(self):
+        super(ReminderLockTestCase, self).setUp()
+        self.domain = "test"
+        self.user_id = "USER-ID-109352"
+        self.user = CommCareUser.create(self.domain, 'chw.bob6', '****', uuid=self.user_id, phone_number="99912345")
         
-        cls.handler1 = CaseReminderHandler(
-            domain=cls.domain,
+        self.handler1 = CaseReminderHandler(
+            domain=self.domain,
             case_type="case_type_a",
-            method="test",
+            method=METHOD_SMS,
             start_property='start_sending1',
             start_value="^(ok|OK|\d\d\d\d-\d\d-\d\d)",
             start_date='start_sending1',
@@ -999,18 +1031,18 @@ class ReminderLockTestCase(TestCase):
                 )
             ]
         )
-        cls.handler1.save()
+        self.handler1.save()
         
-        cls.case1 = CommCareCase(
-            domain=cls.domain,
+        self.case1 = CommCareCase(
+            domain=self.domain,
             type="case_type_a",
-            user_id=cls.user_id
+            user_id=self.user_id
         )
-        cls.case1.save()
+        self.case1.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
+    def tearDown(self):
+        self.user.delete()
+        super(ReminderLockTestCase, self).tearDown()
 
 
     def test_ok(self):
@@ -1051,7 +1083,7 @@ class ReminderLockTestCase(TestCase):
         self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now + LOCK_EXPIRATION + timedelta(minutes = 1)), True)
 
 
-class MessageTestCase(TestCase):
+class MessageTestCase(BaseReminderTestCase):
     def test_message(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
         case = {'external_id': 123, 'edd': datetime.utcnow() + timedelta(days=30)}
