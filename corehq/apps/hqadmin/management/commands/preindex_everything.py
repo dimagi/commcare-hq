@@ -49,6 +49,9 @@ class Command(BaseCommand):
 
         if get_preindex_complete(head):
             mail_admins('Already preindexed', "Skipping this step")
+            return
+        else:
+            clear_preindex_complete()
 
         commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (
             git_snapshot['current_branch'], head['sha'])
@@ -89,8 +92,7 @@ class Command(BaseCommand):
                 "We heard a rumor that preindex is complete,\n"
                 "but it's on you to check that all tasks are complete."
             )
-
-        set_preindex_complete(head)
+            set_preindex_complete(head)
 
         if email:
             mail_admins(subject, message)
@@ -98,15 +100,17 @@ class Command(BaseCommand):
             print '{}\n\n{}'.format(subject, message)
 
 rcache = cache.get_cache('redis')
-PREINDEX_COMPLETE_PREFIX = '#preindex_complete_%s'
+PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'
 HELL_YEAH_IT_IS = 'hell yeah it is'
 
 
+def clear_preindex_complete():
+    rcache.set(PREINDEX_COMPLETE_COMMIT, None, 86400)
+
+
 def set_preindex_complete(head):
-    key = PREINDEX_COMPLETE_PREFIX % head
-    rcache.set(key, HELL_YEAH_IT_IS, 86400)
+    rcache.set(PREINDEX_COMPLETE_COMMIT, head, 86400)
 
 
 def get_preindex_complete(head):
-    key = PREINDEX_COMPLETE_PREFIX % head
-    return rcache.get(key, None) == HELL_YEAH_IT_IS
+    return rcache.get(PREINDEX_COMPLETE_COMMIT, None) == head
