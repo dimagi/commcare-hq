@@ -271,7 +271,10 @@ class CallLog(MessageLog):
     current_question_retry_count = IntegerProperty(default=0) # A counter of the number of invalid responses for the current question
     use_precached_first_response = BooleanProperty(default=False)
     first_response = StringProperty()
-    
+    # The id of the case to submit the form against
+    case_id = StringProperty()
+    case_for_case_submission = BooleanProperty(default=False)
+
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Call %s %s" % (to_from, self.phone_number)

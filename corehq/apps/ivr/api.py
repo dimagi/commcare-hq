@@ -52,14 +52,6 @@ def format_ivr_response(text, app):
         "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
     }
 
-def get_case_id(call_log_entry):
-    if call_log_entry.couch_recipient_doc_type == "CommCareCase":
-        case_id = call_log_entry.couch_recipient
-    else:
-        #TODO: Need a way to choose the case when it's a user that's playing the form.
-        case_id = None
-    
-    return case_id
 
 def get_input_length(question):
     if question.event.type == "question" and question.event.datatype == "select":
@@ -89,8 +81,12 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         recipient = call_log_entry.recipient
         
         if ivr_event == IVR_EVENT_NEW_CALL:
-            case_id = get_case_id(call_log_entry)
-            session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
+            case_id = call_log_entry.case_id
+            case_for_case_submission = call_log_entry.case_for_case_submission
+            session, responses = start_session(recipient.domain, recipient, app,
+                module, form, case_id, yield_responses=True,
+                session_type=XFORMS_SESSION_IVR,
+                case_for_case_submission=case_for_case_submission)
             call_log_entry.xforms_session_id = session.session_id
         elif ivr_event == IVR_EVENT_INPUT:
             if call_log_entry.xforms_session_id is not None:
@@ -214,7 +210,7 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
 
 def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     include_case_side_effects, max_question_retries, verified_number=None,
-    unverified_number=None):
+    unverified_number=None, case_id=None, case_for_case_submission=False):
     """
     Returns True if the call was queued successfully, or False if an error
     occurred.
@@ -235,6 +231,8 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
         include_case_side_effects=include_case_side_effects,
         max_question_retries=max_question_retries,
         current_question_retry_count=0,
+        case_id=case_id,
+        case_for_case_submission=case_for_case_submission,
     )
     backend = get_ivr_backend(recipient, verified_number, unverified_number)
     if not backend:

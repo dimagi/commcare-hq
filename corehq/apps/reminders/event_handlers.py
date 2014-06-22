@@ -172,52 +172,60 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
         # Used for automated tests
         return True
 
+
 def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
-    if handler.recipient in [RECIPIENT_CASE, RECIPIENT_USER]:
-        # If there are no recipients, just move to the next reminder event
-        if len(recipients) == 0:
-            return True
-        
-        # If the callback has been received, skip sending the next timeout message
+
+    for recipient in recipients:
+        send_message = False
         if reminder.callback_try_count > 0:
-            # Lookup the expected callback event
-            if reminder.event_initiation_timestamp is None:
-                event = None
-            else:
+            if reminder.event_initiation_timestamp:
                 event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                                      key=[reminder.domain, json_format_datetime(reminder.event_initiation_timestamp), recipients[0].get_id],
-                                                      include_docs=True,
-                                                      limit=1).one()
-            
-            # NOTE: If last_fired is None, it means that the reminder fired for the first time on a timeout interval
-            if reminder.last_fired is not None and CallLog.inbound_entry_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-                reminder.skip_remaining_timeouts = True
-                if event is not None:
+                    key=[reminder.domain,
+                         json_format_datetime(reminder.event_initiation_timestamp),
+                         recipient.get_id],
+                    include_docs=True,
+                    limit=1).one()
+                if not event:
+                    continue
+                if event.status == CALLBACK_RECEIVED:
+                    continue
+                if CallLog.inbound_entry_exists(recipient.doc_type,
+                    recipient.get_id, reminder.event_initiation_timestamp):
                     event.status = CALLBACK_RECEIVED
                     event.save()
-                return True
-            elif reminder.callback_try_count >= len(current_event.callback_timeout_intervals):
-                # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                if event is not None:
+                    continue
+            else:
+                continue
+
+            if (reminder.callback_try_count >=
+                len(current_event.callback_timeout_intervals)):
+                # On the last callback timeout, instead of sending the SMS
+                # again, log the missed callback
+                if event:
                     event.status = CALLBACK_MISSED
                     event.save()
-                return True
+            else:
+                send_message = True
         else:
-            # It's the first time sending the sms, so create an expected callback event
+            # It's the first time sending the sms, so create an expected
+            # callback event
+            send_message = True
             event = ExpectedCallbackEventLog(
-                domain                   = reminder.domain,
-                date                     = reminder.event_initiation_timestamp,
-                couch_recipient_doc_type = recipients[0].doc_type,
-                couch_recipient          = recipients[0].get_id,
-                status                   = CALLBACK_PENDING,
+                domain=reminder.domain,
+                date=reminder.event_initiation_timestamp,
+                couch_recipient_doc_type=recipient.doc_type,
+                couch_recipient=recipient.get_id,
+                status=CALLBACK_PENDING,
             )
             event.save()
-        
-        return fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=WORKFLOW_CALLBACK)
-    else:
-        # TODO: Implement sms callback for RECIPIENT_OWNER and RECIPIENT_SURVEY_SAMPLE
-        return False
+
+        if send_message:
+            fire_sms_event(reminder, handler, [recipient], verified_numbers,
+                workflow=WORKFLOW_CALLBACK)
+
+    return True
+
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
     if reminder.callback_try_count > 0:
@@ -321,6 +329,11 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                 reminder.event_initiation_timestamp)
 
         if initiate_call:
+            if (isinstance(recipient, CommCareCase) and
+                not handler.force_surveys_to_use_triggered_case):
+                case_id = recipient.get_id
+            else:
+                case_id = reminder.case_id
             verified_number, unverified_number = get_recipient_phone_number(
                 reminder, recipient, verified_numbers)
             if verified_number:
@@ -331,6 +344,8 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     handler.include_case_side_effects,
                     handler.max_question_retries,
                     verified_number=verified_number,
+                    case_id=case_id,
+                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
                 )
             elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
                 initiate_outbound_call.delay(
@@ -340,6 +355,8 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     handler.include_case_side_effects,
                     handler.max_question_retries,
                     unverified_number=unverified_number,
+                    case_id=case_id,
+                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
                 )
             else:
                 #No phone number to send to

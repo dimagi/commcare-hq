@@ -9,7 +9,7 @@ from xml.sax.saxutils import escape
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
 from corehq.apps.smsforms.util import form_requires_input
-from corehq.apps.ivr.api import get_case_id, format_ivr_response, get_input_length
+from corehq.apps.ivr.api import format_ivr_response, get_input_length
 from corehq.apps.app_manager.models import Form
 
 class InvalidPhoneNumberException(Exception):
@@ -72,8 +72,12 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
     # submitting the form regardless of whether the person actually answers the call.
     if form_requires_input(form):
         recipient = call_log_entry.recipient
-        case_id = get_case_id(call_log_entry)
-        session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
+        case_id = call_log_entry.case_id
+        case_for_case_submission = call_log_entry.case_for_case_submission
+        session, responses = start_session(recipient.domain, recipient, app,
+            module, form, case_id, yield_responses=True,
+            session_type=XFORMS_SESSION_IVR,
+            case_for_case_submission=case_for_case_submission)
         
         ivr_responses = []
         if len(responses) == 0:
