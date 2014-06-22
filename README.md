@@ -57,7 +57,7 @@ individual project sites when necessary.
  [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
-#### Elasticsearch Configuration
+#### Elasticsearch Configuration (optional)
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
@@ -68,7 +68,17 @@ supervisor config demonstrates the tunnel creation using autossh.
 
 #### CouchDB Configuration
 
-Open http://localhost:5984/_utils/ and create a new database named `commcarehq`.
+Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+
+To set up CouchDB from the command line
+
+Create the database:
+
+    curl -X PUT "http://localhost:5984/commcarehq
+
+Add the required user:
+
+    curl -X PUT "http://localhost:5984/_config/users/commcarehq" -d \"commcarehq\"
 
 #### PostgreSQL Configuration
 

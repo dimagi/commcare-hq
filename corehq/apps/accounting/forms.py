@@ -163,7 +163,7 @@ class BillingAccountBasicForm(forms.Form):
                 _("This account has subscriptions associated with it. "
                   "Please specify a transfer account before deactivating.")
             )
-        if transfer_subs == self.account.name:
+        if self.account is not None and transfer_subs == self.account.name:
             raise ValidationError(
                 _("The transfer account can't be the same one you're trying "
                   "to deactivate.")

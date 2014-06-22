@@ -12,7 +12,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
@@ -49,10 +48,92 @@ class BaseCommTrackManageView(BaseDomainView):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
 
+class CommTrackSettingsView(BaseCommTrackManageView):
+    urlname = 'commtrack_settings'
+    page_title = ugettext_noop("Advanced Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
+
+    @property
+    @memoized
+    def commtrack_settings(self):
+        return self.domain_object.commtrack_settings
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.commtrack_settings_form
+        }
+
+    @property
+    @memoized
+    def commtrack_settings_form(self):
+        from corehq.apps.commtrack.forms import CommTrackSettingsForm
+        initial = self.commtrack_settings.to_json()
+        initial.update(dict(('consumption_' + k, v) for k, v in
+            self.commtrack_settings.consumption_config.to_json().items()))
+        initial.update(dict(('stock_' + k, v) for k, v in
+            self.commtrack_settings.stock_levels_config.to_json().items()))
+
+        if self.request.method == 'POST':
+            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return CommTrackSettingsForm(initial=initial, domain=self.domain)
+
+    def set_ota_restore_config(self):
+        """
+        If the checkbox for syncing consumption fixtures is
+        checked, then we build the restore config with appropriate
+        special properties, otherwise just clear the object.
+
+        If there becomes a way to tweak these on the UI, this should
+        be done differently.
+        """
+
+        from corehq.apps.commtrack.models import StockRestoreConfig
+        if self.commtrack_settings.sync_consumption_fixtures:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+                section_to_consumption_types={
+                    'stock': 'consumption'
+                },
+                force_consumption_case_types=[
+                    'supply-point'
+                ],
+                use_dynamic_product_list=True,
+            )
+        else:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+
+    def post(self, request, *args, **kwargs):
+        if self.commtrack_settings_form.is_valid():
+            data = self.commtrack_settings_form.cleaned_data
+            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
+            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
+            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
+
+            self.set_ota_restore_config()
+
+            fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
+            for field in fields:
+                if data.get('stock_' + field):
+                    setattr(self.commtrack_settings.stock_levels_config, field,
+                            data['stock_' + field])
+
+            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
+            for field in consumption_fields:
+                if data.get('consumption_' + field):
+                    setattr(self.commtrack_settings.consumption_config, field,
+                            data['consumption_' + field])
+
+            self.commtrack_settings.save()
+            messages.success(request, _("Settings updated!"))
+            return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
+
+
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Default Consumption")
+    page_title = ugettext_noop("Consumption")
 
     @property
     @memoized
@@ -287,7 +368,7 @@ def download_products(request, domain):
             'id',
             'name',
             'unit',
-            'code',
+            'product_id',
             'description',
             'category',
             'program_id',

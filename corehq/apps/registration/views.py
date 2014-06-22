@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -40,7 +40,8 @@ def registration_default(request):
 @transaction.commit_on_success
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    assert domain_type in DOMAIN_TYPES
+    if domain_type not in DOMAIN_TYPES:
+        raise Http404()
 
     context = get_domain_context(domain_type)
 
@@ -110,7 +111,9 @@ def register_org(request, template="registration/org_request.html"):
 @login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    assert domain_type in DOMAIN_TYPES
+    if domain_type not in DOMAIN_TYPES:
+        raise Http404()
+
     context = get_domain_context(domain_type)
 
     is_new = False
