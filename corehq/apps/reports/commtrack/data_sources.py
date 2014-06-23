@@ -58,11 +58,9 @@ class CommtrackDataSourceMixin(object):
     @property
     def start_date(self):
         if self.config.get('startdate'):
-            start = parser.parse(self.config.get('startdate')).date()
+            return parser.parse(self.config.get('startdate')).date()
         else:
-            start = (datetime.now() - timedelta(30)).date()
-
-        return datetime(start.year, start.month, start.day, 0, 0, 0)
+            return (datetime.now() - timedelta(30)).date()
 
     @property
     def end_date(self):
@@ -71,7 +69,7 @@ class CommtrackDataSourceMixin(object):
         else:
             end = datetime.now().date()
 
-        return datetime(end.year, end.month, end.day, 23, 59, 59)
+        return end + timedelta(days=1)
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
