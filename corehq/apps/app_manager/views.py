@@ -393,7 +393,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             # are released to general public
             is_previewer = request.couch_user.is_previewer
             xform_questions = [q for q in xform_questions
-                                 if not (q["tag"] == "upload" and is_previewer)]
+                                 if q["tag"] != "upload" or is_previewer]
 
         try:
             form_action_errors = form.validate_for_build()
