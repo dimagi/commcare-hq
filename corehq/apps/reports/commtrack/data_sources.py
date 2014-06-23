@@ -5,6 +5,7 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from dateutil import parser
 from casexml.apps.stock.models import StockTransaction
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
@@ -49,19 +50,26 @@ class CommtrackDataSourceMixin(object):
             return prog_id
 
     @property
-    def start_date(self):
-        return self.config.get('startdate') or (datetime.now() - timedelta(30)).date()
-
-    @property
-    def end_date(self):
-        return self.config.get('enddate') or datetime.now().date()
-
-    @property
     def request(self):
         request = self.config.get('request')
         if request:
             return request
 
+    @property
+    def start_date(self):
+        if self.config.get('startdate'):
+            return parser.parse(self.config.get('startdate')).date()
+        else:
+            return (datetime.now() - timedelta(30)).date()
+
+    @property
+    def end_date(self):
+        if self.config.get('enddate'):
+            end = parser.parse(self.config.get('enddate')).date()
+        else:
+            end = datetime.now().date()
+
+        return end + timedelta(days=1)
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
