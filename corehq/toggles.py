@@ -94,3 +94,8 @@ ANDROID_OFFLINE_INSTALL = StaticToggle(
     'Android Offline Install',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
+
+CUSTOM_PRODUCT_DATA = StaticToggle(
+    'custom_product_data',
+    'Custom Product Data'
+)
