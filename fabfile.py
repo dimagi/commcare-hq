@@ -17,6 +17,7 @@ Server layout:
 """
 import sys
 from collections import defaultdict
+import datetime
 
 from fabric.context_managers import settings, cd
 
@@ -740,13 +741,16 @@ def hotfix_deploy():
 @task
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
+    _require_target()
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    _require_target()
     run('echo ping!')  # workaround for delayed console response
+    _deploy_without_asking()
 
+
+def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
@@ -769,6 +773,47 @@ def deploy():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
+
+
+@task
+def awesome_deploy():
+    """preindex and deploy if it completes quickly enough, otherwise abort"""
+    if not console.confirm(
+            'Are you sure you want to preindex and deploy '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+    max_wait = datetime.timedelta(minutes=5)
+    start = datetime.datetime.utcnow()
+    pause_length = datetime.timedelta(seconds=5)
+
+    execute(preindex_views)
+
+    @roles(*ROLES_DB_ONLY)
+    def preindex_complete():
+        with settings(warn_only=True):
+            return sudo(
+                '%(virtualenv_root_preindex)s/bin/python '
+                '%(code_root_preindex)s/manage.py preindex_everything '
+                '--check' % env,
+                user=env.sudo_user,
+            ).succeeded
+
+    done = False
+    while not done and datetime.datetime.utcnow() - start < max_wait:
+        time.sleep(pause_length.seconds)
+        if preindex_complete():
+            done = True
+        pause_length *= 2
+
+    if done:
+        _deploy_without_asking()
+    else:
+        mail_admins(
+            " You can't deploy yet",
+            ("Preindexing is taking a while, so hold tight "
+             "and wait for an email saying it's done. "
+             "Thank you for using AWESOME DEPLOY.")
+        )
 
 
 @task

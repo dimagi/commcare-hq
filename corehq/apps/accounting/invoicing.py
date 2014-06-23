@@ -393,7 +393,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             if billable.usage_fee:
                 total_excess += billable.usage_fee.amount
             if billable.gateway_fee:
-                total_excess += billable.gateway_fee.amount * billable.gateway_fee_conversion_rate
+                total_excess += billable.gateway_fee.amount / billable.gateway_fee_conversion_rate
         return Decimal("%.2f" % round(total_excess, 2))
 
     @property

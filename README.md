@@ -43,7 +43,9 @@ individual project sites when necessary.
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7)
++ [elasticsearch][elasticsearch] (including Java 7).
+  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
+  - `brew install homebrew/versions/elasticsearch090` works well on mac
 + memcached
 + redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
@@ -52,10 +54,10 @@ individual project sites when necessary.
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
- [elasticsearch]: http://www.elasticsearch.org/download/
+ [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
-#### Elasticsearch Configuration
+#### Elasticsearch Configuration (optional)
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
@@ -66,7 +68,17 @@ supervisor config demonstrates the tunnel creation using autossh.
 
 #### CouchDB Configuration
 
-Open http://localhost:5984/_utils/ and create a new database named `commcarehq`.
+Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+
+To set up CouchDB from the command line
+
+Create the database:
+
+    curl -X PUT "http://localhost:5984/commcarehq
+
+Add the required user:
+
+    curl -X PUT "http://localhost:5984/_config/users/commcarehq" -d \"commcarehq\"
 
 #### PostgreSQL Configuration
 

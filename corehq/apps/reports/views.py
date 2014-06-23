@@ -66,8 +66,11 @@ from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFor
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain, \
-    users_matching_filter
+from corehq.apps.reports.util import (
+    get_all_users_by_domain,
+    is_mobile_worker_with_report_access,
+    users_matching_filter,
+)
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -102,10 +105,13 @@ def default(request, domain):
 def old_saved_reports(request, domain):
     return default(request, domain)
 
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
+    if not (request.couch_user.can_view_reports()
+            or request.couch_user.get_viewable_reports()
+            or is_mobile_worker_with_report_access(request.couch_user, domain)):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id)

@@ -1,3 +1,9 @@
+/*!
+ * CommCare HQ Style
+ * Built on Twitter Bootstrap (thanks @mdo and @fat)
+ *
+ * Copyright 2012 Dimagi, Inc
+ */
 article,
 aside,
 details,
@@ -167,16 +173,16 @@ textarea {
     page-break-after: avoid;
   }
 }
+html,
+body {
+  height: 100%;
+}
 /*!
  * CommCare HQ Style
  * Built on Twitter Bootstrap (thanks @mdo and @fat)
  *
  * Copyright 2012 Dimagi, Inc
  */
-html,
-body {
-  height: 100%;
-}
 .clearfix {
   *zoom: 1;
 }
@@ -204,12 +210,6 @@ body {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-/*!
- * CommCare HQ Style
- * Built on Twitter Bootstrap (thanks @mdo and @fat)
- *
- * Copyright 2012 Dimagi, Inc
- */
 .table-pricing {
   width: 940px;
 }

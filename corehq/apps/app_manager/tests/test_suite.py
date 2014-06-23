@@ -27,6 +27,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
+        # print app.create_suite()
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_app_strings(self, app_tag):
@@ -153,6 +154,18 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 form.post_form_workflow = WORKFLOW_MODULE
 
         self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
+
+    def test_owner_name(self):
+        self._test_generic_suite('owner-name')
+
+    def test_form_filter(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(2).get_form(0)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
 
 class RegexTest(SimpleTestCase):

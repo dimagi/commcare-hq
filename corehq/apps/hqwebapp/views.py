@@ -39,6 +39,7 @@ from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -169,7 +170,11 @@ def redirect_to_default(req, domain=None):
             if domains[0]:
                 domain = domains[0].name
                 if req.couch_user.is_commcare_user():
-                    url = reverse("cloudcare_main", args=[domain, ""])
+                    if not is_mobile_worker_with_report_access(
+                            req.couch_user, domain):
+                        url = reverse("cloudcare_main", args=[domain, ""])
+                    else:
+                        url = reverse("saved_reports", args=[domain])
                 elif req.couch_user.can_view_reports(domain) or req.couch_user.get_viewable_reports(domain):
                     url = reverse('corehq.apps.reports.views.default', args=[domain])
                 else:

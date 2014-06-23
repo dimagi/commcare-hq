@@ -2573,15 +2573,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            copy.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_media_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-            )
+            if settings.BITLY_LOGIN:
+                copy.short_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_media_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
+                )
         except AssertionError:
             raise
         except Exception:  # URLError, BitlyError

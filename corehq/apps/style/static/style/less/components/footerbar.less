@@ -1,0 +1,54 @@
+// FOOTER BAR (FIXED AND STATIC)
+// -------------------------
+
+footer {
+    min-width: @fluidMinimumWidth - @gridGutterWidth*2;
+    height: @footerHeight;
+    padding: 0 @gridGutterWidth;
+    background-color: @footerBackground;
+    color: @white;
+    font-size: @fontSizeSmall;
+    line-height: @fontSizeSmall+2px;
+
+    .clearfix();
+}
+
+footer a,
+footer a:link,
+footer a:visited {
+    color: @footerLinkColor;
+}
+
+footer a:hover {
+    color: @footerLinkColorHover;
+}
+
+footer a.btn{
+  color: @white;
+}
+
+footer a.btn:hover {
+  .btn-primary();
+}
+
+footer .btn-toolbar {
+  margin: 5px 0;
+}
+
+footer > .row-fluid {
+  margin-top: 3px;
+}
+
+footer .powered-by {
+  line-height: 39px;
+}
+
+footer.fixed-footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  .row-fluid {
+    width: 98%;
+  }
+}
