@@ -221,11 +221,12 @@ def force_push(git, branch):
         # oops we're using a read-only URL, so change to the suggested url
         try:
             line = sh.grep(git.remote("-v"),
-                           '-E', '^origin.https://github\.com/.*\(push\)$')
+                           '-E', '^origin.(https|git)://github\.com/.*\(push\)$')
         except sh.ErrorReturnCode_1:
             raise e
         old_url = line.strip().split()[1]
-        new_url = old_url.replace("https://github.com/", "git@github.com:")
+        prefix = "git" if old_url.startswith("git:") else "https"
+        new_url = old_url.replace(prefix + "://github.com/", "git@github.com:")
         print("    {} -> {}".format(old_url, new_url))
         git.remote('set-url', 'origin', new_url)
         git.push('origin', branch, '--force')
