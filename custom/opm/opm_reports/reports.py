@@ -419,7 +419,6 @@ class BeneficiaryPaymentReport(BaseReport):
     def fields(self):
         return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
 
-    # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
         cases = []
         self.form_sql_data = OpmFormSqlData(domain=DOMAIN, case_id=None, datespan=self.datespan)
@@ -698,6 +697,8 @@ class MetReport(BaseReport):
     exportable = False
     default_case_type = "Pregnancy"
     filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
+    ajax_pagination = True
+    asynchronous = True
 
     @property
     def report_subtitles(self):
@@ -784,7 +785,9 @@ class MetReport(BaseReport):
                     if case_key not in keys:
                         raise InvalidRow
 
-    def get_rows(self, datespan):
+    @property
+    @memoized
+    def es_results(self):
         block = self.block
         q = {
             "query": {
@@ -819,16 +822,23 @@ class MetReport(BaseReport):
             gp = self.request_params.get('gp', None)
             if gp:
                 users = CouchUser.by_domain(self.domain)
-                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == gp]
+                users_id = [user._id for user in users
+                            if 'user_data' in user
+                                and 'gp' in user.user_data
+                                and user.user_data['gp'] == gp]
                 es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
             is_open = self.request_params.get('is_open', None)
             if is_open:
                 es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
         if self.default_case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__,
+                self.domain, simplejson.dumps(q)))
+        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False,
+                        start_at=self.pagination.start, size=self.pagination.count)
 
+    def get_rows(self, datespan):
+        return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row):
         return self.model(row, self)

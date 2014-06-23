@@ -34,4 +34,3 @@ def normal_format(value):
     if not value:
         value = 0
     return "<span style='display: block; text-align:center;'>%d<hr style='margin: 0;border-top: 0; border-color: black;'></span>" % value
-
