@@ -25,9 +25,7 @@ class TestGatewayFee(TestCase):
         self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
         self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
 
-        self.other_currency, _ = Currency.objects.get_or_create(
-            rate_to_default=Decimal('3.14'),
-        )
+        self.other_currency = generator.arbitrary_currency()
 
     def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
