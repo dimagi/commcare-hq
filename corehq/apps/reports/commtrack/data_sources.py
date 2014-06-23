@@ -78,9 +78,9 @@ class CommtrackDataSourceMixin(object):
         the correct localized date so we need to manipulate the datetime
         object to be at the actual end of given day.
         """
-        config_date = self.config.get('enddate')
+        config_date = self.config.get('enddate') or datetime.now()
         if isinstance(config_date, datetime):
-            date = config_date.date() or datetime.now().date()
+            date = config_date.date()
             return datetime(date.year, date.month, date.day, 23, 59, 59)
         else:
             date = [int(x) for x in config_date.split('-')]
