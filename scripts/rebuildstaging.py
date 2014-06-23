@@ -225,7 +225,8 @@ def force_push(git, branch):
         except sh.ErrorReturnCode_1:
             raise e
         old_url = line.strip().split()[1]
-        new_url = old_url.replace("https://github.com/", "git@github.com:")
+        prefix = "git" if old_url.startswith("git:") else "https"
+        new_url = old_url.replace(prefix + "://github.com/", "git@github.com:")
         print("    {} -> {}".format(old_url, new_url))
         git.remote('set-url', 'origin', new_url)
         git.push('origin', branch, '--force')
