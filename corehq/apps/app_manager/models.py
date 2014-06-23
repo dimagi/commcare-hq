@@ -2710,6 +2710,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form.validation_cache = None
             form.version = None
 
+        app.broken_build = False
+
         return app
 
     @property
