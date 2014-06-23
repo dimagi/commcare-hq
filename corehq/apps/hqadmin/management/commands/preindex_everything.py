@@ -101,7 +101,6 @@ class Command(BaseCommand):
 
 rcache = cache.get_cache('redis')
 PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'
-HELL_YEAH_IT_IS = 'hell yeah it is'
 
 
 def clear_preindex_complete():
