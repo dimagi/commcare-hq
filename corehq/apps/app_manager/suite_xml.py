@@ -780,6 +780,13 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_detail_mapping(self):
         return {detail.id: detail for detail in self.details}
 
+    @memoized
+    def get_command_relevance_mapping(self):
+        def commands(menu):
+            return menu.node.findall('command[@relevant]')
+
+        return {c.get('id'): c.get('relevant') for menu in self.menus for c in commands(menu)}
+
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
             module=module,
@@ -788,9 +795,10 @@ class SuiteGenerator(SuiteGeneratorBase):
         return detail_id if detail_id in self.get_detail_mapping() else None
 
     @staticmethod
-    def add_referenced_instances(entry, details_by_id):
+    def add_referenced_instances(entry, details_by_id, relevance_by_id):
         detail_ids = set()
         xpaths = set()
+
         instance_re = r"""instance\(['"](\w+)['"]\)"""
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
@@ -799,6 +807,10 @@ class SuiteGenerator(SuiteGeneratorBase):
             xpaths.add(datum.function)
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
+
+        entry_id = entry.node.find('command[@id]').get('id')
+        if entry_id in relevance_by_id:
+            xpaths.add(relevance_by_id[entry_id])
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -827,7 +839,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        details_by_id = self.get_detail_mapping()
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
@@ -871,8 +882,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
                 results.append(e)
+
+        details_by_id = self.get_detail_mapping()
+        relevance_by_id = self.get_command_relevance_mapping()
         for e in results:
-            self.add_referenced_instances(e, details_by_id)
+            self.add_referenced_instances(e, details_by_id, relevance_by_id)
         return results
 
     def get_indicator_instances(self, module, form=None):
@@ -1169,9 +1183,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
     @property
+    @memoized
     def menus(self):
         # avoid circular dependency
         from corehq.apps.app_manager.models import CareplanModule, AdvancedForm
+
+        menus = []
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 update_menu = Menu(
@@ -1187,7 +1204,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         locale_id=self.id_strings.module_locale(parent),
                     )
                     create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
-                    yield create_menu
+                    menus.append(create_menu)
 
                     update_menu.root = self.id_strings.menu(parent)
                 else:
@@ -1200,7 +1217,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
-                yield update_menu
+                menus.append(update_menu)
             else:
                 menu = Menu(
                     id=self.id_strings.menu(module),
@@ -1233,7 +1250,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 menu.commands.extend(get_commands())
 
-                yield menu
+                menus.append(menu)
+
+        return menus
 
     @property
     def fixtures(self):
