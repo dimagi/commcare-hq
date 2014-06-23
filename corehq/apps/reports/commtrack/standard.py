@@ -79,26 +79,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
-    @property
-    def start_date(self):
-        """
-        The datetime is converted to UTC to make sure we have
-        the correct localized date so we need to manipulate the datetime
-        object to be at the actual start of given day.
-        """
-        date = self.datespan.startdate_utc.date()
-        return datetime(date.year, date.month, date.day, 0, 0, 0)
-
-    @property
-    def end_date(self):
-        """
-        The datetime is converted to UTC to make sure we have
-        the correct localized date so we need to manipulate the datetime
-        object to be at the actual end of given day.
-        """
-        date = self.datespan.enddate_utc.date()
-        return datetime(date.year, date.month, date.day, 23, 59, 59)
-
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -158,8 +138,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
-            last_modified_date__lte=self.end_date,
-            last_modified_date__gte=self.start_date,
+            last_modified_date__lte=self.datespan.enddate_display,
+            last_modified_date__gte=self.datespan.startdate_display,
             section_id=STOCK_SECTION_TYPE
         ).order_by('product_id')
 
@@ -275,8 +255,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
-                'startdate': self.start_date,
-                'enddate': self.end_date,
+                'startdate': self.datespan.startdate_display,
+                'enddate': self.datespan.enddate_display,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -339,8 +319,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.request.GET.get('program'),
-            'startdate': self.start_date,
-            'enddate': self.end_date,
+            'startdate': self.datespan.startdate_display,
+            'enddate': self.datespan.enddate_display,
             'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())

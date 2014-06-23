@@ -5,6 +5,7 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from dateutil import parser
 from casexml.apps.stock.models import StockTransaction
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
@@ -49,48 +50,28 @@ class CommtrackDataSourceMixin(object):
             return prog_id
 
     @property
-    def start_date(self):
-        """
-        Map reports send start date as a string formatted
-        as "yyyy-mm-dd" but with standard reports, it comes as a
-        datetime object, so these two must be treated differently.
-
-        The datetime variety is converted to UTC to make sure we have
-        the correct localized date so we need to manipulate the datetime
-        object to be at the actual start of given day.
-        """
-        config_date = self.config.get('startdate') or datetime.now() - timedelta(30)
-        if isinstance(config_date, datetime):
-            date = config_date.date()
-            return datetime(date.year, date.month, date.day, 0, 0, 0)
-        else:
-            date = [int(x) for x in config_date.split('-')]
-            return datetime(date[0], date[1], date[2], 0, 0, 0)
-
-    @property
-    def end_date(self):
-        """
-        Map reports send end date as a string formatted
-        as "yyyy-mm-dd" but with standard reports, it comes as a
-        datetime object, so these two must be treated differently
-
-        The datetime variety is converted to UTC to make sure we have
-        the correct localized date so we need to manipulate the datetime
-        object to be at the actual end of given day.
-        """
-        config_date = self.config.get('enddate') or datetime.now()
-        if isinstance(config_date, datetime):
-            date = config_date.date()
-            return datetime(date.year, date.month, date.day, 23, 59, 59)
-        else:
-            date = [int(x) for x in config_date.split('-')]
-            return datetime(date[0], date[1], date[2], 23, 59, 59)
-
-    @property
     def request(self):
         request = self.config.get('request')
         if request:
             return request
+
+    @property
+    def start_date(self):
+        if self.config.get('startdate'):
+            start = parser.parse(self.config.get('startdate')).date()
+        else:
+            start = (datetime.now() - timedelta(30)).date()
+
+        return datetime(start.year, start.month, start.day, 0, 0, 0)
+
+    @property
+    def end_date(self):
+        if self.config.get('enddate'):
+            end = parser.parse(self.config.get('enddate')).date()
+        else:
+            end = datetime.now().date()
+
+        return datetime(end.year, end.month, end.day, 23, 59, 59)
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
