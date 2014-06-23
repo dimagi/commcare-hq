@@ -37,7 +37,7 @@ function MapList(o) {
     self.addItem = function () {
         var item = {key: ko.observable(''), value: {}};
         item.key.subscribe(function(newValue) {
-            if(self.duplicatedItems.indexOf(newValue) == -1 && self._isItemDuplicated(newValue)) {
+            if(self.duplicatedItems.indexOf(newValue) === -1 && self._isItemDuplicated(newValue)) {
                 self.duplicatedItems.push(newValue);
             }
 
@@ -45,24 +45,24 @@ function MapList(o) {
 
         item.key.subscribe(function(oldValue) {
             var index = self.duplicatedItems.indexOf(oldValue);
-            if(index != -1 && !self._isItemDuplicated(oldValue, 2)) {
+            if(index !== -1 && !self._isItemDuplicated(oldValue, 2)) {
                 self.duplicatedItems.remove(oldValue);
             }
         }, null, "beforeChange");
         item.value[self.lang] = ko.observable('');
         self.items.push(item);
-        if(self.duplicatedItems.indexOf('') == -1 && self._isItemDuplicated('')) {
+        if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
             self.duplicatedItems.push('');
         }
     };
 
     self._isItemDuplicated = function(key, max_counts) {
-        if(typeof(max_counts)==='undefined') max_counts = 1;
+        if(typeof(max_counts) === 'undefined') max_counts = 1;
         var items = self.getItems();
         var counter = 0;
         for(var i = 0; i < items.length; i++) {
             var item = items[i];
-            if(ko.utils.unwrapObservable(item.key) == key) {
+            if(ko.utils.unwrapObservable(item.key) === key) {
                 counter++;
                 if(counter > max_counts) return true;
             }
@@ -71,7 +71,7 @@ function MapList(o) {
     };
 
     self.isItemDuplicated = function(key) {
-        return self.duplicatedItems.indexOf(key) != -1;
+        return self.duplicatedItems.indexOf(key) !== -1;
     };
 
     self.getItems = function () {
@@ -104,8 +104,13 @@ uiElement.key_value_mapping = function (o) {
         ko.applyBindings({
             modalTitle: o.modalTitle,
             mapList: copy,
-            save: function () {
-                m.setItems(copy.getItems());
+            save: function (data, e) {
+                if(copy.duplicatedItems().length > 0) {
+                    e.stopImmediatePropagation();
+                } else {
+                    m.setItems(copy.getItems());
+                }
+
             }
         }, $modalDiv.get(0));
 
