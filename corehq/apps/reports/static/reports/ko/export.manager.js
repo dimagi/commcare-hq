@@ -179,11 +179,9 @@ var ExportManager = function (o) {
             'async': true
         };
 
-        filters = JSON.parse(self.jsonExportFilters);
-
-        for(var filter in filters) {
-            if(filters.hasOwnProperty(filter)) {
-                params[filter] = filters[filter];
+        for(var filter in self.jsonExportFilters) {
+            if(self.jsonExportFilters.hasOwnProperty(filter)) {
+                params[filter] = self.jsonExportFilters[filter];
             }
         }
 

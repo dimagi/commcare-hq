@@ -219,7 +219,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     """
     Export data from a saved export schema
     """
-    r = request.GET if request.method == "GET" else request.POST
+    r = request.POST if request.method == 'POST' else request.GET
     deid = r.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
@@ -235,7 +235,7 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    req = request.GET if request.method == 'GET' else request.POST
+    req = request.POST if request.method == 'POST' else request.GET
     async = req.get('async') == 'true'
     next = req.get("next", "")
     format = req.get("format", "")
