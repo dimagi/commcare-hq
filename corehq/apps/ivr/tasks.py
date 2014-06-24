@@ -17,6 +17,8 @@ OUTBOUND_RETRY_INTERVAL = getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL",
 def initiate_outbound_call(*args, **kwargs):
     retry_num = kwargs.pop("retry_num", 0)
     try:
+        if retry_num > 0:
+            kwargs.pop("timestamp", None)
         result = api.initiate_outbound_call(*args, **kwargs)
     except Exception:
         notify_exception(None,
