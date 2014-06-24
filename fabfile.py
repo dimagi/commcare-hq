@@ -970,9 +970,8 @@ def flip_es_aliases():
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
 
-@task
 @parallel
-@roles(*ROLES_STATIC)
+@roles(*ROLES_ALL_SRC)
 def _do_compress():
     """Run Django Compressor after a code update"""
     with cd(env.code_root):
