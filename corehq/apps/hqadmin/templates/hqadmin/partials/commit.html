@@ -1,0 +1,7 @@
+<div class="well well-small">
+    {% if commit.subject %}<strong>{{ commit.subject }}</strong><br>{% endif %}{{ commit.message }}
+    authored by {{ commit.author }} on {{ commit.date }}<br/>
+    <small>
+        <a href="{{ commit.commit_url }}">View</a> | <a href="{{ commit.compare_master }}">Compare</a>
+    </small>
+</div>
