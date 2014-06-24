@@ -131,20 +131,33 @@ class Display(OrderedXmlObject):
 
 
 class DisplayNode(XmlObject):
-    """Any node that has the awkward text-or-display subnode, like Command or Menu"""
+    """
+    Mixin for any node that has the awkward text-or-display subnode,
+    like Command or Menu
+
+    """
     text = NodeField('text', Text)
     display = NodeField('display', Display)
 
-    def __init__(self, locale_id=None, media_image=None, media_audio=None, **kwargs):
-        super(DisplayNode, self).__init__(**kwargs)
-        if locale_id is None:
-            text = None
-        else:
-            text = Text(locale_id=locale_id)
-            
+    def __init__(self, node=None, context=None,
+                 locale_id=None, media_image=None, media_audio=None, **kwargs):
+        super(DisplayNode, self).__init__(node, context, **kwargs)
+        self.set_display(
+            locale_id=locale_id,
+            media_image=media_image,
+            media_audio=media_audio,
+        )
+
+    def set_display(self, locale_id=None, media_image=None, media_audio=None):
+        text = Text(locale_id=locale_id) if locale_id else None
+
         if media_image or media_audio:
-            self.display = Display(text=text, media_image=media_image, media_audio=media_audio)
-        else:
+            self.display = Display(
+                text=text,
+                media_image=media_image,
+                media_audio=media_audio,
+            )
+        elif text:
             self.text = text
 
 
@@ -782,10 +795,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @memoized
     def get_command_relevance_mapping(self):
-        def commands(menu):
-            return menu.node.findall('command[@relevant]')
-
-        return {c.get('id'): c.get('relevant') for menu in self.menus for c in commands(menu)}
+        return {c.id: c.relevant for menu in self.menus for c in menu.commands}
 
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
