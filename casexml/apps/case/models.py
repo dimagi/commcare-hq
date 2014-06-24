@@ -490,14 +490,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        def _get(id):
-            try:
-                return XFormInstance.get(id)
-            except ResourceNotFound:
-                return None
-        
-        forms = [_get(id) for id in self.xform_ids]
-        return [form for form in forms if form] 
+        forms = iter_docs(self.get_db(), self.xform_ids)
+        return [XFormInstance(form) for form in forms]
 
     def get_attachment(self, attachment_key):
         return self.fetch_attachment(attachment_key)
