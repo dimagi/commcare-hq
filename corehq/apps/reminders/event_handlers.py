@@ -1,6 +1,7 @@
 from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
     METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL, 
-    RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
+    RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder,
+    CaseReminderHandler)
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
@@ -320,7 +321,8 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
         if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
             initiate_call = not CallLog.answered_call_exists(
                 recipient.doc_type, recipient.get_id,
-                reminder.event_initiation_timestamp)
+                reminder.event_initiation_timestamp,
+                CaseReminderHandler.get_now())
 
         if initiate_call:
             if (isinstance(recipient, CommCareCase) and
@@ -340,6 +342,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     verified_number=verified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
+                    timestamp=CaseReminderHandler.get_now(),
                 )
             elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
                 initiate_outbound_call.delay(
@@ -351,6 +354,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     unverified_number=unverified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
+                    timestamp=CaseReminderHandler.get_now(),
                 )
             else:
                 #No phone number to send to

@@ -280,7 +280,8 @@ class CallLog(MessageLog):
         return "Call %s %s" % (to_from, self.phone_number)
 
     @classmethod
-    def answered_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
+    def answered_call_exists(cls, caller_doc_type, caller_id, after_timestamp,
+        end_timestamp=None):
         """
         Checks to see if an outbound call exists for the given caller that was successfully answered.
         
@@ -291,7 +292,7 @@ class CallLog(MessageLog):
         return          True if a call exists in the CallLog, False if not.
         """
         start_timestamp = json_format_datetime(after_timestamp)
-        end_timestamp = json_format_datetime(datetime.utcnow())
+        end_timestamp = json_format_datetime(end_timestamp or datetime.utcnow())
         calls = cls.view("sms/by_recipient",
                     startkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, start_timestamp],
                     endkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, end_timestamp],

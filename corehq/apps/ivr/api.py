@@ -1,6 +1,6 @@
 from datetime import datetime
 from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
 from corehq.apps.smsforms.models import XFormsSession, XFORMS_SESSION_IVR
@@ -196,52 +196,60 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
 
 def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
     if verified_number and verified_number.ivr_backend_id:
-        return MobileBackend.get(self.ivr_backend_id)
+        return MobileBackend.get(verified_number.ivr_backend_id)
     else:
         phone_number = (verified_number.phone_number if verified_number
             else unverified_number)
         phone_number = strip_plus(str(phone_number))
-        prefixes = IVR_BACKEND_MAP.keys()
+        prefixes = settings.IVR_BACKEND_MAP.keys()
         prefixes = sorted(prefixes, key=lambda x: len(x), reverse=True)
         for prefix in prefixes:
             if phone_number.startswith(prefix):
-                return MobileBackend.get(IVR_BACKEND_MAP[prefix])
+                return MobileBackend.get(settings.IVR_BACKEND_MAP[prefix])
     return None
 
 def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     include_case_side_effects, max_question_retries, verified_number=None,
-    unverified_number=None, case_id=None, case_for_case_submission=False):
+    unverified_number=None, case_id=None, case_for_case_submission=False,
+    timestamp=None):
     """
     Returns True if the call was queued successfully, or False if an error
     occurred.
     """
-    if not verified_number and not unverified_number:
-        return False
-    phone_number = (verified_number.phone_number if verified_number
-        else unverified_number)
-    call_log_entry = CallLog(
-        couch_recipient_doc_type=recipient.doc_type,
-        couch_recipient=recipient.get_id,
-        phone_number="+%s" % str(phone_number),
-        direction=OUTGOING,
-        date= datetime.utcnow(),
-        domain=recipient.domain,
-        form_unique_id=form_unique_id,
-        submit_partial_form=submit_partial_form,
-        include_case_side_effects=include_case_side_effects,
-        max_question_retries=max_question_retries,
-        current_question_retry_count=0,
-        case_id=case_id,
-        case_for_case_submission=case_for_case_submission,
-    )
-    backend = get_ivr_backend(recipient, verified_number, unverified_number)
-    if not backend:
-        return False
-    kwargs = backend.get_cleaned_outbound_params()
-    module = __import__(backend.outbound_module,
-        fromlist=["initiate_outbound_call"])
-    call_log_entry.backend_api = module.API_ID
-    call_log_entry.save()
-    return module.initiate_outbound_call(call_log_entry, **kwargs)
-
+    call_log_entry = None
+    try:
+        if not verified_number and not unverified_number:
+            return False
+        phone_number = (verified_number.phone_number if verified_number
+            else unverified_number)
+        call_log_entry = CallLog(
+            couch_recipient_doc_type=recipient.doc_type,
+            couch_recipient=recipient.get_id,
+            phone_number="+%s" % str(phone_number),
+            direction=OUTGOING,
+            date=timestamp or datetime.utcnow(),
+            domain=recipient.domain,
+            form_unique_id=form_unique_id,
+            submit_partial_form=submit_partial_form,
+            include_case_side_effects=include_case_side_effects,
+            max_question_retries=max_question_retries,
+            current_question_retry_count=0,
+            case_id=case_id,
+            case_for_case_submission=case_for_case_submission,
+        )
+        backend = get_ivr_backend(recipient, verified_number, unverified_number)
+        if not backend:
+            return False
+        kwargs = backend.get_cleaned_outbound_params()
+        module = __import__(backend.outbound_module,
+            fromlist=["initiate_outbound_call"])
+        call_log_entry.backend_api = module.API_ID
+        call_log_entry.save()
+        return module.initiate_outbound_call(call_log_entry, **kwargs)
+    except Exception:
+        if call_log_entry:
+            call_log_entry.error = True
+            call_log_entry.error_message = "Internal Server Error"
+            call_log_entry.save()
+        raise
 

@@ -5,7 +5,7 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMSLog, CallLog
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
@@ -51,10 +51,11 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.save()
         return domain_obj
 
-    def create_mobile_worker(self, username, password, phone_number):
+    def create_mobile_worker(self, username, password, phone_number, save_vn=True):
         user = CommCareUser.create(self.domain, username, password,
             phone_number=phone_number)
-        user.save_verified_number(self.domain, phone_number, True, None)
+        if save_vn:
+            user.save_verified_number(self.domain, phone_number, True, None)
         self.users.append(user)
         return user
 
@@ -96,8 +97,8 @@ class TouchformsTestCase(LiveServerTestCase):
         self.groups.append(group)
         return group
 
-    def load_app(self, filename):
-        dirname = os.path.dirname(os.path.abspath(__file__))
+    def load_app(self, filename, dirname=None):
+        dirname = dirname or os.path.dirname(os.path.abspath(__file__))
         full_filename = "%s/%s" % (dirname, filename)
         with open(full_filename, "r") as f:
             app_source = f.read()
@@ -241,6 +242,19 @@ class TouchformsTestCase(LiveServerTestCase):
             reduce=False,
         ).first()
         return sms
+
+    def get_last_outbound_call(self, contact):
+        # Not clear why this should be necessary, but without it the latest
+        # call may not be returned
+        sleep(0.25)
+        call = CallLog.view("sms/by_recipient",
+            startkey=[contact.doc_type, contact._id, "CallLog", "O", {}],
+            endkey=[contact.doc_type, contact._id, "CallLog", "O"],
+            descending=True,
+            include_docs=True,
+            reduce=False,
+        ).first()
+        return call
 
     def get_open_session(self, contact):
         return XFormsSession.get_open_sms_session(self.domain, contact._id)
