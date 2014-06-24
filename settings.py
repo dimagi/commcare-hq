@@ -285,7 +285,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.m4change',
     'custom.succeed',
-
+    'custom.intrahealth',
     'custom.uth',
 
     'custom.colalife',
@@ -435,8 +435,11 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
+    "custom.intrahealth.fixtures.month_fixture",
+    "custom.intrahealth.fixtures.payment_fixture",
 ]
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
@@ -1052,6 +1055,10 @@ PILLOWTOPS = {
     'trialconnect': [
         'custom.trialconnect.smspillow.TCSMSPillow',
     ],
+    'custom': [
+        'custom.intrahealth.pillows.IntrahealthPillow',
+    ],
+
 }
 
 for k, v in LOCAL_PILLOWTOPS.items():
