@@ -8,16 +8,17 @@ class HqDeploy(Document):
     code_snapshot = DictProperty()
 
     @classmethod
-    def get_latest(cls, environment):
-        return HqDeploy.view(
+    def get_latest(cls, environment, limit=1):
+        result = HqDeploy.view(
             'hqadmin/deploy_history',
             startkey=[environment, {}],
             endkey=[environment],
             reduce=False,
-            limit=1,
+            limit=limit,
             descending=True,
             include_docs=True
-        ).one()
+        )
+        return result.all()
 
     @classmethod
     def get_list(cls, environment, startdate, enddate, limit=50):
