@@ -594,6 +594,11 @@ class SuiteGenerator(SuiteGeneratorBase):
     def post_process(self, suite):
         self.add_form_workflow(suite)
 
+        details_by_id = self.get_detail_mapping()
+        relevance_by_id = self.get_command_relevance_mapping()
+        for e in suite.entries:
+            self.add_referenced_instances(e, details_by_id, relevance_by_id)
+
     def add_form_workflow(self, suite):
         """
         post_form_workflow = 'module':
@@ -639,18 +644,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                             # or a non-autoselect datum
                             last = frame_children.pop()
 
-                        requires_session = False
                         for child in frame_children:
                             if isinstance(child, basestring):
                                 frame.add_command(child)
                             else:
                                 frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
-                                requires_session = True
-
-                        if requires_session and not any(i for i in entry.instances if i.id == 'commcaresession'):
-                                entry.instances.append(
-                                    Instance(id='commcaresession', src='jr://instance/session')
-                                )
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
@@ -922,10 +920,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ))
                 results.append(e)
 
-        details_by_id = self.get_detail_mapping()
-        relevance_by_id = self.get_command_relevance_mapping()
-        for e in results:
-            self.add_referenced_instances(e, details_by_id, relevance_by_id)
         return results
 
     def get_indicator_instances(self, module, form=None):
