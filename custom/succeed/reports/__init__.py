@@ -253,6 +253,34 @@ SUBMISSION_SELECT_FIELDS = [
             {
                 "text": "PD2 Medications",
                 "val": PD2
+            },
+            {
+                "text": "PD2 Antithrombotic Meds",
+                "val": PD2AM
+            },
+            {
+                "text": "PD2 Blood Pressure Meds",
+                "val": PD2BPM
+            },
+            {
+                "text": "PD2 Cholesterol Meds",
+                "val": PD2CHM
+            },
+            {
+                "text": "PD2 Diabetes Meds",
+                "val": PD2DIABM
+            },
+            {
+                "text": "PD2 Depression Meds",
+                "val": PD2DEPM
+            },
+            {
+                "text": "PD2 Smoking Cessation Meds",
+                "val": PD2SCM
+            },
+            {
+                "text": "PD2 Other Meds",
+                "val": PD2OM
             }
         ]
     },

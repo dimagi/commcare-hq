@@ -1,23 +1,23 @@
-from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from corehq.apps.api.es import ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.generic import ElasticProjectInspectionReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import CommCareUser
-from custom.succeed.reports import SUBMISSION_SELECT_FIELDS, EMPTY_FIELD
+from custom.succeed.reports import SUBMISSION_SELECT_FIELDS, EMPTY_FIELD, INTERACTION_OUTPUT_DATE_FORMAT
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from custom.succeed.utils import SUCCEED_DOMAIN
 from django.utils import html
 from dimagi.utils.decorators.memoized import memoized
+from custom.succeed.utils import format_date
 
 
 class PatientSubmissionReport(PatientDetailsReport):
     slug = "patient_submissions"
     name = 'Patient Submissions'
     xform_es = ReportXFormES(SUCCEED_DOMAIN)
+    ajax_pagination = True
+    asynchronous = True
     default_sort = {
         "received_on": "desc"
     }
@@ -34,9 +34,9 @@ class PatientSubmissionReport(PatientDetailsReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Form Name", sortable=False, span=1),
-            DataTablesColumn("Submitted By", sortable=False, span=1),
-            DataTablesColumn("Completed", sortable=False, span=1))
+            DataTablesColumn("Form Name", prop_name='@name', span=1),
+            DataTablesColumn("Submitted By", prop_name='username', span=1),
+            DataTablesColumn("Completed", prop_name='received_on', span=1))
 
 
     @property
@@ -51,26 +51,6 @@ class PatientSubmissionReport(PatientDetailsReport):
                         "and": [
                             {"term": {"domain.exact": self.request.domain}},
                             {"term": {"doc_type": "xforminstance"}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {
-                                                "term": {
-                                                    "@case_id": "%s" % self.request.GET[
-                                                        'patient_id']
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_id": "%s" % self.request.GET['patient_id']
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
                         ]
                     },
                     "query": {"match_all": {}}
@@ -135,10 +115,10 @@ class PatientSubmissionReport(PatientDetailsReport):
 
     def form_completion_time(self, date_string):
         if date_string != EMPTY_FIELD:
-            date = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%SZ")
-            return date.strftime("%m/%d/%Y %H:%M")
+            return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
+
     @property
     def report_context(self):
         ret = super(PatientSubmissionReport, self).report_context

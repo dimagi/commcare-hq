@@ -143,11 +143,11 @@ class PatientListReportDisplay(CaseDisplay):
 class PatientListReport(CustomProjectReport, CaseListReport):
 
     ajax_pagination = True
-    include_inactive = True
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
     default_sort = {'target_date': 'asc'}
     base_template_filters = 'succeed/report.html'
+    default_case_type = 'participant'
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.ResponsibleParty',
@@ -231,6 +231,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         q = { "query": {
                 "filtered": {
                     "query": {
+                        "match_all": {}
                     },
                     "filter": {
                         "bool": {
@@ -342,9 +343,10 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             }
             q['sort'] = sort
 
-        care_site = self.request_params.get('care_site', '')
+        care_site = self.request_params.get('care_site_display', '')
         if care_site != '':
-            es_filters["bool"]["must"].append({"term": {"care_site.#value": care_site}})
+            query_block = {"queryString": {"default_field": "care_site_display.#value", "query": "*" + care_site + "*"}}
+            q["query"]["filtered"]["query"] = query_block
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
@@ -364,14 +366,26 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             es_filters['and'] = [{"term": { "domain.exact": "succeed" }}]
             es_filters['and'].append({"script": self.get_visit_script(order=order, responsible_party=responsible_party)})
 
+        def _filter_gen(key, flist):
+            return {"terms": {
+                key: [item.lower() for item in flist if item]
+            }}
+
         user = self.request.couch_user
         if not user.is_web_user():
-            groups = user.get_group_ids()
-            terms = {"terms": {"owner_id": groups}}
+            owner_ids = user.get_group_ids()
+            user_ids = [user._id]
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
             if responsible_party:
-                es_filters["and"].append(terms)
+                subterms = []
+                subterms.append({'or': filters})
+                es_filters["and"].append({'and': subterms} if subterms else {})
             else:
-                es_filters["bool"]["must"].append(terms)
+                es_filters["bool"]["must"].append(filters[0])
+                es_filters["bool"]["must"].append(filters[1])
+
         if self.case_type:
             if responsible_party:
                 es_filters["and"].append({"term": {"type.exact": 'participant'}})
@@ -380,8 +394,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
-        else:
-            q["query"]["filtered"]["query"] = {"match_all": {}}
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         if self.pagination:
