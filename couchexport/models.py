@@ -744,9 +744,11 @@ class GroupExportComponent(object):
     Helper wrapper class for components of a GroupExportConfiguration
     """
 
-    def __init__(self, config, saved_version):
+    def __init__(self, config, saved_version, group_id, index):
         self.config = config
         self.saved_version = saved_version
+        self.group_id = group_id
+        self.index = index
 
     def __iter__(self):
         yield self.config
@@ -795,8 +797,12 @@ class GroupExportConfiguration(Document):
         ).all()
         export_map = dict((json.dumps(export.configuration.index), export)
             for export in exports)
-        return [GroupExportComponent(config, export_map.get(json.dumps(config.index), None))
-            for config in configs]
+        return [
+            GroupExportComponent(
+                config, export_map.get(json.dumps(config.index), None), self._id, list(self.all_configs).index(config)
+            )
+            for config in configs
+        ]
 
     @property
     @memoized
