@@ -421,11 +421,6 @@ class Schedule(XmlObject):
     post_schedule_increment = StringField('@post_schedule_increment')
     visits = NodeListField('visit', ScheduleVisit)
 
-    def set_content(self, xml):
-        for child in self.node:
-            self.node.remove(child)
-        self.node.append(xml)
-
 
 class ScheduleFixture(Fixture):
     schedule = NodeField('schedule', Schedule)

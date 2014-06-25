@@ -1037,7 +1037,7 @@ class XForm(WrappedNode):
 
                 self.add_setvalue(
                     ref='case/update/{}'.format(SCHEDULE_PHASE),
-                    value=str(form.id + 1)
+                    value=str(form.id + 1)  # convert 0 based index to 1 base index
                 )
 
                 last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
