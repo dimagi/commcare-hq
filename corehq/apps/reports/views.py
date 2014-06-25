@@ -68,7 +68,6 @@ from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
-    is_mobile_worker_with_report_access,
     users_matching_filter,
 )
 from corehq.apps.reports.standard import inspect, export, ProjectReport
@@ -110,8 +109,7 @@ def old_saved_reports(request, domain):
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
     if not (request.couch_user.can_view_reports()
-            or request.couch_user.get_viewable_reports()
-            or is_mobile_worker_with_report_access(request.couch_user, domain)):
+            or request.couch_user.get_viewable_reports()):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id)
