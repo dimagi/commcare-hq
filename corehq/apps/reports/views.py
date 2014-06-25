@@ -24,6 +24,8 @@ from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
 from casexml.apps.case.cleanup import rebuild_case
 from corehq import toggles
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.reports.standard.export import ExcelExportReport
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -31,6 +33,7 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
+from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
@@ -62,7 +65,8 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema, \
+    HQGroupExportConfiguration
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -344,6 +348,19 @@ def hq_download_saved_export(req, domain, export_id):
     # to be the domain
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
+
+@login_or_digest
+@require_form_export_permission
+@require_POST
+def hq_update_saved_export(req, domain):
+    group_id = req.POST['group_export_id']
+    index = int(req.POST['index'])
+    group_config = HQGroupExportConfiguration.get(group_id)
+    assert domain == group_config.domain
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, 'couch')
+    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(), args=[domain, ExcelExportReport.slug]))
 
 @login_or_digest
 @require_form_export_permission
