@@ -738,6 +738,21 @@ class ExportConfiguration(DocumentSchema):
     def __repr__(self):
         return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
 
+
+class GroupExportComponent(object):
+    """
+    Helper wrapper class for components of a GroupExportConfiguration
+    """
+
+    def __init__(self, config, saved_version):
+        self.config = config
+        self.saved_version = saved_version
+
+    def __iter__(self):
+        yield self.config
+        yield self.saved_version
+
+
 class GroupExportConfiguration(Document):
     """
     An export configuration allows you to setup a collection of exports
@@ -780,7 +795,7 @@ class GroupExportConfiguration(Document):
         ).all()
         export_map = dict((json.dumps(export.configuration.index), export)
             for export in exports)
-        return [(config, export_map.get(json.dumps(config.index), None))
+        return [GroupExportComponent(config, export_map.get(json.dumps(config.index), None))
             for config in configs]
 
     @property
