@@ -590,7 +590,7 @@ class FormBase(DocumentSchema):
 
     @property
     def schedule_form_id(self):
-        return self.unique_id
+        return self.unique_id[:6]
 
     def wrapped_xform(self):
         return XForm(self.source)

@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, ScheduleVisit, FormSchedule
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, ScheduleVisit, \
+    FormSchedule, DetailColumn
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -133,6 +134,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         f1 = mod.get_form(0)
         f2 = mod.get_form(1)
         f1.schedule = FormSchedule(
+            anchor='edd',
             expires=120,
             post_schedule_increment=15,
             visits=[
@@ -143,10 +145,19 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         )
 
         f2.schedule = FormSchedule(
+            anchor='dob',
             visits=[
                 ScheduleVisit(due=7, late_window=4),
                 ScheduleVisit(due=15)
             ]
+        )
+        mod.case_details.short.columns.append(
+            DetailColumn(
+                header={'en': 'Next due'},
+                model='case',
+                field='schedule:nextdue',
+                format='plain',
+            )
         )
         self.assertXmlEqual(self.get_xml('suite-schedule'), app.create_suite())
 
