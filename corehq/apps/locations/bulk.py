@@ -54,58 +54,60 @@ def top_level_location_types(domain):
     return [t[0] for t in hierarchy if t[1] == [None]]
 
 
-def import_worksheet(domain, worksheet, total_rows, task):
-    processed = 0
-    location_type = worksheet.worksheet.title
-    results = []
-    if location_type not in defined_location_types(domain):
-        return (0, "location with type %s not found, this worksheet will not be imported" % location_type)
-    else:
-        data = list(worksheet)
+class LocationImporter(object):
+    def __init__(self, domain, worksheets, task):
+        self.domain = domain
+        self.worksheets = worksheets
+        self.task = task
 
-        for loc in data:
-            results.append(import_location(domain, location_type, loc)['message'])
-            if task:
-                processed += 1
-                DownloadBase.set_progress(task, processed, total_rows)
+        self.processed = 0
+        self.results = []
+        self.seen_locs = set()
 
-    return (processed, results)
+        self.total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
+        self.types = [ws.worksheet.title for ws in worksheets]
+        self.top_level_types = top_level_location_types(domain)
 
+    def run(self):
+        for loc_type in self.top_level_types:
+            self.import_loc_type(loc_type)
 
-def import_loc_type(loc_type, types, domain, worksheets, total_rows, task):
-    processed = 0
-    results = []
-    if loc_type in types:
-        result = import_worksheet(
-            domain,
-            worksheets[types.index(loc_type)],
-            total_rows,
-            task
-        )
-        processed += result[0]
-        results += result[1]
+        return self.results
 
-        if loc_type in parent_child(domain):
-            for child_type in parent_child(domain)[loc_type]:
-                result = import_loc_type(child_type, types, domain, worksheets, total_rows, task)
-                processed += result[0]
-                results += result[1]
+    def import_loc_type(self, loc_type):
+        if loc_type in self.types:
+            self.import_worksheet(self.worksheets[self.types.index(loc_type)])
 
-    return (processed, results)
+            if loc_type in parent_child(self.domain):
+                for child_type in parent_child(self.domain)[loc_type]:
+                    self.import_loc_type(child_type)
+
+    def import_worksheet(self, worksheet):
+        location_type = worksheet.worksheet.title
+
+        if location_type not in defined_location_types(self.domain):
+            return (0, "location with type %s not found, this worksheet will not be imported" % location_type)
+        else:
+            data = list(worksheet)
+
+            for loc in data:
+                self.results.append(import_location(
+                    self.domain,
+                    location_type,
+                    loc
+                )['message'])
+                if self.task:
+                    self.processed += 1
+                    DownloadBase.set_progress(
+                        self.task,
+                        self.processed,
+                        self.total_rows
+                    )
 
 
 def import_locations(domain, worksheets, task=None):
-    processed = 0
-    total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
-    results = []
-
-    types = [ws.worksheet.title for ws in worksheets]
-    top_level_types = top_level_location_types(domain)
-
-    for loc_type in top_level_types:
-        result = import_loc_type(loc_type, types, domain, worksheets, total_rows, task)
-        processed += result[0]
-        results += result[1]
+    importer = LocationImporter(domain, worksheets, task)
+    results = importer.run()
 
     return iter(results)
 
