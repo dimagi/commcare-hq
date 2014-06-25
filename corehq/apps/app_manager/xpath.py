@@ -191,7 +191,7 @@ class LedgerSectionXpath(XPath):
 class FixtureXpath(XPath):
 
     def table(self):
-        return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))
+        return XPath(u"instance('item-list:{0}')/{0}_list/{0}".format(self))
 
 
 class CommCareSession(object):

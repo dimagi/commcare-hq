@@ -557,6 +557,31 @@ INSTANCE_BY_ID = {
 }
 
 
+def get_instance_factory(scheme):
+    return get_instance_factory._factory_map.get(scheme, preset_instances)
+get_instance_factory._factory_map = {}
+
+
+class register_factory(object):
+    def __init__(self, *schemes):
+        self.schemes = schemes
+
+    def __call__(self, fn):
+        for scheme in self.schemes:
+            get_instance_factory._factory_map[scheme] = fn
+        return fn
+
+
+def preset_instances(instance_name):
+    return INSTANCE_BY_ID.get(instance_name, None)
+
+
+@register_factory('item-list', 'schedule', 'indicators')
+@memoized
+def generic_fixture_instances(instance_name):
+    return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
 class SuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Suite File"
     sections = (
@@ -809,7 +834,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         detail_ids = set()
         xpaths = set()
 
-        instance_re = r"""instance\(['"](\w+)['"]\)"""
+        instance_re = r"""instance\(['"](.+?)['"]\)"""
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
@@ -838,7 +863,13 @@ class SuiteGenerator(SuiteGeneratorBase):
         for xpath in xpaths:
             instance_names = re.findall(instance_re, xpath)
             for instance_name in instance_names:
-                instance = INSTANCE_BY_ID.get(instance_name)
+                try:
+                    scheme, _ = instance_name.split(':', 1)
+                except ValueError:
+                    scheme = None
+
+                factory = get_instance_factory(scheme)
+                instance = factory(instance_name)
                 if instance:
                     instances.add(instance)
 
@@ -910,20 +941,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         yield Instance(id=self.id_strings.indicator_instance(indicator_set),
                                        src='jr://fixture/indicators:%s' % indicator_set)
 
-    def get_fixture_instances(self, module, form=None):
-        from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE
-        if form and hasattr(form, 'actions'):
-            actions = form.actions.auto_select_actions[AUTO_SELECT_FIXTURE]
-            fixtures = set([a.auto_select.value_source for a in actions])
-            for fixture in fixtures:
-                yield Instance(id='{0}s'.format(fixture), src='jr://fixture/item-list:{0}'.format(fixture))
-
-    def get_extra_instances(self, module, form=None):
-        for instance in self.get_indicator_instances(module, form):
-            yield instance
-        for instance in self.get_fixture_instances(module, form):
-            yield instance
-
     def add_assertion(self, entry, test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
@@ -970,8 +987,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_module(self, module, e, use_filter=False):
-        e.require_instance(*self.get_extra_instances(module))
-
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
         datum_ids = [('parent_' * i or 'case_') + 'id'
@@ -1007,7 +1022,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if 'owner_id' in action.case_properties:
                     return True
             return False
-        e.require_instance(*self.get_extra_instances(module, form))
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
