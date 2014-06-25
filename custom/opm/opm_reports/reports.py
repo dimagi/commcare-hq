@@ -740,13 +740,18 @@ class MetReport(BaseReport):
 
     @property
     def headers(self):
-        if self.snapshot is not None:
+        if not self.is_rendered_as_email:
+            if self.snapshot is not None:
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                ])
             return DataTablesHeader(*[
-                DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                DataTablesColumn(name=header, visible=visible) for method, header, visible, hindi_header in self.model.method_map[self.block.lower()]
             ])
-        return DataTablesHeader(*[
-            DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-        ])
+        else:
+            return DataTablesHeader(*[
+                DataTablesColumn(name=hindi_header, visible=visible) for method, header, visible, hindi_header in self.model.method_map[self.block.lower()]
+            ])
 
     @property
     @memoized
@@ -760,7 +765,7 @@ class MetReport(BaseReport):
         rows = []
         for row in self.row_objects:
             rows.append([getattr(row, method) for
-                method, header, visible in self.model.method_map[self.block.lower()]])
+                method, header, visible, hindi_header in self.model.method_map[self.block.lower()]])
         return rows
 
     def filter(self, fn, filter_fields=None):
