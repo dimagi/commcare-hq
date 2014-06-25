@@ -1,6 +1,7 @@
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from django.utils import html
 from dimagi.utils.decorators.memoized import memoized
@@ -24,6 +25,8 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         if domain and project and user is None:
+            return True
+        if is_mobile_worker_with_report_access(user, domain):
             return True
         return False
 
