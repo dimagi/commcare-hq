@@ -62,7 +62,7 @@ class LocationImporter(object):
 
         self.processed = 0
         self.results = []
-        self.seen_locs = set()
+        self.seen_site_codes = set()
 
         self.total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
         self.types = [ws.worksheet.title for ws in worksheets]
@@ -91,11 +91,24 @@ class LocationImporter(object):
             data = list(worksheet)
 
             for loc in data:
-                self.results.append(import_location(
-                    self.domain,
-                    location_type,
-                    loc
-                )['message'])
+                if loc['site_code'] and loc['site_code'] in self.seen_site_codes:
+                    self.results.append(_(
+                        "Location {name} with site code {site_code} could not \
+                        be imported due to duplicated site codes in the excel \
+                        file"
+                    ).format(
+                        name=loc['name'],
+                        site_code=loc['site_code']
+                    ))
+                else:
+                    if loc['site_code']:
+                        self.seen_site_codes.add(loc['site_code'])
+
+                    self.results.append(import_location(
+                        self.domain,
+                        location_type,
+                        loc
+                    )['message'])
                 if self.task:
                     self.processed += 1
                     DownloadBase.set_progress(
