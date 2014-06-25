@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 import datetime
 from dimagi.utils.dates import months_between
 from corehq.apps.users.models import CommCareCase
@@ -34,40 +35,41 @@ class ConditionsMet(object):
 
     method_map = {
         "atri": [
-            ('name', "List of Beneficiary", True),
-            ('awc_name', "AWC Name", True),
-            ('block_name', "Block Name", True),
-            ('husband_name', "Husband Name", True),
-            ('status', "Current status", True),
-            ('preg_month', 'Pregnancy Month', True),
-            ('child_age', "Child Age", True),
-            ('window', "Window", True),
-            ('one', "1", True),
-            ('two', "2", True),
-            ('three', "3", True),
-            ('four', "4", True),
-            ('five', "5", True),
-            ('cash', "Cash to be transferred", True),
-            ('case_id', 'Case ID', True),
-            ('owner_id', "Owner Id", False),
-            ('closed', 'Closed', False)
+            ('name', "List of Beneficiary", True, u'लाभार्थी का नाम'),
+            ('awc_name', "AWC Name", True, u'आंगनवाडी का नाम'),
+            ('block_name', "Block Name", True, u'तहसील का नाम'),
+            ('husband_name', "Husband Name", True, u'पति का नाम'),
+            ('status', "Current status", True, u'गर्भवती या धात्री'),
+            ('preg_month', 'Pregnancy Month', True, u'गर्भ का महिना'),
+            ('child_age', "Child Age", True, u'बच्चे की उम्र'),
+            ('window', "Window", True, u'शर्त की खिड़की'),
+            ('one', "1", True, u"1"),
+            ('two', "2", True, u"2"),
+            ('three', "3", True, u"3"),
+            ('four', "4", True, u"4"),
+            ('five', "5", True, u"5"),
+            ('cash', "Payment Amount", True, u'नकद मिला'),
+            ('case_id', 'Case ID', True, u"Case ID"),
+            ('owner_id', "Owner Id", False, u"Owner Id"),
+            ('closed', 'Closed', False, u"Closed")
         ],
         'wazirganj': [
-            ('name', "List of Beneficiary", True),
-            ('awc_name', "AWC Name", True),
-            ('block_name', "Block Name", True),
-            ('status', "Current status", True),
-            ('preg_month', 'Pregnancy Month', True),
-            ('child_age', "Child Age", True),
-            ('window', "Window", True),
-            ('one', "1", True),
-            ('two', "2", True),
-            ('four', "3", True),
-            ('five', "4", True),
-            ('cash', "Cash to be transferred", True),
-            ('case_id', 'Case ID', True),
-            ('owner_id', "Owner Id", False),
-            ('closed', 'Closed', False)
+            ('name', "List of Beneficiary", True, u'लाभार्थी का नाम'),
+            ('awc_name', "AWC Name", True, u'आंगनवाडी का नाम'),
+            ('block_name', "Block Name", True, u'तहसील का नाम'),
+            ('husband_name', "Husband Name", True, u'पति का नाम'),
+            ('status', "Current status", True, u'गर्भवती या धात्री'),
+            ('preg_month', 'Pregnancy Month', True, u'गर्भ का महिना'),
+            ('child_age', "Child Age", True, u'बच्चे की उम्र'),
+            ('window', "Window", True, u'शर्त की खिड़की'),
+            ('one', "1", True, u"1"),
+            ('two', "2", True, u"2"),
+            ('three', "3", True, u"3"),
+            ('four', "4", True, u"4"),
+            ('cash', "Payment Amount", True, u'नकद मिला'),
+            ('case_id', 'Case ID', True, u"Case ID"),
+            ('owner_id', "Owner Id", False, u"Owner Id"),
+            ('closed', 'Closed', False, u"Closed")
         ]
     }
 
