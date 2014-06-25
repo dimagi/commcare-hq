@@ -300,7 +300,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.kookoo',
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
@@ -967,6 +966,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.twilio.models.TwilioBackend",
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
+
+IVR_BACKEND_MAP = {
+    "91": "MOBILE_BACKEND_KOOKOO",
+}
 
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
