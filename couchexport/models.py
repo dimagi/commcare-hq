@@ -799,15 +799,14 @@ class GroupExportConfiguration(Document):
             for config in configs]
 
     @property
+    @memoized
     def all_configs(self):
         """
         Return an iterator of config-like objects that include the
         main configs + the custom export configs.
         """
-        for full in self.full_exports:
-            yield full
-        for custom in self.get_custom_exports():
-            yield custom.to_export_config()
+        return [full for full in self.full_exports] + \
+               [custom.to_export_config() for custom in self.get_custom_exports()]
 
     @property
     def all_export_schemas(self):
