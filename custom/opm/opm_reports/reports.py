@@ -31,6 +31,8 @@ from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.util.translation import localize
+from django.utils.translation import ugettext as _
 from custom.opm import HealthStatusMixin
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
@@ -740,13 +742,19 @@ class MetReport(BaseReport):
 
     @property
     def headers(self):
-        if self.snapshot is not None:
+        if not self.is_rendered_as_email:
+            if self.snapshot is not None:
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                ])
             return DataTablesHeader(*[
-                DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
             ])
-        return DataTablesHeader(*[
-            DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-        ])
+        else:
+            with localize('hin'):
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
+                ])
 
     @property
     @memoized
