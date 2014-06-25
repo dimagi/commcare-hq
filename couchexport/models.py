@@ -795,11 +795,11 @@ class GroupExportConfiguration(Document):
             include_docs=True,
             reduce=False,
         ).all()
-        export_map = dict((json.dumps(export.configuration.index), export)
-            for export in exports)
+        export_map = dict((json.dumps(export.configuration.index), export) for export in exports)
         return [
             GroupExportComponent(
-                config, export_map.get(json.dumps(config.index), None), self._id, list(self.all_configs).index(config)
+                config, export_map.get(json.dumps(config.index), None),
+                self._id, list(self.all_configs).index(config)
             )
             for config in configs
         ]
