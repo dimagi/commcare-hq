@@ -73,18 +73,16 @@ class CommCareBuild(Document):
         self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()
 
-        z = ZipFile(f)
-        try:
-            for name in z.namelist():
-                path = name.split('/')
-                if path[0] == "dist" and path[-1] != "":
-                    path = '/'.join(path[1:])
-                    self.put_file(z.read(name), path)
-        except:
-            self.delete()
-            raise
-        finally:
-            z.close()
+        with ZipFile(f) as z:
+            try:
+                for name in z.namelist():
+                    path = name.split('/')
+                    if path[0] == "dist" and path[-1] != "":
+                        path = '/'.join(path[1:])
+                        self.put_file(z.read(name), path)
+            except:
+                self.delete()
+                raise
         return self
 
     def minor_release(self):

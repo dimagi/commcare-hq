@@ -57,6 +57,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     # the _id of the inbound message
     # TODO: For now this is a placeholder and needs to be implemented
     in_reply_to = StringProperty()
+    system_phone_number = StringProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

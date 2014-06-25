@@ -14,7 +14,7 @@ def convert_fdt(fdi):
 
 class FixtureResource(JsonResource):
     type = "fixture"
-    fields = tp_f.DictField(attribute='fields_without_attributes', readonly=True, unique=True)
+    fields = tp_f.DictField(attribute='try_fields_without_attributes', readonly=True, unique=True)
     fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True)
     id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 

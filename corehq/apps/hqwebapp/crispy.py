@@ -1,4 +1,4 @@
-from crispy_forms.bootstrap import AccordionGroup
+from crispy_forms.bootstrap import AccordionGroup, InlineField
 from crispy_forms.layout import MultiField, TEMPLATE_PACK, Field
 from crispy_forms.utils import render_field
 from django.template.loader import render_to_string
@@ -90,3 +90,22 @@ class TextField(Field):
         })
         return super(TextField, self).render(form, form_style, context,
                                              template_pack=template_pack)
+
+
+class InlineColumnField(InlineField):
+
+    def __init__(self, *args, **kwargs):
+        self.block_css_class = kwargs.pop('block_css_class')
+        super(InlineColumnField, self).__init__(*args, **kwargs)
+
+    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        context.update({
+            'block_css_class': self.block_css_class,
+        })
+        return super(InlineColumnField, self).render(
+            form, form_style, context, template_pack=template_pack
+        )
+
+
+class ErrorsOnlyField(Field):
+    template = 'hqwebapp/crispy/field/errors_only_field.html'

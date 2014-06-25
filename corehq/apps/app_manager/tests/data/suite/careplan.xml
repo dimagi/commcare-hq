@@ -272,14 +272,14 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-      <datum id="case_id_goal" function="uuid()"/>
+      <datum id="case_id_goal_new" function="uuid()"/>
     </session>
     <stack>
-      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
+      <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal_new][@status='open']) = 1">
         <command>m0</command>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <command>m1</command>
-        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
+        <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal_new"/>
       </create>
     </stack>
   </entry>

@@ -92,8 +92,9 @@ class CaseAssignmentTest(TestCase):
 
     def test_assign_exclusion(self):
         self._make_tree()
+        exclude_fn = lambda case: case._id in (self.grandfather._id, self.primary._id, self.grandson._id)
         assign_case(self.primary, self.primary_user._id, include_subcases=True, include_parent_cases=True,
-                    exclude=(self.grandfather._id, self.primary._id, self.grandson._id))
+                    exclude_function=exclude_fn)
         self._check_state(new_owner_id=self.primary_user._id, expected_changed=[
             self.grandmother, self.parent, self.son, self.daughter,self.granddaughter, self.grandson2
         ])

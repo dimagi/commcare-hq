@@ -45,10 +45,14 @@ def process_stock(xform):
                             include_docs=True)
 
     # list of cases that had stock reports in the form, properly wrapped by case type
-    relevant_cases = [wrap_commtrack_case(result['doc']) for result in
-                      CommCareCase.get_db().view('_all_docs',
-                                                 keys=list(set(k[0] for k in grouped_tx)),
-                                                 include_docs=True)]
+    try:
+        relevant_cases = [wrap_commtrack_case(result['doc']) for result in
+                          CommCareCase.get_db().view('_all_docs',
+                                                     keys=list(set(k[0] for k in grouped_tx)),
+                                                     include_docs=True)]
+    except KeyError:
+        raise Exception("Cannot find case matching supplied entity id")
+
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
 

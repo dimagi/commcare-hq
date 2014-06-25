@@ -5,11 +5,13 @@
 
 {% block js %} {{ block.super }}
 <script type="text/javascript" src="{% static 'domain/js/media_manager.js' %}"></script>
-<script type="text/javascript">ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));</script>
+<script type="text/javascript">
+    ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+</script>
 {% endblock %}
 
 {% block main_column %}
-<form method="post">
+<form id="update-media-sharing-settings" class="disable-on-submit" method="post">
     <fieldset>
         <legend>{% trans 'Change Multimedia Sharing Settings' %}</legend>
         <p>

@@ -1,0 +1,1379 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>Process Data</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B" uiVersion="1" version="1" name="Process Data">
+                    <fada_facility_id />
+                    <fada_yearly_number />
+                    <fada_monthly_number />
+                    <already_registered />
+                    <fada_date_admission />
+                    <fada_observation_points_observed />
+                    <fada_mother_referred />
+                    <fada_maternal_death />
+                    <fada_stillbirth_neonatal_death />
+                    <fada_csection />
+                    <fada_healthworker_assent />
+                    <fada_obv1>
+                        <fada_assisted_by_obv1 />
+                        <fada_maternal_temp />
+                        <fada_maternal_bp />
+                        <fada_partograph />
+                        <fada_checklist_picked_up_obv1 />
+                        <fada_checklist_used_after_care_obv1 />
+                        <fada_checklist_poster_used_obv1 />
+                        <fada_birth_companion_present_obv1 />
+                    </fada_obv1>
+                    <fada_obv2>
+                        <fada_assisted_by_obv2 />
+                        <fada_oxycotin_administered_obv2 />
+                        <fada_oxycotin_administration_location />
+                        <fada_water_usage />
+                        <fada_soap_usage />
+                        <fada_alcohol_rub />
+                        <fada_clean_gloves />
+                        <fada_clean_towel />
+                        <fada_scissors_blade />
+                        <fada_cord_tie />
+                        <fada_mucus_extractor />
+                        <fada_neonatal_bag />
+                        <fada_pads />
+                        <fada_checklist_picked_up_obv2 />
+                        <fada_checklist_used_after_care_obv2 />
+                        <fada_checklist_poster_used_obv2 />
+                    </fada_obv2>
+                    <fada_obv3>
+                        <fada_assisted_by_obv3 />
+                        <fada_oxycotin_administered_obv3 />
+                        <fada_neonatal_bag_usage />
+                        <fada_birth_companion_present_obv3 />
+                    </fada_obv3>
+                    <fada_obv4>
+                        <fada_assisted_by_obv4 />
+                        <fada_baby_wt />
+                        <fada_baby_temp />
+                        <fada_baby_skin_to_skin />
+                        <fada_baby_skin_to_skin_for_1_hour />
+                        <fada_breastfeeding />
+                        <fada_checklist_picked_up_obv4 />
+                        <fada_checklist_used_after_care_obv4 />
+                        <fada_checklist_poster_used_obv4 />
+                    </fada_obv4>
+                    <fada_other_observations>
+                        <fada_maternal_temp_anytime />
+                        <fada_maternal_bp_anytime />
+                        <fada_magnesium />
+                        <fada_ab_mother />
+                        <fada_ab_baby />
+                        <fada_arv_mother />
+                        <fada_arv_baby />
+                    </fada_other_observations>
+                    <need_facility_trigger />
+                    <fada_patient_id />
+                    <current_site_confirm />
+                    <fada_highlight_record />
+                    <fada_highlight_comment />
+                    <fada_gps_location />
+                    <whole_form />
+                    <facility_number_usage />
+                    <patient_number />
+                    <patient_number_padded />
+                    <facility_owner_id />
+                </data>
+            </instance>
+            <instance id="casedb" src="jr://instance/casedb"></instance>
+            <instance id="sites" src="jr://fixture/item-list:site"></instance>
+            <bind nodeset="/data/fada_facility_id" type="xsd:string" relevant="count(instance('casedb')/casedb/case[@case_type='current_user_data']) = 1" calculate="instance('casedb')/casedb/case[@case_type='current_user_data']/facility_id" />
+            <bind nodeset="/data/fada_yearly_number" type="xsd:int" constraint=". &gt;= 0 and .&lt;= 99999" required="true()" />
+            <bind nodeset="/data/fada_monthly_number" type="xsd:int" constraint=". &gt;= 0 and .&lt;= 99999" required="true()" />
+            <bind nodeset="/data/already_registered" constraint=". = '1'" relevant="count(instance('casedb')/casedb/case[@case_type='fada_patient'][@status='open'][case_name= /data/fada_patient_id]) &gt; 0" required="true()" />
+            <bind nodeset="/data/fada_date_admission" type="xsd:date" constraint=". &lt;= today()" required="true()" />
+            <bind nodeset="/data/fada_observation_points_observed" required="true()" />
+            <bind nodeset="/data/fada_mother_referred" required="true()" />
+            <bind nodeset="/data/fada_maternal_death" required="true()" />
+            <bind nodeset="/data/fada_stillbirth_neonatal_death" required="true()" />
+            <bind nodeset="/data/fada_csection" required="true()" />
+            <bind nodeset="/data/fada_healthworker_assent" required="true()" />
+            <bind nodeset="/data/fada_obv1" relevant="selected(/data/fada_observation_points_observed, '1')" />
+            <bind nodeset="/data/fada_obv1/fada_assisted_by_obv1" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_maternal_temp" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_maternal_bp" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_partograph" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_checklist_picked_up_obv1" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_checklist_used_after_care_obv1" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_checklist_poster_used_obv1" required="true()" />
+            <bind nodeset="/data/fada_obv1/fada_birth_companion_present_obv1" required="true()" />
+            <bind nodeset="/data/fada_obv2" relevant="selected(/data/fada_observation_points_observed, '2')" />
+            <bind nodeset="/data/fada_obv2/fada_assisted_by_obv2" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_oxycotin_administered_obv2" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_oxycotin_administration_location" relevant="/data/fada_obv2/fada_oxycotin_administered_obv2 = '1'" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_water_usage" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_soap_usage" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_alcohol_rub" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_clean_gloves" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_clean_towel" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_scissors_blade" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_cord_tie" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_mucus_extractor" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_neonatal_bag" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_pads" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_checklist_picked_up_obv2" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_checklist_used_after_care_obv2" required="true()" />
+            <bind nodeset="/data/fada_obv2/fada_checklist_poster_used_obv2" required="true()" />
+            <bind nodeset="/data/fada_obv3" relevant="selected(/data/fada_observation_points_observed, '3')" />
+            <bind nodeset="/data/fada_obv3/fada_assisted_by_obv3" required="true()" />
+            <bind nodeset="/data/fada_obv3/fada_oxycotin_administered_obv3" required="true()" />
+            <bind nodeset="/data/fada_obv3/fada_neonatal_bag_usage" required="true()" />
+            <bind nodeset="/data/fada_obv3/fada_birth_companion_present_obv3" required="true()" />
+            <bind nodeset="/data/fada_obv4" relevant="selected(/data/fada_observation_points_observed, '4')" />
+            <bind nodeset="/data/fada_obv4/fada_assisted_by_obv4" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_baby_wt" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_baby_temp" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_baby_skin_to_skin" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_baby_skin_to_skin_for_1_hour" relevant="/data/fada_obv4/fada_baby_skin_to_skin = '1'" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_breastfeeding" relevant="/data/fada_obv4/fada_baby_skin_to_skin = '1'" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_checklist_picked_up_obv4" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_checklist_used_after_care_obv4" required="true()" />
+            <bind nodeset="/data/fada_obv4/fada_checklist_poster_used_obv4" required="true()" />
+            <bind nodeset="/data/fada_other_observations" />
+            <bind nodeset="/data/fada_other_observations/fada_maternal_temp_anytime" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_maternal_bp_anytime" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_magnesium" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_ab_mother" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_ab_baby" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_arv_mother" required="true()" />
+            <bind nodeset="/data/fada_other_observations/fada_arv_baby" required="true()" />
+            <bind nodeset="/data/need_facility_trigger" constraint="1=2" relevant="/data/fada_facility_id = ''" required="true()" />
+            <bind nodeset="/data/fada_patient_id" relevant="/data/fada_facility_id != ''" calculate="concat(/data/fada_facility_id, format-date(/data/fada_date_admission, '%Y%m'), /data/patient_number_padded)" />
+            <bind nodeset="/data/current_site_confirm" constraint=". = '1'" required="true()" />
+            <bind nodeset="/data/fada_highlight_record" required="true()" />
+            <bind nodeset="/data/fada_highlight_comment" type="xsd:string" relevant="/data/fada_highlight_record = 'yes'" required="true()" />
+            <bind nodeset="/data/fada_gps_location" type="geopoint" required="false()" />
+            <bind nodeset="/data/whole_form" relevant="/data/fada_facility_id != ''" />
+            <bind nodeset="/data/facility_number_usage" relevant="/data/fada_facility_id != ''" calculate="instance('casedb')/casedb/case[@case_type='facility'][@status='open'][facility_id = /data/fada_facility_id]/number_usage" />
+            <bind nodeset="/data/patient_number" relevant="/data/fada_facility_id != ''" calculate="if(/data/facility_number_usage = 1, /data/fada_monthly_number, /data/fada_yearly_number)" />
+            <bind nodeset="/data/patient_number_padded" relevant="/data/fada_facility_id != ''" calculate="if(/data/patient_number &gt;= 10000, string(/data/patient_number), if(/data/patient_number &gt;= 1000, concat('0', string(/data/patient_number)), if(/data/patient_number &gt;= 100, concat('00', string(/data/patient_number)), if(/data/patient_number &gt;= 10, concat('000', string(/data/patient_number)), concat('0000', string(/data/patient_number))))))" />
+            <bind nodeset="/data/facility_owner_id" relevant="/data/fada_facility_id != ''" calculate="instance('casedb')/casedb/case[@case_type='facility'][@status='open'][facility_id = /data/fada_facility_id]/owner_id" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="need_facility_trigger-label">
+                        <value>You first need to log a facility before you can record information.</value>
+                    </text>
+                    <text id="need_facility_trigger-exit_form-label">
+                        <value>Go back and exit form</value>
+                    </text>
+                    <text id="current_site_confirm-label">
+                        <value>Registering birth at facility: <output value="instance('casedb')/casedb/case[@case_type='facility'][@status='open'][facility_id = /data/fada_facility_id]/case_name"></output> (<output value="/data/fada_facility_id"></output>)</value>
+                    </text>
+                    <text id="current_site_confirm-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="current_site_confirm-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_yearly_number-label">
+                        <value>Yearly Number</value>
+                    </text>
+                    <text id="fada_monthly_number-label">
+                        <value>Monthly Number</value>
+                    </text>
+                    <text id="already_registered-label">
+                        <value>A patient with this ID (<output value="/data/fada_patient_id"></output>) has already been registered.  Are you sure the entered information is correct?</value>
+                    </text>
+                    <text id="already_registered-1-label">
+                        <value>Yes, Continue</value>
+                    </text>
+                    <text id="already_registered-0-label">
+                        <value>No, go back and change the values.</value>
+                    </text>
+                    <text id="fada_date_admission-label">
+                        <value>Date of Admission</value>
+                    </text>
+                    <text id="fada_observation_points_observed-label">
+                        <value>Observation Points Observed:</value>
+                    </text>
+                    <text id="fada_observation_points_observed-1-label">
+                        <value>1</value>
+                    </text>
+                    <text id="fada_observation_points_observed-2-label">
+                        <value>2</value>
+                    </text>
+                    <text id="fada_observation_points_observed-3-label">
+                        <value>3</value>
+                    </text>
+                    <text id="fada_observation_points_observed-4-label">
+                        <value>4</value>
+                    </text>
+                    <text id="fada_mother_referred-label">
+                        <value>Was the mother referred out at any point during your observation?</value>
+                    </text>
+                    <text id="fada_mother_referred-2-label">
+                        <value>Yes before delivery</value>
+                    </text>
+                    <text id="fada_mother_referred-1-label">
+                        <value>Yes after delivery</value>
+                    </text>
+                    <text id="fada_mother_referred-0-label">
+                        <value>No not referred</value>
+                    </text>
+                    <text id="fada_maternal_death-label">
+                        <value>Was there a maternal death at any point during your observation?</value>
+                    </text>
+                    <text id="fada_maternal_death-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_maternal_death-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_stillbirth_neonatal_death-label">
+                        <value>Was there a stillbirth or neonatal death any point during your observation? </value>
+                    </text>
+                    <text id="copy-1-of-fada_stillbirth_neonatal_death-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="copy-1-of-fada_stillbirth_neonatal_death-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_csection-label">
+                        <value>Was a cesarean section performed?</value>
+                    </text>
+                    <text id="fada_csection-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_csection-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_healthworker_assent-label">
+                        <value>Did health care worker assent to observation?</value>
+                    </text>
+                    <text id="fada_healthworker_assent-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_healthworker_assent-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_obv1-label">
+                        <value>1. On Admission</value>
+                    </text>
+                    <text id="fada_assisted_by_obv1-label">
+                        <value> Assisted with woman's care (check all that apply)</value>
+                    </text>
+                    <text id="attended_by-lmo-label">
+                        <value>Doctor</value>
+                    </text>
+                    <text id="attended_by-staff_nurse-label">
+                        <value>Nurse</value>
+                    </text>
+                    <text id="attended_by-anm-label">
+                        <value>ANM</value>
+                    </text>
+                    <text id="attended_by-dai-label">
+                        <value>Others</value>
+                    </text>
+                    <text id="fada_maternal_temp-label">
+                        <value>Maternal temperature obtained?</value>
+                    </text>
+                    <text id="fada_maternal_temp-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_maternal_temp-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_maternal_bp-label">
+                        <value>Maternal blood pressure obtained?</value>
+                    </text>
+                    <text id="fada_maternal_bp-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_maternal_bp-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_partograph-label">
+                        <value>Was partograph started?</value>
+                    </text>
+                    <text id="fada_partograph-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_partograph-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_picked_up_obv1-label">
+                        <value>Was the paper checklist picked up during care ?</value>
+                    </text>
+                    <text id="fada_checklist_picked_up_obv1-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_checklist_picked_up_obv1-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_used_after_care_obv1-label">
+                        <value>Was the paper checklist picked up after the care was given?</value>
+                    </text>
+                    <text id="fada_checklist_used_after_care_obv1-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_checklist_used_after_care_obv1-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_poster_used_obv1-label">
+                        <value>Was the checklist poster observed during care?</value>
+                    </text>
+                    <text id="fada_checklist_poster_used_obv1-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_checklist_poster_used_obv1-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_birth_companion_present_obv1-label">
+                        <value>Was a birth companion present?</value>
+                    </text>
+                    <text id="birth_companion_present-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="birth_companion_present-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_obv2-label">
+                        <value>2. Just before delivery</value>
+                    </text>
+                    <text id="fada_assisted_by_obv2-label">
+                        <value> Assisted with woman's care (check all that apply)</value>
+                    </text>
+                    <text id="copy-1-of-fada_attended_by_obv2-1-label">
+                        <value>Doctor</value>
+                    </text>
+                    <text id="copy-1-of-fada_attended_by_obv2-2-label">
+                        <value>Nurse</value>
+                    </text>
+                    <text id="copy-1-of-fada_attended_by_obv2-3-label">
+                        <value>ANM</value>
+                    </text>
+                    <text id="copy-1-of-fada_attended_by_obv2-4-label">
+                        <value>Others</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv2-label">
+                        <value>Was Oxytocin administered?</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv2-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv2-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_oxycotin_administration_location-label">
+                        <value>Where was oxytocin administered?</value>
+                    </text>
+                    <text id="f-fada_oxycotin_administration_location-1-label">
+                        <value>Intramuscular (IM)</value>
+                    </text>
+                    <text id="fada_oxycotin_administration_location-2-label">
+                        <value>Intravenous (IV)</value>
+                    </text>
+                    <text id="fada_water_usage-label">
+                        <value>Was water used to clean hands  just before delivery?</value>
+                    </text>
+                    <text id="fada_water_usage-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_water_usage-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_soap_usage-label">
+                        <value>Was soap used to clean hands just before delivery?</value>
+                    </text>
+                    <text id="f-fada_soap_usage-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_soap_usage-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_alcohol_rub-label">
+                        <value>Was alcohol rub used just before delivery?</value>
+                    </text>
+                    <text id="fada_alcohol_rub-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_alcohol_rub-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_clean_gloves-label">
+                        <value>Were clean gloves used at the time of delivery?</value>
+                    </text>
+                    <text id="f-fada_clean_gloves-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_clean_gloves-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_clean_towel-label">
+                        <value>Was clean towel available at the bedside?</value>
+                    </text>
+                    <text id="fada_clean_towel-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_clean_towel-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_scissors_blade-label">
+                        <value>Were sterile scissors/blade to cut cord available at the bedside?</value>
+                    </text>
+                    <text id="f-fada_scissors-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_scissors-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_cord_tie-label">
+                        <value>Was a cord ligature/tie available at the bedside?</value>
+                    </text>
+                    <text id="f-fada_cord_tie-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_cord_tie-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_mucus_extractor-label">
+                        <value>Was an aspiration bulb or mucus extractor available at the bedside?</value>
+                    </text>
+                    <text id="f-fada_mucus_extractor-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_mucus_extractor-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_neonatal_bag-label">
+                        <value>Was a neonatal bag and mask available at the bedside?</value>
+                    </text>
+                    <text id="f-fada_neonatal_bag-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_neonatal_bag-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_pads-label">
+                        <value>Were pads for the mother available at the bedside?</value>
+                    </text>
+                    <text id="f-fada_pads-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_pads-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_picked_up_obv2-label">
+                        <value>Was the paper checklist picked up during care ?</value>
+                    </text>
+                    <text id="f-fada_checklist_picked_up_obv2-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_checklist_picked_up_obv2-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_used_after_care_obv2-label">
+                        <value>Was the paper checklist picked up after the care was given?</value>
+                    </text>
+                    <text id="f-fada_checklist_used_after_care_obv2-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_checklist_used_after_care_obv2-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_poster_used_obv2-label">
+                        <value>Was the checklist poster observed during care?</value>
+                    </text>
+                    <text id="copy-1-of-fada_checklist_poster_used_obv1-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="copy-1-of-fada_checklist_poster_used_obv1-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_obv3-label">
+                        <value>3. At one minute after delivery</value>
+                    </text>
+                    <text id="fada_assisted_by_obv3-label">
+                        <value>Assisted with woman's care (check all that apply)</value>
+                    </text>
+                    <text id="f-fada_assisted_by_obv3-1-label">
+                        <value>Doctor</value>
+                    </text>
+                    <text id="f-fada_assisted_by_obv3-2-label">
+                        <value>Nurse</value>
+                    </text>
+                    <text id="f-fada_assisted_by_obv3-3-label">
+                        <value>ANM</value>
+                    </text>
+                    <text id="f-fada_assisted_by_obv3-4-label">
+                        <value>Others</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv3-label">
+                        <value>Was Oxytocin administered?</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv3-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_oxycotin_administered_obv3-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="baby_intervention-label2">
+                        <value>Was neonatal bag and mask used on baby?</value>
+                    </text>
+                    <text id="baby_intervention-yes-label2">
+                        <value>Yes</value>
+                    </text>
+                    <text id="baby_intervention-no-label2">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_birth_companion_present_obv3-label">
+                        <value>Was a birth companion present?</value>
+                    </text>
+                    <text id="f-fada_birth_companion_present_obv3-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_birth_companion_present_obv3-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_obv4-label">
+                        <value>4. At one hour after delivery</value>
+                    </text>
+                    <text id="fada_assisted_by_obv4-label">
+                        <value>Assisted with woman's care (check all that apply)</value>
+                    </text>
+                    <text id="copy-1-of-fada_assisted_by_obv4-1-label">
+                        <value>Doctor</value>
+                    </text>
+                    <text id="copy-1-of-fada_assisted_by_obv4-2-label">
+                        <value>Nurse</value>
+                    </text>
+                    <text id="copy-1-of-fada_assisted_by_obv4-3-label">
+                        <value>ANM</value>
+                    </text>
+                    <text id="copy-1-of-fada_assisted_by_obv4-4-label">
+                        <value>Others</value>
+                    </text>
+                    <text id="fada_baby_wt-label">
+                        <value>Was newborn weight taken?</value>
+                    </text>
+                    <text id="baby_temp-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="baby_temp-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_baby_temp-label">
+                        <value>Was newborn temperature taken?</value>
+                    </text>
+                    <text id="f-fada_baby_temp-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_baby_temp-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_baby_skin_to_skin-label">
+                        <value>Was baby placed skin-to-skin on mother's abdomen?</value>
+                    </text>
+                    <text id="f-fada_baby_abdomen-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_baby_abdomen-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_baby_skin_to_skin_for_1_hour-label">
+                        <value>Was the baby still skin-to-skin after 1 hour?</value>
+                    </text>
+                    <text id="copy-1-of-fada_skin_1_hour-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="copy-1-of-fada_skin_1_hour-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_breastfeeding-label">
+                        <value>Was breastfeeding initiated?</value>
+                    </text>
+                    <text id="copy-1-of-fada_breastfeeding-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="copy-1-of-fada_breastfeeding-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_picked_up_obv4-label">
+                        <value>Was the paper checklist picked up during care ?</value>
+                    </text>
+                    <text id="f-fada_checklist_picked_up_obv4-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_checklist_picked_up_obv4-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_used_after_care_obv4-label">
+                        <value>Was the paper checklist picked up after the care was given?</value>
+                    </text>
+                    <text id="f-fada_checklist_used_after_care_obv4-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_checklist_used_after_care_obv4-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_checklist_poster_used_obv4-label">
+                        <value>Was the checklist poster observed during care?</value>
+                    </text>
+                    <text id="f-fada_checklist_poster_used_obv2-yes-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_checklist_poster_used_obv2-no-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_other_observations-label">
+                        <value>5.Were any of the following observed at any time?</value>
+                    </text>
+                    <text id="fada_maternal_temp_anytime-label">
+                        <value>Was maternal temperature obtained at any time?</value>
+                    </text>
+                    <text id="fada_maternal_temp_anytime-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="fada_maternal_temp_anytime-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_maternal_bp_anytime-label">
+                        <value>Was maternal blood pressure obtained at any time?</value>
+                    </text>
+                    <text id="f-fada_maternal_bp_anytime-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_maternal_bp_anytime-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_magnesium-label">
+                        <value>Was magnesium Sulphate given to mother at any time?</value>
+                    </text>
+                    <text id="f-fada_magnesium-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_magnesium-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_ab_mother-label">
+                        <value>Was antibiotics given to mother at any time?</value>
+                    </text>
+                    <text id="f-fada_ab_mother-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_ab_mother-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_ab_baby-label">
+                        <value>Was antibiotics given to baby at any time?</value>
+                    </text>
+                    <text id="f-fada_ab_child-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_ab_child-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_arv_mother-label">
+                        <value>Was antiretroviral to mother at any time?</value>
+                    </text>
+                    <text id="f-fada_arv_mother-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_arv_mother-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_arv_baby-label">
+                        <value>Was antiretroviral to baby at any time?</value>
+                    </text>
+                    <text id="f-fada_arv_baby-1-label">
+                        <value>Yes</value>
+                    </text>
+                    <text id="f-fada_arv_baby-0-label">
+                        <value>No</value>
+                    </text>
+                    <text id="fada_highlight_record-label">
+                        <value>Would you like to highlight this record for your team leader?</value>
+                    </text>
+                    <text id="fada_highlight_record-yes-label">
+                        <value>1. Yes</value>
+                    </text>
+                    <text id="fada_highlight_record-no-label">
+                        <value>2. No</value>
+                    </text>
+                    <text id="fada_highlight_comment-label">
+                        <value>Comment to supervisor</value>
+                    </text>
+                    <text id="fada_gps_location-label">
+                        <value>GPS Capture</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <select1 ref="/data/need_facility_trigger">
+            <label ref="jr:itext('need_facility_trigger-label')" />
+            <item>
+                <label ref="jr:itext('need_facility_trigger-exit_form-label')" />
+                <value>exit_form</value>
+            </item>
+        </select1>
+        <group ref="/data/whole_form">
+            <select1 ref="/data/current_site_confirm">
+                <label ref="jr:itext('current_site_confirm-label')" />
+                <item>
+                    <label ref="jr:itext('current_site_confirm-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('current_site_confirm-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <input ref="/data/fada_yearly_number">
+                <label ref="jr:itext('fada_yearly_number-label')" />
+            </input>
+            <input ref="/data/fada_monthly_number">
+                <label ref="jr:itext('fada_monthly_number-label')" />
+            </input>
+            <select1 ref="/data/already_registered">
+                <label ref="jr:itext('already_registered-label')" />
+                <item>
+                    <label ref="jr:itext('already_registered-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('already_registered-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <input ref="/data/fada_date_admission">
+                <label ref="jr:itext('fada_date_admission-label')" />
+            </input>
+            <select ref="/data/fada_observation_points_observed">
+                <label ref="jr:itext('fada_observation_points_observed-label')" />
+                <item>
+                    <label ref="jr:itext('fada_observation_points_observed-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_observation_points_observed-2-label')" />
+                    <value>2</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_observation_points_observed-3-label')" />
+                    <value>3</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_observation_points_observed-4-label')" />
+                    <value>4</value>
+                </item>
+            </select>
+            <select1 ref="/data/fada_mother_referred">
+                <label ref="jr:itext('fada_mother_referred-label')" />
+                <item>
+                    <label ref="jr:itext('fada_mother_referred-2-label')" />
+                    <value>2</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_mother_referred-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_mother_referred-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <select1 ref="/data/fada_maternal_death">
+                <label ref="jr:itext('fada_maternal_death-label')" />
+                <item>
+                    <label ref="jr:itext('fada_maternal_death-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_maternal_death-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <select1 ref="/data/fada_stillbirth_neonatal_death">
+                <label ref="jr:itext('fada_stillbirth_neonatal_death-label')" />
+                <item>
+                    <label ref="jr:itext('copy-1-of-fada_stillbirth_neonatal_death-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('copy-1-of-fada_stillbirth_neonatal_death-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <select1 ref="/data/fada_csection">
+                <label ref="jr:itext('fada_csection-label')" />
+                <item>
+                    <label ref="jr:itext('fada_csection-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_csection-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <select1 ref="/data/fada_healthworker_assent">
+                <label ref="jr:itext('fada_healthworker_assent-label')" />
+                <item>
+                    <label ref="jr:itext('fada_healthworker_assent-1-label')" />
+                    <value>1</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_healthworker_assent-0-label')" />
+                    <value>0</value>
+                </item>
+            </select1>
+            <group ref="/data/fada_obv1">
+                <label ref="jr:itext('fada_obv1-label')" />
+                <select ref="/data/fada_obv1/fada_assisted_by_obv1">
+                    <label ref="jr:itext('fada_assisted_by_obv1-label')" />
+                    <item>
+                        <label ref="jr:itext('attended_by-lmo-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('attended_by-staff_nurse-label')" />
+                        <value>2</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('attended_by-anm-label')" />
+                        <value>3</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('attended_by-dai-label')" />
+                        <value>4</value>
+                    </item>
+                </select>
+                <select1 ref="/data/fada_obv1/fada_maternal_temp">
+                    <label ref="jr:itext('fada_maternal_temp-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_maternal_temp-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_maternal_temp-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_maternal_bp">
+                    <label ref="jr:itext('fada_maternal_bp-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_maternal_bp-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_maternal_bp-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_partograph">
+                    <label ref="jr:itext('fada_partograph-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_partograph-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_partograph-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_checklist_picked_up_obv1">
+                    <label ref="jr:itext('fada_checklist_picked_up_obv1-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_checklist_picked_up_obv1-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_checklist_picked_up_obv1-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_checklist_used_after_care_obv1">
+                    <label ref="jr:itext('fada_checklist_used_after_care_obv1-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_checklist_used_after_care_obv1-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_checklist_used_after_care_obv1-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_checklist_poster_used_obv1">
+                    <label ref="jr:itext('fada_checklist_poster_used_obv1-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_checklist_poster_used_obv1-yes-label')" />
+                        <value>yes</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_checklist_poster_used_obv1-no-label')" />
+                        <value>no</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv1/fada_birth_companion_present_obv1">
+                    <label ref="jr:itext('fada_birth_companion_present_obv1-label')" />
+                    <item>
+                        <label ref="jr:itext('birth_companion_present-yes-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('birth_companion_present-no-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+            </group>
+            <group ref="/data/fada_obv2">
+                <label ref="jr:itext('fada_obv2-label')" />
+                <select ref="/data/fada_obv2/fada_assisted_by_obv2">
+                    <label ref="jr:itext('fada_assisted_by_obv2-label')" />
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_attended_by_obv2-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_attended_by_obv2-2-label')" />
+                        <value>2</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_attended_by_obv2-3-label')" />
+                        <value>3</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_attended_by_obv2-4-label')" />
+                        <value>4</value>
+                    </item>
+                </select>
+                <select1 ref="/data/fada_obv2/fada_oxycotin_administered_obv2">
+                    <label ref="jr:itext('fada_oxycotin_administered_obv2-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_oxycotin_administered_obv2-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_oxycotin_administered_obv2-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_oxycotin_administration_location">
+                    <label ref="jr:itext('fada_oxycotin_administration_location-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_oxycotin_administration_location-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_oxycotin_administration_location-2-label')" />
+                        <value>2</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_water_usage">
+                    <label ref="jr:itext('fada_water_usage-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_water_usage-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_water_usage-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_soap_usage">
+                    <label ref="jr:itext('fada_soap_usage-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_soap_usage-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_soap_usage-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_alcohol_rub">
+                    <label ref="jr:itext('fada_alcohol_rub-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_alcohol_rub-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_alcohol_rub-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_clean_gloves">
+                    <label ref="jr:itext('fada_clean_gloves-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_clean_gloves-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_clean_gloves-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_clean_towel">
+                    <label ref="jr:itext('fada_clean_towel-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_clean_towel-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_clean_towel-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_scissors_blade">
+                    <label ref="jr:itext('fada_scissors_blade-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_scissors-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_scissors-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_cord_tie">
+                    <label ref="jr:itext('fada_cord_tie-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_cord_tie-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_cord_tie-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_mucus_extractor">
+                    <label ref="jr:itext('fada_mucus_extractor-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_mucus_extractor-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_mucus_extractor-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_neonatal_bag">
+                    <label ref="jr:itext('fada_neonatal_bag-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_neonatal_bag-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_neonatal_bag-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_pads">
+                    <label ref="jr:itext('fada_pads-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_pads-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_pads-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_checklist_picked_up_obv2">
+                    <label ref="jr:itext('fada_checklist_picked_up_obv2-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_picked_up_obv2-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_picked_up_obv2-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_checklist_used_after_care_obv2">
+                    <label ref="jr:itext('fada_checklist_used_after_care_obv2-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_used_after_care_obv2-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_used_after_care_obv2-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv2/fada_checklist_poster_used_obv2">
+                    <label ref="jr:itext('fada_checklist_poster_used_obv2-label')" />
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_checklist_poster_used_obv1-yes-label')" />
+                        <value>yes</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_checklist_poster_used_obv1-no-label')" />
+                        <value>no</value>
+                    </item>
+                </select1>
+            </group>
+            <group ref="/data/fada_obv3">
+                <label ref="jr:itext('fada_obv3-label')" />
+                <select ref="/data/fada_obv3/fada_assisted_by_obv3">
+                    <label ref="jr:itext('fada_assisted_by_obv3-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_assisted_by_obv3-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_assisted_by_obv3-2-label')" />
+                        <value>2</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_assisted_by_obv3-3-label')" />
+                        <value>3</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_assisted_by_obv3-4-label')" />
+                        <value>4</value>
+                    </item>
+                </select>
+                <select1 ref="/data/fada_obv3/fada_oxycotin_administered_obv3">
+                    <label ref="jr:itext('fada_oxycotin_administered_obv3-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_oxycotin_administered_obv3-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_oxycotin_administered_obv3-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv3/fada_neonatal_bag_usage">
+                    <label ref="jr:itext('baby_intervention-label2')" />
+                    <item>
+                        <label ref="jr:itext('baby_intervention-yes-label2')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('baby_intervention-no-label2')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv3/fada_birth_companion_present_obv3">
+                    <label ref="jr:itext('fada_birth_companion_present_obv3-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_birth_companion_present_obv3-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_birth_companion_present_obv3-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+            </group>
+            <group ref="/data/fada_obv4">
+                <label ref="jr:itext('fada_obv4-label')" />
+                <select ref="/data/fada_obv4/fada_assisted_by_obv4">
+                    <label ref="jr:itext('fada_assisted_by_obv4-label')" />
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_assisted_by_obv4-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_assisted_by_obv4-2-label')" />
+                        <value>2</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_assisted_by_obv4-3-label')" />
+                        <value>3</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_assisted_by_obv4-4-label')" />
+                        <value>4</value>
+                    </item>
+                </select>
+                <select1 ref="/data/fada_obv4/fada_baby_wt">
+                    <label ref="jr:itext('fada_baby_wt-label')" />
+                    <item>
+                        <label ref="jr:itext('baby_temp-yes-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('baby_temp-no-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_baby_temp">
+                    <label ref="jr:itext('fada_baby_temp-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_baby_temp-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_baby_temp-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_baby_skin_to_skin">
+                    <label ref="jr:itext('fada_baby_skin_to_skin-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_baby_abdomen-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_baby_abdomen-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_baby_skin_to_skin_for_1_hour">
+                    <label ref="jr:itext('fada_baby_skin_to_skin_for_1_hour-label')" />
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_skin_1_hour-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_skin_1_hour-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_breastfeeding">
+                    <label ref="jr:itext('fada_breastfeeding-label')" />
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_breastfeeding-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('copy-1-of-fada_breastfeeding-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_checklist_picked_up_obv4">
+                    <label ref="jr:itext('fada_checklist_picked_up_obv4-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_picked_up_obv4-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_picked_up_obv4-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_checklist_used_after_care_obv4">
+                    <label ref="jr:itext('fada_checklist_used_after_care_obv4-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_used_after_care_obv4-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_used_after_care_obv4-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_obv4/fada_checklist_poster_used_obv4">
+                    <label ref="jr:itext('fada_checklist_poster_used_obv4-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_poster_used_obv2-yes-label')" />
+                        <value>yes</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_checklist_poster_used_obv2-no-label')" />
+                        <value>no</value>
+                    </item>
+                </select1>
+            </group>
+            <group ref="/data/fada_other_observations" appearance="field-list">
+                <label ref="jr:itext('fada_other_observations-label')" />
+                <select1 ref="/data/fada_other_observations/fada_maternal_temp_anytime">
+                    <label ref="jr:itext('fada_maternal_temp_anytime-label')" />
+                    <item>
+                        <label ref="jr:itext('fada_maternal_temp_anytime-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('fada_maternal_temp_anytime-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_maternal_bp_anytime">
+                    <label ref="jr:itext('fada_maternal_bp_anytime-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_maternal_bp_anytime-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_maternal_bp_anytime-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_magnesium">
+                    <label ref="jr:itext('fada_magnesium-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_magnesium-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_magnesium-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_ab_mother">
+                    <label ref="jr:itext('fada_ab_mother-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_ab_mother-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_ab_mother-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_ab_baby">
+                    <label ref="jr:itext('fada_ab_baby-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_ab_child-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_ab_child-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_arv_mother">
+                    <label ref="jr:itext('fada_arv_mother-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_arv_mother-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_arv_mother-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+                <select1 ref="/data/fada_other_observations/fada_arv_baby">
+                    <label ref="jr:itext('fada_arv_baby-label')" />
+                    <item>
+                        <label ref="jr:itext('f-fada_arv_baby-1-label')" />
+                        <value>1</value>
+                    </item>
+                    <item>
+                        <label ref="jr:itext('f-fada_arv_baby-0-label')" />
+                        <value>0</value>
+                    </item>
+                </select1>
+            </group>
+            <select1 ref="/data/fada_highlight_record">
+                <label ref="jr:itext('fada_highlight_record-label')" />
+                <item>
+                    <label ref="jr:itext('fada_highlight_record-yes-label')" />
+                    <value>yes</value>
+                </item>
+                <item>
+                    <label ref="jr:itext('fada_highlight_record-no-label')" />
+                    <value>no</value>
+                </item>
+            </select1>
+            <input ref="/data/fada_highlight_comment">
+                <label ref="jr:itext('fada_highlight_comment-label')" />
+            </input>
+            <input ref="/data/fada_gps_location">
+                <label ref="jr:itext('fada_gps_location-label')" />
+            </input>
+        </group>
+    </h:body>
+</h:html>

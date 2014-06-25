@@ -23,6 +23,9 @@ requires imports/proptable.html to be included in the main template
 .form-data-readable, .form-data-raw {
     display: none;
 }
+.form-data-table, .form-data-group-table {
+    overflow: scroll;
+}
 </style>
 <script>
     $(function () {
@@ -91,6 +94,21 @@ requires imports/proptable.html to be included in the main template
         });
         showSkipped(false);
     });
+</script>
+<script type="text/javascript">
+    // TODO - upgrade to Universal Analytics, to avoid using setTimeout
+    function archive_form() {
+        document.getElementById('archive-form-btn').disabled=true;
+        document.getElementById('archive-spinner').style.display='inline-block';
+        _gaq.push(['_trackEvent', 'Reports', 'Case History', 'Archive this form']);
+        setTimeout("document.getElementById('archive-form').submit();", 300);
+    }
+    function restore_form() {
+        document.getElementById('unarchive-form-btn').disabled=true;
+        document.getElementById('unarchive-spinner').style.display='inline-block';
+        _gaq.push(['_trackEvent', 'Reports', 'Case History', 'Restore this form']);
+        setTimeout("document.getElementById('unarchive-form').submit();", 300);
+    }
 </script>
 <style>
     .form-data-group-table {
@@ -201,7 +219,7 @@ requires imports/proptable.html to be included in the main template
                         <i class="icon icon-question-sign"></i>
                     </span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn"
-                            onclick="document.getElementById('archive-form-btn').disabled=true;document.getElementById('archive-form').submit();document.getElementById('archive-spinner').style.display='inline-block';">
+                            onclick="archive_form();">
                         {% trans "Archive this form" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
@@ -213,7 +231,7 @@ requires imports/proptable.html to be included in the main template
                         <i class="icon icon-question-sign"></i>
                     </span>
                     <button type="submit" class="btn btn-primary" id="unarchive-form-btn"
-                            onclick="document.getElementById('unarchive-form-btn').disabled=true;document.getElementById('unarchive-form').submit();document.getElementById('unarchive-spinner').style.display='inline-block';">
+                            onclick="restore_form();">
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
                    </button>
@@ -222,7 +240,15 @@ requires imports/proptable.html to be included in the main template
             </p>
         </div>
 
-        {% if readable_form_data %}
+        {% if question_list_not_found %}
+        <div class="row-fluid">
+            <div class="alert alert-warning clear-fix span6">
+                <strong>{{ question_list_not_found.message }}</strong>
+                <br/>
+                {% trans "All data is listed as Unrecognized Data." %}
+            </div>
+        </div>
+        {% else %}
         <ul class="nav nav-pills formDisplayToggle">
             <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
             <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
@@ -237,8 +263,9 @@ requires imports/proptable.html to be included in the main template
                    data-trigger="hover"></i>
             </a>
         </label>
-        <div class="row-fluid">
-            <table class="table table-bordered span6">
+        {% endif %}
+        <div{% if not side_pane %} class="row-fluid"{% endif %}>
+            <table class="table table-bordered form-data-table {% if not side_pane %}span6{% endif %}">
                 <tr>
                     <th class="span6">
                         <span class="form-data-readable">{% trans "Question" %}</span>
@@ -249,13 +276,6 @@ requires imports/proptable.html to be included in the main template
                 {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
             </table>
         </div>
-        {% else %}
-            {% if use_old_reason %}
-                {% comment %}This is for debugging{% endcomment %}
-                <div class="alert alert-info">{{ use_old_reason }}. Showing old view instead</div>
-            {% endif %}
-            {% render_tables form_data form_table_options %}
-        {% endif %}
     </div>
 
     {% if cases %}

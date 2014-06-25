@@ -12,7 +12,7 @@ from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_def
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
-from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
@@ -27,7 +27,7 @@ from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
@@ -106,6 +106,7 @@ class Product(Document):
     category = StringProperty()
     program_id = StringProperty()
     cost = DecimalProperty()
+    product_data = DictProperty()
 
     @property
     def code(self):
@@ -165,7 +166,6 @@ class Product(Document):
         )
         return [row['id'] for row in view_results]
 
-
     @classmethod
     def count_by_domain(cls, domain):
         """
@@ -174,11 +174,9 @@ class Product(Document):
         # todo: we should add a reduce so we can get this out of couch
         return len(cls.ids_by_domain(domain))
 
-
     @classmethod
     def _csv_attrs(cls):
         return [
-            '_id',
             'name',
             'unit',
             'code_',
@@ -188,32 +186,57 @@ class Product(Document):
             ('cost', lambda a: Decimal(a) if a else None),
         ]
 
-    def to_csv(self):
-        def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
+    def to_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        product_dict = {}
 
-        return [_encode_if_needed(getattr(self, attr[0] if isinstance(attr, tuple) else attr))
-                for attr in self._csv_attrs()]
+        product_dict['id'] = self._id
+
+        for attr in self._csv_attrs():
+            real_attr = attr[0] if isinstance(attr, tuple) else attr
+            product_dict[real_attr] = encode_if_needed(
+                getattr(self, real_attr)
+            )
+
+        return product_dict
+
+    def custom_property_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        property_dict = {}
+
+        for prop, val in self.product_data.iteritems():
+            property_dict['data: ' + prop] = encode_if_needed(val)
+
+        return property_dict
 
     @classmethod
     def from_csv(cls, row):
         if not row:
             return None
-        id, row = row[0], row[1:]
+
+        id = row.get('id')
         if id:
             p = cls.get(id)
         else:
             p = cls()
-        for i, attr in enumerate(cls._csv_attrs()[1:]):
-            try:
-                val = row[i].decode('utf-8')
-            except IndexError:
-                break
-            else:
+
+        for attr in cls._csv_attrs():
+            if attr in row or (isinstance(attr, tuple) and attr[0] in row):
+                val = row.get(attr, '').decode('utf-8')
                 if isinstance(attr, tuple):
                     attr, f = attr
                     val = f(val)
                 setattr(p, attr, val)
+            else:
+                break
+
+        # pack and add custom data items
+        product_data = {}
+        for k, v in row.iteritems():
+            if str(k).startswith('data: '):
+                product_data[k[6:]] = v
+
+        setattr(p, 'product_data', product_data)
 
         return p
 
@@ -382,8 +405,8 @@ class CommtrackConfig(Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
-    sync_location_fixtures = BooleanProperty(default=False)
-    sync_consumption_fixtures = BooleanProperty(default=False)
+    sync_location_fixtures = BooleanProperty(default=True)
+    sync_consumption_fixtures = BooleanProperty(default=True)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
@@ -432,7 +455,7 @@ class CommtrackConfig(Document):
                     facility_type = supply_point.location.location_type
                 except ResourceNotFound:
                     pass
-            return get_default_consumption(self.domain, product_id, facility_type, case_id)
+            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
 
         return ConsumptionConfiguration(
             min_periods=self.consumption_config.min_transactions,
@@ -1353,6 +1376,13 @@ class StockState(models.Model):
                 self.product_id,
                 config
             )
+
+    def get_monthly_consumption(self):
+        consumption = self.get_consumption()
+        if consumption is not None:
+            return consumption * Decimal(DAYS_IN_MONTH)
+        else:
+            return None
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')

@@ -21,5 +21,5 @@ def update_service_status(request, domain):
                     mcct_status = None
                 if not mcct_status:
                     mcct_status = McctStatus(form_id=form_id, domain=domain, status=new_status)
-                mcct_status.update_status(new_status, reject_reason)
+                mcct_status.update_status(new_status, reject_reason, request.user.username)
     return HttpResponse(status=200)

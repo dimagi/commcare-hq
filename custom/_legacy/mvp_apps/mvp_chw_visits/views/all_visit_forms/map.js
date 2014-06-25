@@ -62,6 +62,11 @@ function(doc) {
                         if (age > 45 * MS_IN_DAY && (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no')) {
                             not_immunized = true;
                         }
+                        if(indicators.prev_vaccination_birth_2.value || indicators.vaccination_birth_2.value){
+                            if (age > 45 * MS_IN_DAY && (indicators.prev_vaccination_birth_2.value === 'no' || indicators.vaccination_birth_2.value === 'no')) {
+                                not_immunized = true;
+                            }
+                        }
                         if (age > 75 * MS_IN_DAY && (indicators.prev_vaccination_6week.value === 'no' || indicators.vaccination_6week.value === 'no')) {
                             not_immunized = true;
                         }

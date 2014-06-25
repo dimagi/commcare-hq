@@ -11,39 +11,51 @@ def _get_comparison_results(field_value, comparison_operator, expected_value):
             if not comparison_operator(field_value, expected_value_item):
                 result = False
                 break
-    else:
-        if not comparison_operator(field_value, expected_value):
-            result = False
+    elif not comparison_operator(field_value, expected_value):
+        result = False
     return result
 
 
 class FormComparisonCalculator(fluff.Calculator):
 
-    def __init__(self, comparisons, namespaces, filter_function = None, *args, **kwargs):
+    def __init__(self, comparisons, namespaces, filter_function=None, joint=True, *args, **kwargs):
         self.comparisons = comparisons
         self.namespaces = namespaces
         self.filter_function = filter_function
         self.get_date_function = get_date_delivery if self.filter_function is form_passes_filter_date_delivery else get_received_on
+        self.joint = joint
         super(FormComparisonCalculator, self).__init__(*args, **kwargs)
 
     @fluff.date_emitter
     def total(self, form):
-        if self.filter_function is None or self.filter_function(form, self.namespaces):
+        if form.xmlns in self.namespaces and (self.filter_function is None or self.filter_function(form)):
             all_filters_passed = True
-            for comparison in self.comparisons:
-                field_value = form.form.get(comparison[0], "")
-                if field_value is None:
-                    field_value = ""
-                if not _get_comparison_results(field_value, comparison[1], comparison[2]):
-                    all_filters_passed = False
-                    break
-            if all_filters_passed:
-                yield [self.get_date_function(form), 1]
+            if self.joint:
+                for c in self.comparisons:
+                    field_value = form.form.get(c[0], "")
+                    if field_value is None:
+                        field_value = ""
+                    if not _get_comparison_results(field_value, c[1], c[2]):
+                        all_filters_passed = False
+                        break
+                if all_filters_passed:
+                    yield [self.get_date_function(form), 1]
+            else:
+                all_filters_passed = False
+                for c in self.comparisons:
+                    field_value = form.form.get(c[0], "")
+                    if field_value is None:
+                        field_value = ""
+                    if _get_comparison_results(field_value, c[1], c[2]):
+                        all_filters_passed = True
+                        break
+                if all_filters_passed:
+                    yield [self.get_date_function(form), 1]
 
 
 def _get_child_date_delivery(form):
     child_date_delivery = form.form.get("child_date_delivery", None)
-    return datetime.strptime(child_date_delivery, "%Y-%m-%d").date() if child_date_delivery else None
+    return child_date_delivery if child_date_delivery else None
 
 
 class InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months(fluff.Calculator):

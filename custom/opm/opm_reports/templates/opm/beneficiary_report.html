@@ -14,16 +14,20 @@
     {% endif %}
             <img id="cc-logo" class="media-object"
             src="{% static 'hqstyle/img/commcare-logo-small.png' %}">
+            <div class="pull-right">
+                <img id="opm-logo-inline" class="media-object"
+                src="{% static 'opm/img/logo.jpg' %}">
+            </div>
             <h1 class="media-heading">{{ report.report_title }}</h1>
             <h2 class="media-heading" style="text-align: center"> Bihar Child Support Programme / बिहार बाल समर्थन कार्यक्रम</h2>
             <h4 class="media-heading">
-                <br>
                 {% for subtitle in report.report_subtitles %}
-                &nbsp;<small>{{ subtitle }}</small>&nbsp;
+                <br/><small>{{ subtitle }}</small>
                 {% endfor %}
             </h4>
+
         </div>
-    <br><br><br><br>
+        <br/><br/><br/><br/>
 {% endif %}
 {% endblock %}
 

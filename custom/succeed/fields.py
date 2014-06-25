@@ -4,7 +4,13 @@ from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.users.models import CouchUser, WebUser
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
-from custom.succeed.utils import is_succeed_admin, CONFIG, is_pm_or_pi
+from custom.succeed.utils import (
+    CONFIG,
+    is_chw,
+    is_cm,
+    is_pm_or_pi,
+    is_succeed_admin,
+)
 
 
 class CareSite(ReportSelectField):
@@ -39,13 +45,10 @@ class ResponsibleParty(ReportSelectField):
                 chw
             ]
         else:
-            role = user.user_data['role']
-            if role == CONFIG['cm_role']:
+            if is_cm(user):
                 options.append(cm)
-                self.selected = cm['val']
-            elif role == CONFIG['chw_role']:
+            elif is_chw(user):
                 options.append(chw)
-                self.selected = chw['val']
         return options
 
 

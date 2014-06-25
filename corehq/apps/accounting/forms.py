@@ -72,8 +72,20 @@ class BillingAccountBasicForm(forms.Form):
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
+    is_active = forms.BooleanField(
+        label=_("Account is Active"),
+        required=False,
+        initial=True,
+    )
+    active_accounts = forms.CharField(
+        label=_("Transfer Subscriptions To"),
+        help_text=_("Transfer any existing subscriptions to the "
+                    "Billing Account Specified here."),
+        required=False,
+    )
 
     def __init__(self, account, *args, **kwargs):
+        self.account = account
         if account is not None:
             contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
             kwargs['initial'] = {
@@ -81,6 +93,7 @@ class BillingAccountBasicForm(forms.Form):
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
                 'emails': contact_info.emails,
+                'is_active': account.is_active,
             }
         else:
             kwargs['initial'] = {
@@ -90,7 +103,23 @@ class BillingAccountBasicForm(forms.Form):
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
+        self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
+        additional_fields = []
+        if account is not None:
+            additional_fields.append(crispy.Field(
+                'is_active',
+                data_bind="checked: is_active",
+            ))
+            if account.subscription_set.count() > 0:
+                additional_fields.append(crispy.Div(
+                    crispy.Field(
+                        'active_accounts',
+                        css_class="input-xxlarge",
+                        placeholder="Select Active Account",
+                    ),
+                    data_bind="visible: showActiveAccounts"
+                ))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Basic Information',
@@ -98,6 +127,7 @@ class BillingAccountBasicForm(forms.Form):
                 crispy.Field('emails', css_class='input-xxlarge'),
                 'salesforce_account_id',
                 'currency',
+                crispy.Div(*additional_fields),
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -123,6 +153,23 @@ class BillingAccountBasicForm(forms.Form):
                 )
         return account_contact_emails
 
+    def clean_active_accounts(self):
+        transfer_subs = self.cleaned_data['active_accounts']
+        if (not self.cleaned_data['is_active'] and self.account is not None
+            and self.account.subscription_set.count() > 0
+            and not transfer_subs
+        ):
+            raise ValidationError(
+                _("This account has subscriptions associated with it. "
+                  "Please specify a transfer account before deactivating.")
+            )
+        if self.account is not None and transfer_subs == self.account.name:
+            raise ValidationError(
+                _("The transfer account can't be the same one you're trying "
+                  "to deactivate.")
+            )
+        return transfer_subs
+
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
@@ -132,7 +179,7 @@ class BillingAccountBasicForm(forms.Form):
         account = BillingAccount(
             name=name,
             salesforce_account_id=salesforce_account_id,
-            currency=currency
+            currency=currency,
         )
         account.save()
 
@@ -146,6 +193,13 @@ class BillingAccountBasicForm(forms.Form):
 
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
+        account.is_active = self.cleaned_data['is_active']
+        transfer_name = self.cleaned_data['active_accounts']
+        if transfer_name:
+            transfer_account = BillingAccount.objects.get(name=transfer_name)
+            for sub in account.subscription_set.all():
+                sub.account = transfer_account
+                sub.save()
         account.salesforce_account_id = \
             self.cleaned_data['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(
@@ -271,6 +325,10 @@ class SubscriptionForm(forms.Form):
     )
     auto_generate_credits = forms.BooleanField(
         label=_("Auto-generate Plan Credits"), required=False
+    )
+    active_accounts = forms.CharField(
+        label=_("Transfer Subscription To"),
+        required=False,
     )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -398,11 +456,21 @@ class SubscriptionForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_text_inline = True
+        transfer_fields = []
+        if self.is_existing:
+            transfer_fields.extend([
+                crispy.Field(
+                    'active_accounts',
+                    css_class='input-xxlarge',
+                    placeholder="Select Active Account",
+                ),
+            ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '%s Subscription' % ('Edit' if self.is_existing
                                      else 'New'),
                 account_field,
+                crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
                 delay_invoice_until_field,
@@ -461,6 +529,13 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
         )
 
+    def clean_active_accounts(self):
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account and transfer_account == self.subscription.account.name:
+            raise ValidationError("Please select an account other than the "
+                                  "current account to transfer to.")
+        return transfer_account
+
     def update_subscription(self):
         self.subscription.update_subscription(
             date_end=self.cleaned_data['end_date'],
@@ -470,6 +545,11 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user
         )
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account:
+            acct = BillingAccount.objects.get(name=transfer_account)
+            self.subscription.account = acct
+            self.subscription.save()
 
 
 class ChangeSubscriptionForm(forms.Form):

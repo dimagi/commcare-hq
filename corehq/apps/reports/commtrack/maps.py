@@ -134,9 +134,12 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Reporting Status (map)")
     slug = "reportingstatus_map"
 
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     data_source = {
         'adapter': 'report',

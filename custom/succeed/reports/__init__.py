@@ -1,7 +1,9 @@
 from django.utils.translation import ugettext as _
+from custom.succeed.utils import CONFIG
 
 PM1 = 'http://openrosa.org/formdesigner/111B09EB-DFFA-4613-9A16-A19BA6ED7D04'
 PM2 = 'http://openrosa.org/formdesigner/4B52ADB2-AA79-4056-A13E-BB34871876A1'
+PM_PM2 = 'http://openrosa.org/formdesigner/31ad9d386120d25238327f0315ada53d9e0f60d9'
 PM3 = 'http://openrosa.org/formdesigner/5250590B-2EB2-46A8-9943-B7008CDA2BB9'
 PM4 = 'http://openrosa.org/formdesigner/876cec8f07c0e29b9f9e2bd0b33c5c85bf0192ee'
 CM1 = 'http://openrosa.org/formdesigner/9946952C-A2EB-43D5-A500-B386C56A49A7'
@@ -28,7 +30,6 @@ CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f654
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
 AP2 = 'http://openrosa.org/formdesigner/58ba18b4bd2054419bfa8da8ec2d08f6c547c91b'
 CUSTOM_EDIT = 'http://commcarehq.org/cloudcare/custom-edit'
-
 EMPTY_FIELD = "---"
 
 OUTPUT_DATE_FORMAT = "%m/%d/%Y"
@@ -58,6 +59,7 @@ VISIT_SCHEDULE = [
         'xmlns': CM1,
         'days': 5,
         'module_idx': CM_APP_CM_MODULE,
+        'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'CM1_form_target'
     },
@@ -66,6 +68,7 @@ VISIT_SCHEDULE = [
         'xmlns': CM2,
         'days': 7,
         'module_idx': CM_APP_CM_MODULE,
+        'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'CM2_form_target'
     },
@@ -75,6 +78,7 @@ VISIT_SCHEDULE = [
         'days': 10,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
+        'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM3_scheduled_date',
         'target_date_case_property': 'CM3_form_target'
     },
@@ -83,6 +87,7 @@ VISIT_SCHEDULE = [
         'xmlns': HUD1,
         'days': 21,
         'module_idx': CM_APP_HUD_MODULE,
+        'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'HUD1_form_target'
     },
@@ -92,6 +97,7 @@ VISIT_SCHEDULE = [
         'days': 35,
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
+        'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW1_scheduled_date',
         'target_date_case_property': 'CHW1_form_target'
     },
@@ -101,6 +107,7 @@ VISIT_SCHEDULE = [
         'days': 49,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
+        'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM4_scheduled_date',
         'target_date_case_property': 'CM4_form_target'
     },
@@ -110,6 +117,7 @@ VISIT_SCHEDULE = [
         'days': 100,
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
+        'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW2_scheduled_date',
         'target_date_case_property': 'CHW2_form_target'
     },
@@ -119,6 +127,7 @@ VISIT_SCHEDULE = [
         'days': 130,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': True,
+        'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM5_scheduled_date',
         'target_date_case_property': 'CM5_form_target'
     },
@@ -128,6 +137,7 @@ VISIT_SCHEDULE = [
         'days': 135,
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
+        'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW4_scheduled_date',
         'target_date_case_property': 'CHW4_form_target'
     },
@@ -137,6 +147,7 @@ VISIT_SCHEDULE = [
         'days': 200,
         'module_idx': CM_APP_CHW_MODULE,
         'show_button': False,
+        'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW2-2_scheduled_date',
         'target_date_case_property': 'CHW2-2_form_target'
     },
@@ -146,6 +157,7 @@ VISIT_SCHEDULE = [
         'days': 250,
         'module_idx': CM_APP_CM_MODULE,
         'show_button': 'CHW2-2_scheduled_date',
+        'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM5-2_scheduled_date',
         'target_date_case_property': 'CM5-2_form_target'
     },

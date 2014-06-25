@@ -66,7 +66,11 @@ from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFor
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.reports.util import (
+    get_all_users_by_domain,
+    is_mobile_worker_with_report_access,
+    users_matching_filter,
+)
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -101,10 +105,13 @@ def default(request, domain):
 def old_saved_reports(request, domain):
     return default(request, domain)
 
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
+    if not (request.couch_user.can_view_reports()
+            or request.couch_user.get_viewable_reports()
+            or is_mobile_worker_with_report_access(request.couch_user, domain)):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id)
@@ -162,11 +169,11 @@ def export_data(req, domain):
     user_filter, _ = UserTypeFilter.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x.get('user_id'),
-                                    get_all_users_by_domain(domain, user_filter=user_filter, simplified=True))
+        filtered_users = users_matching_filter(domain, user_filter)
+
         def _ufilter(user):
             try:
-                return user['form']['meta']['userID'] in users_matching_filter
+                return user['form']['meta']['userID'] in filtered_users
             except KeyError:
                 return False
         filter = _ufilter
@@ -214,12 +221,12 @@ def export_data_async(request, domain):
 
 @login_or_digest
 @datespan_default
-@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
-    deid = request.GET.get('deid') == 'true'
+    r = request.POST if request.method == 'POST' else request.GET
+    deid = r.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
     else:
@@ -234,20 +241,21 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    async = request.GET.get('async') == 'true'
-    next = request.GET.get("next", "")
-    format = request.GET.get("format", "")
-    export_type = request.GET.get("type", "form")
-    previous_export_id = request.GET.get("previous_export", None)
-    filename = request.GET.get("filename", None)
-    max_column_size = int(request.GET.get("max_column_size", 2000))
-    limit = int(request.GET.get("limit", 0))
+    req = request.POST if request.method == 'POST' else request.GET
+    async = req.get('async') == 'true'
+    next = req.get("next", "")
+    format = req.get("format", "")
+    export_type = req.get("type", "form")
+    previous_export_id = req.get("previous_export", None)
+    filename = req.get("filename", None)
+    max_column_size = int(req.get("max_column_size", 2000))
+    limit = int(req.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
         try:
-            is_custom = json.loads(request.GET.get("is_custom", "false"))
-            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+            is_custom = json.loads(req.get("is_custom", "false"))
+            export_tags = json.loads(req.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
 
@@ -278,7 +286,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             # FakeSavedExportSchema a download_data function (called below)
             return HttpResponseBadRequest()
         try:
-            export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+            export_tag = json.loads(req.get("export_tag", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
@@ -908,7 +916,9 @@ def form_data(request, domain, instance_id):
 def case_form_data(request, domain, case_id, xform_id):
     context = _get_form_context(request, domain, xform_id)
     context['case_id'] = case_id
+    context['side_pane'] = True
     return HttpResponse(render_form(context['instance'], domain, options=context))
+
 
 @require_form_view_permission
 @login_and_domain_required
@@ -1018,21 +1028,22 @@ def clear_report_caches(request, domain):
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
-def export_report(request, domain, export_hash):
+def export_report(request, domain, export_hash, format):
     cache = get_redis_client()
 
     if cache.exists(export_hash):
-        with open(cache.get(export_hash), 'r') as content_file:
-            content = content_file.read()
-
-        file = ContentFile(content)
-        response = HttpResponse(file, 'application/vnd.ms-excel')
-        response['Content-Length'] = file.size
-        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-            filename=export_hash,
-            extension=Format.XLS
-        )
-        return response
+        if format in Format.VALID_FORMATS:
+            content = cache.get(export_hash)
+            file = ContentFile(content)
+            response = HttpResponse(file, Format.FORMAT_DICT[format])
+            response['Content-Length'] = file.size
+            response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+                filename=export_hash,
+                extension=Format.FORMAT_DICT[format]['extension']
+            )
+            return response
+        else:
+            return HttpResponseNotFound(_("We don't support this format"))
     else:
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))

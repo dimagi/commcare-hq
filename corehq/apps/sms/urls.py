@@ -1,7 +1,10 @@
 from django.conf.urls.defaults import patterns, url
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
-    SubscribeSMSView)
+    SubscribeSMSView,
+    AddDomainGatewayView,
+    EditDomainGatewayView,
+)
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
@@ -16,7 +19,13 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
     url(r'^delete_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'delete_forwarding_rule', name='delete_forwarding_rule'),
     url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_domain_backend', name='add_domain_backend'),
+    url(r'^add_gateway/(?P<backend_class_name>[\w-]+)/$',
+        AddDomainGatewayView.as_view(), name=AddDomainGatewayView.urlname
+    ),
     url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_domain_backend', name='edit_domain_backend'),
+    url(r'^edit_gateway/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$',
+        EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
+    ),
     url(r'^list_backends/$', 'list_domain_backends', name='list_domain_backends'),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
     url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_domain_backend', name='delete_domain_backend'),

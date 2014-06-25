@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
@@ -172,7 +172,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
 
 
 class McctProjectReview(BaseReport):
-    name = 'mCCT Project Review Page'
+    name = 'mCCT Beneficiary list view'
     slug = 'mcct_project_review_page'
     report_template_path = 'm4change/reviewStatus.html'
     display_status = 'eligible'
@@ -181,7 +181,7 @@ class McctProjectReview(BaseReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
-            DataTablesColumn(_("Client Name"), sortable=False),
+            DataTablesColumn(_("Beneficiary Name"), sortable=False),
             DataTablesColumn(_("Service Type"), sortable=False),
             DataTablesColumn(_("Health Facility"), sortable=False),
             DataTablesColumn(_("Card No."), sortable=False),
@@ -257,7 +257,7 @@ class McctProjectReview(BaseReport):
             ]
             if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-formid="%(form_id)s" '
                                      'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
                 row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
                                            service_type=data.get('service_type')))
@@ -285,7 +285,7 @@ class McctProjectReview(BaseReport):
 
 
 class McctClientApprovalPage(McctProjectReview):
-    name = 'mCCT client Approval Page'
+    name = 'mCCT Beneficiary Approval Page'
     slug = 'mcct_client_approval_page'
     report_template_path = 'm4change/approveStatus.html'
     display_status = 'reviewed'
@@ -316,14 +316,14 @@ class McctClientApprovalPage(McctProjectReview):
 
 
 class McctClientPaymentPage(McctClientApprovalPage):
-    name = 'mCCT client Payment Page'
+    name = 'mCCT Beneficiary Payment Page'
     slug = 'mcct_client_payment_page'
     report_template_path = 'm4change/paidStatus.html'
     display_status = 'approved'
 
 
 class McctRejectedClientPage(McctClientApprovalPage):
-    name = 'mCCT Rejected clients Page'
+    name = 'mCCT Rejected Beneficiary Page'
     slug = 'mcct_rejected_clients_page'
     report_template_path = 'm4change/activateStatus.html'
     display_status = 'rejected'
@@ -332,7 +332,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
-            DataTablesColumn(_("Client Name"), sortable=False),
+            DataTablesColumn(_("Beneficiary Name"), sortable=False),
             DataTablesColumn(_("Service Type"), sortable=False),
             DataTablesColumn(_("Health Facility"), sortable=False),
             DataTablesColumn(_("Card No."), sortable=False),
@@ -369,7 +369,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
             ]
             if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '
-                                     'data-bind="event: {change: updateSelection}" data-formid="%(form_id)s" '
+                                     'data-formid="%(form_id)s" '
                                      'data-caseid="%(case_id)s" data-servicetype="%(service_type)s"/>')
                 row.append(checkbox % dict(form_id=data.get('form_id'), case_id=data.get('case_id'),
                                            service_type=data.get('service_type')))
@@ -389,15 +389,15 @@ class McctRejectedClientPage(McctClientApprovalPage):
 
 
 class McctClientLogPage(McctProjectReview):
-    name = 'mCCT client Log Page'
+    name = 'mCCT Beneficiary Log Page'
     slug = 'mcct_client_log_page'
     report_template_path = 'm4change/report_content.html'
 
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
-            DataTablesColumn(_("Client Name"), sortable=False),
+            DataTablesColumn(_("Date of action"), sortable=False),
+            DataTablesColumn(_("Beneficiary Name"), sortable=False),
             DataTablesColumn(_("Service Type"), sortable=False),
             DataTablesColumn(_("Health Facility"), sortable=False),
             DataTablesColumn(_("Card No."), sortable=False),
@@ -439,11 +439,12 @@ class McctClientLogPage(McctProjectReview):
             data = calculate_form_data(self, form)
             try:
                 status_data = McctStatus.objects.get(domain=self.domain, form_id=data.get('form_id'))
-                status, reason = (status_data.status, status_data.reason)
-            except McctStatus.DoesNotExist:
-                status, reason = ('eligible', None)
+                status, reason, status_date, username = (status_data.status, status_data.reason,
+                                                         status_data.modified_on, status_data.user)
+            except:
+                status, reason, status_date, username = ('eligible', None, None, None)
             row = [
-                DateTimeProperty().wrap(form["form"]["meta"]["timeEnd"]).strftime("%Y-%m-%d %H:%M"),
+                status_date.strftime("%Y-%m-%d %H:%M") if status_date is not None else EMPTY_FIELD,
                 self._get_case_name_html(data.get('case'), with_checkbox),
                 self._get_service_type_html(form, data.get('service_type'), with_checkbox),
                 data.get('location_name'),
@@ -453,7 +454,7 @@ class McctClientLogPage(McctProjectReview):
                 data.get('amount_due'),
                 status,
                 REJECTION_REASON_DISPLAY_NAMES[reason] if reason is not None else '',
-                form["form"]["meta"]["username"]
+                username if username else form["form"]["meta"]["username"]
             ]
             yield row
 
@@ -466,7 +467,25 @@ class McctClientLogPage(McctProjectReview):
 
 
 class McctPaidClientsPage(McctClientApprovalPage):
-    name = 'mCCT Paid clients Page'
+    name = 'mCCT Paid Beneficiary Page'
     slug = 'mcct_paid_clients_page'
-    report_template_path = 'm4change/activateStatus.html'
+    report_template_path = 'm4change/report_content.html'
     display_status = 'paid'
+
+    @property
+    def rows(self):
+        return self.make_rows(self.es_results, with_checkbox=False)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Date of service"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Beneficiary Name"), sortable=False),
+            DataTablesColumn(_("Service Type"), sortable=False),
+            DataTablesColumn(_("Health Facility"), sortable=False),
+            DataTablesColumn(_("Card No."), sortable=False),
+            DataTablesColumn(_("LGA"), sortable=False),
+            DataTablesColumn(_("Phone No."), sortable=False),
+            DataTablesColumn(_("Amount"), sortable=False),
+            DataTablesColumn(_("Status"), sortable=False))
+        return headers

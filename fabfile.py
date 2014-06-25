@@ -17,6 +17,7 @@ Server layout:
 """
 import sys
 from collections import defaultdict
+import datetime
 
 from fabric.context_managers import settings, cd
 
@@ -56,6 +57,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.linewise = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "
@@ -267,7 +269,7 @@ def production():
 
     class Servers(object):
         db = ['hqdb0.internal.commcarehq.org']
-        celery = ['hqcelery0.internal.commcarehq.org']
+        celery = ['hqcelery1.internal.commcarehq.org']
         touch = ['hqtouch0.internal.commcarehq.org']
         django = ['hqdjango3.internal.commcarehq.org',
                   'hqdjango4.internal.commcarehq.org',
@@ -740,13 +742,16 @@ def hotfix_deploy():
 @task
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
+    _require_target()
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    _require_target()
     run('echo ping!')  # workaround for delayed console response
+    _deploy_without_asking()
 
+
+def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
@@ -755,7 +760,7 @@ def deploy():
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
-            execute(migrate)
+            execute(_migrate)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
         execute(version_static)
@@ -769,6 +774,47 @@ def deploy():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
+
+
+@task
+def awesome_deploy():
+    """preindex and deploy if it completes quickly enough, otherwise abort"""
+    if not console.confirm(
+            'Are you sure you want to preindex and deploy '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+    max_wait = datetime.timedelta(minutes=5)
+    start = datetime.datetime.utcnow()
+    pause_length = datetime.timedelta(seconds=5)
+
+    execute(preindex_views)
+
+    @roles(*ROLES_DB_ONLY)
+    def preindex_complete():
+        with settings(warn_only=True):
+            return sudo(
+                '%(virtualenv_root_preindex)s/bin/python '
+                '%(code_root_preindex)s/manage.py preindex_everything '
+                '--check' % env,
+                user=env.sudo_user,
+            ).succeeded
+
+    done = False
+    while not done and datetime.datetime.utcnow() - start < max_wait:
+        time.sleep(pause_length.seconds)
+        if preindex_complete():
+            done = True
+        pause_length *= 2
+
+    if done:
+        _deploy_without_asking()
+    else:
+        mail_admins(
+            " You can't deploy yet",
+            ("Preindexing is taking a while, so hold tight "
+             "and wait for an email saying it's done. "
+             "Thank you for using AWESOME DEPLOY.")
+        )
 
 
 @task
@@ -883,13 +929,34 @@ def services_restart():
 
 
 @roles(*ROLES_DB_ONLY)
-def migrate():
+def _migrate():
     """run south migration on remote environment"""
     _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
+
+
+@task
+@roles(*ROLES_DB_ONLY)
+def migrate():
+    """run south migration on remote environment"""
+    if not console.confirm(
+            'Are you sure you want to run south migrations on '
+            '{env.environment}? '
+            'You must preindex beforehand. '.format(env=env), default=False):
+        utils.abort('Task aborted.')
+    _require_target()
+    execute(stop_pillows)
+    execute(stop_celery_tasks)
+    with cd(env.code_root_preindex):
+        sudo(
+            '%(virtualenv_root_preindex)s/bin/python manage.py migrate --noinput ' % env
+            + env.get('app', ''),
+            user=env.sudo_user
+        )
+    _supervisor_command('start all')
 
 
 @roles(*ROLES_DB_ONLY)

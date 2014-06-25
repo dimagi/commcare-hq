@@ -30,7 +30,7 @@
         {% endfor %}
     </div>
     {% endif %}
-{% endblock %}
+{% endblock pretable %}
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
@@ -97,9 +97,9 @@
         {% endif %}
     </table>
 {% endif %}
-{% endblock %}
-{% block posttable %}{% endblock %}
-{% endblock %}
+{% endblock reporttable %}
+{% block posttable %}{% endblock posttable %}
+{% endblock reportcontent %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
@@ -145,4 +145,4 @@
             {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
         {% endwith %}
     {% endfor %}
-{% endblock %}
+{% endblock js-inline %}

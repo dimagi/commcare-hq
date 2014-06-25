@@ -9,10 +9,13 @@ from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
-
+from django.core.exceptions import ValidationError
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
+from django.utils.translation import ugettext as _
+
+phone_number_plus_re = re.compile("^\+{0,1}\d+$")
 
 def strip_plus(phone_number):
     if (isinstance(phone_number, basestring) and len(phone_number) > 0
@@ -35,6 +38,11 @@ def clean_outgoing_sms_text(text):
         return urllib.quote(text)
     except KeyError:
         return urllib.quote(text.encode('utf-8'))
+
+def validate_phone_number(phone_number):
+    if (not isinstance(phone_number, basestring) or
+        not phone_number_plus_re.match(phone_number)):
+        raise ValidationError(_("Invalid phone number format."))
 
 def domains_for_phone(phone):
     """
@@ -150,14 +158,6 @@ def close_task(domain, subcase_guid, submitting_user_id):
 
 def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
     try:
-        from hqbilling.tasks import bill_client_for_sms
-        from hqbilling.models import API_TO_BILLABLE
-        msg.save()
-        billable_class = API_TO_BILLABLE.get(backend_api)
-        if delay:
-            bill_client_for_sms.delay(billable_class, msg._id, **kwargs)
-        else:
-            bill_client_for_sms(billable_class, msg._id, **kwargs)
         from corehq.apps.sms.api import store_billable
         store_billable.delay(msg)
     except Exception as e:

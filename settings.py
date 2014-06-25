@@ -153,6 +153,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -252,12 +253,11 @@ HQ_APPS = (
     'soil',
     'toggle',
     'touchforms.formplayer',
-    'hqbilling',
     'phonelog',
     'hutch',
     'pillowtop',
     'pillow_retry',
-    'hqstyle',
+    'corehq.apps.style',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -288,6 +288,8 @@ HQ_APPS = (
     'custom.succeed',
 
     'custom.uth',
+
+    'custom.colalife',
 )
 
 TEST_APPS = ()
@@ -869,7 +871,6 @@ COUCHDB_APPS = [
     'phonelog',
     'registration',
     'hutch',
-    'hqbilling',
     'wisepill',
     'fri',
     'crs_reports',
@@ -966,6 +967,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.twilio.models.TwilioBackend",
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
+
+# The number of seconds to use as a timeout when making gateway requests
+SMS_GATEWAY_TIMEOUT = 30
+IVR_GATEWAY_TIMEOUT = 60
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
@@ -1158,6 +1163,6 @@ TRAVIS_TEST_GROUPS = (
         'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqbilling', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )

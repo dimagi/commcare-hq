@@ -3,7 +3,6 @@ import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
-from corehq import toggles
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -21,12 +20,19 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
 
+class MailChimpNotConfiguredError(Exception):
+    pass
+
+
 def get_mailchimp_api():
-    return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    if settings.MAILCHIMP_APIKEY:
+        return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    raise MailChimpNotConfiguredError('Mailchimp is not configured')
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    get_mailchimp_api().lists.subscribe(
+    api = get_mailchimp_api()
+    api.lists.subscribe(
         list_id,
         {'email': email or user.email},
         double_optin=False,
@@ -40,6 +46,20 @@ def subscribe_user_to_mailchimp_list(user, list_id, email=None):
     )
 
 
+def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
+    try:
+        subscribe_user_to_mailchimp_list(user, list_id, email)
+    except (
+        mailchimp.ListAlreadySubscribedError,
+        mailchimp.ListInvalidImportError,
+        mailchimp.ValidationError,
+        MailChimpNotConfiguredError,
+    ):
+        pass
+    except mailchimp.Error as e:
+        logging.error(e.message)
+
+
 def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
     get_mailchimp_api().lists.unsubscribe(
         list_id,
@@ -47,6 +67,18 @@ def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
         send_goodbye=False,
         send_notify=False,
     )
+
+
+def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
+    try:
+        unsubscribe_user_from_mailchimp_list(user, list_id, email)
+    except (
+        mailchimp.ListNotSubscribedError,
+        MailChimpNotConfiguredError,
+    ):
+        pass
+    except mailchimp.Error as e:
+        logging.error(e.message)
 
 
 def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
@@ -60,24 +92,16 @@ def handle_changed_mailchimp_email(user, old_email, new_email, list_id):
     ]
     if (len(users_subscribed_with_old_email) == 1 and
             users_subscribed_with_old_email[0].get_id == user.get_id):
-        try:
-            unsubscribe_user_from_mailchimp_list(
-                user,
-                list_id,
-                email=old_email,
-            )
-        except mailchimp.Error as e:
-            logging.error(e.message)
-    try:
-        subscribe_user_to_mailchimp_list(
+        safe_unsubscribe_user_from_mailchimp_list(
             user,
             list_id,
-            email=new_email,
+            email=old_email,
         )
-    except mailchimp.ListAlreadySubscribedError:
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
+    safe_subscribe_user_to_mailchimp_list(
+        user,
+        list_id,
+        email=new_email,
+    )
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -92,26 +116,30 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
+
+    def _log_mailchimp_error(e):
+        logging.exception(
+            'unable to subscribe {0} to mailchimp. Is your configuration broken? {1}'.format(
+                username, e
+            ))
     try:
-        subscribe_user_to_mailchimp_list(
+        safe_subscribe_user_to_mailchimp_list(
             new_user,
             settings.MAILCHIMP_MASS_EMAIL_ID
         )
-    except mailchimp.ListAlreadySubscribedError:
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
-    new_user.subscribed_to_commcare_users = email_opt_in
+    except Exception as e:
+        _log_mailchimp_error(e)
+
+    new_user.subscribed_to_commcare_users = False
     if email_opt_in:
         try:
-            subscribe_user_to_mailchimp_list(
+            safe_subscribe_user_to_mailchimp_list(
                 new_user,
                 settings.MAILCHIMP_COMMCARE_USERS_ID
             )
-        except mailchimp.ListAlreadySubscribedError:
-            pass
-        except mailchimp.Error as e:
-            logging.error(e.message)
+            new_user.subscribed_to_commcare_users = True
+        except Exception as e:
+            _log_mailchimp_error(e)
 
     new_user.eula.signed = True
     new_user.eula.date = now

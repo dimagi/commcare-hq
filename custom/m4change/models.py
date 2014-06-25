@@ -319,10 +319,13 @@ class McctStatus(models.Model):
     registration_date = models.DateField(null=True)
     immunized = models.BooleanField(null=False, default=False)
     is_booking = models.BooleanField(null=False, default=False)
+    modified_on = models.DateTimeField(auto_now=True)
+    user = models.CharField(max_length=255, null=True)
 
-    def update_status(self, new_status, reason):
+    def update_status(self, new_status, reason, user):
         self.status = new_status
         self.reason = reason
+        self.user = user
         self.save()
 
     @classmethod
@@ -420,10 +423,10 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
         [("partner_hiv_status", operator.eq, "positive")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_stage_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "clinical_stage")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "clinical_stage")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_cd4_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "cd4")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "cd4")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_art = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "3tc")], PMTCT_CLIENTS_FORM
@@ -476,6 +479,13 @@ class FixtureReportResult(Document, QueryMixin):
                              include_docs=True).one(except_all=True)
         except (NoResultFound, ResourceNotFound, MultipleResultsFound):
             return None
+
+    @classmethod
+    def all_by_composite_key(cls, domain, location_id, start_date, end_date, report_slug):
+        return cls.view("m4change/fixture_by_composite_key",
+                        startkey=[domain, location_id, start_date, end_date, report_slug],
+                        endkey=[domain, location_id, start_date, end_date, report_slug],
+                        include_docs=True).all()
 
     @classmethod
     def by_domain(cls, domain):

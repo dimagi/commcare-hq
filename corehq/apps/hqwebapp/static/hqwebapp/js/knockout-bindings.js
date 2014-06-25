@@ -144,6 +144,12 @@ ko.bindingHandlers.sortable = {
                 if (newPosition >= 0) {
                     list.remove(item);
                     list.splice(newPosition, 0, item);
+                    // Knockout 2.3 fix: refresh all of the `data-order`s
+                    // this is an O(n) operation, so if experiencing slowness
+                    // start here
+                    parent.children().each(function (i) {
+                        $(this).data('order', i);
+                    });
                 }
             }
         });

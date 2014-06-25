@@ -121,10 +121,13 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             query = query.filter(pillow=self.pillow)
         if self.error:
             query = query.filter(error_type=self.error)
-        q = self.date_field_filter + '__gte'
-        query = query.filter(**{q: self.datespan.startdate})
-        q = self.date_field_filter + '__lte'
-        query = query.filter(**{q: self.datespan.enddate_adjusted})
+
+        if self.date_field_filter:
+            q = self.date_field_filter + '__gte'
+            query = query.filter(**{q: self.datespan.startdate})
+            q = self.date_field_filter + '__lte'
+            query = query.filter(**{q: self.datespan.enddate_adjusted})
+
         if self.filter_attempts:
             query = query.filter(current_attempt__gt=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
 
