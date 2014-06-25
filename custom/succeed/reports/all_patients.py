@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext as _, ugettext_noop
+from custom.succeed.reports.patient_details import SucceedNavigationMixin
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
@@ -140,7 +141,7 @@ class PatientListReportDisplay(CaseDisplay):
             return EMPTY_FIELD
 
 
-class PatientListReport(CustomProjectReport, CaseListReport):
+class PatientListReport(CustomProjectReport, CaseListReport, SucceedNavigationMixin):
 
     ajax_pagination = True
     include_inactive = True
@@ -153,17 +154,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
               'custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientStatus',
               'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
-
-        if user and (is_succeed_admin(user) or has_any_role(user)
-                     or is_mobile_worker_with_report_access(user, domain)):
-            return True
-        return False
-
 
     @property
     @memoized
