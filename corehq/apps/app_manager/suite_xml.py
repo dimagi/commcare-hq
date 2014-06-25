@@ -9,13 +9,14 @@ from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.xpath import ProductInstanceXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, ItemListFixtureXpath
 
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_LOCATION = 'location'
@@ -538,21 +539,17 @@ class SuiteGeneratorBase(object):
 
 
 GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
-PRODUCTS_INSTANCE = Instance(id='products', src='jr://fixture/commtrack:products')
 LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
 CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
 SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
-LOCATIONS_INSTANCE = Instance(id='commtrack:locations', src='jr://fixture/commtrack:locations')
 
 INSTANCE_BY_ID = {
     instance.id: instance
     for instance in (
         GROUP_INSTANCE,
-        PRODUCTS_INSTANCE,
         LEDGER_INSTANCE,
         CASE_INSTANCE,
         SESSION_INSTANCE,
-        LOCATIONS_INSTANCE,
     )
 }
 
@@ -572,11 +569,12 @@ class register_factory(object):
         return fn
 
 
+@register_factory(*INSTANCE_BY_ID.keys())
 def preset_instances(instance_name):
     return INSTANCE_BY_ID.get(instance_name, None)
 
 
-@register_factory('item-list', 'schedule', 'indicators')
+@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 @memoized
 def generic_fixture_instances(instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
@@ -918,7 +916,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     if self.app.commtrack_enabled:
                         e.datums.append(SessionDatum(
                             id='product_id',
-                            nodeset="instance('products')/products/product",
+                            nodeset=ProductInstanceXpath().instance(),
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
@@ -1079,7 +1077,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     ))
                     self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
                 elif auto_select.mode == AUTO_SELECT_FIXTURE:
-                    xpath_base = FixtureXpath(auto_select.value_source).table()
+                    xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
                     xpath = xpath_base.slash(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
@@ -1122,14 +1120,15 @@ class SuiteGenerator(SuiteGeneratorBase):
             try:
                 last_action = form.actions.load_update_cases[-1]
                 if last_action.show_product_stock:
-                    product_filter = ''
+                    nodeset = ProductInstanceXpath().instance()
                     if last_action.product_program:
-                        product_filter = "[program_id='{}']".format(last_action.product_program)
+                        nodeset = nodeset.select('program_id', last_action.product_program)
 
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
+
                     e.datums.append(SessionDatum(
                         id='product_id',
-                        nodeset="instance('products')/products/product{}".format(product_filter),
+                        nodeset=nodeset,
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
