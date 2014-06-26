@@ -668,8 +668,7 @@ def system_info(request):
     context['rabbitmq_url'] = get_rabbitmq_management_url()
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
-    context['last_deploy'] = HqDeploy.get_latest(environment)
-    context['snapshot'] = context['last_deploy'].code_snapshot if context['last_deploy'] else {}
+    context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
     context.update(check_redis())
     context.update(check_rabbitmq())

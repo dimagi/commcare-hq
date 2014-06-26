@@ -1,6 +1,7 @@
 from datetime import datetime
 from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
+from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
 from corehq.apps.smsforms.models import XFormsSession, XFORMS_SESSION_IVR
 from corehq.apps.app_manager.models import get_app, Form
@@ -51,14 +52,6 @@ def format_ivr_response(text, app):
         "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
     }
 
-def get_case_id(call_log_entry):
-    if call_log_entry.couch_recipient_doc_type == "CommCareCase":
-        case_id = call_log_entry.couch_recipient
-    else:
-        #TODO: Need a way to choose the case when it's a user that's playing the form.
-        case_id = None
-    
-    return case_id
 
 def get_input_length(question):
     if question.event.type == "question" and question.event.datatype == "select":
@@ -88,8 +81,12 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         recipient = call_log_entry.recipient
         
         if ivr_event == IVR_EVENT_NEW_CALL:
-            case_id = get_case_id(call_log_entry)
-            session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
+            case_id = call_log_entry.case_id
+            case_for_case_submission = call_log_entry.case_for_case_submission
+            session, responses = start_session(recipient.domain, recipient, app,
+                module, form, case_id, yield_responses=True,
+                session_type=XFORMS_SESSION_IVR,
+                case_for_case_submission=case_for_case_submission)
             call_log_entry.xforms_session_id = session.session_id
         elif ivr_event == IVR_EVENT_INPUT:
             if call_log_entry.xforms_session_id is not None:
@@ -196,28 +193,63 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     return HttpResponse("")
 
-# Returns True if the call was queued successfully, or False if an error occurred.
-def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form, include_case_side_effects, max_question_retries):
-    call_log_entry = CallLog(
-        couch_recipient_doc_type = verified_number.owner_doc_type,
-        couch_recipient          = verified_number.owner_id,
-        phone_number             = "+" + str(verified_number.phone_number),
-        direction                = OUTGOING,
-        date                     = datetime.utcnow(),
-        domain                   = verified_number.domain,
-        form_unique_id           = form_unique_id,
-        submit_partial_form      = submit_partial_form,
-        include_case_side_effects = include_case_side_effects,
-        max_question_retries     = max_question_retries,
-        current_question_retry_count = 0,
-    )
-    backend = verified_number.ivr_backend
-    kwargs = backend.get_cleaned_outbound_params()
-    module = __import__(backend.outbound_module, fromlist=["initiate_outbound_call"])
-    call_log_entry.backend_api = module.API_ID
-    call_log_entry.save()
-    return module.initiate_outbound_call(call_log_entry, **kwargs)
 
+def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
+    if verified_number and verified_number.ivr_backend_id:
+        return MobileBackend.get(verified_number.ivr_backend_id)
+    else:
+        phone_number = (verified_number.phone_number if verified_number
+            else unverified_number)
+        phone_number = strip_plus(str(phone_number))
+        prefixes = settings.IVR_BACKEND_MAP.keys()
+        prefixes = sorted(prefixes, key=lambda x: len(x), reverse=True)
+        for prefix in prefixes:
+            if phone_number.startswith(prefix):
+                return MobileBackend.get(settings.IVR_BACKEND_MAP[prefix])
+    return None
 
-
+def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
+    include_case_side_effects, max_question_retries, verified_number=None,
+    unverified_number=None, case_id=None, case_for_case_submission=False,
+    timestamp=None):
+    """
+    Returns True if the call was queued successfully, or False if an error
+    occurred.
+    """
+    call_log_entry = None
+    try:
+        if not verified_number and not unverified_number:
+            return False
+        phone_number = (verified_number.phone_number if verified_number
+            else unverified_number)
+        call_log_entry = CallLog(
+            couch_recipient_doc_type=recipient.doc_type,
+            couch_recipient=recipient.get_id,
+            phone_number="+%s" % str(phone_number),
+            direction=OUTGOING,
+            date=timestamp or datetime.utcnow(),
+            domain=recipient.domain,
+            form_unique_id=form_unique_id,
+            submit_partial_form=submit_partial_form,
+            include_case_side_effects=include_case_side_effects,
+            max_question_retries=max_question_retries,
+            current_question_retry_count=0,
+            case_id=case_id,
+            case_for_case_submission=case_for_case_submission,
+        )
+        backend = get_ivr_backend(recipient, verified_number, unverified_number)
+        if not backend:
+            return False
+        kwargs = backend.get_cleaned_outbound_params()
+        module = __import__(backend.outbound_module,
+            fromlist=["initiate_outbound_call"])
+        call_log_entry.backend_api = module.API_ID
+        call_log_entry.save()
+        return module.initiate_outbound_call(call_log_entry, **kwargs)
+    except Exception:
+        if call_log_entry:
+            call_log_entry.error = True
+            call_log_entry.error_message = "Internal Server Error"
+            call_log_entry.save()
+        raise
 

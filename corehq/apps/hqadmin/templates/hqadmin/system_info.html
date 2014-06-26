@@ -157,8 +157,10 @@
 {% endblock js-inline %}
 {% block reportcontent %}
     <div class="row-fluid">
+        {% with deploy_history|first as last_deploy %}
         <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
          at {{ last_deploy.date|date:"H:i:s"}} UTC by {{ last_deploy.user }}</span>
+        {% endwith %}
     </div>
     <div class="row-fluid">
         <table class="table table-striped">
@@ -342,7 +344,7 @@
     </div>
 
     <div class="row-fluid">
-    {% include "hqadmin/partials/project_snapshot.html" %}
+    {% include "hqadmin/partials/deploy_history.html" %}
     </div>
     <div class="row-fluid">
         <h3>Recent Database Changes</h3>

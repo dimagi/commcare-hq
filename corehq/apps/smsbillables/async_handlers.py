@@ -44,7 +44,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
             country_code=country_code,
         )
         usage_fee = SmsUsageFee.get_by_criteria(direction, self.request.domain)
-        usd_gateway_fee = gateway_fee.amount * gateway_fee.currency.rate_to_default
+        usd_gateway_fee = gateway_fee.amount / gateway_fee.currency.rate_to_default
         usd_total = usage_fee.amount + usd_gateway_fee
 
         return {

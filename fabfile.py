@@ -57,6 +57,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.linewise = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "

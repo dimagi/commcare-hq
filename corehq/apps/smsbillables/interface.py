@@ -65,12 +65,7 @@ class SMSBillablesInterface(GenericTabularReport):
                  else ("Outgoing"
                        if sms_billable.direction == OUTGOING
                        else "")),
-                ((sms_billable.gateway_fee.amount
-                  / sms_billable.gateway_fee_conversion_rate)
-                 if (sms_billable.gateway_fee is not None
-                     and sms_billable.gateway_fee_conversion_rate is not None)
-                 else (sms_billable.gateway_fee.amount
-                       if sms_billable.gateway_fee is not None else "")),
+                sms_billable.gateway_charge,
                 (sms_billable.usage_fee.amount
                  if sms_billable.usage_fee is not None else ""),
                 sms_billable.log_id,
