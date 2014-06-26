@@ -1,5 +1,3 @@
-from collections import defaultdict
-import logging
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -174,6 +172,10 @@ def _html_interpolate_output_refs(itext_value, context):
         return itext_value
 
 
+def _group_question_has_response(question):
+    return any(child.response for child in question.children)
+
+
 def zip_form_data_and_questions(relative_data, questions, path_context='',
                                 output_context=None, process_label=None,
                                 absolute_data=None):
@@ -203,7 +205,6 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         node = pop_from_form_data(relative_data, absolute_data, path)
         # response=True on a question with children indicates that one or more
         # child has a response, i.e. that the entire group wasn't skipped
-        node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
         if question.type in ('Group', 'FieldList'):
@@ -217,10 +218,9 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                     process_label=process_label,
                     absolute_data=absolute_data,
                 ),
-                response=node_true_or_none,
                 **question_data
             )
-            if form_question.children:
+            if _group_question_has_response(form_question):
                 form_question.response = True
         elif question.type == 'Repeat':
             if not isinstance(node, list):
@@ -237,13 +237,16 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                             process_label=process_label,
                             absolute_data=absolute_data,
                         ),
-                        response=node_true_or_none,
                     )
                     for entry in node
                 ],
-                response=node_true_or_none,
                 **question_data
             )
+            for child in form_question.children:
+                if _group_question_has_response(child):
+                    child.response = True
+            if _group_question_has_response(form_question):
+                form_question.response = True
         else:
             if (question.type == 'DataBindOnly'
                     and question.label == question.value):
