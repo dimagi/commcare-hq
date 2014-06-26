@@ -138,7 +138,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             self._update(bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            bundle.obj.retire()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
