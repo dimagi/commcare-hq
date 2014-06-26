@@ -3321,6 +3321,8 @@ class RemoteApp(ApplicationBase):
     def get_questions(self, xmlns):
         if not self.questions_map:
             self.questions_map = self.make_questions_map()
+            if not self.questions_map:
+                return []
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
