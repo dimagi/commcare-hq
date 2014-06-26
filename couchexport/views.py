@@ -48,11 +48,6 @@ def export_data(request, **kwargs):
     else:
         return HttpResponse("Sorry, there was no data found for the tag '%s'." % export_tag)
 
-def view_export_group(request, group_id):
-    group = GroupExportConfiguration.get(group_id)
-    return render_to_response('couchexport/export_group.html',
-                              {"group" : group},
-                               context_instance=RequestContext(request))
 
 def download_saved_export(request, export_id):
     export = SavedBasicExport.get(export_id)

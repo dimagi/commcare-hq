@@ -18,3 +18,7 @@ class SchemaMismatchException(CouchExportException):
 
 class UnsupportedExportFormat(CouchExportException):
     pass
+
+
+class ExportRebuildError(CouchExportException):
+    pass

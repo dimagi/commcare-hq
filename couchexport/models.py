@@ -738,6 +738,19 @@ class ExportConfiguration(DocumentSchema):
     def __repr__(self):
         return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
 
+
+class GroupExportComponent(object):
+    """
+    Helper wrapper class for components of a GroupExportConfiguration
+    """
+
+    def __init__(self, config, saved_version, group_id, index):
+        self.config = config
+        self.saved_version = saved_version
+        self.group_id = group_id
+        self.index = index
+
+
 class GroupExportConfiguration(Document):
     """
     An export configuration allows you to setup a collection of exports
@@ -778,21 +791,24 @@ class GroupExportConfiguration(Document):
             include_docs=True,
             reduce=False,
         ).all()
-        export_map = dict((json.dumps(export.configuration.index), export)
-            for export in exports)
-        return [(config, export_map.get(json.dumps(config.index), None))
-            for config in configs]
+        export_map = dict((json.dumps(export.configuration.index), export) for export in exports)
+        return [
+            GroupExportComponent(
+                config, export_map.get(json.dumps(config.index), None),
+                self._id, list(self.all_configs).index(config)
+            )
+            for config in configs
+        ]
 
     @property
+    @memoized
     def all_configs(self):
         """
         Return an iterator of config-like objects that include the
         main configs + the custom export configs.
         """
-        for full in self.full_exports:
-            yield full
-        for custom in self.get_custom_exports():
-            yield custom.to_export_config()
+        return [full for full in self.full_exports] + \
+               [custom.to_export_config() for custom in self.get_custom_exports()]
 
     @property
     def all_export_schemas(self):
