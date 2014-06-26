@@ -218,7 +218,7 @@ class IndicatorXpath(InstanceXpath):
 
     @property
     def id(self):
-        return u'{}'.format(self)
+        return self
 
 
 class CommCareSession(object):

@@ -838,7 +838,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @staticmethod
     def get_required_instances(xpaths):
-        instance_re = r"""instance\(['"](.+?)['"]\)"""
+        instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
         instances = set()
         for xpath in xpaths:
             instance_names = re.findall(instance_re, xpath)
