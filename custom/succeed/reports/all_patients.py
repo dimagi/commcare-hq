@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext as _, ugettext_noop
-from custom.succeed.reports.patient_details import SucceedNavigationMixin
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.api.es import ReportCaseES
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
@@ -9,7 +8,6 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, DomainMembershipError
 from corehq.elastic import es_query
 from corehq.pillows.base import restore_property_dict
@@ -141,7 +139,7 @@ class PatientListReportDisplay(CaseDisplay):
             return EMPTY_FIELD
 
 
-class PatientListReport(CustomProjectReport, CaseListReport, SucceedNavigationMixin):
+class PatientListReport(CustomProjectReport, CaseListReport):
 
     ajax_pagination = True
     name = ugettext_noop('Patient List')
@@ -154,6 +152,14 @@ class PatientListReport(CustomProjectReport, CaseListReport, SucceedNavigationMi
               'custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientStatus',
               'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+        if user and (is_succeed_admin(user) or has_any_role(user)):
+            return True
+        return False
 
     @property
     @memoized

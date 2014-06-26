@@ -1,28 +1,16 @@
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from django.utils import html
 from dimagi.utils.decorators.memoized import memoized
-from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, \
-    is_succeed_admin, has_any_role
+from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME
 from casexml.apps.case.models import CommCareCase
 
 EMPTY_URL = ''
 
 
-class SucceedNavigationMixin(object):
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
-        if user and (is_succeed_admin(user) or has_any_role(user)):
-            return True
-        return False
-
-
-class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin, SucceedNavigationMixin):
+class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
 
     report_template_path = ""
 
@@ -31,6 +19,12 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     flush_layout = True
     fields = []
     es_results=None
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+        return False
 
     def get_case(self):
         if self.request.GET.get('patient_id', None) is None:
