@@ -922,17 +922,6 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return results
 
-    def get_indicator_instances(self, module, form=None):
-        indicator_sets = []
-        for _, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                if column.field_type == FIELD_TYPE_INDICATOR:
-                    indicator_set, _ = column.field_property.split('/', 1)
-                    if indicator_set not in indicator_sets:
-                        indicator_sets.append(indicator_set)
-                        yield Instance(id=self.id_strings.indicator_instance(indicator_set),
-                                       src='jr://fixture/indicators:%s' % indicator_set)
-
     def add_assertion(self, entry, test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
