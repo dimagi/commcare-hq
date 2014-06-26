@@ -7,6 +7,7 @@ import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.xpath import ProductInstanceXpath
@@ -825,12 +826,41 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
         return detail_id if detail_id in self.get_detail_mapping() else None
 
+    def get_instances_for_module(self, module):
+        details_by_id = self.get_detail_mapping()
+        detail_ids = [self.id_strings.detail(module, detail_type)
+                      for detail_type, detail, enabled in module.get_details()]
+        xpaths = set()
+        for detail_id in detail_ids:
+            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+
+        return SuiteGenerator.get_required_instances(xpaths)
+
+    @staticmethod
+    def get_required_instances(xpaths):
+        instance_re = r"""instance\(['"](.+?)['"]\)"""
+        instances = set()
+        for xpath in xpaths:
+            instance_names = re.findall(instance_re, xpath)
+            for instance_name in instance_names:
+                try:
+                    scheme, _ = instance_name.split(':', 1)
+                except ValueError:
+                    scheme = None
+
+                factory = get_instance_factory(scheme)
+                instance = factory(instance_name)
+                if instance:
+                    instances.add(instance)
+                else:
+                    raise UnknownInstanceError("Instance reference not recognized: {}".format(instance_name))
+        return instances
+
     @staticmethod
     def add_referenced_instances(entry, details_by_id, relevance_by_id):
         detail_ids = set()
         xpaths = set()
 
-        instance_re = r"""instance\(['"](.+?)['"]\)"""
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
@@ -855,19 +885,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         xpaths.add(datum.value)
         xpaths.discard(None)
 
-        instances = set()
-        for xpath in xpaths:
-            instance_names = re.findall(instance_re, xpath)
-            for instance_name in instance_names:
-                try:
-                    scheme, _ = instance_name.split(':', 1)
-                except ValueError:
-                    scheme = None
-
-                factory = get_instance_factory(scheme)
-                instance = factory(instance_name)
-                if instance:
-                    instances.add(instance)
+        instances = SuiteGenerator.get_required_instances(xpaths)
 
         entry.require_instance(*instances)
 

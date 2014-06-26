@@ -240,7 +240,7 @@ def filter_cases(request, domain, app_id, module_id):
     suite_gen = SuiteGenerator(app)
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
-                       for inst in suite_gen.get_extra_instances(module)]
+                       for inst in suite_gen.get_instances_for_module(module)]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
