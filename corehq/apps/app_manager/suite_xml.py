@@ -827,6 +827,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         return detail_id if detail_id in self.get_detail_mapping() else None
 
     def get_instances_for_module(self, module):
+        """
+        This method is used by CloudCare when filtering cases.
+        """
         details_by_id = self.get_detail_mapping()
         detail_ids = [self.id_strings.detail(module, detail_type)
                       for detail_type, detail, enabled in module.get_details()]
