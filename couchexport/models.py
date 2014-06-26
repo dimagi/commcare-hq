@@ -750,10 +750,6 @@ class GroupExportComponent(object):
         self.group_id = group_id
         self.index = index
 
-    def __iter__(self):
-        yield self.config
-        yield self.saved_version
-
 
 class GroupExportConfiguration(Document):
     """
