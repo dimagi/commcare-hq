@@ -139,7 +139,6 @@ define(['module'], function (module) {
         paths: {
             'vellum': '.',
 
-            'classy': '../bower_components/classy/classy',
             'codemirror': '../lib/codemirror/xml',
             'codemirrorBase': '../lib/codemirror/codemirror',
             'CryptoJS': '../lib/sha1',
@@ -171,9 +170,6 @@ define(['module'], function (module) {
             'file-uploader': '../bower_components/MediaUploader/hqmedia.upload_controller',
         },
         shim: {
-            'classy': {
-                exports: 'Class'
-            },
             'codemirror': {
                 deps: ['codemirrorBase', 'css!../lib/codemirror/codemirror'],
                 exports: 'CodeMirror',
@@ -338,7 +334,6 @@ define(['module'], function (module) {
                 name: 'local-deps',
                 include: [
                     'underscore',
-                    'classy',
                     'jquery.jstree',
                     'jquery.fancybox',
                     'jquery.bootstrap-popout',
