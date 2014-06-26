@@ -349,6 +349,7 @@ def hq_download_saved_export(req, domain, export_id):
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
 
+
 @login_or_digest
 @require_form_export_permission
 @require_POST
@@ -360,7 +361,9 @@ def hq_update_saved_export(req, domain):
     config, schema = group_config.all_exports[index]
     rebuild_export(config, schema, 'couch')
     messages.success(req, _('The data for {} has been refreshed!').format(config.name))
-    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(), args=[domain, ExcelExportReport.slug]))
+    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
+                                        args=[domain, req.POST['report_slug']]))
+
 
 @login_or_digest
 @require_form_export_permission
