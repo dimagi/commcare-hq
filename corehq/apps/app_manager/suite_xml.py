@@ -832,7 +832,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         """
         details_by_id = self.get_detail_mapping()
         detail_ids = [self.id_strings.detail(module, detail_type)
-                      for detail_type, detail, enabled in module.get_details()]
+                      for detail_type, detail, enabled in module.get_details()
+                      if enabled]
         xpaths = set()
         for detail_id in detail_ids:
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
