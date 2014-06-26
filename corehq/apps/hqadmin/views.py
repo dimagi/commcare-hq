@@ -125,7 +125,7 @@ def active_users(request):
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
 
-@require_superuser_or_developer
+@require_superuser
 def global_report(request, template="hqadmin/global.html", as_export=False):
 
     def _flot_format(result):
@@ -210,15 +210,12 @@ def global_report(request, template="hqadmin/global.html", as_export=False):
 
     return render(request, template, context)
 
-@require_superuser_or_developer
+@require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
     menu = CommCareBuildConfig.fetch().menu
     builds = [item.build.to_string() for item in menu]
     by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
-    domains = WebUser.get_by_username(request.user.username).get_domains()
-    if not request.user.is_superuser and IS_DEVELOPER.enabled(request.user.username):
-        apps = filter(lambda a: a['value']['domain'] in domains, apps)
 
     for app in apps:
         app = app['value']
@@ -250,8 +247,7 @@ def _cacheable_domain_activity_report(request):
     dates = []
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
-    domains_list = _get_domains(request.user)
-    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in domains_list]
+    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in Domain.get_all()]
 
     for domain in domains:
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
@@ -278,7 +274,7 @@ def _cacheable_domain_activity_report(request):
 
     return HttpResponse(json.dumps({'domains': domains, 'landmarks': landmarks}))
 
-@require_superuser_or_developer
+@require_superuser
 def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     context = get_hqadmin_base_context(request)
     context.update(json.loads(_cacheable_domain_activity_report(request).content))
@@ -295,21 +291,12 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     return render(request, template, context)
 
 
-def _get_domains(user):
-    if user.is_superuser:
-        domains = Domain.get_all()
-    else:
-        domains = filter(lambda x: x is not None,
-                         [Domain.get_by_name(domain) for domain in WebUser.get_by_username(user.username).get_domains()])
-    return domains
-
 @datespan_default
-@require_superuser_or_developer
+@require_superuser
 def message_log_report(request):
     show_dates = True
-    
     datespan = request.datespan
-    domains = _get_domains(request.user)
+    domains = Domain.get_all()
 
     for dom in domains:
         dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
@@ -345,11 +332,11 @@ def emails(request):
     return HttpResponse('"' + '", "'.join(email_list) + '"')
 
 @datespan_default
-@require_superuser_or_developer
+@require_superuser
 def submissions_errors(request, template="hqadmin/submissions_errors_report.html"):
     show_dates = "true"
     datespan = request.datespan
-    domains = _get_domains(request.user)
+    domains = Domain.get_all()
 
     rows = []
     for domain in domains:
@@ -401,18 +388,13 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     return render(request, template, context)
 
 
-@require_superuser_or_developer
+@require_superuser
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
     _device_users_by_xform = memoized(device_users_by_xform)
-
     rows = []
-    user = request.user
-    if not user.is_superuser and IS_DEVELOPER.enabled(user.username):
-        domains = WebUser.get_by_username(request.user.username).get_domains()
-        logs = DeviceReportEntry.objects.filter(type__exact="user-report").filter(domain__in=domains).order_by('domain')
-    else:
-        logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
+
+    logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
     for log in logs:
         seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
         rows.append(dict(domain=log.domain,
@@ -839,7 +821,7 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
     }
 
 
-@require_superuser_or_developer
+@require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
@@ -875,7 +857,7 @@ def stats_data(request):
     return json_response(stats_data)
 
 
-@require_superuser_or_developer
+@require_superuser
 def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html

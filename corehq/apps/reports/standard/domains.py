@@ -266,12 +266,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
     def es_query(self, params=None, size=None):
         size = size if size is not None else self.pagination.count
-        domains = None
-        user = self.request.user
-        if not user.is_superuser and IS_DEVELOPER.enabled(user.username):
-            domains = WebUser.get_by_username(user.username).get_domains()
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                               start_at=self.pagination.start, size=size, domains=domains)
+                               start_at=self.pagination.start, size=size)
 
     @property
     def headers(self):

@@ -6,7 +6,6 @@ class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
         self.label = label
-
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -94,7 +93,6 @@ ANDROID_OFFLINE_INSTALL = StaticToggle(
     'Android Offline Install',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
-
 
 IS_DEVELOPER = StaticToggle(
     'is_developer',

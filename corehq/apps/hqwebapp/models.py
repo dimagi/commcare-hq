@@ -1156,14 +1156,19 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
-        admin_operations = []
-        if self.couch_user:
-            if self.couch_user.is_superuser:
-                admin_operations = [
-                    {'title': _('View/Update Domain Information'),
-                     'url': reverse('domain_update')},
-                ]
+        if self.couch_user and (not self.couch_user.is_superuser and IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [
+            (_('Administrative Reports'), [
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
+            ])]
 
+        admin_operations = [
+                    {'title': _('View/Update Domain Information'),
+                     'url': reverse('domain_update')}
+                    ]
+
+        if self.couch_user:
             if self.couch_user.is_staff:
                 admin_operations.extend([
                     {'title': _('Mass Email Users'),
@@ -1171,7 +1176,7 @@ class AdminReportsTab(UITab):
                     {'title': _('PillowTop Errors'),
                     'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
                 ])
-        items = [
+        return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                 'url': reverse('admin_report_dispatcher', args=('domains',))},
@@ -1195,10 +1200,7 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ])]
-        if admin_operations:
-            items.append((_('Administrative Operations'), admin_operations))
-        return items
+            ]), (_('Administrative Operations'), admin_operations)]
 
     @property
     def is_viewable(self):

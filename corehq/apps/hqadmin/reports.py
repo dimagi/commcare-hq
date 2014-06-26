@@ -12,7 +12,6 @@ from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
 from corehq.toggles import IS_DEVELOPER
 
 
-
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = "hqadmin/faceted_report.html"
@@ -70,12 +69,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
             params = {}
         terms = ['search']
         q = {"query": {"match_all":{}}}
-        user = self.request.user
-        if not user.is_superuser and IS_DEVELOPER.enabled(user.username):
-            domains = WebUser.get_by_username(user.username).get_domains()
-            if 'domain' not in params:
-                params['domain'] = domains
-
 
         search_query = params.get('search', "")
         if search_query:

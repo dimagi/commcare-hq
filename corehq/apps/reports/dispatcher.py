@@ -129,7 +129,7 @@ class ReportDispatcher(View):
         cls = self.get_report(domain, report_slug)
         class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
 
-        if cls and (self.permissions_check(class_name, request, domain=domain) or IS_DEVELOPER.enabled(request.couch_user.username)):
+        if cls and (self.permissions_check(class_name, request, domain=domain)):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
