@@ -29,7 +29,10 @@ class CopyApplicationForm(forms.Form):
 
     def clean_domain(self):
         domain_name = self.cleaned_data['domain']
-        domain = Domain.get_by_name(domain_name)
+        try:
+            domain = Domain.get_by_name(domain_name)
+        except UnicodeEncodeError:
+            domain = None
         if domain is None:
             raise forms.ValidationError("A valid project space is required.")
         return domain_name
