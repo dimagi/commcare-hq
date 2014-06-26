@@ -53,7 +53,7 @@ class PatientInteractionsReport(PatientDetailsReport):
                     interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
                     try:
                         user = self.get_user(action['user_id'])
-                        interaction['completed_by'] = user.raw_username
+                        interaction['completed_by'] = user.human_friendly_name
                     except ResourceNotFound:
                         interaction['completed_by'] = EMPTY_FIELD
                     del ret['patient']['actions'][key]
