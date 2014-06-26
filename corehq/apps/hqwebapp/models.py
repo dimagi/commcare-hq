@@ -1371,7 +1371,10 @@ class ExchangeTab(UITab):
 
     @property
     def is_viewable(self):
-        return not self.couch_user.is_commcare_user()
+        return not self.couch_user.is_commcare_user() and (
+            self.couch_user.can_edit_apps()
+            or self.couch_user.can_edit_commcare_users()
+        )
 
 
 class OrgTab(UITab):
