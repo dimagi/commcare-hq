@@ -166,7 +166,7 @@
         </header>
         <template>
             <text>
-                <xpath function="instance('indicators_call-center')/indicators/case[@id = current()/@case_id]/activeClientsLast30Day"/>
+                <xpath function="instance('indicators:call-center')/indicators/case[@id = current()/@case_id]/activeClientsLast30Day"/>
             </text>
         </template>
     </field>
@@ -297,7 +297,7 @@
         </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="indicators_call-center" src="jr://fixture/indicators:call-center"/>
+    <instance id="indicators:call-center" src="jr://fixture/indicators:call-center"/>
     <session>
         <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open'][(filter = 'danny')]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
