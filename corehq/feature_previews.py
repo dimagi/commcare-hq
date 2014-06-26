@@ -104,3 +104,14 @@ COMMTRACK = FeaturePreview(
     help_link='https://confluence.dimagi.com/display/commtrack/CommTrack+Home',
     save_fn=commtrackify,
 )
+
+
+MM_CASE_PROPERTIES = FeaturePreview(
+    slug='mm_case_properties',
+    label=_('Multimedia Case Properties'),
+    description=_(
+        "Allow mutlimedia questions to be added to a case and to be displayed"
+        "in the case list."
+    ),
+)
+
