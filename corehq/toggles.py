@@ -2,11 +2,11 @@ from functools import wraps
 from django.http import Http404
 from toggle.shortcuts import toggle_enabled
 
-
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
         self.label = label
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -93,4 +93,9 @@ ANDROID_OFFLINE_INSTALL = StaticToggle(
     'android_offline_install',
     'Android Offline Install',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+IS_DEVELOPER = StaticToggle(
+    'is_developer',
+    'Is developer'
 )

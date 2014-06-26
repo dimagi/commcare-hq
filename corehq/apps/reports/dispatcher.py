@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.toggles import IS_DEVELOPER
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -130,7 +131,7 @@ class ReportDispatcher(View):
 
         from corehq.apps.reports.util import is_mobile_worker_with_report_access
         if (cls and self.permissions_check(class_name, request, domain=domain)
-                or is_mobile_worker_with_report_access(request.couch_user, request.domain)):
+                or is_mobile_worker_with_report_access(request.couch_user, domain) or IS_DEVELOPER.enabled(request.couch_user.username)):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:

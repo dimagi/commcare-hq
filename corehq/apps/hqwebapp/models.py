@@ -24,6 +24,7 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+from corehq.toggles import IS_DEVELOPER
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -1162,20 +1163,22 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+        admin_operations = []
+        if self.couch_user:
+            if self.couch_user.is_superuser:
+                admin_operations = [
+                    {'title': _('View/Update Domain Information'),
+                     'url': reverse('domain_update')},
+                ]
 
-        admin_operations = [
-            {'title': _('View/Update Domain Information'),
-             'url': reverse('domain_update')},
-        ]
-
-        if self.couch_user and self.couch_user.is_staff:
-            admin_operations.extend([
-                {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')},
-                {'title': _('PillowTop Errors'),
-                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
-            ])
-        return [
+            if self.couch_user.is_staff:
+                admin_operations.extend([
+                    {'title': _('Mass Email Users'),
+                     'url': reverse('mass_email')},
+                    {'title': _('PillowTop Errors'),
+                    'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+                ])
+        items = [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                 'url': reverse('admin_report_dispatcher', args=('domains',))},
@@ -1199,13 +1202,14 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]),
-            (_('Administrative Operations'), admin_operations)
-        ]
+            ])]
+        if admin_operations:
+            items.append((_('Administrative Operations'), admin_operations))
+        return items
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class GlobalADMConfigTab(UITab):
@@ -1319,6 +1323,8 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
+        if self.couch_user and not self.couch_user.is_superuser and (IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [format_submenu_context(_("System Info"), url=reverse("system_info"))]
         submenu_context = [
             format_submenu_context(_("Reports"), is_header=True),
             format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
@@ -1350,7 +1356,7 @@ class AdminTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class ExchangeTab(UITab):

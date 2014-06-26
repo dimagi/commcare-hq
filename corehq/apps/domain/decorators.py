@@ -25,6 +25,7 @@ from corehq.apps.users.models import CouchUser, PublicUser
 from corehq import toggles, privileges
 
 ########################################################################################################
+from corehq.toggles import IS_DEVELOPER
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +192,19 @@ def domain_admin_required_ex(redirect_page_name=None):
 
         return _inner
     return _outer
+
+
+def require_superuser_or_developer(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
 
 # Parallel to what we did with login_and_domain_required, above
 domain_admin_required = domain_admin_required_ex()

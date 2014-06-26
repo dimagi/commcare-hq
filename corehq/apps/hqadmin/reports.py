@@ -4,10 +4,13 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
+from corehq.toggles import IS_DEVELOPER
+
 
 
 class AdminReport(GenericTabularReport):
@@ -67,6 +70,12 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
             params = {}
         terms = ['search']
         q = {"query": {"match_all":{}}}
+        user = self.request.user
+        if not user.is_superuser and IS_DEVELOPER.enabled(user.username):
+            domains = WebUser.get_by_username(user.username).get_domains()
+            if 'domain' not in params:
+                params['domain'] = domains
+
 
         search_query = params.get('search', "")
         if search_query:
@@ -83,7 +92,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         q["sort"] = self.get_sorting_block()
         start_at=self.pagination.start
         size = size if size is not None else self.pagination.count
-
         return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size, facet_size=25)
 
     @property

@@ -47,7 +47,7 @@ from corehq.apps.users.util import format_username
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
@@ -62,6 +62,7 @@ from phonelog.utils import device_users_by_xform
 from pillowtop import get_all_pillows_json
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
+from corehq.toggles import IS_DEVELOPER
 
 from .multimech import GlobalConfig
 
@@ -124,7 +125,7 @@ def active_users(request):
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
 
-@require_superuser
+@require_superuser_or_developer
 def global_report(request, template="hqadmin/global.html", as_export=False):
 
     def _flot_format(result):
@@ -209,12 +210,15 @@ def global_report(request, template="hqadmin/global.html", as_export=False):
 
     return render(request, template, context)
 
-@require_superuser
+@require_superuser_or_developer
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
     menu = CommCareBuildConfig.fetch().menu
     builds = [item.build.to_string() for item in menu]
     by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
+    domains = WebUser.get_by_username(request.user.username).get_domains()
+    if not request.user.is_superuser and IS_DEVELOPER.enabled(request.user.username):
+        apps = filter(lambda a: a['value']['domain'] in domains, apps)
 
     for app in apps:
         app = app['value']
@@ -246,8 +250,8 @@ def _cacheable_domain_activity_report(request):
     dates = []
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
-
-    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in Domain.get_all()]
+    domains_list = _get_domains(request.user)
+    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in domains_list]
 
     for domain in domains:
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
@@ -274,7 +278,7 @@ def _cacheable_domain_activity_report(request):
 
     return HttpResponse(json.dumps({'domains': domains, 'landmarks': landmarks}))
 
-@require_superuser
+@require_superuser_or_developer
 def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     context = get_hqadmin_base_context(request)
     context.update(json.loads(_cacheable_domain_activity_report(request).content))
@@ -290,13 +294,23 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     context["aoColumns"] = headers.render_aoColumns
     return render(request, template, context)
 
+
+def _get_domains(user):
+    if user.is_superuser:
+        domains = Domain.get_all()
+    else:
+        domains = filter(lambda x: x is not None,
+                         [Domain.get_by_name(domain) for domain in WebUser.get_by_username(user.username).get_domains()])
+    return domains
+
 @datespan_default
-@require_superuser
+@require_superuser_or_developer
 def message_log_report(request):
     show_dates = True
     
     datespan = request.datespan
-    domains = Domain.get_all()
+    domains = _get_domains(request.user)
+
     for dom in domains:
         dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
         dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
@@ -331,11 +345,11 @@ def emails(request):
     return HttpResponse('"' + '", "'.join(email_list) + '"')
 
 @datespan_default
-@require_superuser
+@require_superuser_or_developer
 def submissions_errors(request, template="hqadmin/submissions_errors_report.html"):
     show_dates = "true"
     datespan = request.datespan
-    domains = Domain.get_all()
+    domains = _get_domains(request.user)
 
     rows = []
     for domain in domains:
@@ -387,14 +401,18 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     return render(request, template, context)
 
 
-@require_superuser
+@require_superuser_or_developer
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
     _device_users_by_xform = memoized(device_users_by_xform)
 
     rows = []
-
-    logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
+    user = request.user
+    if not user.is_superuser and IS_DEVELOPER.enabled(user.username):
+        domains = WebUser.get_by_username(request.user.username).get_domains()
+        logs = DeviceReportEntry.objects.filter(type__exact="user-report").filter(domain__in=domains).order_by('domain')
+    else:
+        logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
     for log in logs:
         seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
         rows.append(dict(domain=log.domain,
@@ -423,6 +441,7 @@ def mobile_user_reports(request):
     context["rows"] = rows
 
     return render(request, template, context)
+
 
 @require_superuser
 def mass_email(request):
@@ -575,7 +594,7 @@ def domain_list_download(request):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
 
-@require_superuser
+@require_superuser_or_developer
 def system_ajax(request):
     """
     Utility ajax functions for polling couch and celerymon
@@ -634,7 +653,7 @@ def system_ajax(request):
     return HttpResponse('{}', mimetype='application/json')
 
 
-@require_superuser
+@require_superuser_or_developer
 def system_info(request):
     environment = settings.SERVER_ENVIRONMENT
 
@@ -821,7 +840,7 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
     }
 
 
-@require_superuser
+@require_superuser_or_developer
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
@@ -857,7 +876,7 @@ def stats_data(request):
     return json_response(stats_data)
 
 
-@require_superuser
+@require_superuser_or_developer
 def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html
