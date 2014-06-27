@@ -1,17 +1,47 @@
+# coding=utf-8
 from corehq.apps.commtrack.models import Product
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 
 
-class IntraHealtMixin(object):
+class IntraHealthLocationMixin(object):
+    @property
+    def location(self):
+        loc = Location.get(self.request.GET.get('location_id'))
+        return loc
+
+
+class IntraHealthReportConfigMixin(object):
+
+    def config_update(self, config):
+        if self.request.GET.get('location_id', ''):
+            if self.location.location_type.lower() == 'district':
+                config.update(dict(district_id=self.location._id))
+            else:
+                config.update(dict(region_id=self.location._id))
+
+    @property
+    def report_config(self):
+        config = dict(
+            domain=self.domain,
+            startdate=self.datespan.startdate,
+            enddate=self.datespan.enddate,
+            visit="''",
+        )
+        self.config_update(config)
+        return config
+
+
+class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     model = None
     groups = []
     no_value = {'sort_key': 0, 'html': 0}
 
     PRODUCT_NAMES = {
-        'Preservatif Feminin': u'Pr\xe9servatif F\xe9minin',
-        'Preservatif Masculin': u'Pr\xe9servatif Masculin',
-        'Depo-Provera': u'D\xe9po-Provera',
+        'Preservatif Feminin': u'Préservatif Féminin',
+        'Preservatif Masculin': u'Préservatif Masculin',
+        'Depo-Provera': u'Dépo-Provera',
     }
 
     def _safe_get(self, dictionary, element):
@@ -27,8 +57,8 @@ class IntraHealtMixin(object):
             header.add_column(columns[0].data_tables_column)
 
         if self.model.data.keys():
-            grps = list(set(zip(*self.model.data.keys())[0]))
-            self.groups = sorted(set(map(lambda group: self._safe_get(self.PRODUCT_NAMES, group) or group, grps)))
+            groups = list(set(zip(*self.model.data.keys())[0]))
+            self.groups = sorted({self._safe_get(self.PRODUCT_NAMES, group) or group for group in groups})
         else:
             self.groups = [group.name for group in Product.by_domain(self.domain)]
         for group in self.groups:

@@ -6,32 +6,20 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from custom.intrahealth.filters import RecapPassageLocationFilter
+from custom.intrahealth.reports import IntraHealthLocationMixin, IntraHealthReportConfigMixin
 from custom.intrahealth.sqldata import RecapPassageData
 
 
-class RecapPassageReport(DatespanMixin, GenericTabularReport, CustomProjectReport):
+class RecapPassageReport(DatespanMixin, GenericTabularReport, CustomProjectReport, IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     name = "Recap Passage"
     slug = 'recap_passage'
     report_title = "Recap Passage"
     fields = [DatespanFilter, RecapPassageLocationFilter]
 
-    @property
-    def location(self):
-        loc = Location.get(self.request.GET.get('location_id'))
-        return loc
-
-    @property
-    def report_config(self):
-        config = dict(
-            domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
-            visit="''",
-        )
+    def config_update(self, config):
         if self.request.GET.get('location_id', ''):
             if self.location.location_type.lower() == 'pps':
                 config.update(dict(PPS_name=self.location.name))
-        return config
 
     @property
     def model(self):

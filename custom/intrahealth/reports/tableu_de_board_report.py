@@ -102,10 +102,11 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
         return [chart]
 
     def _chart_data(self, chart, series, data):
-        charts = []
-        for i, s in enumerate(series):
-            charts.append({'x': s, 'y': data[i+1]})
-        chart.add_dataset('products', charts)
+        if data:
+            charts = []
+            for i, s in enumerate(series):
+                charts.append({'x': s, 'y': data[i+1]})
+            chart.add_dataset('products', charts)
 
 class TableuDeBoardReport(MultiReport):
     title = "Tableu De Bord"
@@ -113,27 +114,6 @@ class TableuDeBoardReport(MultiReport):
     name = "Tableu De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
-
-    @property
-    def location(self):
-        loc = Location.get(self.request.GET.get('location_id'))
-        return loc
-
-    @property
-    def report_config(self):
-        config = dict(
-            domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
-            visit="",
-        )
-        if self.request.GET.get('location_id', ''):
-            if self.location.location_type.lower() == 'district':
-                config.update(dict(district_id=self.location._id))
-            else:
-                config.update(dict(region_id=self.location._id))
-
-        return config
 
     @property
     @memoized

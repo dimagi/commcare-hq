@@ -23,7 +23,7 @@ $(function() {
   var selected = '{{ loc_id }}';
   var hierarchy = {{ hierarchy|JSON }};
 
-  var model = new IntrahealthLocViewModel(hierarchy);
+  var model = new LocationSelectViewModel(hierarchy, false, null, false, IntrahealthLocModel);
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
   model.load(locs, selected);
 
