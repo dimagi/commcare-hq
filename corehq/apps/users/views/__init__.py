@@ -346,6 +346,12 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     @memoized
+    def web_users(self):
+        users = super(ListWebUsersView, self).web_users
+        return sorted(users, key=lambda x: (x.role_label(), x.email))
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(UserRole.by_domain(self.domain),
