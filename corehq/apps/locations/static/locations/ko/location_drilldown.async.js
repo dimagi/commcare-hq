@@ -8,12 +8,13 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter) {
+function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func) {
   var model = this;
 
   this.default_caption = default_caption || 'All';
   this.auto_drill = (auto_drill == null ? true : auto_drill);
   this.loc_filter = loc_filter || function(loc) { return true; };
+  this.func = typeof func !== 'undefined' ? func : LocationModel;
 
 
   this.root = ko.observable();
@@ -68,7 +69,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
   // load location hierarchy and set initial path
   this.load = function(locs, selected, restriction) {
-    this.root(new LocationModel({name: '_root', children: locs, 'restriction': restriction}, this));
+    this.root(new model.func({name: '_root', children: locs, 'restriction': restriction}, this));
     this.path_push(this.root());
 
     if (selected) {
@@ -85,7 +86,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
   }
 }
 
-function LocationModel(data, root, depth) {
+function LocationModel(data, root, depth, func, withAllOption) {
   var loc = this;
 
   this.name = ko.observable();
@@ -95,7 +96,10 @@ function LocationModel(data, root, depth) {
   this.children = ko.observableArray();
   this.depth = depth || 0;
   this.children_loaded = false;
-  
+  this.func = typeof func !== 'undefined' ? func : LocationModel;
+  this.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
+
+
   this.display_name = ko.computed(function() {
       return this.name() == '_all' ? root.default_caption : this.name();
     }, this);
@@ -158,10 +162,11 @@ function LocationModel(data, root, depth) {
       //'all choices' meta-entry; annoying that we have to stuff this in
       //the children list, but all my attempts to make computed observables
       //based of children() caused infinite loops.
-      children.splice(0, 0, {name: '_all'});
+      if(loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED))
+        children.splice(0, 0, {name: '_all'});
     }
     this.children($.map(children, function(e) {
-        var child = new LocationModel(e, root, loc.depth + 1);
+        var child = new loc.func(e, root, loc.depth + 1);
         return (child.filter() ? child : null);
       }));
     this.children_loaded = true;

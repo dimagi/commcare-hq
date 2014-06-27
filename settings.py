@@ -291,6 +291,7 @@ HQ_APPS = (
     'custom.uth',
 
     'custom.colalife',
+    'custom.intrahealth',
 )
 
 TEST_APPS = ()
@@ -1049,6 +1050,10 @@ PILLOWTOPS = {
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
         'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.intrahealth.models.CouvertureFluffPillow',
+        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
+        'custom.intrahealth.models.IntraHealthFluffPillow',
+        'custom.intrahealth.models.RecapPassagePillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1143,6 +1148,8 @@ DOMAIN_MODULE_MAP = {
     'gc': 'custom.trialconnect',
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
+    'ipm-senegal': 'custom.intrahealth',
+    'testing-ipm-senegal': 'custom.intrahealth',
 
     'crs-remind': 'custom.apps.crs_reports',
 
