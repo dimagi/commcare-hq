@@ -96,7 +96,7 @@ def get_questions_from_xform_node(xform, langs):
     return [FormQuestionResponse(q) for q in questions]
 
 
-def get_readable_form_data(xform):
+def get_questions_for_submission(xform):
     app_id = xform.build_id or xform.app_id
     domain = xform.domain
     xmlns = xform.xmlns
@@ -107,12 +107,25 @@ def get_readable_form_data(xform):
     except QuestionListNotFound as e:
         questions = []
         questions_error = e
-    return zip_form_data_and_questions(
-        strip_form_data(xform.form),
-        questions_in_hierarchy(questions),
-        path_context='/%s/' % xform.form.get('#type', 'data'),
-        process_label=_html_interpolate_output_refs,
+    return questions, questions_error
+
+
+def get_readable_data_for_submission(xform):
+    questions, questions_error = get_questions_for_submission(xform)
+    return get_readable_form_data(
+        xform.form,
+        questions,
+        process_label=_html_interpolate_output_refs
     ), questions_error
+
+
+def get_readable_form_data(xform_data, questions, process_label=None):
+    return zip_form_data_and_questions(
+        strip_form_data(xform_data),
+        questions_in_hierarchy(questions),
+        path_context='/%s/' % xform_data.get('#type', 'data'),
+        process_label=process_label,
+    )
 
 
 def strip_form_data(data):
@@ -190,6 +203,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
     the list, using the repeat's children as the question list.
 
     """
+    assert path_context
     absolute_data = absolute_data or relative_data
     if not path_context.endswith('/'):
         path_context += '/'
