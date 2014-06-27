@@ -144,3 +144,21 @@ class IndexTest(TestCase):
             self.fail("Submitting against a bad case in an index should fail!")
         except IllegalCaseId:
             pass
+
+    def testBadIndexReferenceDomain(self):
+        case_in_other_domain = 'text-index-mother-case'
+        parent_domain = 'parent'
+        child_domain = 'child'
+
+        post_case_blocks([
+            CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID,
+                      version=V2).as_xml()
+        ], domain=parent_domain)
+
+        block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
+                          index={'bad': ('bad-case', case_in_other_domain)})
+        try:
+            post_case_blocks([block.as_xml()], domain=child_domain)
+            self.fail("Submitting against a bad case in an index should fail!")
+        except IllegalCaseId:
+            pass
