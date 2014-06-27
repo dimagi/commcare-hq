@@ -142,7 +142,7 @@ def location_custom_properties(domain, loc_type):
     }
     prop_site_code = CustomProperty(
         name='site_code',
-        label='SMS Code',
+        label='Site Code',
         unique='global',
         help_text='A unique system code for this location. Leave this blank to have it auto generated'
     )
@@ -155,7 +155,7 @@ def location_custom_properties(domain, loc_type):
     loc_config = get_loc_config(domain)
 
     if loc_config[loc_type].administrative:
-        prop_site_code['label'] = 'Site Code'
+        prop_site_code['help_text'] = 'A unique system code for this location that will be used in SMS messages. Leave this blank to have it auto generated'
     properties.insert(0, prop_site_code)
 
     return properties
