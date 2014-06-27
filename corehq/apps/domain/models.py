@@ -1046,4 +1046,4 @@ class DomainCounter(Document):
 
 
 def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()
