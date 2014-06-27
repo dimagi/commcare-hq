@@ -1,4 +1,4 @@
-USER_INDEX="hqusers_ff853dapkb27uo1286t0m789gao495g"
+USER_INDEX="hqusers_31n2pdyzqix4hd023lv6h67771c7wer"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'comment': 'Yedi modified on 2013-01-27',
            'created': None},
