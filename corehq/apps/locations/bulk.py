@@ -128,7 +128,7 @@ def import_locations(domain, worksheets, task=None):
 def import_location(domain, location_type, location_data):
     data = dict(location_data)
 
-    provided_code = data.get('site_code', None)
+    provided_code = data.pop('site_code', None)
 
     # TODO make sure site_code isn't duplicated in the file
 
@@ -162,6 +162,8 @@ def import_location(domain, location_type, location_data):
                 }
 
             parent = parent_id or existing.parent_id
+
+    form_data['site_code'] = provided_code
 
     form_data['parent_id'] = parent
     form_data['name'] = data.pop('name')
