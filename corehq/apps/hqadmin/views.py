@@ -47,7 +47,7 @@ from corehq.apps.users.util import format_username
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
@@ -62,6 +62,7 @@ from phonelog.utils import device_users_by_xform
 from pillowtop import get_all_pillows_json
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
+from corehq.toggles import IS_DEVELOPER
 
 from .multimech import GlobalConfig
 
@@ -246,7 +247,6 @@ def _cacheable_domain_activity_report(request):
     dates = []
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
-
     domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in Domain.get_all()]
 
     for domain in domains:
@@ -290,13 +290,14 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     context["aoColumns"] = headers.render_aoColumns
     return render(request, template, context)
 
+
 @datespan_default
 @require_superuser
 def message_log_report(request):
     show_dates = True
-    
     datespan = request.datespan
     domains = Domain.get_all()
+
     for dom in domains:
         dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
         dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
@@ -391,7 +392,6 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
     _device_users_by_xform = memoized(device_users_by_xform)
-
     rows = []
 
     logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
@@ -423,6 +423,7 @@ def mobile_user_reports(request):
     context["rows"] = rows
 
     return render(request, template, context)
+
 
 @require_superuser
 def mass_email(request):
@@ -575,7 +576,7 @@ def domain_list_download(request):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
 
-@require_superuser
+@require_superuser_or_developer
 def system_ajax(request):
     """
     Utility ajax functions for polling couch and celerymon
@@ -634,7 +635,7 @@ def system_ajax(request):
     return HttpResponse('{}', mimetype='application/json')
 
 
-@require_superuser
+@require_superuser_or_developer
 def system_info(request):
     environment = settings.SERVER_ENVIRONMENT
 

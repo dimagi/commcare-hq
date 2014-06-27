@@ -24,6 +24,7 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+from corehq.toggles import IS_DEVELOPER
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -1155,6 +1156,12 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+        if self.couch_user and (not self.couch_user.is_superuser and IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [
+                (_('Administrative Reports'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                    ])]
 
         admin_operations = [
             {'title': _('View/Update Domain Information'),
@@ -1166,8 +1173,8 @@ class AdminReportsTab(UITab):
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
-                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
-            ])
+                 'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+                ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
@@ -1192,13 +1199,11 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]),
-            (_('Administrative Operations'), admin_operations)
-        ]
+            ]), (_('Administrative Operations'), admin_operations)]
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class GlobalADMConfigTab(UITab):
@@ -1312,6 +1317,8 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
+        if self.couch_user and not self.couch_user.is_superuser and (IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [format_submenu_context(_("System Info"), url=reverse("system_info"))]
         submenu_context = [
             format_submenu_context(_("Reports"), is_header=True),
             format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
@@ -1343,7 +1350,7 @@ class AdminTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class ExchangeTab(UITab):
