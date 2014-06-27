@@ -126,14 +126,24 @@ var DetailScreenConfig = (function () {
 
     function toTitleCase(str) {
         return (str
-            .replace(/_/g, ' ')
-            .replace(/-/g, ' ')
-            .replace(/\//g, ' ')
+            .replace(/[_\/-]/g, ' ')
             .replace(/#/g, '')
         ).replace(/\w\S*/g, function (txt) {
             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
         });
     }
+
+    function getPropertyTitle(property) {
+        // Strip "<prefix>:" before converting to title case.
+        // This is aimed at prefixes like ledger: and attachment:
+        var i = property.indexOf(":");
+        return toTitleCase(property.substring(i + 1));
+    }
+
+    function isAttachmentProperty(value) {
+        return value && value.indexOf("attachment:") === 0;
+    }
+
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
     var field_val_re = RegExp(
@@ -141,13 +151,6 @@ var DetailScreenConfig = (function () {
     );
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
-
-    function attachmentPrefixTransform(value) {
-        if (value && value.indexOf("attachment:") === 0) {
-            value = value.substring(11);
-        }
-        return value;
-    }
 
     Column = (function () {
         function Column(col, screen) {
@@ -169,12 +172,14 @@ var DetailScreenConfig = (function () {
             this.original.model = this.original.model || screen.model;
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
-            this.original.icon = this.original.icon || null;
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || [];
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
+            var icon = (isAttachmentProperty(this.original.field)
+                           ? COMMCAREHQ.icons.PAPERCLIP : null);
+
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
@@ -187,7 +192,7 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
-            this.field = uiElement.input(attachmentPrefixTransform).val(this.original.field);
+            this.field = uiElement.input().val(this.original.field).setIcon(icon);
             this.format_warning = field_format_warning.clone().hide();
 
             (function () {
@@ -205,7 +210,7 @@ var DetailScreenConfig = (function () {
                 }
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.ui.find('input').addClass('input-small');
-                that.header.setVisibleValue(visibleVal, that.original.icon);
+                that.header.setVisibleValue(visibleVal);
             }());
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
 
@@ -424,17 +429,6 @@ var DetailScreenConfig = (function () {
                 return column;
             }
 
-            function getPropertyInfo(property) {
-                // Strip "<prefix>:" before converting to title case.
-                // This is aimed at prefixes like ledger: and attachment:
-                var i = property.indexOf(":");
-                return {
-                    title: toTitleCase(i < 0 ? property : property.substring(i + 1)),
-                    icon: (property.indexOf("attachment:") === 0
-                           ? COMMCAREHQ.icons.PAPERCLIP : null)
-                }
-            }
-
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
 
@@ -451,7 +445,7 @@ var DetailScreenConfig = (function () {
             // set up the custom column
             this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
-                that.customColumn.header.val(toTitleCase(this.val()));
+                that.customColumn.header.val(getPropertyTitle(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
                     that.customColumn.format_warning.show().parent().addClass('error');
                 } else {
@@ -459,7 +453,14 @@ var DetailScreenConfig = (function () {
                 }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
-                    var availableTags = that.properties;
+                    var availableTags = _.map(that.properties, function(value) {
+                        var label = value;
+                        if (isAttachmentProperty(value)) {
+                            label = ('<span class="icon-paper-clip"></span> '
+                                     + label.substring(label.indexOf(":") + 1));
+                        }
+                        return {value: value, label: label};
+                    });
                     response(
                         $.ui.autocomplete.filter(availableTags,  request.term)
                     );
@@ -473,19 +474,22 @@ var DetailScreenConfig = (function () {
             }).focus(function () {
                 $(this).val("").trigger('change');
                 $(this).autocomplete('search');
-            });
+            }).data("autocomplete")._renderItem = function (ul, item) {
+                return $("<li></li>")
+                    .data("item.autocomplete", item)
+                    .append($("<a></a>").html(item.label))
+                    .appendTo(ul);
+            };
 
             // set up suggestion columns
             var info;
             for (i = 0; i < this.properties.length; i += 1) {
                 property = this.properties[i];
-                info = getPropertyInfo(property);
                 header = {};
-                header[this.lang] = info.title;
+                header[this.lang] = getPropertyTitle(property);
                 column = Column.init({
                     model: model,
                     field: property,
-                    icon: info.icon,
                     header: header,
                     includeInShort: false
                 }, this);
@@ -612,7 +616,10 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
 
                 if (!column.field.edit) {
-                    var text = column.field.ui.text();
+                    var text = column.field.val();
+                    if (isAttachmentProperty(text)) {
+                        text = text.substring(text.indexOf(":") + 1);
+                    }
                     var parts = text.split('/');
                     // wrap all parts but the last in a label style
                     for (var j = 0; j < parts.length - 1; j++) {
@@ -626,7 +633,7 @@ var DetailScreenConfig = (function () {
                         parts[j] = ('<code style="display: inline-block;">'
                                     + parts[j] + '</code>');
                     }
-                    column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
+                    column.field.setHtml(parts.join('<span style="color: #DDD;">/</span>'));
                 }
                 var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
                 dsf.append(column.format_warning);

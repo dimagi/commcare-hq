@@ -52,12 +52,11 @@ var uiElement;
 (function () {
     'use strict';
 
-    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue, noEditTransform) {
+    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
         eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
-        this.noEditTransform = noEditTransform || function (value) { return value; };
         this.edit = true;
         this.getElemValue = function () {
             return getElemValue($elem);
@@ -76,7 +75,7 @@ var uiElement;
 
         this.on('change', function () {
             this.value = this.getElemValue();
-            this.$noedit_view.text(this.noEditTransform(this.value));
+            this.$noedit_view.text(this.value);
         });
         this.setEdit(this.edit);
     };
@@ -90,7 +89,7 @@ var uiElement;
                 return this;
             }
         },
-        setVisibleValue: function (value, icon) {
+        setVisibleValue: function (value) {
             var translated = langcodeTag.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
@@ -108,11 +107,21 @@ var uiElement;
                 });
             } else
                 this.setElemValue(translated.value);
-            this.$noedit_view.text(this.noEditTransform(translated.value));
+            this.$noedit_view.text(translated.value);
+            this.setIcon(this.icon);
+            return this;
+        },
+        setHtml: function (value) {
+            this.$noedit_view.html(value);
+            this.setIcon(this.icon);
+            return this;
+        },
+        setIcon: function (icon) {
+            this.icon = icon;
             if (icon) {
-                this.$noedit_view.text(" " + this.$noedit_view.text());
-                $('<i></i>').addClass(icon).prependTo(this.$noedit_view);
+                $('<i> </i>').addClass(icon).prependTo(this.$noedit_view);
             }
+            return this;
         },
         setEdit: function (edit) {
             this.edit = edit;
@@ -128,14 +137,14 @@ var uiElement;
     };
 
     uiElement = {
-        input: function (noEditTransform) {
+        input: function () {
             return new Input($('<input type="text"/>'), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val(value);
             }, function ($elem, value){
                 return $elem.attr('placeholder', value);
-            }, noEditTransform);
+            });
         },
         textarea: function () {
             return new Input($('<textarea/>'), function ($elem) {
