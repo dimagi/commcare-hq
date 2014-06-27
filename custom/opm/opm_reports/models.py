@@ -100,13 +100,12 @@ class OpmFormFluff(fluff.IndicatorDocument):
     growth_monitoring = user_calcs.GrowthMonitoring()
 
 
-class OpmHealthStatusBasicInfoFluff(fluff.IndicatorDocument):
+class OpmHealthStatusAllInfoFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
     domains = ('opm',)
     group_by = ('domain', 'user_id')
     save_direct_to_sql = True
-
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
@@ -115,14 +114,6 @@ class OpmHealthStatusBasicInfoFluff(fluff.IndicatorDocument):
     lmp = case_calcs.Lmp()
     lactating = case_calcs.Lactating()
     children = case_calcs.LiveChildren()
-
-
-class OpmHealthStatusFluff(fluff.IndicatorDocument):
-
-    document_class = CommCareCase
-    domains = ('opm',)
-    group_by = ('domain', 'user_id')
-    save_direct_to_sql = True
 
     #aggregated field
     vhnd_monthly = case_calcs.VhndMonthly()
@@ -155,5 +146,4 @@ class OpmHealthStatusFluff(fluff.IndicatorDocument):
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
-OpmHealthStatusBasicInfoFluffPillow = OpmHealthStatusBasicInfoFluff.pillow()
-OpmHealthStatusFluffPillow = OpmHealthStatusFluff.pillow()
+OpmHealthStatusAllInfoFluffPillow = OpmHealthStatusAllInfoFluff.pillow()
