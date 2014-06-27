@@ -32,6 +32,9 @@ var PaymentMethodHandler = function (errorMessages) {
         }
         return self.newCard();
     });
+    self.hasAgreedToPrivacy = ko.computed(function() {
+        return self.selectedCard() && self.selectedCard().cardFormIsValid();
+    });
 
     self.paymentIsComplete = ko.observable(false);
     self.paymentIsNotComplete = ko.computed(function () {
@@ -286,11 +289,16 @@ var StripeCard = function () {
     self.token = ko.observable();
     self.isTestMode = ko.observable(false);
     self.isProcessing = ko.observable(false);
+    self.agreedToPrivacyPolicy = ko.observable(false);
     self.showCardData = ko.computed(function () {
        return ! self.isProcessing();
     });
     self.cardType = ko.observable();
     self.isSaved = ko.observable(false);
+
+    self.cardFormIsValid = ko.computed(function () {
+        return self.isSaved() || (!self.isSaved() && self.agreedToPrivacyPolicy());
+    });
 
     self.showErrors = ko.computed(function () {
         return !! self.errorMsg();
