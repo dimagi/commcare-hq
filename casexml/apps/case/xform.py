@@ -238,7 +238,14 @@ def get_or_update_cases(xform, case_db):
     def _validate_indices(case):
         if case.indices:
             for index in case.indices:
-                if not case_db.doc_exist(index.referenced_id):
+                try:
+                    referenced_case = CommCareCase.get_lite(index.referenced_id)
+                    if case.domain != referenced_case.domain:
+                        raise Exception(
+                            ("Submitted index against a case from a "
+                             "different domain. This is not allowed. "
+                             "Case Id: %s" % index.referenced_id))
+                except ResourceNotFound:
                     raise Exception(
                         ("Submitted index against an unknown case id: %s. "
                          "This is not allowed. Most likely your case "
