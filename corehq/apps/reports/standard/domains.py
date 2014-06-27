@@ -1,6 +1,4 @@
 from datetime import datetime
-from corehq.toggles import IS_DEVELOPER
-from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
