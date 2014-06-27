@@ -150,7 +150,6 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     default_case_type = 'participant'
 
     fields = ['custom.succeed.fields.CareSite',
-              'custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientStatus',
               'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
@@ -234,12 +233,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                         "match_all": {}
                     },
                     "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}}
-                            ],
-                            "must_not": []
-                        }
+                        "and": [
+                            {"term": { "domain.exact": "succeed" }},
+                        ]
                     }
                 }
             },
@@ -350,21 +346,23 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
-            active_dict = {"nested": {
-                "path": "actions",
-                "query": {
-                    "match": {
-                        "actions.xform_xmlns": PM3}}}}
-            if patient_status == "active":
-                es_filters["bool"]["must_not"].append(active_dict)
-            else:
-                es_filters["bool"]["must"].append(active_dict)
+            active_dict = {
+                "nested": {
+                    "path": "actions",
+                    "filter": {
+                        "bool" : {
+                            "must_not": [],
+                            "must": []
 
-        responsible_party = self.request_params.get('responsible_party', '')
-        if responsible_party != '':
-            del es_filters['bool']
-            es_filters['and'] = [{"term": { "domain.exact": "succeed" }}]
-            es_filters['and'].append({"script": self.get_visit_script(order=order, responsible_party=responsible_party)})
+                        }
+                    }
+                }
+            }
+            if patient_status == 'active':
+                active_dict['nested']['filter']['bool']['must_not'] = {"term": {"actions.xform_xmlns": PM3}}
+            else:
+                active_dict['nested']['filter']['bool']['must'] = {"term": {"actions.xform_xmlns": PM3}}
+            es_filters["and"].append(active_dict)
 
         def _filter_gen(key, flist):
             return {"terms": {
@@ -378,19 +376,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             owner_filters = _filter_gen('owner_id', owner_ids)
             user_filters = _filter_gen('user_id', user_ids)
             filters = filter(None, [owner_filters, user_filters])
-            if responsible_party:
-                subterms = []
-                subterms.append({'or': filters})
-                es_filters["and"].append({'and': subterms} if subterms else {})
-            else:
-                es_filters["bool"]["must"].append(filters[0])
-                es_filters["bool"]["must"].append(filters[1])
+            subterms = []
+            subterms.append({'or': filters})
+            es_filters["and"].append({'and': subterms} if subterms else {})
 
         if self.case_type:
-            if responsible_party:
-                es_filters["and"].append({"term": {"type.exact": 'participant'}})
-            else:
-                es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
+            es_filters["and"].append({"term": {"type.exact": 'participant'}})
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
