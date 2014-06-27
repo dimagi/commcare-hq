@@ -241,12 +241,12 @@ def get_or_update_cases(xform, case_db):
                 try:
                     referenced_case = CommCareCase.get_lite(index.referenced_id)
                     if case.domain != referenced_case.domain:
-                        raise Exception(
+                        raise IllegalCaseId(
                             ("Submitted index against a case from a "
                              "different domain. This is not allowed. "
                              "Case Id: %s" % index.referenced_id))
                 except ResourceNotFound:
-                    raise Exception(
+                    raise IllegalCaseId(
                         ("Submitted index against an unknown case id: %s. "
                          "This is not allowed. Most likely your case "
                          "database is corrupt and you should restore your "
