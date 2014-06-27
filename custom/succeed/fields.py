@@ -58,7 +58,6 @@ class ResponsibleParty(ReportSelectField):
         return [
             dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager")),
             dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker")),
-            dict(val=CONFIG['pm_role'], text=ugettext_noop("Project Manager")),
         ]
 
 

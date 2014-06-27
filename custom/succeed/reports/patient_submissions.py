@@ -51,6 +51,26 @@ class PatientSubmissionReport(PatientDetailsReport):
                         "and": [
                             {"term": {"domain.exact": self.request.domain}},
                             {"term": {"doc_type": "xforminstance"}},
+                            {
+                                "nested": {
+                                    "path": "form.case",
+                                    "filter": {
+                                        "or": [
+                                            {
+                                                "term": {
+                                                    "@case_id": "%s" % self.request.GET[
+                                                        'patient_id']
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "case_id": "%s" % self.request.GET['patient_id']
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
                         ]
                     },
                     "query": {"match_all": {}}
@@ -118,7 +138,6 @@ class PatientSubmissionReport(PatientDetailsReport):
             return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
-
     @property
     def report_context(self):
         ret = super(PatientSubmissionReport, self).report_context
