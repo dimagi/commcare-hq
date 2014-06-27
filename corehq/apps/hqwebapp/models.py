@@ -106,20 +106,13 @@ class UITab(object):
         raise NotImplementedError()
 
     @property
-    def mobile_worker_redirect(self):
-        return (
-            is_mobile_worker_with_report_access(self.couch_user, self.domain)
-            and isinstance(self, ProjectReportsTab)
-        )
-
-    @property
     @memoized
     def real_is_viewable(self):
         if self.subtabs:
             return any(st.real_is_viewable for st in self.subtabs)
         else:
             try:
-                return self.is_viewable or self.mobile_worker_redirect
+                return self.is_viewable
             except AttributeError:
                 return False
 

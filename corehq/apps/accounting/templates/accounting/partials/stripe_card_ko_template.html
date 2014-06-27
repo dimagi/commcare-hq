@@ -144,6 +144,13 @@
         <div class="control-group">
             <div class="controls">
                 <label class="checkbox">
+                    <input type="checkbox"
+                           data-bind="checked: agreedToPrivacyPolicy" />
+                    {% blocktrans %}
+                        I agree to Dimagi's <a href="http://www.dimagi.com/policy" target="_blank">Privacy Policy</a>.
+                    {% endblocktrans %}
+                </label>
+                <label class="checkbox">
                     <input type="checkbox" name="saveCard" />
                     {% trans 'Save card for later' %}
                 </label>

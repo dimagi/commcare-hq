@@ -393,7 +393,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             if billable.usage_fee:
                 total_excess += billable.usage_fee.amount
             if billable.gateway_fee:
-                total_excess += billable.gateway_fee.amount / billable.gateway_fee_conversion_rate
+                total_excess += billable.gateway_charge
         return Decimal("%.2f" % round(total_excess, 2))
 
     @property
@@ -452,7 +452,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         details = []
         for billable in self.sms_billables:
             gateway_api = billable.gateway_fee.criteria.backend_api_id if billable.gateway_fee else "custom"
-            gateway_fee = billable.gateway_fee.amount if billable.gateway_fee else Decimal('0.0')
+            gateway_fee = billable.gateway_charge
             usage_fee = billable.usage_fee.amount if billable.usage_fee else Decimal('0.0')
             total_fee = gateway_fee + usage_fee
             details.append(

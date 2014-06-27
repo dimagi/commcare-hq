@@ -5,6 +5,8 @@ function MapList(o) {
     self.lang = o.lang;
     self.langs = [o.lang].concat(o.langs);
     self.items = ko.observableArray();
+    self.duplicatedItems = ko.observableArray();
+
     self.setItems = function (items) {
         self.items(_(items).map(function (item) {
             return {
@@ -29,12 +31,49 @@ function MapList(o) {
     };
     self.removeItem = function (item) {
         self.items.remove(item);
+        if(!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))
+            self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
     };
     self.addItem = function () {
         var item = {key: ko.observable(''), value: {}};
+        item.key.subscribe(function(newValue) {
+            if(self.duplicatedItems.indexOf(newValue) === -1 && self._isItemDuplicated(newValue)) {
+                self.duplicatedItems.push(newValue);
+            }
+
+        });
+
+        item.key.subscribe(function(oldValue) {
+            var index = self.duplicatedItems.indexOf(oldValue);
+            if(index !== -1 && !self._isItemDuplicated(oldValue, 2)) {
+                self.duplicatedItems.remove(oldValue);
+            }
+        }, null, "beforeChange");
         item.value[self.lang] = ko.observable('');
         self.items.push(item);
+        if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
+            self.duplicatedItems.push('');
+        }
     };
+
+    self._isItemDuplicated = function(key, max_counts) {
+        if(typeof(max_counts) === 'undefined') max_counts = 1;
+        var items = self.getItems();
+        var counter = 0;
+        for(var i = 0; i < items.length; i++) {
+            var item = items[i];
+            if(ko.utils.unwrapObservable(item.key) === key) {
+                counter++;
+                if(counter > max_counts) return true;
+            }
+        }
+        return false;
+    };
+
+    self.isItemDuplicated = function(key) {
+        return self.duplicatedItems.indexOf(key) !== -1;
+    };
+
     self.getItems = function () {
         return _(self.items()).map(function (item) {
             return {
@@ -55,14 +94,26 @@ uiElement.key_value_mapping = function (o) {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
         var $modalDiv = $('<div data-bind="template: \'key_value_mapping_modal\'"></div>');
-        var copy = new MapList({lang: o.lang, langs: o.langs, items: m.getItems()});
+        var copy = new MapList(
+            {
+                lang: o.lang,
+                langs: o.langs,
+                items: m.getItems()
+
+            });
         ko.applyBindings({
             modalTitle: o.modalTitle,
             mapList: copy,
-            save: function () {
-                m.setItems(copy.getItems());
+            save: function (data, e) {
+                if(copy.duplicatedItems().length > 0) {
+                    e.stopImmediatePropagation();
+                } else {
+                    m.setItems(copy.getItems());
+                }
+
             }
         }, $modalDiv.get(0));
+
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
         $modal.modal('show');

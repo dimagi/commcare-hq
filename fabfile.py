@@ -15,19 +15,19 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
-import sys
-from collections import defaultdict
 import datetime
-
-from fabric.context_managers import settings, cd
-
-from fabric.operations import require, local, prompt
 import os
-from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.contrib import files, console
-from fabric import utils
 import posixpath
+import sys
 import time
+from collections import defaultdict
+from distutils.util import strtobool
+
+from fabric import utils
+from fabric.api import run, roles, execute, task, sudo, env, parallel
+from fabric.context_managers import settings, cd
+from fabric.contrib import files, console
+from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -57,6 +57,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.linewise = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "
@@ -776,9 +777,9 @@ def _deploy_without_asking():
 
 
 @task
-def awesome_deploy():
+def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
-    if not console.confirm(
+    if strtobool(confirm) and not console.confirm(
             'Are you sure you want to preindex and deploy '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')

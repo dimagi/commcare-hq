@@ -187,31 +187,9 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="item-list:table_tag" src="jr://fixture/item-list:table_tag" />
     <session>
-      <datum id="case_id_case_clinic" function="instance('item-list:table_tag')/table_tag_list/table_tag/field_name"/>
+      <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
     </session>
-    <assertions>
-      <assert test="count(instance('item-list:table_tag')/table_tag_list/table_tag) = 1">
-        <text>
-          <locale id="case_autoload.fixture.exactly_one_fixture">
-            <argument>table_tag</argument>
-          </locale>
-        </text>
-      </assert>
-      <assert test="count(instance('item-list:table_tag')/table_tag_list/table_tag/field_name) = 1">
-        <text>
-          <locale id="case_autoload.fixture.property_missing">
-            <argument>field_name</argument>
-          </locale>
-        </text>
-      </assert>
-      <assert test="count(instance('casedb')/casedb/case[@case_id=instance('item-list:table_tag')/table_tag_list/table_tag/field_name]) = 1">
-        <text>
-          <locale id="case_autoload.fixture.case_missing"/>
-        </text>
-      </assert>
-    </assertions>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/A0B00710-9AD6-4887-98EC-6D3D2F4B1F0D</form>
@@ -258,6 +236,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
@@ -281,6 +260,6 @@
     <text>
       <locale id="modules.m2"/>
     </text>
-    <command id="m2-f0"/>
+    <command id="m2-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case_requisition]/edd = '123'"/>
   </menu>
 </suite>
