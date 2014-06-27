@@ -1,5 +1,47 @@
 // datatable configuration.
 
+function fnGetKey( aoData, sKey )
+{
+    for ( var i=0, iLen=aoData.length ; i<iLen ; i++ )
+    {
+        if ( aoData[i].name == sKey )
+        {
+            return aoData[i].value;
+        }
+    }
+    return null;
+}
+
+function compareListOfObjects(x, y) {
+    var sameLists = true;
+    if (x.length === y.length) {
+        for (var idx in x) {
+            if(x.hasOwnProperty(idx) && y.hasOwnProperty(idx)) {
+                sameLists = compareObjects(x[idx], y[idx]);
+            }
+            if(!sameLists){
+                break;
+            }
+        }
+    } else {
+        sameLists = false
+    }
+    return sameLists;
+}
+
+function compareObjects(x, y) {
+   var objectsAreSame = true;
+   for(var propertyName in x) {
+       if (x['name'] !== 'sEcho') {
+           if (x.hasOwnProperty(propertyName) && y.hasOwnProperty(propertyName) && x[propertyName] !== y[propertyName]) {
+               objectsAreSame = false;
+               break;
+           }
+       }
+   }
+   return objectsAreSame;
+}
+
 function HQReportDataTables(options) {
     var self = this;
     self.dataTableElem = options.dataTableElem || '.datatable';
@@ -55,6 +97,14 @@ function HQReportDataTables(options) {
 
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
         $(self.dataTableElem).each(function(){
+
+            var opts= {
+                jsonResultDataTableFromServer: {},
+                iDisplayStart: -1,
+                iDisplayLength : -1,
+                aoData: {}
+            };
+
             var params = {
                 sDom: dataTablesDom,
                 sPaginationType: self.paginationType,
@@ -84,38 +134,56 @@ function HQReportDataTables(options) {
                     }
                 };
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
-                    var custom_callback = function(data) {
-                        var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
-                        if ('total_row' in data) {
-                            self.render_footer_row('ajax_total_row', data['total_row']);
-                        }
-                        if ('statistics_rows' in data) {
-                            for (var i = 0; i < data['statistics_rows'].length; i++){
-                               self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                    var iDisplayStart = fnGetKey(aoData, 'iDisplayStart');
+                    var iDisplayLength = fnGetKey(aoData, 'iDisplayLength');
+                    if (opts.iDisplayStart != iDisplayStart || opts.iDisplayLength != iDisplayLength || !compareListOfObjects(aoData, opts.aoData)) {
+                        opts.aoData = aoData;
+                        opts.iDisplayStart = iDisplayStart;
+                        opts.iDisplayLength = iDisplayLength;
+                        var custom_callback = function(data) {
+                            if (opts.jsonResultDataTableFromServer.sEcho !== undefined && opts.jsonResultDataTableFromServer.sEcho != data.sEcho) {
+                                data.sEcho = eval(opts.jsonResultDataTableFromServer.sEcho)+1;
                             }
-                        }
-                        applyBootstrapMagic();
-                        if ('context' in data){
-                            load(data['context'], ICON_PATH);
-                        }
-
-                        return result
-                    };
-
-                    oSettings.jqXHR = $.ajax( {
-                        "url": sSource,
-                        "data": aoData,
-                        "success": custom_callback,
-                        "error": function(data) {
-                            $(".dataTables_processing").hide();
-                            if (data.status === 400) {
-                                $(".dataTables_empty").html(self.badRequestErrorText);
-                            } else {
-                                $(".dataTables_empty").html(self.errorText);                                
+                            opts.jsonResultDataTableFromServer = data;
+                            var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
+                            if ('total_row' in data) {
+                                self.render_footer_row('ajax_total_row', data['total_row']);
                             }
-                            $(".dataTables_empty").show();
+                            if ('statistics_rows' in data) {
+                                for (var i = 0; i < data['statistics_rows'].length; i++){
+                                   self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                                }
+                            }
+                            applyBootstrapMagic();
+                            if ('context' in data){
+                                load(data['context'], ICON_PATH);
+                            }
+
+                            return result
+                        };
+
+                        oSettings.jqXHR = $.ajax( {
+                            "url": sSource,
+                            "data": aoData,
+                            "success": custom_callback,
+                            "error": function(data) {
+                                $(".dataTables_processing").hide();
+                                if (data.status === 400) {
+                                    $(".dataTables_empty").html(self.badRequestErrorText);
+                                } else {
+                                    $(".dataTables_empty").html(self.errorText);
+                                }
+                                $(".dataTables_empty").show();
+                            }
+                        } );
+                    } else {
+                        if (jQuery.isEmptyObject(opts.jsonResultDataTableFromServer)){
+                            opts.jsonResultDataTableFromServer.sEcho = 0
                         }
-                    } );
+                        opts.jsonResultDataTableFromServer.sEcho = eval(opts.jsonResultDataTableFromServer.sEcho) + 1;
+//                        fnCallback(opts.jsonResultDataTableFromServer)
+                    }
+                    return false;
                 };
             }
             params.oLanguage = {
