@@ -3,7 +3,7 @@ from django.contrib import messages
 from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
     DuplicateFixtureTagException, FixtureAPIException
 from django.core.validators import ValidationError
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureTypeField, FixtureDataType, FixtureDataItem, FixtureItemField, \
     FieldList
 from corehq.apps.users.bulkupload import GroupMemoizer
@@ -15,21 +15,42 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 
 DELETE_HEADER = "Delete(Y/N)"
 FAILURE_MESSAGES = {
-    "has_no_column": "Workbook 'types' has no column '{column_name}'.",
-    "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
-                           "as specified in its 'types' definition",
-    "has_extra_column": "Excel-sheet '{tag}' has an extra column" +
-                        "'{field}' that's not defined in its 'types' definition",
-    "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
-                        "'{prop_key}' for field '{field}' is not correctly formatted",
-    "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
-                        "'{property}' of the field '{field}' as specified in its 'types' definition",
-    "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
-                        "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting",
-    "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
-    "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
-    "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same",
-    "replace_with_UID": "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
+    "has_no_column": ugettext_noop(
+        "Workbook 'types' has no column '{column_name}'."
+    ),
+    "has_no_field_column": ugettext_noop(
+        "Excel-sheet '{tag}' does not contain the column '{field}' "
+        "as specified in its 'types' definition"
+    ),
+    "has_extra_column": ugettext_noop(
+        "Excel-sheet '{tag}' has an extra column"
+        "'{field}' that's not defined in its 'types' definition"
+    ),
+    "wrong_property_syntax": ugettext_noop(
+        "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
+        "'{prop_key}' for field '{field}' is not correctly formatted"
+    ),
+    "sheet_has_no_property": ugettext_noop(
+        "Excel-sheet '{tag}' does not contain property "
+        "'{property}' of the field '{field}' as specified in its 'types' definition"
+    ),
+    "sheet_has_extra_property": ugettext_noop(
+        "Excel-sheet '{tag}'' has an extra property "
+        "'{property}' for the field '{field}' that's not defined in its 'types' definition. "
+        "Re-check the formatting"
+    ),
+    "invalid_field_with_property": ugettext_noop(
+        "Fields with attributes should be numbered as 'field: {field} integer"
+    ),
+    "invalid_property": ugettext_noop(
+        "Attribute should be written as '{field}: {prop} interger'"
+    ),
+    "wrong_field_property_combos": ugettext_noop(
+        "Number of values for field '{field}' and attribute '{prop}' should be same"
+    ),
+    "replace_with_UID": ugettext_noop(
+        "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
+    ),
 }
 
 
