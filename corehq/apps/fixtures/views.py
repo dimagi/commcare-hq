@@ -439,19 +439,18 @@ class UploadItemLists(TemplateView):
         }
 
     def get(self, request):
-        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        return HttpResponseRedirect(
+            reverse("fixture_interface_dispatcher", args=[],
+                    kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+
     @method_decorator(get_file)
     def post(self, request):
-        """View's dispatch method automatically calls this"""
-
         def error_redirect():
-            return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+            return HttpResponseRedirect(
+                reverse("fixture_interface_dispatcher", args=[],
+                        kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
 
-        try:
-            replace = request.POST["replace"]
-            replace = True
-        except KeyError:
-            replace = False
+        replace = 'replace' in request.POST
 
         try:
             workbook = WorkbookJSONReader(request.file)
