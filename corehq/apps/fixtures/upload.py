@@ -14,6 +14,23 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 
 
 DELETE_HEADER = "Delete(Y/N)"
+FAILURE_MESSAGES = {
+    "has_no_column": "Workbook 'types' has no column '{column_name}'.",
+    "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
+                           "as specified in its 'types' definition",
+    "has_extra_column": "Excel-sheet '{tag}' has an extra column" +
+                        "'{field}' that's not defined in its 'types' definition",
+    "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
+                        "'{prop_key}' for field '{field}' is not correctly formatted",
+    "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
+                        "'{property}' of the field '{field}' as specified in its 'types' definition",
+    "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
+                        "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting",
+    "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
+    "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
+    "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same",
+    "replace_with_UID": "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
+}
 
 
 def do_fixture_upload(request, domain, file_ref, replace):
@@ -47,24 +64,6 @@ def run_upload(request, domain, workbook, replace=False):
         "unknown_users": [],
         "number_of_fixtures": 0,
     }
-    failure_messages = {
-        "has_no_column": "Workbook 'types' has no column '{column_name}'.",
-        "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
-                               "as specified in its 'types' definition",
-        "has_extra_column": "Excel-sheet '{tag}' has an extra column" +
-                            "'{field}' that's not defined in its 'types' definition",
-        "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
-                            "'{prop_key}' for field '{field}' is not correctly formatted",
-        "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
-                            "'{property}' of the field '{field}' as specified in its 'types' definition",
-        "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
-                            "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting",
-        "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
-        "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
-        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same",
-        "replace_with_UID": "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
-    }
-
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -73,7 +72,7 @@ def run_upload(request, domain, workbook, replace=False):
         try:
             return container[attr]
         except KeyError:
-            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(column_name=attr)))
+            raise ExcelMalformatException(_(FAILURE_MESSAGES["has_no_column"].format(column_name=attr)))
 
     def diff_lists(list_a, list_b):
         set_a = set(list_a)
@@ -111,7 +110,7 @@ def run_upload(request, domain, workbook, replace=False):
                     try:
                         property_list = dt[prop_key]["property"]
                     except KeyError:
-                        error_message = failure_messages["wrong_property_syntax"].format(
+                        error_message = FAILURE_MESSAGES["wrong_property_syntax"].format(
                             prop_key=prop_key,
                             field=field
                         )
@@ -162,10 +161,10 @@ def run_upload(request, domain, workbook, replace=False):
                 item_fields_list = di['field'].keys()
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
                 if len(not_in_sheet) > 0:
-                    error_message = failure_messages["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
+                    error_message = FAILURE_MESSAGES["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
                     raise ExcelMalformatException(_(error_message))
                 if len(not_in_types) > 0:
-                    error_message = failure_messages["has_extra_column"].format(tag=tag, field=not_in_types[0])
+                    error_message = FAILURE_MESSAGES["has_extra_column"].format(tag=tag, field=not_in_types[0])
                     raise ExcelMalformatException(_(error_message))
 
                 # check that properties in 'types' sheet vs item-sheet MATCH
@@ -176,14 +175,14 @@ def run_upload(request, domain, workbook, replace=False):
                         type_props = field.properties
                         not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
                         if len(not_in_sheet) > 0:
-                            error_message = failure_messages["sheet_has_no_property"].format(
+                            error_message = FAILURE_MESSAGES["sheet_has_no_property"].format(
                                 tag=tag,
                                 property=not_in_sheet[0],
                                 field=field.field_name
                             )
                             raise ExcelMalformatException(_(error_message))
                         if len(not_in_types) > 0:
-                            error_message = failure_messages["sheet_has_extra_property"].format(
+                            error_message = FAILURE_MESSAGES["sheet_has_extra_property"].format(
                                 tag=tag,
                                 property=not_in_types[0],
                                 field=field.field_name
@@ -191,18 +190,18 @@ def run_upload(request, domain, workbook, replace=False):
                             raise ExcelMalformatException(_(error_message))
                         # check that fields with properties are numbered
                         if type(di['field'][field.field_name]) != list:
-                            error_message = failure_messages["invalid_field_with_property"].format(field=field.field_name)
+                            error_message = FAILURE_MESSAGES["invalid_field_with_property"].format(field=field.field_name)
                             raise ExcelMalformatException(_(error_message))
                         field_prop_len = len(di['field'][field.field_name])
                         for prop in sheet_props:
                             if type(sheet_props[prop]) != list:
-                                error_message = failure_messages["invalid_property"].format(
+                                error_message = FAILURE_MESSAGES["invalid_property"].format(
                                     field=field.field_name,
                                     prop=prop
                                 )
                                 raise ExcelMalformatException(_(error_message))
                             if len(sheet_props[prop]) != field_prop_len:
-                                error_message = failure_messages["wrong_field_property_combos"].format(
+                                error_message = FAILURE_MESSAGES["wrong_field_property_combos"].format(
                                     field=field.field_name,
                                     prop=prop
                                 )
