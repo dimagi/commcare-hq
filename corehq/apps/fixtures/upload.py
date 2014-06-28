@@ -17,12 +17,7 @@ DELETE_HEADER = "Delete(Y/N)"
 
 
 def do_fixture_upload(request, domain, file_ref, replace):
-    try:
-        workbook = WorkbookJSONReader(file_ref.get_filename())
-    except AttributeError:
-        raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
-    except Exception:
-        raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
+    workbook = _get_workbook(file_ref)
 
     try:
         return run_upload(request, domain, workbook, replace=replace)
@@ -38,6 +33,13 @@ def do_fixture_upload(request, domain, file_ref, replace):
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
+def _get_workbook(download_ref):
+    try:
+        return WorkbookJSONReader(download_ref.get_filename())
+    except AttributeError:
+        raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
+    except Exception:
+        raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
 
 def run_upload(request, domain, workbook, replace=False):
     return_val = {
