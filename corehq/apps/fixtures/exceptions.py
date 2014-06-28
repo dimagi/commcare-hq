@@ -20,3 +20,7 @@ class FixtureVersionError(Exception):
 
 class DuplicateFixtureTagException(Exception):
     pass
+
+
+class FixtureUploadError(FixtureException):
+    pass
