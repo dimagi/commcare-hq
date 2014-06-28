@@ -291,18 +291,6 @@ $(function () {
             });
         };
     }
-    function FileUpload() {
-        this.file = ko.observable();
-        var self = this;
-        self.uploadExcels = function(element, event) {
-            $("#uploadModal").modal({
-                keyboard: false,
-                backdrop: 'static'
-            });
-            $("#uploading").show();
-            $("#uploadForm")[0].submit();
-        };
-    }
 
     var el = $('#fixtures-ui');
     var app = new App();
@@ -310,15 +298,12 @@ $(function () {
     el.show();
     app.loadData();
 
-    var uploadApp = new FileUpload();
-    ko.applyBindings(uploadApp, $('#fixture-upload')[0]);
-
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-complete").hide();
     });
     $('.alert .close').live("click", function(e) {
-    $(this).parent().hide();
+        $(this).parent().hide();
 
-});
+    });
 });
