@@ -457,12 +457,10 @@ class UploadItemLists(TemplateView):
         # workbook = WorkbookJSONReader(download_ref.get_filename())
         try:
             upload_result = do_fixture_upload(request, self.domain, download_ref, replace)
-            if upload_result["unknown_groups"]:
-                for group_name in upload_result["unknown_groups"]:
-                    messages.error(request, (_("Unknown group: '%(name)s'") % {'name': group_name}))
-            if upload_result["unknown_users"]:
-                for user_name in upload_result["unknown_users"]:
-                    messages.error(request, (_("Unknown user: '%(name)s'") % {'name': user_name}))
+            for group_name in upload_result.unknown_groups:
+                messages.error(request, (_("Unknown group: '%(name)s'") % {'name': group_name}))
+            for user_name in upload_result.unknown_users:
+                messages.error(request, (_("Unknown user: '%(name)s'") % {'name': user_name}))
         except FixtureUploadError as e:
             messages.error(request, unicode(e))
             return error_redirect()

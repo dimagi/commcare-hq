@@ -54,6 +54,16 @@ FAILURE_MESSAGES = {
 }
 
 
+class FixtureUploadResult(object):
+    """
+    Helper structure for handling the results of a fixture upload.
+    """
+    def __init__(self):
+        self.unknown_groups = []
+        self.unknown_users = []
+        self.number_of_fixtures = 0
+
+
 def do_fixture_upload(request, domain, file_ref, replace):
     workbook = _get_workbook(file_ref)
     try:
@@ -78,12 +88,9 @@ def _get_workbook(download_ref):
     except Exception:
         raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
 
+
 def run_upload(request, domain, workbook, replace=False):
-    return_val = {
-        "unknown_groups": [],
-        "unknown_users": [],
-        "number_of_fixtures": 0,
-    }
+    return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
 
     data_types = workbook.get_worksheet(title='types')
@@ -305,5 +312,5 @@ def run_upload(request, domain, workbook, replace=False):
                     else:
                         messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
-    return_val["number_of_fixtures"] = number_of_fixtures + 1
+    return_val.number_of_fixtures = number_of_fixtures + 1
     return return_val
