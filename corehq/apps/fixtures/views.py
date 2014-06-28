@@ -456,11 +456,15 @@ class UploadItemLists(TemplateView):
         download_ref = DownloadBase.get(file_ref.download_id)
         # workbook = WorkbookJSONReader(download_ref.get_filename())
         try:
-            upload_result = do_fixture_upload(request, self.domain, download_ref, replace)
+            upload_result = do_fixture_upload(self.domain, download_ref, replace)
             for group_name in upload_result.unknown_groups:
-                messages.error(request, (_("Unknown group: '%(name)s'") % {'name': group_name}))
+                messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
             for user_name in upload_result.unknown_users:
-                messages.error(request, (_("Unknown user: '%(name)s'") % {'name': user_name}))
+                messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
+            for error in upload_result.errors:
+                messages.error(request, error)
+            for info in upload_result.messages:
+                messages.info(request, info)
         except FixtureUploadError as e:
             messages.error(request, unicode(e))
             return error_redirect()
@@ -517,7 +521,7 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
     try:
-        upload_resp = run_upload(request, domain, workbook, replace=replace)  # error handle for other files
+        upload_resp = run_upload(domain, workbook, replace=replace)  # error handle for other files
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
@@ -533,12 +537,12 @@ def upload_fixture_api(request, domain, **kwargs):
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
-    num_unknown_groups = len(upload_resp["unknown_groups"])
-    num_unknown_users = len(upload_resp["unknown_users"])
+    num_unknown_groups = len(upload_resp.unknown_groups)
+    num_unknown_users = len(upload_resp.unknown_users)
     resp_json = {}
 
     if not num_unknown_users and not num_unknown_groups:
-        num_uploads = upload_resp["number_of_fixtures"]
+        num_uploads = upload_resp.number_of_fixtures
         success_message = "Successfully uploaded %d fixture%s." % (num_uploads, 's' if num_uploads > 1 else '')
         return _return_response(response_codes["success"], success_message)
     else:
@@ -548,8 +552,8 @@ def upload_fixture_api(request, domain, **kwargs):
     warn_users = "%d user%s unknown" % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
     resp_json["message"] = "Fixtures have been uploaded. But following "
     if num_unknown_groups:
-        resp_json["message"] += "%s %s" % (warn_groups, upload_resp["unknown_groups"])
+        resp_json["message"] += "%s %s" % (warn_groups, upload_resp.unknown_groups)
     if num_unknown_users:
-        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp["unknown_users"])
+        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")

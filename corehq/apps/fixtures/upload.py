@@ -61,13 +61,15 @@ class FixtureUploadResult(object):
     def __init__(self):
         self.unknown_groups = []
         self.unknown_users = []
+        self.messages = []
+        self.errors = []
         self.number_of_fixtures = 0
 
 
-def do_fixture_upload(request, domain, file_ref, replace):
+def do_fixture_upload(domain, file_ref, replace):
     workbook = _get_workbook(file_ref)
     try:
-        return run_upload(request, domain, workbook, replace=replace)
+        return run_upload(domain, workbook, replace=replace)
 
     except WorksheetNotFound as e:
         raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
@@ -89,7 +91,7 @@ def _get_workbook(download_ref):
         raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
 
 
-def run_upload(request, domain, workbook, replace=False):
+def run_upload(domain, workbook, replace=False):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
 
@@ -126,7 +128,7 @@ def run_upload(request, domain, workbook, replace=False):
             try:
                 tag = _get_or_raise(dt, 'table_id')
             except ExcelMalformatException:
-                messages.info(request, _("Excel-header 'tag' is renamed as 'table_id' and 'name' header is no longer needed."))
+                return_val.messages.append(_("Excel-header 'tag' is renamed as 'table_id' and 'name' header is no longer needed."))
                 tag = _get_or_raise(dt, 'tag')
 
             type_definition_fields = _get_or_raise(dt, 'field')
@@ -174,7 +176,7 @@ def run_upload(request, domain, workbook, replace=False):
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
                     data_type = new_data_type
-                    messages.error(request, _("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
+                    return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
                 if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
                     data_type.recursive_delete(transaction)
                     continue
@@ -277,7 +279,7 @@ def run_upload(request, domain, workbook, replace=False):
                     old_data_item.fields = item_fields
                     if old_data_item.domain != domain or not old_data_item.data_type_id == data_type.get_id:
                         old_data_item = new_data_item
-                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
+                        return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
@@ -298,19 +300,19 @@ def run_upload(request, domain, workbook, replace=False):
                     if group:
                         old_data_item.add_group(group, transaction=transaction)
                     else:
-                        messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
+                        return_val.errors.append(_("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
 
                 for raw_username in di.get('user', []):
                     try:
                         username = normalize_username(str(raw_username), domain)
                     except ValidationError:
-                        messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
+                        return_val.errors.append(_("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
                         continue
                     user = CommCareUser.get_by_username(username)
                     if user:
                         old_data_item.add_user(user)
                     else:
-                        messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+                        return_val.errors.append(_("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
     return_val.number_of_fixtures = number_of_fixtures + 1
     return return_val
