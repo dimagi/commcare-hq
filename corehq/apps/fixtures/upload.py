@@ -58,11 +58,22 @@ class FixtureUploadResult(object):
     Helper structure for handling the results of a fixture upload.
     """
     def __init__(self):
+        self.success = True
         self.unknown_groups = []
         self.unknown_users = []
         self.messages = []
         self.errors = []
         self.number_of_fixtures = 0
+
+
+def safe_fixture_upload(domain, file_ref, replace):
+    try:
+        return do_fixture_upload(domain, file_ref, replace)
+    except FixtureUploadError as e:
+        result = FixtureUploadResult()
+        result.success = False
+        result.errors.append(unicode(e))
+        return result
 
 
 def do_fixture_upload(domain, file_ref, replace):

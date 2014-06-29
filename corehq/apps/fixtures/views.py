@@ -471,23 +471,6 @@ class UploadItemLists(TemplateView):
             )
         )
 
-        # workbook = WorkbookJSONReader(download_ref.get_filename())
-        # try:
-        #     upload_result = do_fixture_upload(self.domain, download_ref, replace)
-        #     for group_name in upload_result.unknown_groups:
-        #         messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
-        #     for user_name in upload_result.unknown_users:
-        #         messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
-        #     for error in upload_result.errors:
-        #         messages.error(request, error)
-        #     for info in upload_result.messages:
-        #         messages.info(request, info)
-        # except FixtureUploadError as e:
-        #     messages.error(request, unicode(e))
-        #     return error_redirect()
-        #
-        # return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
-
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
