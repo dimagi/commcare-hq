@@ -16,7 +16,6 @@ branches:
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - fix-analytics # Nick P 6/26
-  - opm-case-2  # Ethan sol-devce
 submodules:
   submodules/couchlog-src:
     branches:
