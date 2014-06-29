@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - async-fixtures  # cz 6/29
   - 80598-case # lwyszomi:80598-case
   - multimedia-case-properties # Daniel 3/21
   - cache-locations  # cz 5/1
