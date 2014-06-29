@@ -69,6 +69,53 @@ class FixtureUploadResult(object):
         self.number_of_fixtures = 0
 
 
+class FixtureTableDefinitition(object):
+
+    def __init__(self, table_id, fields, is_global, uid, delete):
+        self.table_id = table_id
+        self.fields = fields
+        self.is_global = is_global
+        self.uid = uid
+        self.delete = delete
+
+    @classmethod
+    def from_row(cls, row_dict):
+        tag = row_dict.get('table_id') or row_dict.get('tag')
+        if tag is None:
+            raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
+
+        field_names = row_dict.get('field')
+        if field_names is None:
+            raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
+
+        def _get_field_properties(field, prop_key):
+            if row_dict.has_key(prop_key):
+                try:
+                    return row_dict[prop_key]["property"]
+                except KeyError:
+                    error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
+                        prop_key=prop_key,
+                        field=field
+                    )
+                    raise ExcelMalformatException(error_message)
+            else:
+                return []
+
+        fields = [
+            FixtureTypeField(
+                field_name=field,
+                properties=_get_field_properties(field, 'field {count}'.format(count=i + 1))
+            ) for i, field in enumerate(field_names)
+        ]
+        return FixtureTableDefinitition(
+            table_id=tag,
+            fields=fields,
+            is_global=row_dict.get('is_global', False),
+            uid=row_dict.get('UID'),
+            delete=row_dict.get(DELETE_HEADER, '').lower() == 'y',
+        )
+
+
 class FixtureWorkbook(object):
     """
     Helper class for working with the fixture workbook
@@ -96,13 +143,13 @@ class FixtureWorkbook(object):
         type_sheets = []
         seen_tags = set()
         for number_of_fixtures, dt in enumerate(self.get_types_sheet()):
-            tag = dt.get('table_id') or dt.get('tag') or None
-            if tag is None:
-                raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
-            if tag in seen_tags:
-                raise DuplicateFixtureTagException(_(FAILURE_MESSAGES['duplicate_tag']).format(tag=tag))
-            seen_tags.add(tag)
-            type_sheets.append(dt)
+            table_definition = FixtureTableDefinitition.from_row(dt)
+            if table_definition.table_id in seen_tags:
+                raise DuplicateFixtureTagException(
+                    _(FAILURE_MESSAGES['duplicate_tag']).format(tag=table_definition.table_id))
+
+            seen_tags.add(table_definition.table_id)
+            type_sheets.append(table_definition)
         return type_sheets
 
     def validate(self):
@@ -152,13 +199,6 @@ def run_upload(domain, workbook, replace=False):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
 
-    def _get_or_raise(container, attr):
-        try:
-            return container[attr]
-        except KeyError:
-            raise ExcelMalformatException(_(FAILURE_MESSAGES["has_no_column"]).format(column_name=attr))
-
-
     def diff_lists(list_a, list_b):
         set_a = set(list_a)
         set_b = set(list_b)
@@ -169,60 +209,35 @@ def run_upload(domain, workbook, replace=False):
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
         type_sheets = workbook.get_all_type_sheets()
-        for number_of_fixtures, dt in enumerate(type_sheets):
-            try:
-                tag = _get_or_raise(dt, 'table_id')
-            except ExcelMalformatException:
-                return_val.messages.append(_("Excel-header 'tag' is renamed as 'table_id' and 'name' header is no longer needed."))
-                tag = _get_or_raise(dt, 'tag')
-
-            type_definition_fields = _get_or_raise(dt, 'field')
-            type_fields_with_properties = []
-            for count, field in enumerate(type_definition_fields):
-                prop_key = "field " + str(count + 1)
-                if dt.has_key(prop_key):
-                    try:
-                        property_list = dt[prop_key]["property"]
-                    except KeyError:
-                        error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
-                            prop_key=prop_key,
-                            field=field
-                        )
-                        raise ExcelMalformatException(error_message)
-                else:
-                    property_list = []
-                field_with_prop = FixtureTypeField(
-                    field_name=field,
-                    properties=property_list
-                )
-                type_fields_with_properties.append(field_with_prop)
-
+        for number_of_fixtures, table_def in enumerate(type_sheets):
+            tag = table_def.table_id
             new_data_type = FixtureDataType(
                 domain=domain,
-                is_global=dt.get('is_global', False),
-                tag=tag,
-                fields=type_fields_with_properties,
+                is_global=table_def.is_global,
+                tag=table_def.table_id,
+                fields=table_def.fields,
             )
             try:
                 tagged_fdt = FixtureDataType.fixture_tag_exists(domain, tag)
                 if tagged_fdt:
                     data_type = tagged_fdt
                 # support old usage with 'UID'
-                elif 'UID' in dt and dt['UID']:
-                    data_type = FixtureDataType.get(dt['UID'])
+                elif table_def.uid:
+                    data_type = FixtureDataType.get(table_def.uid)
                 else:
                     data_type = new_data_type
-                    pass
+
                 if replace:
                     data_type.recursive_delete(transaction)
                     data_type = new_data_type
-                data_type.fields = type_fields_with_properties
-                data_type.is_global = dt.get('is_global', False)
+
+                data_type.fields = table_def.fields
+                data_type.is_global = table_def.is_global
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
                     data_type = new_data_type
-                    return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
-                if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
+                    return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': table_def.uid})
+                if table_def.delete:
                     data_type.recursive_delete(transaction)
                     continue
             except (ResourceNotFound, KeyError) as e:
