@@ -1,5 +1,4 @@
 from couchdbkit import ResourceNotFound
-from django.contrib import messages
 from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
     DuplicateFixtureTagException, FixtureAPIException
 from django.core.validators import ValidationError
