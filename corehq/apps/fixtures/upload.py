@@ -10,6 +10,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+from soil import DownloadBase
 
 
 DELETE_HEADER = "Delete(Y/N)"
@@ -157,19 +158,19 @@ class FixtureWorkbook(object):
         self.get_all_type_sheets()
 
 
-def safe_fixture_upload(domain, file_ref, replace):
+def safe_fixture_upload(domain, file_ref, replace, task=None):
     try:
-        return do_fixture_upload(domain, file_ref, replace)
+        return do_fixture_upload(domain, file_ref, replace, task)
     except FixtureUploadError as e:
         result = FixtureUploadResult()
         result.success = False
         result.errors.append(unicode(e))
         return result
 
-def do_fixture_upload(domain, file_ref, replace):
+def do_fixture_upload(domain, file_ref, replace, task=None):
     workbook = get_workbook(file_ref.get_filename())
     try:
-        return run_upload(domain, workbook, replace=replace)
+        return run_upload(domain, workbook, replace=replace, task=task)
     except WorksheetNotFound as e:
         raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
     except ExcelMalformatException as e:
@@ -194,8 +195,7 @@ def get_workbook(file_or_filename):
     return FixtureWorkbook(file_or_filename)
 
 
-def run_upload(domain, workbook, replace=False):
-
+def run_upload(domain, workbook, replace=False, task=None):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
 
@@ -206,10 +206,17 @@ def run_upload(domain, workbook, replace=False):
         not_in_a = set_a.difference(set_a)
         return list(not_in_a), list(not_in_b)
 
-    number_of_fixtures = -1
     with CouchTransaction() as transaction:
         type_sheets = workbook.get_all_type_sheets()
-        for number_of_fixtures, table_def in enumerate(type_sheets):
+        total_tables = len(type_sheets)
+        return_val.number_of_fixtures = total_tables
+
+        def _update_progress(table_count, item_count, items_in_table):
+            if task:
+                processed = table_count * 10 + (10. * item_count / items_in_table)
+                DownloadBase.set_progress(task, processed, 10 * total_tables)
+
+        for table_number, table_def in enumerate(type_sheets):
             tag = table_def.table_id
             new_data_type = FixtureDataType(
                 domain=domain,
@@ -244,8 +251,10 @@ def run_upload(domain, workbook, replace=False):
                 data_type = new_data_type
             transaction.save(data_type)
 
-            data_items = workbook.get_data_sheet(data_type)
+            data_items = list(workbook.get_data_sheet(data_type))
+            items_in_table = len(data_items)
             for sort_key, di in enumerate(data_items):
+                _update_progress(table_number, sort_key, items_in_table)
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
                 item_fields_list = di['field'].keys()
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
@@ -374,5 +383,4 @@ def run_upload(domain, workbook, replace=False):
                     else:
                         return_val.errors.append(_("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
 
-    return_val.number_of_fixtures = number_of_fixtures + 1
     return return_val
