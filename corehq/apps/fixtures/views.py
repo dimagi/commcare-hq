@@ -6,13 +6,16 @@ from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.shortcuts import render
 from django.template.defaultfilters import yesno
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
 from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.fixtures.tasks import fixture_upload_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException, \
     FixtureUploadError
@@ -30,8 +33,8 @@ from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
-from soil import CachedDownload, DownloadBase
-from soil.util import expose_download
+from soil import CachedDownload
+from soil.util import expose_download, get_download_context
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -428,6 +431,10 @@ def download_file(request, domain):
         return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 
+def _fixtures_home(domain):
+    return reverse("fixture_interface_dispatcher", args=[],
+                   kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'})
+
 class UploadItemLists(TemplateView):
 
     def get_context_data(self, **kwargs):
@@ -437,9 +444,7 @@ class UploadItemLists(TemplateView):
         }
 
     def get(self, request):
-        return HttpResponseRedirect(
-            reverse("fixture_interface_dispatcher", args=[],
-                    kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        return HttpResponseRedirect(_fixtures_home(self.domain))
 
     @method_decorator(get_file)
     def post(self, request):
@@ -453,28 +458,75 @@ class UploadItemLists(TemplateView):
         # soil workflow
         file_ref = expose_download(request.file.read(),
                                    expiry=1*60*60)
-        download_ref = DownloadBase.get(file_ref.download_id)
-        # workbook = WorkbookJSONReader(download_ref.get_filename())
-        try:
-            upload_result = do_fixture_upload(self.domain, download_ref, replace)
-            for group_name in upload_result.unknown_groups:
-                messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
-            for user_name in upload_result.unknown_users:
-                messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
-            for error in upload_result.errors:
-                messages.error(request, error)
-            for info in upload_result.messages:
-                messages.info(request, info)
-        except FixtureUploadError as e:
-            messages.error(request, unicode(e))
-            return error_redirect()
+        task = fixture_upload_async.delay(
+            self.domain,
+            file_ref.download_id,
+            replace,
+        )
+        file_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                FixtureUploadStatusView.urlname,
+                args=[self.domain, file_ref.download_id]
+            )
+        )
 
-        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        # workbook = WorkbookJSONReader(download_ref.get_filename())
+        # try:
+        #     upload_result = do_fixture_upload(self.domain, download_ref, replace)
+        #     for group_name in upload_result.unknown_groups:
+        #         messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
+        #     for user_name in upload_result.unknown_users:
+        #         messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
+        #     for error in upload_result.errors:
+        #         messages.error(request, error)
+        #     for info in upload_result.messages:
+        #         messages.info(request, info)
+        # except FixtureUploadError as e:
+        #     messages.error(request, unicode(e))
+        #     return error_redirect()
+        #
+        # return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
         return super(UploadItemLists, self).dispatch(request, *args, **kwargs)
+
+class FixtureUploadStatusView(BaseDomainView):
+    urlname = 'fixture_upload_status'
+    page_title = ugettext_noop('Item List Upload Status')
+
+    @property
+    def section_url(self):
+        return _fixtures_home(self.domain)
+
+    def get(self, request, *args, **kwargs):
+        context = super(FixtureUploadStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('fixture_upload_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _(self.page_title),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_fixtures
+def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Import complete.'),
+        'on_complete_long': _('Item list upload has finished'),
+
+    })
+    return render(request, template, context)
+
 
 @require_POST
 @login_or_digest
