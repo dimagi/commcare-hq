@@ -448,11 +448,6 @@ class UploadItemLists(TemplateView):
 
     @method_decorator(get_file)
     def post(self, request):
-        def error_redirect():
-            return HttpResponseRedirect(
-                reverse("fixture_interface_dispatcher", args=[],
-                        kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
-
         replace = 'replace' in request.POST
 
         # soil workflow
