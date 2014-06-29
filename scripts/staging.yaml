@@ -4,7 +4,6 @@ branches:
   - async-fixtures  # cz 6/29
   - 80598-case # lwyszomi:80598-case
   - multimedia-case-properties # Daniel 3/21
-  - cache-locations  # cz 5/1
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
 #  - vellum-requirejs+use-django-compressor
