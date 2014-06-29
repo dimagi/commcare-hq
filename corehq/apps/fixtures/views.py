@@ -504,7 +504,7 @@ class FixtureUploadStatusView(BaseDomainView):
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
     context = get_download_context(download_id, check_state=True)
     context.update({
-        'on_complete_short': _('Import complete.'),
+        'on_complete_short': _('Upload complete.'),
         'on_complete_long': _('Item list upload has finished'),
 
     })
