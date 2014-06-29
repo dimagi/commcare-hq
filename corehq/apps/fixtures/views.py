@@ -20,14 +20,14 @@ from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException, \
     FixtureUploadError
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField
-from corehq.apps.fixtures.upload import do_fixture_upload, run_upload, DELETE_HEADER
+from corehq.apps.fixtures.upload import run_upload, DELETE_HEADER, validate_file_format, get_workbook
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from couchexport.export import export_raw
 from couchexport.models import Format
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+from dimagi.utils.excel import WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
@@ -450,9 +450,17 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         replace = 'replace' in request.POST
 
-        # soil workflow
         file_ref = expose_download(request.file.read(),
                                    expiry=1*60*60)
+
+        # catch basic validation in the synchronous UI
+        try:
+            validate_file_format(file_ref.get_filename())
+        except FixtureUploadError as e:
+            messages.error(request, unicode(e))
+            return HttpResponseRedirect(_fixtures_home(self.domain))
+
+        # hand off to async
         task = fixture_upload_async.delay(
             self.domain,
             file_ref.download_id,
@@ -546,7 +554,7 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_message)
 
     try:
-        workbook = WorkbookJSONReader(upload_file)
+        workbook = get_workbook(upload_file)
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
@@ -556,14 +564,12 @@ def upload_fixture_api(request, domain, **kwargs):
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
     except ExcelMalformatException as e:
-        notify_exception(request)
         return _return_response(response_codes["fail"], str(e))
     except DuplicateFixtureTagException as e:
         return _return_response(response_codes["fail"], str(e))
     except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
-        notify_exception(request, message=e)
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 

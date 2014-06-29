@@ -17,6 +17,9 @@ FAILURE_MESSAGES = {
     "has_no_column": ugettext_noop(
         "Workbook 'types' has no column '{column_name}'."
     ),
+    "duplicate_tag": ugettext_noop(
+        "Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
+    ),
     "has_no_field_column": ugettext_noop(
         "Excel-sheet '{tag}' does not contain the column '{field}' "
         "as specified in its 'types' definition"
@@ -66,6 +69,47 @@ class FixtureUploadResult(object):
         self.number_of_fixtures = 0
 
 
+class FixtureWorkbook(object):
+    """
+    Helper class for working with the fixture workbook
+    """
+
+    def __init__(self, file_or_filename):
+        try:
+            self.workbook = WorkbookJSONReader(file_or_filename)
+        except AttributeError:
+            raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
+        except Exception:
+            raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
+
+
+    def get_types_sheet(self):
+        try:
+            return self.workbook.get_worksheet(title='types')
+        except WorksheetNotFound as e:
+            raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
+
+    def get_data_sheet(self, data_type):
+        return self.workbook.get_worksheet(data_type.tag)
+
+    def get_all_type_sheets(self):
+        type_sheets = []
+        seen_tags = set()
+        for number_of_fixtures, dt in enumerate(self.get_types_sheet()):
+            tag = dt.get('table_id') or dt.get('tag') or None
+            if tag is None:
+                raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
+            if tag in seen_tags:
+                raise DuplicateFixtureTagException(_(FAILURE_MESSAGES['duplicate_tag']).format(tag=tag))
+            seen_tags.add(tag)
+            type_sheets.append(dt)
+        return type_sheets
+
+    def validate(self):
+        self.get_types_sheet()
+        self.get_all_type_sheets()
+
+
 def safe_fixture_upload(domain, file_ref, replace):
     try:
         return do_fixture_upload(domain, file_ref, replace)
@@ -75,43 +119,45 @@ def safe_fixture_upload(domain, file_ref, replace):
         result.errors.append(unicode(e))
         return result
 
-
 def do_fixture_upload(domain, file_ref, replace):
-    workbook = _get_workbook(file_ref)
+    workbook = get_workbook(file_ref.get_filename())
     try:
         return run_upload(domain, workbook, replace=replace)
-
     except WorksheetNotFound as e:
         raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
-
     except ExcelMalformatException as e:
         raise FixtureUploadError(_("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
-    except (DuplicateFixtureTagException, FixtureAPIException) as e:
+    except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
-def _get_workbook(download_ref):
-    try:
-        return WorkbookJSONReader(download_ref.get_filename())
-    except AttributeError:
-        raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
-    except Exception:
-        raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
+
+def validate_file_format(file_or_filename):
+    """
+    Does basic validation on the uploaded file. Raises a FixtureUploadError if
+    something goes wrong.
+    """
+    workbook = FixtureWorkbook(file_or_filename)
+    workbook.validate()
+
+
+def get_workbook(file_or_filename):
+    return FixtureWorkbook(file_or_filename)
 
 
 def run_upload(domain, workbook, replace=False):
+
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
-
-    data_types = workbook.get_worksheet(title='types')
 
     def _get_or_raise(container, attr):
         try:
             return container[attr]
         except KeyError:
             raise ExcelMalformatException(_(FAILURE_MESSAGES["has_no_column"]).format(column_name=attr))
+
 
     def diff_lists(list_a, list_b):
         set_a = set(list_a)
@@ -122,18 +168,7 @@ def run_upload(domain, workbook, replace=False):
 
     number_of_fixtures = -1
     with CouchTransaction() as transaction:
-        fixtures_tags = []
-        type_sheets = []
-        for number_of_fixtures, dt in enumerate(data_types):
-            try:
-                tag = _get_or_raise(dt, 'table_id')
-            except ExcelMalformatException:
-                tag = _get_or_raise(dt, 'tag')
-            if tag in fixtures_tags:
-                error_message = "Upload Failed: Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
-                raise DuplicateFixtureTagException(_(error_message.format(tag=tag)))
-            fixtures_tags.append(tag)
-            type_sheets.append(dt)
+        type_sheets = workbook.get_all_type_sheets()
         for number_of_fixtures, dt in enumerate(type_sheets):
             try:
                 tag = _get_or_raise(dt, 'table_id')
@@ -194,7 +229,7 @@ def run_upload(domain, workbook, replace=False):
                 data_type = new_data_type
             transaction.save(data_type)
 
-            data_items = workbook.get_worksheet(data_type.tag)
+            data_items = workbook.get_data_sheet(data_type)
             for sort_key, di in enumerate(data_items):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
                 item_fields_list = di['field'].keys()
