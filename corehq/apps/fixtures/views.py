@@ -431,7 +431,7 @@ def download_file(request, domain):
         return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 
-def _fixtures_home(domain):
+def fixtures_home(domain):
     return reverse("fixture_interface_dispatcher", args=[],
                    kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'})
 
@@ -444,7 +444,7 @@ class UploadItemLists(TemplateView):
         }
 
     def get(self, request):
-        return HttpResponseRedirect(_fixtures_home(self.domain))
+        return HttpResponseRedirect(fixtures_home(self.domain))
 
     @method_decorator(get_file)
     def post(self, request):
@@ -458,7 +458,7 @@ class UploadItemLists(TemplateView):
             validate_file_format(file_ref.get_filename())
         except FixtureUploadError as e:
             messages.error(request, unicode(e))
-            return HttpResponseRedirect(_fixtures_home(self.domain))
+            return HttpResponseRedirect(fixtures_home(self.domain))
 
         # hand off to async
         task = fixture_upload_async.delay(
@@ -485,7 +485,7 @@ class FixtureUploadStatusView(BaseDomainView):
 
     @property
     def section_url(self):
-        return _fixtures_home(self.domain)
+        return fixtures_home(self.domain)
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
