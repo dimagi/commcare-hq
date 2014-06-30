@@ -3,6 +3,7 @@ from celery.task import periodic_task, task
 from corehq.apps.reminders.models import CaseReminderHandler, CASE_CRITERIA
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
+from casexml.apps.case.models import CommCareCase
 
 @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def fire_reminders():
@@ -27,6 +28,7 @@ def case_changed(case_id, handler_ids):
 
 def _case_changed(case_id, handler_ids):
     subcases = None
+    case = CommCareCase.get(case_id)
     for handler_id in handler_ids:
         handler = CaseReminderHandler.get(handler_id)
         if handler.start_condition_type == CASE_CRITERIA:
