@@ -391,7 +391,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         else:
             # remove upload questions (attachemnts) until MM Case Properties
             # are released to general public
-            is_previewer = feature_previews.MM_CASE_PROPERTIES.enabled(getattr(request, 'domain', None))
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
             xform_questions = [q for q in xform_questions
                                  if q["tag"] != "upload" or is_previewer]
 

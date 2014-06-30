@@ -94,3 +94,8 @@ ANDROID_OFFLINE_INSTALL = StaticToggle(
     'Android Offline Install',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
+
+MM_CASE_PROPERTIES = StaticToggle(
+    'mm_case_properties',
+    'Multimedia Case Properties',
+)
