@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from corehq.apps.fixtures.views import fixtures_home
+from corehq.apps.fixtures.views import fixtures_home, FixtureViewMixIn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
@@ -10,8 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext as _
 
 
-class FixtureInterface(GenericReportView):
-    section_name = ugettext_noop("Lookup Tables")
+class FixtureInterface(FixtureViewMixIn, GenericReportView):
     base_template = 'fixtures/fixtures_base.html'
     asynchronous = False
     dispatcher = FixtureInterfaceDispatcher

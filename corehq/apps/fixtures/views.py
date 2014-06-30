@@ -435,6 +435,15 @@ def fixtures_home(domain):
     return reverse("fixture_interface_dispatcher", args=[],
                    kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'})
 
+
+class FixtureViewMixIn(object):
+    section_name = ugettext_noop("Lookup Tables")
+
+    @property
+    def section_url(self):
+        return fixtures_home(self.domain)
+
+
 class UploadItemLists(TemplateView):
 
     def get_context_data(self, **kwargs):
@@ -479,13 +488,10 @@ class UploadItemLists(TemplateView):
         self.domain = domain
         return super(UploadItemLists, self).dispatch(request, *args, **kwargs)
 
-class FixtureUploadStatusView(BaseDomainView):
-    urlname = 'fixture_upload_status'
-    page_title = ugettext_noop('Item List Upload Status')
 
-    @property
-    def section_url(self):
-        return fixtures_home(self.domain)
+class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
+    urlname = 'fixture_upload_status'
+    page_title = ugettext_noop('Lookup Table Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
@@ -508,7 +514,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     context = get_download_context(download_id, check_state=True)
     context.update({
         'on_complete_short': _('Upload complete.'),
-        'on_complete_long': _('Item list upload has finished'),
+        'on_complete_long': _('Lookup table upload has finished'),
 
     })
     return render(request, template, context)
