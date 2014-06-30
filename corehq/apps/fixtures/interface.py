@@ -105,6 +105,6 @@ class FixtureEditInterface(FixtureInterface):
         return context
 
     @property
+    @memoized
     def data_types(self):
-        fdts = list(FixtureDataType.by_domain(self.domain))
-        return fdts
+        return list(FixtureDataType.by_domain(self.domain))
