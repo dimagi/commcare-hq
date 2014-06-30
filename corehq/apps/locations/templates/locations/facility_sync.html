@@ -30,7 +30,7 @@
             });
         };
         $("#sync_lmis").click(function() {
-            var url = '{% url "sync_openlmis" domain %}';
+            var url = '{% url sync_url domain %}';
             var successMessage = '{% trans "Sync started" %}';
             _post(this, url, {success: successMessage});
         });
@@ -42,52 +42,54 @@
 
     {% if request.couch_user.is_previewer %}
     <form id="settings" class="form form-horizontal" method="post">
-        <h3>{% trans "OpenLMIS Integration" %}</h3>
+        <h3>{{ current_page.page_name }} {% trans "Integration" %}</h3>
 
         <fieldset>
             <div class="control-group" >
-                <label class="control-label" for="openlmis_enabled">
-                    {% trans "Enable OpenLMIS Integration?" %}
+                <label class="control-label" for="source_enabled">
+                    {% trans "Enable" %} {{ current_page.page_name }} {% trans "Integration?" %}
                 </label>
                 <div class="controls">
-                  <input id="openlmis_enabled" type="checkbox" data-bind="checked: openlmis_config().enabled">
+                  <input id="source_enabled" type="checkbox" data-bind="checked: source_config().enabled">
                 </div>
             </div>
         </fieldset>
 
-        <fieldset data-bind="with: openlmis_config(), visible: openlmis_config().enabled">
+        <fieldset data-bind="with: source_config(), visible: source_config().enabled">
             <div class="control-group" >
-                <label class="control-label" for="openlmis_url">
+                <label class="control-label" for="source_url">
                     {% trans "API URL" %}
                 </label>
                 <div class="controls">
-                  <input id="openlmis_url" type="text" data-bind="value: url">
+                  <input id="source_url" type="text" data-bind="value: url">
                 </div>
             </div>
             <div class="control-group" >
-                <label class="control-label" for="openlmis_username">
+                <label class="control-label" for="source_username">
                     {% trans "Username" %}
                 </label>
                 <div class="controls">
-                  <input id="openlmis_username" type="text" data-bind="value: username">
+                  <input id="source_username" type="text" data-bind="value: username">
                 </div>
             </div>
             <div class="control-group" >
-                <label class="control-label" for="openlmis_password">
+                <label class="control-label" for="source_password">
                     {% trans "Password" %}
                 </label>
                 <div class="controls">
-                  <input id="openlmis_password" type="password" data-bind="value: password">
+                  <input id="source_password" type="password" data-bind="value: password">
                 </div>
             </div>
-            <div class="control-group" >
-                <label class="control-label" for="openlmis_using_requisitions">
-                    {% trans "Use OpenLMIS for Requisitions?" %}
-                </label>
-                <div class="controls">
-                  <input id="openlmis_using_requisitions" type="checkbox" data-bind="checked: using_requisitions">
+            {% if source == 'openlmis' %}
+                <div class="control-group" >
+                    <label class="control-label" for="source_using_requisitions">
+                        {% trans "Use OpenLMIS for Requisitions?" %}
+                    </label>
+                    <div class="controls">
+                      <input id="source_using_requisitions" type="checkbox" data-bind="checked: using_requisitions">
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         </fieldset>
 
         <div class="form-actions">
@@ -99,11 +101,11 @@
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
 
-    {% if settings.openlmis_config.enabled %}
+    {% if settings.source_config.enabled %}
     <header>
         <div class="row-fluid">
             <div class="span8">
-                <h2>{% trans "Sync with OpenLMIS" %}</h2>
+                <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
             </div>
         </div>
     </header>

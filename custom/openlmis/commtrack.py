@@ -5,6 +5,7 @@ from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, Requ
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser
+from custom import _apply_updates
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 from corehq.apps.commtrack import const
@@ -12,17 +13,6 @@ from collections import defaultdict
 
 requisition_approved = Signal(providing_args=["requisitions"])
 requisition_receipt = Signal(providing_args=["requisitions"])
-
-
-def _apply_updates(doc, update_dict):
-    # updates the doc with items from the dict
-    # returns whether or not any updates were made
-    should_save = False
-    for key, value in update_dict.items():
-        if getattr(doc, key, None) != value:
-            setattr(doc, key, value)
-            should_save = True
-    return should_save
 
 
 def bootstrap_domain(domain):

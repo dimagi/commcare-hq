@@ -3,9 +3,9 @@ import json
 import feedparser
 import time
 import requests
-from requests.auth import HTTPBasicAuth
 from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE
 from corehq.apps.commtrack.models import RequisitionCase
+from custom import EndpointMixin
 from custom.openlmis.exceptions import OpenLMISAPIException
 
 REQUISITION_APPROVED = "Requisition approved successfully"
@@ -171,7 +171,7 @@ def get_requisition_statuses(uri_or_text):
         yield RequisitionStatus(RssMetadata.from_entry(entry))
 
 
-class OpenLMISEndpoint(object):
+class OpenLMISEndpoint(EndpointMixin):
     """
     Endpoint for interfacing with the OpenLMIS APIs
     """
@@ -196,9 +196,6 @@ class OpenLMISEndpoint(object):
         self.requisition_details_url = self._urlcombine(self._rest_uri, '/requisitions')
         self.confirm_delivery_base_url = self._urlcombine(self._rest_uri, '/orders')
 
-    def _urlcombine(self, base, target):
-        return '{base}{target}'.format(base=base, target=target)
-
     def _page(self, base, page):
         return '{base}/{page}'.format(base=base, page=page)
 
@@ -211,9 +208,6 @@ class OpenLMISEndpoint(object):
             for r in results:
                 yield r
             page += 1
-
-    def _auth(self):
-        return HTTPBasicAuth(self.username, self.password)
 
     def _response(self, response):
         # todo: error handling and such
@@ -302,10 +296,6 @@ class OpenLMISEndpoint(object):
                                 headers={'content-type': 'application/json'},
                                 auth=self._auth())
         return self._response(response)
-
-    @classmethod
-    def from_config(cls, config):
-        return cls(config.url, config.username, config.password)
 
 
 class Requisition(object):
