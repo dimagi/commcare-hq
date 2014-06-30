@@ -728,7 +728,11 @@ class CaseReminderHandler(Document):
         """
         # Prevent circular import
         from .event_handlers import EVENT_HANDLER_MAP
-        
+
+        if self.deleted():
+            reminder.retire()
+            return False
+
         # Retrieve the list of individual recipients
         recipient = reminder.recipient
         
@@ -929,8 +933,7 @@ class CaseReminderHandler(Document):
             sent = False
             if send_immediately:
                 try:
-                    self.fire(reminder)
-                    sent = True
+                    sent = self.fire(reminder)
                 except Exception:
                     # An exception could happen here, for example, if touchforms is down.
                     # So just pass, and let the reminder be saved below so that the framework
