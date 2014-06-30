@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
@@ -14,6 +13,7 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -22,9 +22,9 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
-from hqbilling.dispatcher import BillingInterfaceDispatcher
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+from corehq.toggles import IS_DEVELOPER
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -296,6 +296,7 @@ class CommTrackSetupTab(UITab):
     def dropdown_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             DefaultConsumptionView,
             ProgramListView,
@@ -306,13 +307,15 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        dropdown_items = [
-            (_("Products"), ProductListView),
-            (_("Programs"), ProgramListView),
-            (_("Consumption"), DefaultConsumptionView),
-            (_("SMS"), SMSSettingsView),
-            (_("Locations"), LocationsListView),
-            (_("Locations (Advanced)"), LocationSettingsView),
+        dropdown_items = [(_(view.page_title), view) for view in (
+                ProductListView,
+                LocationsListView,
+                LocationSettingsView,
+                ProgramListView,
+                SMSSettingsView,
+                DefaultConsumptionView,
+                CommTrackSettingsView,
+            )
         ]
 
         return [
@@ -330,6 +333,7 @@ class CommTrackSetupTab(UITab):
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
+            CommTrackSettingsView,
             ProductListView,
             NewProductView,
             EditProductView,
@@ -367,31 +371,6 @@ class CommTrackSetupTab(UITab):
                     },
                 ]
             },
-            # programs
-            {
-                'title': ProgramListView.page_title,
-                'url': reverse(ProgramListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewProgramView.page_title,
-                        'urlname': NewProgramView.urlname,
-                    },
-                    {
-                        'title': EditProgramView.page_title,
-                        'urlname': EditProgramView.urlname,
-                    },
-                ]
-            },
-            # consumption
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            },
-            # sms
-            {
-                'title': SMSSettingsView.page_title,
-                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
-            },
             # locations
             {
                 'title': LocationsListView.page_title,
@@ -419,6 +398,36 @@ class CommTrackSetupTab(UITab):
             {
                 'title': LocationSettingsView.page_title,
                 'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+            },
+            # programs
+            {
+                'title': ProgramListView.page_title,
+                'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': NewProgramView.page_title,
+                        'urlname': NewProgramView.urlname,
+                    },
+                    {
+                        'title': EditProgramView.page_title,
+                        'urlname': EditProgramView.urlname,
+                    },
+                ]
+            },
+            # sms
+            {
+                'title': SMSSettingsView.page_title,
+                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+            },
+            # consumption
+            {
+                'title': DefaultConsumptionView.page_title,
+                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+            },
+            # settings
+            {
+                'title': CommTrackSettingsView.page_title,
+                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
             },
             # external sync
             {
@@ -586,7 +595,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_access_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        )
+        ) and self.couch_user.can_edit_data()
 
     @property
     @memoized
@@ -657,7 +666,11 @@ class MessagingTab(UITab):
 
         can_use_survey = can_use_survey_reminders(self._request)
         if can_use_survey:
-            from corehq.apps.reminders.views import KeywordsListView
+            from corehq.apps.reminders.views import (
+                KeywordsListView, AddNormalKeywordView,
+                AddStructuredKeywordView, EditNormalKeywordView,
+                EditStructuredKeywordView,
+            )
             if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
                 keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
             else:
@@ -666,14 +679,30 @@ class MessagingTab(UITab):
                 'title': _("Keywords"),
                 'url': keyword_list_url,
                 'subpages': [
-                {
-                    'title': keyword_subtitle,
-                    'urlname': 'edit_keyword'
-                },
-                {
-                    'title': _("New Keyword"),
-                    'urlname': 'add_keyword',
-                },
+                    {
+                        'title': keyword_subtitle,
+                        'urlname': 'edit_keyword'
+                    },
+                    {
+                        'title': _("New Keyword"),
+                        'urlname': 'add_keyword',
+                    },
+                    {
+                        'title': AddNormalKeywordView.page_title,
+                        'urlname': AddNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': AddStructuredKeywordView.page_title,
+                        'urlname': AddStructuredKeywordView.urlname,
+                    },
+                    {
+                        'title': EditNormalKeywordView.page_title,
+                        'urlname': EditNormalKeywordView.urlname,
+                    },
+                    {
+                        'title': EditStructuredKeywordView.page_title,
+                        'urlname': EditStructuredKeywordView.urlname,
+                    },
                 ],
             })
 
@@ -995,17 +1024,6 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            from corehq.apps.domain.views import CommTrackSettingsView
-
-            if self.project.commtrack_enabled:
-                commtrack_settings = [
-                    {
-                        'title': _(CommTrackSettingsView.page_title),
-                        'url': reverse(CommTrackSettingsView.urlname, args=[self.domain])
-                    },
-                ]
-                items.append((_('CommTrack'), commtrack_settings))
-
             administration = [
                 {
                     'title': _('CommCare Exchange'),
@@ -1138,6 +1156,12 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+        if self.couch_user and (not self.couch_user.is_superuser and IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [
+                (_('Administrative Reports'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                    ])]
 
         admin_operations = [
             {'title': _('View/Update Domain Information'),
@@ -1149,8 +1173,8 @@ class AdminReportsTab(UITab):
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
-                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
-            ])
+                 'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+                ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
@@ -1175,29 +1199,17 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]),
-            (_('Administrative Operations'), admin_operations)
-        ]
+            ]), (_('Administrative Operations'), admin_operations)]
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class GlobalADMConfigTab(UITab):
     title = ugettext_noop("Global ADM Report Configuration")
     view = "corehq.apps.adm.views.default_adm_admin"
     dispatcher = ADMAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
-class BillingTab(UITab):
-    title = ugettext_noop("Billing")
-    view = "billing_default"
-    dispatcher = BillingInterfaceDispatcher
 
     @property
     def is_viewable(self):
@@ -1297,7 +1309,6 @@ class AdminTab(UITab):
     subtab_classes = (
         AdminReportsTab,
         GlobalADMConfigTab,
-        BillingTab,
         SMSAdminTab,
         AnnouncementsTab,
         AccountingTab,
@@ -1306,6 +1317,8 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
+        if self.couch_user and not self.couch_user.is_superuser and (IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [format_submenu_context(_("System Info"), url=reverse("system_info"))]
         submenu_context = [
             format_submenu_context(_("Reports"), is_header=True),
             format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
@@ -1337,7 +1350,7 @@ class AdminTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class ExchangeTab(UITab):

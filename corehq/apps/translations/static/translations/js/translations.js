@@ -50,11 +50,18 @@ var mk_translation_ui = function (spec) {
                     this.$error.hide();
                 }
 
-                this.value.on('change', function () {
+                var helperFunction = function () {
                     if (that.solid) {
                         translation_ui.saveButton.fire('change');
                     }
+                };
+
+                this.value.on('change', helperFunction);
+
+                this.value.ui.find('input').autocomplete({
+                    select: helperFunction
                 });
+
                 this.value.ui.find('input').focus(function () {
                     var input = $(this);
                     if (!suggestionCache.hasOwnProperty('-' + that.key.val())) {

@@ -20,6 +20,7 @@ cloudCare.CASE_PROPERTY_MAP = {
     'date-opened': 'date_opened',
     'status': '@status', // must map to corresponding function on the Case model
     'name': 'case_name',
+    'owner_id': '@owner_id'
 };
 
 cloudCare.Case = Backbone.Model.extend({

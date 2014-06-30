@@ -2,8 +2,10 @@ from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
+from casexml.apps.case.models import CommCareCase
+from datetime import datetime, timedelta
 
-
+EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
 SUCCEED_PM_APPNAME = 'SUCCEED PM app'
@@ -17,36 +19,39 @@ CONFIG = {
         dict(val="rancho", text=ugettext_noop("Rancho Los Amigos")),
     ],
     'succeed_admin': 'SUCCEED Admin',
-    'pm_role': 'PM',
-    'pi_role': 'PI',
-    'cm_role': 'CM',
-    'chw_role': 'CHW'
+    'pm_role': 'Project Manager',
+    'pi_role': 'Principal Investigator',
+    'cm_role': 'Care Manager',
+    'chw_role': 'Community Health Worker'
 }
 
 
+def has_role(user, roles):
+    return user.get_role() is not None and user.get_role()['name'] in roles
+
+
 def is_succeed_admin(user):
-    return True if user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin'] else False
+    return has_role(user, [CONFIG['succeed_admin'], 'Admin'])
 
 
 def is_pi(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pi_role']] else False
+    return has_role(user, [CONFIG['pi_role']])
 
 
 def is_cm(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['cm_role']] else False
+    return has_role(user, [CONFIG['cm_role']])
 
 
 def is_chw(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['chw_role']] else False
+    return has_role(user, [CONFIG['chw_role']])
 
 
 def is_pm_or_pi(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role']] else False
+    return has_role(user, [CONFIG['pm_role'], CONFIG['pi_role']])
 
 
 def has_any_role(user):
-    return True if 'user_data' in user and user.user_data['role'] in [CONFIG['pm_role'], CONFIG['pi_role'],
-                                                                      CONFIG['cm_role'], CONFIG['chw_role']] else False
+    return is_chw(user) or is_pm_or_pi(user) or is_cm(user)
 
 
 def get_app_build(app_dict):
@@ -68,10 +73,36 @@ def get_form_dict(case, form_xmlns):
 
 
 def format_date(date_string, OUTPUT_FORMAT):
-    date_obj = date_string
+    if date_string is None or date_string == '' or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
+        return _("Bad Date Format!")
+
     if isinstance(date_string, basestring):
         try:
-            date_obj = dateutil.parser.parse(date_string)
+            date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
             return _("Bad Date Format!")
-    return date_obj.strftime(OUTPUT_FORMAT)
+
+    return date_string.strftime(OUTPUT_FORMAT)
+
+def get_randomization_date(case):
+    from custom.succeed.reports import INPUT_DATE_FORMAT
+    rand_date = case.get_case_property("randomization_date")
+    if rand_date != None:
+        date = format_date(rand_date, INPUT_DATE_FORMAT)
+        return date
+    else:
+        return EMPTY_FIELD
+
+def update_patient_target_dates(case):
+    from custom.succeed.reports import VISIT_SCHEDULE
+
+    for visit_key, visit in enumerate(VISIT_SCHEDULE):
+        try:
+            next_visit = VISIT_SCHEDULE[visit_key + 1]
+        except IndexError:
+            next_visit = 'last'
+        if next_visit != 'last' and case.get_case_property("randomization_date") is not None:
+            rand_date = dateutil.parser.parse(get_randomization_date(case))
+            tg_date = rand_date.date() + timedelta(days=next_visit['days'])
+            case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
+    case.save()

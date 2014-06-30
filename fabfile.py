@@ -15,18 +15,19 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
-import sys
-from collections import defaultdict
-
-from fabric.context_managers import settings, cd
-
-from fabric.operations import require, local, prompt
+import datetime
 import os
-from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.contrib import files, console
-from fabric import utils
 import posixpath
+import sys
 import time
+from collections import defaultdict
+from distutils.util import strtobool
+
+from fabric import utils
+from fabric.api import run, roles, execute, task, sudo, env, parallel
+from fabric.context_managers import settings, cd
+from fabric.contrib import files, console
+from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -56,6 +57,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.linewise = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "
@@ -740,13 +742,16 @@ def hotfix_deploy():
 @task
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
+    _require_target()
     if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    _require_target()
     run('echo ping!')  # workaround for delayed console response
+    _deploy_without_asking()
 
+
+def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
@@ -769,6 +774,47 @@ def deploy():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
+
+
+@task
+def awesome_deploy(confirm="yes"):
+    """preindex and deploy if it completes quickly enough, otherwise abort"""
+    if strtobool(confirm) and not console.confirm(
+            'Are you sure you want to preindex and deploy '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+    max_wait = datetime.timedelta(minutes=5)
+    start = datetime.datetime.utcnow()
+    pause_length = datetime.timedelta(seconds=5)
+
+    execute(preindex_views)
+
+    @roles(*ROLES_DB_ONLY)
+    def preindex_complete():
+        with settings(warn_only=True):
+            return sudo(
+                '%(virtualenv_root_preindex)s/bin/python '
+                '%(code_root_preindex)s/manage.py preindex_everything '
+                '--check' % env,
+                user=env.sudo_user,
+            ).succeeded
+
+    done = False
+    while not done and datetime.datetime.utcnow() - start < max_wait:
+        time.sleep(pause_length.seconds)
+        if preindex_complete():
+            done = True
+        pause_length *= 2
+
+    if done:
+        _deploy_without_asking()
+    else:
+        mail_admins(
+            " You can't deploy yet",
+            ("Preindexing is taking a while, so hold tight "
+             "and wait for an email saying it's done. "
+             "Thank you for using AWESOME DEPLOY.")
+        )
 
 
 @task
@@ -896,12 +942,17 @@ def _migrate():
 @roles(*ROLES_DB_ONLY)
 def migrate():
     """run south migration on remote environment"""
+    if not console.confirm(
+            'Are you sure you want to run south migrations on '
+            '{env.environment}? '
+            'You must preindex beforehand. '.format(env=env), default=False):
+        utils.abort('Task aborted.')
     _require_target()
     execute(stop_pillows)
     execute(stop_celery_tasks)
-    with cd(env.code_root):
+    with cd(env.code_root_preindex):
         sudo(
-            '%(virtualenv_root)s/bin/python manage.py migrate --noinput ' % env
+            '%(virtualenv_root_preindex)s/bin/python manage.py migrate --noinput ' % env
             + env.get('app', ''),
             user=env.sudo_user
         )

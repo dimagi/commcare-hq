@@ -5,7 +5,6 @@ from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
@@ -26,7 +25,7 @@ from custom.openlmis.tasks import bootstrap_domain_task
 from soil.util import expose_download, get_download_context
 from corehq.apps.commtrack.tasks import import_locations_async
 from couchexport.models import Format
-from corehq.apps.consumption.shortcuts import get_default_consumption
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 
 
 @domain_admin_required
@@ -64,7 +63,7 @@ class LocationsListView(BaseLocationView):
 
 class LocationSettingsView(BaseCommTrackManageView):
     urlname = 'location_settings'
-    page_title = ugettext_noop("Locations (Advanced)")
+    page_title = ugettext_noop("Location Types")
     template_name = 'locations/settings.html'
 
     @property
@@ -193,7 +192,7 @@ class EditLocationView(NewLocationView):
     def consumption(self):
         consumptions = []
         for product in Product.by_domain(self.domain):
-            consumption = get_default_consumption(
+            consumption = get_default_monthly_consumption(
                 self.domain,
                 product._id,
                 self.location.location_type,

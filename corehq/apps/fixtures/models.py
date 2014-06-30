@@ -91,6 +91,13 @@ class FieldList(DocumentSchema):
     """
     field_list = SchemaListProperty(FixtureItemField)
 
+    def to_api_json(self):
+        value = self.to_json()
+        del value['doc_type']
+        for field in value['field_list']:
+            del field['doc_type']
+        return value
+
 
 class FixtureDataItem(Document):
     """
@@ -165,6 +172,15 @@ class FixtureDataItem(Document):
                                           " field '%s' has properties" % field)
             fields[field] = self.fields[field].field_list[0].field_value
         return fields
+
+    @property
+    def try_fields_without_attributes(self):
+        """This is really just for the API"""
+        try:
+            return self.fields_without_attributes
+        except FixtureVersionError:
+            return {key: value.to_api_json()
+                    for key, value in self.fields.items()}
 
     @property
     def data_type(self):

@@ -2,7 +2,6 @@ from functools import wraps
 from django.http import Http404
 from toggle.shortcuts import toggle_enabled
 
-
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
@@ -94,3 +93,15 @@ ANDROID_OFFLINE_INSTALL = StaticToggle(
     'Android Offline Install',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
+
+IS_DEVELOPER = StaticToggle(
+    'is_developer',
+    'Is developer'
+)
+
+CUSTOM_PRODUCT_DATA = StaticToggle(
+    'custom_product_data',
+    'Custom Product Data',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+

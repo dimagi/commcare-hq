@@ -1,3 +1,5 @@
+from datetime import timedelta
+import datetime
 from django.utils.translation import ugettext_noop
 from django.utils import html
 from casexml.apps.case.models import CommCareCase
@@ -201,9 +203,11 @@ class HBNCMotherReport(BaseHNBCReport):
 
     @property
     def case_filter(self):
+        now = datetime.datetime.now()
+        fromdate = now - timedelta(days=42)
         filters = BaseHNBCReport.base_filters(self)
         filters.append({'term': {'pp_case_filter.#value': "1"}})
-
+        filters.append({'range': {'date_birth.#value': {"gte": fromdate.strftime("%Y-%m-%d")}}})
         status = self.request_params.get('PNC_status', '')
 
         or_stmt = []

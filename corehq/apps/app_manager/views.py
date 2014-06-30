@@ -641,8 +641,11 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    include_media = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(
+        request.user.username
+    )
     for app in saved_apps:
-        app['include_media'] = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(request.user.username)
+        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 
@@ -708,10 +711,10 @@ def release_build(request, domain, app_id, saved_app_id):
 
 
 def get_module_view_context_and_template(app, module):
-    builder = ParentCasePropertyBuilder(
-        app,
-        defaults=('name', 'date-opened', 'status')
-    )
+    defaults = ('name', 'date-opened', 'status')
+    if app.case_sharing:
+        defaults += ('#owner_name',)
+    builder = ParentCasePropertyBuilder(app, defaults=defaults)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -1421,6 +1424,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.put_in_root = True if put_in_root == "True" else False
     if should_edit('form_filter'):
         form.form_filter = req.POST['form_filter']
+    if should_edit('post_form_workflow'):
+        form.post_form_workflow = req.POST['post_form_workflow']
 
     _handle_media_edits(req, form, should_edit, resp)
 

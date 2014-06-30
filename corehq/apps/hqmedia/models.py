@@ -321,14 +321,14 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def _get_resized_image(cls, image, size):
-        if image.mode != "RGB":
+        if image.mode not in ["RGB", "RGBA"]:
             image = image.convert("RGB")
         o = StringIO()
         try:
             image.thumbnail(size, Image.ANTIALIAS)
         except IndexError:
             raise ImageThumbnailError()
-        image.save(o, format="JPEG")
+        image.save(o, format="PNG")
         return o.getvalue()
 
     @classmethod

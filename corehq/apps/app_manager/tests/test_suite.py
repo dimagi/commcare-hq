@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -27,6 +27,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
+        # print app.create_suite()
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_app_strings(self, app_tag):
@@ -57,6 +58,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_careplan_suite(self):
         self._test_generic_suite('careplan')
+
+    def test_careplan_suite_own_module(self):
+        app = Application.wrap(self.get_json('careplan'))
+        app.get_module(1).display_separately = True
+        self.assertXmlEqual(self.get_xml('careplan-own-module'), app.create_suite())
 
     def test_advanced_suite(self):
         self._test_generic_suite('suite-advanced')
@@ -95,7 +101,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_RAW,
-            value_key='some xpath expression'
+            value_key=("some xpath expression "
+                       "containing instance('casedb') "
+                       "and instance('commcaresession')")
         )
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
 
@@ -117,6 +125,47 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
+    def test_form_workflow_previous(self):
+        """
+        m0 - standard module - no case
+            f0 - no case management
+            f1 - no case management
+        m1 - standard module - patient case
+            f0 - register case
+            f1 - update case
+        m2 - standard module - patient case
+            f0 - update case
+            f1 - update case
+        m3 - standard module - child case
+            f0 - update child case
+            f1 - update child case
+        m4 - advanced module - patient case
+            f0 - load a -> b
+            f1 - load a -> b -> c
+            f2 - load a -> b -> autoselect
+        """
+        self._test_generic_suite('suite-workflow', 'suite-workflow-previous')
+
+    def test_form_workflow_module(self):
+        app = Application.wrap(self.get_json('suite-workflow'))
+        for module in app.get_modules():
+            for form in module.get_forms():
+                form.post_form_workflow = WORKFLOW_MODULE
+
+        self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
+
+    def test_owner_name(self):
+        self._test_generic_suite('owner-name')
+
+    def test_form_filter(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(2).get_form(0)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
 
 class RegexTest(SimpleTestCase):

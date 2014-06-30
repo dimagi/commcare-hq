@@ -15,10 +15,15 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
-from corehq.apps.reminders.util import DotExpandedDict
+from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors, FieldWithHelpBubble
+from corehq.apps.hqwebapp.crispy import (
+    BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
+    FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
+)
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,
@@ -52,13 +57,14 @@ from .models import (
     RECIPIENT_USER_GROUP,
     UI_SIMPLE_FIXED,
     UI_COMPLEX,
+    RECIPIENT_ALL_SUBCASES,
 )
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
@@ -707,9 +713,9 @@ class ComplexCaseReminderForm(Form):
 
 
 MATCH_TYPE_CHOICES = (
-    (MATCH_ANY_VALUE, "exists."),
-    (MATCH_EXACT, "equals"),
-    (MATCH_REGEX, "matches regular expression"),
+    (MATCH_ANY_VALUE, ugettext_noop("exists.")),
+    (MATCH_EXACT, ugettext_noop("equals")),
+    (MATCH_REGEX, ugettext_noop("matches regular expression")),
 )
 
 START_REMINDER_ON_CASE_DATE = 'case_date'
@@ -735,9 +741,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
     This form creates a new CaseReminder. It is the most basic version, no advanced options (like language).
     """
     nickname = forms.CharField(
-        label="Name",
+        label=ugettext_noop("Name"),
         error_messages={
-            'required': "Please enter a name for this reminder",
+            'required': ugettext_noop("Please enter a name for this reminder."),
         }
     )
 
@@ -745,20 +751,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # simple has start_condition_type = CASE_CRITERIA by default
     case_type = forms.CharField(
         required=False,
-        label="Case Type",
+        label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label="Start Reminder",
+        label=ugettext_noop("Send Reminder"),
         required=False,
         choices=(
-            (START_REMINDER_ON_CASE_DATE, "on a date specified in the Case"),
-            (START_REMINDER_ON_CASE_PROPERTY, "when the Case is in the following state"),
+            (START_REMINDER_ON_CASE_DATE, ugettext_noop("on a date specified in the Case")),
+            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("when the Case is in the following state")),
         ),
     )
     ## send options > start_reminder_on = case_date
     start_property = forms.CharField(
         required=False,
-        label="Enter a Case Property",
+        label=ugettext_noop("Enter a Case Property"),
     )
     start_match_type = forms.ChoiceField(
         required=False,
@@ -767,14 +773,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # only shows up if start_match_type != MATCH_ANY_VALUE
     start_value = forms.CharField(
         required=False,
-        label="Value"
+        label=ugettext_noop("Value")
     )
     # this is a UI control that determines how start_offset is calculated (0 or an integer)
     start_property_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            (START_PROPERTY_OFFSET_DELAY, "Delay By"),
-            (START_PROPERTY_OFFSET_IMMEDIATE, "Immediately"),
+            (START_PROPERTY_OFFSET_IMMEDIATE, ugettext_noop("Immediately")),
+            (START_PROPERTY_OFFSET_DELAY, ugettext_noop("Delay By")),
         )
     )
     # becomes start_offset
@@ -785,13 +791,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
         required=False,
-        label="Case Property",
+        label=ugettext_noop("Case Property"),
     )
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            (START_DATE_OFFSET_BEFORE, "Before Date By"),
-            (START_DATE_OFFSET_AFTER, "After Date By"),
+            (START_DATE_OFFSET_BEFORE, ugettext_noop("Before Date By")),
+            (START_DATE_OFFSET_AFTER, ugettext_noop("After Date By")),
         )
     )
     # becomes start_offset
@@ -803,16 +809,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # Fieldset: Recipient
     recipient = forms.ChoiceField(
         choices=(
-            (RECIPIENT_CASE, "Case"),
-            (RECIPIENT_OWNER, "Case Owner"),
-            (RECIPIENT_USER, "User Last Modifying Case"),
-            (RECIPIENT_PARENT_CASE, "Case's Parent Case"),
-            (RECIPIENT_SUBCASE, "Case's Child Cases"),
+            (RECIPIENT_CASE, ugettext_noop("Case")),
+            (RECIPIENT_OWNER, ugettext_noop("Case Owner")),
+            (RECIPIENT_USER, ugettext_noop("Last User Who Modified Case")),
+            (RECIPIENT_USER_GROUP, ugettext_noop("Mobile Worker Group")),
+            (RECIPIENT_ALL_SUBCASES, ugettext_noop("All Child Cases")),
+            (RECIPIENT_SUBCASE, ugettext_noop("Specific Child Case")),
+            (RECIPIENT_PARENT_CASE, ugettext_noop("Parent Case")),
         ),
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
-        label="Case Property",
+        label=ugettext_noop("Case Property"),
         required=False
     )
     recipient_case_match_type = forms.ChoiceField(
@@ -820,20 +828,25 @@ class BaseScheduleCaseReminderForm(forms.Form):
         choices=MATCH_TYPE_CHOICES,
     )
     recipient_case_match_value = forms.CharField(
-        label="Value",
+        label=ugettext_noop("Value"),
         required=False
+    )
+    ## recipient = RECIPIENT_USER_GROUP
+    user_group_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Mobile Worker Group"),
     )
 
     # Fieldset: Message Content
     method = forms.ChoiceField(
-        label="Send",
+        label=ugettext_noop("Send"),
         choices=(
-            (METHOD_SMS, "SMS"),
+            (METHOD_SMS, ugettext_noop("SMS")),
         ),
     )
 
     global_timeouts = forms.CharField(
-        label="Timeouts",
+        label=ugettext_noop("Timeouts"),
         required=False,
     )
 
@@ -844,15 +857,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
 
     event_timing = forms.ChoiceField(
-        label="Timing",
+        label=ugettext_noop("Time of Day"),
     )
 
     event_interpretation = forms.ChoiceField(
-        label="Schedule Type",
+        label=ugettext_noop("Schedule Type"),
         initial=EVENT_AS_OFFSET,
         choices=(
-            (EVENT_AS_OFFSET, "Offset-based"),
-            (EVENT_AS_SCHEDULE, "Schedule-based"),
+            (EVENT_AS_OFFSET, ugettext_noop("Offset-based")),
+            (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
         ),
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
     )
@@ -860,52 +873,52 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # Fieldset: Repeat
     repeat_type = forms.ChoiceField(
         required=False,
-        label="Repeat Reminder",
+        label=ugettext_noop("Repeat Reminder"),
         initial=REPEAT_TYPE_NO,
         choices=(
-            (REPEAT_TYPE_NO, "No"),  # reminder_type = ONE_TIME
-            (REPEAT_TYPE_INDEFINITE, "Indefinitely"),  # reminder_type = DEFAULT, max_iteration_count = -1
-            (REPEAT_TYPE_SPECIFIC, "Specific Number of Times"),
+            (REPEAT_TYPE_NO, ugettext_noop("No")),  # reminder_type = ONE_TIME
+            (REPEAT_TYPE_INDEFINITE, ugettext_noop("Indefinitely")),  # reminder_type = DEFAULT, max_iteration_count = -1
+            (REPEAT_TYPE_SPECIFIC, ugettext_noop("Specific Number of Times")),
         )
     )
     # shown if repeat_type != 'no_repeat'
     schedule_length = forms.IntegerField(
         required=False,
-        label="Repeat Every",
+        label=ugettext_noop("Repeat Every"),
     )
     # shown if repeat_type == 'specific' (0 if no_repeat, -1 if indefinite)
     max_iteration_count = forms.IntegerField(
         required=False,
-        label="Number of Times",
+        label=ugettext_noop("Number of Times"),
     )
     # shown if repeat_type != 'no_repeat'
     stop_condition = forms.ChoiceField(
         required=False,
         label="",
         choices=(
-            ('', '(none)'),
-            (STOP_CONDITION_CASE_PROPERTY, 'Based on Case Property'),
+            ('', ugettext_noop('(none)')),
+            (STOP_CONDITION_CASE_PROPERTY, ugettext_noop('Based on Case Property')),
         )
     )
     until = forms.CharField(
         required=False,
-        label="Enter a Case Property",
+        label=ugettext_noop("Enter a Case Property"),
     )
 
     # Advanced Toggle
     submit_partial_forms = forms.BooleanField(
         required=False,
-        label="Submit Partial Forms",
+        label=ugettext_noop("Submit Partial Forms"),
     )
     include_case_side_effects = forms.BooleanField(
         required=False,
-        label="Include Case Changes for Partial Forms",
+        label=ugettext_noop("Include Case Changes for Partial Forms"),
     )
     default_lang = forms.ChoiceField(
         required=False,
-        label="Default Language",
+        label=ugettext_noop("Default Language"),
         choices=(
-            ('en', "English (en)"),
+            ('en', ugettext_noop("English (en)")),
         )
     )
     # only show if SMS_SURVEY or IVR_SURVEY is chosen
@@ -916,10 +929,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     force_surveys_to_use_triggered_case = forms.BooleanField(
         required=False,
-        label=_("For Surveys, force answers to affect case sending the survey."),
+        label=ugettext_noop("For Surveys, force answers to affect "
+                              "case sending the survey."),
     )
 
-    def __init__(self, data=None, is_previewer=False, domain=None, is_edit=False, can_use_survey=False, *args, **kwargs):
+    use_custom_content_handler = BooleanField(
+        required=False,
+        label=ugettext_noop("Use Custom Content Handler")
+    )
+    custom_content_handler = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Please Specify Custom Content Handler")
+    )
+
+    def __init__(self, data=None, is_previewer=False, is_superuser=False,
+                 domain=None, is_edit=False, can_use_survey=False,
+                 use_custom_content_handler=False,
+                 custom_content_handler=None, *args, **kwargs
+    ):
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -939,6 +966,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.is_edit = is_edit
+        self.is_superuser = is_superuser
+        self.use_custom_content_handler = use_custom_content_handler
+        self.custom_content_handler = custom_content_handler
+
+        self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
 
         if can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -948,15 +980,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         if is_previewer and can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
             method_choices.extend([
-                (METHOD_IVR_SURVEY, "IVR Survey"),
-                (METHOD_SMS_CALLBACK, "SMS Expecting Callback"),
+                (METHOD_IVR_SURVEY, _("IVR Survey")),
+                (METHOD_SMS_CALLBACK, _("SMS Expecting Callback")),
             ])
             self.fields['method'].choices = method_choices
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Field('nickname'),
+            crispy.Field(
+                'nickname',
+                css_class='input-large',
+            ),
             self.section_start,
             self.section_recipient,
             self.section_message,
@@ -968,7 +1003,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>' % reverse(RemindersListView.urlname, args=[self.domain]))
+                crispy.HTML('<a href="%s" class="btn">%s</a>' % (
+                    reverse(RemindersListView.urlname, args=[self.domain]),
+                    _("Cancel")
+                )),
             )
         )
 
@@ -979,18 +1017,28 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_start(self):
         return crispy.Fieldset(
-            'Start',
+            _('Start'),
+            crispy.HTML(
+                '<p style="padding: 0; margin-bottom: 1.5em;">'
+                '<i class="icon-info-sign"></i> %s</p>' % _(
+                    "Choose what will cause this reminder to be sent"
+                ),
+            ),
             *self.section_start_fields
         )
 
     @property
     def section_start_fields(self):
         return [
-            crispy.Field(
+            FieldWithHelpBubble(
                 'case_type',
-                css_class="input-large",
+                css_class="input-xlarge",
                 data_bind="value: case_type",
-                data_placeholder=_("Enter a Case Type")
+                data_placeholder=_("Enter a Case Type"),
+                help_bubble_text=_(
+                    "Choose which case type this reminder will be "
+                    "sent out for."
+                ),
             ),
             FieldWithHelpBubble(
                 'start_reminder_on',
@@ -1002,10 +1050,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ),
             crispy.Div(
                 BootstrapMultiField(
-                    "When Case Property",
+                    _("When Case Property"),
                     InlineField(
                         'start_property',
-                        css_class="input-large",
+                        css_class="input-xlarge",
                     ),
                     InlineField(
                         'start_match_type',
@@ -1018,10 +1066,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     ),
                 ),
                 BootstrapMultiField(
-                    "Begin Sending",
+                    _("Begin Sending"),
                     InlineField(
                         'start_property_offset_type',
                         data_bind="value: start_property_offset_type",
+                        css_class="input-xlarge",
                     ),
                     InlineField(
                         'start_property_offset',
@@ -1041,11 +1090,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.Field(
                     'start_date',
                     data_placeholder="Enter a Case Property",
-                    css_class="input-large",
+                    css_class="input-xlarge",
                 ),
                 BootstrapMultiField(
                     "",
-                    InlineField('start_date_offset_type'),
+                    InlineField(
+                        'start_date_offset_type',
+                        css_class="input-xlarge",
+                    ),
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
@@ -1063,21 +1115,22 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_recipient(self):
         return crispy.Fieldset(
-            "Recipient",
+            _("Recipient"),
             FieldWithHelpBubble(
                 'recipient',
                 data_bind="value: recipient",
                 help_bubble_text=("The contact related to the case that reminder should go to.  The Case "
                                   "Owners are any mobile workers for which the case appears on their phone. "
                                   "For cases with child or parent cases, you can also send the message to those "
-                                  "contacts. ")
+                                  "contacts. "),
+                css_class="input-xlarge",
             ),
             BootstrapMultiField(
-                "When Case Property",
+                _("When Case Property"),
                 InlineField(
                     'recipient_case_match_property',
                     placeholder="Enter a Case Property",
-                    css_class="input-large",
+                    css_class="input-xlarge",
                 ),
                 InlineField(
                     'recipient_case_match_type',
@@ -1088,6 +1141,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     data_bind="visible: isRecipientCaseValueVisible",
                 ),
                 data_bind="visible: isRecipientSubcase",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_id',
+                    css_class="input-xlarge",
+                ),
+                data_bind="visible: isRecipientGroup"
             ),
         )
 
@@ -1106,7 +1166,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="value: method",
                 help_bubble_text=("Send a single SMS message or an interactive SMS survey. "
                                   "SMS surveys are designed in the Surveys or Application "
-                                  "section. ")
+                                  "section. "),
+                css_class="input-xlarge",
             ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
             HiddenFieldWithErrors('events', data_bind="value: events"),
@@ -1116,8 +1177,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                "Time",
-                InlineField('event_timing', data_bind="value: event_timing"),
+                _("Time of Day"),
+                InlineField(
+                    'event_timing',
+                    data_bind="value: event_timing",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     style="display: inline;",
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
@@ -1136,21 +1201,41 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_repeat(self):
         return crispy.Fieldset(
-            "Repeat",
-            crispy.Field('repeat_type', data_bind="value: repeat_type"),
+            _("Repeat"),
+            crispy.Field(
+                'repeat_type',
+                data_bind="value: repeat_type",
+                css_class="input-xlarge",
+            ),
             crispy.Div(
-                crispy.Field('max_iteration_count'),
+                crispy.Field(
+                    'max_iteration_count',
+                    css_class="input-medium",
+                ),
                 data_bind="visible: isMaxIterationCountVisible",
             ),
             BootstrapMultiField(
-                "Repeat Every",
-                InlineField('schedule_length'),
+                _("Repeat Every"),
+                InlineField(
+                    'schedule_length',
+                    css_class="input-medium",
+                ),
                 crispy.HTML('<p class="help-inline">day(s)</p>'),
                 data_bind="visible: isScheduleLengthVisible",
             ),
+        )
+
+    @property
+    def section_advanced(self):
+        return FieldsetAccordionGroup(
+            _("Advanced Options"),
             BootstrapMultiField(
-                "Stop Condition",
-                InlineField('stop_condition', data_bind="value: stop_condition"),
+                _("Stop Condition"),
+                InlineField(
+                    'stop_condition',
+                    data_bind="value: stop_condition",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     InlineField(
                         'until',
@@ -1164,30 +1249,31 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                    "a case property that is going to be set to Ok.  Reminders will always stop if "
                                    "the start condition is no longer true."),
                 css_id="stop-condition-group",
-            )
-        )
-
-    @property
-    def section_advanced(self):
-        return FieldsetAccordionGroup(
-            "Advanced Options",
+            ),
             BootstrapMultiField(
-                "Default Language",
+                _("Default Language"),
                 InlineField(
                     'default_lang',
                     data_bind="options: available_languages, "
                               "value: default_lang, "
                               "optionsText: 'name', optionsValue: 'langcode'",
+                    css_class="input-xlarge",
                 ),
                 crispy.HTML('<a href="#add-language-modal" '
                             'class="btn btn-primary" style="margin-left: 5px;" '
                             'data-toggle="modal">Manage Languages</a>'),
             ),
             crispy.Div(
-                crispy.Field(
+                FieldWithHelpBubble(
                     'global_timeouts',
                     data_bind="value: global_timeouts",
                     placeholder="e.g. 30,60,180",
+                    help_bubble_text=_(
+                        "Will repeat the last message or question if the "
+                        "user does not respond.  Specify each interval "
+                        "(in minutes) separated by a comma. "
+                        "After the last interval, the survey will be closed. "
+                    ),
                 ),
                 data_bind="visible: isGlobalTimeoutsVisible",
             ),
@@ -1199,23 +1285,38 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
-            FieldWithHelpBubble(
-                'submit_partial_forms',
-                help_bubble_text=_("For surveys, this will let forms be saved even if the survey has not "
-                                   "been completed and the user is not responding.")
+            crispy.Div(
+                FieldWithHelpBubble(
+                    'submit_partial_forms',
+                    data_bind="checked: submit_partial_forms",
+                    help_bubble_text=_(
+                        "For surveys, this will let forms be saved even if "
+                        "the survey has not been completed and the user is "
+                        "not responding."
+                    ),
+                ),
+                data_bind="visible: isPartialSubmissionsVisible",
             ),
-            FieldWithHelpBubble(
-                'include_case_side_effects',
-                help_bubble_text=_("When submitting a partial survey, this controls whether the corresponding "
-                                   "case should be created, updated or closed.  This is may not be safe to do if "
-                                   "the form has not been completed. ")
+            crispy.Div(
+                FieldWithHelpBubble(
+                    'include_case_side_effects',
+                    help_bubble_text=_("When submitting a partial survey, this controls whether the corresponding "
+                                       "case should be created, updated or closed.  This is may not be safe to do if "
+                                       "the form has not been completed. ")
+                ),
+                data_bind="visible: submit_partial_forms",
             ),
             crispy.Div(
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
+            crispy.Div(*self.additional_advanced_options),
             active=False,
         )
+
+    @property
+    def additional_advanced_options(self):
+        return []
 
     @property
     def current_values(self):
@@ -1249,6 +1350,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'START_REMINDER_ON_CASE_DATE': START_REMINDER_ON_CASE_DATE,
             'RECIPIENT_CASE': RECIPIENT_CASE,
             'RECIPIENT_SUBCASE': RECIPIENT_SUBCASE,
+            'RECIPIENT_USER_GROUP': RECIPIENT_USER_GROUP,
             'METHOD_SMS': METHOD_SMS,
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
@@ -1281,14 +1383,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
         # todo check start_condition type when we get to the complex form
         case_property = self.cleaned_data['case_type'].strip()
         if not case_property:
-            raise ValidationError("Please specify a case type.")
+            raise ValidationError(_("Please specify a case type."))
         return case_property
 
     def clean_start_property(self):
         if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
             start_property = self.cleaned_data['start_property'].strip()
             if not start_property:
-                raise ValidationError("Please enter a case property for the match criteria.")
+                raise ValidationError(_(
+                    "Please enter a case property for the match criteria."
+                ))
             return start_property
         return None
 
@@ -1302,7 +1406,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
            and self.cleaned_data['start_match_type'] != MATCH_ANY_VALUE):
             start_value = self.cleaned_data['start_value'].strip()
             if not start_value:
-                raise ValidationError("You must specify a value for the case property match criteria.")
+                raise ValidationError(_(
+                    "You must specify a value for the case property "
+                    "match criteria."
+                ))
             return start_value
         return None
 
@@ -1312,7 +1419,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 return 0
             start_property_offset = self.cleaned_data['start_property_offset']
             if start_property_offset < 0:
-                raise ValidationError("Please enter a positive number.")
+                raise ValidationError(_("Please enter a positive number."))
             return start_property_offset
         return None
 
@@ -1320,7 +1427,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
         if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
             start_date = self.cleaned_data['start_date'].strip()
             if not start_date:
-                raise ValidationError("You must specify a case property that will provide the start date.")
+                raise ValidationError(_(
+                    "You must specify a case property that will provide the "
+                    "start date."
+                ))
             return start_date
         return None
 
@@ -1334,17 +1444,31 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return start_date_offset
         return None
 
+    def clean_user_group_id(self):
+        if self.cleaned_data['recipient'] == RECIPIENT_USER_GROUP:
+            value = self.cleaned_data['user_group_id']
+            return clean_group_id(value, self.domain)
+        else:
+            return None
+
     def clean_recipient_case_match_property(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
             case_property = self.cleaned_data['recipient_case_match_property'].strip()
             if not case_property:
-                raise ValidationError("You must specify a case property for the case's child case.")
+                raise ValidationError(_(
+                    "You must specify a case property for the case's "
+                    "child case."
+                ))
             return case_property
+        if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
+            return '_id'
         return None
 
     def clean_recipient_case_match_type(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
             return self.cleaned_data['recipient_case_match_type']
+        if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
+            return MATCH_ANY_VALUE
         return None
 
     def clean_case_match_value(self):
@@ -1352,7 +1476,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
            and self.cleaned_data['recipient_case_match_type'] != MATCH_ANY_VALUE):
             match_value = self.cleaned_data['case_match_value'].strip()
             if not match_value:
-                raise ValidationError("You must provide a value.")
+                raise ValidationError(_("You must provide a value."))
             return match_value
         return None
 
@@ -1361,14 +1485,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         try:
             events = json.loads(self.cleaned_data['events'])
         except ValueError:
-            raise ValidationError("A valid JSON object was not passed in the events input.")
+            raise ValidationError(_(
+                "A valid JSON object was not passed in the events input."
+            ))
 
         for event in events:
             eventForm = CaseReminderEventForm(
                 data=event,
             )
             if not eventForm.is_valid():
-                raise ValidationError("Your event form didn't turn out quite right.")
+                raise ValidationError(_(
+                    "Your event form didn't turn out quite right."
+                ))
 
             event.update(eventForm.cleaned_data)
 
@@ -1384,15 +1512,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     if not msg:
                         del translations[lang]
                 if not translations:
-                    raise ValidationError("You must have at least one message filled in.")
+                    raise ValidationError(_("Please provide an SMS message."))
 
             # clean form_unique_id:
             if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
                 event['form_unique_id'] = None
             else:
                 if not event.get('form_unique_id'):
-                    raise ValidationError("Please create a form for the survey first, and then create "
-                                          "the reminder.")
+                    raise ValidationError(_(
+                        "Please create a form for the survey first, "
+                        "and then create the reminder."
+                    ))
 
             fire_time_type = event['fire_time_type']
 
@@ -1404,14 +1534,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
                 event['fire_time_aux'] = None
             elif not event.get('fire_time_aux'):
-                raise ValidationError("Please enter the case property from which to pull the time.")
+                raise ValidationError(_(
+                    "Please enter the case property from which to pull "
+                    "the time."
+                ))
 
             # clean time_window_length:
             time_window_length = event['time_window_length']
             if fire_time_type != FIRE_TIME_RANDOM:
                 event['time_window_length'] = 0
             elif not (0 < time_window_length < 1440):
-                raise ValidationError(_("Window Length must be greater than 0 and less than 1440 minutes."))
+                raise ValidationError(_(
+                    "Window Length must be greater than 0 and less "
+                    "than 1440 minutes."
+                ))
 
             # clean day_num:
             if self.ui_type == UI_SIMPLE_FIXED or event['is_immediate']:
@@ -1423,17 +1559,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 or method == METHOD_IVR_SURVEY
                 or method == METHOD_SMS_SURVEY):
                 global_timeouts = self.cleaned_data['global_timeouts']
-                timeouts_str = global_timeouts.split(",")
-                timeouts_int = []
-                for t in timeouts_str:
-                    try:
-                        t = int(t.strip())
-                        assert t > 0
-                        timeouts_int.append(t)
-                    except (ValueError, AssertionError):
-                        raise ValidationError("Timeout intervals must be a list of positive numbers "
-                                              "separated by commas.")
-                event['callback_timeout_intervals'] = timeouts_int
+                if global_timeouts:
+                    timeouts_str = global_timeouts.split(",")
+                    timeouts_int = []
+                    for t in timeouts_str:
+                        try:
+                            t = int(t.strip())
+                            assert t > 0
+                            timeouts_int.append(t)
+                        except (ValueError, AssertionError):
+                            raise ValidationError(_(
+                                "Timeout intervals must be a list of positive "
+                                "numbers separated by commas."
+                            ))
+                    event['callback_timeout_intervals'] = timeouts_int
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
@@ -1459,16 +1598,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return -1
         max_iteration_count = self.cleaned_data['max_iteration_count']
         if max_iteration_count < 0:
-            raise ValidationError("Please enter a positive number.")
+            raise ValidationError(_("Please enter a positive number."))
         if max_iteration_count == 0:
-            raise ValidationError("Please enter a number that is 1 or greater.")
+            raise ValidationError(_(
+                "Please enter a number that is 1 or greater."
+            ))
         return max_iteration_count
 
     def clean_until(self):
         if self.cleaned_data['stop_condition'] == STOP_CONDITION_CASE_PROPERTY:
             value = self.cleaned_data['until'].strip()
             if not value:
-                raise ValidationError("You must specify a case property for the stop condition.")
+                raise ValidationError(_(
+                    "You must specify a case property for the stop condition."
+                ))
             return value
         return None
 
@@ -1477,7 +1620,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
         try:
             value = int(value)
         except ValueError:
-            raise ValidationError("Max question retries must be an integer.")
+            raise ValidationError(_(
+                "Max question retries must be an integer."
+            ))
         return value
 
     def clean_force_surveys_to_use_triggered_case(self):
@@ -1486,9 +1631,30 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return False
         return self.cleaned_data['force_surveys_to_use_triggered_case']
 
+    def clean_use_custom_content_handler(self):
+        if self.is_superuser:
+            return self.cleaned_data["use_custom_content_handler"]
+        else:
+            return self.use_custom_content_handler
+
+    def clean_custom_content_handler(self):
+        if self._cchq_is_superuser:
+            value = self.cleaned_data["custom_content_handler"]
+            if self.cleaned_data["use_custom_content_handler"]:
+                if value in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
+                    return value
+                else:
+                    raise ValidationError(_("Invalid custom content handler."))
+            else:
+                return None
+        else:
+            return self.custom_content_handler
+
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
-            raise ValueError("You must save to a CaseReminderHandler object!")
+            raise ValueError(_(
+                "You must save to a CaseReminderHandler object!"
+            ))
 
         events = self.cleaned_data['events']
         event_objects = []
@@ -1510,6 +1676,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'start_value',
             'start_date',
             'recipient',
+            'user_group_id',
             'recipient_case_match_property',
             'recipient_case_match_type',
             'recipient_case_match_value',
@@ -1525,8 +1692,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'default_lang',
             'max_question_retries',
             'force_surveys_to_use_triggered_case',
+            'custom_content_handler',
         ]:
-            setattr(reminder_handler, field, self.cleaned_data[field])
+            value = self.cleaned_data[field]
+            if field == 'recipient' and value == RECIPIENT_ALL_SUBCASES:
+                value = RECIPIENT_SUBCASE
+            setattr(reminder_handler, field, value)
 
         start_property_offset = self.cleaned_data['start_property_offset']
         start_date_offset = self.cleaned_data['start_date_offset']
@@ -1557,6 +1728,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
+                if (field == 'recipient'
+                    and reminder_handler.recipient_case_match_property == '_id'
+                    and reminder_handler.recipient_case_match_type == MATCH_ANY_VALUE
+                ):
+                    current_val = RECIPIENT_ALL_SUBCASES
                 if current_val is not Ellipsis:
                     initial[field] = current_val
             except AttributeError:
@@ -1596,11 +1772,16 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         super(SimpleScheduleCaseReminderForm, self).__init__(*args, **kwargs)
 
         event_timing_choices = (
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE), "Immediately"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, EVENT_TIMING_IMMEDIATE),
+             _("Immediately When Triggered")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None),
+             _("At a Specific Time")),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None),
+             _("Delay After Start")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None),
+             _("Time Specific in Case")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None),
+             _("Random Time in Window")),
         )
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
@@ -1628,8 +1809,12 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                _("Time"),
-                InlineField('event_timing', data_bind="value: event_timing"),
+                _("Time of Day"),
+                InlineField(
+                    'event_timing',
+                    data_bind="value: event_timing",
+                    css_class="input-xlarge",
+                ),
                 crispy.Div(
                     style="display: inline;",
                     data_bind="template: {name: 'event-fire-template', foreach: eventObjects}"
@@ -1652,10 +1837,15 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
         super(ComplexScheduleCaseReminderForm, self).__init__(*args, **kwargs)
 
         event_timing_choices = (
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None), "At a Specific Time"),
-            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None), "Delay After Start"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None), "Time in Case"),
-            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None), "Random Time"),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_DEFAULT, None),
+             _("At a Specific Time")),
+            ((EVENT_AS_OFFSET, FIRE_TIME_DEFAULT, None),
+             _("Delay After Start By")),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_CASE_PROPERTY, None),
+             _("Time Specific in Case")
+            ),
+            ((EVENT_AS_SCHEDULE, FIRE_TIME_RANDOM, None),
+             _("Random Time in Window")),
         )
         event_timing_choices = [(self._format_event_timing_choice(e[0][0], e[0][1], e[0][2]), e[1])
                                 for e in event_timing_choices]
@@ -1676,15 +1866,33 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     def timing_fields(self):
         return [
             BootstrapMultiField(
-                _("Time"),
+                _("Time of Day"),
                 InlineField(
                     'event_timing',
                     data_bind="value: event_timing",
+                    css_class="input-xlarge",
                 ),
                 css_id="timing_block",
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
                                    "option is useful, for example, if the recipient has chosen a "
                                    "specific time to receive the message.")
+            ),
+        ]
+
+    @property
+    def additional_advanced_options(self):
+        return [
+            BootstrapMultiField(
+                "",
+                InlineField(
+                    'use_custom_content_handler',
+                    data_bind="checked: use_custom_content_handler",
+                ),
+                InlineField(
+                    'custom_content_handler',
+                    css_class="input-xxlarge",
+                    data_bind="visible: use_custom_content_handler",
+                ),
             ),
         ]
 
@@ -1695,9 +1903,9 @@ class CaseReminderEventForm(forms.Form):
     """
     fire_time_type = forms.ChoiceField(
         choices=(
-            (FIRE_TIME_DEFAULT, "Default"),
-            (FIRE_TIME_CASE_PROPERTY, "Case Property"),  # not valid when method != EVENT_AS_SCHEDULE
-            (FIRE_TIME_RANDOM, "Random"),  # not valid when method != EVENT_AS_SCHEDULE
+            (FIRE_TIME_DEFAULT, ugettext_noop("Default")),
+            (FIRE_TIME_CASE_PROPERTY, ugettext_noop("Case Property")),  # not valid when method != EVENT_AS_SCHEDULE
+            (FIRE_TIME_RANDOM, ugettext_noop("Random")),  # not valid when method != EVENT_AS_SCHEDULE
         ),
         widget=forms.HiddenInput,  # don't actually display this widget to the user for now, but validate as choice
     )
@@ -1713,17 +1921,17 @@ class CaseReminderEventForm(forms.Form):
     # EVENT_AS_SCHEDULE: time of day
     fire_time = forms.TimeField(
         required=False,
-        label="HH:MM:SS",
+        label=ugettext_noop("HH:MM:SS"),
     )
 
     # method must be EVENT_AS_SCHEDULE
     fire_time_aux = forms.CharField(
         required=False,
-        label="Enter a Case Property",
+        label=ugettext_noop("Enter a Case Property"),
     )
 
     time_window_length = forms.IntegerField(
-        label="Window Length (minutes)",
+        label=ugettext_noop("Window Length (minutes)"),
         required=False
     )
 
@@ -1737,7 +1945,7 @@ class CaseReminderEventForm(forms.Form):
     # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
     form_unique_id = forms.CharField(
         required=False,
-        label="Survey",
+        label=ugettext_noop("Survey"),
     )
 
     def __init__(self, ui_type=None, *args, **kwargs):
@@ -1813,8 +2021,9 @@ class CaseReminderEventMessageForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field('langcode', data_bind="value: langcode"),
             BootstrapMultiField(
-                'Message <span data-bind="visible: languageLabel()">'
-                '(<span data-bind="text:languageLabel"></span>)</span>',
+                '%s <span data-bind="visible: languageLabel()">'
+                '(<span data-bind="text:languageLabel"></span>)</span>' %
+                _("Message"),
                 InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
@@ -2125,6 +2334,7 @@ class ListField(Field):
 class RemindersInErrorForm(Form):
     selected_reminders = ListField(required=False)
 
+
 class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
@@ -2303,6 +2513,472 @@ class KeywordForm(Form):
         if not self.cleaned_data.get("notify_others", False):
             return None
         value = self.cleaned_data.get("other_recipient_id", None)
+        recipient_type = self.cleaned_data.get("other_recipient_type", None)
+        if recipient_type == RECIPIENT_USER_GROUP:
+            try:
+                g = Group.get(value)
+                assert g.doc_type == "Group"
+                assert g.domain == self._cchq_domain
+            except Exception:
+                raise ValidationError("Invalid Group.")
+            return value
+        else:
+            return None
+
+
+class NewKeywordForm(Form):
+    _cchq_domain = None
+    _sk_id = None
+    keyword = CharField(label=ugettext_noop("Keyword"))
+    description = TrimmedCharField(label=ugettext_noop("Description"))
+    override_open_sessions = BooleanField(
+        required=False,
+        initial=False,
+        label=ugettext_noop("Override open SMS Surveys"),
+    )
+    allow_keyword_use_by = ChoiceField(
+        required=False,
+        label=ugettext_noop("Allow Keyword Use By"),
+        initial='any',
+        choices=(
+            ('any', ugettext_noop("Both Mobile Workers and Cases")),
+            ('users', ugettext_noop("Mobile Workers Only")),
+            ('cases', ugettext_noop("Cases Only")),
+        )
+    )
+    sender_content_type = ChoiceField(
+        label=ugettext_noop("Send to Sender"),
+    )
+    sender_message = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Message"),
+    )
+    sender_form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Survey"),
+    )
+    other_recipient_content_type = ChoiceField(
+        required=False,
+        label=ugettext_noop("Notify Another Person"),
+        initial='none',
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Group Name"),
+    )
+    other_recipient_type = ChoiceField(
+        required=False,
+        initial=False,
+        label=ugettext_noop("Recipient"),
+        choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_message = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Message"),
+    )
+    other_recipient_form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Survey"),
+    )
+    process_structured_sms = BooleanField(
+        required=False,
+        label=ugettext_noop("Process incoming keywords as a Structured Message"),
+    )
+    structured_sms_form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Survey"),
+    )
+    use_custom_delimiter = BooleanField(
+        required=False,
+        label=ugettext_noop("Use Custom Delimiter"),
+    )
+    delimiter = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Please Specify Delimiter"),
+    )
+    use_named_args_separator = BooleanField(
+        required=False,
+        label=ugettext_noop("Use Joining Character"),
+    )
+    use_named_args = BooleanField(
+        required=False,
+        label=ugettext_noop("Use Named Answers"),
+    )
+    named_args_separator = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Please Specify Joining Characcter"),
+    )
+    named_args = RecordListField(
+        input_name="named_args",
+        initial=[],
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' in kwargs:
+            self._cchq_domain = kwargs.pop('domain')
+
+        self.process_structured_sms = False
+        if 'process_structured' in kwargs:
+            self.process_structured_sms = kwargs.pop('process_structured')
+
+        super(NewKeywordForm, self).__init__(*args, **kwargs)
+
+        self.fields['sender_content_type'].choices = self.content_type_choices
+        self.fields['other_recipient_content_type'].choices = self.content_type_choices
+
+        self.fields['other_recipient_id'].choices = self.group_choices
+        self.fields['sender_form_unique_id'].choices = self.form_choices
+        self.fields['other_recipient_form_unique_id'].choices = self.form_choices
+        self.fields['structured_sms_form_unique_id'].choices = self.form_choices
+
+        from corehq.apps.reminders.views import KeywordsListView
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+
+        layout_fields = [
+            crispy.Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'keyword',
+                    data_bind="value: keyword, "
+                              "valueUpdate: 'afterkeydown', "
+                              "event: {keyup: updateExampleStructuredSMS}",
+                ),
+                crispy.Field(
+                    'description',
+                    data_bind="text: description",
+                ),
+            ),
+        ]
+        if self.process_structured_sms:
+            layout_fields.append(
+                crispy.Fieldset(
+                    _("Structured Message Options"),
+                    crispy.Field(
+                        'structured_sms_form_unique_id',
+                        data_bind="value: structured_sms_form_unique_id",
+                    ),
+                    BootstrapMultiField(
+                        _("Delimiters"),
+                        crispy.Div(
+                            InlineColumnField(
+                                'use_custom_delimiter',
+                                data_bind="checked: use_custom_delimiter, "
+                                          "click: updateExampleStructuredSMS",
+                                block_css_class="span2",
+                            ),
+                            InlineField(
+                                'delimiter',
+                                data_bind="value: delimiter, "
+                                          "valueUpdate: 'afterkeydown', "
+                                          "event: {keyup: updateExampleStructuredSMS},"
+                                          "visible: use_custom_delimiter",
+                                block_css_class="span4",
+                            ),
+                            css_class="controls-row",
+                        ),
+                    ),
+                    BootstrapMultiField(
+                        _("Named Answers"),
+                        InlineField(
+                            'use_named_args',
+                            data_bind="checked: use_named_args, "
+                                      "click: updateExampleStructuredSMS",
+                        ),
+                        ErrorsOnlyField('named_args'),
+                        crispy.Div(
+                            data_bind="template: {"
+                                      " name: 'ko-template-named-args', "
+                                      " data: $data"
+                                      "}, "
+                                      "visible: use_named_args",
+                        ),
+                    ),
+                    BootstrapMultiField(
+                        _("Joining Characters"),
+                        crispy.Div(
+                            InlineColumnField(
+                                'use_named_args_separator',
+                                data_bind="checked: use_named_args_separator, "
+                                          "click: updateExampleStructuredSMS",
+                                block_css_class="span2",
+                            ),
+                            InlineField(
+                                'named_args_separator',
+                                data_bind="value: named_args_separator, "
+                                          "valueUpdate: 'afterkeydown', "
+                                          "event: {keyup: updateExampleStructuredSMS},"
+                                          "visible: useJoiningCharacter",
+                                block_css_class="span4",
+                            ),
+                            css_class="controls-row",
+                        ),
+                        data_bind="visible: use_named_args",
+                    ),
+                    BootstrapMultiField(
+                        _("Example Structured Message"),
+                        crispy.HTML('<pre style="background: white;" '
+                                    'data-bind="text: example_structured_sms">'
+                                    '</pre>'),
+                    ),
+                ),
+            )
+        layout_fields.extend([
+            crispy.Fieldset(
+                _("Response"),
+                crispy.Field(
+                    'sender_content_type',
+                    data_bind="value: sender_content_type",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_message',
+                        data_bind="text: sender_message",
+                    ),
+                    data_bind="visible: isMessageSMS",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'sender_form_unique_id',
+                        data_bind="value: sender_form_unique_id"
+                    ),
+                    data_bind="visible: isMessageSurvey",
+                ),
+                crispy.Field(
+                    'other_recipient_content_type',
+                    data_bind="value: other_recipient_content_type",
+                ),
+                BootstrapMultiField(
+                    "",
+                    crispy.Div(
+                        crispy.HTML(
+                            '<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Recipient Information"),
+                        ),
+                        crispy.Field(
+                            'other_recipient_type',
+                            data_bind="value: other_recipient_type",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_id',
+                                data_bind="value: other_recipient_id",
+                            ),
+                            data_bind="visible: showRecipientGroup",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_message',
+                                data_bind="value: other_recipient_message",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'sms'",
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'other_recipient_form_unique_id',
+                                data_bind="value: other_recipient_form_unique_id",
+                            ),
+                            data_bind="visible: other_recipient_content_type() == 'survey'",
+                        ),
+                        css_class="well",
+                        data_bind="visible: notify_others",
+                    ),
+                ),
+            ),
+            crispy.Fieldset(
+                _("Advanced Options"),
+                crispy.Field(
+                    'override_open_sessions',
+                    data_bind="checked: override_open_sessions",
+                ),
+                'allow_keyword_use_by',
+            ),
+            FormActions(
+                StrictButton(
+                    _("Save Keyword"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
+                            % reverse(KeywordsListView.urlname, args=[self._cchq_domain]))
+            ),
+        ])
+        self.helper.layout = crispy.Layout(*layout_fields)
+
+    @property
+    def content_type_choices(self):
+        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
+        choices.append(
+            ('none', _("No Response"))
+        )
+        return choices
+
+    @property
+    @memoized
+    def group_choices(self):
+        group_ids = Group.ids_by_domain(self._cchq_domain)
+        groups = []
+        for group_doc in iter_docs(Group.get_db(), group_ids):
+            groups.append((group_doc['_id'], group_doc['name']))
+        return groups
+
+    @property
+    @memoized
+    def form_choices(self):
+        available_forms = get_form_list(self._cchq_domain)
+        return [(a['code'], a['name']) for a in available_forms]
+
+    @property
+    def current_values(self):
+        values = {}
+        for field_name in self.fields.keys():
+            values[field_name] = self[field_name].value()
+        return values
+
+    def clean_keyword(self):
+        value = self.cleaned_data.get("keyword")
+        if value is not None:
+            value = value.strip().upper()
+        if value is None or value == "":
+            raise ValidationError(_("This field is required."))
+        if len(value.split()) > 1:
+            raise ValidationError(_("Keyword should be one word."))
+        duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
+        if duplicate is not None and duplicate._id != self._sk_id:
+            raise ValidationError(_("Keyword already exists."))
+        return value
+
+    def clean_sender_message(self):
+        value = self.cleaned_data.get("sender_message")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_sender_form_unique_id(self):
+        value = self.cleaned_data.get("sender_form_unique_id")
+        if self.cleaned_data.get("sender_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then add a keyword "
+                    "for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_message(self):
+        value = self.cleaned_data.get("other_recipient_message")
+        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_form_unique_id(self):
+        value = self.cleaned_data.get("other_recipient_form_unique_id")
+        if self.cleaned_data.get("other_recipient_content_type") == METHOD_SMS_SURVEY:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then "
+                    "add a keyword for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_structured_sms_form_unique_id(self):
+        value = self.cleaned_data.get("structured_sms_form_unique_id")
+        if self.process_structured_sms:
+            if value is None:
+                raise ValidationError(_(
+                    "Please create a form first, and then add a "
+                    "keyword for it."
+                ))
+            validate_form_unique_id(value, self._cchq_domain)
+            return value
+        else:
+            return None
+
+    def clean_delimiter(self):
+        value = self.cleaned_data.get("delimiter", None)
+        if self.process_structured_sms and self.cleaned_data["use_custom_delimiter"]:
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_named_args(self):
+        if self.process_structured_sms and self.cleaned_data["use_named_args"]:
+            use_named_args_separator = self.cleaned_data["use_named_args_separator"]
+            value = self.cleaned_data.get("named_args")
+            data_dict = {}
+            for d in value:
+                name = d["name"].strip().upper()
+                xpath = d["xpath"].strip()
+                if name == "" or xpath == "":
+                    raise ValidationError(_(
+                        "Name and xpath are both required fields."
+                    ))
+                for k, v in data_dict.items():
+                    if (not use_named_args_separator
+                        and (k.startswith(name) or name.startswith(k))
+                    ):
+                        raise ValidationError(
+                            _("Cannot have two names overlap: ") + "(%s, %s)"
+                            % (k, name)
+                        )
+                    if use_named_args_separator and k == name:
+                        raise ValidationError(
+                            _("Cannot use the same name twice: ") + name
+                        )
+                    if v == xpath:
+                        raise ValidationError(
+                            _("Cannot reference the same xpath twice: ") + xpath
+                        )
+                data_dict[name] = xpath
+            return data_dict
+        else:
+            return {}
+
+    def clean_named_args_separator(self):
+        value = self.cleaned_data["named_args_separator"]
+        if (self.process_structured_sms
+            and self.cleaned_data["use_named_args"]
+            and self.cleaned_data["use_named_args_separator"]
+        ):
+            if value is None or value == "":
+                raise ValidationError(_("This field is required."))
+            if value == self.cleaned_data["delimiter"]:
+                raise ValidationError(_(
+                    "Delimiter and joining character cannot be the same."
+                ))
+            return value
+        else:
+            return None
+
+    def clean_other_recipient_type(self):
+        if self.cleaned_data['other_recipient_content_type'] == 'none':
+            return None
+        value = self.cleaned_data["other_recipient_type"]
+        if value == RECIPIENT_OWNER:
+            if self.cleaned_data['allow_keyword_use_by'] != 'cases':
+                raise ValidationError(_(
+                    "In order to send to the case's owner you must restrict "
+                    "keyword initiation only to cases."
+                ))
+        return value
+
+    def clean_other_recipient_id(self):
+        if self.cleaned_data['other_recipient_content_type'] == 'none':
+            return None
+        value = self.cleaned_data["other_recipient_id"]
         recipient_type = self.cleaned_data.get("other_recipient_type", None)
         if recipient_type == RECIPIENT_USER_GROUP:
             try:

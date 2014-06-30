@@ -26,8 +26,6 @@ METHOD_SMS_CALLBACK = "callback"
 METHOD_SMS_SURVEY = "survey"
 METHOD_IVR_SURVEY = "ivr_survey"
 METHOD_EMAIL = "email"
-METHOD_TEST = "test"
-METHOD_SMS_CALLBACK_TEST = "callback_test"
 METHOD_STRUCTURED_SMS = "structured_sms"
 
 METHOD_CHOICES = [
@@ -36,8 +34,6 @@ METHOD_CHOICES = [
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
     METHOD_EMAIL,
-    METHOD_TEST,
-    METHOD_SMS_CALLBACK_TEST,
 ]
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
@@ -55,10 +51,14 @@ RECIPIENT_USER = "USER"
 RECIPIENT_OWNER = "OWNER"
 RECIPIENT_CASE = "CASE"
 RECIPIENT_PARENT_CASE = "PARENT_CASE"
+RECIPIENT_ALL_SUBCASES = "ALL_SUBCASES"
 RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
-RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP]
+RECIPIENT_CHOICES = [
+    RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
+    RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
+]
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
@@ -638,7 +638,8 @@ class CaseReminderHandler(Document):
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
-            if (self.method in [METHOD_SMS_CALLBACK, METHOD_SMS_CALLBACK_TEST, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]) and len(reminder.current_event.callback_timeout_intervals) > 0:
+            if (self.method in [METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]
+                and len(reminder.current_event.callback_timeout_intervals) > 0):
                 if reminder.skip_remaining_timeouts or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime

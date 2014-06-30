@@ -286,6 +286,8 @@ def incoming(phone_number, text, backend_api, timestamp=None,
       dropped (useful to provide security when simulating incoming sms)
     """
     # Log message in message log
+    if text is None:
+        text = ""
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
         phone_number = phone_number,

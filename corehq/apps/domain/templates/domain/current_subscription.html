@@ -307,6 +307,7 @@
                         data-dismiss="modal">
                     {% trans "Cancel" %}
                 </button>
+                <!-- ko if: hasAgreedToPrivacy -->
                 <button type="submit"
                         data-bind="
                             visible: paymentIsNotComplete,
@@ -315,6 +316,15 @@
                         class="btn btn-success">
                     {% trans 'Buy Credits' %}
                 </button>
+                <!-- /ko -->
+                <!-- ko ifnot: hasAgreedToPrivacy -->
+                <button type="submit"
+                        class="btn btn-success disabled"
+                        disabled="disabled">
+                    {% trans 'Buy Credits' %}
+                </button>
+                <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+                <!-- /ko -->
                 <button type="button"
                         data-bind="visible: paymentIsComplete"
                         class="btn"

@@ -122,7 +122,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             LocationType(name='district', allowed_parents=['state'], administrative=True),
             LocationType(name='block', allowed_parents=['district'], administrative=True),
             LocationType(name='village', allowed_parents=['block'], administrative=True),
-            LocationType(name='outlet', allowed_parents=['block', 'village']),
+            LocationType(name='outlet', allowed_parents=['village']),
         ],
         supply_point_types=[],
     )
@@ -247,7 +247,9 @@ def submit_mapping_case_block(user, index):
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
-            index=index
+            index=index,
+            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
+            user_id=const.COMMTRACK_USERNAME,
         )
 
     submit_case_blocks(
@@ -285,3 +287,7 @@ def wrap_commtrack_case(case_json):
 
 def unicode_slug(text):
     return slugify(unicode(unidecode(text)))
+
+
+def encode_if_needed(val):
+    return val.encode("utf8") if isinstance(val, unicode) else val

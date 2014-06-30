@@ -72,6 +72,10 @@ from .exceptions import (
     LocationXpathValidationError)
 from corehq.apps.app_manager import id_strings
 
+WORKFLOW_DEFAULT = 'default'
+WORKFLOW_MODULE = 'module'
+WORKFLOW_PREVIOUS = 'previous_screen'
+
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
@@ -170,6 +174,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
+    operator = StringProperty(choices=['=', 'selected'], default='=')
 
 
 class FormAction(DocumentSchema):
@@ -503,6 +508,10 @@ class FormBase(DocumentSchema):
     source = FormSource()
     validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
+    )
+    post_form_workflow = StringProperty(
+        default=WORKFLOW_DEFAULT,
+        choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
 
     @classmethod
@@ -1165,6 +1174,13 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             include_lang=False
         )
 
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        for form in self.get_forms():
+            form.rename_lang(old_lang, new_lang)
+        for _, detail, _ in self.get_details():
+            detail.rename_lang(old_lang, new_lang)
+
     def validate_detail_columns(self, columns):
         from corehq.apps.app_manager.suite_xml import FIELD_TYPE_LOCATION
         from corehq.apps.locations.util import parent_child
@@ -1308,11 +1324,7 @@ class Module(ModuleBase):
         return self.get_form(index or -1)
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        for form in self.get_forms():
-            form.rename_lang(old_lang, new_lang)
-        for _, detail, _ in self.get_details():
-            detail.rename_lang(old_lang, new_lang)
+        super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
@@ -1628,6 +1640,10 @@ class AdvancedModule(ModuleBase):
         else:
             self.forms.append(new_form)
         return self.get_form(index or -1)
+
+    def rename_lang(self, old_lang, new_lang):
+        super(AdvancedModule, self).rename_lang(old_lang, new_lang)
+        self.case_list.rename_lang(old_lang, new_lang)
 
     def requires_case_details(self):
         if self.case_list.show:
@@ -2557,15 +2573,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            copy.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_media_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-            )
+            if settings.BITLY_LOGIN:
+                copy.short_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_media_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
+                )
         except AssertionError:
             raise
         except Exception:  # URLError, BitlyError
@@ -2692,6 +2709,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             # likely to have changed in the revert!
             form.validation_cache = None
             form.version = None
+
+        app.broken_build = False
 
         return app
 
@@ -3302,6 +3321,8 @@ class RemoteApp(ApplicationBase):
     def get_questions(self, xmlns):
         if not self.questions_map:
             self.questions_map = self.make_questions_map()
+            if not self.questions_map:
+                return []
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions

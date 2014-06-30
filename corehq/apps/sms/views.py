@@ -104,7 +104,8 @@ def messaging(request, domain, template="sms/default.html"):
     context['layout_flush_content'] = True
     return render(request, template, context)
 
-@login_and_domain_required
+
+@require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def compose_message(request, domain, template="sms/compose.html"):
     context = get_sms_autocomplete_context(request, domain)

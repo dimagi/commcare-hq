@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 import pytz
 from corehq import Domain
 from corehq.apps import reports
-from corehq.apps.app_manager.models import get_app, Form
+from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
@@ -380,7 +380,7 @@ class ReportConfig(Document):
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
         # Make sure the request gets processed by PRBAC Middleware
-        CCHQPRBACMiddleware.process_request(request)
+        CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
             response = self._dispatcher.dispatch(request, render_as='email',
@@ -661,7 +661,7 @@ class FormExportSchema(HQExportSchema):
         return {'#': self.question_order}
 
     def uses_cases(self):
-        if not self.app:
+        if not self.app or isinstance(self.app, RemoteApp):
             return False
         form = self.app.get_form_by_xmlns(self.xmlns)
         if form and isinstance(form, Form):

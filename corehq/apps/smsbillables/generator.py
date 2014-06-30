@@ -4,6 +4,7 @@ import string
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
+from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
 from corehq.apps.sms.util import get_available_backends
 
@@ -139,3 +140,9 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
             sms_log.save()
             messages.append(sms_log)
     return messages
+
+
+def arbitrary_currency():
+    return Currency.objects.get_or_create(
+        rate_to_default=Decimal('%5.f' % random.uniform(0.5, 2.0)),
+    )[0]

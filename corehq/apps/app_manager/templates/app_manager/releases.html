@@ -178,7 +178,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy', '{{ app.id }}']); }
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Button', '{{ app.id }}']); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -263,7 +263,10 @@
                 <div class="accordion" data-bind="bootstrapCollapse: true">
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
+                            <a class="accordion-toggle" data-bind="
+                                attr: {href: $root.url('emulator', id)},
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Preview in Emulator']); },
+                            ">
                                 {% trans 'Preview in Emulator' %}
                             </a>
                         </div>
@@ -271,7 +274,9 @@
 
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download to Java Phone']); },
+                            ">
                                 {% trans "Download to Java Phone" %}
                             </a>
                         </div>
@@ -297,7 +302,9 @@
                     </div>
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download to Android']); },
+                            ">
                                 {% trans "Download to Android" %}
                             </a>
                         </div>
@@ -337,7 +344,9 @@
 
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle">
+                            <a class="accordion-toggle" data-bind="
+                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Send to phone via SMS']); },
+                            ">
                                 {% trans "Send to phone via SMS" %}
                             </a>
                         </div>
@@ -389,7 +398,11 @@
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia">{% trans 'Download Multimedia' %}</a>
+                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia" data-bind="
+                                    click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download Multimedia']); },
+                                ">
+                                    {% trans 'Download Multimedia' %}
+                                </a>
                             </div>
                             <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
                                 <div class="accordion-inner">
@@ -401,7 +414,12 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-bind="attr: {href: $root.url('source', id)}">{% trans "View Source Files" %}</a>
+                                <a class="accordion-toggle" data-bind="
+                                    attr: {href: $root.url('source', id)},
+                                    click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'View Source Files']); },
+                                ">
+                                    {% trans "View Source Files" %}
+                                </a>
                             </div>
                         </div>
                     {% endif %}

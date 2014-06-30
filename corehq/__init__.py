@@ -46,12 +46,12 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
-            commtrack_reports.CurrentStockStatusReport,
             commtrack_reports.AggregateStockStatusReport,
-            commtrack_reports.ReportingRatesReport,
-            # commtrack_reports.RequisitionReport,
+            commtrack_reports.CurrentStockStatusReport,
             commtrack_maps.StockStatusMapReport,
+            commtrack_reports.ReportingRatesReport,
             commtrack_maps.ReportingStatusMapReport,
+            # commtrack_reports.RequisitionReport,
         )))
 
     if project.has_careplan:
@@ -214,6 +214,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
+    PaymentRecordInterface,
 )
 
 from corehq.apps.smsbillables.interface import (
@@ -229,6 +230,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         InvoiceInterface,
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
+        PaymentRecordInterface,
     )),
 )
 

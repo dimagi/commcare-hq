@@ -24,14 +24,16 @@ function HQReportDataTables(options) {
     this.render_footer_row = (function() {
         var $dataTableElem = $(self.dataTableElem);
         return function(id, row) {
-            var $row = $dataTableElem.find('#' + id);
-            if ($row.length == 0) {
-                $row = $('<tfoot />');
-                $dataTableElem.append($row);
-            }
-            $row.html('');
-            for (var i = 0; i < row.length; i++) {
-                $row.append('<td>' + row[i] + '</td>');
+            if ($dataTableElem.find('tfoot').length === 0) {
+                var $row = $dataTableElem.find('#' + id);
+                if ($row.length == 0) {
+                    $row = $('<tfoot />');
+                    $dataTableElem.append($row);
+                }
+                $row.html('');
+                for (var i = 0; i < row.length; i++) {
+                    $row.append('<td>' + row[i] + '</td>');
+                }
             }
         }
     })();
@@ -93,6 +95,10 @@ function HQReportDataTables(options) {
                             }
                         }
                         applyBootstrapMagic();
+                        if ('context' in data){
+                            load(data['context'], ICON_PATH);
+                        }
+
                         return result
                     };
 

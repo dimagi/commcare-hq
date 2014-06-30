@@ -64,6 +64,7 @@ API_LIST = (
         v0_5.BulkUserResource,
         FixtureResource,
         ReportResource,
+        v0_5.DeviceReportResource,
     )),
 )
 

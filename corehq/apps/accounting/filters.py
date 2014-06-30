@@ -3,6 +3,7 @@ from corehq.apps.accounting.models import *
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
 )
+from corehq.apps.reports.filters.search import SearchFilter
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -318,3 +319,10 @@ class BillingContactFilter(BaseSingleOptionFilter):
                 if contact.first_name or contact.last_name
             ]
         )
+
+
+class PaymentTransactionIdFilter(SearchFilter):
+    slug = "transaction_id"
+    label = _("Transaction ID")
+    search_help_inline = _("Usually begins with 'ch_'")
+

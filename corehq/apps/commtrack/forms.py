@@ -5,8 +5,9 @@ from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.util import all_sms_codes
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_consumption
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from django.core.urlresolvers import reverse
+import json
 
 
 class CurrencyField(forms.DecimalField):
@@ -24,11 +25,10 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label="SMS Code", max_length=10)
-    description = forms.CharField(max_length=500, required=False,
-        widget=forms.Textarea)
-    unit = forms.CharField(label="Default Unit", max_length=100, required=False)
-    program_id = forms.ChoiceField(label="Program", choices=(), required=True)
+    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10)
+    description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
+    unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
+    program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):
@@ -65,7 +65,7 @@ class ProductForm(forms.Form):
                 'action': lambda o: o.caption,
                 'command': lambda o: o['caption'],
             }[conflict[0]](conflict[1])
-            raise forms.ValidationError('sms code not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
+            raise forms.ValidationError('product id not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
 
         return code.lower()
 
@@ -77,6 +77,10 @@ class ProductForm(forms.Form):
 
         for field in ('name', 'code', 'program_id', 'unit', 'description', 'cost'):
             setattr(product, field, self.cleaned_data[field])
+
+        product_data = self.data.get('product_data')
+        if product_data:
+            product.product_data = json.loads(product_data)
 
         if commit:
             product.save()
@@ -184,7 +188,7 @@ class ConsumptionForm(forms.Form):
             self.fields[field_name] = forms.DecimalField(
                 label=display,
                 required=False,
-                initial=get_default_consumption(
+                initial=get_default_monthly_consumption(
                     self.domain,
                     p._id,
                     None,

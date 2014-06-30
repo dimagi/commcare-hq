@@ -2,10 +2,11 @@
 import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase
+    AutoSelectCase, FormActionCondition
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
+from corehq.apps.app_manager.xform import XForm
 
 
 class FormPreparationV2Test(TestCase, TestFileMixin):
@@ -347,3 +348,29 @@ class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
         self.form.actions.open_cases[1].open_condition.question = '/data/child/which_child'
         self.form.actions.open_cases[1].open_condition.answer = '2'
         self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
+
+
+class TestXForm(TestCase):
+    def setUp(self):
+        self.xform = XForm('')
+
+    def test_action_relevance(self):
+        def condition_case(expected, type=None, question=None, answer=None, operator=None):
+            condition = FormActionCondition(
+                type=type,
+                question=question,
+                answer=answer,
+                operator=operator
+            )
+            return condition, expected
+
+        cases = [
+            (condition_case('true()', 'always')),
+            (condition_case('false()', 'never')),
+            (condition_case("/data/question1 = 'yes'", 'if', '/data/question1', 'yes')),
+            (condition_case("selected(/data/question1, 'yes')", 'if', '/data/question1', 'yes', 'selected')),
+        ]
+
+        for case in cases:
+            actual = self.xform.action_relevance(case[0])
+            self.assertEqual(actual, case[1])

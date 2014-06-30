@@ -765,7 +765,7 @@ class XForm(WrappedNode):
         elif 'bind' in node.attrib:
             bind_id = node.attrib['bind']
             bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
-            if not bind.xml:
+            if not bind.exists():
                 raise BindNotFound('No binding found for %s' % bind_id)
             path = bind.attrib['nodeset']
         elif node.tag_name == "group":
@@ -988,7 +988,14 @@ class XForm(WrappedNode):
         if condition.type == 'always':
             return 'true()'
         elif condition.type == 'if':
-            return "%s = '%s'" % (self.resolve_path(condition.question), condition.answer)
+            if condition.operator == 'selected':
+                template = "selected({path}, '{answer}')"
+            else:
+                template = "{path} = '{answer}'"
+            return template.format(
+                path=self.resolve_path(condition.question),
+                answer=condition.answer
+            )
         else:
             return 'false()'
 
@@ -1658,7 +1665,7 @@ class XForm(WrappedNode):
                     case_name=form.name_path,
                     case_type=form.case_type,
                     autoset_owner_id=False,
-                    case_id=session_var('case_id_goal')
+                    case_id=session_var('case_id_goal_new')
                 )
 
                 case_block.add_update_block(form.case_updates())
