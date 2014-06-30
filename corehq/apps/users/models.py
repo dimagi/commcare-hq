@@ -1989,6 +1989,7 @@ class Invitation(Document):
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+    is_rejected = BooleanProperty(default=False)
 
     _inviter = None
     def get_inviter(self):
@@ -2027,6 +2028,17 @@ class DomainInvitation(Invitation):
         key = [domain]
 
         return cls.view("users/open_invitations_by_domain",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+        ).all()
+
+    @classmethod
+    def by_email(cls, email, is_active=True):
+        key = [email]
+
+        return cls.view("users/open_invitations_by_email",
             reduce=False,
             startkey=key,
             endkey=key + [{}],
