@@ -673,8 +673,8 @@ class FormBase(DocumentSchema):
         `(case_property_name, data_path)` and returns a string.
         """
         try:
-            valid_paths = dict((question['value'], question['tag'])
-                               for question in self.get_questions(langs=[]))
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
         except XFormError as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
@@ -759,8 +759,8 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = dict((question['value'], question['tag'])
-                               for question in self.get_questions(langs=[]))
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
         except XFormError as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -2786,7 +2786,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         Multimedia case properties are supported by apps version 2.6 or higher
         """
-        return LooseVersion(self.build_spec.version) >= '2.6'
+        return self.build_version >= '2.6'
 
     @property
     def default_language(self):
