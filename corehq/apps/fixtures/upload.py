@@ -113,7 +113,7 @@ class FixtureTableDefinitition(object):
             fields=fields,
             is_global=row_dict.get('is_global', False),
             uid=row_dict.get('UID'),
-            delete=row_dict.get(DELETE_HEADER, '').lower() == 'y',
+            delete=(row_dict.get(DELETE_HEADER) or '').lower() == 'y',
         )
 
 
