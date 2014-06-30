@@ -198,6 +198,7 @@ $(function () {
         var self = this;
         self.data_types = ko.observableArray([]);
         self.loading = ko.observable(0);
+        self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
 
         self.updateSelectedTables = function(element, event) {
@@ -262,7 +263,7 @@ $(function () {
             var dataType = makeDataType({
                 tag: "",
                 fields: ko.observableArray([]),
-                is_global: false,
+                is_global: false
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);
@@ -297,7 +298,7 @@ $(function () {
     ko.applyBindings(app, el.get(0));
     el.show();
     app.loadData();
-
+    ko.applyBindings(app, $('#fixture-upload')[0]);
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-complete").hide();
