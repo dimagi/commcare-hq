@@ -167,6 +167,15 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
+    def test_form_filter(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(2).get_form(0)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
+
 
 class RegexTest(SimpleTestCase):
 

@@ -231,3 +231,59 @@ def send_purchase_receipt(payment_record, core_product,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email_by_product(core_product),
     )
+
+
+# Email this out every Monday morning.
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1))
+def weekly_digest():
+    today = datetime.date.today()
+    in_forty_days = today + datetime.timedelta(days=40)
+
+    from corehq.apps.accounting.interface import SubscriptionInterface
+    request = HttpRequest()
+    params = urlencode((
+        ('report_filter_end_date_use_filter', 'on'),
+        ('end_date_startdate', today.isoformat()),
+        ('end_date_enddate', in_forty_days.isoformat()),
+        ('active_status', 'Active'),
+    ))
+    request.GET = QueryDict(params)
+    request.couch_user = FakeUser(
+        domain="hqadmin",
+        username="admin@dimagi.com",
+    )
+    subs = SubscriptionInterface(request)
+    subs.is_rendered_as_email = True
+
+    email_context = {
+        'today': today.isoformat(),
+        'forty_days': in_forty_days.isoformat(),
+    }
+    email_content = render_to_string(
+        'accounting/digest_email.html', email_context)
+    email_content_plaintext = render_to_string(
+        'accounting/digest_email.txt', email_context)
+
+    format_dict = Format.FORMAT_DICT[Format.CSV]
+    excel_attachment = {
+        'title': 'Subscriptions_%(start)s_%(end)s.csv' % {
+            'start': today.isoformat(),
+            'end': in_forty_days.isoformat(),
+        },
+        'mimetype': format_dict['mimetype'],
+        'file_obj': subs.excel_response,
+    }
+    from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
+    send_HTML_email(
+        "Subscriptions ending in 40 Days from %s" % today.isoformat(),
+        settings.INVOICING_CONTACT_EMAIL,
+        email_content,
+        email_from=from_email,
+        text_content=email_content_plaintext,
+        file_attachments=[excel_attachment],
+    )
+
+    logger.info(
+        "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
+            'today': today.isoformat(),
+        })

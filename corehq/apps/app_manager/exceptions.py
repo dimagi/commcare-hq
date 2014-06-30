@@ -94,3 +94,7 @@ class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
 
 class LocationXpathValidationError(AppManagerException):
     pass
+
+
+class UnknownInstanceError(SuiteError):
+    pass

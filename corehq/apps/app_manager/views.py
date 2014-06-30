@@ -139,7 +139,8 @@ class ApplicationViewMixin(DomainViewMixin):
         return None
 
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
                  unique_form_id=None, edit=True):
     """
@@ -212,7 +213,8 @@ def _get_xform_source(request, app, form, filename="form.xml"):
     else:
         return json_response(source)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     try:
@@ -221,7 +223,8 @@ def get_xform_source(req, domain, app_id, module_id, form_id):
         raise Http404()
     return _get_xform_source(req, app, form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
@@ -250,7 +253,7 @@ def xform_display(req, domain, form_unique_id):
         return json_response(questions)
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def form_casexml(req, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
@@ -261,16 +264,19 @@ def form_casexml(req, domain, form_unique_id):
     return HttpResponse(form.create_casexml())
 
 @login_or_digest
+@require_can_edit_apps
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app_check_domain(req, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
     return back_to_main(req, app_copy.domain, app_id=app_copy._id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app(req, domain):
     app_id = req.POST.get('app')
     form = CopyApplicationForm(app_id, req.POST)
@@ -279,7 +285,8 @@ def copy_app(req, domain):
     else:
         return view_generic(req, domain, app_id=app_id, copy_app_form=form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
@@ -626,7 +633,7 @@ def get_apps_base_context(request, domain, app):
 
 
 @cache_control(no_cache=True, no_store=True)
-@login_and_domain_required
+@require_can_edit_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
@@ -655,7 +662,7 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
@@ -879,24 +886,29 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_commcare_version(request, app_id, app_version):
     options = CommCareBuildConfig.fetch().get_menu(app_version)
     return json_response(options)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_user_registration(request, domain, app_id):
     return view_generic(request, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_form(req, domain, app_id, module_id, form_id):
     return view_generic(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_module(req, domain, app_id, module_id):
     return view_generic(req, domain, app_id, module_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_app(req, domain, app_id=None):
     # redirect old m=&f= urls
     module_id = req.GET.get('m', None)
@@ -907,15 +919,18 @@ def view_app(req, domain, app_id=None):
 
     return view_generic(req, domain, app_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_designer(req, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     app = get_app(domain, app_id)
@@ -2279,7 +2294,7 @@ def emulator_page(req, domain, app_id, template):
     })
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return emulator_page(req, domain, app_id, template)
 
@@ -2298,7 +2313,8 @@ def emulator_commcare_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def formdefs(request, domain, app_id):
     langs = [json.loads(request.GET.get('lang', '"en"'))]
     format = request.GET.get('format', 'json')
@@ -2371,7 +2387,8 @@ def _find_name(names, langs):
         name = names[lang]
     return name
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def app_summary(request, domain, app_id):
     return summary(request, domain, app_id, should_edit=True)
 
@@ -2409,7 +2426,8 @@ def summary(request, domain, app_id, should_edit=True):
     else:
         return render(request, "app_manager/exchange_summary.html", context)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     properties = tuple(["property"] + app.langs + ["default"])

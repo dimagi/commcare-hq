@@ -1,0 +1,34 @@
+trunk: master
+name: autostaging
+branches:
+  - async-fixtures  # cz 6/29
+  - 80598-case # lwyszomi:80598-case
+  - multimedia-case-properties # Daniel 3/21
+  - hq-dropdown # sravan 5/7
+  - refactor-domain-copy2  # Brian 5/20
+#  - vellum-requirejs+use-django-compressor
+#  - use-django-compressor # bb 6/20
+  - dynamic-links # Nick P 5/20
+  - offline-install-multimedia  # Danny 5/28
+  - logos # Nick P 5/28
+  - 109909-case-performance  # ethan/cory 5/30
+  # - condition # SK 6/12
+  - switch_to_site_code # tw 6/17
+  - vellum-requirejs # Daniel 6/12
+  - fix-analytics # Nick P 6/26
+submodules:
+  submodules/couchlog-src:
+    branches:
+      - static-tags # Nick P 5/20
+  submodules/django-soil-src:
+    branches:
+      - static-tags # Nick P 5/20
+#  submodules/formdesigner:
+#    branches:
+#      - develop-staging # Daniel 6/12 (major refactor + itemsets?)
+  submodules/formtranslate-src:
+    branches:
+      - static-tags # Nick P 5/20
+  submodules/touchforms-src:
+    branches:
+      - static-tags # Nick P 5/20

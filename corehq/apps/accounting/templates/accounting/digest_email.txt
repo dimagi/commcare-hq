@@ -1,0 +1,8 @@
+Dear Dimagi Finance,
+
+Attached is a report of all active subscriptions ending today ({{ today }})
+through {{ forty_days }}.
+
+Cheers,
+--The CommCareHQ Team
+

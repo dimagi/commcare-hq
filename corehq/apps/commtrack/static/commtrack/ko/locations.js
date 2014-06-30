@@ -111,7 +111,7 @@ function LocationTypeModel(data, root) {
         allowed_parents = [last ? last.name() : undefined];
     }
     this.allowed_parents = ko.observableArray(allowed_parents);
-    this.administrative = ko.observable(data.administrative);
+    this.tracks_stock = ko.observable(!data.administrative);
 
     this.name_error = ko.observable();
     this.code_error = ko.observable();
@@ -144,7 +144,7 @@ function LocationTypeModel(data, root) {
             name: this.name(),
             code: this.code(),
             allowed_parents: this.allowed_parents(),
-            administrative: this.administrative()
+            administrative: !this.tracks_stock()
         };
     };
 }

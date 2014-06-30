@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from corehq.apps.api.resources import JsonResource
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
@@ -7,9 +8,12 @@ from corehq.apps.users.models import Permissions
 
 
 def convert_fdt(fdi):
-    fdt = FixtureDataType.get(fdi.data_type_id)
-    fdi.fixture_type = fdt.tag
-    return fdi
+    try:
+        fdt = FixtureDataType.get(fdi.data_type_id)
+        fdi.fixture_type = fdt.tag
+        return fdi
+    except ResourceNotFound:
+        return fdi
 
 
 class FixtureResource(JsonResource):

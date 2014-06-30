@@ -163,7 +163,7 @@ class BillingAccountBasicForm(forms.Form):
                 _("This account has subscriptions associated with it. "
                   "Please specify a transfer account before deactivating.")
             )
-        if transfer_subs == self.account.name:
+        if self.account is not None and transfer_subs == self.account.name:
             raise ValidationError(
                 _("The transfer account can't be the same one you're trying "
                   "to deactivate.")
@@ -517,7 +517,7 @@ class SubscriptionForm(forms.Form):
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
-        return Subscription.new_domain_subscription(
+        sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
             date_end=date_end,
@@ -528,6 +528,9 @@ class SubscriptionForm(forms.Form):
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
         )
+        # this is likely temporary, see PR#3725
+        sub.save()
+        return sub
 
     def clean_active_accounts(self):
         transfer_account = self.cleaned_data.get('active_accounts')

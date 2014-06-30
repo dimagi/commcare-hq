@@ -150,9 +150,11 @@ DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -256,7 +258,7 @@ HQ_APPS = (
     'hutch',
     'pillowtop',
     'pillow_retry',
-    'hqstyle',
+    'corehq.apps.style',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -289,6 +291,7 @@ HQ_APPS = (
     'custom.uth',
 
     'custom.colalife',
+    'custom.intrahealth',
 )
 
 TEST_APPS = ()
@@ -299,7 +302,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.kookoo',
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
@@ -967,6 +969,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
+IVR_BACKEND_MAP = {
+    "91": "MOBILE_BACKEND_KOOKOO",
+}
+
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
 IVR_GATEWAY_TIMEOUT = 60
@@ -1044,6 +1050,10 @@ PILLOWTOPS = {
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
         'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.intrahealth.models.CouvertureFluffPillow',
+        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
+        'custom.intrahealth.models.IntraHealthFluffPillow',
+        'custom.intrahealth.models.RecapPassagePillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1138,6 +1148,8 @@ DOMAIN_MODULE_MAP = {
     'gc': 'custom.trialconnect',
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
+    'ipm-senegal': 'custom.intrahealth',
+    'testing-ipm-senegal': 'custom.intrahealth',
 
     'crs-remind': 'custom.apps.crs_reports',
 

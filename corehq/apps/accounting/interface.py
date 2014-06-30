@@ -154,7 +154,7 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn("Subscriber"),
             DataTablesColumn("Account"),
             DataTablesColumn("Plan"),
@@ -164,8 +164,10 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
-            DataTablesColumn("Action"),
         )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        return header
 
     @property
     def rows(self):
@@ -229,18 +231,25 @@ class SubscriptionInterface(AddItemInterface):
                     created_by_adj.method, "Unknown")
             except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
                 created_by = "Unknown"
-            rows.append([subscription.subscriber.domain,
-                         mark_safe('<a href="%s">%s</a>'
-                                   % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
-                                      subscription.account.name)),
-                         subscription.plan_version.plan.name,
-                         subscription.is_active,
-                         subscription.salesforce_contract_id,
-                         subscription.date_start,
-                         subscription.date_end,
-                         subscription.do_not_invoice,
-                         created_by,
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+            columns = [
+                subscription.subscriber.domain,
+                format_datatables_data(
+                    text=mark_safe('<a href="%s">%s</a>' % (
+                        reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)
+                        ), subscription.account.name)),
+                    sort_key=subscription.account.name,
+                ),
+                subscription.plan_version.plan.name,
+                subscription.is_active,
+                subscription.salesforce_contract_id,
+                subscription.date_start,
+                subscription.date_end,
+                subscription.do_not_invoice,
+                created_by,
+            ]
+            if not self.is_rendered_as_email:
+                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+            rows.append(columns)
 
         return rows
 

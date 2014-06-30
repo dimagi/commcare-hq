@@ -7,15 +7,17 @@ import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.xpath import ProductInstanceXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, FixtureXpath
+from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, ItemListFixtureXpath
 
 FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
@@ -132,20 +134,33 @@ class Display(OrderedXmlObject):
 
 
 class DisplayNode(XmlObject):
-    """Any node that has the awkward text-or-display subnode, like Command or Menu"""
+    """
+    Mixin for any node that has the awkward text-or-display subnode,
+    like Command or Menu
+
+    """
     text = NodeField('text', Text)
     display = NodeField('display', Display)
 
-    def __init__(self, locale_id=None, media_image=None, media_audio=None, **kwargs):
-        super(DisplayNode, self).__init__(**kwargs)
-        if locale_id is None:
-            text = None
-        else:
-            text = Text(locale_id=locale_id)
-            
+    def __init__(self, node=None, context=None,
+                 locale_id=None, media_image=None, media_audio=None, **kwargs):
+        super(DisplayNode, self).__init__(node, context, **kwargs)
+        self.set_display(
+            locale_id=locale_id,
+            media_image=media_image,
+            media_audio=media_audio,
+        )
+
+    def set_display(self, locale_id=None, media_image=None, media_audio=None):
+        text = Text(locale_id=locale_id) if locale_id else None
+
         if media_image or media_audio:
-            self.display = Display(text=text, media_image=media_image, media_audio=media_audio)
-        else:
+            self.display = Display(
+                text=text,
+                media_image=media_image,
+                media_audio=media_audio,
+            )
+        elif text:
             self.text = text
 
 
@@ -263,8 +278,11 @@ class Entry(XmlObject):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
+                # make sure the first instance gets inserted
+                # right after the command
+                # once you "suggest" a placement to eulxml,
+                # it'll follow your lead and place the rest of them there too
                 if len(self.instances) == 1:
-                    # insert instance_node right after command_node
                     instance_node = self.node.find('instance')
                     command_node = self.node.find('command')
                     self.node.remove(instance_node)
@@ -523,23 +541,45 @@ class SuiteGeneratorBase(object):
 
 
 GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
-PRODUCTS_INSTANCE = Instance(id='products', src='jr://fixture/commtrack:products')
 LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
 CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
 SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
-LOCATIONS_INSTANCE = Instance(id='commtrack:locations', src='jr://fixture/commtrack:locations')
 
 INSTANCE_BY_ID = {
     instance.id: instance
     for instance in (
         GROUP_INSTANCE,
-        PRODUCTS_INSTANCE,
         LEDGER_INSTANCE,
         CASE_INSTANCE,
         SESSION_INSTANCE,
-        LOCATIONS_INSTANCE,
     )
 }
+
+
+def get_instance_factory(scheme):
+    return get_instance_factory._factory_map.get(scheme, preset_instances)
+get_instance_factory._factory_map = {}
+
+
+class register_factory(object):
+    def __init__(self, *schemes):
+        self.schemes = schemes
+
+    def __call__(self, fn):
+        for scheme in self.schemes:
+            get_instance_factory._factory_map[scheme] = fn
+        return fn
+
+
+@register_factory(*INSTANCE_BY_ID.keys())
+def preset_instances(instance_name):
+    return INSTANCE_BY_ID.get(instance_name, None)
+
+
+@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
+@memoized
+def generic_fixture_instances(instance_name):
+    return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 class SuiteGenerator(SuiteGeneratorBase):
@@ -555,6 +595,11 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def post_process(self, suite):
         self.add_form_workflow(suite)
+
+        details_by_id = self.get_detail_mapping()
+        relevance_by_id = self.get_command_relevance_mapping()
+        for e in suite.entries:
+            self.add_referenced_instances(e, details_by_id, relevance_by_id)
 
     def add_form_workflow(self, suite):
         """
@@ -601,18 +646,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                             # or a non-autoselect datum
                             last = frame_children.pop()
 
-                        requires_session = False
                         for child in frame_children:
                             if isinstance(child, basestring):
                                 frame.add_command(child)
                             else:
                                 frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
-                                requires_session = True
-
-                        if requires_session and not any(i for i in entry.instances if i.id == 'commcaresession'):
-                                entry.instances.append(
-                                    Instance(id='commcaresession', src='jr://instance/session')
-                                )
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
@@ -778,6 +816,10 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_detail_mapping(self):
         return {detail.id: detail for detail in self.details}
 
+    @memoized
+    def get_command_relevance_mapping(self):
+        return {c.id: c.relevant for menu in self.menus for c in menu.commands}
+
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
             module=module,
@@ -785,11 +827,49 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
         return detail_id if detail_id in self.get_detail_mapping() else None
 
+    def get_instances_for_module(self, module, additional_xpaths=None):
+        """
+        This method is used by CloudCare when filtering cases.
+        """
+        details_by_id = self.get_detail_mapping()
+        detail_ids = [self.id_strings.detail(module, detail_type)
+                      for detail_type, detail, enabled in module.get_details()
+                      if enabled]
+        xpaths = set()
+
+        if additional_xpaths:
+            xpaths.update(additional_xpaths)
+
+        for detail_id in detail_ids:
+            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+
+        return SuiteGenerator.get_required_instances(xpaths)
+
     @staticmethod
-    def add_referenced_instances(entry, details_by_id):
+    def get_required_instances(xpaths):
+        instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
+        instances = set()
+        for xpath in xpaths:
+            instance_names = re.findall(instance_re, xpath)
+            for instance_name in instance_names:
+                try:
+                    scheme, _ = instance_name.split(':', 1)
+                except ValueError:
+                    scheme = None
+
+                factory = get_instance_factory(scheme)
+                instance = factory(instance_name)
+                if instance:
+                    instances.add(instance)
+                else:
+                    raise UnknownInstanceError("Instance reference not recognized: {}".format(instance_name))
+        return instances
+
+    @staticmethod
+    def add_referenced_instances(entry, details_by_id, relevance_by_id):
         detail_ids = set()
         xpaths = set()
-        instance_re = r"""instance\(['"](\w+)['"]\)"""
+
         for datum in entry.datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
@@ -797,6 +877,10 @@ class SuiteGenerator(SuiteGeneratorBase):
             xpaths.add(datum.function)
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
+
+        entry_id = entry.node.find('command[@id]').get('id')
+        if entry_id in relevance_by_id:
+            xpaths.add(relevance_by_id[entry_id])
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -810,13 +894,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         xpaths.add(datum.value)
         xpaths.discard(None)
 
-        instances = set()
-        for xpath in xpaths:
-            instance_names = re.findall(instance_re, xpath)
-            for instance_name in instance_names:
-                instance = INSTANCE_BY_ID.get(instance_name)
-                if instance:
-                    instances.add(instance)
+        instances = SuiteGenerator.get_required_instances(xpaths)
 
         entry.require_instance(*instances)
 
@@ -825,7 +903,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        details_by_id = self.get_detail_mapping()
         for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
@@ -864,39 +941,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     if self.app.commtrack_enabled:
                         e.datums.append(SessionDatum(
                             id='product_id',
-                            nodeset="instance('products')/products/product",
+                            nodeset=ProductInstanceXpath().instance(),
                             value="./@id",
                             detail_select=self.get_detail_id_safe(module, 'product_short')
                         ))
                 results.append(e)
-        for e in results:
-            self.add_referenced_instances(e, details_by_id)
+
         return results
-
-    def get_indicator_instances(self, module, form=None):
-        indicator_sets = []
-        for _, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                if column.field_type == FIELD_TYPE_INDICATOR:
-                    indicator_set, _ = column.field_property.split('/', 1)
-                    if indicator_set not in indicator_sets:
-                        indicator_sets.append(indicator_set)
-                        yield Instance(id=self.id_strings.indicator_instance(indicator_set),
-                                       src='jr://fixture/indicators:%s' % indicator_set)
-
-    def get_fixture_instances(self, module, form=None):
-        from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE
-        if form and hasattr(form, 'actions'):
-            actions = form.actions.auto_select_actions[AUTO_SELECT_FIXTURE]
-            fixtures = set([a.auto_select.value_source for a in actions])
-            for fixture in fixtures:
-                yield Instance(id='{0}s'.format(fixture), src='jr://fixture/item-list:{0}'.format(fixture))
-
-    def get_extra_instances(self, module, form=None):
-        for instance in self.get_indicator_instances(module, form):
-            yield instance
-        for instance in self.get_fixture_instances(module, form):
-            yield instance
 
     def add_assertion(self, entry, test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
@@ -944,8 +995,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             self.add_case_sharing_assertion(e)
 
     def configure_entry_module(self, module, e, use_filter=False):
-        e.require_instance(*self.get_extra_instances(module))
-
         select_chain = self.get_select_chain(module)
         # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
         datum_ids = [('parent_' * i or 'case_') + 'id'
@@ -981,7 +1030,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if 'owner_id' in action.case_properties:
                     return True
             return False
-        e.require_instance(*self.get_extra_instances(module, form))
 
         def get_target_module(case_type, module_id, with_product_details=False):
             if module_id:
@@ -1039,7 +1087,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     ))
                     self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
                 elif auto_select.mode == AUTO_SELECT_FIXTURE:
-                    xpath_base = FixtureXpath(auto_select.value_source).table()
+                    xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
                     xpath = xpath_base.slash(auto_select.value_key)
                     e.datums.append(SessionDatum(
                         id=action.case_session_var,
@@ -1082,14 +1130,15 @@ class SuiteGenerator(SuiteGeneratorBase):
             try:
                 last_action = form.actions.load_update_cases[-1]
                 if last_action.show_product_stock:
-                    product_filter = ''
+                    nodeset = ProductInstanceXpath().instance()
                     if last_action.product_program:
-                        product_filter = "[program_id='{}']".format(last_action.product_program)
+                        nodeset = nodeset.select('program_id', last_action.product_program)
 
                     target_module = get_target_module(action.case_type, last_action.details_module, True)
+
                     e.datums.append(SessionDatum(
                         id='product_id',
-                        nodeset="instance('products')/products/product{}".format(product_filter),
+                        nodeset=nodeset,
                         value="./@id",
                         detail_select=self.get_detail_id_safe(target_module, 'product_short')
                     ))
@@ -1167,9 +1216,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
     @property
+    @memoized
     def menus(self):
         # avoid circular dependency
         from corehq.apps.app_manager.models import CareplanModule, AdvancedForm
+
+        menus = []
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 update_menu = Menu(
@@ -1185,7 +1237,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         locale_id=self.id_strings.module_locale(parent),
                     )
                     create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
-                    yield create_menu
+                    menus.append(create_menu)
 
                     update_menu.root = self.id_strings.menu(parent)
                 else:
@@ -1198,7 +1250,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
                     Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
-                yield update_menu
+                menus.append(update_menu)
             else:
                 menu = Menu(
                     id=self.id_strings.menu(module),
@@ -1231,7 +1283,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 menu.commands.extend(get_commands())
 
-                yield menu
+                menus.append(menu)
+
+        return menus
 
     @property
     def fixtures(self):

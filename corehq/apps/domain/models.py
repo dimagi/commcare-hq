@@ -291,6 +291,8 @@ class Domain(Document, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
+    default_mobile_worker_redirect = StringProperty(default=None)
+
     @property
     def domain_type(self):
         """
@@ -1044,4 +1046,4 @@ class DomainCounter(Document):
 
 
 def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()

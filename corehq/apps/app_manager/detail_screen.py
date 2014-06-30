@@ -419,7 +419,7 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
     def xpath(self):
         indicator_set, indicator = self.column.field_property.split('/', 1)
         instance_id = self.id_strings.indicator_instance(indicator_set)
-        return IndicatorXpath(instance_id).indicator(indicator)
+        return IndicatorXpath(instance_id).instance().slash(indicator)
 
 
 @register_type_processor(sx.FIELD_TYPE_LOCATION)

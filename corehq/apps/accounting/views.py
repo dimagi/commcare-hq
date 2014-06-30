@@ -32,7 +32,7 @@ from corehq.apps.accounting.interface import (
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler, Select2RateAsyncHandler,
     SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
-    Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
+    Select2InvoiceTriggerHandler,
 )
 from corehq.apps.accounting.models import (
     SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
@@ -195,7 +195,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
     async_handlers = [
-        Select2SubscriptionInfoHandler,
+        Select2BillingInfoHandler,
     ]
 
     @property
@@ -263,7 +263,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
     async_handlers = [
-        Select2SubscriptionInfoHandler,
         Select2BillingInfoHandler,
     ]
 

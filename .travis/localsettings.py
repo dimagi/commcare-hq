@@ -33,7 +33,7 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 
 ####### Bitly ########
 
-BITLY_LOGIN = 'dimagi'
+BITLY_LOGIN = None
 BITLY_APIKEY = '*******'
 
 
