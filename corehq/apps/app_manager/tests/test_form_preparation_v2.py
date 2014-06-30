@@ -62,6 +62,13 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.case_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
 
+    def test_update_attachment(self):
+        self.form.requires = 'case'
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
+
     def test_close_case(self):
         self.form.requires = 'case'
         self.form.actions.close_case = FormAction()
@@ -230,6 +237,15 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
             case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
         ))
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+
+    def test_update_attachment(self):
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'photo': '/data/thepicture'}
+        ))
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
 
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):

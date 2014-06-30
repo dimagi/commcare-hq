@@ -666,6 +666,24 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    def get_case_property_name_formatter(self):
+        """Get a function that formats case property names
+
+        The returned function requires two arguments
+        `(case_property_name, data_path)` and returns a string.
+        """
+        try:
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
+        except XFormError as e:
+            # punt on invalid xml (sorry, no rich attachments)
+            valid_paths = {}
+        def format_key(key, path):
+            if valid_paths.get(path) == "upload":
+                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+            return key
+        return format_key
+
     def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
@@ -741,15 +759,17 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
         except XFormError as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
-            unique_paths = set()
-            unique_paths.update(paths)
-            for path in unique_paths:
+            no_multimedia = not self.get_app().enable_multimedia_case_property
+            for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
+                elif no_multimedia and valid_paths[path] == "upload":
+                    errors.append({'type': 'multimedia case property not supported', 'path': path})
 
         return errors
 
@@ -898,7 +918,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if self.get_module().case_type == case_type:
-            return self.actions.update_case.update.keys()
+            format_key = self.get_case_property_name_formatter()
+            return [format_key(*item)
+                    for item in self.actions.update_case.update.items()]
 
         return []
 
@@ -1500,9 +1522,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         updates = set()
+        format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
             if action.case_type == case_type:
-                updates.update(action.case_properties.keys())
+                updates.update(format_key(*item)
+                               for item in action.case_properties.iteritems())
         return updates
 
     @memoized
@@ -1722,7 +1746,8 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
-            return self.case_updates().keys()
+            format_key = self.get_case_property_name_formatter()
+            return [format_key(*item) for item in self.case_updates().iteritems()]
         else:
             return []
 
@@ -2758,6 +2783,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
         return self.build_version >= '2.2'
+
+    @property
+    def enable_multimedia_case_property(self):
+        """
+        Multimedia case properties are supported by apps version 2.6 or higher
+        """
+        return self.build_version >= '2.6'
 
     @property
     def default_language(self):

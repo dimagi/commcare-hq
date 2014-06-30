@@ -105,3 +105,7 @@ CUSTOM_PRODUCT_DATA = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+MM_CASE_PROPERTIES = StaticToggle(
+    'mm_case_properties',
+    'Multimedia Case Properties',
+)

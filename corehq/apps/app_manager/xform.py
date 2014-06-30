@@ -112,6 +112,13 @@ class WrappedNode(object):
         else:
             return []
 
+    def iterfind(self, xpath, *args, **kwargs):
+        if self.xml is None:
+            return
+        formatted_xpath = xpath.format(**self.namespaces)
+        for n in self.xml.iterfind(formatted_xpath, *args, **kwargs):
+            yield WrappedNode(n)
+
     def findtext(self, xpath, *args, **kwargs):
         if self.xml is not None:
             return self.xml.findtext(
@@ -342,18 +349,21 @@ class CaseBlock(object):
     def add_update_block(self, updates, make_relative=False):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
-        update_mapping = {}
+        if not updates:
+            return
 
-        if updates:
-            for key, value in updates.items():
-                if key == 'name':
-                    key = 'case_name'
+        update_mapping = {}
+        attachments = {}
+        for key, value in updates.items():
+            if key == 'name':
+                key = 'case_name'
+            if self.is_attachment(value):
+                attachments[key] = value
+            else:
                 update_mapping[key] = value
 
-        for key in sorted(update_mapping.keys()):
-            update_block.append(make_case_elem(key))
-
         for key, q_path in sorted(update_mapping.items()):
+            update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
             resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
@@ -364,6 +374,29 @@ class CaseBlock(object):
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
+
+        if attachments:
+            attachment_block = make_case_elem('attachment')
+            self.elem.append(attachment_block)
+            for key, q_path in sorted(attachments.items()):
+                attach_elem = make_case_elem(key, {'src': '', 'from': 'local'})
+                attachment_block.append(attach_elem)
+                nodeset = self.xform.resolve_path(
+                    "%scase/attachment/%s" % (self.path, key))
+                resolved_path = self.xform.resolve_path(q_path)
+                if make_relative:
+                    resolved_path = relative_path(nodeset, resolved_path)
+                self.xform.add_bind(nodeset=nodeset, relevant=("count(%s) = 1" % resolved_path))
+                self.xform.add_bind(nodeset=nodeset + "/@src", calculate=resolved_path)
+
+    def is_attachment(self, ref):
+        """Return true if there is an upload node with the given ref """
+        try:
+            uploads = self.xform.__upload_refs
+        except AttributeError:
+            itr = self.xform.find('{h}body').iterfind(".//{f}upload[@ref]")
+            uploads = self.xform.__upload_refs = set(node.attrib["ref"] for node in itr)
+        return ref in uploads
 
     def add_close_block(self, relevance):
         self.elem.append(make_case_elem('close'))

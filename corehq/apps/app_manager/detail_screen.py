@@ -357,6 +357,23 @@ class Address(HideShortColumn):
     template_width = 0
 
 
+@register_format_type('picture')
+class Picture(FormattedDetailColumn):
+    template_form = 'image'
+
+
+@register_format_type('audio')
+class Audio(FormattedDetailColumn):
+    template_form = 'audio'
+
+
+@register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
+class AttachmentXpathGenerator(BaseXpathGenerator):
+    @property
+    def xpath(self):
+        return sx.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
+
+
 @register_type_processor(sx.FIELD_TYPE_PROPERTY)
 class PropertyXpathGenerator(BaseXpathGenerator):
     @property
