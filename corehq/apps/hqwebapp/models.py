@@ -1206,7 +1206,9 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]), (_('Administrative Operations'), admin_operations)]
+            ]),
+            (_('Administrative Operations'), admin_operations),
+        ]
 
     @property
     def is_viewable(self):
