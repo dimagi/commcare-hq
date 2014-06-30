@@ -39,7 +39,7 @@ def _case_changed(case_id, handler_ids):
                 for subcase in subcases:
                     handler.case_changed(subcase)
 
-@task(queue="reminder_rule_queue")
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
