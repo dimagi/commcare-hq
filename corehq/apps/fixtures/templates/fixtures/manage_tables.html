@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
 {% block js %}{{ block.super }}
 <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
 <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -21,7 +20,6 @@
         var UpdateTableUrl = "{% url 'update_lookup_tables' domain %}";
     </script>
 {% endblock %}
-
 {% block main_column %}
 <header>
     <div class="row-fluid">
