@@ -2,6 +2,7 @@ from datetime import timedelta
 from celery.task import periodic_task, task
 from corehq.apps.reminders.models import CaseReminderHandler, CASE_CRITERIA
 from django.conf import settings
+from dimagi.utils.logging import notify_exception
 
 @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def fire_reminders():
@@ -17,6 +18,14 @@ def get_subcases(case):
 
 @task
 def case_changed(case_id, handler_ids):
+    try:
+        _case_changed(case_id, handler_ids)
+    except Exception:
+        notify_exception(None,
+            message="Error processing reminder rule updates for case %s" %
+            case_id)
+
+def _case_changed(case_id, handler_ids):
     subcases = None
     for handler_id in handler_ids:
         handler = CaseReminderHandler.get(handler_id)
@@ -33,7 +42,8 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
         handler.process_rule(schedule_changed, prev_definition, send_immediately)
-    except:
-        pass
+    except Exception:
+        notify_exception(None,
+            message="Error processing reminder rule for handler %s" % handler._id)
     handler.save(unlock=True)
 
