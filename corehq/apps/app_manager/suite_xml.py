@@ -826,7 +826,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
         return detail_id if detail_id in self.get_detail_mapping() else None
 
-    def get_instances_for_module(self, module):
+    def get_instances_for_module(self, module, additional_xpaths=None):
         """
         This method is used by CloudCare when filtering cases.
         """
@@ -835,6 +835,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                       for detail_type, detail, enabled in module.get_details()
                       if enabled]
         xpaths = set()
+
+        if additional_xpaths:
+            xpaths.update(additional_xpaths)
+
         for detail_id in detail_ids:
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
