@@ -198,6 +198,7 @@ $(function () {
         var self = this;
         self.data_types = ko.observableArray([]);
         self.loading = ko.observable(0);
+        self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
 
         self.updateSelectedTables = function(element, event) {
@@ -262,7 +263,7 @@ $(function () {
             var dataType = makeDataType({
                 tag: "",
                 fields: ko.observableArray([]),
-                is_global: false,
+                is_global: false
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);
@@ -291,34 +292,19 @@ $(function () {
             });
         };
     }
-    function FileUpload() {
-        this.file = ko.observable();
-        var self = this;
-        self.uploadExcels = function(element, event) {
-            $("#uploadModal").modal({
-                keyboard: false,
-                backdrop: 'static'
-            });
-            $("#uploading").show();
-            $("#uploadForm")[0].submit();
-        };
-    }
 
     var el = $('#fixtures-ui');
     var app = new App();
     ko.applyBindings(app, el.get(0));
     el.show();
     app.loadData();
-
-    var uploadApp = new FileUpload();
-    ko.applyBindings(uploadApp, $('#fixture-upload')[0]);
-
+    ko.applyBindings(app, $('#fixture-upload')[0]);
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-complete").hide();
     });
     $('.alert .close').live("click", function(e) {
-    $(this).parent().hide();
+        $(this).parent().hide();
 
-});
+    });
 });
