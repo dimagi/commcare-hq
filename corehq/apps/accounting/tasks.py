@@ -11,7 +11,7 @@ from django.utils.translation import ugettext
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
-from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError
+from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import Subscription, Invoice
@@ -85,6 +85,18 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                 logger.error(
                     "[BILLING] There was an error utilizing credits for "
                     "domain %s: %s" % (domain.name, e)
+                )
+            except BillingContactInfoError as e:
+                subject = "[%s] Invoice Generation Issue" % domain.name
+                email_content = render_to_string(
+                    'accounting/invoice_error_email.html', {
+                        'project': domain.name,
+                        'error_msg': 'BillingContactInfoError: %s' % e,
+                    }
+                )
+                send_HTML_email(
+                    subject, settings.BILLING_EMAIL, email_content,
+                    email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
                 )
             except InvoiceError as e:
                 logger.error(
