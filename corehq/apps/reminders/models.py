@@ -971,6 +971,7 @@ class CaseReminderHandler(Document):
                     reduce=False,
                     startkey=[self.domain],
                     endkey=[self.domain, {}],
+                    include_docs=False,
                 ).all()
                 case_ids = [entry["id"] for entry in case_id_result]
                 try:
