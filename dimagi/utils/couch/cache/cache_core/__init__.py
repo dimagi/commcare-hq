@@ -37,8 +37,7 @@ def get_redis_default_cache():
         return cache.cache
 
 def get_redis_client():
-    from redis_cache.cache import RedisCache
-    rcache = get_redis_default_cache()
+    rcache = cache.get_cache('redis')
     try:
         client = rcache.raw_client
     except Exception:

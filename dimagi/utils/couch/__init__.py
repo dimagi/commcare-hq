@@ -295,6 +295,50 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
         """
         raise NotImplementedError("Please implement this method.")
 
+
+class CriticalSection(object):
+    """
+    An object to facilitate the use of locking in critical sections where
+    you can't use CouchDocLockableMixIn (i.e., in cases where you don't
+    necessarily want or need a document to be created).
+
+    Sample usage:
+        with CriticalSection(["my-update-key"]):
+            ...do processing
+
+    keys - a list of strings representing the keys of the locks to acquire; when
+      using multiple keys, make sure to consider key order to prevent deadlock
+      and be mindful of the duration of the task(s) using these keys in relation
+      to the lock timeout
+    fail_hard - if True, exceptions are raised when locks can't be acquired
+    timeout - the number of seconds before each lock times out
+    """
+    def __init__(self, keys, fail_hard=False, timeout=60):
+        self.keys = keys
+        self.locks = []
+        self.fail_hard = fail_hard
+        self.timeout = timeout
+
+    def __enter__(self):
+        try:
+            client = get_redis_client()
+            for key in self.keys:
+                lock = client.lock(key, timeout=self.timeout)
+                self.locks.append(lock)
+            for lock in self.locks:
+                lock.acquire(blocking=True)
+        except Exception:
+            if self.fail_hard:
+                raise
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for lock in self.locks:
+            try:
+                lock.release()
+            except:
+                pass
+
+
 class LooselyEqualDocumentSchema(DocumentSchema):
     """
     A DocumentSchema that will pass equality and hash checks if its

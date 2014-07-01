@@ -27,7 +27,7 @@ class DateSpanTimezoneTest(TestCase):
         end = datetime(2014, 3, 7, 2, tzinfo=pytz.utc)
         start = end = datetime(2014, 2, 7, 2, tzinfo=pytz.utc)
         ds = DateSpan(start, end)
-        pst = pytz.timezone('US/Pacific-New')
+        pst = pytz.timezone('US/Pacific')
         ds.set_timezone(pst)
         self.assertEqual(ds.enddate - end, timedelta(hours=8))
         self.assertEqual(ds.startdate - start, timedelta(hours=8))

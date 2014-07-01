@@ -366,8 +366,8 @@ class DateSpan(object):
         3pm in EST will be converted to PST as 3pm (so 6pm in EST) instead of adjusting
         the time.
         """
-        self.startdate = self.startdate.replace(tzinfo=to_tz)
-        self.enddate = self.enddate.replace(tzinfo=to_tz)
+        self.startdate = to_tz.localize(self.startdate.replace(tzinfo=None))
+        self.enddate = to_tz.localize(self.enddate.replace(tzinfo=None))
         self.timezone = to_tz
 
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
