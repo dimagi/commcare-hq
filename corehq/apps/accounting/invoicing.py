@@ -9,7 +9,7 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
@@ -112,8 +112,11 @@ class DomainInvoiceFactory(object):
             # No contact information exists for this account.
             # This shouldn't happen, but if it does, we can't continue
             # with the invoice generation.
-            raise InvoiceError("No Billing Contact Info could be found "
-                               "for domain '%s'." % self.domain.name)
+            raise BillingContactInfoError(
+                "Project %s has incurred charges, but does not have their "
+                "Billing Contact Info filled out. Someone should follow up "
+                "on this." % self.domain.name
+            )
         # First check to make sure none of the existing subscriptions is set
         # to do not invoice. Let's be on the safe side and not send a
         # community invoice out, if that's the case.
