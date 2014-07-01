@@ -21,12 +21,16 @@ class Command(LabelCommand):
     root_dir = settings.FILEPATH
 
     def output_manifest(self, manifest_str):
+        print "saving manifest.json to disk"
         with open(os.path.join(self.root_dir, MANIFEST_FILE), 'w') as fout:
+            print manifest_str
             fout.write(manifest_str)
 
     def save_manifest(self):
+        print "saving manifest.json to redis"
         with open(os.path.join(self.root_dir, MANIFEST_FILE), 'r') as fin:
             manifest_data = fin.read()
+            print manifest_data
             rcache.set(COMPRESS_PREFIX % self.current_sha, manifest_data, 86400)
 
     def handle(self, *args, **options):
@@ -35,12 +39,10 @@ class Command(LabelCommand):
         print "Current commit SHA: %s" % self.current_sha
 
         if 'save' in args:
-            print "saving manifest.json to redis"
             self.save_manifest()
         else:
             existing_resource_str = rcache.get(COMPRESS_PREFIX % self.current_sha, None)
             if existing_resource_str:
-                print "getting compressed manifest.json from redis"
                 self.output_manifest(existing_resource_str)
             else:
                 raise ResourceCompressError(
