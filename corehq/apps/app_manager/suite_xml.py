@@ -597,9 +597,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         self.add_form_workflow(suite)
 
         details_by_id = self.get_detail_mapping()
-        relevance_by_id = self.get_command_relevance_mapping()
+        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
         for e in suite.entries:
-            self.add_referenced_instances(e, details_by_id, relevance_by_id)
+            self.add_referenced_instances(e, details_by_id, relevance_by_menu, menu_by_command)
 
     def add_form_workflow(self, suite):
         """
@@ -817,8 +817,16 @@ class SuiteGenerator(SuiteGeneratorBase):
         return {detail.id: detail for detail in self.details}
 
     @memoized
-    def get_command_relevance_mapping(self):
-        return {c.id: c.relevant for menu in self.menus for c in menu.commands}
+    def get_menu_relevance_mapping(self):
+        relevance_by_menu = defaultdict(list)
+        menu_by_command = {}
+        for menu in self.menus:
+            for command in menu.commands:
+                menu_by_command[command.id] = menu.id
+                if command.relevant:
+                    relevance_by_menu[menu.id].append(command.relevant)
+
+        return relevance_by_menu, menu_by_command
 
     def get_detail_id_safe(self, module, detail_type):
         detail_id = self.id_strings.detail(
@@ -866,7 +874,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         return instances
 
     @staticmethod
-    def add_referenced_instances(entry, details_by_id, relevance_by_id):
+    def add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command):
         detail_ids = set()
         xpaths = set()
 
@@ -879,8 +887,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                    if detail_id]
 
         entry_id = entry.command.id
-        if entry_id in relevance_by_id:
-            xpaths.add(relevance_by_id[entry_id])
+        menu_id = menu_by_command[entry_id]
+        relevances = relevance_by_menu[menu_id]
+        xpaths.update(relevances)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())

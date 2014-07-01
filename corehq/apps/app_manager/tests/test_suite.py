@@ -172,7 +172,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         Ensure form filter gets added correctly and appropriate instances get added to the entry.
         """
         app = Application.wrap(self.get_json('suite-advanced'))
-        form = app.get_module(2).get_form(0)
+        form = app.get_module(1).get_form(1)
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
