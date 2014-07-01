@@ -665,7 +665,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         datums = defaultdict(lambda: defaultdict(list))
         entries = {}
         for e in suite.entries:
-            command = e.node.find('command').get('id')
+            command = e.command.id
             module_id, form_id = command.split('-', 1)
             if form_id != 'case-list':
                 entries[command] = e
@@ -878,7 +878,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         details = [details_by_id[detail_id] for detail_id in detail_ids
                    if detail_id]
 
-        entry_id = entry.node.find('command[@id]').get('id')
+        entry_id = entry.command.id
         if entry_id in relevance_by_id:
             xpaths.add(relevance_by_id[entry_id])
 
