@@ -5,7 +5,7 @@ import time
 import requests
 from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE
 from corehq.apps.commtrack.models import RequisitionCase
-from custom import EndpointMixin
+from custom.api.utils import EndpointMixin
 from custom.openlmis.exceptions import OpenLMISAPIException
 
 REQUISITION_APPROVED = "Requisition approved successfully"

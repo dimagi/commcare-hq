@@ -1,6 +1,5 @@
-import logging
 import requests
-from custom import EndpointMixin
+from custom.api.utils import EndpointMixin
 
 
 class Product(object):

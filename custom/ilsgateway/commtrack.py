@@ -1,6 +1,5 @@
-import logging
 from corehq import Domain
-from custom import _apply_updates
+from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product
 
@@ -17,7 +16,7 @@ def sync_ilsgateway_product(domain, ilsgateway_product):
         product = Product(**product_dict)
         product.save()
     else:
-        if _apply_updates(product, product_dict):
+        if apply_updates(product, product_dict):
             product.save()
     return product
 

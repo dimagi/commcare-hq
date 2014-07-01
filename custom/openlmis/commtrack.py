@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, Requ
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser
-from custom import _apply_updates
+from custom.api.utils import apply_updates
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.exceptions import BadParentException, OpenLMISAPIException
 from corehq.apps.commtrack import const
@@ -69,7 +69,7 @@ def sync_facility_to_supply_point(domain, facility):
         if parent_sp and facility_loc.parent_id != parent_sp.location._id:
             raise BadParentException('You are trying to move a location. This is currently not supported.')
 
-        should_save = _apply_updates(facility_loc, facility_dict)
+        should_save = apply_updates(facility_loc, facility_dict)
         if should_save:
             facility_loc.save()
 
@@ -116,7 +116,7 @@ def sync_openlmis_product(domain, program, lmis_product):
         product = Product(**product_dict)
         product.save()
     else:
-        if _apply_updates(product, product_dict):
+        if apply_updates(product, product_dict):
             product.save()
     return product
 
@@ -175,7 +175,7 @@ def sync_requisition_from_openlmis(domain, requisition_id, openlmis_endpoint):
         else:
             for case in rec_cases:
                 before_status = case.requisition_status
-                if _apply_updates(case, lmis_requisition_details.to_dict(case.product_id)):
+                if apply_updates(case, lmis_requisition_details.to_dict(case.product_id)):
                     after_status = case.requisition_status
                     case.save()
                     if before_status in ['INITIATED', 'SUBMITTED'] and after_status == 'AUTHORIZED':
