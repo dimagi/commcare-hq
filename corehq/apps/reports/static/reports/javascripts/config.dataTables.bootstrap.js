@@ -18,6 +18,9 @@ function compareListOfObjects(x, y) {
         for (var idx in x) {
             if(x.hasOwnProperty(idx) && y.hasOwnProperty(idx)) {
                 sameLists = compareObjects(x[idx], y[idx]);
+            } else {
+                sameLists = false;
+                break;
             }
             if(!sameLists){
                 break;
@@ -181,7 +184,6 @@ function HQReportDataTables(options) {
                             opts.jsonResultDataTableFromServer.sEcho = 0
                         }
                         opts.jsonResultDataTableFromServer.sEcho = eval(opts.jsonResultDataTableFromServer.sEcho) + 1;
-//                        fnCallback(opts.jsonResultDataTableFromServer)
                     }
                     return false;
                 };
