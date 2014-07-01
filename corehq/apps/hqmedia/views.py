@@ -19,7 +19,7 @@ from django.shortcuts import render
 
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.models import get_app, RemoteApp
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
@@ -131,6 +131,9 @@ def media_from_path(request, domain, app_id, file_path):
     # Rewrote it to use new media refs.
     # Yedi, care to comment?
     app = get_app(domain, app_id)
+    if isinstance(app, RemoteApp):
+        raise Http404('Media not yet available for remote apps')
+
     # todo remove get_media_references
     multimedia = app.get_media_references()
 
