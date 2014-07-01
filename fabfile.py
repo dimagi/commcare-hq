@@ -1001,7 +1001,7 @@ def version_compress(save=False):
 
     cmd = 'resource_compress save' if save else 'resource_compress'
     with cd(withpath):
-        sudo('{venv}/bin/python manage.py resource_compress'.format(venv=venv, cmd=cmd),
+        sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
             user=env.sudo_user
         )
 
