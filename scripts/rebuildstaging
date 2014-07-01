@@ -1,16 +1,58 @@
 #!/bin/bash
 
-if [[ $1 = "--deploy" ]]; then
-    deploy='y'
+function usage() {
+    cat << EOF
+usage: $0 [-h|--help] [-v|--verbose] [--deploy] [--skip-fetch]
+
+rebuild staging from yaml configuration (scripts/staging.yaml)
+
+    -h --help       print this help text
+    -v --verbose    display debugging output
+    --deploy        deploy after rebuild is complete
+    --skip-fetch    assume local copy is already update date with remote
+EOF
+}
+
+while [[ $# > 0 ]]
+do
+    key="$1"
     shift
-fi
+
+    case $key in
+      --deploy)
+        deploy=y
+        ;;
+      -h|--help)
+        usage
+        exit
+        ;;
+      -v|--verbose)
+        verbose=y
+        ;;
+      --skip-fetch)
+        skip_fetch=y
+        echo skip-fetch
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+done
 
 function rebuildstaging() {
     python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
 }
 
-if [[ $deploy = "y" ]]; then
-    rebuildstaging && fab staging awesome_deploy:confirm=no
+args=''
+
+[[ $verbose = 'y' ]] && args="$args -v"
+
+[[ $skip_fetch = 'y' ]] && args="$args sync check rebuild"
+
+if [[ $deploy = 'y' ]]
+then
+    rebuildstaging $args && fab staging awesome_deploy:confirm=no
 else
-    rebuildstaging
+    rebuildstaging $args
 fi
