@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 import datetime
 from casexml.apps.case import settings
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -134,11 +135,28 @@ class IndexTest(TestCase):
         check_user_has_case(self, user, update_index_expected, version=V2)
 
     def testBadIndexReference(self):
+        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         CASE_ID = 'test-bad-index-case'
         block = CaseBlock(create=True, case_id=CASE_ID, user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', 'not-an-existing-id')})
         try:
             post_case_blocks([block.as_xml()])
             self.fail("Submitting against a bad case in an index should fail!")
-        except Exception:
+        except IllegalCaseId:
             pass
+
+    def testBadIndexReferenceDomain(self):
+        case_in_other_domain = 'text-index-mother-case'
+        parent_domain = 'parent'
+        child_domain = 'child'
+
+        post_case_blocks([
+            CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID,
+                      version=V2).as_xml()
+        ], form_extras={'domain': parent_domain})
+
+        block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
+                          index={'bad': ('bad-case', case_in_other_domain)})
+
+        with self.assertRaisesRegexp(IllegalCaseId, 'Bad case id'):
+            post_case_blocks([block.as_xml()], form_extras={'domain': child_domain})
