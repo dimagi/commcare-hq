@@ -1,3 +1,4 @@
+import logging
 import requests
 from custom.api.utils import EndpointMixin
 
@@ -30,10 +31,16 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.password = password
         self.products_url = self._urlcombine(self.base_uri, '/products/')
 
-    def get_products(self):
-        response = requests.get(self.products_url, params={},
+    def get_objects(self, url, params=None):
+        params = {} if params else params
+        response = requests.get(url, params=params,
                                 auth=self._auth())
-        if response.status_code == 200:
-            product_list = response.json()['product_list']
-            for product in product_list:
-                yield Product.from_json(product)
+        objects = []
+        if response.status_code == 200 and 'objects' in response.json():
+            objects = response.json()['objects']
+        return objects
+
+    def get_products(self):
+        products = self.get_objects(self.products_url)
+        for product in products:
+            yield Product.from_json(product)
