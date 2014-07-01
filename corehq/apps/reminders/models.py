@@ -955,9 +955,14 @@ class CaseReminderHandler(Document):
         else:
             self.locked = True
         super(CaseReminderHandler, self).save(**params)
+        delay = self.start_condition_type == CASE_CRITERIA
         if not unlock:
-            process_reminder_rule.delay(self, schedule_changed, prev_definition,
-                send_immediately)
+            if delay:
+                process_reminder_rule.delay(self, schedule_changed,
+                    prev_definition, send_immediately)
+            else:
+                process_reminder_rule(self, schedule_changed,
+                    prev_definition, send_immediately)
 
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
