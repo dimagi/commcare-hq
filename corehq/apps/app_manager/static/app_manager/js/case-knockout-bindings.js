@@ -1,6 +1,12 @@
 var utils = {
+    getIcon: function(question) {
+        if (question.tag === 'upload') {
+            return '<span class="icon-paper-clip"></span> ';
+        }
+        return '';
+    },
     getDisplay: function (question, MAXLEN) {
-        return utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
+        return utils.getIcon(question) + utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
     },
     getLabel: function (question, MAXLEN) {
         return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
@@ -54,6 +60,35 @@ ko.bindingHandlers.questionsSelect = {
         allBindings.optstrText = utils.getLabel;
     }
 };
+
+ko.bindingHandlers.casePropertyTypeahead = {
+    /*
+     * Strip attachment: prefix and show icon for attachment properties
+     */
+    init: function (element, valueAccessor) {
+        ko.bindingHandlers.typeahead.init(element, valueAccessor);
+        $(element).data("autocomplete")._renderItem = function (ul, item) {
+            return $("<li></li>")
+                .data("item.autocomplete", item)
+                .append($("<a></a>").html(item.label))
+                .appendTo(ul);
+        };
+    },
+    update: function (element, valueAccessor) {
+        function wrappedValueAccessor() {
+            return _.map(ko.unwrap(valueAccessor()), function(value) {
+                if (value.indexOf("attachment:") === 0) {
+                    var text = value.substring(11),
+                        html = '<span class="icon-paper-clip"></span> ' + text;
+                    return {value: text, label: html};
+                }
+                return {value: value, label: value};
+            })
+        }
+        ko.bindingHandlers.typeahead.update(element, wrappedValueAccessor);
+    }
+};
+
 ko.bindingHandlers.accordion = {
     init: function(element, valueAccessor) {
         var options = valueAccessor() || {};

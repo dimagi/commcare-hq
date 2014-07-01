@@ -117,6 +117,9 @@
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
                             {% endif %}
                         {% endif %}
+                        {% if error.type == "multimedia case property not supported" %}
+                            Multimedia case property "{{ error.path }}" is not supported on apps on or before v2.5
+                        {% endif %}
                         {% if error.type == "remote error" %}
                             Remote Error:
                         {% endif %}

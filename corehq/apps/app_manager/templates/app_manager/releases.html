@@ -13,6 +13,22 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
+       var help_text = {
+           "Released": "This is used for automatically updating CommCare applications. If the \"Auto-update\" setting is " +
+                   "set to Daily or Weekly, any application versions that are marked as released will update to the latest" +
+                   "released version when checking for updates.",
+       };
+       $('.help_popover').popover({
+                placement: $(this).data('placement') || 'left',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+    });
+    $(function () {
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -119,7 +135,9 @@
                 <th></th>
                 {% endif %}
                 <th>{% trans "Comment" %}</th>
-                <th>{% trans "Released" %}</th>
+                <th class="help_popover" data-help-key="Released">
+                    <a href="#">{% trans "Released" %} <i class="icon icon-question-sign"></i></a>
+                </th>
 
             </tr>
             <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
