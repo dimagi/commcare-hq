@@ -19,7 +19,7 @@ def couchable_property(prop):
     return prop
 
 
-def post_case_blocks(case_blocks, form_extras=None, domain=None):
+def post_case_blocks(case_blocks, form_extras=None):
     """
     Post case blocks.
 
@@ -36,11 +36,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     for block in case_blocks:
         form.append(block)
 
-    def process(doc):
-        if domain:
-            doc.domain = domain
-
-    with create_and_lock_xform(ElementTree.tostring(form), domain=domain, process=process) as xform:
+    with create_and_lock_xform(ElementTree.tostring(form)) as xform:
         for k, v in form_extras.items():
             setattr(xform, k, v)
         process_cases(xform=xform)
