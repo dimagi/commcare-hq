@@ -194,6 +194,7 @@ class KooKooTestCase(TouchformsTestCase):
 
         call = CallLog.get(call._id)
         self.assertTrue(call.answered)
+        self.assertEqual(call.duration, 20)
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "1")
@@ -240,6 +241,7 @@ class KooKooTestCase(TouchformsTestCase):
 
         call = CallLog.get(call._id)
         self.assertTrue(call.answered)
+        self.assertEqual(call.duration, 5)
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "label", "ok")
@@ -332,7 +334,8 @@ class KooKooTestCase(TouchformsTestCase):
             "duration": "20",
         })
         call1 = CallLog.get(call1._id)
-        self.assertTrue(call.answered)
+        self.assertTrue(call1.answered)
+        self.assertEqual(call1.duration, 20)
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "2")
@@ -393,7 +396,8 @@ class KooKooTestCase(TouchformsTestCase):
             "duration": "20",
         })
         call2 = CallLog.get(call2._id)
-        self.assertTrue(call.answered)
+        self.assertTrue(call2.answered)
+        self.assertEqual(call2.duration, 20)
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "1")
