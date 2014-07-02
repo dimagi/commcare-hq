@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link type="text/less" rel="stylesheet" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+    <link type="text/less" rel="stylesheet" media="all" href="{{ STATIC_URL }}style/less/legacy/app_manager.less"/>
 {% endblock %}
 
 {% block head %}{{ block.super }}

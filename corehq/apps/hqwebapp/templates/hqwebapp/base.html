@@ -9,7 +9,7 @@
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
         {% compress css %}
-            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+            <link type="text/less" rel="stylesheet" media="all" href="{{ STATIC_URL }}style/less/hqstyle-core.less"/>
             {% block stylesheets %}
             {% endblock %}
         {% endcompress %}
@@ -23,7 +23,7 @@
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
             {% compress css %}
-            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/core.less' %}"/>
+            <link type="text/less" rel="stylesheet" media="all" href="{{ STATIC_URL }}style/less/legacy/core.less"/>
             {% endcompress %}
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
