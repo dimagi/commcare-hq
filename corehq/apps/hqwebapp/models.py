@@ -13,7 +13,6 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -566,7 +565,8 @@ class ApplicationsTab(UITab):
     @property
     def is_viewable(self):
         couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
+        return (self.domain and couch_user and
+                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
