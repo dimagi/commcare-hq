@@ -83,6 +83,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
 
         options = self.basics[start:stop]
 
+        '''
         g_start = max(0, start - self.group_start)
         g_size = limit - len(options) if start < self.user_start else 0
         options += self.get_groups(g_start, g_size) if g_size else []
@@ -90,7 +91,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         u_start = max(0, start - self.user_start)
         u_size = limit - len(options)
         options += self.get_users(u_start, u_size) if u_size else []
-
+        '''
         return [{'id': id, 'text': text} for id, text in options]
 
     @property
