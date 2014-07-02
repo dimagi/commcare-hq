@@ -88,7 +88,13 @@ class LocationImporter(object):
         location_type = worksheet.worksheet.title
 
         if location_type not in defined_location_types(self.domain):
-            return (0, "location with type %s not found, this worksheet will not be imported" % location_type)
+            self.results.append(_(
+                "Location with type {location_type} not found, this worksheet \
+                will not be imported"
+                ).format(
+                    location_type=location_type
+                )
+            )
         else:
             data = list(worksheet)
 
