@@ -211,11 +211,6 @@ class ConditionsMet(object):
         self.preg_month = preg_month
         self.window = window
 
-        met_one = False
-        met_two = False
-        met_three = False
-        met_four = False
-        met_five = False
         # preg_month = get_property(case_obj, 'pregnancy_month', 0) or 0
         vhnd_attendance = {
             4: case_property('attendance_vhnd_1', 0),
@@ -225,13 +220,14 @@ class ConditionsMet(object):
             8: case_property('month_7_attended', 0)
         }
         if self.status == 'pregnant':
-            met_one, met_two, met_three = None, None, None
+            met_one, met_two, met_three, met_four, met_five = None, None, None, None, None
             self.child_age = EMPTY_FIELD
             if self.preg_month != 9:
                 met_one = vhnd_attendance[self.preg_month] == '1'
             if self.preg_month == 6:
                 met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]
-                met_three = case_property('ifa_tri1', 0) == '1'
+                if report.block.lower() == "atri":
+                    met_three = case_property('ifa_tri1', 0) == '1'
             if self.preg_month == 9:
                 met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]         
             
@@ -242,27 +238,28 @@ class ConditionsMet(object):
 
         if self.status == 'mother':
             self.preg_month = EMPTY_FIELD
-            met_one, met_two, met_three = None, None, None
+            met_one, met_two, met_three, met_four, met_five = None, None, None, None, None
             self.one, self.two, self.three, self.four, self.five = '','','','',''
             if self.child_age != 1:
-                met_one = '1' in [met['child1_vhndattend_calc'], met['prev_child1_vhndattend_calc'], met['child1_attendance_vhnd']]
+                met_one = 'received' in [met['child1_vhndattend_calc'], met['prev_child1_vhndattend_calc'], met['child1_attendance_vhnd']]
                 self.one = condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, met_one)
             if self.child_age % 3 == 0:
-                met_two = '1' in [met['child1_growthmon_calc'], met['prev_child1_growthmon_calc']]
-                met_three = '1' in [met['child1_ors_calc'], met['prev_child1_ors_calc']]
+                met_two = 'received' in [met['child1_growthmon_calc'], met['prev_child1_growthmon_calc']]
+                if met['child1_suffer_diarrhea'] == '1':
+                    met_three = 'received' in [met['child1_ors_calc'], met['prev_child1_ors_calc']]
+                    self.three = condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, met_three)
                 self.two = condition_image(C_WEIGHT_Y, C_WEIGHT_N, met_two)
-                self.three = condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, met_three)
-            if self.child_age == 3:
+            if self.child_age == 3 and report.block.lower() == 'atri':
                 met_four = 'received' in [met['child1_weight_calc'], met['prev_child1_weight_calc']]
                 met_five = 'received' in [met['child1_excl_breastfeed_calc'], met['prev_child1_excl_breastfeed_calc']]
                 self.four = condition_image(CHILD_WEIGHT_Y, CHILD_WEIGHT_N, met_four)
                 self.five = condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, met_five)
-            if self.child_age == 6:
+            if self.child_age == 6 and report.block.lower() == 'atri':
                 met_four = 'received' in [met['child1_register_calc'] or met['prev_child1_register_calc']]
                 met_five = 'received' in [met['child1_excl_breastfeed_calc'], met['prev_child1_excl_breastfeed_calc']]
                 self.four = condition_image(C_REGISTER_Y, C_REGISTER_N, met_four)
                 self.five = condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, met_five)
-            if self.child_age == 12:
+            if self.child_age == 12 and report.block.lower() == 'atri':
                 met_four = 'received' in [met['child1_measles_calc'] or met['prev_child1_measles_calc']]
                 self.four = condition_image(MEASLEVACC_Y, MEASLEVACC_N, met_four)
 
@@ -286,13 +283,13 @@ class ConditionsMet(object):
                 self.cash = '<span style="color: green;">Rs. 2000</span>'
             elif child_age == 36:
                 self.cash = '<span style="color: green;">Rs. 3000</span>'
-            elif met_one or met_two or met_three or met_four or met_five:
-                self.cash = '<span style="color: green;">Rs. 250</span>'
-            else:
-                self.cash = '<span style="color: red;">Rs. 0</span>'
 
-        elif report.block.lower() == 'wazirganj':
-            if met_one or met_two or met_four or met_five:
-                self.cash = '<span style="color: green;">Rs. 250</span>'
-            else:
-                self.cash = '<span style="color: red;">Rs. 0</span>'
+        applicable_conditions = []
+        for condition in [met_one, met_two, met_three, met_four, met_five]:
+            if condition is not None:
+                applicable_conditions.append(condition)
+        met_or_not = reduce(lambda x, y: x and y, applicable_conditions, True)
+        if met_or_not is True:
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        else:
+            self.cash = '<span style="color: red;">Rs. 0</span>'
