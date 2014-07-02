@@ -6,6 +6,7 @@ from django.template import Context
 from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties, lookup_by_property
 from django.utils.safestring import mark_safe
 from corehq.apps.locations.signals import location_created, location_edited
+from django.utils.translation import ugettext as _
 import re
 
 class ParentLocWidget(forms.Widget):
@@ -32,7 +33,7 @@ class LocationForm(forms.Form):
     site_code = forms.CharField(
         label='Site Code',
         required=False,
-        help_text='A unique system code for this location. Leave this blank to have it auto generated'
+        help_text=_("A unique system code for this location. Leave this blank to have it auto generated")
     )
 
     strict = True # optimization hack: strict or loose validation 
@@ -101,12 +102,13 @@ class LocationForm(forms.Form):
         if site_code:
             site_code = site_code.lower()
 
-        if lookup_by_property(
+        lookup = lookup_by_property(
             self.location.domain,
             'site_code',
             site_code,
             'global'
-        ):
+        )
+        if lookup and lookup != set([self.location._id]):
             raise forms.ValidationError('another location already uses this site code')
 
         return site_code

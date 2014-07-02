@@ -64,6 +64,8 @@ class LocationImporter(object):
         self.results = []
         self.seen_site_codes = set()
 
+        self.parent_child_map = parent_child(self.domain)
+
         self.total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
         self.types = [ws.worksheet.title for ws in worksheets]
         self.top_level_types = top_level_location_types(domain)
@@ -78,8 +80,8 @@ class LocationImporter(object):
         if loc_type in self.types:
             self.import_worksheet(self.worksheets[self.types.index(loc_type)])
 
-            if loc_type in parent_child(self.domain):
-                for child_type in parent_child(self.domain)[loc_type]:
+            if loc_type in self.parent_child_map:
+                for child_type in self.parent_child_map[loc_type]:
                     self.import_loc_type(child_type)
 
     def import_worksheet(self, worksheet):
@@ -107,7 +109,8 @@ class LocationImporter(object):
                     self.results.append(import_location(
                         self.domain,
                         location_type,
-                        loc
+                        loc,
+                        self.parent_child_map
                     )['message'])
                 if self.task:
                     self.processed += 1
@@ -125,20 +128,21 @@ def import_locations(domain, worksheets, task=None):
     return iter(results)
 
 
-def import_location(domain, location_type, location_data):
+def import_location(domain, location_type, location_data, parent_child_map=None):
     data = dict(location_data)
 
     provided_code = data.pop('site_code', None)
 
-    # TODO make sure site_code isn't duplicated in the file
-
     parent_site_code = data.pop('parent_site_code', None)
+
+    if not parent_child_map:
+        parent_child_map = parent_child(domain)
 
     form_data = {}
 
     try:
         parent_id = _process_parent_site_code(
-            parent_site_code, domain, location_type
+            parent_site_code, domain, location_type, parent_child_map
         )
     except LocationImportError as e:
         return {
@@ -199,14 +203,13 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
     )
 
 
-def _process_parent_site_code(parent_site_code, domain, location_type):
+def _process_parent_site_code(parent_site_code, domain, location_type, parent_child_map):
     if not parent_site_code:
         return None
 
     parent_obj = Location.by_site_code(domain, parent_site_code)
     if parent_obj:
-        parent_relationships = parent_child(domain)
-        if invalid_location_type(location_type, parent_obj, parent_relationships):
+        if invalid_location_type(location_type, parent_obj, parent_child_map):
             raise LocationImportError(
                 _('Invalid parent type of {0} for child type {1}').format(
                     parent_obj.location_type,
