@@ -490,7 +490,7 @@ def last_if_none(month, year):
         return last_month.month, last_month.year
 
 
-def get_report(ReportClass, month=None, year=None, block=None):
+def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     """
     Utility method to run a report for an arbitrary month without a request
     """
@@ -504,6 +504,9 @@ def get_report(ReportClass, month=None, year=None, block=None):
         def __init__(self, *args, **kwargs):
             if ReportClass.__name__ == "MetReport":
                 self.slugs, self._headers, self.visible_cols = [list(tup) for tup in zip(*self.model.method_map[self.block])]
+                for idx, val in enumerate(self._headers):
+                    with localize(self.lang):
+                        self._headers[idx] = _(self._headers[idx])
             else:
                 self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
 
@@ -522,6 +525,10 @@ def get_report(ReportClass, month=None, year=None, block=None):
         @property
         def headers(self):
             return self._headers
+
+        @property
+        def lang(self):
+            return lang
 
         @property
         def datespan(self):
@@ -797,7 +804,8 @@ class MetReport(BaseReport):
             }
         }
         es_filters = q["query"]["filtered"]["filter"]
-        if self.snapshot is None:
+        if self.snapshot is None and hasattr(self, 'request'):
+
             awcs = self.request.GET.getlist('awcs')
             if awcs:
                 awcs_lower = [awc.lower() for awc in awcs]
