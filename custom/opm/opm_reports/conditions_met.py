@@ -141,17 +141,23 @@ class ConditionsMet(object):
         case_obj = CommCareCase.get(case['_source']['_id'])
         case_property = lambda _property, default: get_property(case_obj, _property, default=default)
 
-        self.case_id = get_property(case_obj, '_id', '')
-        self.block_name = get_property(case_obj, 'block_name', '')
-        self.owner_id = get_property(case_obj, 'owner_id', '')
-        self.closed = get_property(case_obj, 'closed', False)
+        self.case_id = case_property('_id', '')
+        self.block_name = case_property('block_name', '')
+        self.owner_id = case_property('owner_id', '')
+        self.closed = case_property('closed', False)
+
+        self.name = case_property('name', EMPTY_FIELD)
+        self.awc_name = case_property('awc_name', EMPTY_FIELD)
+        self.husband_name = case_property('husband_name', EMPTY_FIELD)
+
+        # confirm birth-spacing condition, if it's not needed forms need not be fetched for pregnant cases
         forms = case_obj.get_forms()
         birth_spacing_prompt = []
         for form in forms:
             if 'birth_spacing_prompt' in form.form:
                 birth_spacing_prompt.append(form.form['birth_spacing_prompt'])
 
-        filtered_forms = [form for form in case_obj.get_forms() if report.datespan.startdate <= form.received_on <= report.datespan.enddate]
+        filtered_forms = [form for form in forms if report.datespan.startdate <= form.received_on <= report.datespan.enddate]
 
         get_property_from_forms(filtered_forms, met)
 
@@ -159,14 +165,12 @@ class ConditionsMet(object):
         reporting_year = report.year
         reporting_date = datetime.date(reporting_year, reporting_month + 1, 1) - datetime.timedelta(1)
         
-
-        dod = get_property(case_obj, 'dod')
-        edd = get_property(case_obj, 'edd')
+        dod = case_property('dod', None)
+        edd = case_property('edd', None)
         status = "unknown"
         preg_month = -1
         child_age = -1
         window = -1
-        self.block_name = str(reporting_date)
         if not dod and not edd:
             raise InvalidRow
         if dod and dod != EMPTY_FIELD:
@@ -211,7 +215,6 @@ class ConditionsMet(object):
         self.preg_month = preg_month
         self.window = window
 
-        # preg_month = get_property(case_obj, 'pregnancy_month', 0) or 0
         vhnd_attendance = {
             4: case_property('attendance_vhnd_1', 0),
             5: case_property('attendance_vhnd_2', 0),
@@ -263,11 +266,6 @@ class ConditionsMet(object):
                 met_four = 'received' in [met['child1_measles_calc'] or met['prev_child1_measles_calc']]
                 self.four = condition_image(MEASLEVACC_Y, MEASLEVACC_N, met_four)
 
-        self.name = get_property(case_obj, 'name')
-        # self.awc_name = get_property(case_obj, 'awc_name')
-        # self.husband_name = get_property(case_obj, 'husband_name')
-        self.awc_name = str(dod)
-        self.husband_name = str(edd)
 
         if self.status == 'pregnant':
             if report.block.lower() == 'wazirganj':
