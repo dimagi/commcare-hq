@@ -34,6 +34,7 @@ from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
 from django.db.models.signals import post_save, post_delete
+from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -1270,7 +1271,7 @@ class CommTrackUser(CommCareUser):
 
     def submit_location_block(self, caseblock):
         submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml()),
+            ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime)),
             self.domain,
             self.username,
             self._id
