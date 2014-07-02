@@ -1,3 +1,4 @@
+import copy
 import logging
 
 from couchdbkit.resource import ResourceNotFound
@@ -234,6 +235,10 @@ def get_or_update_cases(xform, case_db):
                 "This usually means it had a missing ID" % xform.get_id
             )
 
+    # at this point we know which cases we want to update so sopy this away
+    # this prevents indices that end up in the cache from being added to the return value
+    touched_cases = copy.copy(case_db.cache)
+
     # once we've gotten through everything, validate all indices
     def _validate_indices(case):
         if case.indices:
@@ -250,7 +255,7 @@ def get_or_update_cases(xform, case_db):
 
     [_validate_indices(case) for case in case_db.cache.values()]
 
-    return case_db.cache
+    return touched_cases
 
 
 def _get_or_update_model(case_update, xform, case_db):
