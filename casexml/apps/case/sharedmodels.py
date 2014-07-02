@@ -57,6 +57,8 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     @property
     def is_image(self):
+        if self.server_mime is None:
+            return None
         return True if self.server_mime.startswith('image/') else False
 
     @property
