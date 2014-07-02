@@ -20,7 +20,7 @@
         {% endblock %}
         </title>
         {% compress css %}
-        <link type="text/less" rel="stylesheet" media="all" href="{{ STATIC_URL }}style/less/hqstyle-core.less"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
         {% endcompress %}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>

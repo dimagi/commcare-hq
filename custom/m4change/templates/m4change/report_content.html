@@ -30,7 +30,7 @@
 
 {% block reportcontent %}
     {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{{ STATIC_URL }}style/less/hqstyle-core.less"/>
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     {% endcompress %}
     <link rel="stylesheet" href="{% static 'm4change/css/reports.css' %}"/>
     {{ block.super }}
