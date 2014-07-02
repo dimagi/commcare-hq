@@ -453,6 +453,11 @@ BROKER_URL = 'django://'  # default django db based
 # for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
 
+# This is the celery queue to use for running reminder rules.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_RULE_QUEUE = 'celery'
+
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'

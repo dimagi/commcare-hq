@@ -15,8 +15,9 @@ from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
-from dimagi.utils.couch import LockableMixIn
+from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.multithreading import process_fast
 from random import randint
 
@@ -241,6 +242,11 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         # the scheduling.
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
+    try:
+        client = get_redis_client()
+        client.incr("reminder-rule-processing-current-%s" % handler._id)
+    except:
+        pass
 
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
@@ -369,7 +375,8 @@ class CaseReminderHandler(Document):
     user_id = StringProperty()
     case_id = StringProperty()
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
-    
+    locked = BooleanProperty(default=False)
+
     # Only used when recipient is RECIPIENT_SUBCASE.
     # All subcases matching the given criteria will be the recipients.
     recipient_case_match_property = StringProperty()
@@ -721,7 +728,11 @@ class CaseReminderHandler(Document):
         """
         # Prevent circular import
         from .event_handlers import EVENT_HANDLER_MAP
-        
+
+        if self.deleted():
+            reminder.retire()
+            return False
+
         # Retrieve the list of individual recipients
         recipient = reminder.recipient
         
@@ -797,6 +808,11 @@ class CaseReminderHandler(Document):
             return False
 
     def case_changed(self, case, now=None, schedule_changed=False, prev_definition=None):
+        key = "rule-update-definition-%s-case-%s" % (self._id, case._id)
+        with CriticalSection([key]):
+            self._case_changed(case, now, schedule_changed, prev_definition)
+
+    def _case_changed(self, case, now, schedule_changed, prev_definition):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == CASE_CRITERIA.
         
@@ -917,8 +933,7 @@ class CaseReminderHandler(Document):
             sent = False
             if send_immediately:
                 try:
-                    self.fire(reminder)
-                    sent = True
+                    sent = self.fire(reminder)
                 except Exception:
                     # An exception could happen here, for example, if touchforms is down.
                     # So just pass, and let the reminder be saved below so that the framework
@@ -927,36 +942,69 @@ class CaseReminderHandler(Document):
             if sent or not send_immediately:
                 self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
             reminder.save()
-    
+
     def save(self, **params):
+        from corehq.apps.reminders.tasks import process_reminder_rule
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
         send_immediately = params.pop("send_immediately", False)
+        unlock = params.pop("unlock", False)
         self.last_modified = datetime.utcnow()
+        if unlock:
+            self.locked = False
+        else:
+            self.locked = True
         super(CaseReminderHandler, self).save(**params)
+        delay = self.start_condition_type == CASE_CRITERIA
+        if not unlock:
+            if delay:
+                process_reminder_rule.delay(self, schedule_changed,
+                    prev_definition, send_immediately)
+            else:
+                process_reminder_rule(self, schedule_changed,
+                    prev_definition, send_immediately)
+
+    def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
                 case_id_result = CommCareCase.view('hqcase/types_by_domain',
                     reduce=False,
                     startkey=[self.domain],
                     endkey=[self.domain, {}],
+                    include_docs=False,
                 ).all()
                 case_ids = [entry["id"] for entry in case_id_result]
+                try:
+                    client = get_redis_client()
+                    client.set("reminder-rule-processing-current-%s" % self._id,
+                        0)
+                    client.set("reminder-rule-processing-total-%s" % self._id,
+                        len(case_ids))
+                except:
+                    pass
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition))
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
-    
+        else:
+            reminder_ids = self.get_reminders(ids_only=True)
+            process_fast(reminder_ids, retire_reminder, item_goal=100,
+                max_threads=5)
+
     @classmethod
-    def get_handlers(cls, domain, case_type=None):
+    def get_handlers(cls, domain, case_type=None, ids_only=False):
         key = [domain]
         if case_type:
             key.append(case_type)
-        return cls.view('reminders/handlers_by_domain_case_type',
+        result = cls.view('reminders/handlers_by_domain_case_type',
             startkey=key,
             endkey=key + [{}],
-            include_docs=True,
+            include_docs=(not ids_only),
         )
+        if ids_only:
+            return [row["id"] for row in result]
+        else:
+            return result
 
     @classmethod
     def get_referenced_forms(cls, domain):
@@ -1003,9 +1051,6 @@ class CaseReminderHandler(Document):
                     reminder.release_lock()
 
     def retire(self):
-        reminder_ids = self.get_reminders(ids_only=True)
-        process_fast(reminder_ids, retire_reminder, item_goal=100,
-            max_threads=5)
         self.doc_type += "-Deleted"
         self.save()
 

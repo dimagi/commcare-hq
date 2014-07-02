@@ -94,6 +94,7 @@ env.roledefs = {
 
 env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
+env.use_separate_reminder_rule_queue = False
 env.pillow_retry_queue_enabled = True
 
 
@@ -257,6 +258,7 @@ def production():
     env.django_port = '9010'
     env.should_migrate = True
     env.sms_queue_enabled = True
+    env.use_separate_reminder_rule_queue = True
     env.pillow_retry_queue_enabled = True
 
     if env.code_branch != 'master':
@@ -1075,6 +1077,8 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    if env.use_separate_reminder_rule_queue:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
