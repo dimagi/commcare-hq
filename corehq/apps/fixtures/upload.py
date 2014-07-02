@@ -234,7 +234,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                 else:
                     data_type = new_data_type
 
-                if replace:
+                if replace and data_type != new_data_type:
                     data_type.recursive_delete(transaction)
                     data_type = new_data_type
 
