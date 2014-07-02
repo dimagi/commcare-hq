@@ -82,7 +82,8 @@ def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
     url = settings.STATIC_URL + url
-    if version:
+    is_less = url.endswith('.less')
+    if version and not is_less:
         url += "?version=%s" % version
     return url
 
