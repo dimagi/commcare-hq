@@ -179,7 +179,6 @@ class Product(Document):
         return [
             'name',
             'unit',
-            'code_',
             'description',
             'category',
             'program_id',
@@ -191,6 +190,7 @@ class Product(Document):
         product_dict = {}
 
         product_dict['id'] = self._id
+        product_dict['product_id'] = self.code_
 
         for attr in self._csv_attrs():
             real_attr = attr[0] if isinstance(attr, tuple) else attr
@@ -219,6 +219,8 @@ class Product(Document):
             p = cls.get(id)
         else:
             p = cls()
+
+        p.code = row.get('product_id')
 
         for attr in cls._csv_attrs():
             if attr in row or (isinstance(attr, tuple) and attr[0] in row):
