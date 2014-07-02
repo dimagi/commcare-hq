@@ -13,7 +13,6 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -530,7 +529,8 @@ class ApplicationsTab(UITab):
                 app_name = app_info['name']
                 app_doc_type = app_info['doc_type']
 
-                url = reverse('view_app', args=[self.domain, app_id])
+                url = reverse('view_app', args=[self.domain, app_id]) if self.couch_user.can_edit_apps() \
+                    else reverse('release_manager', args=[self.domain, app_id])
                 app_title = self.make_app_title(app_name, app_doc_type)
 
                 submenu_context.append(format_submenu_context(
@@ -544,7 +544,7 @@ class ApplicationsTab(UITab):
             newapp_options = [
                 format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
                 format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
-                    is_remote=True)),
+                                                                     is_remote=True)),
             ]
             newapp_options.append(format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
                 url=reverse('appstore')))
@@ -566,7 +566,8 @@ class ApplicationsTab(UITab):
     @property
     def is_viewable(self):
         couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
+        return (self.domain and couch_user and
+                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 

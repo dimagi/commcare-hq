@@ -117,6 +117,7 @@
                 {% endblocktrans %}
             </small></p>
         </div>
+        {% if edit %}
         <button class="btn btn-primary" data-bind="
             click: makeNewBuild,
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -124,7 +125,7 @@
         ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
-
+        {% endif %}
         <table class="table">
             <tr>
                 <th colspan="2">{% trans "Version" %}</th>

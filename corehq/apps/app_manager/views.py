@@ -8,9 +8,6 @@ import json
 import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
-from django.http import HttpResponse
-from django.core.servers.basehttp import FileWrapper
-import tempfile
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -25,7 +22,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
-from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX
+
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -70,7 +67,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm, VELLUM_TYPES
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -97,7 +94,7 @@ from django_prbac.utils import ensure_request_has_privilege
 logger = logging.getLogger(__name__)
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
-
+require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
 
 def set_file_download(response, filename):
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
@@ -140,7 +137,7 @@ class ApplicationViewMixin(DomainViewMixin):
 
 
 
-@require_can_edit_apps
+@require_deploy_apps
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
                  unique_form_id=None, edit=True):
     """
@@ -341,6 +338,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         })
 
 
+@require_deploy_apps
 def default(req, domain):
     """
     Handles a url that does not include an app_id.
@@ -348,8 +346,6 @@ def default(req, domain):
     but this view exists so that there's something to
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
-
-
     """
     return view_app(req, domain)
 
@@ -595,8 +591,8 @@ def get_apps_base_context(request, domain, app):
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
-        edit = (request.GET.get('edit', 'true') == 'true') and\
-               (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        edit = ((request.GET.get('edit', 'true') == 'true') and
+                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
         edit = False
@@ -633,7 +629,7 @@ def get_apps_base_context(request, domain, app):
 
 
 @cache_control(no_cache=True, no_store=True)
-@require_can_edit_apps
+@require_deploy_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
@@ -662,7 +658,7 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@require_can_edit_apps
+@require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
@@ -898,17 +894,20 @@ def view_user_registration(request, domain, app_id):
     return view_generic(request, domain, app_id, is_user_registration=True)
 
 
-@require_can_edit_apps
+@require_GET
+@require_deploy_apps
 def view_form(req, domain, app_id, module_id, form_id):
     return view_generic(req, domain, app_id, module_id, form_id)
 
 
-@require_can_edit_apps
+@require_GET
+@require_deploy_apps
 def view_module(req, domain, app_id, module_id):
     return view_generic(req, domain, app_id, module_id)
 
 
-@require_can_edit_apps
+@require_GET
+@require_deploy_apps
 def view_app(req, domain, app_id=None):
     # redirect old m=&f= urls
     module_id = req.GET.get('m', None)
