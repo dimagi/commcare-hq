@@ -837,7 +837,7 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if not self.active or case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
+        if case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
@@ -890,7 +890,8 @@ class CaseReminderHandler(Document):
                         self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
                     else:
                         reminder.active = active
-                
+
+                reminder.active = self.active and reminder.active
                 reminder.save()
     
     def datetime_definition_changed(self, send_immediately=False):
