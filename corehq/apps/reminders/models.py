@@ -1101,8 +1101,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         if self.handler.recipient == RECIPIENT_USER:
             try:
                 return CommCareUser.get_by_user_id(self.user_id)
-            except Exception:
-                self.retire()
+            except CouchUser.AccountTypeError:
                 return None
         else:
             return None
