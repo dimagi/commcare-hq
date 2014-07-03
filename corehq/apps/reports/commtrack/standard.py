@@ -187,21 +187,21 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     def get_data_for_graph(self):
         ret = [
-            {"key": "stocked out", "color": "#e00707"},
-            {"key": "under stock", "color": "#ffb100"},
-            {"key": "adequate stock", "color": "#4ac925"},
-            {"key": "overstocked", "color": "#b536da"},
+            {"key": "Stocked Out", "color": "#e00707"},
+            {"key": "Under Stock", "color": "#ffb100"},
+            {"key": "Adequate Stock", "color": "#4ac925"},
+            {"key": "Overstocked", "color": "#b536da"},
 #            {"key": "nonreporting", "color": "#363636"},
-            {"key": "unknown", "color": "#ABABAB"}
+            {"key": "Unknown", "color": "#ABABAB"}
         ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
+        statuses = ['Stocked Out', 'Under Stock', 'Adequate Stock', 'Overstocked', 'No data'] #'nonreporting', 'no data']
 
         for r in ret:
             r["values"] = []
 
         for pd in self.product_data:
             for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
+                ret[i]['values'].append({"x": '%.1f%%' % pd[0], "y": pd[i+2]})
 
         return ret
 
