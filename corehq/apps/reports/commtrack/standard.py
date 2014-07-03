@@ -201,8 +201,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         for pd in self.product_data:
             for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
+                ret[i]['values'].append({"x": '%.1f%%' % pd[0], "y": pd[i+2]})
 
+        for row in ret:
+            row["key"] = row["key"].title()
+            
         return ret
 
     @property
