@@ -36,7 +36,12 @@ def catch_signal(app, **kwargs):
             else:
                 print(msg, file=sys.stderr)
 
-        domains = get_call_center_domains()
+        try:
+            domains = get_call_center_domains()
+        except (RequestException, ESError):
+            _log('Unable to query ES for call-center domains during syncdb')
+            domains = []
+
         for name in domains:
             domain = Domain.get_by_name(name)
             if domain:
