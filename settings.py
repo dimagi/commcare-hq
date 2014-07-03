@@ -348,10 +348,6 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
 
-
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
-
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
@@ -806,6 +802,15 @@ else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
+
+### Reporting database - use same DB as main database
+db_settings = DATABASES["default"].copy()
+db_settings['PORT'] = db_settings.get('PORT', '5432')
+if UNIT_TESTING:
+    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+SQL_REPORTING_DATABASE_URL = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+    **db_settings
+)
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
