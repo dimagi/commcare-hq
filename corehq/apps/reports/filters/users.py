@@ -249,7 +249,7 @@ class EmwfMixin(object):
         try:
             if self.show_all_filter:
                 basics = [("t__x", "[All Data]")] + basics
-        except:
+        except AttributeError:
             if (self.request and self.request.GET.get("show_all_filter", False)):
                 basics = [("t__x", "[All Data]")] + basics
         return basics
