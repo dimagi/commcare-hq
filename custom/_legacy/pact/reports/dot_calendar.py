@@ -2,6 +2,7 @@ from calendar import HTMLCalendar
 from calendar import  month_name, monthrange
 from datetime import date, timedelta, datetime
 from itertools import groupby
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
 from pact.dot_data import filter_obs_for_day, DOTDay, query_observations, query_observations_singledoc
@@ -190,23 +191,23 @@ class DOTCalendar(HTMLCalendar):
                             else:
                                 if obs.adherence == DOT_ADHERENCE_EMPTY:
 #                                    body.append('<span class="label label-success">Empty</span>')
-                                    body.append('<img src="%spact/icons/check.jpg">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/check.jpg'))
                                 elif obs.adherence == DOT_ADHERENCE_PARTIAL:
 #                                    body.append('<span class="label label-warning">Partial</span>')
-                                    body.append('<img src="%spact/icons/exclamation-point.jpg">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/exclamation-point.jpg'))
                                 elif obs.adherence == DOT_ADHERENCE_FULL:
 #                                    body.append('<span class="label label-important">Full</span>')
-                                    body.append('<img src="%spact/icons/x-mark.png">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/x-mark.png'))
 
                                 if obs.method == DOT_OBSERVATION_DIRECT:
 #                                    body.append('<span class="label label-info">Direct</span>')
-                                    body.append('<img src="%spact/icons/plus.png">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/plus.png'))
                                 elif obs.method == DOT_OBSERVATION_PILLBOX:
 #                                    body.append('<span class="label label-inverse">Pillbox</span>')
-                                    body.append('<img src="%spact/icons/bucket.png">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/bucket.png'))
                                 elif obs.method == DOT_OBSERVATION_SELF:
 #                                    body.append('<span class="label">Self</span>')
-                                    body.append('<img src="%spact/icons/minus.png">' % settings.STATIC_URL)
+                                    body.append('<img src="%s">' % static('pact/icons/minus.png'))
                             body.append('&nbsp;</div> <!-- close time-cell -->') #close time-cell
 #                            body.append('&nbsp;</div>') #close observation
                         else:

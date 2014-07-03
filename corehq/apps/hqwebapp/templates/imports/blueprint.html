@@ -1,3 +1,5 @@
-    <link rel="stylesheet" href="{{STATIC_URL}}hqwebapp/stylesheets/blueprint/screen.css" media="screen, projection">
-    <link rel="stylesheet" href="{{STATIC_URL}}hqwebapp/stylesheets/blueprint/print.css" media="print">
-    <!--[if lt IE 8]><link rel="stylesheet" href="{{STATIC_URL}}hqwebapp/blueprint/stylesheets/blueprint/ie.css" media="screen, projection"><![endif]-->
+{% load hq_shared_tags %}
+
+    <link rel="stylesheet" href="{% static 'hqwebapp/stylesheets/blueprint/screen.css' %}" media="screen, projection">
+    <link rel="stylesheet" href="{% static 'hqwebapp/stylesheets/blueprint/print.css' %}" media="print">
+    <!--[if lt IE 8]><link rel="stylesheet" href="{% static 'hqwebapp/blueprint/stylesheets/blueprint/ie.css' %}" media="screen, projection"><![endif]-->
