@@ -8,7 +8,6 @@ from couchdbkit.exceptions import MultipleResultsFound
 from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher, NOT_EQUAL
 
 
-MAPPING_NAME_FORMS = 'cc_form_submissions'
 MAPPING_NAME_CASES = 'cc_case_updates'
 MAPPING_NAME_CASE_OWNERSHIP = 'cc_case_ownership'
 
@@ -68,27 +67,8 @@ def bootstrap_callcenter(domain):
     if not (domain and domain.name and domain.call_center_config.enabled):
         return
 
-    get_form_mapping(domain.name).save()
     get_case_mapping(domain.name).save()
     get_case_ownership_mapping(domain.name).save()
-
-
-def get_form_mapping(domain):
-    mapping = get_or_create_mapping(domain, MAPPING_NAME_FORMS)
-
-    mapping.couch_view = 'reports_forms/all_forms'
-    mapping.couch_key_prefix = ['submission', domain]
-    mapping.columns = [
-        ColumnDef(name="date", data_type="date", value_source="key", value_index=2,
-                  date_format="%Y-%m-%dT%H:%M:%SZ"),
-        ColumnDef(name="user_id", data_type="string", value_source="value", value_attribute="user_id"),
-        ColumnDef(name="xmlns", data_type="string", value_source="value", value_attribute="xmlns"),
-        ColumnDef(name="duration", data_type="integer", value_source="value", value_attribute="duration"),
-    ]
-    mapping.couch_view_params = {
-        'reduce': False,
-    }
-    return mapping
 
 
 def get_case_mapping(domain):
