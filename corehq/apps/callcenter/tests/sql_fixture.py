@@ -51,13 +51,13 @@ def load_data(domain, user_id):
     case_data = [
         {"date": date.today(), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '1', 'action_count': 1},
         {"date": date.today() - timedelta(days=10), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '2', 'action_count': 1},
+        {"date": date.today() - timedelta(days=29), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '2', 'action_count': 1},
         {"date": date.today() - timedelta(days=30), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '3', 'action_count': 1},
         {"date": date.today() - timedelta(days=31), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '4', 'action_count': 1},
         {"date": date.today() - timedelta(days=45), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '5', 'action_count': 1},
         {"date": date.today() - timedelta(days=55), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '6', 'action_count': 1},
         {"date": date.today() - timedelta(days=56), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '7', 'action_count': 1},
-        {"date": date.today() - timedelta(days=60), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '8', 'action_count': 1},
-        {"date": date.today() - timedelta(days=61), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '9', 'action_count': 1},
+        {"date": date.today() - timedelta(days=59), "user_id": user_id, "case_type": 'person', 'action_type': 'update', 'case_id': '8', 'action_count': 1},
     ]
 
     case_ownership_data = [
