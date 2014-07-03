@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
-from corehq.apps.callcenter.utils import MAPPING_NAME_FORMS, MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
+from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -16,6 +16,17 @@ TYPE_SUM = 'sum'
 
 TABLE_PREFIX = '%s_' % settings.CTABLE_PREFIX if hasattr(settings, 'CTABLE_PREFIX') else ''
 
+FORMDATA_TABLE = 'sofabed_formdata'
+
+
+def case_table(domain):
+    return '%s%s_%s' % (TABLE_PREFIX, domain, MAPPING_NAME_CASES)
+
+
+def case_ownership_table(domain):
+    return '%s%s_%s' % (TABLE_PREFIX, domain, MAPPING_NAME_CASE_OWNERSHIP)
+
+
 PER_DOMAIN_FORM_INDICATORS = {
     'aarohi': [
         {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'},
@@ -28,16 +39,27 @@ PER_DOMAIN_FORM_INDICATORS = {
     ]
 }
 
-filters_week0 = [filters.GTE('date', 'weekago'), filters.LT('date', 'today')]
-filters_week1 = [filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')]
-filters_month0 = [filters.GTE('date', '30daysago'), filters.LT('date', 'today')]
-filters_month1 = [filters.GTE('date', '60daysago'), filters.LT('date', '30daysago')]
-filters_ever = [filters.LT('date', 'today')]
+
+def filters_week0(date_field):
+    return [filters.GT(date_field, 'weekago'), filters.LTE(date_field, 'today')]
+
+
+def filters_week1(date_field):
+    return [filters.GT(date_field, '2weekago'), filters.LTE(date_field, 'weekago')]
+
+
+def filters_month0(date_field):
+    return [filters.GT(date_field, '30daysago'), filters.LTE(date_field, 'today')]
+
+
+def filters_month1(date_field):
+    return [filters.GT(date_field, '60daysago'), filters.LTE(date_field, '30daysago')]
+
 
 custom_form_ranges = {
-    'Week0': None,
-    'Week1': filters_week1,
-    'Month0': filters_month0,
+    'Week0': filters_week0('time_end'),
+    'Week1': filters_week1('time_end'),
+    'Month0': filters_month0('time_end'),
 }
 
 
@@ -59,11 +81,11 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def table_name(self):
-        return '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_FORMS)
+        return FORMDATA_TABLE
 
     @property
     def filters(self):
-        return filters_week0
+        return filters_week0('date')
 
     @property
     def filter_values(self):
@@ -74,6 +96,8 @@ class CallCenter(SqlIndicatorSet):
             '30daysago': date.today() - timedelta(days=30),
             '60daysago': date.today() - timedelta(days=60),
             'ccCaseType': self.domain.call_center_config.case_type,
+            'domain': self.domain.name,
+            'form_doc_type': 'XFormInstance',
         }
 
     @property
@@ -82,43 +106,52 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def columns(self):
-        case_table_name = '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_CASES)
-        case_ownership_table_name = '%s%s_%s' % (TABLE_PREFIX, self.domain.name, MAPPING_NAME_CASE_OWNERSHIP)
+        case_table_name = case_table(self.domain.name)
+        case_ownership_table_name = case_ownership_table(self.domain.name)
+
         case_type_filters = [filters.NOTEQ('case_type', 'ccCaseType')]
+        domain_filter = [filters.EQ('domain', 'domain'), filters.EQ('doc_type', 'form_doc_type')]
 
         columns = [
-            DatabaseColumn("case", SimpleColumn('user_id'),
+            DatabaseColumn("case",
+                           SimpleColumn(
+                               'user_id',
+                               filters=filters_week0('time_end') + domain_filter),
                            format_fn=self.get_user_case_id,
                            sortable=False),
             DatabaseColumn('formsSubmittedWeek0',
                            CountColumn(
-                               'date',
+                               'instance_id',
+                               table_name=FORMDATA_TABLE,
+                               filters=filters_week0('time_end') + domain_filter,
                                alias='formsSubmittedWeek0'),
                            sortable=False),
             DatabaseColumn('formsSubmittedWeek1',
                            CountColumn(
-                               'date',
-                               filters=filters_week1,
+                               'instance_id',
+                               table_name=FORMDATA_TABLE,
+                               filters=filters_week1('time_end') + domain_filter,
                                alias='formsSubmittedWeek1'),
                            sortable=False),
             DatabaseColumn('formsSubmittedMonth0',
                            CountColumn(
-                               'date',
-                               filters=filters_month0,
+                               'instance_id',
+                               table_name=FORMDATA_TABLE,
+                               filters=filters_month0('time_end') + domain_filter,
                                alias='formsSubmittedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth0',
                            CountUniqueColumn(
                                'case_id',
                                table_name=case_table_name,
-                               filters=filters_month0 + case_type_filters,
+                               filters=filters_month0('date') + case_type_filters,
                                alias='casesUpdatedMonth0'),
                            sortable=False),
             DatabaseColumn('casesUpdatedMonth1',
                            CountUniqueColumn(
                                'case_id',
                                table_name=case_table_name,
-                               filters=filters_month1 + case_type_filters,
+                               filters=filters_month1('date') + case_type_filters,
                                alias='casesUpdatedMonth1'),
                            sortable=False),
             DatabaseColumn('totalCases',
@@ -150,7 +183,8 @@ class CallCenter(SqlIndicatorSet):
     def _get_form_sum_column(self, meta, slug_suffix, filters):
         slug = '%s%s' % (meta['slug'], slug_suffix)
         agg_col = SumWhen(
-            whens={"xmlns = '%s'" % meta['xmlns']: 1},
+            key='xmlns',
+            whens={meta['xmlns']: 1},
             else_=0,
             filters=filters,
             alias=slug)
@@ -158,14 +192,15 @@ class CallCenter(SqlIndicatorSet):
 
     def _get_form_duration_column(self, meta, slug_suffix, filters):
         slug = '%s%s' % (meta['slug'], slug_suffix)
-        when = "xmlns = '%s'" % meta['xmlns']
         dur_col = SumWhen(
-            whens={when: 'duration'},
+            key='xmlns',
+            whens={meta['xmlns']: 'duration'},
             else_=0,
             filters=filters,
             alias='%s_sum' % slug)
         count_col = SumWhen(
-            whens={when: 1},
+            key='xmlns',
+            whens={meta['xmlns']: 1},
             else_=0,
             filters=filters,
             alias='%s_count' % slug)
