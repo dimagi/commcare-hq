@@ -897,10 +897,15 @@ var DetailScreenConfig = (function () {
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
-        {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
-        {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT},
         {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT}
     ];
+
+    if (window.FEATURE_mm_case_properties) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
+            {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
+        );
+    }
 
     if (window.FEATURE_enable_enum_image) {
         DetailScreenConfig.MENU_OPTIONS.push(
