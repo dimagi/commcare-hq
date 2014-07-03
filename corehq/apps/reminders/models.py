@@ -828,16 +828,8 @@ class CaseReminderHandler(Document):
         """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        
-        try:
-            if (case.user_id == case._id) or (case.user_id is None):
-                user = None
-            else:
-                user = CommCareUser.get_by_user_id(case.user_id)
-        except Exception:
-            user = None
-        
-        if not self.active or case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
+
+        if case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted"):
             if reminder:
                 reminder.retire()
         else:
@@ -848,7 +840,7 @@ class CaseReminderHandler(Document):
                     start_date = parse(start_date)
                 except Exception:
                     start_date = None
-            
+
             if isinstance(start_date, datetime):
                 start_condition_datetime = start_date
                 start = start_date
@@ -858,7 +850,7 @@ class CaseReminderHandler(Document):
             else:
                 start_condition_datetime = None
                 start = now
-            
+
             # Retire the reminder if the start condition is no longer valid
             if reminder is not None:
                 if not start_condition_reached:
@@ -869,7 +861,7 @@ class CaseReminderHandler(Document):
                     # The start date has changed, so retire the reminder and it will be spawned again in the next block
                     reminder.retire()
                     reminder = None
-            
+
             # Spawn a reminder if need be
             just_spawned = False
             if reminder is None:
@@ -878,7 +870,7 @@ class CaseReminderHandler(Document):
                     reminder.start_condition_datetime = start_condition_datetime
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
                     just_spawned = True
-            
+
             # Check to see if the reminder should still be active
             if reminder is not None:
                 if schedule_changed and self.event_interpretation == EVENT_AS_SCHEDULE and not just_spawned:
@@ -890,9 +882,10 @@ class CaseReminderHandler(Document):
                         self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
                     else:
                         reminder.active = active
-                
+
+                reminder.active = self.active and reminder.active
                 reminder.save()
-    
+
     def datetime_definition_changed(self, send_immediately=False):
         """
         This method is used to manage updates to CaseReminderHandler's whose start_condition_type == ON_DATETIME.
