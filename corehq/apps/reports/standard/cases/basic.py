@@ -23,19 +23,24 @@ from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 
 from .data_sources import CaseInfo, CaseDisplay
 
-class ExpandedMobileWorkerFilterWithAllFilter(ExpandedMobileWorkerFilter):
+class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
     show_all_filter = True
 
     @property
     def filter_context(self):
-        context = super(ExpandedMobileWorkerFilterWithAllFilter, self).filter_context
+        context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
         url = reverse('emwf_options', args=[self.domain])+"?show_all_filter=true"
         context.update({'endpoint': url})
         return context
 
+    @classmethod
+    def show_all_data(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return 't__x' in emws
+
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.standard.cases.basic.ExpandedMobileWorkerFilterWithAllFilter',
+        'corehq.apps.reports.standard.cases.basic.ExpandedMobileWorkerFilterWithAllData',
         #'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
@@ -71,13 +76,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             subterms.append({"term": {"closed": (status == 'closed')}})
 
 
-        owner_filters = _filter_gen('owner_id', owner_ids)
-        user_filters = _filter_gen('user_id', user_ids)
-        filters = filter(None, [owner_filters, user_filters])
-        print "FILTERS", filters
-
-        if filters:
-            subterms.append({'or': filters})
+        if not ExpandedMobileWorkerFilterWithAllData.show_all_data(self.request):
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
+            if filters:
+                subterms.append({'or': filters})
 
         if search_string:
             query_block = {
@@ -98,7 +102,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             'from': self.pagination.start,
             'size': self.pagination.count,
         }
-
         return es_query
 
     @property
