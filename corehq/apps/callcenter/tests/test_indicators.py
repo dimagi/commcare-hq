@@ -73,9 +73,9 @@ class CallCenterTests(TestCase):
             'childFormsWeek0': 0L,
             'childFormsWeek1': 0L,
             'childFormsMonth0': 0L,
-            'motherdurationweek0': 3L,
-            'motherdurationweek1': 4L,
-            'motherdurationmonth0': 4L,
+            'motherDurationWeek0': 3L,
+            'motherDurationWeek1': 4L,
+            'motherDurationMonth0': 4L,
         }
 
         self._test_indicators(self.aarohi_domain, self.aarohi_user, expected)
