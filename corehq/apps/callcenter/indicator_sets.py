@@ -10,6 +10,11 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 
+PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
+PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
+AAROHI_CHILD_FORM = 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'
+AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
+
 NO_CASE_TAG = 'NO CASE'
 TYPE_DURATION = 'duration'
 TYPE_SUM = 'sum'
@@ -29,13 +34,13 @@ def case_ownership_table(domain):
 
 PER_DOMAIN_FORM_INDICATORS = {
     'aarohi': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'},
-        {'slug': 'motherDuration', 'type': TYPE_DURATION, 'xmlns': 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'},
+        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': AAROHI_MOTHER_FORM},
+        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': AAROHI_CHILD_FORM},
+        {'slug': 'motherDuration', 'type': TYPE_DURATION, 'xmlns': AAROHI_MOTHER_FORM},
     ],
     'pci-india': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'},
+        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': PCI_MOTHER_FORM},
+        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
     ]
 }
 
@@ -193,9 +198,9 @@ class CallCenter(SqlIndicatorSet):
 
     def _get_form_duration_column(self, meta, slug_suffix, filters):
         slug = '%s%s' % (meta['slug'], slug_suffix)
+        when = "xmlns = '%s'" % meta['xmlns']
         dur_col = SumWhen(
-            key='xmlns',
-            whens={meta['xmlns']: 'duration'},
+            whens={when: 'duration'},
             else_=0,
             filters=filters,
             alias='%s_sum' % slug)
