@@ -40,13 +40,19 @@ def catch_signal(app, **kwargs):
                     }
 
         print '\tchecking fluff SQL tables for schema changes'
-        migration_context = get_migration_context(table_pillow_map.keys())
-        diffs = compare_metadata(migration_context, fluff_metadata)
+        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+
+        with engine.begin() as connection:
+            migration_context = get_migration_context(connection, table_pillow_map.keys())
+            diffs = compare_metadata(migration_context, fluff_metadata)
+
         tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map)
 
         for table in tables_to_rebuild:
             info = table_pillow_map[table]
-            rebuild_table(info['pillow'], info['doc'])
+            rebuild_table(engine, info['pillow'], info['doc'])
+
+        engine.dispose()
 
 
 def get_tables_to_rebuild(diffs, table_pillow_map):
@@ -70,10 +76,10 @@ def get_tables_to_rebuild(diffs, table_pillow_map):
     return [table for table in yield_diffs(diffs) if table]
 
 
-def rebuild_table(pillow_class, indicator_doc):
+def rebuild_table(engine, pillow_class, indicator_doc):
     logger.warn('Rebuilding table and resetting checkpoint for %s', pillow_class)
     table = indicator_doc._table
-    with get_engine().begin() as connection:
+    with engine.begin() as connection:
             table.drop(connection, checkfirst=True)
             table.create(connection)
             owner = getattr(settings, 'SQL_REPORTING_OBJECT_OWNER', None)
@@ -83,22 +89,15 @@ def rebuild_table(pillow_class, indicator_doc):
         pillow_class().reset_checkpoint()
 
 
-def get_migration_context(table_names):
+def get_migration_context(connection, table_names):
     opts = {
         'include_symbol': partial(include_symbol, table_names),
     }
-    return MigrationContext.configure(get_engine().connect(), opts=opts)
+    return MigrationContext.configure(connection, opts=opts)
 
 
 def include_symbol(names_to_include, table_name, schema):
     return table_name in names_to_include
 
 
-def get_engine():
-    if not hasattr(get_engine, '_engine') or get_engine._engine is None:
-        get_engine._engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-    return get_engine._engine
-
-
 signals.post_syncdb.connect(catch_signal)
-

@@ -83,13 +83,14 @@ class Test(TestCase):
         MockIndicatorsWithGetters.set_db(self.fakedb)
         MockDoc.set_db(self.fakedb)
 
-        rebuild_table(None, MockIndicatorsSql)
-        rebuild_table(None, MockIndicatorsSqlWithFlatFields)
+        rebuild_table(self.engine, None, MockIndicatorsSql)
+        rebuild_table(self.engine, None, MockIndicatorsSqlWithFlatFields)
 
     def tearDown(self):
         with self.engine.begin() as connection:
             MockIndicatorsSql()._table.drop(connection, checkfirst=True)
             MockIndicatorsSqlWithFlatFields()._table.drop(connection, checkfirst=True)
+        self.engine.dispose()
 
     def test_calculator_base_classes(self):
         # Base0
