@@ -99,8 +99,8 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
         PASSED_AUTH = 'is_authenticated'
 
         @api_auth
-        @domain_admin_required
         @login_or_digest
+        @domain_admin_required
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 
