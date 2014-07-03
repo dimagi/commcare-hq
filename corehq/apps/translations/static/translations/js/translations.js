@@ -113,7 +113,7 @@ var mk_translation_ui = function (spec) {
         $table = $("<table></table>"),
         $list_tbody = $('<tbody/>').appendTo($table),
         $adder_tbody = $('<tbody/>').appendTo($table),
-        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations').click(function (e) {
+        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations ').click(function (e) {
             e.preventDefault();
             $.ajax({
                 type: "get",
@@ -132,7 +132,7 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        });
+        }).after($('<i class="icon-question-sign" data-trigger="hover" data-original-title=""></i>'));
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
