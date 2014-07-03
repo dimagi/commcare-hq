@@ -89,12 +89,13 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def filter_values(self):
+        today = date.today() + timedelta(days=1)  # set to midnight of current day
         return {
-            'today': date.today(),
-            'weekago': date.today() - timedelta(days=7),
-            '2weekago': date.today() - timedelta(days=14),
-            '30daysago': date.today() - timedelta(days=30),
-            '60daysago': date.today() - timedelta(days=60),
+            'today': today,
+            'weekago': today - timedelta(days=7),
+            '2weekago': today - timedelta(days=14),
+            '30daysago': today - timedelta(days=30),
+            '60daysago': today - timedelta(days=60),
             'ccCaseType': self.domain.call_center_config.case_type,
             'domain': self.domain.name,
             'form_doc_type': 'XFormInstance',

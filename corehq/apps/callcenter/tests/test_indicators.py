@@ -41,8 +41,8 @@ class CallCenterTests(TestCase):
         user_data = data[self.cc_user.user_id]
         self.assertEqual(user_data['formsSubmittedWeek0'], 2L)
         self.assertEqual(user_data['formsSubmittedWeek1'], 4L)
-        self.assertEqual(user_data['formsSubmittedMonth0'], 7L)
+        self.assertEqual(user_data['formsSubmittedMonth0'], 8L)
         self.assertEqual(user_data['casesUpdatedMonth0'], 2L)
-        self.assertEqual(user_data['casesUpdatedMonth1'], 5L)
+        self.assertEqual(user_data['casesUpdatedMonth1'], 6L)
         self.assertEqual(user_data['totalCases'], 12L)
 
