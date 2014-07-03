@@ -241,8 +241,21 @@ var CaseConfig = (function () {
             } catch (e) {
                 self.case_name = null;
             }
-            self.suggestedPreloadProperties = ko.computed(self.suggestedProperties, self);
-            self.suggestedSaveProperties = ko.computed(self.suggestedProperties, self);
+            self._filteredSuggestedProperties = function(properties) {
+                var used_properties = _.map(properties, function (x) {
+                    return x.key();
+                });
+                return _(self.suggestedProperties()).difference(used_properties);
+            };
+            self.suggestedPreloadProperties = ko.computed(function () {
+                if (!self.case_preload) {
+                    return [];
+                }
+                return self._filteredSuggestedProperties(self.case_preload());
+            }, self);
+            self.suggestedSaveProperties = ko.computed(function () {
+                return self._filteredSuggestedProperties(self.case_properties());
+            }, self);
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
