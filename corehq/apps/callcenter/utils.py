@@ -5,6 +5,7 @@ import uuid
 from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
+from corehq.elastic import es_query
 from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher, NOT_EQUAL
 
 
@@ -123,3 +124,14 @@ def get_or_create_mapping(domain, mapping_name, date_range=2):
     mapping.schedule_day = -1
 
     return mapping
+
+
+def get_call_center_domains():
+    q = {'fields': ['name']}
+    result = es_query(params={
+        'internal.using_call_center': True,
+        'is_active': True,
+        'is_snapshot': False
+    }, q=q)
+    hits = result.get('hits', {}).get('hits', {})
+    return [hit['fields']['name'] for hit in hits]
