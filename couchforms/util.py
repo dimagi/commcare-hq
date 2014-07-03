@@ -440,14 +440,10 @@ class SubmissionPost(object):
         for func, resp in feedback:
             if resp and isinstance(resp, Exception):
                 error_message = unicode(resp)
-                # hack to log exception type (no valuable stacktrace though)
-                try:
-                    raise resp
-                except Exception:
-                    logging.exception((
-                        u"Receiver app: problem sending "
-                        u"post-save signal %s for xform %s: %s"
-                    ) % (func, doc._id, error_message))
+                logging.error((
+                    u"Receiver app: problem sending "
+                    u"post-save signal %s for xform %s: %s: %s"
+                ) % (func, doc._id, type(resp).__name__, error_message))
                 errors.append(error_message)
             elif resp and isinstance(resp, ReceiverResult):
                 responses.append(resp)
