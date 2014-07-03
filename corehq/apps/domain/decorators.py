@@ -173,6 +173,7 @@ def login_required(view_func):
 # config setting
 
 def domain_admin_required_ex(redirect_page_name=None):
+    # todo: this is weirdly similar but different to require_permission. they should probably be combined
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
 
