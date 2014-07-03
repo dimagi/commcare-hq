@@ -68,16 +68,16 @@ def bootstrap_callcenter(domain):
     if not (domain and domain.name and domain.call_center_config.enabled):
         return
 
-    create_form_mapping(domain)
-    create_case_mapping(domain)
-    create_case_ownership_mapping(domain)
+    get_form_mapping(domain.name).save()
+    get_case_mapping(domain.name).save()
+    get_case_ownership_mapping(domain.name).save()
 
 
-def create_form_mapping(domain):
+def get_form_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_FORMS)
 
     mapping.couch_view = 'reports_forms/all_forms'
-    mapping.couch_key_prefix = ['submission', domain.name]
+    mapping.couch_key_prefix = ['submission', domain]
     mapping.columns = [
         ColumnDef(name="date", data_type="date", value_source="key", value_index=2,
                   date_format="%Y-%m-%dT%H:%M:%SZ"),
@@ -88,14 +88,14 @@ def create_form_mapping(domain):
     mapping.couch_view_params = {
         'reduce': False,
     }
-    mapping.save()
+    return mapping
 
 
-def create_case_mapping(domain):
+def get_case_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_CASES)
 
     mapping.couch_view = 'callcenter/case_actions_by_user'
-    mapping.couch_key_prefix = [domain.name]
+    mapping.couch_key_prefix = [domain]
     mapping.columns = [
         ColumnDef(name="date", data_type="date", value_source="key", value_index=1,
                   date_format="%Y-%m-%dT%H:%M:%SZ"),
@@ -105,14 +105,14 @@ def create_case_mapping(domain):
         ColumnDef(name="case_id", data_type="string", value_source="key", value_index=5),
         ColumnDef(name="action_count", data_type="integer", value_source="value"),
     ]
-    mapping.save()
+    return mapping
 
 
-def create_case_ownership_mapping(domain):
+def get_case_ownership_mapping(domain):
     mapping = get_or_create_mapping(domain, MAPPING_NAME_CASE_OWNERSHIP, date_range=None)
 
     mapping.couch_view = 'case/by_date_modified_owner'
-    mapping.couch_key_prefix = [domain.name]
+    mapping.couch_key_prefix = [domain]
     mapping.couch_group_level = 4
     mapping.columns = [
         ColumnDef(name="user_id", data_type="string", value_source="key", value_index=3),
@@ -124,16 +124,16 @@ def create_case_ownership_mapping(domain):
                   match_keys=[KeyMatcher(index=1, value='closed'),
                               KeyMatcher(index=2, value='{}', operator=NOT_EQUAL)]),
     ]
-    mapping.save()
+    return mapping
 
 
 def get_or_create_mapping(domain, mapping_name, date_range=2):
-    mapping = SqlExtractMapping.by_name(domain.name, mapping_name)
+    mapping = SqlExtractMapping.by_name(domain, mapping_name)
     if not mapping:
         mapping = SqlExtractMapping()
 
     mapping.auto_generated = True
-    mapping.domains = [domain.name]
+    mapping.domains = [domain]
     mapping.name = mapping_name
     mapping.active = True
     mapping.couch_date_range = date_range
