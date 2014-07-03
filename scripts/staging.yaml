@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - filter-suggested-properties
   - 80598-case # lwyszomi:80598-case
   - multimedia-case-properties # Daniel 3/21
   - hq-dropdown # sravan 5/7
