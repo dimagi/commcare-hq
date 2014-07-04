@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import sys
 import os
+from urllib import urlencode
 from django.contrib import messages
 
 # odd celery fix
@@ -806,9 +807,13 @@ else:
 ### Reporting database - use same DB as main database
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
+options = db_settings.get('OPTIONS')
+db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
+
 if UNIT_TESTING:
     db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
-SQL_REPORTING_DATABASE_URL = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+
+SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
     **db_settings
 )
 
