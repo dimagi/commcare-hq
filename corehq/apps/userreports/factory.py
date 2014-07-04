@@ -2,7 +2,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import SimpleGetter
-from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator
+from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator
 from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
 from fluff.filters import ANDFilter, ORFilter, CustomFilter
 
@@ -65,6 +65,15 @@ def _build_count_indicator(spec):
         CustomFilter(lambda item: True)
     )
 
+def _build_raw_indicator(spec):
+    _validate_required_fields(spec, ('column_id', 'property_name'))
+    display_name = spec.get('display_name', spec['column_id'])
+    return RawIndicator(
+        display_name,
+        spec['column_id'],
+        getter=SimpleGetter(property_name=spec['property_name'])
+    )
+
 
 def _build_boolean_indicator(spec):
     _validate_required_fields(spec, ('column_id', 'filter'))
@@ -106,6 +115,7 @@ class IndicatorFactory(object):
     constructor_map = {
         'count': _build_count_indicator,
         'boolean': _build_boolean_indicator,
+        'raw': _build_raw_indicator,
         'choice_list': _build_choice_list_indicator,
     }
 
