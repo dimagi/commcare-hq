@@ -5,7 +5,15 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import IndicatorFactory
 
 
-class BooleanIndicatorTest(SimpleTestCase):
+class SingleIndicatorTestBase(SimpleTestCase):
+
+    def _check_result(self, indicator, document, value):
+        [result] = indicator.get_values(document)
+        self.assertEqual(value, result.value)
+
+
+
+class BooleanIndicatorTest(SingleIndicatorTestBase):
 
     def setUp(self):
         self.indicator = IndicatorFactory.from_spec({
@@ -19,11 +27,6 @@ class BooleanIndicatorTest(SimpleTestCase):
 
         })
         self.assertEqual(1, len(self.indicator.get_columns()))
-
-    def _check_result(self, indicator, document, value):
-        [result] = indicator.get_values(document)
-        self.assertEqual(value, result.value)
-
 
     def testNoColumnId(self):
         self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
@@ -145,13 +148,30 @@ class BooleanIndicatorTest(SimpleTestCase):
         # last and not right
         self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
 
+
+class CountIndicatorTest(SingleIndicatorTestBase):
     def testCount(self):
         indicator = IndicatorFactory.from_spec({
-            "column_id": "count",
             "type": "count",
+            "column_id": "count",
             "display_name": "Count"
         })
         self._check_result(indicator, Document(), 1)
+
+
+class RawIndicatorTest(SingleIndicatorTestBase):
+    def testRaw(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            'property_name': 'foo',
+            "display_name": "raw foos"
+        })
+        self._check_result(indicator, Document(foo="bar"), "bar")
+        self._check_result(indicator, Document(foo=1), 1)
+        self._check_result(indicator, Document(foo=1.2), 1.2)
+        self._check_result(indicator, Document(foo=None), None)
+        self._check_result(indicator, Document(nofoo='foryou'), None)
 
 
 class ChoiceListIndicatorTest(SimpleTestCase):

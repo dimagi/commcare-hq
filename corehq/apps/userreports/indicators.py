@@ -54,6 +54,18 @@ class BooleanIndicator(SingleColumnIndicator):
         return [ColumnValue(self.column, value)]
 
 
+class RawIndicator(SingleColumnIndicator):
+    """
+    Pass whatever's in the column through to the database
+    """
+    def __init__(self, display_name, column_id, getter):
+        super(RawIndicator, self).__init__(display_name, column_id)
+        self.getter = getter
+
+    def get_values(self, item):
+        return [ColumnValue(self.column, self.getter(item))]
+
+
 class CompoundIndicator(ConfigurableIndicator):
     """
     An indicator that wraps other indicators.
