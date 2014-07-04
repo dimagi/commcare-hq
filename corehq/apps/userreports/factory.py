@@ -25,9 +25,7 @@ def _build_compound_filter(spec):
 
 
 def _build_property_match_filter(spec):
-    for key in ('property_name', 'property_value'):
-        if not spec.get(key):
-            raise BadSpecError(_('Property match spec must include valid a {0} field.'.format(key)))
+    _validate_required_fields(spec, ('property_name', 'property_value'))
 
     return SinglePropertyValueFilter(
         getter=SimpleGetter(spec['property_name']),
@@ -50,9 +48,8 @@ class FilterFactory(object):
 
     @classmethod
     def validate_spec(self, spec):
-        if 'type' not in spec:
-            raise BadSpecError(_('Filter specification must include a root level type field.'))
-        elif spec['type'] not in self.constructor_map:
+        _validate_required_fields(spec, ('type',))
+        if spec['type'] not in self.constructor_map:
             raise BadSpecError(_('Illegal filter type: "{0}", must be one of the following choice: ({1})'.format(
                 spec['type'],
                 ', '.join(self.constructor_map.keys())
@@ -60,9 +57,7 @@ class FilterFactory(object):
 
 
 def _build_boolean_indicator(spec):
-    for key in ('column_id', 'filter'):
-        if not spec.get(key):
-            raise BadSpecError(_('boolean match spec must include valid a {0} field.'.format(key)))
+    _validate_required_fields(spec, ('column_id', 'filter'))
     if not isinstance(spec['filter'], dict):
         raise BadSpecError(_('filter property must be a dictionary.'))
 
@@ -90,3 +85,8 @@ class IndicatorFactory(object):
                 spec['type'],
                 ', '.join(self.constructor_map.keys())
             )))
+
+def _validate_required_fields(spec, fields):
+    for key in fields:
+        if not spec.get(key):
+            raise BadSpecError(_('Spec must include a valid "{0}" field.'.format(key)))
