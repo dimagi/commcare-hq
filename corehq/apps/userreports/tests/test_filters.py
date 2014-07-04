@@ -2,38 +2,40 @@ from couchdbkit import Document
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory
-from corehq.apps.userreports.filters import PropertyMatchFilter
 from fluff.filters import ANDFilter, ORFilter
 
 
 class PropertyMatchFilterTest(SimpleTestCase):
 
     def setUp(self):
-        self.filter = PropertyMatchFilter.from_spec({
+        self.filter = FilterFactory.from_spec({
+            'type': 'property_match',
             'property_name': 'foo',
             'property_value': 'bar',
         })
-        self.assertEqual('foo', self.filter.property_name)
-        self.assertEqual('bar', self.filter.property_value)
 
     def testNoName(self):
-        self.assertRaises(BadSpecError, PropertyMatchFilter.from_spec, {
+        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
+            'type': 'property_match',
             'property_value': 'bar',
         })
 
     def testEmptyName(self):
-        self.assertRaises(BadSpecError, PropertyMatchFilter.from_spec, {
+        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
+            'type': 'property_match',
             'property_name': '',
             'property_value': 'bar',
         })
 
     def testNoValue(self):
-        self.assertRaises(BadSpecError, PropertyMatchFilter.from_spec, {
+        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
+            'type': 'property_match',
             'property_name': 'foo',
         })
 
-    def testNoName(self):
-        self.assertRaises(BadSpecError, PropertyMatchFilter.from_spec, {
+    def testEmptyValue(self):
+        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
+            'type': 'property_match',
             'property_name': 'foo',
             'property_value': '',
         })
@@ -46,16 +48,6 @@ class PropertyMatchFilterTest(SimpleTestCase):
 
     def testFilterMissing(self):
         self.assertFalse(self.filter.filter(Document(not_foo='bar')))
-
-    def testFromFactory(self):
-        from_factory = FilterFactory.from_spec({
-            'type': 'property_match',
-            'property_name': 'foo',
-            'property_value': 'bar',
-        })
-        self.assertTrue(isinstance(from_factory, PropertyMatchFilter))
-        self.assertEqual('foo', from_factory.property_name)
-        self.assertEqual('bar', from_factory.property_value)
 
 
 class ConfigurableANDFilterTest(SimpleTestCase):

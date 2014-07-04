@@ -1,6 +1,8 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import PropertyMatchFilter
+from corehq.apps.userreports.filters import SinglePropertyValueFilter
+from corehq.apps.userreports.getters import SimpleGetter
+from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter, ORFilter
 
 
@@ -21,9 +23,21 @@ def _build_compound_filter(spec):
     return compound_type_map[spec['type']](filters)
 
 
+def _build_property_match_filter(spec):
+    for key in ('property_name', 'property_value'):
+        if not spec.get(key):
+            raise BadSpecError(_('Property match filter spec must include valid a {0} field.'.format(key)))
+
+    return SinglePropertyValueFilter(
+        getter=SimpleGetter(spec['property_name']),
+        operator=EQUAL,
+        reference_value=spec['property_value']
+    )
+
+
 class FilterFactory(object):
     constructor_map = {
-        'property_match': PropertyMatchFilter.from_spec,
+        'property_match': _build_property_match_filter,
         'and': _build_compound_filter,
         'or': _build_compound_filter,
     }
@@ -42,5 +56,3 @@ class FilterFactory(object):
                 spec['type'],
                 ', '.join(self.constructor_map.keys())
             )))
-
-
