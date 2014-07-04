@@ -141,6 +141,11 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         print("Running {0} tests with database".format(suite.countTestCases()))
         old_config = self.setup_databases()
         result = self.run_suite(suite)
+
+        from corehq.db import _engine, Session
+        Session.remove()
+        _engine.dispose()
+
         self.teardown_databases(old_config)
         return self.suite_result(suite, result)
 
