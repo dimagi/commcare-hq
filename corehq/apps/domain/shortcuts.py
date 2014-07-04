@@ -9,7 +9,7 @@ def create_domain(name, active=True):
                                           secure_submissions=False)
 
 
-def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, **kwargs):
+def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, is_ilsuser=False, **kwargs):
     user = User()
     user.username = username.lower()
     for key, val in kwargs.items():
@@ -18,7 +18,10 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user.is_staff = is_staff
     user.is_active = is_active
     user.is_superuser = is_superuser
-    user.set_password(password)
+    if not is_ilsuser:
+        user.set_password(password)
+    else:
+        user.password = password
 
     user.save()
     return user

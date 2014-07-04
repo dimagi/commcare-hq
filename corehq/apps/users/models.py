@@ -3,13 +3,11 @@ couch models go here
 """
 from __future__ import absolute_import
 from datetime import datetime
-import logging
 import re
 
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -1161,7 +1159,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
-                first_name=first_name, last_name=last_name
+                first_name=first_name, last_name=last_name, is_ilsuser=kwargs.pop('is_ilsuser', False)
             )
 
         if uuid:
@@ -1804,9 +1802,13 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
+        is_ilsuser = kwargs.get('is_ilsuser', False)
         web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if domain:
-            web_user.add_domain_membership(domain, **kwargs)
+            if not is_ilsuser:
+                web_user.add_domain_membership(domain, **kwargs)
+            else:
+                web_user.add_domain_membership(domain, role_id=kwargs.get('role_id'))
         web_user.save()
         return web_user
 
