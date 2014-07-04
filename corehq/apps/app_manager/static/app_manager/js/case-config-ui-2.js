@@ -299,7 +299,11 @@ var CaseConfig = (function () {
             }
 
             self.repeat_context = function () {
-                return self.caseConfig.get_repeat_context(self.case_name());
+                if (self.case_name) {
+                    return self.caseConfig.get_repeat_context(self.case_name());
+                } else {
+                    return null;
+                }
             };
 
             self.close_case = ko.computed({
