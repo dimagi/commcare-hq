@@ -1,5 +1,4 @@
-from casexml.apps.case.models import CommCareCase
-from fluff.filters import ANDFilter, ORFilter, NOTFilter, Filter
+from fluff.filters import ANDFilter, ORFilter, NOTFilter, CustomFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.groups.models import Group
 from corehq.fluff.calculators.xform import IN_MULTISELECT, IntegerPropertyReference
@@ -149,8 +148,8 @@ class UnicefMalawiFluff(fluff.IndicatorDocument):
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalc.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        xcalc.CustomFilter(lambda f: get_user_id(f) != 'demo_user'),
-        xcalc.CustomFilter(lambda f: get_group_id(f)),
+        CustomFilter(lambda f: get_user_id(f) != 'demo_user'),
+        CustomFilter(lambda f: get_group_id(f)),
     ])
 
     domains = ('cvsulive',)
