@@ -1,0 +1,74 @@
+{
+    "domain": "user-reports",
+    "table_id": "sample",
+    "_filter": {
+        "type": "and",
+        "filters": [
+            {
+                "type": "property_match",
+                "property_name": "domain",
+                "property_value": "user-reports"
+            },
+            {
+                "type": "property_match",
+                "property_name": "doc_type",
+                "property_value": "CommCareCase"
+            },
+            {
+                "type": "property_match",
+                "property_name": "type",
+                "property_value": "ticket"
+            }
+        ]
+    },
+    "_indicators": [
+        {
+            "column_id": "count",
+            "type": "count",
+            "display_name": "Count"
+        },
+        {
+            "column_id": "category",
+            "type": "choice_list",
+            "display_name": "category",
+            "property_name": "category",
+            "choices": [
+                "bug",
+                "feature",
+                "app",
+                "schedule"
+            ],
+            "select_style": "single"
+        },
+        {
+            "column_id": "tags",
+            "type": "choice_list",
+            "display_name": "tags",
+            "property_name": "tags",
+            "choices": [
+                "easy-win",
+                "potential-dupe",
+                "roadmap",
+                "public"
+            ],
+            "select_style": "multiple"
+        },
+        {
+            "column_id": "is_starred",
+            "type": "boolean",
+            "display_name": "starred?",
+            "filter": {
+                "type": "property_match",
+                "property_name": "starred",
+                "property_value": "yes"
+            }
+        },
+        {
+            "column_id": "estimate",
+            "type": "raw",
+            "display_name": "estimate",
+            "data_type": "numeric",
+            "property_name": "estimate"
+        }
+    ]
+}
