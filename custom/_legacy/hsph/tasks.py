@@ -26,21 +26,24 @@ INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
 def indexed_facilities():
-    facilities = get_cases_in_domain(domain, type="facility")
     facility_index = {}
-    for facility in facilities:
-        facility_index[facility.facility_id] = {
-            "cati": facility.cati_user,
-            "fida": facility.fida_user
-        }
+    for domain in DOMAINS:
+        current_domain_index = {}
+        facilities = get_cases_in_domain(domain, type="facility")
+        for facility in facilities:
+            current_domain_index[facility.facility_id] = {
+                "cati": facility.cati_user,
+                "fida": facility.fida_user
+            }
+        facility_index[domain] = current_domain_index
     return facility_index
 
 def get_owner_username(domain, owner_type, facility_id):
     if not owner_type:
         return ''
-    facility_index = indexed_facilities()
+    facility_index_by_domain = indexed_facilities()
     try:
-        return facility_index[facility_id][owner_type]
+        return facility_index_by_domain[domain][facility_id][owner_type]
     except KeyError:
         return None
 
