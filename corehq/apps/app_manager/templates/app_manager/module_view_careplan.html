@@ -10,6 +10,7 @@
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script>
     window.FEATURE_enable_enum_image = {{ enable_enum_image|BOOL }};
+    window.FEATURE_mm_case_properties = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
