@@ -4,7 +4,7 @@ from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import SimpleGetter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator
 from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
-from fluff.filters import ANDFilter, ORFilter
+from fluff.filters import ANDFilter, ORFilter, CustomFilter
 
 
 def _build_compound_filter(spec):
@@ -56,6 +56,16 @@ class FilterFactory(object):
             )))
 
 
+def _build_count_indicator(spec):
+    _validate_required_fields(spec, ('column_id',))
+    display_name = spec.get('display_name', spec['column_id'])
+    return BooleanIndicator(
+        display_name,
+        spec['column_id'],
+        CustomFilter(lambda item: True)
+    )
+
+
 def _build_boolean_indicator(spec):
     _validate_required_fields(spec, ('column_id', 'filter'))
     if not isinstance(spec['filter'], dict):
@@ -94,6 +104,7 @@ def _build_choice_list_indicator(spec):
 
 class IndicatorFactory(object):
     constructor_map = {
+        'count': _build_count_indicator,
         'boolean': _build_boolean_indicator,
         'choice_list': _build_choice_list_indicator,
     }

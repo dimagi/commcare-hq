@@ -145,6 +145,14 @@ class BooleanIndicatorTest(SimpleTestCase):
         # last and not right
         self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
 
+    def testCount(self):
+        indicator = IndicatorFactory.from_spec({
+            "column_id": "count",
+            "type": "count",
+            "display_name": "Count"
+        })
+        self._check_result(indicator, Document(), 1)
+
 
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):
