@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import SimpleGetter
+from corehq.apps.userreports.indicators import BooleanIndicator
 from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter, ORFilter
 
@@ -26,7 +27,7 @@ def _build_compound_filter(spec):
 def _build_property_match_filter(spec):
     for key in ('property_name', 'property_value'):
         if not spec.get(key):
-            raise BadSpecError(_('Property match filter spec must include valid a {0} field.'.format(key)))
+            raise BadSpecError(_('Property match spec must include valid a {0} field.'.format(key)))
 
     return SinglePropertyValueFilter(
         getter=SimpleGetter(spec['property_name']),
@@ -53,6 +54,39 @@ class FilterFactory(object):
             raise BadSpecError(_('Filter specification must include a root level type field.'))
         elif spec['type'] not in self.constructor_map:
             raise BadSpecError(_('Illegal filter type: "{0}", must be one of the following choice: ({1})'.format(
+                spec['type'],
+                ', '.join(self.constructor_map.keys())
+            )))
+
+
+def _build_boolean_indicator(spec):
+    for key in ('column_id', 'filter'):
+        if not spec.get(key):
+            raise BadSpecError(_('boolean match spec must include valid a {0} field.'.format(key)))
+    if not isinstance(spec['filter'], dict):
+        raise BadSpecError(_('filter property must be a dictionary.'))
+
+    filter = FilterFactory.from_spec(spec['filter'])
+    display_name = spec.get('display_name', spec['column_id'])
+    return BooleanIndicator(display_name, spec['column_id'], filter)
+
+
+class IndicatorFactory(object):
+    constructor_map = {
+        'boolean': _build_boolean_indicator,
+    }
+
+    @classmethod
+    def from_spec(cls, spec):
+        cls.validate_spec(spec)
+        return cls.constructor_map[spec['type']](spec)
+
+    @classmethod
+    def validate_spec(self, spec):
+        if 'type' not in spec:
+            raise BadSpecError(_('Indicator specification must include a root level type field.'))
+        elif spec['type'] not in self.constructor_map:
+            raise BadSpecError(_('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
                 spec['type'],
                 ', '.join(self.constructor_map.keys())
             )))
