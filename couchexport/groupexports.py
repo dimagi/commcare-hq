@@ -29,7 +29,7 @@ def rebuild_export(config, schema, output_dir):
     except SchemaMismatchException, e:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(config.index)
-        raise ExportRebuildError('Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
+        raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     payload = files.file.payload
     if output_dir == "couch":
