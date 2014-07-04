@@ -1,3 +1,4 @@
+from copy import copy
 from couchdbkit import Document
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -143,3 +144,60 @@ class BooleanIndicatorTest(SimpleTestCase):
         self._check_result(indicator, Document(foo1='bar1', foo2='not bar2', foo3='bar3'), 0)
         # last and not right
         self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
+
+
+class ChoiceListIndicatorTest(SimpleTestCase):
+    def setUp(self):
+        self.spec = {
+            "type": "choice_list",
+            "column_id": "col",
+            "display_name": "the category",
+            "property_name": "category",
+            "choices": [
+                "bug",
+                "feature",
+                "app",
+                "schedule"
+            ],
+            "select_style": "single",
+        }
+
+    def _check_vals(self, indicator, document, expected_values):
+        values = indicator.get_values(document)
+        for i, val in enumerate(values):
+            self.assertEqual(expected_values[i], val.value)
+
+    def testConstructChoiceList(self):
+        indicator = IndicatorFactory.from_spec(self.spec)
+        cols = indicator.get_columns()
+        self.assertEqual(4, len(cols))
+        for i, choice in enumerate(self.spec['choices']):
+            self.assertTrue(self.spec['column_id'] in cols[i].id)
+            self.assertTrue(choice in cols[i].id)
+
+        self.assertEqual(self.spec['display_name'], indicator.display_name)
+
+    def testSingleSelectIndicators(self):
+        indicator = IndicatorFactory.from_spec(self.spec)
+        self._check_vals(indicator, Document(category='bug'), [1, 0, 0, 0])
+        self._check_vals(indicator, Document(category='feature'), [0, 1, 0, 0])
+        self._check_vals(indicator, Document(category='app'), [0, 0, 1, 0])
+        self._check_vals(indicator, Document(category='schedule'), [0, 0, 0, 1])
+        self._check_vals(indicator, Document(category='nomatch'), [0, 0, 0, 0])
+        self._check_vals(indicator, Document(category=''), [0, 0, 0, 0])
+        self._check_vals(indicator, Document(nocategory='bug'), [0, 0, 0, 0])
+
+    def testMultiSelectIndicators(self):
+        spec = copy(self.spec)
+        spec['select_style'] = 'multiple'
+        indicator = IndicatorFactory.from_spec(spec)
+        self._check_vals(indicator, Document(category='bug'), [1, 0, 0, 0])
+        self._check_vals(indicator, Document(category='feature'), [0, 1, 0, 0])
+        self._check_vals(indicator, Document(category='app'), [0, 0, 1, 0])
+        self._check_vals(indicator, Document(category='schedule'), [0, 0, 0, 1])
+        self._check_vals(indicator, Document(category='nomatch'), [0, 0, 0, 0])
+        self._check_vals(indicator, Document(category=''), [0, 0, 0, 0])
+        self._check_vals(indicator, Document(nocategory='bug'), [0, 0, 0, 0])
+        self._check_vals(indicator, Document(category='bug feature'), [1, 1, 0, 0])
+        self._check_vals(indicator, Document(category='bug feature app schedule'), [1, 1, 1, 1])
+        self._check_vals(indicator, Document(category='bug nomatch'), [1, 0, 0, 0])

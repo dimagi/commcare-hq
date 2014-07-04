@@ -2,8 +2,8 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import SimpleGetter
-from corehq.apps.userreports.indicators import BooleanIndicator
-from corehq.apps.userreports.logic import EQUAL
+from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator
+from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
 from fluff.filters import ANDFilter, ORFilter
 
 
@@ -66,9 +66,36 @@ def _build_boolean_indicator(spec):
     return BooleanIndicator(display_name, spec['column_id'], filter)
 
 
+def _build_choice_list_indicator(spec):
+    _validate_required_fields(spec, ('column_id', 'property_name', 'choices'))
+    operator = IN_MULTISELECT if spec.get('select_style') == 'multiple' else EQUAL
+    getter = SimpleGetter(spec['property_name'])
+    base_display_name = spec.get('display_name', spec['column_id'])
+
+    def _construct_display(choice):
+        return '{base} ({choice})'.format(base=base_display_name, choice=choice)
+
+    def _construct_column(choice):
+        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
+
+    choice_indicators = [
+        BooleanIndicator(
+            display_name=_construct_display(choice),
+            column_id=_construct_column(choice),
+            filter=SinglePropertyValueFilter(
+                getter=getter,
+                operator=operator,
+                reference_value=choice,
+            )
+        ) for choice in spec['choices']
+    ]
+    return CompoundIndicator(base_display_name, choice_indicators)
+
+
 class IndicatorFactory(object):
     constructor_map = {
         'boolean': _build_boolean_indicator,
+        'choice_list': _build_choice_list_indicator,
     }
 
     @classmethod
