@@ -1,20 +1,11 @@
 {
     "domain": "user-reports",
+    "doc_type": "CommCareCase",
     "table_id": "sample",
     "_filter": {
-        "type": "and",
-        "filters": [
-            {
-                "type": "property_match",
-                "property_name": "doc_type",
-                "property_value": "CommCareCase"
-            },
-            {
-                "type": "property_match",
-                "property_name": "type",
-                "property_value": "ticket"
-            }
-        ]
+        "type": "property_match",
+        "property_name": "type",
+        "property_value": "ticket"
     },
     "_indicators": [
         {
