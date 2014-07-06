@@ -10,6 +10,7 @@ from fluff.filters import ANDFilter
 class IndicatorConfiguration(Document):
 
     domain = StringProperty()
+    doc_type = StringProperty()
     table_id = StringProperty()
     _filter = DictProperty()
     _indicators = ListProperty()
@@ -22,6 +23,11 @@ class IndicatorConfiguration(Document):
                 getter=SimpleGetter('domain'),
                 operator=EQUAL,
                 reference_value=self.domain
+            ),
+            SinglePropertyValueFilter(
+                getter=SimpleGetter('doc_type'),
+                operator=EQUAL,
+                reference_value=self.doc_type
             ),
         ])
 
