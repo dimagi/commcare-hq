@@ -1,8 +1,10 @@
+from fluff import TYPE_INTEGER
 
 
 class Column(object):
-    def __init__(self, id):
+    def __init__(self, id, datatype):
         self.id = id
+        self.datatype = datatype
 
     def __repr__(self):
         return self.id
@@ -34,9 +36,9 @@ class ConfigurableIndicator(ConfigurableIndicatorMixIn):
 
 class SingleColumnIndicator(ConfigurableIndicator):
 
-    def __init__(self, display_name, column_id):
+    def __init__(self, display_name, column):
         super(SingleColumnIndicator, self).__init__(display_name)
-        self.column = Column(column_id)
+        self.column = column
 
     def get_columns(self):
         return [self.column]
@@ -49,7 +51,7 @@ class BooleanIndicator(SingleColumnIndicator):
     """
 
     def __init__(self, display_name, column_id, filter):
-        super(BooleanIndicator, self).__init__(display_name, column_id)
+        super(BooleanIndicator, self).__init__(display_name, Column(column_id, datatype=TYPE_INTEGER))
         self.filter = filter
 
     def get_values(self, item):
@@ -61,8 +63,8 @@ class RawIndicator(SingleColumnIndicator):
     """
     Pass whatever's in the column through to the database
     """
-    def __init__(self, display_name, column_id, getter):
-        super(RawIndicator, self).__init__(display_name, column_id)
+    def __init__(self, display_name, column_id, datatype, getter):
+        super(RawIndicator, self).__init__(display_name, Column(column_id, datatype))
         self.getter = getter
 
     def get_values(self, item):
