@@ -6,11 +6,6 @@
         "filters": [
             {
                 "type": "property_match",
-                "property_name": "domain",
-                "property_value": "user-reports"
-            },
-            {
-                "type": "property_match",
                 "property_name": "doc_type",
                 "property_value": "CommCareCase"
             },
@@ -66,7 +61,7 @@
         {
             "column_id": "estimate",
             "type": "raw",
-            "display_name": "estimate",
+            "display_name": "estimate (hours)",
             "data_type": "numeric",
             "property_name": "estimate"
         }
