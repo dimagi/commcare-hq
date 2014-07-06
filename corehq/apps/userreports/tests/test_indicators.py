@@ -1,5 +1,4 @@
 from copy import copy
-from couchdbkit import Document
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import IndicatorFactory
@@ -80,13 +79,13 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         })
 
     def testIndicatorMatch(self):
-        self._check_result(self.indicator, Document(foo='bar'), 1)
+        self._check_result(self.indicator, dict(foo='bar'), 1)
 
     def testIndicatorNoMatch(self):
-        self._check_result(self.indicator, Document(foo='not bar'), 0)
+        self._check_result(self.indicator, dict(foo='not bar'), 0)
 
     def testIndicatorMissing(self):
-        self._check_result(self.indicator, Document(notfoo='bar'), 0)
+        self._check_result(self.indicator, dict(notfoo='bar'), 0)
 
     def testComplexStructure(self):
         # in slightly more compact format:
@@ -136,17 +135,17 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
             }
         })
         # first level or
-        self._check_result(indicator, Document(foo='bar'), 1)
+        self._check_result(indicator, dict(foo='bar'), 1)
         # first level and with both or's
-        self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo3='bar3'), 1)
-        self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo4='bar4'), 1)
+        self._check_result(indicator, dict(foo1='bar1', foo2='bar2', foo3='bar3'), 1)
+        self._check_result(indicator, dict(foo1='bar1', foo2='bar2', foo4='bar4'), 1)
 
         # first and not right
-        self._check_result(indicator, Document(foo1='not bar1', foo2='bar2', foo3='bar3'), 0)
+        self._check_result(indicator, dict(foo1='not bar1', foo2='bar2', foo3='bar3'), 0)
         # second and not right
-        self._check_result(indicator, Document(foo1='bar1', foo2='not bar2', foo3='bar3'), 0)
+        self._check_result(indicator, dict(foo1='bar1', foo2='not bar2', foo3='bar3'), 0)
         # last and not right
-        self._check_result(indicator, Document(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
+        self._check_result(indicator, dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):
@@ -156,7 +155,7 @@ class CountIndicatorTest(SingleIndicatorTestBase):
             "column_id": "count",
             "display_name": "Count"
         })
-        self._check_result(indicator, Document(), 1)
+        self._check_result(indicator, dict(), 1)
 
 
 class RawIndicatorTest(SingleIndicatorTestBase):
@@ -167,11 +166,11 @@ class RawIndicatorTest(SingleIndicatorTestBase):
             'property_name': 'foo',
             "display_name": "raw foos"
         })
-        self._check_result(indicator, Document(foo="bar"), "bar")
-        self._check_result(indicator, Document(foo=1), 1)
-        self._check_result(indicator, Document(foo=1.2), 1.2)
-        self._check_result(indicator, Document(foo=None), None)
-        self._check_result(indicator, Document(nofoo='foryou'), None)
+        self._check_result(indicator, dict(foo="bar"), "bar")
+        self._check_result(indicator, dict(foo=1), 1)
+        self._check_result(indicator, dict(foo=1.2), 1.2)
+        self._check_result(indicator, dict(foo=None), None)
+        self._check_result(indicator, dict(nofoo='foryou'), None)
 
 
 class ChoiceListIndicatorTest(SimpleTestCase):
@@ -207,25 +206,25 @@ class ChoiceListIndicatorTest(SimpleTestCase):
 
     def testSingleSelectIndicators(self):
         indicator = IndicatorFactory.from_spec(self.spec)
-        self._check_vals(indicator, Document(category='bug'), [1, 0, 0, 0])
-        self._check_vals(indicator, Document(category='feature'), [0, 1, 0, 0])
-        self._check_vals(indicator, Document(category='app'), [0, 0, 1, 0])
-        self._check_vals(indicator, Document(category='schedule'), [0, 0, 0, 1])
-        self._check_vals(indicator, Document(category='nomatch'), [0, 0, 0, 0])
-        self._check_vals(indicator, Document(category=''), [0, 0, 0, 0])
-        self._check_vals(indicator, Document(nocategory='bug'), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(category='bug'), [1, 0, 0, 0])
+        self._check_vals(indicator, dict(category='feature'), [0, 1, 0, 0])
+        self._check_vals(indicator, dict(category='app'), [0, 0, 1, 0])
+        self._check_vals(indicator, dict(category='schedule'), [0, 0, 0, 1])
+        self._check_vals(indicator, dict(category='nomatch'), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(category=''), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(nocategory='bug'), [0, 0, 0, 0])
 
     def testMultiSelectIndicators(self):
         spec = copy(self.spec)
         spec['select_style'] = 'multiple'
         indicator = IndicatorFactory.from_spec(spec)
-        self._check_vals(indicator, Document(category='bug'), [1, 0, 0, 0])
-        self._check_vals(indicator, Document(category='feature'), [0, 1, 0, 0])
-        self._check_vals(indicator, Document(category='app'), [0, 0, 1, 0])
-        self._check_vals(indicator, Document(category='schedule'), [0, 0, 0, 1])
-        self._check_vals(indicator, Document(category='nomatch'), [0, 0, 0, 0])
-        self._check_vals(indicator, Document(category=''), [0, 0, 0, 0])
-        self._check_vals(indicator, Document(nocategory='bug'), [0, 0, 0, 0])
-        self._check_vals(indicator, Document(category='bug feature'), [1, 1, 0, 0])
-        self._check_vals(indicator, Document(category='bug feature app schedule'), [1, 1, 1, 1])
-        self._check_vals(indicator, Document(category='bug nomatch'), [1, 0, 0, 0])
+        self._check_vals(indicator, dict(category='bug'), [1, 0, 0, 0])
+        self._check_vals(indicator, dict(category='feature'), [0, 1, 0, 0])
+        self._check_vals(indicator, dict(category='app'), [0, 0, 1, 0])
+        self._check_vals(indicator, dict(category='schedule'), [0, 0, 0, 1])
+        self._check_vals(indicator, dict(category='nomatch'), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(category=''), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(nocategory='bug'), [0, 0, 0, 0])
+        self._check_vals(indicator, dict(category='bug feature'), [1, 1, 0, 0])
+        self._check_vals(indicator, dict(category='bug feature app schedule'), [1, 1, 1, 1])
+        self._check_vals(indicator, dict(category='bug nomatch'), [1, 0, 0, 0])

@@ -1,4 +1,3 @@
-from couchdbkit import Document
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory
@@ -41,13 +40,13 @@ class PropertyMatchFilterTest(SimpleTestCase):
         })
 
     def testFilterMatch(self):
-        self.assertTrue(self.filter.filter(Document(foo='bar')))
+        self.assertTrue(self.filter.filter(dict(foo='bar')))
 
     def testFilterNoMatch(self):
-        self.assertFalse(self.filter.filter(Document(foo='not bar')))
+        self.assertFalse(self.filter.filter(dict(foo='not bar')))
 
     def testFilterMissing(self):
-        self.assertFalse(self.filter.filter(Document(not_foo='bar')))
+        self.assertFalse(self.filter.filter(dict(not_foo='bar')))
 
 
 class ConfigurableANDFilterTest(SimpleTestCase):
@@ -71,19 +70,19 @@ class ConfigurableANDFilterTest(SimpleTestCase):
         self.assertTrue(isinstance(self.filter, ANDFilter))
 
     def testFilterMatch(self):
-        self.assertTrue(self.filter.filter(Document(foo='bar', foo2='bar2')))
+        self.assertTrue(self.filter.filter(dict(foo='bar', foo2='bar2')))
 
     def testFilterPartialMatch(self):
-        self.assertFalse(self.filter.filter(Document(foo='bar', foo2='not bar2')))
+        self.assertFalse(self.filter.filter(dict(foo='bar', foo2='not bar2')))
 
     def testFilterNoMatch(self):
-        self.assertFalse(self.filter.filter(Document(foo='not bar', foo2='not bar2')))
+        self.assertFalse(self.filter.filter(dict(foo='not bar', foo2='not bar2')))
 
     def testFilterMissingPartialMatch(self):
-        self.assertFalse(self.filter.filter(Document(foo='bar')))
+        self.assertFalse(self.filter.filter(dict(foo='bar')))
 
     def testFilterMissingAll(self):
-        self.assertFalse(self.filter.filter(Document(notfoo='not bar')))
+        self.assertFalse(self.filter.filter(dict(notfoo='not bar')))
 
 class ConfigurableORFilterTest(SimpleTestCase):
 
@@ -106,19 +105,19 @@ class ConfigurableORFilterTest(SimpleTestCase):
         self.assertTrue(isinstance(self.filter, ORFilter))
 
     def testFilterMatch(self):
-        self.assertTrue(self.filter.filter(Document(foo='bar', foo2='bar2')))
+        self.assertTrue(self.filter.filter(dict(foo='bar', foo2='bar2')))
 
     def testFilterPartialMatch(self):
-        self.assertTrue(self.filter.filter(Document(foo='bar', foo2='not bar2')))
+        self.assertTrue(self.filter.filter(dict(foo='bar', foo2='not bar2')))
 
     def testFilterNoMatch(self):
-        self.assertFalse(self.filter.filter(Document(foo='not bar', foo2='not bar2')))
+        self.assertFalse(self.filter.filter(dict(foo='not bar', foo2='not bar2')))
 
     def testFilterMissingPartialMatch(self):
-        self.assertTrue(self.filter.filter(Document(foo='bar')))
+        self.assertTrue(self.filter.filter(dict(foo='bar')))
 
     def testFilterMissingAll(self):
-        self.assertFalse(self.filter.filter(Document(notfoo='not bar')))
+        self.assertFalse(self.filter.filter(dict(notfoo='not bar')))
 
 class ComplexFilterTest(SimpleTestCase):
 
@@ -166,14 +165,14 @@ class ComplexFilterTest(SimpleTestCase):
             ]
         })
         # first level or
-        self.assertTrue(filter.filter(Document(foo='bar')))
+        self.assertTrue(filter.filter(dict(foo='bar')))
         # first level and with both or's
-        self.assertTrue(filter.filter(Document(foo1='bar1', foo2='bar2', foo3='bar3')))
-        self.assertTrue(filter.filter(Document(foo1='bar1', foo2='bar2', foo4='bar4')))
+        self.assertTrue(filter.filter(dict(foo1='bar1', foo2='bar2', foo3='bar3')))
+        self.assertTrue(filter.filter(dict(foo1='bar1', foo2='bar2', foo4='bar4')))
 
         # first and not right
-        self.assertFalse(filter.filter(Document(foo1='not bar1', foo2='bar2', foo3='bar3')))
+        self.assertFalse(filter.filter(dict(foo1='not bar1', foo2='bar2', foo3='bar3')))
         # second and not right
-        self.assertFalse(filter.filter(Document(foo1='bar1', foo2='not bar2', foo3='bar3')))
+        self.assertFalse(filter.filter(dict(foo1='bar1', foo2='not bar2', foo3='bar3')))
         # last and not right
-        self.assertFalse(filter.filter(Document(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4')))
+        self.assertFalse(filter.filter(dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4')))
