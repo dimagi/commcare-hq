@@ -2,7 +2,7 @@ from couchdbkit import Document
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
-from corehq.apps.userreports.getters import SimpleGetter
+from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter
 
@@ -20,12 +20,12 @@ class IndicatorConfiguration(Document):
         return ANDFilter([
             FilterFactory.from_spec(self._filter),
             SinglePropertyValueFilter(
-                getter=SimpleGetter('domain'),
+                getter=DictGetter('domain'),
                 operator=EQUAL,
                 reference_value=self.domain
             ),
             SinglePropertyValueFilter(
-                getter=SimpleGetter('doc_type'),
+                getter=DictGetter('doc_type'),
                 operator=EQUAL,
                 reference_value=self.doc_type
             ),

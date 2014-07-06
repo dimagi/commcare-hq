@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
-from corehq.apps.userreports.getters import SimpleGetter
+from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator
 from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
 from fluff.filters import ANDFilter, ORFilter, CustomFilter
@@ -28,7 +28,7 @@ def _build_property_match_filter(spec):
     _validate_required_fields(spec, ('property_name', 'property_value'))
 
     return SinglePropertyValueFilter(
-        getter=SimpleGetter(spec['property_name']),
+        getter=DictGetter(spec['property_name']),
         operator=EQUAL,
         reference_value=spec['property_value']
     )
@@ -71,7 +71,7 @@ def _build_raw_indicator(spec):
     return RawIndicator(
         display_name,
         spec['column_id'],
-        getter=SimpleGetter(property_name=spec['property_name'])
+        getter=DictGetter(property_name=spec['property_name'])
     )
 
 
@@ -88,7 +88,7 @@ def _build_boolean_indicator(spec):
 def _build_choice_list_indicator(spec):
     _validate_required_fields(spec, ('column_id', 'property_name', 'choices'))
     operator = IN_MULTISELECT if spec.get('select_style') == 'multiple' else EQUAL
-    getter = SimpleGetter(spec['property_name'])
+    getter = DictGetter(spec['property_name'])
     base_display_name = spec.get('display_name', spec['column_id'])
 
     def _construct_display(choice):
