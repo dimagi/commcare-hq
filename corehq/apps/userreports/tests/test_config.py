@@ -13,12 +13,56 @@ class IndicatorConfigurationTest(SimpleTestCase):
         with open(sample_file) as f:
             structure = json.loads(f.read())
             config = IndicatorConfiguration.wrap(structure)
+            # metadata
             self.assertEqual('user-reports', config.domain)
+            self.assertEqual('CommCareCase', config.doc_type)
+            self.assertEqual('CommBugz', config.display_name)
             self.assertEqual('sample', config.table_id)
-            self.assertTrue(config.filter.filter(dict(doc_type="CommCareCase", domain='user-reports', type='ticket')))
-            self.assertFalse(config.filter.filter(dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket')))
-            self.assertFalse(config.filter.filter(dict(doc_type="CommCareCase", domain='not-user-reports', type='ticket')))
-            self.assertFalse(config.filter.filter(dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket')))
 
-            # tbd, indicator checks
-            indicators = config.indicators
+            # filters
+            not_matching = [
+                dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
+                dict(doc_type="CommCareCase", domain='not-user-reports', type='ticket'),
+                dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
+            ]
+            for document in not_matching:
+                self.assertFalse(config.filter.filter(document))
+                self.assertEqual([], config.get_values(document))
+
+            self.assertTrue(config.filter.filter(dict(doc_type="CommCareCase", domain='user-reports', type='ticket')))
+
+            # columns
+            expected_columns = [
+                'count',
+                'category_bug', 'category_feature', 'category_app', 'category_schedule',
+                'tags_easy-win', 'tags_potential-dupe', 'tags_roadmap', 'tags_public',
+                'is_starred',
+                'estimate'
+            ]
+            cols = config.get_columns()
+            self.assertEqual(len(expected_columns), len(cols))
+            for i, col in enumerate(expected_columns):
+                col_back = cols[i]
+                self.assertEqual(col, col_back.id)
+
+
+            # indicators
+            sample_doc = dict(
+                doc_type="CommCareCase",
+                domain='user-reports',
+                type='ticket',
+                category='bug',
+                tags='easy-win public',
+                is_starred='yes',
+                estimate=2,
+            )
+            expected_indicators = {
+                'count': 1,
+                'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
+                'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,
+                'is_starred': 1,
+                'estimate': 2
+            }
+            results = config.get_values(sample_doc)
+            for result in results:
+                self.assertEqual(expected_indicators[result.column.id], result.value)

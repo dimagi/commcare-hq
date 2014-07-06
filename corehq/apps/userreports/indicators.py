@@ -17,16 +17,19 @@ class ColumnValue(object):
         return '{0}: {1}'.format(self.column, self.value)
 
 
-class ConfigurableIndicator(object):
-
-    def __init__(self, display_name):
-        self.display_name = display_name
+class ConfigurableIndicatorMixIn(object):
 
     def get_columns(self):
         raise NotImplementedError()
 
     def get_values(self, item):
         raise NotImplementedError()
+
+class ConfigurableIndicator(ConfigurableIndicatorMixIn):
+
+    def __init__(self, display_name):
+        self.display_name = display_name
+
 
 
 class SingleColumnIndicator(ConfigurableIndicator):

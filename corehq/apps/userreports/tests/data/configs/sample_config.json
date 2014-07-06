@@ -2,6 +2,7 @@
     "domain": "user-reports",
     "doc_type": "CommCareCase",
     "table_id": "sample",
+    "display_name": "CommBugz",
     "_filter": {
         "type": "property_match",
         "property_name": "type",
@@ -45,7 +46,7 @@
             "display_name": "starred?",
             "filter": {
                 "type": "property_match",
-                "property_name": "starred",
+                "property_name": "is_starred",
                 "property_value": "yes"
             }
         },

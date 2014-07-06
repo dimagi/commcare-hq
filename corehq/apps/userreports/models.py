@@ -3,15 +3,17 @@ from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListPrope
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
+from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter
 
 
-class IndicatorConfiguration(Document):
+class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
     domain = StringProperty()
     doc_type = StringProperty()
     table_id = StringProperty()
+    display_name = StringProperty()
     _filter = DictProperty()
     _indicators = ListProperty()
 
@@ -33,4 +35,16 @@ class IndicatorConfiguration(Document):
 
     @property
     def indicators(self):
-        return [IndicatorFactory.from_spec(indicator) for indicator in self._indicators]
+        return CompoundIndicator(
+            self.display_name,
+            [IndicatorFactory.from_spec(indicator) for indicator in self._indicators]
+        )
+
+    def get_columns(self):
+        return self.indicators.get_columns()
+
+    def get_values(self, item):
+        if self.filter.filter(item):
+            return self.indicators.get_values(item)
+        else:
+            return []
