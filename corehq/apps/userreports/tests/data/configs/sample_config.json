@@ -54,7 +54,7 @@
             "column_id": "estimate",
             "type": "raw",
             "display_name": "estimate (hours)",
-            "data_type": "numeric",
+            "datatype": "integer",
             "property_name": "estimate"
         }
     ]

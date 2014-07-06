@@ -66,11 +66,12 @@ def _build_count_indicator(spec):
     )
 
 def _build_raw_indicator(spec):
-    _validate_required_fields(spec, ('column_id', 'property_name'))
+    _validate_required_fields(spec, ('column_id', 'datatype', 'property_name'))
     display_name = spec.get('display_name', spec['column_id'])
     return RawIndicator(
         display_name,
         spec['column_id'],
+        spec['datatype'],
         getter=DictGetter(property_name=spec['property_name'])
     )
 

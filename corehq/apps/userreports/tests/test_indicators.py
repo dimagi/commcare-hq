@@ -163,9 +163,12 @@ class RawIndicatorTest(SingleIndicatorTestBase):
         indicator = IndicatorFactory.from_spec({
             "type": "raw",
             "column_id": "foo",
+            "datatype": "integer",
             'property_name': 'foo',
             "display_name": "raw foos"
         })
+        # todo: eventually data types should be smarter than this.
+        # when this test starts failing that will be a good thing and when we should fix it.
         self._check_result(indicator, dict(foo="bar"), "bar")
         self._check_result(indicator, dict(foo=1), 1)
         self._check_result(indicator, dict(foo=1.2), 1.2)
