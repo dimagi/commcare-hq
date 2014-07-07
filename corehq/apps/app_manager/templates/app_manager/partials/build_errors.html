@@ -73,6 +73,14 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "invalid sort field" %}
+                            {% if error.field %}
+                                Case List has invalid sort field <code>{{ error.field }}</code> in module
+                            {% else %}
+                                Case List has blank sort field in module
+                            {% endif %}
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
                         {% if error.type == "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}
