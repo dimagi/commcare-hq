@@ -96,18 +96,23 @@ requires imports/proptable.html to be included in the main template
     });
 </script>
 <script type="text/javascript">
-    // TODO - upgrade to Universal Analytics, to avoid using setTimeout
     function archive_form() {
         document.getElementById('archive-form-btn').disabled=true;
         document.getElementById('archive-spinner').style.display='inline-block';
-        _gaq.push(['_trackEvent', 'Reports', 'Case History', 'Archive this form']);
-        setTimeout("document.getElementById('archive-form').submit();", 300);
+        ga('send', 'event', 'Reports', 'Case History', 'Archive this form', {
+            'hitCallback': function () {
+                document.getElementById('archive-form').submit();
+            }
+        });
     }
     function restore_form() {
         document.getElementById('unarchive-form-btn').disabled=true;
         document.getElementById('unarchive-spinner').style.display='inline-block';
-        _gaq.push(['_trackEvent', 'Reports', 'Case History', 'Restore this form']);
-        setTimeout("document.getElementById('unarchive-form').submit();", 300);
+        ga('send', 'event', 'Reports', 'Case History', 'Restore this form', {
+            'hitCallback': function () {
+                document.getElementById('unarchive-form').submit();
+            }
+        });
     }
 </script>
 <style>
