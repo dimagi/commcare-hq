@@ -343,8 +343,12 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            self.subscription_form.update_subscription()
-            messages.success(request, "The subscription has been updated.")
+            try:
+                self.subscription_form.update_subscription()
+                messages.success(request, "The subscription has been updated.")
+            except Exception as e:
+                messages.error(request,
+                               "Could not update subscription due to: %s" % e)
             return HttpResponseRedirect(self.page_url)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit():

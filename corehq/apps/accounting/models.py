@@ -803,6 +803,11 @@ class Subscription(models.Model):
             and date_start > today
         ):
             self.date_start = date_start
+        elif date_start is not None:
+            raise SubscriptionAdjustmentError(
+                "Can't change the start date of a subscription to a date that "
+                "is today or in the past."
+            )
 
         if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
             self.date_delay_invoicing = date_delay_invoicing
