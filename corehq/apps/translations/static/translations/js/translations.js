@@ -113,7 +113,7 @@ var mk_translation_ui = function (spec) {
         $table = $("<table></table>"),
         $list_tbody = $('<tbody/>').appendTo($table),
         $adder_tbody = $('<tbody/>').appendTo($table),
-        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations ').click(function (e) {
+        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations').click(function (e) {
             e.preventDefault();
             $.ajax({
                 type: "get",
@@ -132,7 +132,7 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        }).after($('<a><i class="icon-question-sign" data-trigger="click"></i></a>')).popover({
+        }).after($('<span> <a><i class="icon-question-sign" data-trigger="click"></i></a><span>')).popover({
             placement: 'right',
             title: 'Auto Fill translations',
             content: 'This will pick the most common translations for your selected language.  You can then edit them as needed.'
