@@ -800,9 +800,13 @@ class Subscription(models.Model):
             self.date_end = date_end
 
         if (self.date_start > today and date_start is not None
-            and date_start > today
+            and date_start > today and not date_start > self.date_end
         ):
             self.date_start = date_start
+        elif date_start > self.date_end:
+            raise SubscriptionAdjustmentError(
+                "Can't have a subscription start after the end date."
+            )
         elif date_start is not None:
             raise SubscriptionAdjustmentError(
                 "Can't change the start date of a subscription to a date that "
