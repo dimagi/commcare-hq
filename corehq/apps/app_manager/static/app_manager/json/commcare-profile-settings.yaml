@@ -241,6 +241,7 @@
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
   preview: true
+  force: true
 
 - name: "Incomplete Forms"
   description: "Choose whether or not to display the 'Incomplete' button on the ODK home screen"
@@ -252,6 +253,7 @@
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
   preview: true
+  force: true
 
 - name: "Auto-Resize Images"
   description: "Automatically resizes images within forms. Choose full resize to scale to the available space on the screen, or horizontal resize to scale to the width of the screen"
