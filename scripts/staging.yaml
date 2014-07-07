@@ -13,7 +13,7 @@ branches:
   # - condition # SK 6/12
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
-  - formslq # SK 7/7
+  - formsql # SK 7/7
   - coredb # SK 7/7
 submodules:
   submodules/couchlog-src:
