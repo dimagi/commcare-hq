@@ -132,7 +132,11 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        }).after($('<i class="icon-question-sign" data-trigger="hover" data-original-title=""></i>'));
+        }).after($('<a><i class="icon-question-sign" data-trigger="click"></i></a>')).popover({
+            placement: 'right',
+            title: 'Auto Fill translations',
+            content: 'This will pick the most common translations for your selected language.  You can then edit them as needed.'
+        });
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
