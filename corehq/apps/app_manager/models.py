@@ -742,8 +742,9 @@ class IndexedFormBase(FormBase, IndexedSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in all_names:
-            # this regex is also copied in propertyList.ejs
-            if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
+            try:
+                validate_property(key)
+            except ValueError:
                 errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
             _, key = split_path(key)
             if key in reserved_words:
@@ -1364,6 +1365,19 @@ class Module(ModuleBase):
             return self.case_details.short.sort_elements
         except Exception:
             return []
+
+    def validate_for_build(self):
+        errors = super(Module, self).validate_for_build()
+        for sort_element in self.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.get_module_info(),
+                })
+        return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
@@ -2644,6 +2658,20 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
+
+
+def validate_property(property):
+    # this regex is also copied in propertyList.ejs
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+        raise ValueError("Invalid Property")
+
+
+def validate_detail_screen_field(field):
+    # If you change here, also change here:
+    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
+    if not re.match(field_re, field):
+        raise ValueError("Invalid Sort Field")
 
 
 class SavedAppBuild(ApplicationBase):

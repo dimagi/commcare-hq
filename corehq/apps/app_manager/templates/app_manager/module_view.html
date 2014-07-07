@@ -277,16 +277,7 @@
                                        style="cursor: move"></i>
                                 </td>
 
-                                <td>
-                                    <!-- ko foreach: labelTextItems -->
-                                        <span class="label label-info"
-                                              data-bind="text: $data">
-                                        </span>
-                                        <span style="color: #DDD;">/</span>
-                                    <!-- /ko -->
-                                    </span>
-                                    <code data-bind="text: fieldText">
-                                    </code>
+                                <td data-bind="html: fieldHtml">
                                 </td>
 
                                 <td>
