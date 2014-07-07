@@ -2,9 +2,11 @@ from fluff import TYPE_INTEGER
 
 
 class Column(object):
-    def __init__(self, id, datatype):
+    def __init__(self, id, datatype, is_nullable=True, is_primary_key=False):
         self.id = id
         self.datatype = datatype
+        self.is_nullable = is_nullable
+        self.is_primary_key = is_primary_key
 
     def __repr__(self):
         return self.id
