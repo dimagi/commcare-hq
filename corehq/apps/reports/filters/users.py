@@ -245,7 +245,9 @@ class EmwfMixin(object):
         user_types = [getattr(HQUserType, t) for t in types]
         basics = [("t__0", _("[All mobile workers]"))] + \
             [self.user_type_tuple(t) for t in user_types]
-        if getattr(self, "show_all_filter", False) or self.request and self.request.GET.get("show_all_filter", False):
+        if (getattr(self, "show_all_filter", False)
+            or (getattr(self, "request", None)
+                and self.request.GET.get("show_all_filter", False))):
             basics = [("t__x", "[All Data]")] + basics
         return basics
 
