@@ -219,7 +219,6 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
         return options
 
 
-
 class EmwfMixin(object):
 
     def user_tuple(self, u):
