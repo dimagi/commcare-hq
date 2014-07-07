@@ -2883,7 +2883,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             else:
                 setting_value = self__profile[setting_type][setting_id]
             if setting_value:
-                app_profile[setting_type][setting_id] = setting_value
+                app_profile[setting_type][setting_id] = {
+                    'value': setting_value,
+                    'force': setting.get('force', False)
+                }
             # assert that it gets explicitly set once per loop
             del setting_value
 
