@@ -1,5 +1,9 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
+from corehq.apps.hqadmin.reports import (
+    AdminAppReport,
+    AdminUserReport,
+    RealProjectSpacesReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -260,7 +264,8 @@ ADMIN_REPORTS = (
         AdminDomainStatsReport,
         AdminUserReport,
         AdminAppReport,
-        PillowErrorsReport
+        PillowErrorsReport,
+        RealProjectSpacesReport,
     )),
 )
 

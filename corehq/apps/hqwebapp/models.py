@@ -1208,6 +1208,13 @@ class AdminReportsTab(UITab):
                  'url': reverse('loadtest_report')},
             ]),
             (_('Administrative Operations'), admin_operations),
+            (_('CommCare Reports'), [
+                {
+                    'title': _('Real Project Spaces'),
+                    'url': reverse('admin_report_dispatcher',
+                                   args=('real_project_spaces',)),
+                },
+            ]),
         ]
 
     @property

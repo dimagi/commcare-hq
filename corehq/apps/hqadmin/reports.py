@@ -223,3 +223,9 @@ class AdminAppReport(AdminFacetedReport):
                 app.get('domain'),
                 app.get('build_comment'),
             ]
+
+
+class RealProjectSpacesReport(AdminReport):
+    slug = 'real_project_spaces'
+    name = ugettext_noop('Real Project Spaces')
+    section_name = ugettext_noop("ADMINREPORT")
