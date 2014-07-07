@@ -37,5 +37,11 @@ var CC_UTILS = {
             }
         }
         return options;
+    },
+    filteredSuggestedProperties: function (suggestedProperties, properties) {
+        var used_properties = _.map(properties, function (x) {
+            return x.key();
+        });
+        return _(suggestedProperties).difference(used_properties);
     }
 };
