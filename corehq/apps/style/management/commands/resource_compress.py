@@ -7,7 +7,8 @@ from django.core import cache
 
 rcache = cache.get_cache('redis')
 COMPRESS_PREFIX = '#compress_%s'
-MANIFEST_FILE = '%s/CACHE/manifest.json' % settings.STATIC_ROOT
+CACHE_DIR = '%s/CACHE' % settings.STATIC_ROOT
+MANIFEST_FILE = '%s/manifest.json' % CACHE_DIR
 
 
 class ResourceCompressError(Exception):
@@ -22,6 +23,8 @@ class Command(LabelCommand):
 
     def output_manifest(self, manifest_str):
         print "saving manifest.json to disk"
+        if not os.path.exists(CACHE_DIR):
+            os.makedirs(CACHE_DIR)
         with open(os.path.join(self.root_dir, MANIFEST_FILE), 'w') as fout:
             print manifest_str
             fout.write(manifest_str)
