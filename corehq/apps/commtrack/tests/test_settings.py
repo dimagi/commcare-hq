@@ -26,7 +26,7 @@ class CommTrackSettingsTest(TestCase):
         self.assertEqual(10, restore_settings.consumption_config.min_periods)
         self.assertEqual(20, restore_settings.consumption_config.min_window)
         self.assertEqual(60, restore_settings.consumption_config.max_window)
-        self.assertEqual(150, restore_settings.consumption_config.default_consumption_function('foo', 'bar'))
+        self.assertEqual(150, restore_settings.consumption_config.default_monthly_consumption_function('foo', 'bar'))
         self.assertFalse(restore_settings.force_consumption_case_filter(CommCareCase(type='force-type')))
         self.assertEqual(0, len(restore_settings.default_product_list))
 

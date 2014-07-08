@@ -448,7 +448,7 @@ class CommtrackConfig(Document):
         return dict((a.keyword, a) for a in actions).get(keyword)
 
     def get_consumption_config(self):
-        def _default_consumption_function(case_id, product_id):
+        def _default_monthly_consumption(case_id, product_id):
             # note: for now as an optimization hack, per-supply point type is not supported
             # unless explicitly configured, because it will require looking up the case
             facility_type = None
@@ -464,7 +464,7 @@ class CommtrackConfig(Document):
             min_periods=self.consumption_config.min_transactions,
             min_window=self.consumption_config.min_window,
             max_window=self.consumption_config.optimal_window,
-            default_consumption_function=_default_consumption_function,
+            default_monthly_consumption_function=_default_monthly_consumption,
         )
 
     def get_ota_restore_settings(self):
