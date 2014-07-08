@@ -15,6 +15,7 @@ branches:
   - formsql # SK 7/7
   - coredb # SK 7/7
   - all-filter-hack # Noah 7/7
+  - universal-analytics-upgrade # Nick P 7/8
 submodules:
   submodules/couchlog-src:
     branches:
@@ -22,9 +23,10 @@ submodules:
   submodules/django-soil-src:
     branches:
       - static-tags # Nick P 5/20
-#  submodules/formdesigner:
-#    branches:
+  submodules/formdesigner:
+    branches:
 #      - develop-staging # Daniel 6/12 (major refactor + itemsets?)
+      - universal-analytics-upgrade # Nick P 7/8
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
