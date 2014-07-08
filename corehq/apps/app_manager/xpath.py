@@ -112,12 +112,6 @@ class CaseXPath(XPath):
         return self.select('@status', 'open')
 
 
-class IndicatorXpath(XPath):
-
-    def indicator(self, indicator_name):
-        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
-
-
 class LocationXpath(XPath):
 
     def location(self, ref, hierarchy):
@@ -218,15 +212,48 @@ class LedgerSectionXpath(XPath):
         return XPath(self.slash(u'entry').select(u'@id', id, quote=False))
 
 
-class FixtureXpath(XPath):
+class InstanceXpath(XPath):
+    id = ''
+    path = ''
 
-    def table(self):
-        return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))
+    def instance(self):
+        return XPath(u"instance('{id}')/{path}".format(
+            id=self.id,
+            path=self.path)
+        )
+
+
+class SessionInstanceXpath(InstanceXpath):
+    id = u'commcaresession'
+    path = u'session/context'
+
+
+class ItemListFixtureXpath(InstanceXpath):
+    @property
+    def id(self):
+        return u'item-list:{}'.format(self)
+
+    @property
+    def path(self):
+        return u'{0}_list/{0}'.format(self)
+
+
+class ProductInstanceXpath(InstanceXpath):
+    id = u'commtrack:products'
+    path = u'products/product'
+
+
+class IndicatorXpath(InstanceXpath):
+    path = u'indicators/case[@id = current()/@case_id]'
+
+    @property
+    def id(self):
+        return self
 
 
 class CommCareSession(object):
-    username = XPath(u"instance('commcaresession')/session/context/username")
-    userid = XPath(u"instance('commcaresession')/session/context/userid")
+    username = SessionInstanceXpath().instance().slash(u"username")
+    userid = SessionInstanceXpath().instance().slash(u"userid")
 
 
 class ScheduleFixtureInstance(XPath):

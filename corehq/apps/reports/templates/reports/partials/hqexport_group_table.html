@@ -1,26 +1,31 @@
 {% load i18n %}
 {% load timezone_tags %}
+{% load humanize %}
 {% if exports %}
-    <table class="couchexport-group-download table table-condensed">
+    <table class="couchexport-group-download table table-condensed export_data">
         <thead>
             <tr>
                 <th>{% trans "File" %}</th>
                 <th>{% trans "Last Updated" %}</th>
                 <th>{% trans "Size" %}</th>
+                <th>{% trans "Action" %}</th>
             </tr>
         </thead>
         <tbody>
-    {% for config, saved in exports %}
-        <tr>
-        {% if saved and saved.has_file %}
-            <td><a href="{% url "hq_download_saved_export" domain saved.get_id %}">{{ config.name }}</a></td>
-            <td>{%  utc_to_timezone saved.last_updated timezone %}</td>
-            <td>{{ saved.size|filesizeformat }}</td>
-        {% else %}
-            <td>{{ config.name }}</td>
-            <td>{% trans "N/A" %}</td>
-            <td>{% trans "N/A" %}</td>
-        {% endif %}
+    {% for component in exports %}
+        <tr class="{% cycle "odd" "even" %}">
+            <td>{{ component.config.name }} {{ component.config.get_id }}</td>
+            <td>{% if component.saved_version.has_file %}{{ component.saved_version.last_updated|naturaltime }}{% else %}{% trans "N/A" %}{% endif %}</td>
+            <td>{% if component.saved_version.has_file %}{{ component.saved_version.size|filesizeformat }}{% else %}{% trans "N/A" %}{% endif %}</td>
+            <td>
+                {% if component.saved_version.has_file %}<a href="{% url "hq_download_saved_export" domain component.saved_version.get_id %}" class="btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>{% endif %}
+                <form style="display: inline-block;" action={% url "hq_update_saved_export" domain %} method="POST">
+                    <input type="hidden" name="group_export_id" value="{{ component.group_id }}" />
+                    <input type="hidden" name="index" value="{{ component.index }}" />
+                    <input type="hidden" name="report_slug" value="{{ report_slug }}" />
+                    <button type="submit" class="btn btn-info disable-on-submit" ><i class="icon-table icon-white"></i> {% trans "Update Data" %}</button>
+                </form>
+            </td>
         </tr>
     {% endfor %}
         </tbody>

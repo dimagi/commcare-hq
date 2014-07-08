@@ -54,4 +54,5 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^one_time_reminders/add/$', 'add_one_time_reminder', name='add_one_time_reminder'),
     url(r'^one_time_reminders/edit/(?P<handler_id>[\w-]+)/$', 'add_one_time_reminder', name='edit_one_time_reminder'),
     url(r'^one_time_reminders/copy/(?P<handler_id>[\w-]+)/$', 'copy_one_time_reminder', name='copy_one_time_reminder'),
+    url(r'^rule_progress/$', 'rule_progress', name='reminder_rule_progress'),
 )

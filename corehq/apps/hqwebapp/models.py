@@ -13,7 +13,6 @@ from corehq.apps.reminders.util import can_use_survey_reminders
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -24,6 +23,7 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
+from corehq.toggles import IS_DEVELOPER
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -106,20 +106,13 @@ class UITab(object):
         raise NotImplementedError()
 
     @property
-    def mobile_worker_redirect(self):
-        return (
-            is_mobile_worker_with_report_access(self.couch_user, self.domain)
-            and isinstance(self, ProjectReportsTab)
-        )
-
-    @property
     @memoized
     def real_is_viewable(self):
         if self.subtabs:
             return any(st.real_is_viewable for st in self.subtabs)
         else:
             try:
-                return self.is_viewable or self.mobile_worker_redirect
+                return self.is_viewable
             except AttributeError:
                 return False
 
@@ -536,7 +529,8 @@ class ApplicationsTab(UITab):
                 app_name = app_info['name']
                 app_doc_type = app_info['doc_type']
 
-                url = reverse('view_app', args=[self.domain, app_id])
+                url = reverse('view_app', args=[self.domain, app_id]) if self.couch_user.can_edit_apps() \
+                    else reverse('release_manager', args=[self.domain, app_id])
                 app_title = self.make_app_title(app_name, app_doc_type)
 
                 submenu_context.append(format_submenu_context(
@@ -550,7 +544,7 @@ class ApplicationsTab(UITab):
             newapp_options = [
                 format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
                 format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
-                    is_remote=True)),
+                                                                     is_remote=True)),
             ]
             newapp_options.append(format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
                 url=reverse('appstore')))
@@ -1162,6 +1156,12 @@ class AdminReportsTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
+        if self.couch_user and (not self.couch_user.is_superuser and IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [
+                (_('Administrative Reports'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                    ])]
 
         admin_operations = [
             {'title': _('View/Update Domain Information'),
@@ -1173,8 +1173,8 @@ class AdminReportsTab(UITab):
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
-                'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
-            ])
+                 'url': reverse('admin_report_dispatcher', args=('pillow_errors',))},
+                ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
@@ -1199,13 +1199,11 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]),
-            (_('Administrative Operations'), admin_operations)
-        ]
+            ]), (_('Administrative Operations'), admin_operations)]
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class GlobalADMConfigTab(UITab):
@@ -1319,6 +1317,8 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
+        if self.couch_user and not self.couch_user.is_superuser and (IS_DEVELOPER.enabled(self.couch_user.username)):
+            return [format_submenu_context(_("System Info"), url=reverse("system_info"))]
         submenu_context = [
             format_submenu_context(_("Reports"), is_header=True),
             format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
@@ -1350,7 +1350,7 @@ class AdminTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username))
 
 
 class ExchangeTab(UITab):
@@ -1371,7 +1371,9 @@ class ExchangeTab(UITab):
 
     @property
     def is_viewable(self):
-        return not self.couch_user.is_commcare_user()
+        couch_user = self.couch_user
+        return (self.domain and couch_user and couch_user.can_edit_apps() and
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class OrgTab(UITab):

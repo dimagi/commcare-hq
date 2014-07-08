@@ -67,3 +67,4 @@ def load_data():
             connection.execute(insert)
     finally:
         connection.close()
+        engine.dispose()

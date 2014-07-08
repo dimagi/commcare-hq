@@ -1,5 +1,3 @@
-from collections import defaultdict
-import logging
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -98,7 +96,7 @@ def get_questions_from_xform_node(xform, langs):
     return [FormQuestionResponse(q) for q in questions]
 
 
-def get_readable_form_data(xform):
+def get_questions_for_submission(xform):
     app_id = xform.build_id or xform.app_id
     domain = xform.domain
     xmlns = xform.xmlns
@@ -109,12 +107,25 @@ def get_readable_form_data(xform):
     except QuestionListNotFound as e:
         questions = []
         questions_error = e
-    return zip_form_data_and_questions(
-        strip_form_data(xform.form),
-        questions_in_hierarchy(questions),
-        path_context='/%s/' % xform.form.get('#type', 'data'),
-        process_label=_html_interpolate_output_refs,
+    return questions, questions_error
+
+
+def get_readable_data_for_submission(xform):
+    questions, questions_error = get_questions_for_submission(xform)
+    return get_readable_form_data(
+        xform.form,
+        questions,
+        process_label=_html_interpolate_output_refs
     ), questions_error
+
+
+def get_readable_form_data(xform_data, questions, process_label=None):
+    return zip_form_data_and_questions(
+        strip_form_data(xform_data),
+        questions_in_hierarchy(questions),
+        path_context='/%s/' % xform_data.get('#type', 'data'),
+        process_label=process_label,
+    )
 
 
 def strip_form_data(data):
@@ -174,6 +185,10 @@ def _html_interpolate_output_refs(itext_value, context):
         return itext_value
 
 
+def _group_question_has_response(question):
+    return any(child.response for child in question.children)
+
+
 def zip_form_data_and_questions(relative_data, questions, path_context='',
                                 output_context=None, process_label=None,
                                 absolute_data=None):
@@ -188,6 +203,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
     the list, using the repeat's children as the question list.
 
     """
+    assert path_context
     absolute_data = absolute_data or relative_data
     if not path_context.endswith('/'):
         path_context += '/'
@@ -203,7 +219,6 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         node = pop_from_form_data(relative_data, absolute_data, path)
         # response=True on a question with children indicates that one or more
         # child has a response, i.e. that the entire group wasn't skipped
-        node_true_or_none = bool(node) or None
         question_data = dict(question)
         question_data.pop('response')
         if question.type in ('Group', 'FieldList'):
@@ -217,10 +232,9 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                     process_label=process_label,
                     absolute_data=absolute_data,
                 ),
-                response=node_true_or_none,
                 **question_data
             )
-            if form_question.children:
+            if _group_question_has_response(form_question):
                 form_question.response = True
         elif question.type == 'Repeat':
             if not isinstance(node, list):
@@ -237,13 +251,16 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                             process_label=process_label,
                             absolute_data=absolute_data,
                         ),
-                        response=node_true_or_none,
                     )
                     for entry in node
                 ],
-                response=node_true_or_none,
                 **question_data
             )
+            for child in form_question.children:
+                if _group_question_has_response(child):
+                    child.response = True
+            if _group_question_has_response(form_question):
+                form_question.response = True
         else:
             if (question.type == 'DataBindOnly'
                     and question.label == question.value):

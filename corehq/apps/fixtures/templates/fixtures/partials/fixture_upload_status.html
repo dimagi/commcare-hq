@@ -1,0 +1,33 @@
+{% extends "hqwebapp/partials/download_status.html" %}
+{% load i18n %}
+{% block results %}
+{% if result.success %}
+    <div class="alert alert-success">
+        <h3>{{ on_complete_long }}</h3>
+        <p>{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}</p>
+    </div>
+    {% if result.errors %}
+        <div class="alert alert-error">
+        <h3>{% trans "However, we ran into the following problems:" %}</h3>
+            {% for e in result.errors %}
+            <p>{{ e }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if result.messages %}
+        <div class="alert alert-info">
+        <h3>{% trans "Additional information:" %}</h3>
+            {% for msg in result.messages %}
+            <p>{{ msg }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-error">
+        <h3>{% trans "Upload failed! Details:" %}</h3>
+            {% for e in result.errors %}
+            <p>{{ e }}</p>
+            {% endfor %}
+        </div>
+{% endif %}
+{% endblock results %}

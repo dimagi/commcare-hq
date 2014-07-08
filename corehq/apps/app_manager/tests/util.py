@@ -44,7 +44,7 @@ class TestFileMixin(object):
                 tofile='got.xml'
             )
             for line in diff:
-                message += line + '\n'
+                message += line
             raise AssertionError(message)
 
 

@@ -43,12 +43,12 @@ from corehq.apps.domain.views import (
 
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
-        return password_reset(request, *args, **kwargs)                
+        return password_reset(request, *args, **kwargs)
     except None: 
         vals = {'error_msg':'There was a problem with your request',
                 'error_details':sys.exc_info(),
                 'show_homepage_link': 1 }
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+        return render_to_response('error.html', vals, context_instance=RequestContext(request))
 
 
 # auth templates are normally in 'registration,'but that's too confusing a name, given that this app has

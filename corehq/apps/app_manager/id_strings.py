@@ -153,7 +153,7 @@ def referral_list_command(module):
 
 
 def indicator_instance(indicator_set_name):
-    return u"indicators_%s" % indicator_set_name
+    return u"indicators:%s" % indicator_set_name
 
 
 def schedule_fixture(form):

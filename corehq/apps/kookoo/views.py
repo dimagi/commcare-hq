@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.api import incoming, IVR_EVENT_NEW_CALL, IVR_EVENT_INPUT, IVR_EVENT_DISCONNECT
 from corehq.apps.kookoo import api as backend_module
 from corehq.apps.sms.models import CallLog
+from dimagi.utils.couch import CriticalSection
 
 """
 Kookoo invokes this view for its main communication with HQ.
@@ -36,8 +37,11 @@ def ivr(request):
         ivr_event = IVR_EVENT_DISCONNECT
     else:
         ivr_event = IVR_EVENT_DISCONNECT
-    
-    return incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=data)
+
+    with CriticalSection([gateway_session_id]):
+        result = incoming(phone_number, backend_module, gateway_session_id,
+            ivr_event, input_data=data)
+    return result
 
 """
 Kookoo invokes this view after a call is finished (whether answered or not) with status and some statistics.
@@ -56,21 +60,22 @@ def ivr_finished(request):
     status_details = request.POST.get("status_details", None)
     
     gateway_session_id = "KOOKOO-" + sid
-    
-    call_log_entry = CallLog.view("sms/call_by_session",
-                                  startkey=[gateway_session_id, {}],
-                                  endkey=[gateway_session_id],
-                                  descending=True,
-                                  include_docs=True,
-                                  limit=1).one()
-    if call_log_entry is not None:
-        try:
-            duration = int(duration)
-        except Exception:
-            duration = None
-        call_log_entry.answered = (status == "answered")
-        call_log_entry.duration = duration
-        call_log_entry.save()
+
+    with CriticalSection([gateway_session_id]):
+        call_log_entry = CallLog.view("sms/call_by_session",
+                                      startkey=[gateway_session_id, {}],
+                                      endkey=[gateway_session_id],
+                                      descending=True,
+                                      include_docs=True,
+                                      limit=1).one()
+        if call_log_entry is not None:
+            try:
+                duration = int(duration)
+            except Exception:
+                duration = None
+            call_log_entry.answered = (status == "answered")
+            call_log_entry.duration = duration
+            call_log_entry.save()
     
     return HttpResponse("")
 

@@ -420,8 +420,6 @@ class GenericReportView(CacheableRequestMixIn):
                     self.override_permissions_check
                     or self.request.couch_user.can_view_reports()
                     or self.request.couch_user.get_viewable_reports()
-                    or util.is_mobile_worker_with_report_access(
-                        self.request.couch_user, self.domain)
                 ),
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,

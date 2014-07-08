@@ -1,7 +1,7 @@
 from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
     METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL, 
-    METHOD_TEST, METHOD_SMS_CALLBACK_TEST, RECIPIENT_USER, 
-    RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder)
+    RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder,
+    CaseReminderHandler)
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
@@ -22,15 +22,12 @@ from corehq.apps.sms.models import (
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
-from corehq.apps.ivr.api import initiate_outbound_call
+from corehq.apps.ivr.tasks import initiate_outbound_call
 from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
-
-DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
-DEFAULT_OUTBOUND_RETRIES = 2
 
 ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
 ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
@@ -108,119 +105,122 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=Non
         reminder_id=reminder._id,
     )
     current_event = reminder.current_event
-    if handler.method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-        template_params = {}
-        case = reminder.case
-        if case is not None:
-            template_params["case"] = case.case_properties()
-        for recipient in recipients:
-            try:
-                lang = recipient.get_language_code()
-            except Exception:
-                lang = None
+    template_params = {}
+    case = reminder.case
+    if case is not None:
+        template_params["case"] = case.case_properties()
+    for recipient in recipients:
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
 
-            if handler.custom_content_handler is not None:
-                if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
-                    try:
-                        content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
-                    except Exception:
-                        raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
-                        return False
-                    message = content_handler(reminder, handler, recipient)
-                    # If the content handler returns None or empty string,
-                    # don't send anything
-                    if not message:
-                        return True
-                else:
-                    raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
-                    return False
-            else:
-                message = current_event.message.get(lang, current_event.message[handler.default_lang])
+        if handler.custom_content_handler is not None:
+            if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
                 try:
-                    message = Message.render(message, **template_params)
+                    content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
                 except Exception:
-                    if len(recipients) == 1:
-                        raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
-                        return False
-                    else:
-                        raise_warning() # ERROR_RENDERING_MESSAGE
-                        continue
-
-            verified_number, unverified_number = get_recipient_phone_number(
-                reminder, recipient, verified_numbers)
-
-            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
-            if verified_number is not None:
-                result = send_sms_to_verified_number(verified_number,
-                    message, metadata)
-            elif isinstance(recipient, CouchUser) and unverified_number:
-                result = send_sms(reminder.domain, recipient, unverified_number,
-                    message, metadata)
-            elif (isinstance(recipient, CommCareCase) and unverified_number and
-                domain_obj.send_to_duplicated_case_numbers):
-                result = send_sms(reminder.domain, recipient, unverified_number,
-                    message, metadata)
+                    raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
+                    return False
+                message = content_handler(reminder, handler, recipient)
+                # If the content handler returns None or empty string,
+                # don't send anything
+                if not message:
+                    return True
             else:
+                raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
+                return False
+        else:
+            message = current_event.message.get(lang, current_event.message[handler.default_lang])
+            try:
+                message = Message.render(message, **template_params)
+            except Exception:
                 if len(recipients) == 1:
-                    raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-                result = False
+                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
+                    return False
+                else:
+                    raise_warning() # ERROR_RENDERING_MESSAGE
+                    continue
 
+        verified_number, unverified_number = get_recipient_phone_number(
+            reminder, recipient, verified_numbers)
+
+        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
+        if verified_number is not None:
+            result = send_sms_to_verified_number(verified_number,
+                message, metadata)
+        elif isinstance(recipient, CouchUser) and unverified_number:
+            result = send_sms(reminder.domain, recipient, unverified_number,
+                message, metadata)
+        elif (isinstance(recipient, CommCareCase) and unverified_number and
+            domain_obj.send_to_duplicated_case_numbers):
+            result = send_sms(reminder.domain, recipient, unverified_number,
+                message, metadata)
+        else:
             if len(recipients) == 1:
-                return result
+                raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
+            result = False
 
-        # For multiple recipients, always move to the next event
-        return True
+        if len(recipients) == 1:
+            return result
 
-    elif handler.method in [METHOD_TEST, METHOD_SMS_CALLBACK_TEST]:
-        # Used for automated tests
-        return True
+    # For multiple recipients, always move to the next event
+    return True
+
 
 def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
-    if handler.recipient in [RECIPIENT_CASE, RECIPIENT_USER]:
-        # If there are no recipients, just move to the next reminder event
-        if len(recipients) == 0:
-            return True
-        
-        # If the callback has been received, skip sending the next timeout message
+
+    for recipient in recipients:
+        send_message = False
         if reminder.callback_try_count > 0:
-            # Lookup the expected callback event
-            if reminder.event_initiation_timestamp is None:
-                event = None
-            else:
+            if reminder.event_initiation_timestamp:
                 event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                                      key=[reminder.domain, json_format_datetime(reminder.event_initiation_timestamp), recipients[0].get_id],
-                                                      include_docs=True,
-                                                      limit=1).one()
-            
-            # NOTE: If last_fired is None, it means that the reminder fired for the first time on a timeout interval
-            if reminder.last_fired is not None and CallLog.inbound_entry_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-                reminder.skip_remaining_timeouts = True
-                if event is not None:
+                    key=[reminder.domain,
+                         json_format_datetime(reminder.event_initiation_timestamp),
+                         recipient.get_id],
+                    include_docs=True,
+                    limit=1).one()
+                if not event:
+                    continue
+                if event.status == CALLBACK_RECEIVED:
+                    continue
+                if CallLog.inbound_entry_exists(recipient.doc_type,
+                    recipient.get_id, reminder.event_initiation_timestamp):
                     event.status = CALLBACK_RECEIVED
                     event.save()
-                return True
-            elif reminder.callback_try_count >= len(current_event.callback_timeout_intervals):
-                # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                if event is not None:
+                    continue
+            else:
+                continue
+
+            if (reminder.callback_try_count >=
+                len(current_event.callback_timeout_intervals)):
+                # On the last callback timeout, instead of sending the SMS
+                # again, log the missed callback
+                if event:
                     event.status = CALLBACK_MISSED
                     event.save()
-                return True
+            else:
+                send_message = True
         else:
-            # It's the first time sending the sms, so create an expected callback event
+            # It's the first time sending the sms, so create an expected
+            # callback event
+            send_message = True
             event = ExpectedCallbackEventLog(
-                domain                   = reminder.domain,
-                date                     = reminder.event_initiation_timestamp,
-                couch_recipient_doc_type = recipients[0].doc_type,
-                couch_recipient          = recipients[0].get_id,
-                status                   = CALLBACK_PENDING,
+                domain=reminder.domain,
+                date=reminder.event_initiation_timestamp,
+                couch_recipient_doc_type=recipient.doc_type,
+                couch_recipient=recipient.get_id,
+                status=CALLBACK_PENDING,
             )
             event.save()
-        
-        return fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=WORKFLOW_CALLBACK)
-    else:
-        # TODO: Implement sms callback for RECIPIENT_OWNER and RECIPIENT_SURVEY_SAMPLE
-        return False
+
+        if send_message:
+            fire_sms_event(reminder, handler, [recipient], verified_numbers,
+                workflow=WORKFLOW_CALLBACK)
+
+    return True
+
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
     if reminder.callback_try_count > 0:
@@ -315,47 +315,68 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         return True
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
-    if handler.recipient == RECIPIENT_CASE:
-        # If there are no recipients, just move to the next reminder event
-        if len(recipients) == 0:
-            return True
-        
-        # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we can
-        # skip the lookup for the answered call since no call went out yet.
-        if reminder.last_fired is not None and reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-            reminder.skip_remaining_timeouts = True
-            return True
-        verified_number = verified_numbers[recipients[0].get_id]
-        if verified_number is not None:
-            if initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries):
-                return True
-            else:
-                reminder = CaseReminder.get(reminder._id)
-                reminder.error_retry_count += 1
-                if reminder.error_retry_count > getattr(settings, "IVR_OUTBOUND_RETRIES", DEFAULT_OUTBOUND_RETRIES):
-                    return True
-                else:
-                    reminder.next_fire += timedelta(minutes=getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL", DEFAULT_OUTBOUND_RETRY_INTERVAL))
-                    reminder.save()
-                    return False
-        else:
-            raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-            return False
-    else:
-        # TODO: Implement ivr survey for RECIPIENT_USER, RECIPIENT_OWNER, and RECIPIENT_SURVEY_SAMPLE
-        return False
+    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
+    for recipient in recipients:
+        initiate_call = True
+        if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
+            initiate_call = not CallLog.answered_call_exists(
+                recipient.doc_type, recipient.get_id,
+                reminder.event_initiation_timestamp,
+                CaseReminderHandler.get_now())
 
-"""
-This method is meant to report runtime warnings which are caused by configuration errors to a project contact.
-"""
+        if initiate_call:
+            if (isinstance(recipient, CommCareCase) and
+                not handler.force_surveys_to_use_triggered_case):
+                case_id = recipient.get_id
+            else:
+                case_id = reminder.case_id
+            verified_number, unverified_number = get_recipient_phone_number(
+                reminder, recipient, verified_numbers)
+            if verified_number:
+                initiate_outbound_call.delay(
+                    recipient,
+                    reminder.current_event.form_unique_id,
+                    handler.submit_partial_forms,
+                    handler.include_case_side_effects,
+                    handler.max_question_retries,
+                    verified_number=verified_number,
+                    case_id=case_id,
+                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
+                    timestamp=CaseReminderHandler.get_now(),
+                )
+            elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
+                initiate_outbound_call.delay(
+                    recipient,
+                    reminder.current_event.form_unique_id,
+                    handler.submit_partial_forms,
+                    handler.include_case_side_effects,
+                    handler.max_question_retries,
+                    unverified_number=unverified_number,
+                    case_id=case_id,
+                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
+                    timestamp=CaseReminderHandler.get_now(),
+                )
+            else:
+                #No phone number to send to
+                pass
+
+    return True
+
+
 def raise_warning():
+    """
+    This method is meant to report runtime warnings which are caused by
+    configuration errors to a project contact.
+    """
     # For now, just a stub.
     pass
 
-"""
-Put the reminder in an error state, which filters it out of the reminders queue.
-"""
+
 def raise_error(reminder, error_msg):
+    """
+    Put the reminder in an error state, which filters it out of the reminders
+    queue.
+    """
     reminder.error = True
     reminder.error_msg = error_msg
     reminder.save()
@@ -367,8 +388,6 @@ EVENT_HANDLER_MAP = {
     METHOD_SMS_CALLBACK : fire_sms_callback_event,
     METHOD_SMS_SURVEY : fire_sms_survey_event,
     METHOD_IVR_SURVEY : fire_ivr_survey_event,
-    METHOD_TEST : fire_sms_event,
-    METHOD_SMS_CALLBACK_TEST : fire_sms_callback_event,
     # METHOD_EMAIL is a placeholder at the moment; it's not implemented yet anywhere in the framework
 }
 

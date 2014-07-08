@@ -8,6 +8,8 @@ SYSTEM_USERNAME = 'bihar-system'
 SYSTEM_USERID = SYSTEM_USERNAME
 
 DEMO_OWNER_IDS = set(['demo_user_group_id', 'demo_user_group_bihar'])
+REASSIGN_BLACKLIST = ('anm_review', 'mcts_persona')
+
 
 class BiharMockUser(object):
     username = SYSTEM_USERNAME
@@ -25,7 +27,7 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
                 form_cases = set(c._id for c in cases)
 
                 def bihar_exclude(case):
-                    return case._id in form_cases or case.type == 'anm_review'
+                    return case._id in form_cases or case.type in REASSIGN_BLACKLIST
 
                 for case in cases:
                     if case.type in ('cc_bihar_pregnancy', 'cc_bihar_newborn'):

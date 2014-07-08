@@ -59,6 +59,10 @@ class OPMTestBase(object):
                 self.reindex_fluff(pillow)
         print "Finished setup, on to tests!"
 
+    def tearDown(self):
+        for pillow in [OpmCaseFluffPillow, OpmUserFluffPillow, OpmFormFluffPillow]:
+            pillow.get_sql_engine().dispose()
+
     def the_same(self, a, b):
         # for some reason types aren't consistent
         # so there's this beautiful kludge

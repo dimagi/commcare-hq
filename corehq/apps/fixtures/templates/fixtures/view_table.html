@@ -82,28 +82,6 @@
     {% endfor %}
     {% endblock %}
     </tbody>
-    {% if report_table.total_row and report_table.rows %}
-        <tfoot>
-        <tr>
-            {% for col in report_table.total_row %}
-                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-            {% endfor %}
-        </tr>
-        </tfoot>
-    {% endif %}
-    {% if report_table.statistics_rows and report_table.rows %}
-        <tfoot>
-            {% for stats in report_table.statistics_rows %}
-                <tr>
-                {% for col in stats %}
-                    {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
-                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                    {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
-                {% endfor %}
-                </tr>
-            {% endfor %}
-        </tfoot>
-    {% endif %}
 </table>
 {% endif %}
 {% endblock %}

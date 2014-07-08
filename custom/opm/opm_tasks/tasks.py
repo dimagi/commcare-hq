@@ -20,11 +20,11 @@ from .models import OpmReportSnapshot
 from dimagi.utils.django.email import send_HTML_email
 
 
-def prepare_snapshot(month, year, ReportClass, block=None):
+def prepare_snapshot(month, year, ReportClass, block=None, lang=None):
     existing = OpmReportSnapshot.by_month(month, year, ReportClass.__name__, block)
     assert existing is None, \
         "Existing report found for %s/%s at %s" % (month, year, existing._id)
-    report = get_report(ReportClass, month, year, block)
+    report = get_report(ReportClass, month, year, block, lang)
     snapshot = OpmReportSnapshot(
         domain=DOMAIN,
         month=report.month,
@@ -49,7 +49,7 @@ def save_report(ReportClass, month=None, year=None):
     month, year = last_if_none(month, year)
     if ReportClass.__name__ == "MetReport":
         for block in ['atri', 'wazirganj']:
-            snapshot = prepare_snapshot(month, year, ReportClass, block)
+            snapshot = prepare_snapshot(month, year, ReportClass, block, 'en')
     else:
         snapshot = prepare_snapshot(month, year, ReportClass)
     return snapshot

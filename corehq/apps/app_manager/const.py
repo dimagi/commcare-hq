@@ -24,3 +24,5 @@ CT_LEDGER_APPROVED = 'ct-approved'
 SCHEDULE_PHASE = 'current_schedule_phase'
 SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
 SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
+
+ATTACHMENT_PREFIX = 'attachment:'
