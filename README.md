@@ -174,6 +174,16 @@ that you have a 32bit version of Python installed.
     ./manage.py ptop_es_manage --flip_all_aliases
 
 
+### Optional for using Django Compressor: Install lessc for compiling less files
+
+    1. Install node and alongside it npm (eg, on a mac: `brew install node`)
+    2. Install less@1.7.1 with npm `npm install -g less@1.3.1`
+    3. Make sure `lessc --version` runs and outputs 1.3.1 as the current version
+
+    If you don't do this, all the .less files should compile on the fly with
+    less.js in your browser (for development purposes ONLY).
+
+
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
 django admin user you created above (with manage.py bootstrap) and then create

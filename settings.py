@@ -16,6 +16,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+LESS_DEBUG = DEBUG
 
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
@@ -74,7 +75,8 @@ LOCALE_PATHS = (
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder"
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    'compressor.finders.CompressorFinder',
 )
 
 STATICFILES_DIRS = (
@@ -166,6 +168,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -388,8 +391,9 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
-LOGGEDOUT_TEMPLATE = "loggedout.html"
+LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "user@domain.com"
@@ -755,6 +759,12 @@ LOGGING = {
         },
     }
 }
+
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
@@ -1191,3 +1201,18 @@ TRAVIS_TEST_GROUPS = (
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )
+
+#### Django Compressor Stuff after localsettings overrides ####
+
+# This makes sure that Django Compressor does not run at all
+# when LESS_DEBUG is set to True.
+if LESS_DEBUG:
+    COMPRESS_ENABLED = False
+    COMPRESS_PRECOMPILERS = ()
+
+COMPRESS_OFFLINE_CONTEXT = {
+    'base_template': BASE_TEMPLATE,
+    'login_template': LOGIN_TEMPLATE,
+    'original_template': BASE_ASYNC_TEMPLATE,
+    'less_debug': LESS_DEBUG,
+}

@@ -32,6 +32,8 @@ tmp.sh
 .DS_Store
 app_builder_live_test/*/
 dump.rdb
+**/less/*.css
+/staticmedia*
 
 ptop*.txt
 ptop*.json
