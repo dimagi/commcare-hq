@@ -37,6 +37,15 @@
                 }
             });
         }
+
+        $(document).ready(function() {
+            {% for snapshot in snapshots %}
+                $('#publish_{{ snapshot.name }}').click(function() {
+                    ga('send', 'event', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
+                });
+            {% endfor %}
+        });
+
     </script>
 {% endblock %}
 
@@ -104,7 +113,7 @@
                    data-toggle="modal"
                    data-target="#contentDistributionAgreement"
                    href="#contentDistributionAgreement"
-                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}']);"
+                   id="publish_{{ snapshot.name }}"
                 >
                     Publish
                 </a>
