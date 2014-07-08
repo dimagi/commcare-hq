@@ -9,7 +9,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product, StockState
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
+from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.stock import const as stockconst
@@ -99,7 +99,7 @@ class CommTrackOTATest(CommTrackTest):
         self.ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'}
         )
-        set_default_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
 
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
         report = _report_soh(amounts, self.sp._id, 'stock')
@@ -136,7 +136,7 @@ class CommTrackOTATest(CommTrackTest):
         self.ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'},
         )
-        set_default_consumption_for_domain(self.domain.name, 5)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5)
 
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
         self.assertEqual(0, len(balance_blocks))
@@ -448,7 +448,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'}
         )
-        set_default_consumption_for_domain(self.domain.name, 5)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5)
         self.ota_settings = self.ct_settings.get_ota_restore_settings()
 
         # get initial restore token
