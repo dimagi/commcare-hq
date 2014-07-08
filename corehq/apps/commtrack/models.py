@@ -1364,25 +1364,29 @@ class StockState(models.Model):
         if self.daily_consumption is not None:
             return self.daily_consumption
         else:
-            domain = self.get_domain()
-
-            if domain and domain.commtrack_settings:
-                config = domain.commtrack_settings.get_consumption_config()
-            else:
-                config = None
-
-            return compute_default_monthly_consumption(
-                self.case_id,
-                self.product_id,
-                config
-            ) / DAYS_IN_MONTH
+            monthly = self._get_default_monthly_consumption()
+            if monthly is not None:
+                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
 
     def get_monthly_consumption(self):
-        consumption = self.get_daily_consumption()
-        if consumption is not None:
-            return consumption * Decimal(DAYS_IN_MONTH)
+
+        if self.daily_consumption is not None:
+            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
         else:
-            return None
+            return self._get_default_monthly_consumption()
+
+    def _get_default_monthly_consumption(self):
+        domain = self.get_domain()
+        if domain and domain.commtrack_settings:
+            config = domain.commtrack_settings.get_consumption_config()
+        else:
+            config = None
+
+        return compute_default_monthly_consumption(
+            self.case_id,
+            self.product_id,
+            config
+        )
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')
