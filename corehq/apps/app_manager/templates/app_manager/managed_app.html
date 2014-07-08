@@ -114,6 +114,14 @@
     </script>
     <script>
         $(document).ready(function() {
+            $('#edit_label').click(function () {
+                event.preventDefault();
+                ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
+                    'hitCallback': function () {
+                        document.location = $('#edit_label').attr('href');
+                    }
+                });
+            });
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
                     $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {

@@ -228,18 +228,6 @@
                 '{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
-    <script>
-        $(document).ready(function() {
-            $('#edit_label').click(function () {
-                event.preventDefault();
-                ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
-                    'hitCallback': function () {
-                        document.location = $('#edit_label').attr('href');
-                    }
-                });
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block head %}
