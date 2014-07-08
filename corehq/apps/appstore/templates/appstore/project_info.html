@@ -68,6 +68,10 @@
                 }
             });
         });
+
+        $('#download-new-project').click(function() {
+            ga('send', 'event', 'Exchange', 'Download As New Project', '{{ project }}');
+        });
     </script>
 {% endblock %}
 
@@ -271,7 +275,7 @@
                            data-toggle="modal"
                            data-target="#licenseAgreement"
                            href="#licenseAgreement"
-                           onclick="_gaq.push(['_trackEvent', 'Exchange', 'Download As New Project', '{{ project }}']);"
+                           id="download-new-project"
                         >
                             {% trans "Download As New Project" %}
                         </a>
