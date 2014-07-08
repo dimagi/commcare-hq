@@ -28,6 +28,16 @@
             });
         });
     </script>
+    <script>
+        function view_on_exchange(version_name) {
+            event.preventDefault();
+            ga('send', 'event', 'Exchange', 'View on exchange', version_name, {
+                'hitCallback': function () {
+                    document.location = $('#view-on-exchange').attr('href');
+                }
+            });
+        }
+    </script>
 {% endblock %}
 
 {% block main_column %}
