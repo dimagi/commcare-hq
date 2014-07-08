@@ -766,7 +766,7 @@ def _deploy_without_asking():
         execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
-        execute(version_compress)
+        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
@@ -977,7 +977,7 @@ def _do_compress():
     """Run Django Compressor after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env, user=env.sudo_user)
-    version_compress(save=True)
+    update_manifest(save=True)
 
 
 @parallel
@@ -990,11 +990,14 @@ def _do_collectstatic():
 
 @roles(*ROLES_DJANGO)
 @parallel
-def version_compress(save=False):
+def update_manifest(save=False):
     """
     Puts the manifest.json file with the references to the compressed files
     from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
     governs the actual static reference.
+
+    save=True saves the manifest.json file to redis, otherwise it grabs the
+    manifest.json file from redis and inserts it into the staticfiles dir.
     """
     withpath = env.code_root
     venv = env.virtualenv_root
@@ -1037,7 +1040,7 @@ def collectstatic():
     _require_target()
     update_code()
     _do_compress()
-    version_compress(save=True)
+    update_manifest(save=True)
     _do_collectstatic()
 
 
