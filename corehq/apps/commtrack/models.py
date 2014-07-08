@@ -1344,10 +1344,11 @@ class StockState(models.Model):
 
     @property
     def resupply_quantity_needed(self):
-        if self.get_daily_consumption() is not None:
+        monthly_consumption = self.get_monthly_consumption()
+        if monthly_consumption is not None:
             stock_levels = self.get_domain().commtrack_settings.stock_levels_config
             needed_quantity = int(
-                self.get_daily_consumption() * 30 * stock_levels.overstock_threshold
+                monthly_consumption * stock_levels.overstock_threshold
             )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:
