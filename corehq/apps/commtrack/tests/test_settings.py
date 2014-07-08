@@ -3,7 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig, StockRestoreConfig
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
+from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 
 
 class CommTrackSettingsTest(TestCase):
@@ -19,7 +19,7 @@ class CommTrackSettingsTest(TestCase):
         ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'},
         )
-        set_default_consumption_for_domain(domain.name, 5 * DAYS_IN_MONTH)
+        set_default_monthly_consumption_for_domain(domain.name, 5 * DAYS_IN_MONTH)
         restore_settings = ct_settings.get_ota_restore_settings()
         self.assertEqual(1, len(restore_settings.section_to_consumption_types))
         self.assertEqual('consumption', restore_settings.section_to_consumption_types['stock'])
