@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - time-ago-deployed
   - filter-suggested-properties
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
