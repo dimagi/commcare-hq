@@ -50,6 +50,15 @@
                 $('#author-input').hide(250);
             }
         });
+
+        $('#publish-now-button').on('click', function() {
+            event.preventDefault();
+            ga('send', 'event', 'Exchange', 'Publish Now', '?', {
+                'hitCallback': function() {
+                    $('#snapshot-form').submit();
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
@@ -104,7 +113,7 @@
         <a id="save-button" class="btn disable-on-submit">{% trans "Save and Publish Later" %}</a>
         <button type="submit"
                 class="btn btn-primary disable-on-submit"
-                onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Now', '?']);"
+                id="publish-now-button"
         >
             {% trans "Publish Now" %}
         </button>
