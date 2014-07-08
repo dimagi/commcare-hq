@@ -34,6 +34,6 @@ class ConsumptionCaseTest(StockTestBase):
             now,
             configuration=ConsumptionConfiguration(
                 min_periods=4,
-                default_consumption_function=_ten
+                default_monthly_consumption_function=_ten
             )
         ))

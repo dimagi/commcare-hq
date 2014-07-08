@@ -16,7 +16,7 @@ class ConsumptionConfiguration(object):
 
 
     def __init__(self, min_periods=None, min_window=None, max_window=None,
-                 default_consumption_function=None):
+                 default_monthly_consumption_function=None):
         def _default_if_none(value, default):
             return value if value is not None else default
 
@@ -33,7 +33,7 @@ class ConsumptionConfiguration(object):
         # data before this period will not be included in the calculation
         self.max_window = _default_if_none(max_window, self.DEFAULT_MAX_WINDOW)
 
-        self.default_consumption_function = _default_if_none(default_consumption_function,
+        self.default_monthly_consumption_function = _default_if_none(default_monthly_consumption_function,
                                                              DEFAULT_CONSUMPTION_FUNCTION)
 
     @classmethod
@@ -109,17 +109,17 @@ def compute_consumption_or_default(case_id,
     if consumption:
         return consumption
     else:
-        return compute_default_consumption(
+        return compute_default_monthly_consumption(
             case_id,
             product_id,
-            configuration
+            configuration,
         )
 
 
-def compute_default_consumption(case_id, product_id, configuration):
-    return configuration.default_consumption_function(
+def compute_default_monthly_consumption(case_id, product_id, configuration):
+    return configuration.default_monthly_consumption_function(
         case_id,
-        product_id
+        product_id,
     )
 
 
