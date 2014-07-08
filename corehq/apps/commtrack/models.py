@@ -1339,15 +1339,15 @@ class StockState(models.Model):
     def months_remaining(self):
         return months_of_stock_remaining(
             self.stock_on_hand,
-            self.get_consumption()
+            self.get_daily_consumption()
         )
 
     @property
     def resupply_quantity_needed(self):
-        if self.get_consumption() is not None:
+        if self.get_daily_consumption() is not None:
             stock_levels = self.get_domain().commtrack_settings.stock_levels_config
             needed_quantity = int(
-                self.get_consumption() * 30 * stock_levels.overstock_threshold
+                self.get_daily_consumption() * 30 * stock_levels.overstock_threshold
             )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:
@@ -1363,7 +1363,7 @@ class StockState(models.Model):
             DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
         )
 
-    def get_consumption(self):
+    def get_daily_consumption(self):
         if self.daily_consumption is not None:
             return self.daily_consumption
         else:
@@ -1381,7 +1381,7 @@ class StockState(models.Model):
             )
 
     def get_monthly_consumption(self):
-        consumption = self.get_consumption()
+        consumption = self.get_daily_consumption()
         if consumption is not None:
             return consumption * Decimal(DAYS_IN_MONTH)
         else:
