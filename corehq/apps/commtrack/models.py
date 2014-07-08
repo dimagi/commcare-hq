@@ -956,13 +956,9 @@ class SupplyPointCase(CommCareCase):
             }
         ]
 
-DAYS_PER_MONTH = 365.2425 / 12.
-
-# TODO make settings
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
-
 DEFAULT_CONSUMPTION = 10.  # per month
 
 
