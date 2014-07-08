@@ -1,5 +1,39 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
+var CC_DETAIL_SCREEN = {
+    getFieldHtml: function (field) {
+        var text = field;
+        if (CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
+            text = text.substring(text.indexOf(":") + 1);
+        }
+        var parts = text.split('/');
+        // wrap all parts but the last in a label style
+        for (var j = 0; j < parts.length - 1; j++) {
+            parts[j] = ('<span class="label label-info">'
+                        + parts[j] + '</span>');
+        }
+        if (parts[j][0] == '#') {
+            parts[j] = ('<span class="label label-info">'
+                        + CC_DETAIL_SCREEN.toTitleCase(parts[j]) + '</span>');
+        } else {
+            parts[j] = ('<code style="display: inline-block;">'
+                        + parts[j] + '</code>');
+        }
+        return parts.join('<span style="color: #DDD;">/</span>');
+    },
+    isAttachmentProperty: function (value) {
+        return value && value.indexOf("attachment:") === 0;
+    },
+    toTitleCase: function (str) {
+        return (str
+            .replace(/[_\/-]/g, ' ')
+            .replace(/#/g, '')
+        ).replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
+};
+
 var SortRow = function (field, type, direction) {
     var self = this;
     self.field = ko.observable(field);
@@ -13,16 +47,8 @@ var SortRow = function (field, type, direction) {
         window.sortRowSaveButton.fire('change');
     });
 
-    self.labelTextItems = ko.computed(function () {
-        var splitField = self.field().split('/');
-
-        splitField.pop(); // throw away last item (which is field text)
-        return splitField
-    });
-
-    self.fieldText = ko.computed(function () {
-        var splitField = self.field().split('/');
-        return splitField.pop();
+    self.fieldHtml = ko.computed(function () {
+        return CC_DETAIL_SCREEN.getFieldHtml(self.field());
     });
 
     self.ascendText = ko.computed(function () {
@@ -124,24 +150,11 @@ function ParentSelect(init) {
 var DetailScreenConfig = (function () {
     "use strict";
 
-    function toTitleCase(str) {
-        return (str
-            .replace(/[_\/-]/g, ' ')
-            .replace(/#/g, '')
-        ).replace(/\w\S*/g, function (txt) {
-            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-        });
-    }
-
     function getPropertyTitle(property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         var i = property.indexOf(":");
-        return toTitleCase(property.substring(i + 1));
-    }
-
-    function isAttachmentProperty(value) {
-        return value && value.indexOf("attachment:") === 0;
+        return CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
     }
 
     var DetailScreenConfig, Screen, Column, sortRows;
@@ -177,7 +190,7 @@ var DetailScreenConfig = (function () {
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
-            var icon = (isAttachmentProperty(this.original.field)
+            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                            ? COMMCAREHQ.icons.PAPERCLIP : null);
 
 
@@ -326,7 +339,7 @@ var DetailScreenConfig = (function () {
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                that.screen.config.sortRows.addSortRow(that.field.ui.text(), '', '');
+                that.screen.config.sortRows.addSortRow(that.field.val(), '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
@@ -455,7 +468,7 @@ var DetailScreenConfig = (function () {
                 source: function (request, response) {
                     var availableTags = _.map(that.properties, function(value) {
                         var label = value;
-                        if (isAttachmentProperty(value)) {
+                        if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
                             label = ('<span class="icon-paper-clip"></span> '
                                      + label.substring(label.indexOf(":") + 1));
                         }
@@ -616,26 +629,9 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
 
                 if (!column.field.edit) {
-                    var text = column.field.val();
-                    if (isAttachmentProperty(text)) {
-                        text = text.substring(text.indexOf(":") + 1);
-                    }
-                    var parts = text.split('/');
-                    // wrap all parts but the last in a label style
-                    for (var j = 0; j < parts.length - 1; j++) {
-                        parts[j] = ('<span class="label label-info">'
-                                    + parts[j] + '</span>');
-                    }
-                    if (parts[j][0] == '#') {
-                        parts[j] = ('<span class="label label-info">'
-                                    + toTitleCase(parts[j]) + '</span>');
-                    } else {
-                        parts[j] = ('<code style="display: inline-block;">'
-                                    + parts[j] + '</code>');
-                    }
-                    column.field.setHtml(parts.join('<span style="color: #DDD;">/</span>'));
+                    column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
                 }
-                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
+                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui);
                 dsf.append(column.format_warning);
                 if (column.field.value && !field_val_re.test(column.field.value)) {
                     column.format_warning.show().parent().addClass('error');

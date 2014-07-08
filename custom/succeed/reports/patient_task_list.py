@@ -18,7 +18,7 @@ from corehq.pillows.base import restore_property_dict
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed import PatientInfoReport
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, \
-    INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_VIEW_UPDATE_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR
+    INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR
 from custom.succeed.utils import is_succeed_admin, has_any_role, SUCCEED_CM_APPNAME, get_app_build
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.decorators.memoized import memoized
@@ -96,7 +96,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
             url = reverse('case_details', args=[self.domain, self.get_property("_id")])
             return url + '#!history'
         else:
-            return self.get_form_url(self.app_dict, self.latest_build, CM_APP_VIEW_UPDATE_TASK_MODULE, CM_UPDATE_TASK, self.get_property("_id"))
+            return self.get_form_url(self.app_dict, self.latest_build, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, self.get_property("_id"))
 
 
     @property

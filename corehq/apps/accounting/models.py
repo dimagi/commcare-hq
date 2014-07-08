@@ -788,8 +788,9 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
-    def update_subscription(self, date_end=None, date_delay_invoicing=None,
-                            do_not_invoice=False, salesforce_contract_id=None,
+    def update_subscription(self, date_start=None, date_end=None,
+                            date_delay_invoicing=None, do_not_invoice=False,
+                            salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -797,6 +798,20 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is None or self.date_end > today:
             self.date_end = date_end
+
+        if (self.date_start > today and date_start is not None
+            and date_start > today and not date_start > self.date_end
+        ):
+            self.date_start = date_start
+        elif date_start > self.date_end:
+            raise SubscriptionAdjustmentError(
+                "Can't have a subscription start after the end date."
+            )
+        elif date_start is not None:
+            raise SubscriptionAdjustmentError(
+                "Can't change the start date of a subscription to a date that "
+                "is today or in the past."
+            )
 
         if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
             self.date_delay_invoicing = date_delay_invoicing
