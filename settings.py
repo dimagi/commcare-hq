@@ -785,6 +785,8 @@ MAILCHIMP_APIKEY = ''
 MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
 
+SQL_REPORTING_DATABASE_URL = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -823,9 +825,10 @@ db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
 if UNIT_TESTING:
     db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
 
-SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
-    **db_settings
-)
+if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
+    SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
+        **db_settings
+    )
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
