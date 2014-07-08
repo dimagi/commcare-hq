@@ -109,14 +109,14 @@ def compute_consumption_or_default(case_id,
     if consumption:
         return consumption
     else:
-        return compute_default_consumption(
+        return compute_default_monthly_consumption(
             case_id,
             product_id,
-            configuration
+            configuration,
         )
 
 
-def compute_default_consumption(case_id, product_id, configuration):
+def compute_default_monthly_consumption(case_id, product_id, configuration):
     return configuration.default_monthly_consumption_function(
         case_id,
         product_id,
