@@ -43,6 +43,14 @@
                 $('#publish_{{ snapshot.name }}').click(function() {
                     ga('send', 'event', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
                 });
+                $('#view_{{ snapshot.name }}').click(function() {
+                    event.preventDefault();
+                    ga('send', 'event', 'Exchange', 'View', '{{ snapshot.name }}', {
+                        'hitCallback': function () {
+                            document.location = $('#view_{{ snapshot.name }}').attr('href');
+                        }
+                    });
+                });
             {% endfor %}
         });
 
@@ -85,7 +93,7 @@
             <td>
                 <a class="btn btn-primary"
                    href="{% url "project_info" snapshot.name %}"
-                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ snapshot.name }}']);"
+                   id="view_{{ snapshot.name }}"
                 >
                     View
                 </a>
