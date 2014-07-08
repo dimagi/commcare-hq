@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_consumption
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_monthly_consumption
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
@@ -1375,7 +1375,7 @@ class StockState(models.Model):
             else:
                 config = None
 
-            return compute_default_consumption(
+            return compute_default_monthly_consumption(
                 self.case_id,
                 self.product_id,
                 config
