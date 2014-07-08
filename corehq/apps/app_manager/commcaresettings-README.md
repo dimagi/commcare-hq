@@ -32,6 +32,7 @@ with each element containing the following properties:
 * `values_txt` - Extra help text describing what values can be entered
 * `group` - Presentational; defines how the properties get grouped on HQ 
 * `disabled` - Set to `true` for deprecated values we don't want to show up in the UI anymore
+* `force` - Set to `true` to have the `force` attribute of the setting set when building the profile. Only applies when type='properties' (default).
 
 ## Example
 ```yaml

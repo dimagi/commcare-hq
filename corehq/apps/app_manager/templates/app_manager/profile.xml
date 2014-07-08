@@ -13,7 +13,7 @@
 
     <!-- Properties configured on CommCare HQ 1.0 -->
     {% for key, value in app_profile.properties.items %}{% if value != None %}
-        <property key="{{ key }}" value="{{ value }}" />
+        <property key="{{ key }}" value="{{ value.value }}"{% if value.force %} force="true"{% endif %}/>
     {% endif %}{% endfor %}
 
     <!-- end -->
@@ -24,10 +24,10 @@
             <time>0</time>
         </reminders>
         <package active="false"/>
-        {% for feature, value in app_profile.features.items %}{% if value != None and feature != 'users'%}
-            <{{ feature }} active="{{ value }}" />
+        {% for feature, value in app_profile.features.items %}{% if value.value != None and feature != 'users'%}
+            <{{ feature }} active="{{ value.value }}" />
         {% endif %}{% endfor %}
-        <users active="{{ app_profile.features.users|default:'true' }}">
+        <users active="{{ app_profile.features.users.value|default:'true' }}">
             {% if app.show_user_registration %}
             <registration>{{ app.get_user_registration.wrapped_xform.data_node.tag_xmlns }}</registration>
             {% endif %}
