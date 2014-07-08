@@ -1379,7 +1379,7 @@ class StockState(models.Model):
                 self.case_id,
                 self.product_id,
                 config
-            )
+            ) / DAYS_IN_MONTH
 
     def get_monthly_consumption(self):
         consumption = self.get_daily_consumption()
