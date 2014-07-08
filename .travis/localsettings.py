@@ -2,6 +2,8 @@ import os
 
 ####### Configuration for CommCareHQ Running on Travis-CI #####
 
+BASE_ADDRESS = '127.0.0.1:8000'
+
 ####### Database config. This assumes Postgres ####### 
 DATABASES = {
     'default': {
