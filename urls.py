@@ -6,6 +6,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 
@@ -60,7 +61,8 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    (r'^favicon\.ico$', RedirectView.as_view(url='%shqwebapp/img/favicon2.png' % settings.STATIC_URL)),
+    (r'^favicon\.ico$', RedirectView.as_view(
+        url=static('hqwebapp/img/favicon2.png'))),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),

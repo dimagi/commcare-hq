@@ -314,7 +314,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
-                self.request.POST, can_use_custom_logo=self.can_use_custom_logo
+                self.request.POST,
+                self.request.FILES,
+                can_use_custom_logo=self.can_use_custom_logo
             )
 
         if self.can_user_see_meta:

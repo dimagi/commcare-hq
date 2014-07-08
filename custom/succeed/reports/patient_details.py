@@ -20,7 +20,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     fields = []
     es_results=None
 
-
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         if domain and project and user is None:

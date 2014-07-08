@@ -1,14 +1,16 @@
 from couchdbkit import ResourceNotFound
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from corehq.apps.fixtures.views import fixtures_home, FixtureViewMixIn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext as _
 
 
-class FixtureInterface(GenericReportView):
-    section_name = ugettext_noop("Lookup Tables")
+class FixtureInterface(FixtureViewMixIn, GenericReportView):
     base_template = 'fixtures/fixtures_base.html'
     asynchronous = False
     dispatcher = FixtureInterfaceDispatcher
@@ -48,10 +50,16 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     fields = ['corehq.apps.fixtures.interface.FixtureSelectFilter']
 
     @property
-    def report_context(self):
+    def view_response(self):
         if not self.has_tables():
-            self.report_template_path = 'fixtures/no_table.html'
-            return {"selected_table": self.table.get("table_id", "")}
+            messages.info(self.request, _("You don't have any tables defined yet - create tables to view them."))
+            return HttpResponseRedirect(fixtures_home(self.domain))
+        else:
+            return super(FixtureViewInterface, self).view_response
+
+    @property
+    def report_context(self):
+        assert self.has_tables()
         if not self.request.GET.get("table_id", None):
             return {"table_not_selected": True}
         try:
@@ -96,6 +104,6 @@ class FixtureEditInterface(FixtureInterface):
         return context
 
     @property
+    @memoized
     def data_types(self):
-        fdts = list(FixtureDataType.by_domain(self.domain))
-        return fdts
+        return list(FixtureDataType.by_domain(self.domain))

@@ -67,7 +67,7 @@ CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
 ####### Bitly ########
 
-BITLY_LOGIN = 'dimagi'
+BITLY_LOGIN = 'dimagi'  # set to None to disable bitly app url shortening (useful offline)
 BITLY_APIKEY = '*******'
 
 

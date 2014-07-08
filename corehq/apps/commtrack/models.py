@@ -34,6 +34,7 @@ from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
 from django.db.models.signals import post_save, post_delete
+from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -179,7 +180,6 @@ class Product(Document):
         return [
             'name',
             'unit',
-            'code_',
             'description',
             'category',
             'program_id',
@@ -191,6 +191,7 @@ class Product(Document):
         product_dict = {}
 
         product_dict['id'] = self._id
+        product_dict['product_id'] = self.code_
 
         for attr in self._csv_attrs():
             real_attr = attr[0] if isinstance(attr, tuple) else attr
@@ -219,6 +220,8 @@ class Product(Document):
             p = cls.get(id)
         else:
             p = cls()
+
+        p.code = row.get('product_id')
 
         for attr in cls._csv_attrs():
             if attr in row or (isinstance(attr, tuple) and attr[0] in row):
@@ -826,7 +829,7 @@ class SupplyPointCase(CommCareCase):
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
         username = const.COMMTRACK_USERNAME
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=dateparse.json_format_datetime))
         submit_case_blocks(casexml, domain, username, const.get_commtrack_user_id(domain),
                            xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
         return cls.get(caseblock._id)
@@ -1270,7 +1273,7 @@ class CommTrackUser(CommCareUser):
 
     def submit_location_block(self, caseblock):
         submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml()),
+            ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime)),
             self.domain,
             self.username,
             self._id

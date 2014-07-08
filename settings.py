@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import sys
 import os
+from urllib import urlencode
 from django.contrib import messages
 
 # odd celery fix
@@ -157,9 +158,11 @@ DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -296,6 +299,7 @@ HQ_APPS = (
     'custom.uth',
 
     'custom.colalife',
+    'custom.intrahealth',
 )
 
 TEST_APPS = ()
@@ -306,7 +310,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.kookoo',
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
@@ -352,10 +355,6 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
-
-
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -457,6 +456,11 @@ BROKER_URL = 'django://'  # default django db based
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery'
+
+# This is the celery queue to use for running reminder rules.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_RULE_QUEUE = 'celery'
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -807,6 +811,19 @@ else:
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
 
+### Reporting database - use same DB as main database
+db_settings = DATABASES["default"].copy()
+db_settings['PORT'] = db_settings.get('PORT', '5432')
+options = db_settings.get('OPTIONS')
+db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
+
+if UNIT_TESTING:
+    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+
+SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
+    **db_settings
+)
+
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
@@ -974,6 +991,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
+IVR_BACKEND_MAP = {
+    "91": "MOBILE_BACKEND_KOOKOO",
+}
+
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
 IVR_GATEWAY_TIMEOUT = 60
@@ -1040,8 +1061,7 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1051,6 +1071,10 @@ PILLOWTOPS = {
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
         'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.intrahealth.models.CouvertureFluffPillow',
+        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
+        'custom.intrahealth.models.IntraHealthFluffPillow',
+        'custom.intrahealth.models.RecapPassagePillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1145,6 +1169,8 @@ DOMAIN_MODULE_MAP = {
     'gc': 'custom.trialconnect',
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
+    'ipm-senegal': 'custom.intrahealth',
+    'testing-ipm-senegal': 'custom.intrahealth',
 
     'crs-remind': 'custom.apps.crs_reports',
 

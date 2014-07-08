@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load hq_shared_tags %}
 {% block title %}Welcome to CommCareHQ!{% endblock title %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -8,11 +9,11 @@
     </script>
 {% endblock %}
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/mainlogin.css"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/screen.css" media="screen, projection">
-	<link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/stylesheets/blueprint/print.css" media="print">
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/landingpage.css"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/css/mainlogin.css' %}"/>
+    <link rel="stylesheet" href="{% static 'hqwebapp/stylesheets/blueprint/screen.css' %}" media="screen, projection">
+	<link rel="stylesheet" href="{% static 'hqwebapp/stylesheets/blueprint/print.css' %}" media="print">
+    <link rel="stylesheet" href="{% static 'hqwebapp/css/landingpage.css' %}"/>
+    <link rel="stylesheet" href="{% static 'hqwebapp/css/splits.css' %}" />
     <style>
         #main_container { 
             margin: 1em auto;
@@ -70,13 +71,13 @@
 	<hr>
 	<div class="three-columns">
 	    <div class="col-1">
-			 <img src="{{ STATIC_URL }}hqwebapp/img/home/hh_visit.jpg" title="Household visit in Tanzania"/>
+			 <img src="{% static 'hqwebapp/img/home/hh_visit.jpg' %}" title="Household visit in Tanzania"/>
 		</div>
 		<div class="col-2">
-			<img src="{{ STATIC_URL }}hqwebapp/img/home/commtab.jpg" title="CommCare Android, on a tablet and phone."/>
+			<img src="{% static 'hqwebapp/img/home/commtab.jpg' %}" title="CommCare Android, on a tablet and phone."/>
 		</div>
 		<div class="col-3">
-			<img src="{{ STATIC_URL }}hqwebapp/img/home/training.jpg" title="CommCare training"/>
+			<img src="{% static 'hqwebapp/img/home/training.jpg' %}" title="CommCare training"/>
 		</div>
 	</div>
     <div class="clear_hack">&nbsp;</div>

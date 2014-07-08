@@ -35,11 +35,12 @@
         <script type="text/javascript">
             _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
             _gaq.push(['_setDomainName', 'none']);
-            _gaq.push(['_trackPageview']);
-            {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
-            {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
+
             _gaq.push(['_setCustomVar', 1, 'is_dimagi', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}', 3]);
-            {% get_report_analytics_tag request %}
+            _gaq.push(['_setCustomVar', 2, 'user_id', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}', 3]);
+
+            // Include _trackPageview request after setting custom variables
+            _gaq.push(['_trackPageview']);
 
             (function() {
                 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;

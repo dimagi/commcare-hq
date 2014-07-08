@@ -147,3 +147,4 @@
   requires: "{$parent.doc_type}='Application'"
   preview: true
   disabled: true
+  disabled_txt: Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.

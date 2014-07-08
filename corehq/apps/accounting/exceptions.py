@@ -44,3 +44,7 @@ class PaymentRequestError(Exception):
 
 class PaymentHandlerError(Exception):
     pass
+
+
+class BillingContactInfoError(Exception):
+    pass

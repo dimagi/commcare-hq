@@ -126,6 +126,15 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
+    def test_picture_format(self):
+        self._test_generic_suite('app_picture_format', 'suite-picture-format')
+
+    def test_audio_format(self):
+        self._test_generic_suite('app_audio_format', 'suite-audio-format')
+
+    def test_attached_picture(self):
+        self._test_generic_suite('app_attached_image', 'suite-attached-image')
+
     def test_form_workflow_previous(self):
         """
         m0 - standard module - no case
@@ -157,6 +166,15 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
+
+    def test_form_filter(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(1).get_form(1)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
 
 class RegexTest(SimpleTestCase):

@@ -1,5 +1,6 @@
 import datetime
 from dimagi.utils.dates import months_between
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.users.models import CommCareCase
 from custom.opm.opm_reports.constants import InvalidRow
 
@@ -34,40 +35,41 @@ class ConditionsMet(object):
 
     method_map = {
         "atri": [
-            ('name', "List of Beneficiary", True),
-            ('awc_name', "AWC Name", True),
-            ('block_name', "Block Name", True),
-            ('husband_name', "Husband Name", True),
-            ('status', "Current status", True),
-            ('preg_month', 'Pregnancy Month', True),
-            ('child_age', "Child Age", True),
-            ('window', "Window", True),
-            ('one', "1", True),
-            ('two', "2", True),
-            ('three', "3", True),
-            ('four', "4", True),
-            ('five', "5", True),
-            ('cash', "Cash to be transferred", True),
-            ('case_id', 'Case ID', True),
-            ('owner_id', "Owner Id", False),
-            ('closed', 'Closed', False)
+            ('name', _("List of Beneficiary"), True),
+            ('awc_name', _("AWC Name"), True),
+            ('block_name', _("Block Name"), True),
+            ('husband_name', _("Husband Name"), True),
+            ('status', _("Current status"), True),
+            ('preg_month', _('Pregnancy Month'), True),
+            ('child_age', _("Child Age"), True),
+            ('window', _("Window"), True),
+            ('one', _("1"), True),
+            ('two', _("2"), True),
+            ('three', _("3"), True),
+            ('four', _("4"), True),
+            ('five', _("5"), True),
+            ('cash', _("Payment Amount"), True),
+            ('case_id', _('Case ID'), True),
+            ('owner_id', _("Owner Id"), False),
+            ('closed', _('Closed'), False)
         ],
         'wazirganj': [
-            ('name', "List of Beneficiary", True),
-            ('awc_name', "AWC Name", True),
-            ('block_name', "Block Name", True),
-            ('status', "Current status", True),
-            ('preg_month', 'Pregnancy Month', True),
-            ('child_age', "Child Age", True),
-            ('window', "Window", True),
-            ('one', "1", True),
-            ('two', "2", True),
-            ('four', "3", True),
-            ('five', "4", True),
-            ('cash', "Cash to be transferred", True),
-            ('case_id', 'Case ID', True),
-            ('owner_id', "Owner Id", False),
-            ('closed', 'Closed', False)
+            ('name', _("List of Beneficiary"), True),
+            ('awc_name', _("AWC Name"), True),
+            ('block_name', _("Block Name"), True),
+            ('husband_name', _("Husband Name"), True),
+            ('status', _("Current status"), True),
+            ('preg_month', _('Pregnancy Month'), True),
+            ('child_age', _("Child Age"), True),
+            ('window', _("Window"), True),
+            ('one', _("1"), True),
+            ('two', _("2"), True),
+            ('three', _("3"), True),
+            ('four', _("4"), True),
+            ('cash', _("Payment Amount"), True),
+            ('case_id', _('Case ID'), True),
+            ('owner_id', _("Owner Id"), False),
+            ('closed', _('Closed'), False)
         ]
     }
 
