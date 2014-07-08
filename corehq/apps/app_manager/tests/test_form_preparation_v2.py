@@ -80,14 +80,6 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.update_case.condition.type = 'always'
         schedule = self.form.schedule
         schedule.anchor = 'edd'
-        xml = self.get_xml('schedule').format(form_id=self.form.schedule_form_id)
-        self.assertXmlEqual(xml, self.form.render_xform())
-
-    def test_form_schedule(self):
-        self.form.requires = 'case'
-        self.form.actions.update_case.condition.type = 'always'
-        schedule = self.form.schedule
-        schedule.anchor = 'edd'
         xml = self.get_xml('schedule').format(
             form_id=self.form.schedule_form_id,
             form_index=1

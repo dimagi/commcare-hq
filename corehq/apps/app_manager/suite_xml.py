@@ -787,27 +787,14 @@ class SuiteGenerator(SuiteGeneratorBase):
         return r
 
     def detail_variables(self, module, detail, detail_column_infos):
-        has_schedule_columns = any((ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos))
+        has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
         if module.has_schedule and has_schedule_columns:
             forms_due = []
             for form in module.get_forms():
                 fixture_id = self.id_strings.schedule_fixture(form)
                 anchor = form.schedule.anchor
 
-                expires = ScheduleFixtureInstance(fixture_id).expires()
-                valid_not_expired = XPath.and_(
-                    XPath(SCHEDULE_PHASE).eq(form.id),
-                    XPath(anchor).neq(XPath.string('')),
-                    XPath.group(XPath.or_(
-                        XPath(expires).eq(XPath.string('')),
-                        "today() < ({} + {})".format(XPath.date(anchor), expires)
-                    ))
-                )
-
-                visit_num_valid = XPath('@id > {}'.format(
-                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-                ))
-
+                # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
                 within_window = XPath.or_(
                     XPath('@late_window').eq(XPath.string('')),
                     XPath('today() <= ({} + {} + {})'.format(
@@ -817,21 +804,52 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 )
 
-                due = ScheduleFixtureInstance(fixture_id).visit().\
+                due_first = ScheduleFixtureInstance(fixture_id).visit().\
+                    select_raw(within_window).\
+                    select_raw("1").slash('@due')
+
+                # current_schedule_phase = 1 and anchor != '' and (
+                #   instance(...)/schedule/@expires = ''
+                #   or
+                #   today() < (date(anchor) + instance(...)/schedule/@expires)
+                # )
+                expires = ScheduleFixtureInstance(fixture_id).expires()
+                valid_not_expired = XPath.and_(
+                    XPath(SCHEDULE_PHASE).eq(form.id + 1),
+                    XPath(anchor).neq(XPath.string('')),
+                    XPath.group(
+                        XPath.or_(
+                            XPath(expires).eq(XPath.string('')),
+                            "today() < ({} + {})".format(XPath.date(anchor), expires)
+                        )))
+
+                visit_num_valid = XPath('@id > {}'.format(
+                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+                ))
+
+                due_not_first = ScheduleFixtureInstance(fixture_id).visit().\
                     select_raw(visit_num_valid).\
                     select_raw(within_window).\
                     select_raw("1").slash('@due')
 
                 name = 'next_{}'.format(form.schedule_form_id)
                 forms_due.append(name)
-                yield DetailVariable(
-                    name=name,
-                    function=XPath.if_(
-                        valid_not_expired,
-                        '{} + {}'.format(XPath.date(anchor), XPath.int(due)),
-                        0
+
+                def due_date(due_days):
+                    return '{} + {}'.format(XPath.date(anchor), XPath.int(due_days))
+
+                xpath_phase_set = XPath.if_(valid_not_expired, due_date(due_not_first), 0)
+                if form.id == 0:  # first form must cater for empty phase
+                    yield DetailVariable(
+                        name=name,
+                        function=XPath.if_(
+                            XPath(SCHEDULE_PHASE).eq(XPath.string('')),
+                            due_date(due_first),
+                            xpath_phase_set
+                        )
                     )
-                )
+                else:
+                    yield DetailVariable(name=name, function=xpath_phase_set)
 
             yield DetailVariable(
                 name='next_due',
@@ -1406,7 +1424,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ))
             for i, visit in enumerate(schedule.visits):
                 f.schedule.visits.append(ScheduleVisit(
-                    id=i,
+                    id=i+1,
                     due=visit.due,
                     late_window=visit.late_window
                 ))

@@ -35,6 +35,12 @@
             <locale id="m0.case_short.title"/>
         </text>
     </title>
+    <variables>
+        <next_18a9fb function="if(current_schedule_phase = '', date(edd) + int(instance('schedule:m0:f0')/schedule/visit[@late_window = '' or today() &lt;= (date(edd) + int(@due) + int(@late_window))][1]/@due), if(current_schedule_phase = 1 and edd != '' and (instance('schedule:m0:f0')/schedule/@expires = '' or today() &lt; (date(edd) + instance('schedule:m0:f0')/schedule/@expires)), date(edd) + int(instance('schedule:m0:f0')/schedule/visit[@id &gt; last_visit_number_18a9fb][@late_window = '' or today() &lt;= (date(edd) + int(@due) + int(@late_window))][1]/@due), 0))"/>
+        <next_149620 function="if(current_schedule_phase = 2 and dob != '' and (instance('schedule:m0:f1')/schedule/@expires = '' or today() &lt; (date(dob) + instance('schedule:m0:f1')/schedule/@expires)), date(dob) + int(instance('schedule:m0:f1')/schedule/visit[@id &gt; last_visit_number_149620][@late_window = '' or today() &lt;= (date(dob) + int(@due) + int(@late_window))][1]/@due), 0)"/>
+        <next_due function="min(next_18a9fb,next_149620)"/>
+        <is_late function="next_due &lt; today()"/>
+    </variables>
     <field sort="default">
         <header>
             <text>
@@ -166,7 +172,19 @@
         </header>
         <template>
             <text>
-                <xpath function="instance('indicators_call-center')/indicators/case[@id = current()/@case_id]/activeClientsLast30Day"/>
+                <xpath function="instance('indicators:call-center')/indicators/case[@id = current()/@case_id]/activeClientsLast30Day"/>
+            </text>
+        </template>
+    </field>
+    <field>
+        <header>
+            <text>
+                <locale id="m0.case_short.case_schedule:nextdue_11.header"/>
+            </text>
+        </header>
+        <template>
+            <text>
+                <xpath function="nextdue"/>
             </text>
         </template>
     </field>
@@ -297,7 +315,7 @@
         </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="indicators_call-center" src="jr://fixture/indicators:call-center"/>
+    <instance id="indicators:call-center" src="jr://fixture/indicators:call-center"/>
     <session>
         <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open'][(filter = 'danny')]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
@@ -311,15 +329,15 @@
 </menu>
 <fixture id="schedule:m0:f0">
     <schedule expires="120" post_schedule_increment="15">
-        <visit id="0" due="5" late_window="4"/>
-        <visit id="1" due="10" late_window="9"/>
-        <visit id="2" due="20" late_window="5"/>
+        <visit id="1" due="5" late_window="4"/>
+        <visit id="2" due="10" late_window="9"/>
+        <visit id="3" due="20" late_window="5"/>
     </schedule>
 </fixture>
 <fixture id="schedule:m0:f1">
     <schedule>
-        <visit id="0" due="7" late_window="4"/>
-        <visit id="1" due="15"/>
+        <visit id="1" due="7" late_window="4"/>
+        <visit id="2" due="15"/>
     </schedule>
 </fixture>
 </suite>
