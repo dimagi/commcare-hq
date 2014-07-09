@@ -789,14 +789,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if is_user_registration:
             if not app.show_user_registration:
                 raise Http404()
-            if not app.user_registration.unique_id:
-                # you have to do it this way because get_user_registration
-                # changes app.user_registration.unique_id
-                form = app.get_user_registration()
-                app.save()
-            else:
-                form = app.get_user_registration()
-
+            form = app.get_user_registration()
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -1748,7 +1741,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('name', None),
         ('platform', None),
         ('recipients', None),
-        ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
         ('secure_submissions', None),
@@ -1790,6 +1782,12 @@ def edit_app_attr(request, domain, app_id, attr):
         except PermissionDenied:
             app.cloudcare_enabled = False
 
+    if should_edit('show_user_registration'):
+        show_user_registration = hq_settings['show_user_registration']
+        app.show_user_registration = show_user_registration
+        if show_user_registration:
+            #  load the form source and also set its unique_id
+            app.get_user_registration()
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
