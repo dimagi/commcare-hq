@@ -2035,14 +2035,11 @@ class DomainInvitation(Invitation):
 
     @classmethod
     def by_email(cls, email, is_active=True):
-        key = [email]
-        # Is there any reason not to just pass the folowing function the `key` keyword argument as opposed to a start and endkey?
         return cls.view("users/open_invitations_by_email",
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
+                        reduce=False,
+                        key=[email],
+                        include_docs=True,
+                        ).all()
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
