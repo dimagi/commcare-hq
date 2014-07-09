@@ -53,7 +53,7 @@ def get(doc_id):
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
-        
+
         <Meta>
             <timeStart />
             <timeEnd />
@@ -65,10 +65,11 @@ class Metadata(DocumentSchema):
 
             <!-- CommCare extension -->
             <appVersion />
+            <location />
         </Meta>
-    
+
     See spec: https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaMetaDataSchema
-    
+
     username is not part of the spec but included for convenience
     """
     timeStart = DateTimeProperty()
@@ -79,6 +80,7 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
     appVersion = StringProperty()
+    location = StringProperty()
 
 
 class XFormOperation(DocumentSchema):
@@ -140,10 +142,22 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def uiversion(self):
         return self.form.get(const.TAG_UIVERSION, "")
-    
+
     @property
     def metadata(self):
-        if (const.TAG_META) in self.form:
+        def get_text(node):
+            if node is None:
+                return None
+            if isinstance(node, dict) and '#text' in node:
+                value = node['#text']
+            else:
+                value = node
+
+            if not isinstance(value, basestring):
+                value = unicode(value)
+            return value
+
+        if const.TAG_META in self.form:
             def _clean(meta_block):
                 ret = copy(dict(meta_block))
                 for key in ret.keys():
@@ -153,11 +167,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
                 # couchdbkit erroneously converts appVersion to a Decimal just because it is possible (due to it being within a "dynamic" property)
                 # (see https://github.com/benoitc/couchdbkit/blob/a23343e539370cffcf8b0ce483c712911bb022c1/couchdbkit/schema/properties.py#L1038)
-                if meta_block.get('appVersion') is not None and not isinstance(meta_block['appVersion'], basestring):
-                    if isinstance(meta_block['appVersion'], dict) and '#text' in meta_block['appVersion']:
-                        ret['appVersion'] = unicode(meta_block['appVersion']['#text'])
-                    else:
-                        ret['appVersion'] = unicode(meta_block['appVersion'])
+                ret['appVersion'] = get_text(meta_block.get('appVersion'))
+                ret['location'] = get_text(meta_block.get('location'))
 
                 # couchdbkit chokes on dates that aren't actually dates
                 # so check their validity before passing them up
