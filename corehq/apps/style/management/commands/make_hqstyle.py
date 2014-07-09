@@ -7,12 +7,6 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = "Compiles all the files necessary for the UI of CommCare HQ from HQ Bootstrap. Make sure lessc and uglifyjs are installed"
 
-    less_files = [
-        "hqstyle-core",
-        "legacy/app_manager",
-        "legacy/core",
-        "hqstyle-mobile-c2",
-    ]
     # NOTE: Order matters for the bootstrap js files.
     js_bootstrap = [
         "transition",
@@ -61,7 +55,6 @@ class Command(BaseCommand):
             print "NOTICE: Using uglifyjs as '%s'" % self.uglifyjs
 
         self.compile_core_js()
-        self.compile_css()
         self.copy_bootstrap_images()
         self.copy_font_awesome()
 
@@ -85,13 +78,6 @@ class Command(BaseCommand):
             filestring = open(os.path.join(source_dir, file_pattern % f), "r").read()
             all_files.write(filestring)
             all_files.write("\n")
-
-    def compile_css(self):
-        print "\nCompiling CSS from LESS Files in HQStyle"
-        for less_file in self.less_files:
-            self.compile_file(self.lessc,
-                os.path.join(self.hqstyle_src, "static/style/less/%s.less" % less_file),
-                os.path.join(self.destination, "css/%s.css" % less_file))
 
     def copy_bootstrap_images(self):
         print "\nCopying Images from HQ Bootstrap"

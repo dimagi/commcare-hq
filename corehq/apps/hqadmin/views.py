@@ -862,7 +862,7 @@ def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html
 
-    db_settings = settings.DATABASES["default"]
+    db_settings = settings.DATABASES["default"].copy()
     db_settings['PORT'] = db_settings.get('PORT', '') or '5432'
     db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
         **db_settings

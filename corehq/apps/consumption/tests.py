@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_consumption_for_domain,
+from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_monthly_consumption_for_domain,
     set_default_consumption_for_product, set_default_consumption_for_supply_point
 )
 from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
@@ -98,10 +98,10 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
 
     def testSetForDomain(self):
         self.assertEqual(None, DefaultConsumption.get_domain_default(domain))
-        default = set_default_consumption_for_domain(domain, 50)
+        default = set_default_monthly_consumption_for_domain(domain, 50)
         self.assertEqual(50, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
-        updated = set_default_consumption_for_domain(domain, 40)
+        updated = set_default_monthly_consumption_for_domain(domain, 40)
         self.assertEqual(default._id, updated._id)
         self.assertEqual(40, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
