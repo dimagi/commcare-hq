@@ -50,10 +50,8 @@ class HQUserType(object):
     toggle_defaults = [True, False, False, False, False]
 
     @classmethod
-    def use_defaults(cls, show_all=False):
+    def use_defaults(cls):
         defaults = cls.toggle_defaults
-        if show_all:
-            defaults = [True] * len(cls.human_readable)
         return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable))]
 
     @classmethod
