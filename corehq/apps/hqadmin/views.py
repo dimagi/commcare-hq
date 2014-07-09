@@ -27,6 +27,7 @@ from django.core import management
 from django.template.loader import render_to_string
 from django.http import Http404
 
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.hqadmin.history import get_recent_changes
@@ -657,8 +658,94 @@ def system_info(request):
     context.update(check_celery_health())
     context.update(check_memcached())
     context.update(check_es_cluster_health())
+    context.update(foo())
 
     return render(request, "hqadmin/system_info.html", context)
+
+def foo():
+    comparisons = []
+
+    #  Users
+    db = CommCareUser.get_db()
+    couch_docs = len(db.view(
+        'users/by_username',
+        reduce=False
+    ))
+    print "USERS YO"
+    print couch_docs
+    es_docs = 10
+    comparisons.append({
+        'description': 'Users (base_doc is "CouchUser")',
+        'couch_docs': couch_docs,
+        'es_docs': es_docs,
+    })
+
+    # Domains
+    db = Domain.get_db()
+    couch_docs = len(db.view(
+        'domain/by_status',
+        reduce=False
+    ))
+    es_docs = 10
+    comparisons.append({
+        'description': 'Domains (doc_type is "Domain")',
+        'couch_docs': couch_docs,
+        'es_docs': es_docs,
+    })
+
+    # Forms
+    db = XFormInstance.get_db()
+    couch_docs = len(db.view(
+        'couchforms/by_xmlns',
+        reduce=False
+    ))
+    es_docs = 10
+    comparisons.append({
+        'description': 'Forms (doc_type is "XFormInstance")',
+        'couch_docs': couch_docs,
+        'es_docs': es_docs
+    })
+
+    # Cases
+    db = CommCareCase.get_db()
+    couch_docs = len(db.view(
+        'case/by_owner',
+        reduce=False
+    ))
+    es_docs = 10
+    comparisons.append({
+        'description': 'Cases (doc_type is "CommCareCase")',
+        'couch_docs': couch_docs,
+        'es_docs': es_docs,
+    })
+
+    return {'es_couch_comparisons':comparisons}
+
+# MOVE ME SOMEWHERE APPROPRIATE!
+def get_es_couch_comparisons():
+    unprocessed_comparisons = [
+        {
+            'description': 'Users (base_doc is "CouchUser")',
+            'es_query': 'foo',
+            'couch_view': 'bar',
+        },
+        {
+            'description': 'WebUsers (doc_type is "WebUser" and is_active is True)',
+            'es_query': 'foo',
+            'couch_view': 'bar',
+        }
+    ]
+
+    ret = []
+    for comp in unprocessed_comparisons:
+        elastic_docs = es_query()['hits']
+        ret.append({
+            'description': comp['description'],
+            #'elastic_docs': es_query(comp['es_query']),
+            #'couch_docs': do_view(comp['couch_view']),
+        })
+    return ret
+
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
@@ -803,6 +890,7 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
                             }}}]}}}}
 
     histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
+    # NOTE
 
     del q["facets"]
     q["filter"] = {
