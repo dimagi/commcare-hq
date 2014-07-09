@@ -91,6 +91,8 @@ class Command(BaseCommand):
         print 'Starting...\n'
         if not ids:
             ids = get_build_ids(start, end)
+        else:
+            ids = ids.split(',')
 
         print 'Checking {} builds\n'.format(len(ids))
         for message in find_broken_builds(check_fn, ids):
