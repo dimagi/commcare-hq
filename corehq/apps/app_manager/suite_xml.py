@@ -1346,7 +1346,9 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 id=self.id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
-                local=local_path,
+                local=(local_path
+                       if self.app.enable_local_resource
+                       else None),
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]

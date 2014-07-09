@@ -443,7 +443,7 @@
                         </div>
                     {% endif %}
                     {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
-                    <div class="accordion-group">
+                    <div class="accordion-group" data-bind="visible: enable_offline_install">
                         <div class="accordion-heading">
                             <a class="accordion-toggle">
                                 {% trans "Download Zip Archive" %}

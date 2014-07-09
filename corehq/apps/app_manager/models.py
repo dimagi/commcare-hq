@@ -31,6 +31,7 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -2153,7 +2154,8 @@ def absolute_url_property(method):
     return property(_inner)
 
 
-class ApplicationBase(VersionedDoc, SnapshotMixin):
+class ApplicationBase(VersionedDoc, SnapshotMixin,
+                      CommCareFeatureSupportMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -2688,7 +2690,8 @@ class SavedAppBuild(ApplicationBase):
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
-            'short_name': self.short_name
+            'short_name': self.short_name,
+            'enable_offline_install': self.enable_offline_install,
         })
         comment_from = data['comment_from']
         if comment_from:
@@ -2800,24 +2803,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return "./media_suite.xml"
         else:
             return "jr://resource/media_suite.xml"
-
-    @property
-    def enable_relative_suite_path(self):
-        return self.build_version >= '2.12'
-
-    @property
-    def enable_multi_sort(self):
-        """
-        Multi (tiered) sort is supported by apps version 2.2 or higher
-        """
-        return self.build_version >= '2.2'
-
-    @property
-    def enable_multimedia_case_property(self):
-        """
-        Multimedia case properties are supported by apps version 2.6 or higher
-        """
-        return self.build_version >= '2.6'
 
     @property
     def default_language(self):
