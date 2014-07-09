@@ -441,6 +441,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         app.save()
 
     context = {
+        'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
@@ -448,6 +449,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
+        'allow_form_copy': isinstance(form, Form),
+        'allow_form_filtering': not isinstance(form, CareplanForm),
+        'allow_form_workflow': not isinstance(form, CareplanForm),
     }
 
     if isinstance(form, CareplanForm):
@@ -474,7 +479,6 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
-            'is_user_registration': is_user_registration,
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
