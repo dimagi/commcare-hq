@@ -165,35 +165,27 @@ class ConditionsMet(object):
         reporting_year = report.year
         reporting_date = datetime.date(reporting_year, reporting_month + 1, 1) - datetime.timedelta(1)
         
-        dod = case_property('dod', None)
-        edd = case_property('edd', None)
+        dod_date = case_property('dod', None)
+        edd_date = case_property('edd', None)
         status = "unknown"
         preg_month = -1
         child_age = -1
         window = -1
-        if not dod and not edd:
+        if not dod_date and not edd_date:
+            print case_obj
             raise InvalidRow
-        if dod and dod != EMPTY_FIELD:
-            try:
-                dod_date = datetime.date(dod.year, dod.month, dod.day)
-            except AttributeError:
-                dod_date = None
-                child_age = -1
-            if dod_date and dod_date >= reporting_date:
+        if dod_date and dod_date != EMPTY_FIELD:
+            if dod_date >= reporting_date:
                 status = 'pregnant'
                 preg_month = 9 - (dod_date - reporting_date).days / 30 # edge case
-            elif dod_date and dod_date < reporting_date:
+            elif dod_date < reporting_date:
                 status = 'mother'
                 child_age = 1 + (reporting_date - dod_date).days / 30
-        elif edd and edd != EMPTY_FIELD:
-            try:
-                edd_date = datetime.date(edd.year, edd.month, edd.day)
-            except AttributeError:
-                raise InvalidRow
-            if edd_date and edd_date >= reporting_date:
+        elif edd_date and edd_date != EMPTY_FIELD:
+            if edd_date >= reporting_date:
                 status = 'pregnant'
                 preg_month = 9 - (edd_date - reporting_date).days / 30
-            elif edd_date and edd_date < reporting_date: # edge case
+            elif edd_date < reporting_date: # edge case
                 raise InvalidRow
 
         if status == 'pregnant' and (preg_month > 3 and preg_month < 10):
