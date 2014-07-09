@@ -188,10 +188,13 @@ def json_handler(obj):
     else:
         return json.JSONEncoder().default(obj)
 
-def json_response(obj, **kwargs):
-    if not kwargs.has_key('default'):
+
+def json_response(obj, status_code=200, **kwargs):
+    if 'default' not in kwargs:
         kwargs['default'] = json_handler
-    return HttpResponse(json.dumps(obj, **kwargs), mimetype="application/json")
+    return HttpResponse(json.dumps(obj, **kwargs), status=status_code,
+                        mimetype="application/json")
+
 
 def json_request(params, lenient=True):
     d = {}
