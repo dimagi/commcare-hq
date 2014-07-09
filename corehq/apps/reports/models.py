@@ -47,18 +47,26 @@ class HQUserType(object):
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
                       ugettext_noop("CommTrack")]
-    toggle_defaults = [True, False, False, False, False]
-
+    toggle_defaults = (True, False, False, False, False)
+    included_defaults = (True,) * 5
     @classmethod
     def use_defaults(cls):
-        defaults = cls.toggle_defaults
-        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable))]
+        return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
 
     @classmethod
     def all_but_users(cls):
         no_users = [True] * len(cls.human_readable)
         no_users[cls.REGISTERED] = False
-        return [HQUserToggle(i, no_users[i]) for i in range(len(cls.human_readable))]
+        return cls._get_manual_filterset(cls.included_defaults, no_users)
+
+    @classmethod
+    def _get_manual_filterset(cls, included, defaults):
+        """
+        manually construct a filter set. included and defaults should both be
+        arrays of booleans mapping to values in human_readable and whether they should be
+        included and defaulted, respectively.
+        """
+        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable)) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
