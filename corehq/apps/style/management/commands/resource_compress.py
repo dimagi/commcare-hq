@@ -7,8 +7,8 @@ from django.core import cache
 
 rcache = cache.get_cache('redis')
 COMPRESS_PREFIX = '#compress_%s'
-CACHE_DIR = '%s/CACHE' % settings.STATIC_ROOT
-MANIFEST_FILE = '%s/manifest.json' % CACHE_DIR
+CACHE_DIR = os.path.join(settings.STATIC_ROOT, 'CACHE')
+MANIFEST_FILE = os.path.join(CACHE_DIR, 'manifest.json')
 
 
 class ResourceCompressError(Exception):
