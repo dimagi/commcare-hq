@@ -15,6 +15,7 @@ from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -114,25 +115,7 @@ class FilterUsersField(ReportField):
 
     @classmethod
     def get_user_filter(cls, request):
-        ufilter = group = individual = None
-        try:
-            if request.GET.get('ufilter', ''):
-                ufilter = request.GET.getlist('ufilter')
-            group = request.GET.get('group', '')
-            individual = request.GET.get('individual', '')
-        except KeyError:
-            pass
-        except AttributeError:
-            pass
-
-        show_filter = True
-        toggle = HQUserType.use_defaults()
-
-        if not cls.always_show_filter and (group or individual):
-            show_filter = False
-        elif ufilter:
-            toggle = HQUserType.use_filter(ufilter)
-        return toggle, show_filter
+        return get_user_toggle(request)
 
 
 class SelectMobileWorkerMixin(object):

@@ -48,16 +48,28 @@ class HQUserType(object):
                       ugettext_noop("Unknown Users"),
                       ugettext_noop("CommTrack")]
     toggle_defaults = (True, False, False, False, False)
-    included_defaults = (True,) * 5
+    count = len(human_readable)
+    included_defaults = (True, True, True, True, False)
+
     @classmethod
     def use_defaults(cls):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
 
     @classmethod
     def all_but_users(cls):
-        no_users = [True] * len(cls.human_readable)
+        no_users = (True,) * cls.count
         no_users[cls.REGISTERED] = False
         return cls._get_manual_filterset(cls.included_defaults, no_users)
+
+    @classmethod
+    def commtrack_defaults(cls):
+        # this is just a convenience method for clairty on commtrack projects
+        return cls.all()
+
+    @classmethod
+    def all(cls):
+        defaults = (True,) * cls.count
+        return cls._get_manual_filterset(defaults, cls.toggle_defaults)
 
     @classmethod
     def _get_manual_filterset(cls, included, defaults):
