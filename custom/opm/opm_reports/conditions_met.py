@@ -165,8 +165,8 @@ class ConditionsMet(object):
         reporting_year = report.year
         reporting_date = datetime.date(reporting_year, reporting_month + 1, 1) - datetime.timedelta(1)
         
-        dod_date = case_property('dod', None)
-        edd_date = case_property('edd', None)
+        dod_date = case_property('dod', EMPTY_FIELD)
+        edd_date = case_property('edd', EMPTY_FIELD)
         status = "unknown"
         preg_month = -1
         child_age = -1
@@ -190,12 +190,8 @@ class ConditionsMet(object):
 
         if status == 'pregnant' and (preg_month > 3 and preg_month < 10):
             window = (preg_month - 1) / 3
-        elif status == 'pregnant' and (preg_month < 4 and preg_month > 9):
-            raise InvalidRow
         elif status == 'mother' and (child_age > 0 and child_age < 37):
             window = (child_age - 1) / 3 + 1
-        elif status == 'mother' and (child_age < 1 and child_age > 36):
-            raise InvalidRow
         else:
             raise InvalidRow
 
