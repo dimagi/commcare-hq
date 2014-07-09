@@ -56,6 +56,12 @@ class PatientTaskListReportDisplay(CaseDisplay):
         else:
             return EMPTY_FIELD
 
+    def get_link(self, url, field):
+        if url:
+            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(field)))
+        else:
+            return "%s (bad ID format)" % self.case["indices"][0]["referenced_id"]
+
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
         try:
             module = app_dict['modules'][module_idx]
@@ -70,6 +76,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
                                                   case_id=case_id) + '/enter/')
 
     @property
+    @memoized
     def full_name(self):
         return CommCareCase.get(self.get_property("indices")[0]["referenced_id"])["full_name"]
 
@@ -80,11 +87,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
 
     @property
     def full_name_link(self):
-        url = self.full_name_url
-        if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.full_name)))
-        else:
-            return "%s (bad ID format)" % self.case["indices"][0]["referenced_id"]
+        return self.get_link(self.full_name_url, self.full_name)
 
     @property
     def name(self):
@@ -101,11 +104,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
 
     @property
     def name_link(self):
-        url = self.name_url
-        if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.name)))
-        else:
-            return "%s (bad ID format)" % self.name
+        return self.get_link(self.name_url, self.name)
 
     @property
     def task_responsible(self):
