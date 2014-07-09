@@ -149,7 +149,6 @@ def domains_for_user(request, selected_domain=None):
     return domain_list_str
 
 
-
 @register.simple_tag
 def list_my_orgs(request):
     org_list = request.couch_user.get_organizations()
