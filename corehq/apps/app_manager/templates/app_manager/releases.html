@@ -446,15 +446,24 @@
                     <div class="accordion-group" data-bind="visible: enable_offline_install">
                         <div class="accordion-heading">
                             <a class="accordion-toggle">
-                                {% trans "Download Zip Archive" %}
+                                {% trans "Android Offline Install" %}
                             </a>
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
                                 <ol>
                                     <li>
-                                        {% trans "Download the following file:" %}
-                                        <p><a data-bind="attr: {href: $root.url('ccz', id)}">{% trans "Download" %} CommCare.ccz</a></p>
+                                        {% trans "Download" %}
+                                        <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                    </li>
+                                    <li>
+                                        {% trans "Transfer it to your Android phone's filesystem" %}
+                                    </li>
+                                    <li>
+                                        {% trans "From CommCare ODK's install screen menu, select Offline Mode" %}
+                                    </li>
+                                    <li>
+                                        {% trans "You'll be prompted to select this file from your phone's filesystem and install will begin" %}
                                     </li>
                                 </ol>
                             </div>
