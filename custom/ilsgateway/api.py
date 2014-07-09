@@ -1,5 +1,6 @@
 import logging
 import requests
+import simplejson
 from custom.api.utils import EndpointMixin
 
 
@@ -58,6 +59,31 @@ class ILSUser(object):
         )
 
 
+class SMSUser(object):
+    def __init__(self, id, name, role, is_active, supply_point, email, phone_numbers, backend):
+        self.id = id
+        self.name = name
+        self.role = role
+        self.is_active = is_active
+        self.supply_point = supply_point
+        self.email = email
+        self.phone_numbers = phone_numbers
+        self.backend = backend
+
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            id=json_rep['id'],
+            name=json_rep['name'],
+            role=json_rep['role'],
+            is_active=json_rep['is_active'],
+            supply_point=json_rep['supply_point'],
+            email=json_rep['email'],
+            phone_numbers=json_rep['phone_numbers'],
+            backend=json_rep['backend']
+        )
+
 class ILSGatewayEndpoint(EndpointMixin):
 
     def __init__(self, base_uri, username, password):
@@ -65,23 +91,44 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.username = username
         self.password = password
         self.products_url = self._urlcombine(self.base_uri, '/products/')
-        self.webusers_url = self._urlcombine(self.base_uri, '/webusers')
+        self.webusers_url = self._urlcombine(self.base_uri, '/webusers/')
+        self.smsusers_url = self._urlcombine(self.base_uri, '/smsusers/')
+        self.checkpoint_url = self._urlcombine(self.base_uri, '/checkpoint/')
 
     def get_objects(self, url, params=None):
-        params = {} if params else params
+        params = params if params else {}
         response = requests.get(url, params=params,
                                 auth=self._auth())
         objects = []
+        meta = []
         if response.status_code == 200 and 'objects' in response.json():
+            meta = response.json()['meta']
             objects = response.json()['objects']
-        return objects
+        return meta, objects
 
     def get_products(self):
-        products = self.get_objects(self.products_url)
+        meta, products = self.get_objects(self.products_url)
         for product in products:
             yield Product.from_json(product)
 
     def get_webusers(self):
-        users = self.get_objects(self.webusers_url)
+        meta, users = self.get_objects(self.webusers_url)
         for user in users:
             yield ILSUser.from_json(user)
+
+    def get_smsusers(self, domain, next_url_params=None):
+        params = {}
+        if not next_url_params:
+            url = self.smsusers_url
+            params = {'domain': domain, 'limit': 500}
+        else:
+            url = self.smsusers_url + "?" + next_url_params
+
+        meta, users = self.get_objects(url, params=params)
+        return meta, [SMSUser.from_json(user) for user in users]
+
+    def confirm_migration(self, id, domain, api):
+        url = self._urlcombine(self.checkpoint_url, '%s/' % domain)
+        data = {'id': id, 'api': api}
+        requests.put(url, data=simplejson.dumps(data), auth=self._auth(), headers={"Content-Type": "application/json"})
+

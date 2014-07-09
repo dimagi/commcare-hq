@@ -1159,7 +1159,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
-                first_name=first_name, last_name=last_name, is_ilsuser=kwargs.pop('is_ilsuser', False)
+                first_name=first_name, last_name=last_name, **kwargs
             )
 
         if uuid:
@@ -1802,13 +1802,9 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
-        is_ilsuser = kwargs.get('is_ilsuser', False)
         web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if domain:
-            if not is_ilsuser:
-                web_user.add_domain_membership(domain, **kwargs)
-            else:
-                web_user.add_domain_membership(domain, role_id=kwargs.get('role_id'))
+            web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
         return web_user
 

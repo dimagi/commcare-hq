@@ -1,6 +1,8 @@
 import logging
+from dimagi.utils.django.email import send_HTML_email
+from django.contrib.auth.models import User
 from corehq import Domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, DomainMembership
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product
@@ -30,12 +32,8 @@ def sync_ilsgateway_webusers(domain, ilsgateway_webuser):
 
     user = WebUser.get_by_username(ilsgateway_webuser.email.lower())
     user_dict = {
-        'domain': domain.name,
-        'username': ilsgateway_webuser.email.lower(),
         'first_name': ilsgateway_webuser.first_name,
         'last_name': ilsgateway_webuser.last_name,
-        'email': ilsgateway_webuser.email,
-        'password': ilsgateway_webuser.password,
         'is_staff': ilsgateway_webuser.is_staff,
         'is_active': ilsgateway_webuser.is_active,
         'is_superuser': ilsgateway_webuser.is_superuser,
@@ -45,19 +43,51 @@ def sync_ilsgateway_webusers(domain, ilsgateway_webuser):
         #'location': ilsgateway_webuser.location,
         #'supply_point': ilsgateway_webuser.supply_point,
         'is_ilsuser': True,
-        'role_id': ilsgateway_webuser.role_id if hasattr(ilsgateway_webuser, 'role_id') else None
     }
+
+    role_id = ilsgateway_webuser.role_id if hasattr(ilsgateway_webuser, 'role_id') else None
 
     if user is None:
         try:
-            user = WebUser.create(**user_dict)
+            user = WebUser.create(domain=None, username=ilsgateway_webuser.email.lower(),
+                                  password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
+            user.add_domain_membership(domain.name, role_id=role_id)
+            user.save()
         except Exception as e:
             logging.error(e)
     else:
         if domain.name not in user.get_domains():
-            role_id = user_dict.get('role_id', None)
             user.add_domain_membership(domain.name, role_id=role_id)
             user.save()
+
+    return user
+
+def sync_ilsgateway_smsusers(domain, ilsgateway_smsuser):
+    username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
+    username = "%s@%s.commcarehq.org" % (username_part, domain.name)
+    user = CouchUser.get_by_username(username)
+    splitted_value = ilsgateway_smsuser.name.split(' ', 1)
+    first_name = last_name = ''
+    if splitted_value:
+        first_name = splitted_value[0][:30] #due to postgres restriction
+        last_name = splitted_value[1][:30] if len(splitted_value) > 1 else ''
+
+    if user is None and username_part:
+        try:
+            password = User.objects.make_random_password()
+            user = CommCareUser.create(domain=domain.name, username=username, password=password,
+                                       email=ilsgateway_smsuser.email, commit=False)
+            user.first_name = first_name
+            user.last_name = last_name
+            user.is_active = bool(ilsgateway_smsuser.is_active)
+            if ilsgateway_smsuser.phone_numbers:
+                user.set_default_phone_number(ilsgateway_smsuser.phone_numbers[0].replace('+', ''))
+                user.user_data = {
+                    'backend': ilsgateway_smsuser.backend
+                }
+                user.save()
+        except Exception as e:
+            logging.error(e)
 
     return user
 
