@@ -100,7 +100,6 @@ def select(request, domain_select_template='domain/select.html'):
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
-    # TODO: Does this need to be cached?
     open_invitations = DomainInvitation.by_email(email)
 
     additional_context={

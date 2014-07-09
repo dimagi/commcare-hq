@@ -1989,7 +1989,6 @@ class Invitation(Document):
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
-    is_rejected = BooleanProperty(default=False)
 
     _inviter = None
     def get_inviter(self):
@@ -2037,7 +2036,7 @@ class DomainInvitation(Invitation):
     @classmethod
     def by_email(cls, email, is_active=True):
         key = [email]
-
+        # Is there any reason not to just pass the folowing function the `key` keyword argument as opposed to a start and endkey?
         return cls.view("users/open_invitations_by_email",
             reduce=False,
             startkey=key,
