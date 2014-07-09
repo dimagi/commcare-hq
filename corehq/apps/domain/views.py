@@ -102,9 +102,9 @@ def select(request, domain_select_template='domain/select.html'):
     email = request.couch_user.get_email()
     open_invitations = DomainInvitation.by_email(email)
 
-    additional_context={
-        'domains_for_user':domains_for_user,
-        'open_invitations':open_invitations,
+    additional_context = {
+        'domains_for_user': domains_for_user,
+        'open_invitations': open_invitations,
     }
     return render(request, domain_select_template, additional_context)
 
