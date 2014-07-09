@@ -541,6 +541,7 @@ class SubscriptionForm(forms.Form):
 
     def update_subscription(self):
         self.subscription.update_subscription(
+            date_start=self.cleaned_data['start_date'],
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],

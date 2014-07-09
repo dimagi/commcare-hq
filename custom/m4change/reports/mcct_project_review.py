@@ -91,6 +91,10 @@ def calculate_form_data(self, form):
         location = Location.get(location_id)
         location_name = location.name
         location_parent = location.parent
+        if location_parent is not None and location_parent.location_type != 'state':
+            while location_parent.location_type != 'district':
+                if location_parent.parent is not None:
+                    location_parent = location_parent.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 
     return {'case': case, 'service_type': service_type, 'location_name': location_name,
