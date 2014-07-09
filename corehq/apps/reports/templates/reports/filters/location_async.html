@@ -4,7 +4,7 @@
 <label class="control-label">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
 <div class="controls">
   <div data-bind="foreach: selected_path" style="display: inline-block;">
-    <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+    <select data-bind="options: children, optionsText: 'display_name', value: selected_child, disable: location_restriction"></select>
   </div>
   <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
 </div>
@@ -20,10 +20,12 @@ $(function() {
   var locs = {{ locations|safe }};
   var selected = '{{ loc_id }}';
   var hierarchy = {{ hierarchy|JSON }};
+
+  var restriction = '{{ restriction }}';
   
   var model = new LocationSelectViewModel(hierarchy);
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
-  model.load(locs, selected);
+  model.load(locs, selected, restriction);
 
 });
 
