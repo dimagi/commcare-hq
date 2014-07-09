@@ -1,7 +1,7 @@
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -97,12 +97,14 @@ KNOWN_BUILD_SERVER_LOGINS = {
 }
 
 
+@require_POST
 def import_build(request):
     """
     example POST params:
     source: 'http://build.dimagi.com:250/repository/downloadAll/bt97/14163:id/artifacts.zip'
     version: '2.13.0'
     build_number: 32703
+
     """
     source = request.POST.get('source')
     version = request.POST.get('version')
