@@ -92,9 +92,8 @@ def calculate_form_data(self, form):
         location_name = location.name
         location_parent = location.parent
         if location_parent is not None and location_parent.location_type != 'state':
-            while location_parent.location_type != 'district':
-                if location_parent.parent is not None:
-                    location_parent = location_parent.parent
+            while location_parent.location_type != 'district' and location_parent is not None:
+                location_parent = location_parent.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 
     return {'case': case, 'service_type': service_type, 'location_name': location_name,
@@ -216,7 +215,6 @@ class McctProjectReview(BaseReport):
             location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
                                                         CCT_only=True)
             q = _get_report_query(start_date, end_date, filtered_case_ids, location_ids)
-
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
 
