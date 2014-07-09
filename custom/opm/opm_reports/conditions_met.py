@@ -270,12 +270,8 @@ class ConditionsMet(object):
             elif child_age == 36:
                 self.cash = '<span style="color: green;">Rs. 3000</span>'
 
-        applicable_conditions = []
-        for condition in [met_one, met_two, met_three, met_four, met_five]:
-            if condition is not None:
-                applicable_conditions.append(condition)
-        met_or_not = reduce(lambda x, y: x and y, applicable_conditions, True)
-        if met_or_not is True:
+        met_or_not = not False in [met_one, met_two, met_three, met_four, met_five]
+        if met_or_not:
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
