@@ -1,6 +1,8 @@
 Vellum
 ======
 
+[![Build Status](https://travis-ci.org/mwhite/Vellum.svg?branch=master)](https://travis-ci.org/mwhite/Vellum)
+
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
 
@@ -61,6 +63,8 @@ multiple Bootstrap versions due to the way the bundled version is loaded. -->
 See
 [here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/form_designer.html)
 and `tests/main.js` for example options usage.
+
+Vellum targets modern browsers.  IE8 and earlier are not supported.
 
 Contributing
 ------------
