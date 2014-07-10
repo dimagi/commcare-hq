@@ -1,6 +1,7 @@
 import copy
 import json
 import re
+from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -1730,11 +1731,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         if not event.message:
                             event.message = {(reminder_handler.default_lang or 'en'): ''}
                         if event.form_unique_id:
-                            form = CCHQForm.get_form(event.form_unique_id)
-                            event.form_unique_id = json.dumps({
-                                'text': form.full_path_name,
-                                'id': event.form_unique_id,
-                            })
+                            try:
+                                form = CCHQForm.get_form(event.form_unique_id)
+                                event.form_unique_id = json.dumps({
+                                    'text': form.full_path_name,
+                                    'id': event.form_unique_id,
+                                })
+                            except ResourceNotFound:
+                                pass
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
