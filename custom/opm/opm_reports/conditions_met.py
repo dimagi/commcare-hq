@@ -150,17 +150,6 @@ class ConditionsMet(object):
         self.awc_name = case_property('awc_name', EMPTY_FIELD)
         self.husband_name = case_property('husband_name', EMPTY_FIELD)
 
-        # confirm birth-spacing condition, if it's not needed forms need not be fetched for pregnant cases
-        forms = case_obj.get_forms()
-        birth_spacing_prompt = []
-        for form in forms:
-            if 'birth_spacing_prompt' in form.form:
-                birth_spacing_prompt.append(form.form['birth_spacing_prompt'])
-
-        filtered_forms = [form for form in forms if report.datespan.startdate <= form.received_on <= report.datespan.enddate]
-
-        get_property_from_forms(filtered_forms, met)
-
         reporting_month = report.month
         reporting_year = report.year
         reporting_date = datetime.date(reporting_year, reporting_month + 1, 1) - datetime.timedelta(1)
@@ -172,7 +161,6 @@ class ConditionsMet(object):
         child_age = -1
         window = -1
         if not dod_date and not edd_date:
-            print case_obj
             raise InvalidRow
         if dod_date and dod_date != EMPTY_FIELD:
             if dod_date >= reporting_date:
@@ -202,6 +190,30 @@ class ConditionsMet(object):
         self.child_age = child_age
         self.preg_month = preg_month
         self.window = window
+
+        # confirm birth-spacing condition, if it's not needed forms need not be fetched for pregnant cases
+        birth_spacing_prompt = []
+        child_birth_weight_taken = None # None - condition n/a, True - condition met, False - condition not met
+        child_excusive_breastfed = None
+        if self.status == 'mother':
+            forms = case_obj.get_forms()
+            for form in forms:
+                if 'birth_spacing_prompt' in form.form:
+                    birth_spacing_prompt.append(form.form['birth_spacing_prompt'])  
+
+            form_start_date, form_end_date = None, None
+            filtered_forms = [form for form in forms if report.datespan.startdate <= form.received_on <= report.datespan.enddate]   
+            if self.child_age == 3:
+                prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(90) <= form.received_on <= report.datespan.enddate]
+                weight_key = "child1_child_weight"
+                birth_weight = [form.form[weight_key] for form in prev_forms if weight_key in form.form]
+                child_birth_weight_taken = '1' in birth_weight
+            if self.child_age == 6:
+                prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(180) <= form.received_on <= report.datespan.enddate]
+                excl_key = "child1_child_excbreastfed"
+                exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
+                child_excusive_breastfed = exclusive_breastfed == ['1', '1', '1', '1', '1', '1']
+            get_property_from_forms(filtered_forms, met)
 
         vhnd_attendance = {
             4: case_property('attendance_vhnd_1', 0),
@@ -241,13 +253,11 @@ class ConditionsMet(object):
                     self.three = condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, met_three)
                 self.two = condition_image(C_WEIGHT_Y, C_WEIGHT_N, met_two)
             if self.child_age == 3 and report.block.lower() == 'atri':
-                met_four = 'received' in [met['child1_weight_calc'], met['prev_child1_weight_calc']]
-                met_five = 'received' in [met['child1_excl_breastfeed_calc'], met['prev_child1_excl_breastfeed_calc']]
+                met_four = child_birth_weight_taken
                 self.four = condition_image(CHILD_WEIGHT_Y, CHILD_WEIGHT_N, met_four)
-                self.five = condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, met_five)
             if self.child_age == 6 and report.block.lower() == 'atri':
                 met_four = 'received' in [met['child1_register_calc'] or met['prev_child1_register_calc']]
-                met_five = 'received' in [met['child1_excl_breastfeed_calc'], met['prev_child1_excl_breastfeed_calc']]
+                met_five = child_excusive_breastfed
                 self.four = condition_image(C_REGISTER_Y, C_REGISTER_N, met_four)
                 self.five = condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, met_five)
             if self.child_age == 12 and report.block.lower() == 'atri':
