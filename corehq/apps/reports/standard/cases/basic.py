@@ -15,7 +15,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.users import (ExpandedMobileWorkerFilter,
-        SelectMobileWorkerFilter)
+        SelectMobileWorkerFilter, ExpandedMobileWorkerFilterWithAllData)
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -23,24 +23,9 @@ from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 
 from .data_sources import CaseInfo, CaseDisplay
 
-class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
-    show_all_filter = True
-
-    @property
-    def filter_context(self):
-        context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
-        url = reverse('emwf_options', args=[self.domain])+"?show_all_filter=true"
-        context.update({'endpoint': url})
-        return context
-
-    @classmethod
-    def show_all_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 't__x' in emws
-
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.standard.cases.basic.ExpandedMobileWorkerFilterWithAllData',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilterWithAllData',
         #'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
