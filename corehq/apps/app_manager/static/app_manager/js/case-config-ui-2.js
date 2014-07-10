@@ -299,7 +299,11 @@ var CaseConfig = (function () {
             }
 
             self.repeat_context = function () {
-                return self.caseConfig.get_repeat_context(self.case_name());
+                if (self.case_name) {
+                    return self.caseConfig.get_repeat_context(self.case_name());
+                } else {
+                    return null;
+                }
             };
 
             self.close_case = ko.computed({
@@ -450,7 +454,8 @@ var CaseConfig = (function () {
     var DEFAULT_CONDITION = {
         type: 'always',
         question: null,
-        answer: null
+        answer: null,
+        operator: null
     };
 
     var propertyDictToArray = function (required, property_dict, caseConfig, keyIsPath) {
@@ -482,6 +487,15 @@ var CaseConfig = (function () {
             }
         });
         return [property_dict, extra_dict];
+    };
+
+    var cleanCondition = function(condition) {
+        if (condition.type !== 'if') {
+            condition.question = null;
+            condition.answer = null;
+            condition.operator = null;
+        }
+        return condition;
     };
 
     var HQFormActions = {
@@ -580,19 +594,19 @@ var CaseConfig = (function () {
 
             return {
                 open_case: {
-                    condition: open_condition,
+                    condition: cleanCondition(open_condition),
                     name_path: case_name
                 },
                 update_case: {
                     update: case_properties,
-                    condition: update_condition
+                    condition: cleanCondition(update_condition)
                 },
                 case_preload: {
                     preload: case_preload,
-                    condition: update_condition
+                    condition: cleanCondition(update_condition)
                 },
                 close_case: {
-                    condition: close_condition
+                    condition: cleanCondition(close_condition)
                 }
             };
         }
@@ -662,7 +676,7 @@ var CaseConfig = (function () {
                 case_type: o.case_type,
                 case_properties: case_properties,
                 reference_id: o.reference_id,
-                condition: o.condition,
+                condition: cleanCondition(o.condition),
                 repeat_context: case_transaction.repeat_context()
             };
         }

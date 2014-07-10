@@ -37,18 +37,13 @@ var langcodeTag;
                 return new LangCodeButton($elem, new_lang);
             };
         }()),
-        translate_delim: (function () {
-            return function (value) {
-                var values = value.split(langcodeTag.LANG_DELIN);
-                var langcode = null;
-                if (values.length > 1)
-                    langcode = values[1];
-                return {
-                    value: values[0],
-                    lang: langcode
-                };
+        translate_delim: function (value) {
+            var values = value.split(langcodeTag.LANG_DELIN);
+            return {
+                value: values[0],
+                lang: (values.length > 1 ? values[1] : null)
             };
-        }())
+        }
     };
 
 }());
@@ -98,7 +93,9 @@ var uiElement;
             var translated = langcodeTag.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
-                var langcode_button = langcodeTag.button_tag($('<a href="#" class="btn btn-inverse btn-mini lang-text" style="color:#ffffff; text-decoration: none;" />'),
+                var langcode_button = langcodeTag.button_tag(
+                    $('<a href="#" class="btn btn-inverse btn-mini lang-text"'
+                      + ' style="color:#ffffff; text-decoration: none;" />'),
                     translated.lang);
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
@@ -111,6 +108,20 @@ var uiElement;
             } else
                 this.setElemValue(translated.value);
             this.$noedit_view.text(translated.value);
+            this.setIcon(this.icon);
+            return this;
+        },
+        setHtml: function (value) {
+            this.$noedit_view.html(value);
+            this.setIcon(this.icon);
+            return this;
+        },
+        setIcon: function (icon) {
+            this.icon = icon;
+            if (icon) {
+                $('<i> </i>').addClass(icon).prependTo(this.$noedit_view);
+            }
+            return this;
         },
         setEdit: function (edit) {
             this.edit = edit;
@@ -126,17 +137,15 @@ var uiElement;
     };
 
     uiElement = {
-        input: (function () {
-            return function () {
-                return new Input($('<input type="text"/>'), function ($elem) {
-                    return $elem.val();
-                }, function ($elem, value) {
-                    return $elem.val(value);
-                }, function ($elem, value){
-                    return $elem.attr('placeholder', value);
-                });
-            };
-        }()),
+        input: function () {
+            return new Input($('<input type="text"/>'), function ($elem) {
+                return $elem.val();
+            }, function ($elem, value) {
+                return $elem.val(value);
+            }, function ($elem, value){
+                return $elem.attr('placeholder', value);
+            });
+        },
         textarea: function () {
             return new Input($('<textarea/>'), function ($elem) {
                 return $elem.val();

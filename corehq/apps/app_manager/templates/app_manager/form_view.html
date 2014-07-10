@@ -206,6 +206,18 @@
                     },
                     $('#form-filter').get(0)
                 );
+
+                ko.applyBindings({
+                        workflow: ko.observable('{{ form.post_form_workflow }}'),
+                        form_workflow_options: [
+                            {value: "default", label: "{% trans "* Home Screen" %}" },
+                            {value: "module", label: "{% trans "Module:" %} {{ module.name|trans:langs }}" },
+                            {value: "previous_screen", label: "{% trans "Previous Screen" %}" }
+                        ]
+                    },
+                    $('#form-workflow').get(0)
+                );
+
             {% endif %}
         {% endif %}
         });
@@ -221,9 +233,9 @@
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -375,6 +387,7 @@
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with item=form %}
                 {% include "app_manager/partials/form_filter.html" %}
+                {% include "app_manager/partials/form_workflow.html" %}
             </form>
         </div>
     {% endif %}
@@ -416,6 +429,7 @@
         <div class="tab-pane" id="advanced">
             <h4>XForm</h4>
             <ul class="nav nav-pills nav-stacked">
+{% if edit %}
                 <li>
                     <a class="dialog_opener" href="#">
                         <i class="icon-arrow-up"></i>
@@ -429,6 +443,7 @@
                         </form>
                     </div>
                 </li>
+{% endif %}
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
                        href="{% url "get_user_registration_source" domain app.id %}?download=true"
@@ -470,6 +485,7 @@
                     </div>
                 </li>
             </ul>
+{% if edit %}
             <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
                 <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
                 <select name='to_module_id'>{% for mod in app.get_modules %}
@@ -477,6 +493,7 @@
                 {% endfor %}</select>
                 <button class='btn btn-primary' type="submit">Copy</button>
             </form>
+{% endif %}
         </div>
         </div>
     </div>

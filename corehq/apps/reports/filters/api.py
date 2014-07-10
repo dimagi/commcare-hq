@@ -23,7 +23,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     Paginated options for the ExpandedMobileWorkerFilter
     """
 
-    def get(self, request, domain):
+    def get(self, request, domain, all_data=False):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
         if self.q:

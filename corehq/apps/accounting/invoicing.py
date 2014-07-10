@@ -3,13 +3,14 @@ from decimal import Decimal
 import datetime
 import logging
 from django.db.models import F, Q
+from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
 from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError
+from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
@@ -18,6 +19,8 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.django.email import send_HTML_email
+import settings
 
 logger = logging.getLogger('accounting')
 
@@ -99,21 +102,34 @@ class DomainInvoiceFactory(object):
             self.domain.name, created_by=self.__class__.__name__,
             created_by_invoicing=True)[0]
         if account.date_confirmed_extra_charges is None:
-            logger.error(
-                "[BILLING] "
-                "Domain '%s' is going to get charged on "
-                "Community, but they haven't formally acknowledged this. "
-                "Someone on ops should reconcile this soon. To be on the "
-                "safe side, we've marked the invoices as Do Not Invoice."
-                % self.domain.name
+            subject = "[%s] Invoice Generation Issue" % self.domain.name
+            email_content = render_to_string(
+                'accounting/invoice_error_email.html', {
+                    'project': self.domain.name,
+                    'error_msg': "This project is incurring charges on their "
+                                 "Community subscription, but they haven't "
+                                 "agreed to the charges yet. Someone should "
+                                 "follow up with this project to see if everything "
+                                 "is configured correctly or if communication "
+                                 "needs to happen between Dimagi and the project's"
+                                 "admins. For now, the invoices generated are "
+                                 "marked as Do Not Invoice.",
+                }
+            )
+            send_HTML_email(
+                subject, settings.BILLING_EMAIL, email_content,
+                email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
             )
             do_not_invoice = True
         if not BillingContactInfo.objects.filter(account=account).exists():
             # No contact information exists for this account.
             # This shouldn't happen, but if it does, we can't continue
             # with the invoice generation.
-            raise InvoiceError("No Billing Contact Info could be found "
-                               "for domain '%s'." % self.domain.name)
+            raise BillingContactInfoError(
+                "Project %s has incurred charges, but does not have their "
+                "Billing Contact Info filled out. Someone should follow up "
+                "on this." % self.domain.name
+            )
         # First check to make sure none of the existing subscriptions is set
         # to do not invoice. Let's be on the safe side and not send a
         # community invoice out, if that's the case.
@@ -393,7 +409,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             if billable.usage_fee:
                 total_excess += billable.usage_fee.amount
             if billable.gateway_fee:
-                total_excess += billable.gateway_fee.amount * billable.gateway_fee_conversion_rate
+                total_excess += billable.gateway_charge
         return Decimal("%.2f" % round(total_excess, 2))
 
     @property
@@ -452,7 +468,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         details = []
         for billable in self.sms_billables:
             gateway_api = billable.gateway_fee.criteria.backend_api_id if billable.gateway_fee else "custom"
-            gateway_fee = billable.gateway_fee.amount if billable.gateway_fee else Decimal('0.0')
+            gateway_fee = billable.gateway_charge
             usage_fee = billable.usage_fee.amount if billable.usage_fee else Decimal('0.0')
             total_fee = gateway_fee + usage_fee
             details.append(

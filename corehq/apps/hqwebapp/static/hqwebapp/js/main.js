@@ -181,7 +181,8 @@ var COMMCAREHQ = (function () {
             GRIP:   'icon-resize-vertical icon-blue',
             ADD:    'icon-plus icon-blue',
             COPY:   'icon-copy icon-blue',
-            DELETE: 'icon-remove icon-blue'
+            DELETE: 'icon-remove icon-blue',
+            PAPERCLIP: 'icon-paper-clip'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;

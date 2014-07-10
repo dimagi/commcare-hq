@@ -17,7 +17,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3, CM_APP_CM_MODULE, \
     OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
 from custom.succeed.reports.patient_Info import PatientInfoReport
-from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, get_randomization_date
 import logging
 import simplejson
 from casexml.apps.case.models import CommCareCase
@@ -47,7 +47,6 @@ class PatientListReportDisplay(CaseDisplay):
         self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
         self.latest_build = get_app_build(self.app_dict)
         super(PatientListReportDisplay, self).__init__(report, case_dict)
-        self.update_target_date_case_properties()
 
     def get_property(self, key):
         if key in self.case:
@@ -66,19 +65,6 @@ class PatientListReportDisplay(CaseDisplay):
             return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(self.case_name)))
         else:
             return "%s (bad ID format)" % self.case_name
-
-    def update_target_date_case_properties(self):
-        case = CommCareCase.get(self.case_id)
-        for visit_key, visit in enumerate(VISIT_SCHEDULE):
-            try:
-                next_visit = VISIT_SCHEDULE[visit_key + 1]
-            except IndexError:
-                next_visit = 'last'
-            if next_visit != 'last':
-                rand_date = dateutil.parser.parse(self.randomization_date)
-                tg_date = rand_date.date() + timedelta(days=next_visit['days'])
-                case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
-        case.save()
 
     @property
     def edit_link(self):
@@ -156,14 +142,13 @@ class PatientListReportDisplay(CaseDisplay):
 class PatientListReport(CustomProjectReport, CaseListReport):
 
     ajax_pagination = True
-    include_inactive = True
     name = ugettext_noop('Patient List')
     slug = 'patient_list'
     default_sort = {'target_date': 'asc'}
     base_template_filters = 'succeed/report.html'
+    default_case_type = 'participant'
 
     fields = ['custom.succeed.fields.CareSite',
-              'custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientStatus',
               'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
@@ -171,11 +156,9 @@ class PatientListReport(CustomProjectReport, CaseListReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         if domain and project and user is None:
             return True
-
         if user and (is_succeed_admin(user) or has_any_role(user)):
             return True
         return False
-
 
     @property
     @memoized
@@ -243,14 +226,12 @@ class PatientListReport(CustomProjectReport, CaseListReport):
         q = { "query": {
                 "filtered": {
                     "query": {
+                        "match_all": {}
                     },
                     "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}}
-                            ],
-                            "must_not": []
-                        }
+                        "and": [
+                            {"term": { "domain.exact": "succeed" }},
+                        ]
                     }
                 }
             },
@@ -354,46 +335,52 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             }
             q['sort'] = sort
 
-        care_site = self.request_params.get('care_site', '')
+        care_site = self.request_params.get('care_site_display', '')
         if care_site != '':
-            es_filters["bool"]["must"].append({"term": {"care_site.#value": care_site}})
+            query_block = {"queryString": {"default_field": "care_site_display.#value", "query": "*" + care_site + "*"}}
+            q["query"]["filtered"]["query"] = query_block
 
         patient_status = self.request_params.get('patient_status', '')
         if patient_status != '':
-            active_dict = {"nested": {
-                "path": "actions",
-                "query": {
-                    "match": {
-                        "actions.xform_xmlns": PM3}}}}
-            if patient_status == "active":
-                es_filters["bool"]["must_not"].append(active_dict)
-            else:
-                es_filters["bool"]["must"].append(active_dict)
+            active_dict = {
+                "nested": {
+                    "path": "actions",
+                    "filter": {
+                        "bool" : {
+                            "must_not": [],
+                            "must": []
 
-        responsible_party = self.request_params.get('responsible_party', '')
-        if responsible_party != '':
-            del es_filters['bool']
-            es_filters['and'] = [{"term": { "domain.exact": "succeed" }}]
-            es_filters['and'].append({"script": self.get_visit_script(order=order, responsible_party=responsible_party)})
+                        }
+                    }
+                }
+            }
+            if patient_status == 'active':
+                active_dict['nested']['filter']['bool']['must_not'] = {"term": {"actions.xform_xmlns": PM3}}
+            else:
+                active_dict['nested']['filter']['bool']['must'] = {"term": {"actions.xform_xmlns": PM3}}
+            es_filters["and"].append(active_dict)
+
+        def _filter_gen(key, flist):
+            return {"terms": {
+                key: [item.lower() for item in flist if item]
+            }}
 
         user = self.request.couch_user
         if not user.is_web_user():
-            groups = user.get_group_ids()
-            terms = {"terms": {"owner_id": groups}}
-            if responsible_party:
-                es_filters["and"].append(terms)
-            else:
-                es_filters["bool"]["must"].append(terms)
+            owner_ids = user.get_group_ids()
+            user_ids = [user._id]
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
+            subterms = []
+            subterms.append({'or': filters})
+            es_filters["and"].append({'and': subterms} if subterms else {})
+
         if self.case_type:
-            if responsible_party:
-                es_filters["and"].append({"term": {"type.exact": 'participant'}})
-            else:
-                es_filters["bool"]["must"].append({"term": {"type.exact": 'participant'}})
+            es_filters["and"].append({"term": {"type.exact": 'participant'}})
         if search_string:
             query_block = {"queryString": {"default_field": "full_name.#value", "query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
-        else:
-            q["query"]["filtered"]["query"] = {"match_all": {}}
 
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         if self.pagination:

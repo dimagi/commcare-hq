@@ -6,7 +6,7 @@ from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
     CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS, UserDataADMColumn
 from corehq.apps.crud.models import BaseAdminCRUDForm
-from hqstyle.forms import fields as hq_fields
+from corehq.apps.style.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
 
 DATESPAN_CHOICES = [("startdate", "Start of Datespan"), ("enddate", "End of Datespan")]

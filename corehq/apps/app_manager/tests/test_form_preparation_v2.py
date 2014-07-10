@@ -2,10 +2,11 @@
 import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase
+    AutoSelectCase, FormActionCondition
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
+from corehq.apps.app_manager.xform import XForm
 
 
 class FormPreparationV2Test(TestCase, TestFileMixin):
@@ -60,6 +61,13 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.case_preload = PreloadAction(preload={'/data/question1': 'question1'})
         self.form.actions.case_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
+
+    def test_update_attachment(self):
+        self.form.requires = 'case'
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
     def test_close_case(self):
         self.form.requires = 'case'
@@ -230,6 +238,15 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
 
+    def test_update_attachment(self):
+        self.form.source = self.get_xml('attachment')
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'photo': '/data/thepicture'}
+        ))
+        self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
+
 
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
@@ -347,3 +364,29 @@ class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
         self.form.actions.open_cases[1].open_condition.question = '/data/child/which_child'
         self.form.actions.open_cases[1].open_condition.answer = '2'
         self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
+
+
+class TestXForm(TestCase):
+    def setUp(self):
+        self.xform = XForm('')
+
+    def test_action_relevance(self):
+        def condition_case(expected, type=None, question=None, answer=None, operator=None):
+            condition = FormActionCondition(
+                type=type,
+                question=question,
+                answer=answer,
+                operator=operator
+            )
+            return condition, expected
+
+        cases = [
+            (condition_case('true()', 'always')),
+            (condition_case('false()', 'never')),
+            (condition_case("/data/question1 = 'yes'", 'if', '/data/question1', 'yes')),
+            (condition_case("selected(/data/question1, 'yes')", 'if', '/data/question1', 'yes', 'selected')),
+        ]
+
+        for case in cases:
+            actual = self.xform.action_relevance(case[0])
+            self.assertEqual(actual, case[1])

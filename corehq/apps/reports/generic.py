@@ -416,8 +416,11 @@ class GenericReportView(CacheableRequestMixIn):
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
                 has_datespan=has_datespan,
-                show=self.override_permissions_check or \
-                   self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                show=(
+                    self.override_permissions_check
+                    or self.request.couch_user.can_view_reports()
+                    or self.request.couch_user.get_viewable_reports()
+                ),
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,
                 is_printable=self.printable,

@@ -49,8 +49,7 @@
         <div class="span8">
             <h2>
                 {% blocktrans %}
-                    Manage Mobile Workers <small>for CommCare Mobile and
-                    CommCare HQ Reports</small>
+                    Manage Mobile Workers
                 {% endblocktrans %}
             </h2>
             {% if cannot_share or show_inactive %}
@@ -74,16 +73,9 @@
                 {% else %}
                     <p>
                         {% blocktrans %}
-                            Mobile Workers can submit forms from phones running the CommCare Application. While
-                            Mobile Workers can login to CommCare HQ and view project data, they are bound to a
-                            particular project on CommCare HQ and cannot manage the project or create additional projects
-                            and users.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            Mobile Workers will appear in the reports on CommCare HQ
-                            for the project they are bound to.
+                            Mobile Workers can log into applications in this project space and submit data. Their activity
+                            and form submissions can be monitored in the Reports section of this CommCareHQ project space.
+                            Read more about managing mobile workers on our <a href="https://help.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers">Help Site</a>.
                         {% endblocktrans %}
                     </p>
                 {% endif %}

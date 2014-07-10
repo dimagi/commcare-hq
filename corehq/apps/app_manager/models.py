@@ -72,6 +72,10 @@ from .exceptions import (
     LocationXpathValidationError)
 from corehq.apps.app_manager import id_strings
 
+WORKFLOW_DEFAULT = 'default'
+WORKFLOW_MODULE = 'module'
+WORKFLOW_PREVIOUS = 'previous_screen'
+
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
 AUTO_SELECT_CASE = 'case'
@@ -170,6 +174,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
+    operator = StringProperty(choices=['=', 'selected'], default='=')
 
 
 class FormAction(DocumentSchema):
@@ -504,6 +509,10 @@ class FormBase(DocumentSchema):
     validation_cache = CachedStringProperty(
         lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
+    post_form_workflow = StringProperty(
+        default=WORKFLOW_DEFAULT,
+        choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
+    )
 
     @classmethod
     def wrap(cls, data):
@@ -657,6 +666,24 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    def get_case_property_name_formatter(self):
+        """Get a function that formats case property names
+
+        The returned function requires two arguments
+        `(case_property_name, data_path)` and returns a string.
+        """
+        try:
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
+        except XFormError as e:
+            # punt on invalid xml (sorry, no rich attachments)
+            valid_paths = {}
+        def format_key(key, path):
+            if valid_paths.get(path) == "upload":
+                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+            return key
+        return format_key
+
     def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
@@ -715,8 +742,9 @@ class IndexedFormBase(FormBase, IndexedSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in all_names:
-            # this regex is also copied in propertyList.ejs
-            if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
+            try:
+                validate_property(key)
+            except ValueError:
                 errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
             _, key = split_path(key)
             if key in reserved_words:
@@ -732,15 +760,17 @@ class IndexedFormBase(FormBase, IndexedSchema):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
+            valid_paths = {question['value']: question['tag']
+                           for question in self.get_questions(langs=[])}
         except XFormError as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
-            unique_paths = set()
-            unique_paths.update(paths)
-            for path in unique_paths:
+            no_multimedia = not self.get_app().enable_multimedia_case_property
+            for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
+                elif no_multimedia and valid_paths[path] == "upload":
+                    errors.append({'type': 'multimedia case property not supported', 'path': path})
 
         return errors
 
@@ -889,7 +919,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if self.get_module().case_type == case_type:
-            return self.actions.update_case.update.keys()
+            format_key = self.get_case_property_name_formatter()
+            return [format_key(*item)
+                    for item in self.actions.update_case.update.items()]
 
         return []
 
@@ -1334,6 +1366,19 @@ class Module(ModuleBase):
         except Exception:
             return []
 
+    def validate_for_build(self):
+        errors = super(Module, self).validate_for_build()
+        for sort_element in self.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.get_module_info(),
+                })
+        return errors
+
     def export_json(self, dump_json=True, keep_unique_id=False):
         source = self.to_json()
         if not keep_unique_id:
@@ -1491,9 +1536,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         updates = set()
+        format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
             if action.case_type == case_type:
-                updates.update(action.case_properties.keys())
+                updates.update(format_key(*item)
+                               for item in action.case_properties.iteritems())
         return updates
 
     @memoized
@@ -1713,7 +1760,8 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
-            return self.case_updates().keys()
+            format_key = self.get_case_property_name_formatter()
+            return [format_key(*item) for item in self.case_updates().iteritems()]
         else:
             return []
 
@@ -2564,15 +2612,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             # I'm putting this assert here if copy._id is ever None
             # which makes tests error
             assert copy._id
-            copy.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
-            )
-            copy.short_odk_media_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
-            )
+            if settings.BITLY_LOGIN:
+                copy.short_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
+                )
+                copy.short_odk_media_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[copy.domain, copy._id])
+                )
         except AssertionError:
             raise
         except Exception:  # URLError, BitlyError
@@ -2609,6 +2658,20 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
+
+
+def validate_property(property):
+    # this regex is also copied in propertyList.ejs
+    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+        raise ValueError("Invalid Property")
+
+
+def validate_detail_screen_field(field):
+    # If you change here, also change here:
+    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
+    if not re.match(field_re, field):
+        raise ValueError("Invalid Sort Field")
 
 
 class SavedAppBuild(ApplicationBase):
@@ -2700,6 +2763,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form.validation_cache = None
             form.version = None
 
+        app.broken_build = False
+
         return app
 
     @property
@@ -2746,6 +2811,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
         return self.build_version >= '2.2'
+
+    @property
+    def enable_multimedia_case_property(self):
+        """
+        Multimedia case properties are supported by apps version 2.6 or higher
+        """
+        return self.build_version >= '2.6'
 
     @property
     def default_language(self):
@@ -2839,7 +2911,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             else:
                 setting_value = self__profile[setting_type][setting_id]
             if setting_value:
-                app_profile[setting_type][setting_id] = setting_value
+                app_profile[setting_type][setting_id] = {
+                    'value': setting_value,
+                    'force': setting.get('force', False)
+                }
             # assert that it gets explicitly set once per loop
             del setting_value
 
@@ -3309,6 +3384,8 @@ class RemoteApp(ApplicationBase):
     def get_questions(self, xmlns):
         if not self.questions_map:
             self.questions_map = self.make_questions_map()
+            if not self.questions_map:
+                return []
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions

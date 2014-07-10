@@ -5,6 +5,7 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.parsing import json_format_datetime
 from mock import patch
 
 
@@ -20,7 +21,7 @@ class LocationsTest(CommTrackTest):
             create=False,
             case_id=sp,
             version=V2,
-        ).as_xml()
+        ).as_xml(format_datetime=json_format_datetime)
         check_user_has_case(
             self,
             user.to_casexml_user(),

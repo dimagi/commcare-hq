@@ -4,6 +4,7 @@ from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
+from django.views.generic import RedirectView
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
 from corehq.apps.domain.views import (
@@ -15,7 +16,7 @@ from corehq.apps.domain.views import (
     DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView,
     SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView,
     EditExistingBillingAccountView, DomainBillingStatementsView,
-    BillingStatementPdfView, CommTrackSettingsView, OrgSettingsView,
+    BillingStatementPdfView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
 )
@@ -42,12 +43,12 @@ from corehq.apps.domain.views import (
 
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
-        return password_reset(request, *args, **kwargs)                
+        return password_reset(request, *args, **kwargs)
     except None: 
         vals = {'error_msg':'There was a problem with your request',
                 'error_details':sys.exc_info(),
                 'show_homepage_link': 1 }
-        return render_to_response('error.html', vals, context_instance = RequestContext(request))   
+        return render_to_response('error.html', vals, context_instance=RequestContext(request))
 
 
 # auth templates are normally in 'registration,'but that's too confusing a name, given that this app has
@@ -116,7 +117,7 @@ domain_settings = patterns(
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
-    url(r'^commtrack/settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
+    url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
     url(r'^organization/$', OrgSettingsView.as_view(), name=OrgSettingsView.urlname),
     url(r'^organization/request/$', 'org_request', name='domain_org_request'),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),

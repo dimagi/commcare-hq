@@ -138,7 +138,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             self._update(bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            bundle.obj.retire()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -304,10 +304,10 @@ class GroupResource(v0_4.GroupResource):
         return should_save
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
-        if isinstance(bundle_or_obj, Bundle):
+        if bundle_or_obj is None:
+            return super(GroupResource, self).get_resource_uri(bundle_or_obj, url_name)
+        elif isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
         else:
             obj = bundle_or_obj
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,

@@ -82,23 +82,10 @@ def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
     url = settings.STATIC_URL + url
-    if version:
+    is_less = url.endswith('.less')
+    if version and not is_less:
         url += "?version=%s" % version
     return url
-
-
-@register.simple_tag
-def get_report_analytics_tag(request):
-    # todo: change this to takes_context=True and check the active_tab context
-    # variable to see exactly whether the reports tab is active
-    if 'reports' in request.path_info:
-        try:
-            report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
-        except IndexError:
-            return ''
-
-        return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
-    return ''
 
 
 @register.simple_tag
@@ -147,26 +134,6 @@ def domains_for_user(request, selected_domain=None):
 
     domain_list_str = "".join(lst)
     return domain_list_str
-
-
-@register.simple_tag
-def list_my_domains(request):
-    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'list_my_domains')
-    if cached_val:
-        return cached_val.get('list_my_domains', "")
-
-    domain_list = Domain.active_for_user(request.user)
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for domain in domain_list:
-        default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
-    lst.append('</ul>')
-
-    my_domain_list_str = "".join(lst)
-    ret = {"list_my_domains": my_domain_list_str}
-    cache_core.cache_doc_prop(request.couch_user.get_id, 'list_my_domains', ret)
-    return my_domain_list_str
 
 
 @register.simple_tag

@@ -104,6 +104,17 @@
                     },
                     $('#form-filter').get(0)
                 );
+
+                ko.applyBindings({
+                        workflow: ko.observable('{{ form.post_form_workflow }}'),
+                        form_workflow_options: [
+                            {value: "default", label: "{% trans "* Home Screen" %}" },
+                            {value: "module", label: "{% trans "Module:" %} {{ module.name|trans:langs }}" },
+                            {value: "previous_screen", label: "{% trans "Previous Screen" %}" }
+                        ]
+                    },
+                    $('#form-workflow').get(0)
+                );
             {% endif %}
         });
     </script>
@@ -118,9 +129,9 @@
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -258,6 +269,7 @@
                 </div>
                 {% include "app_manager/partials/nav_menu_media.html" with item=form %}
                 {% include "app_manager/partials/form_filter.html" %}
+                {% include "app_manager/partials/form_workflow.html" %}
             </form>
         </div>
         <div class="tab-pane" id="case-configuration">

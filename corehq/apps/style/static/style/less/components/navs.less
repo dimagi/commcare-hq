@@ -1,0 +1,84 @@
+// Extends Twitter Bootstrap's navigation styles
+
+
+// NAV LIST Extensions
+// --------
+
+.nav-list .nav-header {
+    font-size: @baseFontSize - 1;
+    color: @commCareGray;
+}
+
+// sidebar specific Nav list styles
+.sidebar {
+    .nav-list > li > a,
+    .nav-list > li > a:visited,
+    .nav-list > li > a:link {
+        color: darken(@commCareGray, 4);
+    }
+    .nav-list .nav-header {
+        color: @blue;
+    }
+    .nav-list > li > a,
+    .nav-list .nav-header {
+        padding-left: @gridGutterWidth;
+        margin-left:  -@gridGutterWidth;
+    }
+    .nav > li > a.hovered,
+    .nav > li > a:hover {
+        background-color: darken(@sideNavigationBackground, 10);
+        color: @grayDarker;
+    }
+    .nav-list > li.active > a,
+    .nav-list > li.active > a:hover {
+        color: @white;
+        background-color: @blue;
+    }
+}
+
+// hq-content
+
+.hq-content > .nav-tabs {
+    margin-top: @gridGutterWidth;
+    margin-right: @gridGutterWidth*2;
+}
+.hq-content > .tab-content{
+    margin-right: @gridGutterWidth*2;
+}
+
+.nav-list .nav-header-role {
+  font-size: @fontSizeSmall;
+  padding-top: 0;
+}
+
+// =========== taken from navs.less in bootstrap to hook in .hovered class
+
+// Actual tabs (as links)
+.nav-tabs > li > a {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: @baseLineHeight;
+  border: 1px solid transparent;
+  .border-radius(4px 4px 0 0);
+  &:hover,
+  &.hovered {
+    border-color: @grayLighter @grayLighter #ddd;
+  }
+}
+
+// Active state, and it's :hover to override normal :hover
+.nav-tabs > .active > a,
+.nav-tabs > .active > a.hovered,
+.nav-tabs > .active > a:hover {
+  color: @gray;
+  background-color: @bodyBackground;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+  cursor: default;
+}
+
+.nav > li > a:hover,
+.nav > li > a.hovered {
+  text-decoration: none;
+  background-color: @grayLighter;
+}

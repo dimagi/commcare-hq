@@ -258,6 +258,7 @@ class SqlData(ReportDataSource):
             data = qc.resolve(conn, self.filter_values)
         finally:
             conn.close()
+            engine.dispose()
 
         return data
 

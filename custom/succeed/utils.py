@@ -2,9 +2,10 @@ from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
+from casexml.apps.case.models import CommCareCase
+from datetime import datetime, timedelta
 
 EMPTY_FIELD = "---"
-
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
 SUCCEED_PM_APPNAME = 'SUCCEED PM app'
@@ -25,28 +26,32 @@ CONFIG = {
 }
 
 
+def has_role(user, roles):
+    return user.get_role() is not None and user.get_role()['name'] in roles
+
+
 def is_succeed_admin(user):
-    return user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin']
+    return has_role(user, [CONFIG['succeed_admin'], 'Admin'])
 
 
 def is_pi(user):
-    return user.get_role()['name'] in [CONFIG['pi_role']]
+    return has_role(user, [CONFIG['pi_role']])
 
 
 def is_cm(user):
-    return user.get_role()['name'] in [CONFIG['cm_role']]
+    return has_role(user, [CONFIG['cm_role']])
 
 
 def is_chw(user):
-    return user.get_role()['name'] in [CONFIG['chw_role']]
+    return has_role(user, [CONFIG['chw_role']])
 
 
 def is_pm_or_pi(user):
-    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role']]
+    return has_role(user, [CONFIG['pm_role'], CONFIG['pi_role']])
 
 
 def has_any_role(user):
-    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role'], CONFIG['cm_role'], CONFIG['chw_role']]
+    return is_chw(user) or is_pm_or_pi(user) or is_cm(user)
 
 
 def get_app_build(app_dict):
@@ -78,3 +83,26 @@ def format_date(date_string, OUTPUT_FORMAT):
             return _("Bad Date Format!")
 
     return date_string.strftime(OUTPUT_FORMAT)
+
+def get_randomization_date(case):
+    from custom.succeed.reports import INPUT_DATE_FORMAT
+    rand_date = case.get_case_property("randomization_date")
+    if rand_date != None:
+        date = format_date(rand_date, INPUT_DATE_FORMAT)
+        return date
+    else:
+        return EMPTY_FIELD
+
+def update_patient_target_dates(case):
+    from custom.succeed.reports import VISIT_SCHEDULE
+
+    for visit_key, visit in enumerate(VISIT_SCHEDULE):
+        try:
+            next_visit = VISIT_SCHEDULE[visit_key + 1]
+        except IndexError:
+            next_visit = 'last'
+        if next_visit != 'last' and case.get_case_property("randomization_date") is not None:
+            rand_date = dateutil.parser.parse(get_randomization_date(case))
+            tg_date = rand_date.date() + timedelta(days=next_visit['days'])
+            case.set_case_property(visit['target_date_case_property'], tg_date.strftime("%m/%d/%Y"))
+    case.save()

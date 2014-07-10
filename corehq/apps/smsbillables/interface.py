@@ -1,6 +1,3 @@
-from corehq.apps.accounting.dispatcher import (
-    AccountingAdminInterfaceDispatcher
-)
 from corehq.apps.accounting.filters import DateCreatedFilter
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -11,6 +8,7 @@ from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
 )
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.smsbillables.filters import (
     CountryCodeFilter,
     DateSentFilter,
@@ -29,7 +27,7 @@ from corehq.apps.smsbillables.models import (
 class SMSBillablesInterface(GenericTabularReport):
     base_template = "accounting/report_filter_actions.html"
     section_name = "Accounting"
-    dispatcher = AccountingAdminInterfaceDispatcher
+    dispatcher = SMSAdminInterfaceDispatcher
     name = "SMS Billables"
     description = "List of all SMS Billables"
     slug = "sms_billables"
@@ -65,12 +63,7 @@ class SMSBillablesInterface(GenericTabularReport):
                  else ("Outgoing"
                        if sms_billable.direction == OUTGOING
                        else "")),
-                ((sms_billable.gateway_fee.amount
-                  * sms_billable.gateway_fee_conversion_rate)
-                 if (sms_billable.gateway_fee is not None
-                     and sms_billable.gateway_fee_conversion_rate is not None)
-                 else (sms_billable.gateway_fee.amount
-                       if sms_billable.gateway_fee is not None else "")),
+                sms_billable.gateway_charge,
                 (sms_billable.usage_fee.amount
                  if sms_billable.usage_fee is not None else ""),
                 sms_billable.log_id,
@@ -110,7 +103,7 @@ class SMSBillablesInterface(GenericTabularReport):
 class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     base_template = "accounting/report_filter_actions.html"
     section_name = "Accounting"
-    dispatcher = AccountingAdminInterfaceDispatcher
+    dispatcher = SMSAdminInterfaceDispatcher
     name = "SMS Gateway Fee Criteria"
     description = "List of all SMS Gateway Fee Criteria"
     slug = "sms_gateway_fee_criteria"

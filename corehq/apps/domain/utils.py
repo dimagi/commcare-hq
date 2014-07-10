@@ -58,3 +58,10 @@ def domain_restricts_superusers(domain):
     if not domain:
         return False
     return domain.restrict_superusers
+
+
+def get_dummy_domain(domain_type=None):
+    domain_type = domain_type or 'commcare'
+    dummy_domain = Domain()
+    dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
+    return dummy_domain

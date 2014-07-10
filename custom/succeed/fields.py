@@ -3,12 +3,17 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.elastic import es_query
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
-from custom.succeed.utils import is_succeed_admin, CONFIG, is_pm_or_pi
+from casexml.apps.case.models import CommCareCase
+from custom.succeed.utils import (
+    CONFIG
+)
 
 
 class CareSite(ReportSelectField):
-    slug = "care_site"
+    slug = "care_site_display"
     name = ugettext_noop("Care Site")
     cssId = "opened_closed"
     cssClasses = "span3"
@@ -16,7 +21,29 @@ class CareSite(ReportSelectField):
 
     @property
     def options(self):
-        return CONFIG['groups']
+        q = { "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"domain.exact": self.domain}}
+                            ],
+                            "must_not": []
+                        }
+                    }
+                }
+            }
+        }
+        es_results = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        care_sites = []
+        for case in es_results['hits'].get('hits', []):
+            prop = CommCareCase.get(case['_id']).get_case_property('care_site_display')
+            if prop is not None and prop not in care_sites:
+                care_sites.append(prop)
+        return [dict(val=care_site, text=ugettext_noop(care_site)) for care_site in care_sites]
 
 
 class ResponsibleParty(ReportSelectField):
@@ -24,27 +51,14 @@ class ResponsibleParty(ReportSelectField):
     name = ugettext_noop("Responsible Party")
     cssId = "opened_closed"
     cssClasses = "span3"
+    default_option = ugettext_noop("All Roles")
 
     @property
     def options(self):
-        user = self.request.couch_user
-        cm = dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager"))
-        chw = dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker"))
-        options = []
-        if isinstance(user, WebUser) or is_succeed_admin(user) or is_pm_or_pi(user):
-            options = [
-                dict(val='', text=ugettext_noop("All Roles")),
-                dict(val=CONFIG['pm_role'], text=ugettext_noop("Project Manager")),
-                cm,
-                chw
-            ]
-        else:
-            role = user.get_role()['name']
-            if role == CONFIG['cm_role']:
-                options.append(cm)
-            elif role == CONFIG['chw_role']:
-                options.append(chw)
-        return options
+        return [
+            dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager")),
+            dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker")),
+        ]
 
 
 class PatientStatus(ReportSelectField):

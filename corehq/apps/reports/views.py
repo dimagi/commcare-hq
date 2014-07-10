@@ -24,6 +24,8 @@ from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
 from casexml.apps.case.cleanup import rebuild_case
 from corehq import toggles
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.reports.standard.export import ExcelExportReport
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -31,6 +33,7 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
+from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
@@ -62,12 +65,15 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema, \
+    HQGroupExportConfiguration
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain, \
-    users_matching_filter
+from corehq.apps.reports.util import (
+    get_all_users_by_domain,
+    users_matching_filter,
+)
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -102,10 +108,12 @@ def default(request, domain):
 def old_saved_reports(request, domain):
     return default(request, domain)
 
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
+    if not (request.couch_user.can_view_reports()
+            or request.couch_user.get_viewable_reports()):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id)
@@ -215,12 +223,12 @@ def export_data_async(request, domain):
 
 @login_or_digest
 @datespan_default
-@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
-    deid = request.GET.get('deid') == 'true'
+    r = request.POST if request.method == 'POST' else request.GET
+    deid = r.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
     else:
@@ -235,20 +243,21 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    async = request.GET.get('async') == 'true'
-    next = request.GET.get("next", "")
-    format = request.GET.get("format", "")
-    export_type = request.GET.get("type", "form")
-    previous_export_id = request.GET.get("previous_export", None)
-    filename = request.GET.get("filename", None)
-    max_column_size = int(request.GET.get("max_column_size", 2000))
-    limit = int(request.GET.get("limit", 0))
+    req = request.POST if request.method == 'POST' else request.GET
+    async = req.get('async') == 'true'
+    next = req.get("next", "")
+    format = req.get("format", "")
+    export_type = req.get("type", "form")
+    previous_export_id = req.get("previous_export", None)
+    filename = req.get("filename", None)
+    max_column_size = int(req.get("max_column_size", 2000))
+    limit = int(req.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
         try:
-            is_custom = json.loads(request.GET.get("is_custom", "false"))
-            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+            is_custom = json.loads(req.get("is_custom", "false"))
+            export_tags = json.loads(req.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
 
@@ -279,7 +288,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             # FakeSavedExportSchema a download_data function (called below)
             return HttpResponseBadRequest()
         try:
-            export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+            export_tag = json.loads(req.get("export_tag", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
@@ -337,6 +346,22 @@ def hq_download_saved_export(req, domain, export_id):
     # to be the domain
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
+
+
+@login_or_digest
+@require_form_export_permission
+@require_POST
+def hq_update_saved_export(req, domain):
+    group_id = req.POST['group_export_id']
+    index = int(req.POST['index'])
+    group_config = HQGroupExportConfiguration.get(group_id)
+    assert domain == group_config.domain
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, 'couch')
+    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
+                                        args=[domain, req.POST['report_slug']]))
+
 
 @login_or_digest
 @require_form_export_permission

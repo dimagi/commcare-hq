@@ -6,6 +6,8 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import UNUSABLE_PASSWORD
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -39,7 +41,7 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from hqstyle.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -635,7 +637,37 @@ def clean_password(txt):
         raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
     return txt
 
-class ConfidentialPasswordResetForm(PasswordResetForm):
+
+class HQPasswordResetForm(PasswordResetForm):
+    """
+    Modified from PasswordResetForm to filter only web users by default.
+
+    This prevents duplicate emails with linked commcare user accounts to the same email.
+    """
+
+    def clean_email(self):
+        UserModel = get_user_model()
+        email = self.cleaned_data["email"]
+        matching_users = UserModel._default_manager.filter(username__iexact=email)
+        if matching_users.count():
+            self.users_cache = matching_users
+        else:
+            # revert to previous behavior to theoretically allow commcare users to create an account
+            self.users_cache = UserModel._default_manager.filter(email__iexact=email)
+
+        # below here is not modified from the superclass
+        if not len(self.users_cache):
+            raise forms.ValidationError(self.error_messages['unknown'])
+        if not any(user.is_active for user in self.users_cache):
+            # none of the filtered users are active
+            raise forms.ValidationError(self.error_messages['unknown'])
+        if any((user.password == UNUSABLE_PASSWORD)
+               for user in self.users_cache):
+            raise forms.ValidationError(self.error_messages['unusable'])
+        return email
+
+
+class ConfidentialPasswordResetForm(HQPasswordResetForm):
     def clean_email(self):
         try:
             return super(ConfidentialPasswordResetForm, self).clean_email()
@@ -979,6 +1011,7 @@ class ProBonoForm(forms.Form):
         try:
             params = {
                 'pro_bono_form': self,
+                'domain': domain,
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)

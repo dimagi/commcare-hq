@@ -17,6 +17,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
+from dimagi.utils.parsing import json_format_datetime
 
 
 def all_supply_point_types(domain):
@@ -247,11 +248,15 @@ def submit_mapping_case_block(user, index):
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
-            index=index
+            index=index,
+            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
+            user_id=const.COMMTRACK_USERNAME,
         )
 
     submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(
+            caseblock.as_xml(format_datetime=json_format_datetime)
+        ),
         user.domain,
     )
 

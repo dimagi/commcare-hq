@@ -25,6 +25,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
+from corehq.apps.users.models import DomainInvitation
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -94,12 +95,18 @@ accounting_logger = logging.getLogger('accounting')
 
 @login_required
 def select(request, domain_select_template='domain/select.html'):
-
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    return render(request, domain_select_template, {})
+    email = request.couch_user.get_email()
+    open_invitations = DomainInvitation.by_email(email)
+
+    additional_context = {
+        'domains_for_user': domains_for_user,
+        'open_invitations': open_invitations,
+    }
+    return render(request, domain_select_template, additional_context)
 
 
 class DomainViewMixin(object):
@@ -314,7 +321,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
-                self.request.POST, can_use_custom_logo=self.can_use_custom_logo
+                self.request.POST,
+                self.request.FILES,
+                can_use_custom_logo=self.can_use_custom_logo
             )
 
         if self.can_user_see_meta:
@@ -1913,91 +1922,6 @@ def set_published_snapshot(request, domain, snapshot_name=''):
         else:
             _publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
-
-
-class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
-
-    @property
-    @memoized
-    def commtrack_settings(self):
-        return self.domain_object.commtrack_settings
-
-
-class CommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'commtrack_settings'
-    page_title = ugettext_lazy("CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings.html'
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.commtrack_settings_form
-        }
-
-    @property
-    @memoized
-    def commtrack_settings_form(self):
-        from corehq.apps.commtrack.forms import CommTrackSettingsForm
-        initial = self.commtrack_settings.to_json()
-        initial.update(dict(('consumption_' + k, v) for k, v in
-            self.commtrack_settings.consumption_config.to_json().items()))
-        initial.update(dict(('stock_' + k, v) for k, v in
-            self.commtrack_settings.stock_levels_config.to_json().items()))
-
-        if self.request.method == 'POST':
-            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
-        return CommTrackSettingsForm(initial=initial, domain=self.domain)
-
-    def set_ota_restore_config(self):
-        """
-        If the checkbox for syncing consumption fixtures is
-        checked, then we build the restore config with appropriate
-        special properties, otherwise just clear the object.
-
-        If there becomes a way to tweak these on the UI, this should
-        be done differently.
-        """
-
-        from corehq.apps.commtrack.models import StockRestoreConfig
-        if self.commtrack_settings.sync_consumption_fixtures:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
-                section_to_consumption_types={
-                    'stock': 'consumption'
-                },
-                force_consumption_case_types=[
-                    'supply-point'
-                ],
-                use_dynamic_product_list=True,
-            )
-        else:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
-
-    def post(self, request, *args, **kwargs):
-        if self.commtrack_settings_form.is_valid():
-            data = self.commtrack_settings_form.cleaned_data
-            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
-            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
-            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
-
-            self.set_ota_restore_config()
-
-            fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
-            for field in fields:
-                if data.get('stock_' + field):
-                    setattr(self.commtrack_settings.stock_levels_config, field,
-                            data['stock_' + field])
-
-            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
-            for field in consumption_fields:
-                if data.get('consumption_' + field):
-                    setattr(self.commtrack_settings.consumption_config, field,
-                            data['consumption_' + field])
-
-            self.commtrack_settings.save()
-            messages.success(request, _("Settings updated!"))
-            return HttpResponseRedirect(self.page_url)
-        return self.get(request, *args, **kwargs)
 
 
 class ProBonoMixin():
