@@ -1491,6 +1491,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return match_value
         return None
 
+    def clean_global_timeouts(self):
+        global_timeouts = self.cleaned_data['global_timeouts']
+        if global_timeouts:
+            timeouts_str = global_timeouts.split(",")
+            timeouts_int = []
+            for t in timeouts_str:
+                try:
+                    t = int(t.strip())
+                    assert t > 0
+                    timeouts_int.append(t)
+                except (ValueError, AssertionError):
+                    raise ValidationError(_(
+                        "Timeout intervals must be a list of positive "
+                        "numbers separated by commas."
+                    ))
+            return timeouts_int
+        return []
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1569,21 +1587,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if (method == METHOD_SMS_CALLBACK
                 or method == METHOD_IVR_SURVEY
                 or method == METHOD_SMS_SURVEY):
-                global_timeouts = self.cleaned_data['global_timeouts']
-                if global_timeouts:
-                    timeouts_str = global_timeouts.split(",")
-                    timeouts_int = []
-                    for t in timeouts_str:
-                        try:
-                            t = int(t.strip())
-                            assert t > 0
-                            timeouts_int.append(t)
-                        except (ValueError, AssertionError):
-                            raise ValidationError(_(
-                                "Timeout intervals must be a list of positive "
-                                "numbers separated by commas."
-                            ))
-                    event['callback_timeout_intervals'] = timeouts_int
+                event['callback_timeout_intervals'] = self.cleaned_data.get(
+                    'global_timeouts', [])
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
