@@ -1178,7 +1178,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None,
+        'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "parent_module": None,
@@ -1244,6 +1244,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if should_edit(SLUG):
             module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
             module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
+
+    module.has_schedule = should_edit('has_schedule')
 
     _handle_media_edits(req, module, should_edit, resp)
 

@@ -147,8 +147,18 @@
                         {% endif %}
                     </div>
                 </div>
-
                 {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                <div class="control-group">
+                    <label class="control-label">
+                        <span class="label label-info">{% trans "Preview" %}</span>
+                    </label>
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" name="has_schedule" {% if module.has_schedule %}checked{% endif %}>
+                            {% trans "Enable visit schedule for forms in this module" %}
+                        </label>
+                    </div>
+                </div>
             </fieldset>
         </form>
     </div>
