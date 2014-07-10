@@ -18,10 +18,11 @@ Adding CommCare Builds to CommCare HQ
        If you use the web UI, copy the download URL. This will be called `build_url`.
 
 You now have two options for how to install it.
-Command line:
+
+* Command line:
     * `cd` into the commcare-hq root directory, and run the following command:
       `python manage.py add_commcare_build $build_path $version $build_number`
-Web UI
+* Web UI
     * Go to `/builds/edit_menu/` and follow the instructions at the bottom for adding your build.
 
 Now make sure the build is available in the app settings.  Go to `/builds/edit_menu/`, then add the version and a label. You can also set the default here to be the version you've added.
