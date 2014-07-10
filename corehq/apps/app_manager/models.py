@@ -506,6 +506,7 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -714,6 +715,9 @@ class FormBase(DocumentSchema):
     @property
     def has_fixtures(self):
         return 'src="jr://fixture/item-list:' in self.source
+
+    def get_auto_gps_capture(self):
+        return self.auto_gps_capture or self.get_app().auto_gps_capture
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -2740,6 +2744,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

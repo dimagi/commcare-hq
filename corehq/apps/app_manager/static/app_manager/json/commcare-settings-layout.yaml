@@ -26,6 +26,7 @@
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.cc-content-valid  # Multimedia Validation
+    - hq.auto_gps_capture
 
 - title: 'Java Phone General Settings'
   id: app-settings-j2me-properties
