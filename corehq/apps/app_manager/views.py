@@ -1457,6 +1457,14 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     else:
         return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
 
+@no_conflict_require_POST
+@login_or_digest
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def edit_form_schedule(req, domain, app_id, unique_form_id):
+    print req.POST
+    resp ={}
+    return HttpResponse(json.dumps(resp))
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
