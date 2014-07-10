@@ -1260,6 +1260,7 @@ class Module(ModuleBase):
     Translates to a top-level menu on the phone.
 
     """
+    module_type = 'basic'
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
@@ -1559,6 +1560,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
 
 class AdvancedModule(ModuleBase):
+    module_type = 'advanced'
     case_label = DictProperty()
     forms = SchemaListProperty(AdvancedForm)
     case_details = SchemaProperty(DetailPair)
@@ -1886,6 +1888,7 @@ class CareplanModule(ModuleBase):
     """
     A set of forms and configuration for managing the Care Plan workflow.
     """
+    module_type = 'careplan'
     parent_select = SchemaProperty(ParentSelect)
 
     display_separately = BooleanProperty(default=False)
