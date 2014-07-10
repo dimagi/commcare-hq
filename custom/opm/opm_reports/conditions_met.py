@@ -281,7 +281,29 @@ class ConditionsMet(object):
                 self.cash = '<span style="color: green;">Rs. 3000</span>'
 
         met_or_not = not False in [met_one, met_two, met_three, met_four, met_five]
-        if met_or_not:
+        block = report.block.lower()
+        year_end_condition = '1' in birth_spacing_prompt if block is 'wazirganj' else met['interpret_grade_1'] is 'normal'
+        year_end_condition_img_Y = (SPACING_PROMPT_Y if block is 'wazirganj' else GRADE_NORMAL_Y)
+        year_end_condition_img_N = (SPACING_PROMPT_N if block is 'wazirganj' else GRADE_NORMAL_N)
+        if child_age == 24 and year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 2250</span>'   
+        if child_age == 24 and year_end_condition and not met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 2000</span>'
+        if child_age == 24 and not year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_N
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        if child_age == 36 and year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 3250</span>'  
+        if child_age == 36 and year_end_condition and not met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 3000</span>'
+        if child_age == 36 and not year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_N
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        elif met_or_not:
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
