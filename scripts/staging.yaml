@@ -19,6 +19,7 @@ branches:
 #  - universal-analytics-upgrade # Nick P 7/8
   - formviewbase+universal-analytics-upgrade # SK 7/9
   - module-view # SK 7/10
+  - dynmic-opm # sravan 7/10
 submodules:
   submodules/couchlog-src:
     branches:
