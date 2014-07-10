@@ -112,7 +112,7 @@ class AsyncLocationFilter(BaseReportFilter):
                                                         'resource_name': 'location',
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
-        user = CouchUser.get_by_username(str(self.request.user))
+        user = CouchUser.get_by_username(unicode(self.request.user))
         domain = Domain.get_by_name(self.domain)
 
         context = {}
