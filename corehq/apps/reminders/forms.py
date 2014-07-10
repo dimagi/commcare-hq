@@ -942,7 +942,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Please Specify Custom Content Handler")
     )
 
-    def __init__(self, data=None, is_previewer=False, is_superuser=False,
+    def __init__(self, data=None, is_previewer=False,
                  domain=None, is_edit=False, can_use_survey=False,
                  use_custom_content_handler=False,
                  custom_content_handler=None, *args, **kwargs
@@ -966,7 +966,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.is_edit = is_edit
-        self.is_superuser = is_superuser
+        self.is_previewer = is_previewer
         self.use_custom_content_handler = use_custom_content_handler
         self.custom_content_handler = custom_content_handler
 
@@ -1310,13 +1310,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
-            crispy.Div(*self.additional_advanced_options),
+            BootstrapMultiField(
+                "",
+                InlineField(
+                    'use_custom_content_handler',
+                    data_bind="checked: use_custom_content_handler",
+                ),
+                InlineField(
+                    'custom_content_handler',
+                    css_class="input-xxlarge",
+                    data_bind="visible: use_custom_content_handler",
+                ),
+            ),
             active=False,
         )
-
-    @property
-    def additional_advanced_options(self):
-        return []
 
     @property
     def current_values(self):
@@ -1632,13 +1639,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return self.cleaned_data['force_surveys_to_use_triggered_case']
 
     def clean_use_custom_content_handler(self):
-        if self.is_superuser:
+        if self.is_previewer:
             return self.cleaned_data["use_custom_content_handler"]
         else:
             return self.use_custom_content_handler
 
     def clean_custom_content_handler(self):
-        if self._cchq_is_superuser:
+        if self.is_previewer:
             value = self.cleaned_data["custom_content_handler"]
             if self.cleaned_data["use_custom_content_handler"]:
                 if value in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
@@ -1735,6 +1742,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     current_val = RECIPIENT_ALL_SUBCASES
                 if current_val is not Ellipsis:
                     initial[field] = current_val
+                if field is 'custom_content_handler' and current_val is not None:
+                    initial['use_custom_content_handler'] = True
             except AttributeError:
                 pass
 
@@ -1876,23 +1885,6 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
                                    "option is useful, for example, if the recipient has chosen a "
                                    "specific time to receive the message.")
-            ),
-        ]
-
-    @property
-    def additional_advanced_options(self):
-        return [
-            BootstrapMultiField(
-                "",
-                InlineField(
-                    'use_custom_content_handler',
-                    data_bind="checked: use_custom_content_handler",
-                ),
-                InlineField(
-                    'custom_content_handler',
-                    css_class="input-xxlarge",
-                    data_bind="visible: use_custom_content_handler",
-                ),
             ),
         ]
 

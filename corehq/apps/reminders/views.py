@@ -544,12 +544,10 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
-                is_superuser=self.request.couch_user.is_superuser,
                 can_use_survey=can_use_survey_reminders(self.request),
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
-            is_superuser=self.request.couch_user.is_superuser,
             domain=self.domain,
             can_use_survey=can_use_survey_reminders(self.request),
         )
