@@ -160,7 +160,7 @@ class ConditionsMet(object):
         preg_month = -1
         child_age = -1
         window = -1
-        if not dod_date and not edd_date:
+        if dod_date == EMPTY_FIELD and edd_date == EMPTY_FIELD:
             raise InvalidRow
         if dod_date and dod_date != EMPTY_FIELD:
             if dod_date >= reporting_date:
