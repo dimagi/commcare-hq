@@ -16,7 +16,7 @@ from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch import CouchDocLockableMixIn
 
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
 from dimagi.utils.mixins import UnicodeMixIn
@@ -145,11 +145,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def metadata(self):
         if (const.TAG_META) in self.form:
             def _clean(meta_block):
-                # couchdbkit chokes on dates that aren't actually dates
-                # so check their validity before passing them up
                 ret = copy(dict(meta_block))
                 for key in ret.keys():
-                    #remove attributes from the meta block
+                    # remove attributes from the meta block
                     if key.startswith('@'):
                         del ret[key]
 
@@ -161,13 +159,17 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                     else:
                         ret['appVersion'] = unicode(meta_block['appVersion'])
 
+                # couchdbkit chokes on dates that aren't actually dates
+                # so check their validity before passing them up
                 if meta_block:
                     for key in ("timeStart", "timeEnd"):
                         if key in meta_block:
                             if meta_block[key]:
                                 try:
-                                    #try to parse to ensure correctness
+                                    # try to parse to ensure correctness
                                     parsed = string_to_datetime(meta_block[key])
+                                    # and set back in the right format in case it was a date, not a datetime
+                                    ret[key] = json_format_datetime(parsed)
                                 except ValueError:
                                     # we couldn't parse it
                                     del ret[key]

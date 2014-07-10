@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from django.test import TestCase
 from couchforms import create_xform_from_xml
 from couchforms.models import XFormInstance
@@ -95,4 +95,13 @@ class TestMeta(TestCase):
                 'deprecatedID': None,
                 'deviceID': u'commconnect'
             })
+            xform.delete()
+
+    def testMetaDateInDatetimeFields(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "date_in_meta.xml")
+        xml_data = open(file_path, "rb").read()
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
+            self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
+            self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
             xform.delete()
