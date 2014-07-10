@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
+from dimagi.utils.couch.database import iter_docs
+import csv
 
 
 class Command(BaseCommand):
     # frequency domain/property
-    def has_any_hardcoded_properties(self, loc):
+    def has_any_hardcoded_properties(self, loc, csv_writer):
         hardcoded = {
             'outlet': [
                 'outlet_type',
@@ -26,37 +28,44 @@ class Command(BaseCommand):
             for prop in hardcoded[loc.location_type]:
                 prop_val = getattr(loc, prop, '')
                 if prop_val:
-                    self.stdout.write(
-                        "Found location %s (%s) in domain %s with %s set to %s" % (
-                            loc._id,
-                            loc.location_type,
-                            loc.domain,
-                            prop,
-                            prop_val
-                        )
-                    )
+                    csv_writer.writerow([
+                        loc._id,
+                        loc.location_type,
+                        loc.domain,
+                        prop,
+                        prop_val
+                    ])
                     found = True
 
         return found
 
     def handle(self, *args, **options):
-        self.stdout.write("Populating site codes...\n")
+        with open('location_results.csv', 'wb+') as csvfile:
+            csv_writer = csv.writer(
+                csvfile,
+                delimiter=',',
+                quotechar='|',
+                quoting=csv.QUOTE_MINIMAL
+            )
 
-        relevant_ids = set([r['id'] for r in Location.get_db().view(
-            'locations/by_type',
-            reduce=False,
-        ).all()])
+            csv_writer.writerow(['id', 'type', 'domain', 'property', 'value'])
 
-        problematic_domains = {}
+            locations = list(set(Location.get_db().view(
+                'locations/by_type',
+                reduce=False,
+                wrapper=lambda row: row['id'],
+            ).all()))
 
-        for loc_id in relevant_ids:
-            loc = Location.get(loc_id)
-            if self.has_any_hardcoded_properties(loc):
-                if loc.domain in problematic_domains:
-                    problematic_domains[loc.domain] += 1
-                else:
-                    problematic_domains[loc.domain] = 1
+            problematic_domains = {}
 
-        self.stdout.write("\nDomain stats:\n")
-        for domain, count in problematic_domains.iteritems():
-            self.stdout.write("%s: %d" % (domain, count))
+            for loc in iter_docs(Location.get_db(), locations):
+                loc = Location.get(loc['_id'])
+                if self.has_any_hardcoded_properties(loc, csv_writer):
+                    if loc.domain in problematic_domains:
+                        problematic_domains[loc.domain] += 1
+                    else:
+                        problematic_domains[loc.domain] = 1
+
+            self.stdout.write("\nDomain stats:\n")
+            for domain, count in problematic_domains.iteritems():
+                self.stdout.write("%s: %d" % (domain, count))
