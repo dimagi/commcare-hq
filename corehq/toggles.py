@@ -109,3 +109,9 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
 )
+
+VISIT_SCHEDULER = StaticToggle(
+    'app_builder_visit_scheduler',
+    'Visit Scheduler',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
