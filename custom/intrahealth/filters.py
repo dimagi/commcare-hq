@@ -52,4 +52,5 @@ class RecapPassageLocationFilter(LocationFilter):
     def filter_context(self):
         context = super(RecapPassageLocationFilter, self).filter_context
         context.update(dict(hierarchy=location_hierarchy_config(self.domain)))
+        print(context)
         return context
