@@ -788,7 +788,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def detail_variables(self, module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
-        if module.has_schedule and has_schedule_columns:
+        if module.has_schedule and module.all_forms_require_a_case and has_schedule_columns:
             forms_due = []
             for form in module.get_forms():
                 fixture_id = self.id_strings.schedule_fixture(form)
@@ -1412,7 +1412,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
-        schedule_modules = (module for module in self.modules if module.has_schedule)
+        schedule_modules = (module for module in self.modules if module.has_schedule and module.all_forms_require_a_case)
         schedule_forms = (form for module in schedule_modules for form in module.get_forms())
         for form in schedule_forms:
             schedule = form.schedule
