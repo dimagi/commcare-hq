@@ -16,8 +16,7 @@ from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
-from custom.m4change.constants import BOOKING_FORMS, FOLLOW_UP_FORMS, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, IMMUNIZATION_FORMS, \
-    REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
+from custom.m4change.constants import REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
 from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
@@ -92,7 +91,7 @@ def calculate_form_data(self, form):
         location_name = location.name
         location_parent = location.parent
         if location_parent is not None and location_parent.location_type != 'state':
-            while location_parent.location_type != 'district' and location_parent is not None:
+            while location_parent is not None and location_parent.location_type != 'district':
                 location_parent = location_parent.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 
