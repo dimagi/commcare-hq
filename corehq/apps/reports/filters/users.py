@@ -453,7 +453,7 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
     @property
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
-        url = reverse('emwf_options_with_all_data', args=[self.domain, 'all-data'])
+        url = reverse('emwf_options_with_all_data', args=[self.domain])
         context.update({'endpoint': url})
         return context
 

@@ -1,5 +1,4 @@
 import logging
-from django.core.urlresolvers import reverse
 import simplejson
 
 from django.utils.translation import ugettext as _
@@ -26,7 +25,6 @@ from .data_sources import CaseInfo, CaseDisplay
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilterWithAllData',
-        #'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
