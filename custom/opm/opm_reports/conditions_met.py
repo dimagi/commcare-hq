@@ -81,6 +81,13 @@ class ConditionsMet(object):
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
         img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        def condition_image(image_y, image_n, condition):
+            if condition is None:
+                return ''
+            elif condition is True:
+                return img_elem % image_y
+            elif condition is False:
+                return img_elem % image_n
 
         met = {
             'window_1_1': None,
@@ -132,72 +139,133 @@ class ConditionsMet(object):
             return met_properties
 
         case_obj = CommCareCase.get(case['_source']['_id'])
-        self.case_id = get_property(case_obj, '_id', '')
-        self.block_name = get_property(case_obj, 'block_name', '')
-        self.owner_id = get_property(case_obj, 'owner_id', '')
-        self.closed = get_property(case_obj, 'closed', False)
-        forms = case_obj.get_forms()
-        birth_spacing_prompt = []
-        for form in forms:
-            if 'birth_spacing_prompt' in form.form:
-                birth_spacing_prompt.append(form.form['birth_spacing_prompt'])
+        case_property = lambda _property, default: get_property(case_obj, _property, default=default)
 
-        filtered_forms = [form for form in case_obj.get_forms() if report.datespan.startdate <= form.received_on <= report.datespan.enddate]
+        self.case_id = case_property('_id', '')
+        self.block_name = case_property('block_name', '')
+        self.owner_id = case_property('owner_id', '')
+        self.closed = case_property('closed', False)
 
-        get_property_from_forms(filtered_forms, met)
+        self.name = case_property('name', EMPTY_FIELD)
+        self.awc_name = case_property('awc_name', EMPTY_FIELD)
+        self.husband_name = case_property('husband_name', EMPTY_FIELD)
 
-        dod = get_property(case_obj, 'dod')
-        if dod and dod != EMPTY_FIELD:
-            try:
-                child_age = len(months_between(datetime.datetime(dod.year, dod.month, dod.day), datetime.datetime.now()))
-            except AssertionError:
-                child_age = -1
-        else:
-            child_age = -1
+        reporting_month = report.month
+        reporting_year = report.year
+        reporting_date = datetime.date(reporting_year, reporting_month + 1, 1) - datetime.timedelta(1)
+        
+        dod_date = case_property('dod', EMPTY_FIELD)
+        edd_date = case_property('edd', EMPTY_FIELD)
+        status = "unknown"
+        preg_month = -1
+        child_age = -1
+        window = -1
+        if dod_date == EMPTY_FIELD and edd_date == EMPTY_FIELD:
+            raise InvalidRow
+        if dod_date and dod_date != EMPTY_FIELD:
+            if dod_date >= reporting_date:
+                status = 'pregnant'
+                preg_month = 9 - (dod_date - reporting_date).days / 30 # edge case
+            elif dod_date < reporting_date:
+                status = 'mother'
+                child_age = 1 + (reporting_date - dod_date).days / 30
+        elif edd_date and edd_date != EMPTY_FIELD:
+            if edd_date >= reporting_date:
+                status = 'pregnant'
+                preg_month = 9 - (edd_date - reporting_date).days / 30
+            elif edd_date < reporting_date: # edge case
+                raise InvalidRow
 
-        if get_property(case_obj, 'mother_preg_outcome', '') == '1':
-            self.status = 'mother'
-        elif get_property(case_obj, 'mother_preg_outcome', '') == '':
-            self.status = 'pregnant'
+        if status == 'pregnant' and (preg_month > 3 and preg_month < 10):
+            window = (preg_month - 1) / 3
+        elif status == 'mother' and (child_age > 0 and child_age < 37):
+            window = (child_age - 1) / 3 + 1
         else:
             raise InvalidRow
 
-        met_one = False
-        met_two = False
-        met_three = False
-        met_four = False
-        met_five = False
-        preg_month = get_property(case_obj, 'pregnancy_month', 0) or 0
-        if self.status == 'pregnant':
-            if '1' in [met['window_1_1'], met['window_1_2'], met['window_2_1'], met['window_2_2'], met['attendance_vhnd_3'], met['attendance_vhnd_6']]:
-                met_one = True
-            if (preg_month == '6' and '1' in [met['weight_tri_1'], met['prev_weight_tri_1']]) or (preg_month == '9' and '1' in [met['weight_tri_2'], met['prev_weight_tri_2']]):
-                met_two = True
-        elif self.status == 'mother':
-            if '1' in [met['child1_vhndattend_calc'], met['prev_child1_vhndattend_calc'], met['child1_attendance_vhnd']]:
-                met_one = True
-            if '1' in [met['child1_growthmon_calc'], met['prev_child1_growthmon_calc']]:
-                met_two = True
-            if (child_age == 3 and (met['child1_weight_calc'] or met['prev_child1_weight_calc'])) or \
-                    (child_age == 6 and (met['child1_register_calc'] or met['prev_child1_register_calc'])) or \
-                    (child_age == 9 and (met['child1_measles_calc'] or met['prev_child1_measles_calc'])):
-                met_three = True
-            if child_age == 6 and ('1' in [met['child1_excl_breastfeed_calc'], met['prev_child1_excl_breastfeed_calc']]):
-                met_four = True
-            if child_age in [6, 9, 12] and '1' in [met['child1_ors_calc'], met['prev_child1_ors_calc']]:
-                met_five = True
+        if status == "unknown" or window == -1 or (child_age == -1 and preg_month == -1):
+            raise InvalidRow
 
-        self.name = get_property(case_obj, 'name')
-        self.awc_name = get_property(case_obj, 'awc_name')
-        self.husband_name = get_property(case_obj, 'husband_name')
-        self.window = get_property(case_obj, 'which_window')
+        self.status = status
+        self.child_age = child_age
+        self.preg_month = preg_month
+        self.window = window
+
+        # confirm birth-spacing condition, if it's not needed forms need not be fetched for pregnant cases
+        birth_spacing_prompt = []
+        child_birth_weight_taken = None # None - condition n/a, True - condition met, False - condition not met
+        child_excusive_breastfed = None
+        if self.status == 'mother':
+            forms = case_obj.get_forms()
+            for form in forms:
+                if 'birth_spacing_prompt' in form.form:
+                    birth_spacing_prompt.append(form.form['birth_spacing_prompt'])  
+
+            form_start_date, form_end_date = None, None
+            filtered_forms = [form for form in forms if report.datespan.startdate <= form.received_on <= report.datespan.enddate]   
+            if self.child_age == 3:
+                prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(90) <= form.received_on <= report.datespan.enddate]
+                weight_key = "child1_child_weight"
+                birth_weight = [form.form[weight_key] for form in prev_forms if weight_key in form.form]
+                child_birth_weight_taken = '1' in birth_weight
+            if self.child_age == 6:
+                prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(180) <= form.received_on <= report.datespan.enddate]
+                excl_key = "child1_child_excbreastfed"
+                exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
+                child_excusive_breastfed = exclusive_breastfed == ['1', '1', '1', '1', '1', '1']
+            get_property_from_forms(filtered_forms, met)
+
+        vhnd_attendance = {
+            4: case_property('attendance_vhnd_1', 0),
+            5: case_property('attendance_vhnd_2', 0),
+            6: case_property('attendance_vhnd_3', 0),
+            7: case_property('month_7_attended', 0),
+            8: case_property('month_7_attended', 0)
+        }
         if self.status == 'pregnant':
-            self.preg_month = get_property(case_obj, 'pregnancy_month')
+            met_one, met_two, met_three, met_four, met_five = None, None, None, None, None
             self.child_age = EMPTY_FIELD
-            self.one = img_elem % M_ATTENDANCE_Y if preg_month == '9' else img_elem % M_ATTENDANCE_N
-            self.two = img_elem % M_WEIGHT_Y if preg_month in ['6', '9'] else img_elem % M_WEIGHT_N
-            self.three = img_elem % IFA_Y if int(preg_month) < 7 else img_elem % IFA_N
+            if self.preg_month != 9:
+                met_one = vhnd_attendance[self.preg_month] == '1'
+            if self.preg_month == 6:
+                met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]
+                if report.block.lower() == "atri":
+                    met_three = case_property('ifa_tri1', 0) == '1'
+            if self.preg_month == 9:
+                met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]         
+            
+            self.one = condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, met_one)
+            self.two = condition_image(M_WEIGHT_Y, M_WEIGHT_N, met_two)
+            self.three = condition_image(IFA_Y, IFA_N, met_three)
             self.four = ''
+
+        if self.status == 'mother':
+            self.preg_month = EMPTY_FIELD
+            met_one, met_two, met_three, met_four, met_five = None, None, None, None, None
+            self.one, self.two, self.three, self.four, self.five = '','','','',''
+            if self.child_age != 1:
+                met_one = 'received' in [met['child1_vhndattend_calc'], met['prev_child1_vhndattend_calc'], met['child1_attendance_vhnd']]
+                self.one = condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, met_one)
+            if self.child_age % 3 == 0:
+                met_two = 'received' in [met['child1_growthmon_calc'], met['prev_child1_growthmon_calc']]
+                if met['child1_suffer_diarrhea'] == '1':
+                    met_three = 'received' in [met['child1_ors_calc'], met['prev_child1_ors_calc']]
+                    self.three = condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, met_three)
+                self.two = condition_image(C_WEIGHT_Y, C_WEIGHT_N, met_two)
+            if self.child_age == 3 and report.block.lower() == 'atri':
+                met_four = child_birth_weight_taken
+                self.four = condition_image(CHILD_WEIGHT_Y, CHILD_WEIGHT_N, met_four)
+            if self.child_age == 6 and report.block.lower() == 'atri':
+                met_four = 'received' in [met['child1_register_calc'] or met['prev_child1_register_calc']]
+                met_five = child_excusive_breastfed
+                self.four = condition_image(C_REGISTER_Y, C_REGISTER_N, met_four)
+                self.five = condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, met_five)
+            if self.child_age == 12 and report.block.lower() == 'atri':
+                met_four = 'received' in [met['child1_measles_calc'] or met['prev_child1_measles_calc']]
+                self.four = condition_image(MEASLEVACC_Y, MEASLEVACC_N, met_four)
+
+
+        if self.status == 'pregnant':
             if report.block.lower() == 'wazirganj':
                 if child_age > 23 and '1' in birth_spacing_prompt:
                     self.five = img_elem % SPACING_PROMPT_Y
@@ -206,61 +274,36 @@ class ConditionsMet(object):
             else:
                 self.five = ''
 
-        elif self.status == 'mother':
-            self.preg_month = EMPTY_FIELD
-            if child_age != -1:
-                self.child_age = child_age
-            else:
-                self.child_age = EMPTY_FIELD
-
-            self.one = img_elem % C_ATTENDANCE_Y if 0 <= child_age <= 1 else img_elem % C_ATTENDANCE_N
-            self.two = img_elem % C_WEIGHT_Y if child_age % 3 == 0 else img_elem % C_WEIGHT_N
-
-            if child_age == 3:
-                if met['child1_weight_calc'] or met['prev_child1_weight_calc']:
-                    self.three = img_elem % CHILD_WEIGHT_Y
-                else:
-                    self.three = img_elem % CHILD_WEIGHT_N
-            elif child_age == 6:
-                if met['child1_register_calc'] or met['prev_child1_register_calc']:
-                    self.three = img_elem % C_REGISTER_Y
-                else:
-                    self.three = img_elem % C_REGISTER_N
-            elif child_age == 9:
-                if met['child1_measles_calc'] or met['prev_child1_measles_calc']:
-                    self.three = img_elem % MEASLEVACC_Y
-                else:
-                    self.three = img_elem % MEASLEVACC_N
-            else:
-                self.three = ''
-
-            self.four = img_elem % EXCBREASTFED_Y if child_age == 6 else img_elem % EXCBREASTFED_N
-
-            if child_age in [3, 6, 9]:
-                if met['child1_suffer_diarrhea'] == '1':
-                    self.five = img_elem % ORSZNTREAT_Y
-                else:
-                    self.five = img_elem % ORSZNTREAT_N
-            elif child_age == [24, 36]:
-                if met['interpret_grade_1'] == 'normal':
-                    self.five = img_elem % GRADE_NORMAL_Y
-                else:
-                    self.five = img_elem % GRADE_NORMAL_N
-            else:
-                self.five = ''
-
         if report.block.lower() == 'atri':
             if child_age == 24:
                 self.cash = '<span style="color: green;">Rs. 2000</span>'
             elif child_age == 36:
                 self.cash = '<span style="color: green;">Rs. 3000</span>'
-            elif met_one or met_two or met_three or met_four or met_five:
-                self.cash = '<span style="color: green;">Rs. 250</span>'
-            else:
-                self.cash = '<span style="color: red;">Rs. 0</span>'
 
-        elif report.block.lower() == 'wazirganj':
-            if met_one or met_two or met_four or met_five:
-                self.cash = '<span style="color: green;">Rs. 250</span>'
-            else:
-                self.cash = '<span style="color: red;">Rs. 0</span>'
+        met_or_not = not False in [met_one, met_two, met_three, met_four, met_five]
+        block = report.block.lower()
+        year_end_condition = '1' in birth_spacing_prompt if block is 'wazirganj' else met['interpret_grade_1'] is 'normal'
+        year_end_condition_img_Y = (SPACING_PROMPT_Y if block is 'wazirganj' else GRADE_NORMAL_Y)
+        year_end_condition_img_N = (SPACING_PROMPT_N if block is 'wazirganj' else GRADE_NORMAL_N)
+        if child_age == 24 and year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 2250</span>'   
+        if child_age == 24 and year_end_condition and not met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 2000</span>'
+        if child_age == 24 and not year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_N
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        if child_age == 36 and year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 3250</span>'  
+        if child_age == 36 and year_end_condition and not met_or_not:
+            self.five = img_elem % year_end_condition_img_Y
+            self.cash = '<span style="color: green;">Rs. 3000</span>'
+        if child_age == 36 and not year_end_condition and met_or_not:
+            self.five = img_elem % year_end_condition_img_N
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        elif met_or_not:
+            self.cash = '<span style="color: green;">Rs. 250</span>'
+        else:
+            self.cash = '<span style="color: red;">Rs. 0</span>'
