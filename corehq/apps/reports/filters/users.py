@@ -231,8 +231,13 @@ class EmwfMixin(object):
         user_types = [getattr(HQUserType, t) for t in types]
         basics = [("t__0", _("[All mobile workers]"))] + \
             [self.user_type_tuple(t) for t in user_types]
-        return basics
 
+        if (getattr(self, "show_all_filter", False)
+            or (getattr(self, "kwargs", None)
+                and "all_data" in self.kwargs)):
+            basics = [("t__x", "[All Data]")] + basics
+
+        return basics
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -440,6 +445,22 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
+
+
+class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
+    show_all_filter = True
+
+    @property
+    def filter_context(self):
+        context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
+        url = reverse('emwf_options_with_all_data', args=[self.domain])
+        context.update({'endpoint': url})
+        return context
+
+    @classmethod
+    def show_all_data(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return 't__x' in emws
 
 
 def get_user_toggle(request):
