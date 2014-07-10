@@ -11,8 +11,17 @@ def real_date(form):
 
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
-    def total(self, form):
+    def total_for_region(self, form):
         loc = Location.get(get_location_id_by_type(form=form, type=u'r\xe9gion'))
+        count = list(Location.filter_by_type(form.domain, 'PPS', loc)).__len__()
+        yield {
+            'date': form_date(form),
+            'value': count
+        }
+
+    @fluff.date_emitter
+    def total_for_district(self, form):
+        loc = Location.get(get_location_id_by_type(form=form, type=u'district'))
         count = list(Location.filter_by_type(form.domain, 'PPS', loc)).__len__()
         yield {
             'date': form_date(form),
@@ -154,7 +163,7 @@ class RecapPassage(fluff.Calculator):
             if 'real_date' in form.form and form.form['real_date']:
                 yield {
                     'date': real_date(form),
-                    "value": product['billed_consumption'],
+                    "value": int(product['pps_stock']) if int(product['pps_stock']) >= 0 else 0,
                     "group_by": [product['product_name']]
                 }
 

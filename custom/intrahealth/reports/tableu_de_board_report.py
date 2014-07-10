@@ -119,10 +119,18 @@ class TableuDeBoardReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [
-            ConventureData(config=config),
-            DispDesProducts(config=config),
-            ConsommationData(config=config),
-            TauxConsommationData(config=config),
-            NombreData(config=config)
-        ]
+        if 'district_id' in config:
+            return [
+                ConventureData(config=config),
+                ConsommationData(config=config),
+                TauxConsommationData(config=config),
+                NombreData(config=config)
+            ]
+        else:
+            return [
+                ConventureData(config=config),
+                DispDesProducts(config=config),
+                ConsommationData(config=config),
+                TauxConsommationData(config=config),
+                NombreData(config=config)
+            ]
