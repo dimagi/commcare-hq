@@ -25,6 +25,13 @@ PD2DEPM = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511
 PD2SCM = 'http://openrosa.org/formdesigner/b3226cecdc7c32fe7aca37a76799b48900b2e050'
 PD2OM = 'http://openrosa.org/formdesigner/e859b4d46422f61d902be6acd3ed758009694998'
 CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca850'
+CHW1PS = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511e73b'
+CHW1DIAB = 'http://openrosa.org/formdesigner/2FD5DD7C-38A2-4F46-9386-134C574F7407'
+CHW1CHOL = 'http://openrosa.org/formdesigner/351ec6c430a7dd90f6f7a96938f3d58183ec3992'
+CHW1SMOKINGSENS = 'http://openrosa.org/formdesigner/937a24202f98f87263a7ecbe5fe8a559dc827a05'
+CHW1SL = 'http://openrosa.org/formdesigner/137B1EC0-0DF9-4238-8E7C-0191EF1187AA'
+CHW1DIETOBESITY = 'http://openrosa.org/formdesigner/5DE940C5-430B-41AF-8C58-E4C63C49470F'
+CHW1COMPREF = 'http://openrosa.org/formdesigner/282DAA4B-6246-43B2-9551-A905C05D8476'
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
@@ -40,9 +47,10 @@ CM_APP_CM_MODULE = 0
 CM_APP_HUD_MODULE = 1
 CM_APP_PD_MODULE = 2
 CM_APP_CHW_MODULE = 3
-CM_APP_CP_MODULE = 4
-CM_APP_APPOINTMENTS_MODULE = 5
-CM_APP_MEDICATIONS_MODULE = 6
+CM_APP_APPOINTMENTS_MODULE = 4
+CM_APP_MEDICATIONS_MODULE = 5
+CM_APP_CREATE_TASK_MODULE = 6
+CM_APP_UPDATE_VIEW_TASK_MODULE = 7
 
 PM_APP_PM_MODULE = 0
 
@@ -221,12 +229,32 @@ SUBMISSION_SELECT_FIELDS = [
         ]
     },
     {
-        "text": "CHW Manager Forms",
+        "text": "CHW Forms",
         "val": "chwm_forms",
         "next": [
             {
                 "text": "CHW1 Initial Home Visit",
                 "val": CHW1
+            },
+            {
+                "text": "CHW1 Psycho-Social",
+                "val": CHW1PS
+            },
+            {
+                "text": "CHW1 Cholesterol",
+                "val": CHW1CHOL
+            },
+            {
+                "text": "CHW1 Smoking Cessation",
+                "val": CHW1SMOKINGSENS
+            },
+            {
+                "text": "CHW1 Stroke Literacy",
+                "val": CHW1SL
+            },
+            {
+                "text": "CHW1 Communication Preferences",
+                "val": CHW1COMPREF
             },
             {
                 "text": "CHW2 Follow-up Home Visit",

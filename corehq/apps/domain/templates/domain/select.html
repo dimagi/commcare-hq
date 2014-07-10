@@ -11,7 +11,24 @@
     </div>
     <div class="span4">
         <h2>{% trans "My Projects" %}</h2>
-        {% list_my_domains request %}
+            <ul class="nav nav-pills nav-stacked">
+            {% for domain in domains_for_user %}
+                <li><a href="{% url "domain_homepage" domain.name %}">{{ domain.display_name }}</a></li>
+            {% endfor %}
+            </ul>
+        {% if open_invitations %}
+        <h2>{% trans "Project Invitations" %}</h2>
+            <ul class="unstyled">
+            {% for invitation in open_invitations %}
+                <li style="padding-bottom: 6px;">
+                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-success btn-mini">
+                        Accept
+                    </a>
+                    {{  invitation.domain }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
     </div>
     <div class="span4">
     {% if request.couch_user.organizations %}

@@ -52,7 +52,7 @@ args=''
 
 if [[ $deploy = 'y' ]]
 then
-    rebuildstaging $args && fab staging awesome_deploy:confirm=no
+    rebuildstaging $args && git checkout autostaging && fab staging awesome_deploy:confirm=no
 else
     rebuildstaging $args
 fi

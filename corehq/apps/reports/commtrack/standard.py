@@ -212,7 +212,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart.data = self.get_data_for_graph()
             return [chart]
 
-class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
+class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
@@ -224,7 +224,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(AggregateStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(InventoryReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):

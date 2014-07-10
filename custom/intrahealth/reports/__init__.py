@@ -28,6 +28,8 @@ class IntraHealthReportConfigMixin(object):
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
             visit="''",
+            strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
+            stred=self.datespan.enddate.strftime("%Y-%m-%d")
         )
         self.config_update(config)
         return config

@@ -2033,6 +2033,14 @@ class DomainInvitation(Invitation):
             include_docs=True,
         ).all()
 
+    @classmethod
+    def by_email(cls, email, is_active=True):
+        return cls.view("users/open_invitations_by_email",
+                        reduce=False,
+                        key=[email],
+                        include_docs=True,
+                        ).all()
+
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)

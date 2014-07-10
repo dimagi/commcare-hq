@@ -286,7 +286,7 @@ class ComplexCaseReminderForm(Form):
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     start_condition_type = CharField()
     case_type = CharField(required=False)
-    method = ChoiceField(choices=('sms', 'SMS'))
+    method = ChoiceField(choices=(('sms', 'SMS'),))
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
     start_choice = ChoiceField(choices=START_CHOICES)

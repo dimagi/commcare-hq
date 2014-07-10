@@ -162,18 +162,6 @@ class FormPropertyFilter(Filter):
             )
         )
 
-class CustomFilter(Filter):
-    """
-    This filter allows you to pass in a function reference to use as the filter
-
-    e.g. CustomFilter(lambda f: f.gender in ['male', 'female'])
-    """
-    def __init__(self, filter):
-        self._filter = filter
-
-    def filter(self, item):
-        return self._filter(item)
-
 
 class FormSUMCalculator(ORCalculator):
     window = timedelta(days=1)

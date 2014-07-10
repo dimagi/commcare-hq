@@ -140,21 +140,7 @@ class UserTypeFilter(BaseReportFilter):
 
     @classmethod
     def get_user_filter(cls, request):
-        ufilter = group = individual = None
-        try:
-            if request.GET.get('ufilter', ''):
-                ufilter = request.GET.getlist('ufilter')
-            group = request.GET.get('group', '')
-            individual = request.GET.get('individual', '')
-        except (KeyError, AttributeError):
-            pass
-        show_filter = True
-        toggle = HQUserType.use_defaults()
-        if ufilter and not (group or individual):
-            toggle = HQUserType.use_filter(ufilter)
-        elif group or individual:
-            show_filter = False
-        return toggle, show_filter
+        return get_user_toggle(request)
 
 
 class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
@@ -475,3 +461,23 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
     def show_all_data(cls, request):
         emws = request.GET.getlist(cls.slug)
         return 't__x' in emws
+
+
+def get_user_toggle(request):
+    ufilter = group = individual = show_commtrack = None
+    try:
+        if request.GET.get('ufilter', ''):
+            ufilter = request.GET.getlist('ufilter')
+        group = request.GET.get('group', '')
+        individual = request.GET.get('individual', '')
+        show_commtrack = request.project.commtrack_enabled
+    except (KeyError, AttributeError):
+        pass
+    show_filter = True
+
+    toggle = HQUserType.commtrack_defaults() if show_commtrack else HQUserType.use_defaults()
+    if ufilter and not (group or individual):
+        toggle = HQUserType.use_filter(ufilter)
+    elif group or individual:
+        show_filter = False
+    return toggle, show_filter

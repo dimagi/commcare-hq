@@ -15,6 +15,7 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
+        'less_debug': settings.LESS_DEBUG,
     }
 
 

@@ -2,6 +2,8 @@ import os
 
 ####### Configuration for CommCareHQ Running on Travis-CI #####
 
+BASE_ADDRESS = '127.0.0.1:8000'
+
 ####### Database config. This assumes Postgres ####### 
 DATABASES = {
     'default': {
@@ -13,8 +15,6 @@ DATABASES = {
         'PORT': '5432'
     }
 }
-
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 ####### Couch Config ######
 COUCH_HTTPS = False 

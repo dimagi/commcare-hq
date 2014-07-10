@@ -1,4 +1,5 @@
 from django.core.urlresolvers import NoReverseMatch
+from django.http import HttpResponse
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError
 
@@ -14,12 +15,25 @@ class dict_object(object):
         return 'dict_object(%r)' % self.dict
 
 
+def build_content_type(format, encoding='utf-8'):
+    if 'charset' in format:
+        return format
+
+    return "%s; charset=%s" % (format, encoding)
+
 class JsonResource(Resource):
     """
     This can be extended to default to json formatting. 
     """
     # This exists in addition to the mixin since the order of the class
     # definitions actually matters
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        # overridden so we can specify a utf-8 charset
+        # http://stackoverflow.com/questions/17280513/tastypie-json-header-to-use-utf-8
+        desired_format = self.determine_format(request)
+        serialized = self.serialize(request, data, desired_format)
+        return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
 
     def determine_format(self, request):
         format = super(JsonResource, self).determine_format(request)

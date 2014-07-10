@@ -36,7 +36,9 @@ ko.bindingHandlers.questionsSelect = {
                 value: value
             };
             optionObjects = [option].concat(optionObjects);
-            $warning.show().text('We cannot find this question in the form. It is likely that you deleted or renamed the question. Please choose a valid question from the dropdown.');
+            $warning.show().text('We cannot find this question in the allowed questions for this field. ' +
+                'It is likely that you deleted or renamed the question. ' +
+                'Please choose a valid question from the dropdown.');
         } else {
             $warning.hide();
         }
