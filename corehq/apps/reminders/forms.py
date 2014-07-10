@@ -988,9 +988,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'nickname',
-                css_class='input-large',
+            crispy.Fieldset(
+                _("Basic Information"),
+                crispy.Field(
+                    'nickname',
+                    css_class='input-large',
+                ),
             ),
             self.section_start,
             self.section_recipient,
