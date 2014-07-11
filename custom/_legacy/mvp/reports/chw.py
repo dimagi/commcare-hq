@@ -164,8 +164,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Newborn",
                 indicators=[
-                    dict(slug="num_births_occured", expected="--"),
-                    dict(slug="num_births_recorded", expected="--"),
                     dict(slug="facility_births_proportion", expected="100%"),
                     dict(slug="newborn_7day_visit_proportion", expected="100%"),
                     dict(slug="neonate_routine_visit_past7days", expected="100%"),
@@ -218,6 +216,8 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Vital Events",
                 indicators=[
+                    dict(slug="num_births_occured", expected="--"),
+                    dict(slug="num_births_recorded", expected="--"),
                     dict(slug="maternal_deaths", expected="--"),
                     dict(slug="neonatal_deaths", expected="--"),
                     dict(slug="infant_deaths", expected="--"),
