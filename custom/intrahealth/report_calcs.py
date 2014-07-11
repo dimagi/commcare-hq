@@ -1,6 +1,6 @@
 import fluff
 from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_id_by_type, get_location_by_type
+from custom.intrahealth import get_location_by_type
 
 
 def form_date(form):
@@ -42,22 +42,24 @@ class Commandes(fluff.Calculator):
     def total(self, form):
         products = form.form['products']
         for product in products:
-            yield {
-                'date': product['receivedMonthInner'],
-                'value': product['amountOrdered'],
-                'group_by': [product['productName']]
-            }
+            if 'productName' in product:
+                yield {
+                    'date': product['receivedMonthInner'],
+                    'value': product['amountOrdered'],
+                    'group_by': [product['productName']]
+                }
 
 class Recus(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         products = form.form['products']
         for product in products:
-            yield {
-                'date': product['receivedMonthInner'],
-                'value': product['amountReceived'],
-                'group_by': [product['productName']]
-            }
+            if 'productName' in product:
+                yield {
+                    'date': product['receivedMonthInner'],
+                    'value': product['amountReceived'],
+                    'group_by': [product['productName']]
+                }
 
 class PPSConsumption(fluff.Calculator):
 
@@ -68,7 +70,7 @@ class PPSConsumption(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     'value': product[self.field],
@@ -80,7 +82,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def old_stock_total(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['old_stock_total'],
@@ -90,7 +92,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def total_stock(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['total_stock'],
@@ -100,7 +102,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def livraison(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['top_up']['transfer']['entry']['value']['@quantity'],
@@ -110,7 +112,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def display_total_stock(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['display_total_stock'],
@@ -120,7 +122,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def old_stock_pps(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['old_stock_pps'],
@@ -131,16 +133,17 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
         for product in form.form['products']:
-            yield {
-                "date": form_date(form),
-                "value": product['outside_receipts_amt'],
-                "group_by": [product['product_name']]
-            }
+            if 'product_name' in product:
+                yield {
+                    "date": form_date(form),
+                    "value": product['outside_receipts_amt'],
+                    "group_by": [product['product_name']]
+                }
 
     @fluff.date_emitter
     def actual_consumption(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['actual_consumption'],
@@ -150,7 +153,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def billed_consumption(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": product['billed_consumption'],
@@ -160,7 +163,7 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def pps_restant(self, form):
         for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
                     'date': real_date(form),
                     "value": int(product['pps_stock']) if int(product['pps_stock']) >= 0 else 0,
