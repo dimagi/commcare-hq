@@ -173,7 +173,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 title="Under-5s",
                 indicators=[
                     dict(slug="num_under5", expected="--"),
-                    dict(slug="under5_danger_signs", expected="--"),
                     dict(slug="under5_fever", expected="--"),
                     dict(slug="under5_fever_rdt_proportion", expected="100%"),
                     dict(slug="under5_fever_rdt_positive_proportion", expected="100%"),
@@ -190,7 +189,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 title="Pregnant",
                 indicators=[
                     dict(slug="pregnancy_cases", expected="--"),
-                    dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
                     dict(slug="anc4_proportion", expected="100%"),
                     dict(slug="pregnant_routine_checkup_proportion_6weeks", expected="100%"),
                     dict(slug="pregnant_routine_visit_past30days", expected="100%"),
@@ -199,6 +197,8 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Follow-up",
                 indicators=[
+                    dict(slug="under5_danger_signs", expected="--"),
+                    dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
                     dict(slug="num_urgent_referrals", expected="--"), # denominator for MVIS indicator
                     dict(slug="urgent_referrals_proportion", expected="100%"), # MVIS Indicator
                     dict(slug="late_followups_proportion", expected="--"),
