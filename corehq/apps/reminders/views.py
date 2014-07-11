@@ -7,6 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
@@ -545,16 +546,24 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 domain=self.domain,
                 is_previewer=self.is_previewer,
                 can_use_survey=can_use_survey_reminders(self.request),
+                available_languages=self.available_languages,
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
             domain=self.domain,
             can_use_survey=can_use_survey_reminders(self.request),
+            available_languages=self.available_languages,
         )
 
     @property
     def available_languages(self):
-        return ['en']
+        default_langs = ['en']
+        try:
+            translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
+            return translation_doc.langs or default_langs
+        except ResourceNotFound:
+            pass
+        return default_langs
 
     @property
     def is_previewer(self):
@@ -716,7 +725,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     @memoized
     def schedule_form(self):
-        initial = self.reminder_form_class.compute_initial(self.reminder_handler)
+        initial = self.reminder_form_class.compute_initial(
+            self.reminder_handler, self.available_languages,
+        )
         if self.request.method == 'POST':
             return self.reminder_form_class(
                 self.request.POST,
@@ -727,6 +738,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 can_use_survey=can_use_survey_reminders(self.request),
                 use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
                 custom_content_handler=self.reminder_handler.custom_content_handler,
+                available_languages=self.available_languages,
             )
         return self.reminder_form_class(
             initial=initial,
@@ -736,6 +748,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             can_use_survey=can_use_survey_reminders(self.request),
             use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
             custom_content_handler=self.reminder_handler.custom_content_handler,
+            available_languages=self.available_languages,
         )
 
     @property
@@ -745,13 +758,6 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             return CaseReminderHandler.get(self.handler_id)
         except ResourceNotFound:
             raise Http404()
-
-    @property
-    def available_languages(self):
-        langcodes = []
-        for event in self.reminder_handler.events:
-            langcodes.extend(event.message.keys())
-        return list(set(langcodes)) or ['en']
 
     @property
     def ui_type(self):

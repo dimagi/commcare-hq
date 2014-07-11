@@ -950,14 +950,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def __init__(self, data=None, is_previewer=False,
                  domain=None, is_edit=False, can_use_survey=False,
                  use_custom_content_handler=False,
-                 custom_content_handler=None, *args, **kwargs
+                 custom_content_handler=None,
+                 available_languages=None, *args, **kwargs
     ):
+        available_languages = available_languages or ['en']
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
-            'message': {
-                'en': "",
-            },
+            'message': dict([(l, '') for l in available_languages]),
         }
 
         if 'initial' not in kwargs:
@@ -976,6 +976,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.custom_content_handler = custom_content_handler
 
         self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
+        self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -1258,18 +1259,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                    "the start condition is no longer true."),
                 css_id="stop-condition-group",
             ),
-            BootstrapMultiField(
-                _("Default Language"),
-                InlineField(
-                    'default_lang',
-                    data_bind="options: available_languages, "
-                              "value: default_lang, "
-                              "optionsText: 'name', optionsValue: 'langcode'",
-                    css_class="input-xlarge",
+            crispy.Div(
+                BootstrapMultiField(
+                    _("Default Language"),
+                    InlineField(
+                        'default_lang',
+                        data_bind="options: available_languages, "
+                                  "value: default_lang, "
+                                  "optionsText: 'name', optionsValue: 'langcode'",
+                        css_class="input-xlarge",
+                    ),
                 ),
-                crispy.HTML('<a href="#add-language-modal" '
-                            'class="btn btn-primary" style="margin-left: 5px;" '
-                            'data-toggle="modal">Manage Languages</a>'),
+                data_bind="visible: showDefaultLanguageOption",
             ),
             crispy.Div(
                 FieldWithHelpBubble(
@@ -1735,7 +1736,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         reminder_handler.save()
 
     @classmethod
-    def compute_initial(cls, reminder_handler):
+    def compute_initial(cls, reminder_handler, available_languages):
         initial = {}
         fields = cls.__dict__['base_fields'].keys()
         for field in fields:
@@ -1743,8 +1744,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
                     for event in current_val:
-                        if not event.message:
-                            event.message = {(reminder_handler.default_lang or 'en'): ''}
+                        messages = dict([(l, '') for l in available_languages])
+                        if event.message:
+                            for language, text in event.message.items():
+                                if language in available_languages:
+                                    messages[language] = text
+                        event.message = messages
                         if event.form_unique_id:
                             try:
                                 form = CCHQForm.get_form(event.form_unique_id)
@@ -1766,6 +1771,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     initial[field] = current_val
                 if field is 'custom_content_handler' and current_val is not None:
                     initial['use_custom_content_handler'] = True
+                if field is 'default_lang' and current_val not in available_languages:
+                    initial['default_lang'] = 'en'
             except AttributeError:
                 pass
 
