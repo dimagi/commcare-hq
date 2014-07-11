@@ -386,6 +386,12 @@ class CaseCustomExportHelper(CustomExportHelper):
     def update_table_conf(self, table_conf):
         column_conf = table_conf[0].get("column_configuration", [])
         current_properties = set(self.custom_export.case_properties)
+
+        print "['current_properties']"
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(current_properties)
+
         remaining_properties = current_properties.copy()
 
         def is_special_type(p):
@@ -406,6 +412,11 @@ class CaseCustomExportHelper(CustomExportHelper):
                 if self.creating_new_export:
                     col["selected"] = True
 
+        print "[column_conf]"
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(column_conf)
+
         column_conf.extend([
             ExportColumn(
                 index=prop,
@@ -421,6 +432,11 @@ class CaseCustomExportHelper(CustomExportHelper):
             for col in table.get("column_configuration", []):
                 if col["index"] in self.properties_to_show:
                     col["show"] = True
+
+        print "[table_conf]"
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(table_conf)
 
         return table_conf
 
