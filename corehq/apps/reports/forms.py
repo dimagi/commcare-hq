@@ -23,11 +23,14 @@ class ScheduledReportForm(forms.Form):
         required=False,
         choices=[(i, i) for i in range(0, 32)])
 
+    timezone_source = forms.TypedChoiceField(
+        label='Timezone source',
+        choices=[("domain", "Domain"), ("user", "User")])
+
     hour = forms.TypedChoiceField(
         label='Time',
         coerce=int,
-        choices=ReportNotification.hour_choices(),
-        help_text='Sorry, at the moment all times are in GMT.')
+        choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
         label='Send to me',

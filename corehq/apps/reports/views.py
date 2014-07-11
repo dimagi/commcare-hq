@@ -23,7 +23,8 @@ from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
 from casexml.apps.case.cleanup import rebuild_case
-from corehq import toggles
+import pytz
+from corehq import toggles, Domain
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
 
@@ -79,7 +80,7 @@ from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -537,6 +538,15 @@ def delete_config(request, domain, config_id):
     return HttpResponse()
 
 
+def calculate_hour(hour, time_difference):
+    hour += time_difference
+    if hour < 0:
+        hour += 24
+    elif hour > 24:
+        hour -= 24
+    return hour
+
+
 @login_and_domain_required
 def edit_scheduled_report(request, domain, scheduled_report_id=None,
                           template="reports/edit_scheduled_report.html"):
@@ -573,7 +583,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8,
+                                      config_ids=[], hour=8, timezone_source='domain',
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -590,6 +600,14 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     if request.method == "POST" and form.is_valid():
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
+
+        if instance.timezone_source == 'user':
+            user = CouchUser.get_by_username(unicode(request.user))
+            timezone = user.get_domain_membership(domain)['timezone']
+        else:
+            timezone = Domain._get_by_name(domain)['default_timezone']
+        instance.hour = calculate_hour(instance.hour, int(datetime.now(pytz.timezone(timezone)).strftime('%z')[:3]))
+
         instance.save()
         if is_new:
             messages.success(request, "Scheduled report added!")
