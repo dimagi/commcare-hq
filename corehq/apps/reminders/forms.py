@@ -719,6 +719,7 @@ MATCH_TYPE_CHOICES = (
     (MATCH_REGEX, ugettext_noop("matches regular expression")),
 )
 
+START_REMINDER_ALL_CASES = 'start_all_cases'
 START_REMINDER_ON_CASE_DATE = 'case_date'
 START_REMINDER_ON_CASE_PROPERTY = 'case_property'
 
@@ -727,6 +728,8 @@ START_DATE_OFFSET_AFTER = 'offset_after'
 
 START_PROPERTY_OFFSET_DELAY = 'offset_delay'
 START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
+
+START_PROPERTY_ALL_CASES_VALUE = '_id'
 
 EVENT_TIMING_IMMEDIATE = 'immediate'
 
@@ -755,11 +758,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label=ugettext_noop("Send Reminder"),
+        label=ugettext_noop("Start Reminder for"),
         required=False,
         choices=(
-            (START_REMINDER_ON_CASE_DATE, ugettext_noop("on a date specified in the Case")),
-            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("when the Case is in the following state")),
+            (START_REMINDER_ALL_CASES, ugettext_noop("All Cases")),
+            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("Only Cases in Following State")),
+            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Cases Based on Date in Case")),
         ),
     )
     ## send options > start_reminder_on = case_date
@@ -1398,18 +1402,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return case_property
 
     def clean_start_property(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+        start_reminder_on = self.cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
             start_property = self.cleaned_data['start_property'].strip()
             if not start_property:
                 raise ValidationError(_(
                     "Please enter a case property for the match criteria."
                 ))
             return start_property
+        if start_reminder_on == START_REMINDER_ALL_CASES:
+            return START_PROPERTY_ALL_CASES_VALUE
         return None
 
     def clean_start_match_type(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+        start_reminder_on = self.cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
             return self.cleaned_data['start_match_type']
+        if start_reminder_on == START_REMINDER_ALL_CASES:
+            return MATCH_ANY_VALUE
         return None
 
     def clean_start_value(self):
@@ -1760,10 +1770,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 pass
 
         if reminder_handler.start_date is None:
-            start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
-            initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
-                                                     if reminder_handler.start_offset == 0
-                                                     else START_PROPERTY_OFFSET_DELAY)
+            if (initial['start_property'] == START_PROPERTY_ALL_CASES_VALUE
+                and initial['start_match_type'] == MATCH_ANY_VALUE
+            ):
+                start_reminder_on = START_REMINDER_ALL_CASES
+                del initial['start_property']
+                del initial['start_match_type']
+            else:
+                start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
+                initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
+                                                         if reminder_handler.start_offset == 0
+                                                         else START_PROPERTY_OFFSET_DELAY)
         else:
             start_reminder_on = START_REMINDER_ON_CASE_DATE
             initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
