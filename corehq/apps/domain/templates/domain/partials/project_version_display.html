@@ -19,7 +19,7 @@
                    data-action="{% url "domain_set_published" domain version.name %}"
                    data-toggle="modal" data-target="#contentDistributionAgreement"
                    href="#contentDistributionAgreement"
-                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Most Recent', '{{ version.name }}']);"
+                   onclick="ga('send', 'event', 'Exchange', 'Publish Most Recent', '{{ version.name }}');"
                 >
                     Publish
                 </a>
@@ -36,7 +36,8 @@
     <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
     <dd>
         <a href="{% url "project_info" version.name %}"
-           onclick="_gaq.push(['_trackEvent', 'Exchange', 'View on exchange', '{{ version.name }}']);"
+           id="view-on-exchange"
+           onclick="view_on_exchange('{{ version.name }}');"
         >
             View on exchange
         </a>

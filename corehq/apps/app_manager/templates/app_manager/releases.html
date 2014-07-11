@@ -57,6 +57,19 @@
         el.show();
     });
 </script>
+<script>
+    function track_deploy_type(type) {
+        ga('send', 'event', 'App Manager', 'Deploy Type', type);
+    }
+
+    function track_deploy_type_and_redirect(type, href) {
+        ga('send', 'event', 'App Manager', 'Deploy Type', type, {
+            'hitCallback': function () {
+                document.location = href;
+            }
+        });
+    }
+</script>
 {% endblock %}
 
 {% block title %}{{ app.name|html_name }}{% endblock %}
@@ -197,7 +210,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Button', '{{ app.id }}']); }
+                                click: function() { ga('send', 'event', 'App Manager', 'Deploy Button', '{{ app.id }}'); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -284,7 +297,7 @@
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
                                 attr: {href: $root.url('emulator', id)},
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Preview in Emulator']); },
+                                click: function() { track_deploy_type_and_redirect('Preview in Emulator', $root.url('emulator', id)); },
                             ">
                                 {% trans 'Preview in Emulator' %}
                             </a>
@@ -294,7 +307,7 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download to Java Phone']); },
+                                click: function() { track_deploy_type('Download to Java Phone'); },
                             ">
                                 {% trans "Download to Java Phone" %}
                             </a>
@@ -322,7 +335,7 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download to Android']); },
+                                click: function() { track_deploy_type('Download to Android'); },
                             ">
                                 {% trans "Download to Android" %}
                             </a>
@@ -364,7 +377,7 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
-                                click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Send to phone via SMS']); },
+                                click: function() { track_deploy_type('Send to phone via SMS'); },
                             ">
                                 {% trans "Send to phone via SMS" %}
                             </a>
@@ -418,7 +431,7 @@
                         <div class="accordion-group">
                             <div class="accordion-heading">
                                 <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia" data-bind="
-                                    click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'Download Multimedia']); },
+                                    click: function() { track_deploy_type('Download Multimedia'); },
                                 ">
                                     {% trans 'Download Multimedia' %}
                                 </a>
@@ -435,7 +448,7 @@
                             <div class="accordion-heading">
                                 <a class="accordion-toggle" data-bind="
                                     attr: {href: $root.url('source', id)},
-                                    click: function() { _gaq.push(['_trackEvent', 'App Manager', 'Deploy Type', 'View Source Files']); },
+                                    click: function() { track_deploy_type_and_redirect('View Source Files', $root.url('source', id)); },
                                 ">
                                     {% trans "View Source Files" %}
                                 </a>

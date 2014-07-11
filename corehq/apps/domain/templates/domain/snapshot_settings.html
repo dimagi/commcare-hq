@@ -28,6 +28,33 @@
             });
         });
     </script>
+    <script>
+        function view_on_exchange(version_name) {
+            event.preventDefault();
+            ga('send', 'event', 'Exchange', 'View on exchange', version_name, {
+                'hitCallback': function () {
+                    document.location = $('#view-on-exchange').attr('href');
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            {% for snapshot in snapshots %}
+                $('#publish_{{ snapshot.name }}').click(function() {
+                    ga('send', 'event', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
+                });
+                $('#view_{{ snapshot.name }}').click(function() {
+                    event.preventDefault();
+                    ga('send', 'event', 'Exchange', 'View', '{{ snapshot.name }}', {
+                        'hitCallback': function () {
+                            document.location = $('#view_{{ snapshot.name }}').attr('href');
+                        }
+                    });
+                });
+            {% endfor %}
+        });
+
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -66,7 +93,7 @@
             <td>
                 <a class="btn btn-primary"
                    href="{% url "project_info" snapshot.name %}"
-                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'View', '{{ snapshot.name }}']);"
+                   id="view_{{ snapshot.name }}"
                 >
                     View
                 </a>
@@ -94,7 +121,7 @@
                    data-toggle="modal"
                    data-target="#contentDistributionAgreement"
                    href="#contentDistributionAgreement"
-                   onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Previous Version', '{{ snapshot.name }}']);"
+                   id="publish_{{ snapshot.name }}"
                 >
                     Publish
                 </a>
