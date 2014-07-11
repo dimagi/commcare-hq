@@ -179,6 +179,16 @@
                         }
                     },
                     putInDefaultOrder: function (index, columns) {
+                        tag_order = {
+                            '': 5,
+                            'case': 4,
+                            'info': 3,
+                            'update': 2.5, // for case history only
+                            'server': 2,
+                            'tag': 1,
+                            'row': 0
+                        };
+
                         function compare(x, y) {
                             if (x === y) {
                                 return 0;
@@ -186,33 +196,18 @@
                             return x > y ? 1 : -1;
                         }
 
-                       return columns.sort(function(x, y) {
-                           var x_selected = x.selected(),
-                               y_selected = y.selected(),
-                                tag_order = {
-                                    '': 5,
-                                    'case': 4,
-                                    'info': 3,
-                                    'update': 2.5, // for case history only
-                                    'server': 2,
-                                    'tag': 1,
-                                    'row': 0
-                                };
+                        return columns.sort(function(x, y) {
+                            var x_selected = x.selected(),
+                                y_selected = y.selected(),
                                 x_tag = tag_order[x._niceField.tags[0]],
                                 y_tag = tag_order[y._niceField.tags[0]],
                                 x_display = x._niceField.field,
                                 y_display = y._niceField.field;
 
-                            if (x_selected !== y_selected) {
-                                return compare(y_selected, x_selected);
-                            }
-
-                            if (x_tag !== y_tag) {
-                                return compare(x_tag, y_tag);
-                            }
-
-                            return compare(x_display, y_display);
-                       });
+                            return (compare(y_selected, x_selected)
+                                    || compare(x_tag, y_tag)
+                                    || compare(x_display, y_display));
+                        });
                     }
                 };
 
@@ -243,17 +238,8 @@
                         column._niceField = niceField;
                     });
 
-                    for (var i = 0; i < columns.length; i++) {
-                        if (!columns[i].selected()) {
-                            break;
-                        }
-                    }
-                    unselected = table.column_configuration.splice(i, columns.length);
-                    unselected = self.utils.putInDefaultOrder(table.index(), unselected);
-                    table.column_configuration.push.apply(
-                        table.column_configuration,
-                        unselected
-                    );
+                    var sorted = self.utils.putInDefaultOrder(table.index(), columns);
+                    table.column_configuration(sorted);
                 });
 
                 self.showDeidColumn = ko.observable(function () {
@@ -375,13 +361,10 @@
                     });
                 }, 0);
 
-                _(self.table_configuration()).each(function (table) {
-                    // assumes unselected
-                    var columns = table.column_configuration();
-
-                    sorted = self.utils.putInDefaultOrder(table.index(), table.column_configuration());
-                    table.column_configuration(sorted);
-                });
+{#                _(self.table_configuration()).each(function (table) {#}
+{#                    var sorted = self.utils.putInDefaultOrder(table.index(), table.column_configuration());#}
+{#                    table.column_configuration(sorted);#}
+{#                });#}
                 return self;
             },
             excludedTables: {
