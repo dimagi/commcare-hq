@@ -179,33 +179,41 @@
                         }
                     },
                     putInDefaultOrder: function (index, columns) {
-                        // http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
-                        // [11] < [2], so have to pad numbers
-                        function pad10(a){return(1e15+a+"").slice(-10)}
-
-                        var order = ko.utils.unwrapObservable(self.default_order[index]);
-                        var order_index = {};
-                        _(order).each(function (index, i) {
-                            order_index[index] = pad10(i);
-                        });
-                        var tag_order = {
-                            '': 0,
-                            'case': 1,
-                            'info': 2,
-                            'update': 2.5, // for case history only
-                            'server': 3,
-                            'tag': 4,
-                            'row': 5
-                        };
-                        return _(columns).sortBy(function (column) {
-                            var key;
-                            if (order_index.hasOwnProperty(column.index())) {
-                                key = [0, order_index[column.index()]];
-                            } else {
-                                key = [1, tag_order[column._niceField.tags[0]], column._niceField.field];
+                        function compare(x, y) {
+                            console.log (x +'\t' + y)
+                            if (x === y) {
+                                return 0;
                             }
-                            return key;
-                        });
+                            return x > y ? 1 : -1;
+                        }
+
+                       return columns.sort(function(x, y) {
+                           var x_selected = x.selected(),
+                               y_selected = y.selected(),
+                                tag_order = {
+                                    '': 5,
+                                    'case': 4,
+                                    'info': 3,
+                                    'update': 2.5, // for case history only
+                                    'server': 2,
+                                    'tag': 1,
+                                    'row': 0
+                                };
+                                x_tag = tag_order[x._niceField.tags[0]],
+                                y_tag = tag_order[y._niceField.tags[0]],
+                                x_display = x._niceField.field,
+                                y_display = y._niceField.field;
+
+                            if (x_selected !== y_selected) {
+                                return compare(y_selected, x_selected);
+                            }
+
+                            if (x_tag !== y_tag) {
+                                return compare(x_tag, y_tag);
+                            }
+
+                            return compare(x_display, y_display);
+                       });
                     }
                 };
 
@@ -368,6 +376,13 @@
                     });
                 }, 0);
 
+                _(self.table_configuration()).each(function (table) {
+                    // assumes unselected
+                    var columns = table.column_configuration();
+
+                    sorted = self.utils.putInDefaultOrder(table.index(), table.column_configuration());
+                    table.column_configuration(sorted);
+                });
                 return self;
             },
             excludedTables: {
