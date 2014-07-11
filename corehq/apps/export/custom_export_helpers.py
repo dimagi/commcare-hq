@@ -297,6 +297,7 @@ class FormCustomExportHelper(CustomExportHelper):
                     col["show"] = True
 
 
+        column_conf.sort(reverse=True, key=lambda row: row['selected'])
         table_conf[0]["column_configuration"] = column_conf
         return table_conf
 
