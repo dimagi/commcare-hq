@@ -2,6 +2,7 @@ from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
+from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
@@ -55,15 +56,32 @@ def get_location_id(form):
     return _get_location(form)._id
 
 def get_location_id_by_type(form, type):
+    return get_location_by_type(form, type)._id
+
+def get_location_by_type(form, type):
     loc = _get_location(form)
 
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
         if unicode(loc.location_type).lower().replace(" ", "") == type:
-            return loc._id
+            return loc
 
 def get_real_date(form):
     date = ""
     if 'real_date' in form.form:
         date = form.form['real_date']
     return date
+
+class IsExistFormPropertyFilter(FormPropertyFilter):
+
+    def __init__(self, xmlns=None, property_path=None, property_value=None):
+        super(IsExistFormPropertyFilter, self).__init__(xmlns=xmlns, property_path=property_path,
+                                                        property_value=property_value, operator=IN)
+
+    def filter(self, form):
+        return (
+            form.xmlns == self.xmlns and (
+                self.property_path is None or
+                self.operator(self.property_value, form.xpath(self.property_path))
+            )
+        )
