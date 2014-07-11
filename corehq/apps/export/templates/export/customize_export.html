@@ -488,7 +488,7 @@
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
-                            <tr data-bind="visible:  $root.show_deleted() || ($data.show() || selected)">
+                            <tr data-bind="visible: ($parent.index() == '#.actions.#') || $root.show_deleted() || ($data.show() || selected)">
                                 <td class="sortable-handle">
                                     <i class="icon-resize-vertical"></i>
                                 </td>
