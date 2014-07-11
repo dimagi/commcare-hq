@@ -112,8 +112,8 @@ class LocationGenerationCache(GenerationCache):
 
 
 class DomainInvitationGenerationCache(GenerationCache):
-    generation_key = '#gen#invitation#' # Or should this be #gen#domain_invitation#
-    #doc_types = ['Invitation'] # Or should this be ['DomainInvitation']?
+    generation_key = '#gen#invitation#'
+    doc_types = ['Invitation']
     views = [
         'users/open_invitations_by_email',
     ]
