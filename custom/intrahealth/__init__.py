@@ -55,12 +55,15 @@ def get_location_id(form):
     return _get_location(form)._id
 
 def get_location_id_by_type(form, type):
+    return get_location_by_type(form, type)._id
+
+def get_location_by_type(form, type):
     loc = _get_location(form)
 
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
         if unicode(loc.location_type).lower().replace(" ", "") == type:
-            return loc._id
+            return loc
 
 def get_real_date(form):
     date = ""

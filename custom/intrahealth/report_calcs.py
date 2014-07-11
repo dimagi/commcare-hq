@@ -1,6 +1,6 @@
 import fluff
 from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_id_by_type
+from custom.intrahealth import get_location_id_by_type, get_location_by_type
 
 
 def form_date(form):
@@ -12,8 +12,8 @@ def real_date(form):
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_region(self, form):
-        loc = Location.get(get_location_id_by_type(form=form, type=u'r\xe9gion'))
-        count = list(Location.filter_by_type(form.domain, 'PPS', loc)).__len__()
+        loc = get_location_by_type(form=form, type=u'r\xe9gion')
+        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -21,8 +21,8 @@ class PPSRegistered(fluff.Calculator):
 
     @fluff.date_emitter
     def total_for_district(self, form):
-        loc = Location.get(get_location_id_by_type(form=form, type=u'district'))
-        count = list(Location.filter_by_type(form.domain, 'PPS', loc)).__len__()
+        loc = get_location_by_type(form=form, type=u'district')
+        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
