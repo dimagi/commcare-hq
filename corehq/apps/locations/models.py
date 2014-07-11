@@ -55,7 +55,9 @@ class Location(CachedCouchDocumentMixin, Document):
             ).strip('_')
             postfix = ''
 
-            while name_slug + postfix in Location.site_codes_for_domain(self.domain):
+            site_codes = Location.site_codes_for_domain(self.domain)
+
+            while name_slug + postfix in site_codes:
                 if postfix:
                     postfix = str(int(postfix) + 1)
                 else:
@@ -87,7 +89,12 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def site_codes_for_domain(cls, domain):
-        return set([loc.site_code for loc in cls.by_domain(domain)])
+        return set([r['key'][1] for r in cls.get_db().view(
+            'locations/prop_index_site_code',
+            reduce=False,
+            startkey=[domain],
+            endkey=[domain, {}],
+        ).all()])
 
     @classmethod
     def by_site_code(cls, domain, site_code):
