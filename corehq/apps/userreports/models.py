@@ -35,9 +35,16 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
     @property
     def indicators(self):
+        doc_id_indicator = IndicatorFactory.from_spec({
+            "column_id": "doc_id",
+            "type": "raw",
+            "display_name": "document id",
+            "datatype": "string",
+            "property_name": "_id"
+        })
         return CompoundIndicator(
             self.display_name,
-            [IndicatorFactory.from_spec(indicator) for indicator in self._indicators]
+            [doc_id_indicator] + [IndicatorFactory.from_spec(indicator) for indicator in self._indicators]
         )
 
     def get_columns(self):
