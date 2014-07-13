@@ -3241,7 +3241,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
+        r = cls.get_db().view('exports_forms/by_xmlns',
+            key=[domain, {}, xmlns],
+            group=True,
+            stale=settings.COUCH_STALE_QUERY,
+        ).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
     def get_profile_setting(self, s_type, s_id):
