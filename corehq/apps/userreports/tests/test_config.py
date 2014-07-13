@@ -37,6 +37,7 @@ class IndicatorConfigurationTest(SimpleTestCase):
     def testColumns(self):
         # columns
         expected_columns = [
+            'doc_id',
             'count',
             'category_bug', 'category_feature', 'category_app', 'category_schedule',
             'tags_easy-win', 'tags_potential-dupe', 'tags_roadmap', 'tags_public',
@@ -52,6 +53,7 @@ class IndicatorConfigurationTest(SimpleTestCase):
     def testIndicators(self):
         # indicators
         sample_doc = dict(
+            _id='some-doc-id',
             doc_type="CommCareCase",
             domain='user-reports',
             type='ticket',
@@ -61,6 +63,7 @@ class IndicatorConfigurationTest(SimpleTestCase):
             estimate=2,
         )
         expected_indicators = {
+            'doc_id': 'some-doc-id',
             'count': 1,
             'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
             'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,
