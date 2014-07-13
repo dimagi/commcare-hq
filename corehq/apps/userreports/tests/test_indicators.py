@@ -159,13 +159,38 @@ class CountIndicatorTest(SingleIndicatorTestBase):
 
 
 class RawIndicatorTest(SingleIndicatorTestBase):
+
+    def testMetadataDefaults(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            "datatype": "integer",
+            'property_name': 'foo',
+            "display_name": "raw foos",
+        })
+        self.assertEqual(True, indicator.column.is_nullable)
+        self.assertEqual(False, indicator.column.is_primary_key)
+
+    def testMetadataOverrides(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            "datatype": "integer",
+            'property_name': 'foo',
+            "display_name": "raw foos",
+            "is_nullable": False,
+            "is_primary_key": True,
+        })
+        self.assertEqual(False, indicator.column.is_nullable)
+        self.assertEqual(True, indicator.column.is_primary_key)
+
     def testRaw(self):
         indicator = IndicatorFactory.from_spec({
             "type": "raw",
             "column_id": "foo",
             "datatype": "integer",
             'property_name': 'foo',
-            "display_name": "raw foos"
+            "display_name": "raw foos",
         })
         # todo: eventually data types should be smarter than this.
         # when this test starts failing that will be a good thing and when we should fix it.

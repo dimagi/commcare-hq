@@ -2,7 +2,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
-from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator
+from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
 from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
 from fluff.filters import ANDFilter, ORFilter, CustomFilter
 
@@ -68,10 +68,16 @@ def _build_count_indicator(spec):
 def _build_raw_indicator(spec):
     _validate_required_fields(spec, ('column_id', 'datatype', 'property_name'))
     display_name = spec.get('display_name', spec['column_id'])
+
+    column = Column(
+        id=spec['column_id'],
+        datatype=spec['datatype'],
+        is_nullable=spec.get('is_nullable', True),
+        is_primary_key=spec.get('is_primary_key', False),
+    )
     return RawIndicator(
         display_name,
-        spec['column_id'],
-        spec['datatype'],
+        column,
         getter=DictGetter(property_name=spec['property_name'])
     )
 

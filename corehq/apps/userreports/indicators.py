@@ -65,8 +65,8 @@ class RawIndicator(SingleColumnIndicator):
     """
     Pass whatever's in the column through to the database
     """
-    def __init__(self, display_name, column_id, datatype, getter):
-        super(RawIndicator, self).__init__(display_name, Column(column_id, datatype))
+    def __init__(self, display_name, column, getter):
+        super(RawIndicator, self).__init__(display_name, column)
         self.getter = getter
 
     def get_values(self, item):

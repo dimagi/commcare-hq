@@ -40,7 +40,9 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
             "type": "raw",
             "display_name": "document id",
             "datatype": "string",
-            "property_name": "_id"
+            "property_name": "_id",
+            "is_nullable": False,
+            "is_primary_key": True,
         })
         return CompoundIndicator(
             self.display_name,
