@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-    DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+    DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
