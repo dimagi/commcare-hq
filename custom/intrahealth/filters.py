@@ -1,8 +1,12 @@
+import calendar
 import json
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.filters.select import YearFilter, MonthFilter
+from corehq.util.translation import localize
+from django.utils.translation import ugettext as _
 
 
 class LocationFilter(AsyncLocationFilter):
@@ -53,3 +57,15 @@ class RecapPassageLocationFilter(LocationFilter):
         context = super(RecapPassageLocationFilter, self).filter_context
         context.update(dict(hierarchy=location_hierarchy_config(self.domain)))
         return context
+
+class FRYearFilter(YearFilter):
+    label = ugettext_noop(u"Ann\xe9e")
+
+
+class FRMonthFilter(MonthFilter):
+    label = ugettext_noop("Mois")
+
+    @property
+    def options(self):
+        with localize('fr'):
+            return [("%02d" % m, _(calendar.month_name[m])) for m in range(1, 13)]
