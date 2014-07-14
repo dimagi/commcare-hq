@@ -658,21 +658,21 @@ def system_info(request):
     context.update(check_celery_health())
     context.update(check_memcached())
     context.update(check_es_cluster_health())
-    context.update(foo())
+    context.update(get_es_couch_comparisons())
 
     return render(request, "hqadmin/system_info.html", context)
 
-def foo():
+# MOVE ME SOMEWHERE APPROPRIATE
+def get_es_couch_comparisons():
     comparisons = []
 
     #  Users
     db = CommCareUser.get_db()
-    couch_docs = len(db.view(
+    res = db.view(
         'users/by_username',
-        reduce=False
-    ))
-    print "USERS YO"
-    print couch_docs
+        reduce=True,
+    ).one()
+    couch_docs = res['value']
     es_docs = 10
     comparisons.append({
         'description': 'Users (base_doc is "CouchUser")',
@@ -682,10 +682,10 @@ def foo():
 
     # Domains
     db = Domain.get_db()
-    couch_docs = len(db.view(
+    couch_docs = db.view(
         'domain/by_status',
-        reduce=False
-    ))
+        reduce=True,
+    ).one()['value']
     es_docs = 10
     comparisons.append({
         'description': 'Domains (doc_type is "Domain")',
@@ -695,10 +695,10 @@ def foo():
 
     # Forms
     db = XFormInstance.get_db()
-    couch_docs = len(db.view(
+    couch_docs = db.view(
         'couchforms/by_xmlns',
-        reduce=False
-    ))
+        reduce=True,
+    ).one()['value']
     es_docs = 10
     comparisons.append({
         'description': 'Forms (doc_type is "XFormInstance")',
@@ -708,10 +708,10 @@ def foo():
 
     # Cases
     db = CommCareCase.get_db()
-    couch_docs = len(db.view(
+    couch_docs = db.view(
         'case/by_owner',
-        reduce=False
-    ))
+        reduce=True,
+    ).one()['value']
     es_docs = 10
     comparisons.append({
         'description': 'Cases (doc_type is "CommCareCase")',
@@ -722,7 +722,7 @@ def foo():
     return {'es_couch_comparisons':comparisons}
 
 # MOVE ME SOMEWHERE APPROPRIATE!
-def get_es_couch_comparisons():
+def get_es_couch_comparisons2():
     unprocessed_comparisons = [
         {
             'description': 'Users (base_doc is "CouchUser")',
