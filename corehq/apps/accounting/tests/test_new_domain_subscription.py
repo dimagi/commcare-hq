@@ -1,6 +1,7 @@
 import datetime
 from corehq import Domain
 from corehq.apps.accounting import generator
+from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     SubscriptionAdjustmentMethod)
@@ -66,3 +67,47 @@ class TestNewDomainSubscription(BaseAccountingTest):
         self.assertEqual(final_sub.date_start, week_after_30)
         self.assertEqual(final_sub.date_end, next_year)
 
+    def test_conflicting_dates(self):
+        """
+        Tests creating a subscription with conflicting dates with an existing
+        subscription
+        """
+        today = datetime.date.today()
+        one_week = today + datetime.timedelta(days=7)
+        one_month = today + datetime.timedelta(days=30)
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan,
+            date_start=one_week,
+            date_end=one_month,
+        )
+
+        # conflicting subscription with no date end.
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+        ))
+
+        # conflicting subscription with overlapping end date
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_end=one_week + datetime.timedelta(days=1)
+        ))
+
+        # conflicting subscription with overlapping start date
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=one_month - datetime.timedelta(days=1)
+        ))
+
+        # subscription without overlapping dates before
+        # bound future subscription
+        sub_before = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_end=one_week,
+        )
+
+        # subscription without overlapping dates after
+        # bound future subscription
+        sub_after = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=one_month,
+        )
