@@ -1126,7 +1126,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 target_module = get_target_module(action.case_type, action.details_module)
                 e.datums.append(SessionDatum(
                     id=action.case_session_var,
-                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, False) + parent_filter),
+                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),
                     detail_confirm=(
