@@ -1168,19 +1168,23 @@ class Subscription(models.Model):
             return last_subscription
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        subscription = Subscription(
+        subscription = Subscription.objects.create(
             account=account,
             plan_version=plan_version,
             subscriber=subscriber,
-            date_start=date_start or datetime.date.today(),
+            date_start=date_start,
             date_end=date_end,
             **kwargs
         )
-        subscription.save()
         subscriber.apply_upgrades_and_downgrades(
             new_plan_version=plan_version, web_user=web_user,
         )
-        SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
+        SubscriptionAdjustment.record_adjustment(
+            subscription, method=adjustment_method, note=note,
+            web_user=web_user
+        )
+        subscription.save()
+
         return subscription
 
     @classmethod
