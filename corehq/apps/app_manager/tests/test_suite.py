@@ -120,6 +120,22 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
 
+    def test_advanced_suite_auto_select_with_filter(self):
+        """
+        Form filtering should be done using the last 'non-autoload' case being loaded.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='autoload',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_USER,
+                value_key='case_id'
+            )
+        ))
+        form = app.get_module(1).get_form(0)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-with-filter'), app.create_suite())
+
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
 
