@@ -717,7 +717,11 @@ class FormBase(DocumentSchema):
         return 'src="jr://fixture/item-list:' in self.source
 
     def get_auto_gps_capture(self):
-        return self.auto_gps_capture or self.get_app().auto_gps_capture
+        app = self.get_app()
+        if app.build_version and app.enable_auto_gps:
+            return self.auto_gps_capture or app.auto_gps_capture
+        else:
+            return False
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -2375,7 +2379,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # `LooseVersion`s are smart!
         # LooseVersion('2.12.0') > '2.2'
         # (even though '2.12.0' < '2.2')
-        return LooseVersion(self.build_spec.version)
+        if self.build_spec.version:
+            return LooseVersion(self.build_spec.version)
 
     def get_preview_build(self):
         preview = self.get_build()
