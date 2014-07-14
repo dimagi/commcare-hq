@@ -1,6 +1,4 @@
-import logging
 import requests
-import simplejson
 from custom.api.utils import EndpointMixin
 
 
@@ -93,10 +91,11 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.products_url = self._urlcombine(self.base_uri, '/products/')
         self.webusers_url = self._urlcombine(self.base_uri, '/webusers/')
         self.smsusers_url = self._urlcombine(self.base_uri, '/smsusers/')
-        self.checkpoint_url = self._urlcombine(self.base_uri, '/checkpoint/')
 
-    def get_objects(self, url, params=None):
+    def get_objects(self, url, params=None, **kwargs):
         params = params if params else {}
+        if 'date' in kwargs:
+            params.update({'date': kwargs['date']})
         response = requests.get(url, params=params,
                                 auth=self._auth())
         objects = []
@@ -106,29 +105,24 @@ class ILSGatewayEndpoint(EndpointMixin):
             objects = response.json()['objects']
         return meta, objects
 
-    def get_products(self):
-        meta, products = self.get_objects(self.products_url)
+    def get_products(self, **kwargs):
+        meta, products = self.get_objects(self.products_url, **kwargs)
         for product in products:
             yield Product.from_json(product)
 
-    def get_webusers(self):
-        meta, users = self.get_objects(self.webusers_url)
+    def get_webusers(self, **kwargs):
+        meta, users = self.get_objects(self.webusers_url, **kwargs)
         for user in users:
             yield ILSUser.from_json(user)
 
-    def get_smsusers(self, domain, next_url_params=None):
+    def get_smsusers(self, next_url_params=None, **kwargs):
         params = {}
         if not next_url_params:
             url = self.smsusers_url
-            params = {'domain': domain, 'limit': 500}
+            params = {'limit': 500}
         else:
             url = self.smsusers_url + "?" + next_url_params
 
-        meta, users = self.get_objects(url, params=params)
+        meta, users = self.get_objects(url, params=params, **kwargs)
         return meta, [SMSUser.from_json(user) for user in users]
-
-    def confirm_migration(self, id, domain, api):
-        url = self._urlcombine(self.checkpoint_url, '%s/' % domain)
-        data = {'id': id, 'api': api}
-        requests.put(url, data=simplejson.dumps(data), auth=self._auth(), headers={"Content-Type": "application/json"})
 
