@@ -220,7 +220,7 @@ class ConditionsMet(object):
             5: case_property('attendance_vhnd_2', 0),
             6: case_property('attendance_vhnd_3', 0),
             7: case_property('month_7_attended', 0),
-            8: case_property('month_7_attended', 0)
+            8: case_property('month_8_attended', 0)
         }
         if self.status == 'pregnant':
             met_one, met_two, met_three, met_four, met_five = None, None, None, None, None
