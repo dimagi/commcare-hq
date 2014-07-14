@@ -967,7 +967,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     # Couch view wrappers
     @classmethod
     def all(cls):
-        return CouchUser.view("users/by_username", include_docs=True)
+        return CouchUser.view("users/by_username", include_docs=True, recuce=False)
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
@@ -1106,6 +1106,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
+                reduce=False,
                 #stale=stale,
             )
             return result.one(except_all=raise_if_none)
@@ -1197,7 +1198,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def save(self, **params):
         # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username).first()
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
