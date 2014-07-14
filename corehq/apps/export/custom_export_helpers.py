@@ -387,11 +387,6 @@ class CaseCustomExportHelper(CustomExportHelper):
         column_conf = table_conf[0].get("column_configuration", [])
         current_properties = set(self.custom_export.case_properties)
 
-        print "['current_properties']"
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(current_properties)
-
         remaining_properties = current_properties.copy()
 
         def is_special_type(p):
@@ -412,11 +407,6 @@ class CaseCustomExportHelper(CustomExportHelper):
                 if self.creating_new_export:
                     col["selected"] = True
 
-        print "[column_conf]"
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(column_conf)
-
         column_conf.extend([
             ExportColumn(
                 index=prop,
@@ -434,9 +424,7 @@ class CaseCustomExportHelper(CustomExportHelper):
                     col["show"] = True
 
         # Show most of the Case History rows by default
-        dont_show_cols = {
-            "sync_log_id",
-        }
+        dont_show_cols = {"sync_log_id"}
         for table in table_conf:
             if table.get("index", "") == "#.actions.#":
                 for col in table.get("column_configuration", []):
@@ -445,13 +433,7 @@ class CaseCustomExportHelper(CustomExportHelper):
                         col["show"] = True
                     else:
                         dont_show_cols.discard(index)
-                    print col
                 break
-
-        print "[table_conf]"
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(table_conf)
 
         return table_conf
 
