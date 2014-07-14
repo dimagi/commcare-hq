@@ -7,7 +7,7 @@ from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActi
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.loosechange import map_reduce
-from datetime import datetime, timedelta
+from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop

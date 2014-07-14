@@ -69,6 +69,30 @@
         <p><input id="submit-menu-form" class="pull-right btn btn-primary" type="Submit" value="submit"></p>
     </form>
     </div>
+    <div>
+        <h4>Import a new build from the build server</h4>
+        <ol>
+            <li><a href="http://build.dimagi.com:250/guestLogin.html?guest=1" target="_blank">Browse builds</a></li>
+            <li>Click on a CommCare version (example: "CommCare 2.13", <strong>NOT</strong> "CommCare ODK 2.13")</li>
+            <li>Click on "View" in the Artifacts column for the build you want</li>
+            <li>Right-click on "Download all (.zip)" and select "Copy Link Address"</li>
+            <li>Paste the address into the box below</li>
+            <li>Click Submit</li>
+            <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
+        </ol>
+        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
+            <label for="import_build_name">Source for artifacts.zip</label>
+            <input id="import_build_name" type="text" name="source"/>
+            <br/>
+            <label for="import_build_version">Version</label>
+            <input id="import_build_version" type="text" name="version"/>
+            <br/>
+            <label for="import_build_build_number">Build Number (you can usually leave this blank)</label>
+            <input id="import_build_build_number" type="text" name="build_number"/>
+            <br/>
+            <button type="submit">Import Build</button>
+        </form>
+    </div>
     <div style="height:150px;"></div>
 
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>

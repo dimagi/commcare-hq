@@ -422,6 +422,18 @@ class CaseCustomExportHelper(CustomExportHelper):
                 if col["index"] in self.properties_to_show:
                     col["show"] = True
 
+        # Show most of the Case History rows by default
+        dont_show_cols = {"sync_log_id"}
+        for table in table_conf:
+            if table.get("index", "") == "#.actions.#":
+                for col in table.get("column_configuration", []):
+                    index = col.get("index", "")
+                    if index not in dont_show_cols:
+                        col["show"] = True
+                    else:
+                        dont_show_cols.discard(index)
+                break
+
         return table_conf
 
     def get_context(self):

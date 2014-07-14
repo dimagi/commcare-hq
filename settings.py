@@ -458,14 +458,16 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 BROKER_URL = 'django://'  # default django db based
 
+CELERY_MAIN_QUEUE = 'celery'
+
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = 'celery'
+CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
 
 # This is the celery queue to use for running reminder rules.
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
-CELERY_REMINDER_RULE_QUEUE = 'celery'
+CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -1114,6 +1116,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

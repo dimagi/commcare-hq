@@ -25,9 +25,13 @@ $(function() {
     $(document).on('submit', 'form', function(ev) {
         var form = $(ev.target);
         form.find('.disable-on-submit').disableButton();
+        form.find('.disable-on-submit-no-spinner').disableButtonNoSpinner();
     });
     $(document).on('submit', 'form.disable-on-submit', function (ev) {
         $(ev.target).find('[type="submit"]').disableButton();
+    });
+    $(document).on('click', '.add-spinner-on-click', function(ev) {
+        $(ev.target).addSpinnerToButton();
     });
 
     $(document).on('click', '.notification-close-btn', function() {
@@ -75,8 +79,18 @@ $.showMessage = function (message, level) {
 };
 
 
-$.fn.disableButton = function () {
-    $(this).prepend('<i class="icon-refresh icon-spin"></i> ')
-           .attr('disabled', 'disabled')
+$.fn.addSpinnerToButton = function () {
+    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
+};
+
+
+$.fn.disableButtonNoSpinner = function () {
+    $(this).attr('disabled', 'disabled')
            .addClass('disabled');
+};
+
+
+$.fn.disableButton = function () {
+    $(this).disableButtonNoSpinner();
+    $(this).addSpinnerToButton();
 };

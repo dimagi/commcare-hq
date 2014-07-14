@@ -137,26 +137,6 @@ def domains_for_user(request, selected_domain=None):
 
 
 @register.simple_tag
-def list_my_domains(request):
-    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'list_my_domains')
-    if cached_val:
-        return cached_val.get('list_my_domains', "")
-
-    domain_list = Domain.active_for_user(request.user)
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for domain in domain_list:
-        default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
-    lst.append('</ul>')
-
-    my_domain_list_str = "".join(lst)
-    ret = {"list_my_domains": my_domain_list_str}
-    cache_core.cache_doc_prop(request.couch_user.get_id, 'list_my_domains', ret)
-    return my_domain_list_str
-
-
-@register.simple_tag
 def list_my_orgs(request):
     org_list = request.couch_user.get_organizations()
     lst = list()
