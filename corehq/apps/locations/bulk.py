@@ -131,7 +131,7 @@ def import_locations(domain, worksheets, task=None):
     importer = LocationImporter(domain, worksheets, task)
     results = importer.run()
 
-    return iter(results)
+    return results
 
 
 def import_location(domain, location_type, location_data, parent_child_map=None):
