@@ -40,7 +40,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
             ),
             pregnancy_cases=dict(
                 description="No. of Active Pregnancies",
-                title="# Pregnancies",
+                title="# Pregnancies in specified time period",
                 indicator_key="",
                 case_type="pregnancy",
             ),
