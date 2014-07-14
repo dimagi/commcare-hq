@@ -2004,7 +2004,7 @@ class Invitation(Document):
         raise NotImplementedError
 
 
-class DomainInvitation(Invitation, CachedCouchDocumentMixin):
+class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     """
     When we invite someone to a domain it gets stored here.
     """
