@@ -386,7 +386,6 @@ class CaseCustomExportHelper(CustomExportHelper):
     def update_table_conf(self, table_conf):
         column_conf = table_conf[0].get("column_configuration", [])
         current_properties = set(self.custom_export.case_properties)
-
         remaining_properties = current_properties.copy()
 
         def is_special_type(p):
