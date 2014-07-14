@@ -9,6 +9,7 @@ class RecapPassageReport(MonthYearMixin, MultiReport):
     name = "Recap Passage"
     slug = 'recap_passage'
     report_title = "Recap Passage"
+    exportable = True
     default_rows = 10
     fields = [FRMonthFilter, FRYearFilter, RecapPassageLocationFilter]
 

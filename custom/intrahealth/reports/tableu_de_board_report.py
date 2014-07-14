@@ -108,12 +108,30 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
                 charts.append({'x': s, 'y': data[i+1]})
             chart.add_dataset('products', charts)
 
+    @property
+    def export_table(self):
+        reports = [r['report_table'] for r in self.report_context['reports']]
+        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
+
 class TableuDeBoardReport(MultiReport):
     title = "Tableu De Bord"
     fields = [DatespanFilter, LocationFilter]
     name = "Tableu De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
+    exportable = True
 
     @property
     @memoized
