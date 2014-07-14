@@ -1,7 +1,9 @@
+from decimal import Decimal
 import os
 from datetime import date, datetime
 from django.test import TestCase
 from couchforms import create_xform_from_xml
+from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
 
@@ -106,7 +108,16 @@ class TestMeta(TestCase):
         xml_data = open(file_path, "rb").read()
         with create_xform_from_xml(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
-            self.assertEqual(xform.metadata.location, '42.3739063 -71.1109113 0.0 886.0')
+            self.assertEqual(
+                xform.metadata.location,
+                # '42.3739063 -71.1109113 0.0 886.0'
+                GeoPoint(
+                    latitude=Decimal('42.3739063'),
+                    longitude=Decimal('-71.1109113'),
+                    altitude=Decimal('0.0'),
+                    accuracy=Decimal('886.0'),
+                )
+            )
 
             j = xform.metadata.to_json()
             self.assertEqual(xform.metadata.to_json(), {

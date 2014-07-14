@@ -13,6 +13,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
 
 from dimagi.utils.indicators import ComputedDocumentMixin
@@ -80,7 +81,7 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
     appVersion = StringProperty()
-    location = StringProperty()
+    location = GeoPointProperty()
 
 
 class XFormOperation(DocumentSchema):
