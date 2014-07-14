@@ -1508,6 +1508,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
+        if self.form_filter:
+            if not any(action for action in self.actions.load_update_cases if not action.auto_select):
+                errors.append({'type': "filtering without case"})
+
         def generate_paths():
             for action in self.actions.get_all_actions():
                 for path in action.get_paths():
