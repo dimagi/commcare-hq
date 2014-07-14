@@ -1488,12 +1488,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             except ValueError:
                 errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
 
-            if isinstance(action, LoadUpdateAction) and \
-                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
-                case_tag = action.auto_select.value_source
-                if not self.actions.get_action_from_tag(case_tag):
-                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
-
             errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
                 case_tag=action.case_tag
@@ -1502,6 +1496,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for action in self.actions.get_all_actions():
             if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
                 errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
+
+            if isinstance(action, LoadUpdateAction) and \
+                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
+                case_tag = action.auto_select.value_source
+                if not self.actions.get_action_from_tag(case_tag):
+                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
