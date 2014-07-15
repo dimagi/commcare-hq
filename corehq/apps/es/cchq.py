@@ -7,5 +7,3 @@ class HQESQuery(ESQuery):
 
     def domain(self, domain):
         return self.term('domain.exact', domain)
-
-
