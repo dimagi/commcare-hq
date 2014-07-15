@@ -1,4 +1,5 @@
 from datetime import datetime
+from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -228,4 +229,26 @@ class AdminAppReport(AdminFacetedReport):
 class RealProjectSpacesReport(AdminReport):
     slug = 'real_project_spaces'
     name = ugettext_noop('Real Project Spaces')
-    section_name = ugettext_noop("ADMINREPORT")
+    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
+    base_template = "hqadmin/hqadmin_base_report.html"
+
+    @property
+    def template_context(self):
+        context = super(AdminReport, self).template_context
+        context.update({
+            'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
+        })
+        return context
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Project Space")),
+            DataTablesColumn(_("Number of Countries")),
+        )
+
+    @property
+    def rows(self):
+        return [
+            [domain.name, domain.deployment] for domain in Domain.get_all()
+        ]
