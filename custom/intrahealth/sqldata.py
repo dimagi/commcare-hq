@@ -71,8 +71,11 @@ class ConventureData(BaseSqlData):
 
     @property
     def columns(self):
+        registered_column = "registered_total_for_region"
+        if 'district_id' in self.config:
+            registered_column = 'registered_total_for_district'
         return [
-            DatabaseColumn("No de PPS (number of PPS registered in that region)", MaxColumn('registered_total', alias='registered')),
+            DatabaseColumn("No de PPS (number of PPS registered in that region)", MaxColumn(registered_column, alias='registered')),
             DatabaseColumn("No de PPS planifie (number of PPS planned)", MaxColumn('planned_total')),
             DatabaseColumn("No de PPS avec livrasion cet mois (number of PPS visited this month)",
                 CountUniqueColumn('location_id',
@@ -171,7 +174,7 @@ class FicheData(BaseSqlData):
 
     @property
     def columns(self):
-        diff = lambda x, y: x - y
+        diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("LISTE des PPS"), SimpleColumn('PPS_name')),
             DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_total', alias='actual_consumption')),
@@ -198,7 +201,7 @@ class RecapPassageData(BaseSqlData):
 
     @property
     def columns(self):
-        diff = lambda x, y: x - y
+        diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),

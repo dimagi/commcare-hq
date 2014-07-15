@@ -25,6 +25,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
+from corehq.apps.users.models import DomainInvitation
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -94,12 +95,18 @@ accounting_logger = logging.getLogger('accounting')
 
 @login_required
 def select(request, domain_select_template='domain/select.html'):
-
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    return render(request, domain_select_template, {})
+    email = request.couch_user.get_email()
+    open_invitations = DomainInvitation.by_email(email)
+
+    additional_context = {
+        'domains_for_user': domains_for_user,
+        'open_invitations': open_invitations,
+    }
+    return render(request, domain_select_template, additional_context)
 
 
 class DomainViewMixin(object):

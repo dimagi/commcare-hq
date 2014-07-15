@@ -968,10 +968,11 @@ class ProBonoForm(forms.Form):
     organization = forms.CharField(label=_("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
-    duration_of_project = forms.CharField(help_text=_("We grant pro-bono software plans for "
-                                                      "12 months at a time. After 12 months "
-                                                      "groups must reapply to renew their "
-                                                      "pro-bono subscription."))
+    duration_of_project = forms.CharField(help_text=_(
+        "We grant pro-bono subscriptions to match the duration of your "
+        "project, up to a maximum of 12 months at a time (at which point "
+        "you need to reapply)."
+    ))
     domain = forms.CharField(label=_("Project Space"))
     dimagi_contact = forms.CharField(
         help_text=_("If you have already been in touch with someone from "

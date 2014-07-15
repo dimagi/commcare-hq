@@ -12,6 +12,7 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
     slug = 'fiche_consommation'
     report_title = "Fiche Consommation"
     fields = [DatespanFilter, FicheLocationFilter]
+    exportable = True
     col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
 
     @property

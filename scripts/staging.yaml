@@ -1,22 +1,24 @@
 trunk: master
 name: autostaging
 branches:
+#  - add-build-ui
   - time-ago-deployed
   - filter-suggested-properties
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
-  - vellum-requirejs+use-django-compressor
-  - use-django-compressor # bb 7/1
+#  - vellum-requirejs+use-django-compressor
+#  - use-django-compressor # bb 7/1
   - offline-install-multimedia  # Danny 5/28
   - logos # Nick P 5/28
   - 109909-case-performance  # ethan/cory 5/30
-  # - condition # SK 6/12
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - formsql # SK 7/7
   - coredb # SK 7/7
   - all-filter-hack # Noah 7/7
-  - universal-analytics-upgrade # Nick P 7/8
+  - formviewbase
+  - module-view # SK 7/10
+  - dynmic-opm # sravan 7/10
 submodules:
   submodules/couchlog-src:
     branches:
@@ -24,13 +26,16 @@ submodules:
   submodules/django-soil-src:
     branches:
       - static-tags # Nick P 5/20
-  submodules/formdesigner:
-    branches:
+#  submodules/formdesigner:
+#    branches:
 #      - develop-staging # Daniel 6/12 (major refactor + itemsets?)
-      - universal-analytics-upgrade # Nick P 7/8
+#      - universal-analytics-upgrade # Nick P 7/8
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
+#  submodules/dimagi-utils-src:
+#    branches:
+#      - json_response-status
