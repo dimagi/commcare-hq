@@ -1,13 +1,19 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from celery.task import periodic_task, task
-from corehq.apps.reminders.models import CaseReminderHandler, CASE_CRITERIA
+from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
+    CASE_CRITERIA)
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch import CriticalSection
 
-@periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def fire_reminders():
-    CaseReminderHandler.fire_reminders()
+CELERY_REMINDERS_QUEUE = "reminders_queue"
+
+if not settings.REMINDERS_QUEUE_ENABLED:
+    @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings,
+        'CELERY_PERIODIC_QUEUE', settings.CELERY_MAIN_QUEUE))
+    def fire_reminders():
+        CaseReminderHandler.fire_reminders()
 
 def get_subcases(case):
     indices = case.reverse_indices
@@ -17,7 +23,8 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task
+@task(queue=(CELERY_REMINDERS_QUEUE if settings.REMINDERS_QUEUE_ENABLED
+    else settings.CELERY_MAIN_QUEUE))
 def case_changed(case_id, handler_ids):
     try:
         _case_changed(case_id, handler_ids)
@@ -48,4 +55,21 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
         notify_exception(None,
             message="Error processing reminder rule for handler %s" % handler._id)
     handler.save(unlock=True)
+
+@task(queue=CELERY_REMINDERS_QUEUE)
+def fire_reminder(reminder_id):
+    utcnow = datetime.utcnow()
+    reminder = CaseReminder.get(reminder_id)
+    # This key prevents doc update conflicts with rule running
+    key = "rule-update-definition-%s-case-%s" % (reminder.handler_id, reminder.case_id)
+    with CriticalSection([key], timeout=(REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)):
+        # Refresh the reminder
+        reminder = CaseReminder.get(reminder_id)
+        if (not reminder.retired and reminder.active
+            and utcnow >= reminder.next_fire):
+            handler = reminder.handler
+            if handler.fire(reminder):
+                handler.set_next_fire(reminder, utcnow)
+                reminder.save()
+
 

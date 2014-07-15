@@ -1014,18 +1014,22 @@ class CaseReminderHandler(Document):
         return filter(None, referenced_forms)
 
     @classmethod
-    def get_all_reminders(cls, domain=None, due_before=None):
+    def get_all_reminders(cls, domain=None, due_before=None, ids_only=False):
         if due_before:
             now_json = json_format_datetime(due_before)
         else:
             now_json = {}
 
         # domain=None will actually get them all, so this works smoothly
-        return CaseReminder.view('reminders/by_next_fire',
+        result = CaseReminder.view('reminders/by_next_fire',
             startkey=[domain],
             endkey=[domain, now_json],
-            include_docs=True
+            include_docs=(not ids_only),
         ).all()
+        if ids_only:
+            return [entry["id"] for entry in result]
+        else:
+            return result
     
     @classmethod
     def fire_reminders(cls, now=None):
