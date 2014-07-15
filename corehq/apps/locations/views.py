@@ -22,6 +22,7 @@ import json
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
+from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 from soil.util import expose_download, get_download_context
 from corehq.apps.commtrack.tasks import import_locations_async
 from couchexport.models import Format
@@ -213,39 +214,61 @@ class EditLocationView(NewLocationView):
         return reverse(self.urlname, args=[self.domain, self.location_id])
 
 
-class FacilitySyncView(BaseLocationView):
-    urlname = 'sync_facilities'
-    page_title = ugettext_noop("OpenLMIS")
-    template_name = 'locations/facility_sync.html'
+class BaseSyncView(BaseLocationView):
+    source = ""
+    sync_urlname = None
 
     @property
     def page_context(self):
         return {
             'settings': self.settings_context,
+            'source': self.source,
+            'sync_url': self.sync_urlname
         }
 
     @property
     def settings_context(self):
-        return {
-            'openlmis_config': self.domain_object.commtrack_settings.openlmis_config._doc,
-        }
+        key = "%s_config" % self.source
+        if hasattr(self.domain_object.commtrack_settings, key):
+            return {
+                "source_config": getattr(self.domain_object.commtrack_settings, key)._doc,
+            }
+        else:
+            return {}
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
         #TODO add server-side input validation here (currently validated on client)
-
-        if 'openlmis_config' in payload:
-            for item in payload['openlmis_config']:
-                setattr(
-                    self.domain_object.commtrack_settings.openlmis_config,
-                    item,
-                    payload['openlmis_config'][item]
-                )
+        key = "%s_config" % self.source
+        if "source_config" in payload:
+            for item in payload['source_config']:
+                if hasattr(self.domain_object.commtrack_settings, key):
+                    setattr(
+                        getattr(self.domain_object.commtrack_settings, key),
+                        item,
+                        payload['source_config'][item]
+                    )
 
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class FacilitySyncView(BaseSyncView):
+    urlname = 'sync_facilities'
+    sync_urlname = 'sync_openlmis'
+    page_title = ugettext_noop("OpenLMIS")
+    template_name = 'locations/facility_sync.html'
+    source = 'openlmis'
+
+class ILSFacilitySyncView(BaseSyncView):
+    urlname = 'sync_facilities_ils'
+    sync_urlname = 'sync_ilsgateway'
+    page_title = ugettext_noop("ILSGateway")
+    template_name = 'locations/facility_sync.html'
+    source = 'ilsgateway'
+
 
 
 class EditLocationHierarchy(BaseLocationView):
@@ -438,3 +461,10 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
+@domain_admin_required
+@require_POST
+def sync_ilsgateway(request, domain):
+    ils_bootstrap_domain_task.delay(domain)
+    return HttpResponse('OK')
+

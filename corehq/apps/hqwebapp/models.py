@@ -229,7 +229,7 @@ class ProjectReportsTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-        
+
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
@@ -348,6 +348,7 @@ class CommTrackSetupTab(UITab):
             NewLocationView,
             EditLocationView,
             FacilitySyncView,
+            ILSFacilitySyncView,
             LocationImportView,
             LocationImportStatusView,
             LocationSettingsView,
@@ -433,6 +434,10 @@ class CommTrackSetupTab(UITab):
             {
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+            },
+            {
+                'title': ILSFacilitySyncView.page_title,
+                'url': reverse(ILSFacilitySyncView.urlname, args=[self.domain]),
             },
         ]])
         return items

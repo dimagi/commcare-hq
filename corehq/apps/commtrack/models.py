@@ -37,6 +37,7 @@ from django.db.models.signals import post_save, post_delete
 from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
+from custom.ilsgateway.models import ILSGatewayConfig
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -404,6 +405,7 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
+    ilsgateway_config = SchemaProperty(ILSGatewayConfig)
 
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
