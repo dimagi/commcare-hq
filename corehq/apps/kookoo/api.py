@@ -119,12 +119,18 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         elif child.tag.endswith("message"):
             message = child.text
 
+    do_not_retry = False
     if status == "queued":
         call_log_entry.error = False
         call_log_entry.gateway_session_id = "KOOKOO-" + message
     elif status == "error":
         call_log_entry.error = True
         call_log_entry.error_message = message
+        if (message.strip().upper() in [
+            'CALLS WILL NOT BE MADE BETWEEN 9PM TO 9AM',
+            'PHONE NUMBER IN DND LIST',
+        ]):
+            do_not_retry = True
     else:
         call_log_entry.error = True
         call_log_entry.error_message = "Unknown status received from Kookoo."
@@ -136,5 +142,5 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         call_log_entry.first_response = get_http_response_string(call_log_entry.gateway_session_id, ivr_responses, collect_input=True, hang_up=False, input_length=input_length)
 
     call_log_entry.save()
-    return not call_log_entry.error
+    return not call_log_entry.error or do_not_retry
 

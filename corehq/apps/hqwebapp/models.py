@@ -10,6 +10,7 @@ from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
@@ -1260,29 +1261,32 @@ class AccountingTab(UITab):
 
 
 class SMSAdminTab(UITab):
-    title = ugettext_noop("SMS Connectivity")
+    title = ugettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
+    dispatcher = SMSAdminInterfaceDispatcher
 
     @property
+    @memoized
     def sidebar_items(self):
-        return [
-            (_('SMS Connectivity'), [
-                {'title': _('SMS Connections'),
-                 'url': reverse('list_backends'),
-                 'subpages': [
-                     {'title': _('Add Connection'),
-                      'urlname': 'add_backend'},
-                     {'title': _('Edit Connection'),
-                      'urlname': 'edit_backend'},
-                 ]},
-                {'title': _('SMS Country-Connection Map'),
-                 'url': reverse('global_backend_map')},
-            ]),
-        ]
+        items = super(SMSAdminTab, self).sidebar_items
+        items.append((_('SMS Connectivity'), [
+            {'title': _('SMS Connections'),
+             'url': reverse('list_backends'),
+             'subpages': [
+                 {'title': _('Add Connection'),
+                  'urlname': 'add_backend'},
+                 {'title': _('Edit Connection'),
+                  'urlname': 'edit_backend'},
+             ]},
+            {'title': _('SMS Country-Connection Map'),
+             'url': reverse('global_backend_map')},
+        ]))
+        return items
 
     @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
+
 
 class FeatureFlagsTab(UITab):
     title = ugettext_noop("Feature Flags")
@@ -1341,7 +1345,7 @@ class AdminTab(UITab):
         except Exception:
             pass
         submenu_context.extend([
-            format_submenu_context(_("SMS Connectivity"), url=reverse("default_sms_admin_interface")),
+            format_submenu_context(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             format_submenu_context(_("Feature Flags"), url=reverse("toggle_list")),
             format_submenu_context(None, is_divider=True),
             format_submenu_context(_("Django Admin"), url="/admin")

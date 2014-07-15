@@ -121,7 +121,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             raise Http404()
     else:
         if not user_filter:
-            user_filter = HQUserType.use_defaults()
+            user_filter = HQUserType.all()
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])

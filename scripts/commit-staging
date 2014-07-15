@@ -41,7 +41,7 @@ then
 fi
 
 # have the commit follow a certain template
-git commit --edit --message="$COMMIT_MESSAGE"
+git commit --edit --message="$COMMIT_MESSAGE" --message "[ci skip]"
 
 # push if using --push option
 if [[ $1 = '--push' ]]

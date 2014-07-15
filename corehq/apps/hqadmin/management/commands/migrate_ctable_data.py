@@ -34,7 +34,7 @@ class Command(BaseCommand):
         if '?' in old_db:
             old_db = old_db.split('?')[0]
 
-        db_settings = settings.DATABASES["default"]
+        db_settings = settings.DATABASES["default"].copy()
         db_settings['PORT'] = db_settings.get('PORT', None) or '5432'
         maindb_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
             **db_settings

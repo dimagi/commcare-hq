@@ -65,6 +65,10 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
+####### Django Compressor ########
+
+COMPRESS_ENABLED = False  # this will allow less.js to compile less files on the client side
+
 ####### Bitly ########
 
 BITLY_LOGIN = 'dimagi'  # set to None to disable bitly app url shortening (useful offline)

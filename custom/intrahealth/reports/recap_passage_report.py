@@ -14,6 +14,7 @@ class RecapPassageReport(DatespanMixin, GenericTabularReport, CustomProjectRepor
     name = "Recap Passage"
     slug = 'recap_passage'
     report_title = "Recap Passage"
+    exportable = True
     fields = [DatespanFilter, RecapPassageLocationFilter]
 
     def config_update(self, config):

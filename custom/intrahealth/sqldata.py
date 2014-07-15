@@ -1,11 +1,11 @@
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
 from corehq.apps.commtrack.models import Product
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, DictDataFormat
-from sqlagg.filters import EQ, NOTEQ, BETWEEN
+from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -71,21 +71,26 @@ class ConventureData(BaseSqlData):
 
     @property
     def columns(self):
+        registered_column = "registered_total_for_region"
+        if 'district_id' in self.config:
+            registered_column = 'registered_total_for_district'
         return [
-            DatabaseColumn("No de PPS (number of PPS registered in that region)", MaxColumn('registered_total', alias='registered')),
+            DatabaseColumn("No de PPS (number of PPS registered in that region)", MaxColumn(registered_column, alias='registered')),
             DatabaseColumn("No de PPS planifie (number of PPS planned)", MaxColumn('planned_total')),
             DatabaseColumn("No de PPS avec livrasion cet mois (number of PPS visited this month)",
-                CountColumn('real_date_repeat',
-                    alias="visited"
+                CountUniqueColumn('location_id',
+                    alias="visited",
+                    filters=self.filters + [AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")])]
                 )
             ),
             AggregateColumn("Taux de couverture (coverage ratio)", self.percent_fn,
                 [AliasColumn('registered'), AliasColumn("visited")]),
             DatabaseColumn("No de PPS avec donnees soumises (number of PPS which submitted data)",
-                 CountColumn('real_date_repeat',
-                     alias="submitted",
-                     filters=self.filters + [NOTEQ("real_date_repeat", "visit")]
-                 )),
+                 CountUniqueColumn('location_id',
+                    alias="submitted",
+                    filters=self.filters + [AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")])]
+                )
+            ),
             AggregateColumn("Exhaustivite des donnees", self.percent_fn,
                             [AliasColumn('visited'), AliasColumn('submitted')]),
         ]
@@ -169,7 +174,7 @@ class FicheData(BaseSqlData):
 
     @property
     def columns(self):
-        diff = lambda x, y: x - y
+        diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("LISTE des PPS"), SimpleColumn('PPS_name')),
             DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_total', alias='actual_consumption')),
@@ -196,7 +201,7 @@ class RecapPassageData(BaseSqlData):
 
     @property
     def columns(self):
-        diff = lambda x, y: x - y
+        diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),

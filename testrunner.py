@@ -157,6 +157,9 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         if simple_suite.countTestCases():
             failures += self.run_non_db_tests(simple_suite)
 
+        if failures and self.failfast:
+            return failures
+
         if db_suite.countTestCases():
             failures += self.run_db_tests(db_suite)
             # disabled until TimingTestSuite fixed: http://manage.dimagi.com/default.asp?121894
@@ -242,6 +245,9 @@ class GroupTestRunnerCatchall(_OnlySpecificApps, TwoStageTestRunner):
         simple_suite, _ = self.split_suite(all_suite)
         if simple_suite.countTestCases():
             failures += self.run_non_db_tests(simple_suite)
+
+        if failures and self.failfast:
+            return failures
 
         # then run db tests from specified apps
         db_labels = test_labels or self.get_test_labels()
