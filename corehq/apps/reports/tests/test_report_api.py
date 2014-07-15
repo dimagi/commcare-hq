@@ -2,6 +2,7 @@ from django import test as unittest
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import EQFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.db import Session
 
 from .sql_fixture import load_data
 from .sql_reports import combine_indicator
@@ -65,6 +66,10 @@ class ReportAPITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         load_data()
+
+    @classmethod
+    def tearDownClass(cls):
+        Session.remove()
 
     def test_basic(self):
         ds = UserDataSource({}, keys=[["user1"], ["user2"]], group_by=['user'])
