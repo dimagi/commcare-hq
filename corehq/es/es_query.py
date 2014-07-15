@@ -1,0 +1,219 @@
+"""
+TODOs:
+Figure out proper default_filters for each class
+make filter be match_all if all defaults are removed
+sorting
+Add esquery.iter() method
+"""
+from copy import deepcopy
+import json
+
+from ..elastic import ES_URLS, ESError, run_query
+
+from . import filters
+
+
+class ESQuery(object):
+    """
+    {"query": {
+        "filtered": {
+            "filter": {
+                "and": [
+                    <filters>
+                ]
+            },
+            "query": <query>
+        }
+    }}
+
+    language:
+        es_query - the entire query, filters, query, pagination, facets
+        filters - a list of the individual filters
+        query - the query, used for searching, not filtering
+        field - a field on the document. User docs have a 'domain' field.
+        lt/gt - less/greater than
+        lte/gte - less/greater than or equal to
+    """
+    index = None
+    fields = None
+    start = None
+    size = None
+    default_filters = {
+        'match_all': {'match_all': {}}
+    }
+
+    def __init__(self, index=None):
+        self.index = index or self.index
+        if self.index not in ES_URLS:
+            msg = "%s is not a valid ES index.  Available options are: %s" % (
+                index, ', '.join(ES_URLS.keys()))
+            raise IndexError(msg)
+        self.es_query = {"query": {
+            "filtered": {
+                "filter": {"and": []},
+                "query": {'match_all': {}}
+            }
+        }}
+        # when the filters are needed, add remaining default filters and query
+
+    def run(self):
+        raw = run_query(self.url, self.raw_query)
+        if 'error' in raw:
+            msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
+                   "\nQuery: {query}").format({
+                       'error': raw['error'],
+                       'index': self.index,
+                       'url': self.url,
+                       'query': self.dumps(pretty=True)
+                    })
+            raise ESError(msg)
+        return ESQuerySet(raw, deepcopy(self))
+
+    @property
+    def _filters(self):
+        return self.es_query['query']['filtered']['filter']['and']
+
+    def filter(self, filter):
+        query = deepcopy(self)
+        query._filters.append(filter)
+        return query
+
+    @property
+    def filters(self):
+        return self.default_filters + self._filters
+
+    @property
+    def _query(self):
+        return self.es_query['query']['filtered']['query']
+
+    @property
+    def set_query(self, query):
+        es = deepcopy(self)
+        es.es_query['query']['filtered']['query'] = query
+        return es
+
+    def assemble(self):
+        """
+        build out the es_query dict
+        """
+        self._filters.append(self.default_filters)
+        if self.fields is not None:
+            self.es_query['fields'] = self.fields
+        if self.start is not None:
+            self.es_query['start'] = self.start
+        if self.size is not None:
+            self.es_query['size'] = self.size
+
+    def start(self, start):
+        # analagous to SQL offset
+        query = deepcopy(self)
+        query.start = start
+        return query
+
+    def size(self, size):
+        # analagous to SQL limit
+        query = deepcopy(self)
+        query.size = size
+        return query
+
+    @property
+    def raw_query(self):
+        query = deepcopy(self)
+        query.assemble()
+        return query.es_query
+
+    def dumps(self, pretty=False):
+        indent = 4 if pretty else None
+        return json.dumps(self.raw_query, indent=indent)
+
+    def pprint(self):
+        print self.dumps(pretty=True)
+
+    @property
+    def url(self):
+        return ES_URLS[self.index],
+
+    def sort(self, field, desc=False):
+        query = deepcopy(self)
+        query.es_query['sort'] = {
+            field: {'order': 'desc' if desc else 'asc'}
+        }
+        return query
+
+    def remove_default_filter(self, default):
+        query = deepcopy(self)
+        query.default_filters.pop(default)
+        return query
+
+    def fuzzy_query(self, q):
+        self.set_query({"fuzzy_like_this": {"like_text": q}})
+
+    def term(self, field, value):
+        return self.filter(filters.term(field, value))
+
+    def OR(self, *filters):
+        return self.filter(filters.OR(*filters))
+
+    def range(self, field, gt=None, gte=None, lt=None, lte=None):
+        return self.filter(filters.range_filter(field, gt, gte, lt, lte))
+
+    def date_range(self, field, gt=None, gte=None, lt=None, lte=None):
+        return  self.filter(filters.date_range(field, gt, gte, lt, lte))
+
+
+class ESQuerySet(object):
+    """
+    The object returned from ESQuery.run
+    ESQuerySet.raw is the raw response from elasticsearch
+    ESQuerySet.query is the ESQuery object
+    """
+    def __init__(self, raw, query):
+        self.raw = raw
+        self.query = query
+
+    def raw_hits(self):
+        return self.raw['hits']['hits']
+
+    def hits(self):
+        if self.query.fields is not None:
+            hits = [r['fields'] for r in self.raw_hits()]
+        else:
+            hits = [r['_source'] for r in self.raw_hits()]
+
+    def total(self):
+        return self.raw['hits']['total']
+
+
+class HQESQuery(ESQuery):
+    """
+    Query logic specific to CommCareHQ
+    """
+    core_filters = [
+        filters.domain,
+        filters.doc_type,
+    ]
+    index_filters = []
+    # TODO make this a property and call super
+
+    def __getattr__(self, attr, *args, **kwargs):
+        # https://docs.python.org/2/reference/datamodel.html#object.__getattr__
+        for fn in self.index_filters + self.core_filters:
+            if fn.__name__ == attr:
+                return self.filter(fn(*args, **kwargs))
+        raise AttributeError("There is no builtin filter named %s" % attr)
+
+
+class Example(object):
+    def example_query(self):
+        q = FormsES()\
+            .domain(self.domain)\
+            .xmlns(self.xmlns)\
+            .submitted(gte=self.datespan.startdate_param,
+                       lt=self.datespan.enddateparam)\
+            .sort('received_on', desc=False)\
+            .size(self.pagination.count)\
+            .start(self.pagination.start)
+
+        result = q.run()
+        total_docs = result.total()
+        hits = result.hits()

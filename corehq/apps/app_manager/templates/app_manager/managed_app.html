@@ -112,6 +112,30 @@
             }, 0);
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            $('#edit_label').click(function () {
+                event.preventDefault();
+                ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
+                    'hitCallback': function () {
+                        document.location = $('#edit_label').attr('href');
+                    }
+                });
+            });
+            {% for module in app.get_modules %}
+                {% for form in module.get_forms %}
+                    $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
+                        event.preventDefault();
+                        ga('send', 'event', 'App Builder', 'Open Form', 'Edit Pen', {
+                            'hitCallback': function () {
+                                document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
+                            }
+                        });
+                    });
+                {% endfor %}
+            {% endfor %}
+        });
+    </script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -231,9 +255,7 @@
                                         </a>
                                         {% if edit %}
                                             <div class="edit-form-pencil pull-right">
-                                                <a href="{% url "form_source" domain app.id module.id form.id %}" onclick="
-                                                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Pen']);
-                                                ">
+                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
                                             </div>

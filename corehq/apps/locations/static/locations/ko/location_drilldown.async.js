@@ -41,9 +41,11 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
   // add a new level of drill-down to the tree
   this.path_push = function(loc) {
-    this.selected_path.push(loc);
-    if (this.auto_drill && loc.num_children() == 1) {
-      loc.selected_child(loc.get_child(0));
+    if (this.selected_path().length != this.location_types.length) {
+        this.selected_path.push(loc);
+        if (this.auto_drill && loc.num_children() == 1) {
+            loc.selected_child(loc.get_child(0));
+        }
     }
   }
 
@@ -116,7 +118,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
           // reset so dropdown for loc will default to 'all' if shown again
           e.selected_child(null);
         });
-      
+
       var post_children_loaded = function(parent) {
         if (parent.num_children()) {
           root.path_push(parent);
@@ -196,7 +198,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
   this.can_have_children = ko.computed(function() {
           return (this.allowed_child_types().length > 0);
       }, this);
-  
+
   this.filter = function() {
       return this.name() == '_all' || root.loc_filter(this);
   }

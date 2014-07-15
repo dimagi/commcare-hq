@@ -531,29 +531,31 @@ class XForm(WrappedNode):
         for g in node_groups.values():
             duplicate_dict[g].append(g)
 
-        def replace_ref(old_xpath, attrib_name, new):
-            for ref in self.findall(old_xpath):
-                if ref.xml is not None:
-                    ref.attrib[attrib_name] = new
+        duplicates = [sorted(g, key=lambda ng: ng.id) for g in duplicate_dict.values() if len(g) > 1]
 
-        duplicates = [g for g in duplicate_dict.values() if len(g) > 1]
-        for d in duplicates:
-            d = sorted(d, key=lambda ng: ng.id)
-            reference = d[0]
-            new_ref = u"jr:itext('{0}')".format(reference.id)
-
-            for group in d[1:]:
+        for dup in duplicates:
+            for group in dup[1:]:
                 itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                ref_path = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(ref_path, 'ref', new_ref)
+        def replace_ref_s(xmlstring, find, replace):
+            find = find.encode('ascii', 'xmlcharrefreplace')
+            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            return xmlstring.replace(find, replace)
 
-                constraint_path = u'.//*[@{{jr}}constraintMsg="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(constraint_path, '{jr}constraintMsg', new_ref)
+        xf_string = self.render()
+        for dup in duplicates:
+            reference = dup[0]
+            new_ref = u"jr:itext('{0}')".format(reference.id)
+
+            for group in dup[1:]:
+                old_ref = u'jr:itext(\'{0}\')'.format(group.id)
+                xf_string = replace_ref_s(xf_string, old_ref, new_ref)
+
+        self.xml = parse_xml(xf_string)
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)

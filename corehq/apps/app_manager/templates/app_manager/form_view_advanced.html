@@ -222,9 +222,7 @@
         {% if edit %}
         <div class="span1">
             <h3>
-                <a href="./source/" class="btn btn-primary" onclick="
-                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
-                ">
+                <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
                     <i class="icon-pencil"></i>
                     {% trans "Edit" %}
                 </a>

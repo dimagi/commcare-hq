@@ -50,6 +50,15 @@
                 $('#author-input').hide(250);
             }
         });
+
+        $('#publish-now-button').on('click', function() {
+            event.preventDefault();
+            ga('send', 'event', 'Exchange', 'Publish Now', '?', {
+                'hitCallback': function() {
+                    $('#snapshot-form').submit();
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
@@ -101,10 +110,10 @@
     </fieldset>
 
     <div class="form-actions">
-        <a id="save-button" class="btn disable-on-submit">{% trans "Save and Publish Later" %}</a>
+        <a id="save-button" class="btn disable-on-submit-no-spinner add-spinner-on-click">{% trans "Save and Publish Later" %}</a>
         <button type="submit"
-                class="btn btn-primary disable-on-submit"
-                onclick="_gaq.push(['_trackEvent', 'Exchange', 'Publish Now', '?']);"
+                class="btn btn-primary disable-on-submit-no-spinner add-spinner-on-click"
+                id="publish-now-button"
         >
             {% trans "Publish Now" %}
         </button>

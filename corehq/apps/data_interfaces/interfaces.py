@@ -69,7 +69,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
+        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],

@@ -763,8 +763,10 @@ def _deploy_without_asking():
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
+        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
+        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
@@ -971,10 +973,40 @@ def flip_es_aliases():
 
 @parallel
 @roles(*ROLES_STATIC)
+def _do_compress():
+    """Run Django Compressor after a code update"""
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env, user=env.sudo_user)
+    update_manifest(save=True)
+
+
+@parallel
+@roles(*ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+
+
+@roles(*ROLES_DJANGO)
+@parallel
+def update_manifest(save=False):
+    """
+    Puts the manifest.json file with the references to the compressed files
+    from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
+    governs the actual static reference.
+
+    save=True saves the manifest.json file to redis, otherwise it grabs the
+    manifest.json file from redis and inserts it into the staticfiles dir.
+    """
+    withpath = env.code_root
+    venv = env.virtualenv_root
+
+    cmd = 'resource_compress save' if save else 'resource_compress'
+    with cd(withpath):
+        sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
+            user=env.sudo_user
+        )
 
 
 @roles(*ROLES_DJANGO)
@@ -1007,6 +1039,8 @@ def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
     update_code()
+    _do_compress()
+    update_manifest(save=True)
     _do_collectstatic()
 
 
