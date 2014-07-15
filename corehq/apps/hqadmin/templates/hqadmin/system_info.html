@@ -276,13 +276,14 @@
     </div>
 
     <div class="row-fluid" id="elastic-vs-couch">
-        <h3>Elasticsearch/Couch comparison</h3>
+        <h3>Elasticsearch/Couch/Postgres comparison</h3>
         <table class="table">
             <thread>
             <tr>
                 <th>Description</th>
                 <th>CouchDB</th>
                 <th>Elasticsearch</th>
+                <th>PostgreSQL</th>
             </tr>
             </thread>
             <tbody>
@@ -291,6 +292,7 @@
                 <td>{{ comparison.description }}</td>
                 <td>{{ comparison.couch_docs }}</td>
                 <td>{{ comparison.es_docs }}</td>
+                <td>{{ comparison.sql_rows }}</td>
             </tr>
             {% endfor %}
             </tbody>
