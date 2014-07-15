@@ -8,8 +8,10 @@ Code Contributions
 ------------------
 Dimagi tracks most issues internally, but we use github's `issue tracker`_
 for public facing issues.  Feel free to browse the issues there and tackle
-any you feel equipped to do.  When you update or add comments to an issue please mention **@dimagiupdate** to send an alert to
-our internal issue tracking system.
+any you feel equipped to do.  When you update or add comments to an issue
+please mention **@dimagiupdate** to send an alert to our internal issue
+tracking system.  Before submitting a PR, review our `Contributor
+Checklist`_.
 
 Bug Reports
 -----------
@@ -25,3 +27,4 @@ We manage feature requests on `uservoice`_.
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
 .. _uservoice: http://dimagi.uservoice.com/
+.. _Contributor Checklist: https://github.com/dimagi/commcare-hq/wiki/Contributor-Checklists
