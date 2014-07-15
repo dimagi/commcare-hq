@@ -23,6 +23,7 @@ from corehq.apps.users.models import FakeUser, WebUser
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
+import corehq.apps.accounting.filters as filters
 
 logger = get_task_logger('accounting')
 
@@ -258,6 +259,7 @@ def weekly_digest():
         ('end_date_startdate', today.isoformat()),
         ('end_date_enddate', in_forty_days.isoformat()),
         ('active_status', 'Active'),
+        (filters.TrialStatusFilter.slug, filters.TrialStatusFilter.NON_TRIAL),
     ))
     request.GET = QueryDict(params)
     request.couch_user = FakeUser(

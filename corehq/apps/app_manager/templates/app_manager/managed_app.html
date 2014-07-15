@@ -112,30 +112,32 @@
             }, 0);
         });
     </script>
-    <script>
-        $(document).ready(function() {
-            $('#edit_label').click(function () {
-                event.preventDefault();
-                ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
-                    'hitCallback': function () {
-                        document.location = $('#edit_label').attr('href');
-                    }
-                });
-            });
-            {% for module in app.get_modules %}
-                {% for form in module.get_forms %}
-                    $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
-                        event.preventDefault();
-                        ga('send', 'event', 'App Builder', 'Open Form', 'Edit Pen', {
-                            'hitCallback': function () {
-                                document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
-                            }
-                        });
+    {% if GOOGLE_ANALYTICS_ID %}
+        <script>
+            $(document).ready(function() {
+                $('#edit_label').click(function () {
+                    event.preventDefault();
+                    ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
+                        'hitCallback': function () {
+                            document.location = $('#edit_label').attr('href');
+                        }
                     });
+                });
+                {% for module in app.get_modules %}
+                    {% for form in module.get_forms %}
+                        $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
+                            event.preventDefault();
+                            ga('send', 'event', 'App Builder', 'Open Form', 'Edit Pen', {
+                                'hitCallback': function () {
+                                    document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
+                                }
+                            });
+                        });
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
-        });
-    </script>
+            });
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}

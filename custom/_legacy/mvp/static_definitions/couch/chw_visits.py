@@ -20,7 +20,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
             ),
             household_cases=dict(
                 description="No. of Active Households ",
-                title="# Households",
+                title="# Households in specified time period",
                 indicator_key="",
                 case_type="household",
             ),
@@ -40,7 +40,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
             ),
             pregnancy_cases=dict(
                 description="No. of Active Pregnancies",
-                title="# Pregnancies",
+                title="# Pregnancies in specified time period",
                 indicator_key="",
                 case_type="pregnancy",
             ),
@@ -54,7 +54,7 @@ CHW_VISIT_INDICATORS = dict(
         all_visit_forms=dict(
             household_visits=dict(
                 description="No. of household visits",
-                title="# Household Visits",
+                title="# Household Visits in specified time period",
                 indicator_key="household",
             ),
         ),
@@ -135,4 +135,3 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
         )
     )
 )
-
