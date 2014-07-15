@@ -8,7 +8,7 @@ Code Contributions
 ------------------
 Dimagi tracks most issues internally, but we use github's `issue tracker`_
 for public facing issues.  Feel free to browse the issues there and tackle
-any you feel equipped to do.  Mention **@dimagiupdate** to send an alert to
+any you feel equipped to do.  When you update or add comments to an issue please mention **@dimagiupdate** to send an alert to
 our internal issue tracking system.
 
 Bug Reports
