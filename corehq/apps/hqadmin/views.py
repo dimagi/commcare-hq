@@ -6,6 +6,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import socket
+from django.contrib.auth.models import User
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -673,11 +674,16 @@ def get_es_couch_comparisons():
         reduce=True,
     ).one()
     couch_docs = res['value']
+
     es_docs = 10
+
+    sql_rows = User.objects.count()
+
     comparisons.append({
         'description': 'Users (base_doc is "CouchUser")',
         'couch_docs': couch_docs,
         'es_docs': es_docs,
+        'sql_rows': sql_rows,
     })
 
     # Domains
@@ -686,11 +692,14 @@ def get_es_couch_comparisons():
         'domain/by_status',
         reduce=True,
     ).one()['value']
+
     es_docs = 10
+
     comparisons.append({
         'description': 'Domains (doc_type is "Domain")',
         'couch_docs': couch_docs,
         'es_docs': es_docs,
+        'sql_rows': 'n/a'
     })
 
     # Forms
