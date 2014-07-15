@@ -2,9 +2,8 @@
 TODOs:
 Figure out proper default_filters for each class
 make filter be match_all if all defaults are removed
-pagination
 sorting
-date filter
+Add esquery.iter() method
 """
 from copy import deepcopy
 import json
@@ -35,7 +34,6 @@ class ESQuery(object):
         lt/gt - less/greater than
         lte/gte - less/greater than or equal to
     """
-    _result = None
     index = None
     fields = None
     start = None
@@ -58,40 +56,24 @@ class ESQuery(object):
         }}
         # when the filters are needed, add remaining default filters and query
 
-    def result(self):
-        if self._result is not None:
-            return self._result
-        self._result = run_query(self.url, self.raw_query)
-        if 'error' in self._result:
+    def run(self):
+        raw = run_query(self.url, self.raw_query)
+        if 'error' in raw:
             msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
                    "\nQuery: {query}").format({
-                       'error': self._result['error'],
+                       'error': raw['error'],
                        'index': self.index,
                        'url': self.url,
                        'query': self.dumps(pretty=True)
                     })
             raise ESError(msg)
-        return self._result
-
-    def raw_hits(self):
-        return self.result()['hits']['hits']
-
-    def hits(self):
-        if self.fields is not None:
-            hits = [r['fields'] for r in self.raw_hits()['hits']['hits']]
-        else:
-            hits = [r['_source'] for r in self.raw_hits()['hits']['hits']]
-
-    def total(self):
-        # TODO don't run full query if it hasn't been run already
-        # run query with size=0
-        return self.result()['hits']['total']
+        return ESQuerySet(raw, deepcopy(self))
 
     @property
     def _filters(self):
         return self.es_query['query']['filtered']['filter']['and']
 
-    def add_filter(self, filter):
+    def filter(self, filter):
         query = deepcopy(self)
         query._filters.append(filter)
         return query
@@ -122,6 +104,18 @@ class ESQuery(object):
         if self.size is not None:
             self.es_query['size'] = self.size
 
+    def start(self, start):
+        # analagous to SQL offset
+        query = deepcopy(self)
+        query.start = start
+        return query
+
+    def size(self, size):
+        # analagous to SQL limit
+        query = deepcopy(self)
+        query.size = size
+        return query
+
     @property
     def raw_query(self):
         query = deepcopy(self)
@@ -146,16 +140,6 @@ class ESQuery(object):
         }
         return query
 
-    def is_normal(self):
-        try:
-            self.es_query['query']['filtered']['filter']['and']
-            self.es_query['query']['filtered']['query']
-        except (KeyError, AssertionError):
-            raise ESError("In order to use this method, your query must be "
-                          "in the format specified in the ESQuery class")
-        else:
-            return True
-
     def remove_default_filter(self, default):
         query = deepcopy(self)
         query.default_filters.pop(default)
@@ -165,66 +149,58 @@ class ESQuery(object):
         self.set_query({"fuzzy_like_this": {"like_text": q}})
 
     def term(self, field, value):
-        return self.add_filter(filters.term(field, value))
+        return self.filter(filters.term(field, value))
 
-    def OR(self, **filters):
-        return self.add_filter(filters.OR(**filters))
+    def OR(self, *filters):
+        return self.filter(filters.OR(*filters))
 
     def range(self, field, gt=None, gte=None, lt=None, lte=None):
-        return self.add_filter(filters.range_filter(field, gt, gte, lt, lte))
+        return self.filter(filters.range_filter(field, gt, gte, lt, lte))
 
     def date_range(self, field, gt=None, gte=None, lt=None, lte=None):
-        return  self.add_filter(filters.date_range(field, gt, gte, lt, lte))
+        return  self.filter(filters.date_range(field, gt, gte, lt, lte))
+
+
+class ESQuerySet(object):
+    """
+    The object returned from ESQuery.run
+    ESQuerySet.raw is the raw response from elasticsearch
+    ESQuerySet.query is the ESQuery object
+    """
+    def __init__(self, raw, query):
+        self.raw = raw
+        self.query = query
+
+    def raw_hits(self):
+        return self.raw['hits']['hits']
+
+    def hits(self):
+        if self.query.fields is not None:
+            hits = [r['fields'] for r in self.raw_hits()]
+        else:
+            hits = [r['_source'] for r in self.raw_hits()]
+
+    def total(self):
+        return self.raw['hits']['total']
 
 
 class HQESQuery(ESQuery):
     """
     Query logic specific to CommCareHQ
     """
-    def doc_type(self, doc_type):
-        return self.term('doc_type', doc_type)
+    core_filters = [
+        filters.domain,
+        filters.doc_type,
+    ]
+    index_filters = []
+    # TODO make this a property and call super
 
-    def domain(self, domain):
-        return self.term('domain.exact', domain)
-
-
-class UserES(HQESQuery):
-    index = 'users'
-    default_filters = {
-        'mobile_worker': {"term": {"doc_type": "CommCareUser"}},
-        'not_deleted': {"term": {"base_doc": "couchuser"}},
-        'active': {"term": {"is_active": True}},
-    }
-
-    def domain(self, domain):
-        self.OR(
-            filters.term("domain.exact", domain),
-            filters.term("domain_memberships.domain.exact", domain)
-        )
-
-    def show_inactive(self):
-        return self.remove_default_filter('active')
-
-
-class FormsES(HQESQuery):
-    index = 'forms'
-    default_filters = {
-        'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
-        'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
-        'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
-    }
-
-    def submitted(self, gt=None, gte=None, lt=None, lte=None):
-        return self.date_range('received_on', gt, gte, lt, lte)
-
-    def completed(self, gt=None, gte=None, lt=None, lte=None):
-        return self.date_range('form.meta.timeEnd', gt, gte, lt, lte)
-
-    def xmlns(self, xmlns):
-        return self.term('xmlns.exact', xmlns)
-
-    def app(self, app_id):
-        return self.term('app_id', app_id)
+    def __getattr__(self, attr, *args, **kwargs):
+        # https://docs.python.org/2/reference/datamodel.html#object.__getattr__
+        for fn in self.index_filters + self.core_filters:
+            if fn.__name__ == attr:
+                return self.filter(fn(*args, **kwargs))
+        raise AttributeError("There is no builtin filter named %s" % attr)
 
 
 class Example(object):
@@ -234,8 +210,10 @@ class Example(object):
             .xmlns(self.xmlns)\
             .submitted(gte=self.datespan.startdate_param,
                        lt=self.datespan.enddateparam)\
-            .sort('received_on', desc=False)
+            .sort('received_on', desc=False)\
+            .size(self.pagination.count)\
+            .start(self.pagination.start)
 
-        total_docs = q.total()
-        hits = q.page(start=self.pagination.start, size=self.pagination.count)\
-                .hits()
+        result = q.run()
+        total_docs = result.total()
+        hits = result.hits()

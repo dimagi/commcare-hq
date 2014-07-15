@@ -1,7 +1,6 @@
 def term(field, value):
     """
     Filter docs by a field
-
     'value' can be a singleton or a list.
     """
     if isinstance(value, list):
@@ -10,8 +9,18 @@ def term(field, value):
         return {"term": {field: value}}
 
 
-def OR(**filters):
+def OR(*filters):
+    """
+    Filter docs to match any of the filters passed in
+    """
     return {"or": filters}
+
+
+def AND(*filters):
+    """
+    Filter docs to match all of the filters passed in
+    """
+    return {"and": filters}
 
 
 def range_filter(field, gt=None, gte=None, lt=None, lte=None):
@@ -28,7 +37,15 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
     def format_date(date):
-        # TODO I assume we need to coerce to a string date here?
-        return date
+        # TODO This probably needs more sophistication...
+        return date.isoformat()
     params = [format_date(d) for d in [gt, gte, lt, lte] if d is not None]
     return range_filter(field, **params)
+
+
+def domain(domain):
+    return term('domain.exact', domain)
+
+
+def doc_type(doc_type):
+    return term('doc_type', doc_type)
