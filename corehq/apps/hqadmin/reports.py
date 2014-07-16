@@ -230,11 +230,6 @@ class GlobalAdminReports(AdminReport):
     base_template = "hqadmin/hqadmin_base_report.html"
     section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
 
-
-class RealProjectSpacesReport(GlobalAdminReports):
-    slug = 'real_project_spaces'
-    name = ugettext_noop('Real Project Spaces')
-
     @property
     def template_context(self):
         context = super(AdminReport, self).template_context
@@ -242,6 +237,11 @@ class RealProjectSpacesReport(GlobalAdminReports):
             'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
         })
         return context
+
+
+class RealProjectSpacesReport(GlobalAdminReports):
+    slug = 'real_project_spaces'
+    name = ugettext_noop('Real Project Spaces')
 
     @property
     def headers(self):
