@@ -93,6 +93,7 @@ var VisitScheduler = (function () {
                 visits: {
                     create: function (options) {
                         options.data.type = options.data.due < 0 ? 'before' : 'after';
+                        options.data.due = Math.abs(options.data.due);
                         return ScheduleVisit.wrap(options.data,  self);
                     }
                 }
