@@ -54,7 +54,8 @@ def import_stock_reports(domain, f):
 
 def import_products(domain, importer):
     messages = []
-    products = []
+    to_save = []
+    product_count = 0
 
     for row in importer.worksheet:
         try:
@@ -70,16 +71,21 @@ def import_products(domain, importer):
                         continue
                 else:
                     p.domain = domain
-                products.append(p)
+
+                product_count += 1
+                to_save.append(p)
+
             importer.add_progress()
+            if len(to_save) > 500:
+                Product.get_db().bulk_save(to_save)
+                to_save = []
         except Exception, e:
             messages.append(
-                'Failed to import product ' + row['name'] + ' ' + str(e)
+                'Failed to import product ' + str(row['name']) + ' ' + str(e)
             )
-    if products:
-        Product.get_db().bulk_save(products)
-        messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
-            products=len(products), errors=len(messages))
+    if product_count:
+        messages.insert(0, _('Successfullly updated {number_of_products} products with {errors} errors.').format(
+            number_of_products=product_count, errors=len(messages))
         )
     return messages
 
