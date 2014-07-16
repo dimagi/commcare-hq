@@ -28,7 +28,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
-        # print app.create_suite()
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_app_strings(self, app_tag):
@@ -141,11 +140,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
     def test_schedule(self):
-        app = Application.wrap(self.get_json('app'))
-        mod = app.get_module(0)
+        app = Application.wrap(self.get_json('suite-advanced'))
+        mod = app.get_module(1)
         mod.has_schedule = True
         f1 = mod.get_form(0)
         f2 = mod.get_form(1)
+        f3 = mod.get_form(2)
         f1.schedule = FormSchedule(
             anchor='edd',
             expires=120,
@@ -164,6 +164,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 ScheduleVisit(due=15)
             ]
         )
+
+        f3.schedule = FormSchedule(
+            anchor='dob',
+            visits=[
+                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=11)
+            ]
+        )
         mod.case_details.short.columns.append(
             DetailColumn(
                 header={'en': 'Next due'},
@@ -172,8 +180,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 format='plain',
             )
         )
-        self.assertXmlEqual(self.get_xml('suite-schedule'), app.create_suite())
-
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('schedule-fixture'), suite, './fixture')
+        self.assertXmlPartialEqual(self.get_xml('schedule-entry'), suite, "./detail[@id='m1_case_short']")
 
     def test_picture_format(self):
         self._test_generic_suite('app_picture_format', 'suite-picture-format')
