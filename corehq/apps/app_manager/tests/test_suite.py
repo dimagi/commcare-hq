@@ -132,6 +132,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             )
         ))
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
+        self.assertXmlPartialEqual(
+            self.get_xml('autoselect-case-entry'),
+            app.create_suite(),
+            "./entry/command[@id='m1-f0']/.."
+        )
 
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
