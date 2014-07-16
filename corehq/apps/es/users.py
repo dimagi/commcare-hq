@@ -1,3 +1,7 @@
+from .es_query import HQESQuery
+from . import filters
+
+
 def domain(self, domain):
     self.OR(
         filters.term("domain.exact", domain),

@@ -8,7 +8,7 @@ Add esquery.iter() method
 from copy import deepcopy
 import json
 
-from ..elastic import ES_URLS, ESError, run_query
+from corehq.elastic import ES_URLS, ESError, run_query
 
 from . import filters
 
@@ -35,11 +35,11 @@ class ESQuery(object):
         lte/gte - less/greater than or equal to
     """
     index = None
-    fields = None
-    start = None
-    size = None
+    _fields = None
+    _start = None
+    _size = None
     default_filters = {
-        'match_all': {'match_all': {}}
+        "match_all": {"match_all": {}}
     }
 
     def __init__(self, index=None):
@@ -60,12 +60,12 @@ class ESQuery(object):
         raw = run_query(self.url, self.raw_query)
         if 'error' in raw:
             msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
-                   "\nQuery: {query}").format({
-                       'error': raw['error'],
-                       'index': self.index,
-                       'url': self.url,
-                       'query': self.dumps(pretty=True)
-                    })
+                   "\nQuery: {query}").format(
+                       error=raw['error'],
+                       index=self.index,
+                       url=self.url,
+                       query=self.dumps(pretty=True),
+                    )
             raise ESError(msg)
         return ESQuerySet(raw, deepcopy(self))
 
@@ -80,7 +80,7 @@ class ESQuery(object):
 
     @property
     def filters(self):
-        return self.default_filters + self._filters
+        return self.default_filters.values() + self._filters
 
     @property
     def _query(self):
@@ -96,24 +96,30 @@ class ESQuery(object):
         """
         build out the es_query dict
         """
-        self._filters.append(self.default_filters)
-        if self.fields is not None:
-            self.es_query['fields'] = self.fields
-        if self.start is not None:
-            self.es_query['start'] = self.start
-        if self.size is not None:
-            self.es_query['size'] = self.size
+        self._filters.extend(self.default_filters.values())
+        if self._fields is not None:
+            self.es_query['fields'] = self._fields
+        if self._start is not None:
+            self.es_query['start'] = self._start
+        if self._size is not None:
+            self.es_query['size'] = self._size
+
+    def fields(self, fields):
+        # analagous to sql offset
+        query = deepcopy(self)
+        query._fields = fields
+        return query
 
     def start(self, start):
-        # analagous to SQL offset
+        # analagous to sql offset
         query = deepcopy(self)
-        query.start = start
+        query._start = start
         return query
 
     def size(self, size):
         # analagous to SQL limit
         query = deepcopy(self)
-        query.size = size
+        query._size = size
         return query
 
     @property
@@ -131,7 +137,7 @@ class ESQuery(object):
 
     @property
     def url(self):
-        return ES_URLS[self.index],
+        return ES_URLS[self.index]
 
     def sort(self, field, desc=False):
         query = deepcopy(self)
@@ -174,12 +180,14 @@ class ESQuerySet(object):
     def raw_hits(self):
         return self.raw['hits']['hits']
 
+    @property
     def hits(self):
-        if self.query.fields is not None:
-            hits = [r['fields'] for r in self.raw_hits()]
+        if self.query._fields is not None:
+            return [r['fields'] for r in self.raw_hits()]
         else:
-            hits = [r['_source'] for r in self.raw_hits()]
+            return [r['_source'] for r in self.raw_hits()]
 
+    @property
     def total(self):
         return self.raw['hits']['total']
 
