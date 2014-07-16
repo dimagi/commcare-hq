@@ -1460,7 +1460,6 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     form.schedule = FormSchedule.wrap(json_loads)
     response_json = {}
     app.save(response_json)
-    print response_json
     return json_response(response_json)
 
 
