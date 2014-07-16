@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from django.views.decorators.http import require_POST, require_GET
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.template.defaultfilters import yesno
@@ -663,9 +663,10 @@ def system_info(request):
 @require_superuser_or_developer
 def reset_pillow_checkpoint(request):
     pillow = get_pillow_by_name(request.POST["pillow_name"])
-    pillow.reset_checkpoint()
+    if pillow:
+        pillow.reset_checkpoint()
 
-    return HttpResponseRedirect("../system")
+    return redirect("system_info")
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
