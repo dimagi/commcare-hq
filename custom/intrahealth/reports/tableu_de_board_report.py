@@ -39,6 +39,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
 
         total_row = []
         charts = []
+        self.data_source = data_provider
         if self.needs_filters:
             headers = []
             rows = []
