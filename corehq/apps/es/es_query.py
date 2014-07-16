@@ -1,7 +1,45 @@
 """
+Basic usage:
+There should be a file and subclass of ESQuery for each index we have.
+
+Each method returns a new object, so you can chain calls together like
+SQLAlchemy. Here's an example usage:
+
+    q = FormsES()\
+        .domain(self.domain)\
+        .xmlns(self.xmlns)\
+        .submitted(gte=self.datespan.startdate_param,
+                    lt=self.datespan.enddateparam)\
+        .fields(['xmlns', 'domain', 'app_id'])\
+        .sort('received_on', desc=False)\
+        .size(self.pagination.count)\
+        .start(self.pagination.start)
+    result = q.run()
+    total_docs = result.total()
+    hits = result.hits()
+
+Generally useful filters and queries should be abstracted away for re-use,
+but you can always add your own like so:
+
+    q.filter({"some_arbitrary_filter": {...}})
+    q.set_query({"fancy_query": {...}})
+
+Index query classes have default filters to exclude things like inactive
+users or deleted docs, but you can remove these with `remove_default_filters`.
+
+For debugging or more helpful error messages, you can use `query.dumps()`
+and `query.pprint()`, both of which use `json.dumps()` and are suitable for
+pasting in to ES Head or Marvel or whatever
+
+language:
+    es_query - the entire query, filters, query, pagination, facets
+    filters - a list of the individual filters
+    query - the query, used for searching, not filtering
+    field - a field on the document. User docs have a 'domain' field.
+    lt/gt - less/greater than
+    lte/gte - less/greater than or equal to
+
 TODOs:
-Figure out proper default_filters for each class
-make filter be match_all if all defaults are removed
 sorting
 Add esquery.iter() method
 """
@@ -15,24 +53,20 @@ from . import filters
 
 class ESQuery(object):
     """
-    {"query": {
-        "filtered": {
-            "filter": {
-                "and": [
-                    <filters>
-                ]
-            },
-            "query": <query>
-        }
-    }}
-
-    language:
-        es_query - the entire query, filters, query, pagination, facets
-        filters - a list of the individual filters
-        query - the query, used for searching, not filtering
-        field - a field on the document. User docs have a 'domain' field.
-        lt/gt - less/greater than
-        lte/gte - less/greater than or equal to
+    This query builder only outputs the following query structure
+    {
+        "query": {
+            "filtered": {
+                "filter": {
+                    "and": [
+                        <filters>
+                    ]
+                },
+                "query": <query>
+            }
+        },
+        <size, sort, other params>
+    }
     """
     index = None
     _fields = None
@@ -84,6 +118,9 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def run(self):
+        """
+        Actually run the query.  Return an ESQuerySet object.
+        """
         raw = run_query(self.url, self.raw_query)
         if 'error' in raw:
             msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
@@ -101,12 +138,20 @@ class ESQuery(object):
         return self.es_query['query']['filtered']['filter']['and']
 
     def filter(self, filter):
+        """
+        Add the passed-in filter to the query.  All filtering goes through
+        this class.
+        """
         query = deepcopy(self)
         query._filters.append(filter)
         return query
 
     @property
     def filters(self):
+        """
+        Return a list of the filters used in this query, suitable if you
+        want to reproduce a query with additional filtering.
+        """
         return self.default_filters.values() + self._filters
 
     @property
@@ -115,13 +160,17 @@ class ESQuery(object):
 
     @property
     def set_query(self, query):
+        """
+        Add a query.  Most stuff we want is better done with filters, but
+        if you actually want Levenshtein distance or prefix querying...
+        """
         es = deepcopy(self)
         es.es_query['query']['filtered']['query'] = query
         return es
 
     def assemble(self):
         """
-        build out the es_query dict
+        Build out the es_query dict
         """
         self._filters.extend(self.default_filters.values())
         if self._fields is not None:
@@ -132,19 +181,25 @@ class ESQuery(object):
             self.es_query['size'] = self._size
 
     def fields(self, fields):
-        # analagous to sql offset
+        """
+        Restrict the fields returned from elasticsearch
+        """
         query = deepcopy(self)
         query._fields = fields
         return query
 
     def start(self, start):
-        # analagous to sql offset
+        """
+        Pagination.  Analagous to SQL offset.
+        """
         query = deepcopy(self)
         query._start = start
         return query
 
     def size(self, size):
-        # analagous to SQL limit
+        """
+        Restrict number of results returned.  Analagous to SQL limit.
+        """
         query = deepcopy(self)
         query._size = size
         return query
@@ -167,10 +222,21 @@ class ESQuery(object):
         return ES_URLS[self.index]
 
     def sort(self, field, desc=False):
+        """
+        Order the results by field.
+        """
         query = deepcopy(self)
         query.es_query['sort'] = {
             field: {'order': 'desc' if desc else 'asc'}
         }
+        return query
+
+    def remove_default_filters(self):
+        """
+        Some sensible defaults are provided.  Use this if you don't want 'em
+        """
+        query = deepcopy(self)
+        query.default_filters = {"match_all": filters.match_all()}
         return query
 
     def remove_default_filter(self, default):
