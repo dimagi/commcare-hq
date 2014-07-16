@@ -15,7 +15,6 @@ var VisitScheduler = (function () {
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
-                console.log(schedule);
                 self.saveButton.ajax({
                     type: 'post',
                     url: self.save_url,
@@ -105,8 +104,12 @@ var VisitScheduler = (function () {
             };
             ko.mapping.fromJS(data, FormSchedule.mapping(self), self);
 
-            self.transition_condition.allowRepeats = function() { return false; };
-            self.termination_condition.allowRepeats = function() { return false; };
+            // for compatibility with common template: case-config:condition
+            self.allow = {
+                repeats: function () {
+                    return false;
+                }
+            };
 
             self.transition = ko.computed(FormSchedule.condition_computed(self.config, self.transition_condition));
             self.terminate = ko.computed(FormSchedule.condition_computed(self.config, self.termination_condition));
