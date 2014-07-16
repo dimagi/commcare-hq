@@ -18,7 +18,7 @@ def completed(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('form.meta.timeEnd', gt, gte, lt, lte)
 
 
-class FormsES(HQESQuery):
+class FormES(HQESQuery):
     index = 'forms'
     default_filters = {
         'is_xform_instance': {"term": {"doc_type": "xforminstance"}},

@@ -32,6 +32,9 @@ from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
@@ -698,7 +701,8 @@ def get_es_couch_comparisons():
         reduce=True,
     ).one()['value']
 
-    es_docs = 10
+    q = DomainES().size(0)
+    es_docs = q.run().total
 
     comparisons.append({
         'description': 'Domains (doc_type is "Domain")',
@@ -713,11 +717,16 @@ def get_es_couch_comparisons():
         'couchforms/by_xmlns',
         reduce=True,
     ).one()['value']
-    es_docs = 10
+
+    q = FormES().remove_default_filter('has_xmlns')\
+        .remove_default_filter('has_user')\
+        .size(0)
+    es_docs = q.run().total
+
     comparisons.append({
         'description': 'Forms (doc_type is "XFormInstance")',
         'couch_docs': couch_docs,
-        'es_docs': es_docs
+        'es_docs': es_docs,
     })
 
     # Cases
@@ -726,7 +735,11 @@ def get_es_couch_comparisons():
         'case/by_owner',
         reduce=True,
     ).one()['value']
-    es_docs = 10
+
+    q = CaseES().fields(['doc_type'])
+    q.pprint()
+    es_docs = CaseES().size(0).run().total
+
     comparisons.append({
         'description': 'Cases (doc_type is "CommCareCase")',
         'couch_docs': couch_docs,

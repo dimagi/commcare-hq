@@ -53,7 +53,7 @@ class TestHQESQuery(TestCase):
                 }
             }
         }
-        query = forms.FormsES()
+        query = forms.FormES()
         self.checkQuery(query, json_output)
 
     def test_user_query(self):
@@ -91,7 +91,7 @@ class TestHQESQuery(TestCase):
                 }
             }
         }
-        query = forms.FormsES()
+        query = forms.FormES()
         # TODO add filters
         # self.checkQuery(query, json_output)
 
