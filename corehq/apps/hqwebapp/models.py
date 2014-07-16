@@ -1214,6 +1214,11 @@ class AdminReportsTab(UITab):
                     'url': reverse('admin_report_dispatcher',
                                    args=('real_project_spaces',)),
                 },
+                {
+                    'title': _('Real Project Spaces - Plans'),
+                    'url': reverse('admin_report_dispatcher',
+                                   args=('real_project_spaces_plans',)),
+                },
             ]),
         ]
 

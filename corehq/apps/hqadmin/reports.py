@@ -255,3 +255,8 @@ class RealProjectSpacesReport(GlobalAdminReports):
         return [
             [domain.name, domain.deployment] for domain in Domain.get_all()
         ]
+
+
+class RealProjectSpacesPlansReport(GlobalAdminReports):
+    slug = 'real_project_spaces_plans'
+    name = ugettext_noop('Real Project Spaces - Plans')
