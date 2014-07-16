@@ -226,11 +226,14 @@ class AdminAppReport(AdminFacetedReport):
             ]
 
 
-class RealProjectSpacesReport(AdminReport):
+class GlobalAdminReports(AdminReport):
+    base_template = "hqadmin/hqadmin_base_report.html"
+    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
+
+
+class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
     name = ugettext_noop('Real Project Spaces')
-    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
-    base_template = "hqadmin/hqadmin_base_report.html"
 
     @property
     def template_context(self):
