@@ -668,110 +668,57 @@ def system_info(request):
 
     return render(request, "hqadmin/system_info.html", context)
 
-# MOVE ME SOMEWHERE APPROPRIATE
+
 def get_es_couch_comparisons():
-    comparisons = []
+    # escheck.py and system_info/checks.py both seem like appealing places to
+    # put this function, but it doesn't quite fit the form of the other
+    # functions in those files.
+    comparison_config = [
+        {'description': 'Users (base_doc is "CouchUser")',
+         'couch_db': CommCareUser.get_db(),
+         'view_name': 'users/by_username',
+         'es_query': UserES().remove_default_filter('active')
+             .remove_default_filter('mobile_worker')
+             .size(0),
+         'sql_rows': User.objects.count(),
+         },
 
-    #  Users
-    db = CommCareUser.get_db()
-    res = db.view(
-        'users/by_username',
-        reduce=True,
-    ).one()
-    couch_docs = res['value']
+        {'description': 'Domains (doc_type is "Domain")',
+         'couch_db': Domain.get_db(),
+         'view_name': 'domain/by_status',
+         'es_query': DomainES().size(0),
+         'sql_rows': None,
+         },
 
-    q = UserES().remove_default_filter('active')\
-        .remove_default_filter('mobile_worker')\
-        .size(0)
-    es_docs = q.run().total
+        {'description': 'Forms (doc_type is "XFormInstance")',
+         'couch_db': XFormInstance.get_db(),
+         'view_name': 'couchforms/by_xmlns',
+         'es_query': FormES().remove_default_filter('has_xmlns')\
+            .remove_default_filter('has_user')\
+            .size(0),
+         'sql_rows': None,
+         },
 
-    sql_rows = User.objects.count()
-
-    comparisons.append({
-        'description': 'Users (base_doc is "CouchUser")',
-        'couch_docs': couch_docs,
-        'es_docs': es_docs,
-        'sql_rows': sql_rows,
-    })
-
-    # Domains
-    db = Domain.get_db()
-    couch_docs = db.view(
-        'domain/by_status',
-        reduce=True,
-    ).one()['value']
-
-    q = DomainES().size(0)
-    es_docs = q.run().total
-
-    comparisons.append({
-        'description': 'Domains (doc_type is "Domain")',
-        'couch_docs': couch_docs,
-        'es_docs': es_docs,
-        'sql_rows': 'n/a'
-    })
-
-    # Forms
-    db = XFormInstance.get_db()
-    couch_docs = db.view(
-        'couchforms/by_xmlns',
-        reduce=True,
-    ).one()['value']
-
-    q = FormES().remove_default_filter('has_xmlns')\
-        .remove_default_filter('has_user')\
-        .size(0)
-    es_docs = q.run().total
-
-    comparisons.append({
-        'description': 'Forms (doc_type is "XFormInstance")',
-        'couch_docs': couch_docs,
-        'es_docs': es_docs,
-    })
-
-    # Cases
-    db = CommCareCase.get_db()
-    couch_docs = db.view(
-        'case/by_owner',
-        reduce=True,
-    ).one()['value']
-
-    q = CaseES().fields(['doc_type'])
-    q.pprint()
-    es_docs = CaseES().size(0).run().total
-
-    comparisons.append({
-        'description': 'Cases (doc_type is "CommCareCase")',
-        'couch_docs': couch_docs,
-        'es_docs': es_docs,
-    })
-
-    return {'es_couch_comparisons':comparisons}
-
-# MOVE ME SOMEWHERE APPROPRIATE!
-def get_es_couch_comparisons2():
-    unprocessed_comparisons = [
-        {
-            'description': 'Users (base_doc is "CouchUser")',
-            'es_query': 'foo',
-            'couch_view': 'bar',
-        },
-        {
-            'description': 'WebUsers (doc_type is "WebUser" and is_active is True)',
-            'es_query': 'foo',
-            'couch_view': 'bar',
-        }
+        {'description': 'Cases (doc_type is "CommCareCase")',
+         'couch_db': CommCareCase.get_db(),
+         'view_name': 'case/by_owner',
+         'es_query': CaseES().size(0),
+         'sql_rows': None,
+         },
     ]
 
-    ret = []
-    for comp in unprocessed_comparisons:
-        elastic_docs = es_query()['hits']
-        ret.append({
+    comparisons = []
+    for comp in comparison_config:
+        comparisons.append({
             'description': comp['description'],
-            #'elastic_docs': es_query(comp['es_query']),
-            #'couch_docs': do_view(comp['couch_view']),
+            'couch_docs': comp['couch_db'].view(
+                    comp['view_name'],
+                    reduce=True,
+                ).one()['value'],
+            'es_docs': comp['es_query'].run().total,
+            'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })
-    return ret
+    return {'es_couch_comparisons':comparisons}
 
 
 @require_superuser
