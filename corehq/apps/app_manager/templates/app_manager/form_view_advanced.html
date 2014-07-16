@@ -14,6 +14,7 @@
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
+    <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
@@ -115,6 +116,16 @@
                     },
                     $('#form-workflow').get(0)
                 );
+            {% endif %}
+            {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
+                var visitScheduler = new VisitScheduler.Scheduler({
+                    home: $('#visit-scheduler'),
+                    questions: {{ xform_questions|JSON }},
+                    edit: edit,
+                    save_url: "{% url "corehq.apps.app_manager.views.edit_visit_schedule" app.domain app.id module.id nav_form.id %}",
+                    schedule: {{ form.schedule|JSON }}
+                });
+                visitScheduler.init();
             {% endif %}
         });
     </script>

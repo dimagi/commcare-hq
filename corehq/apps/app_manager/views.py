@@ -83,7 +83,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
     DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
-    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
+    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException, FormSchedule
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
@@ -1450,13 +1450,18 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     else:
         return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
 
+
 @no_conflict_require_POST
-@login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
-def edit_form_schedule(req, domain, app_id, unique_form_id):
-    print req.POST
-    resp ={}
-    return HttpResponse(json.dumps(resp))
+@require_can_edit_apps
+def edit_visit_schedule(request, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(request.POST.get('schedule'))
+    form.schedule = FormSchedule.wrap(json_loads)
+    response_json = {}
+    app.save(response_json)
+    print response_json
+    return json_response(response_json)
 
 
 @no_conflict_require_POST
