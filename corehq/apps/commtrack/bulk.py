@@ -52,16 +52,13 @@ def import_stock_reports(domain, f):
     return annotate_csv(data, reader.fieldnames)
 
 
-def import_products(domain, download, task):
+def import_products(domain, importer):
     messages = []
     products = []
-    data = download.get_content().split('\n')
-    processed = 0
-    total_rows = len(data) - 1
-    reader = csv.DictReader(data)
-    for row in reader:
+
+    for row in importer.worksheet:
         try:
-            p = Product.from_csv(row)
+            p = Product.from_excel(row)
             if p:
                 if p.domain:
                     if p.domain != domain:
@@ -74,9 +71,7 @@ def import_products(domain, download, task):
                 else:
                     p.domain = domain
                 products.append(p)
-            if task:
-                processed += 1
-                DownloadBase.set_progress(task, processed, total_rows)
+            importer.add_progress()
         except Exception, e:
             messages.append(str(e))
     if products:
