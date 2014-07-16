@@ -935,6 +935,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         Rebuilds the case state from its actions.
 
         If strict is True, this will enforce that the first action must be a create.
+
+        TODO: this implementation has a number of flaws:
+          - it starts from whatever the cases current state is,
+            not a clean slate
+          - it simply ignores all case create blocks,
+            except to report whether they're in order;
+            it does not apply their changes.
+
         """
         # try to re-sort actions if necessary
         try:
