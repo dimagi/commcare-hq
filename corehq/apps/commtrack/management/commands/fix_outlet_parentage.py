@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import Location
 
 
 class Command(BaseCommand):
@@ -14,6 +15,14 @@ class Command(BaseCommand):
         else:
             return []
 
+    def any_bad_outlets(self, domain):
+        outlets = Location.filter_by_type(domain.name, 'outlet')
+        for outlet in outlets:
+            if outlet.parent.location_type == 'block':
+                return True
+
+        return False
+
     def handle(self, *args, **options):
         domains = Domain.get_all()
 
@@ -24,9 +33,14 @@ class Command(BaseCommand):
                 outlet = self.find_outlet_type(d.commtrack_settings.location_types)
                 if outlet:
                     if self.is_still_default_outlet_config(outlet):
-                        outlet.allowed_parents = ['village']
-                        d.commtrack_settings.save()
-                        self.stdout.write("\nFixed domain " + d.name)
+                        if self.any_bad_outlets(d):
+                            self.stdout.write(
+                                "\nDomain " + d.name + " still has outlets mapped to blocks"
+                            )
+                        else:
+                            outlet.allowed_parents = ['village']
+                            d.commtrack_settings.save()
+                            self.stdout.write("\nFixed domain " + d.name)
                     elif len(outlet.allowed_parents) > 1:
                         # if it was no longer the default setup, but does
                         # have multiple parent options, we will need to
