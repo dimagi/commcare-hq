@@ -73,7 +73,7 @@ from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import FormRepeaterForm
+from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -480,7 +480,7 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = FormRepeaterForm({"url": url})
+    form = GenericRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -1673,7 +1673,6 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
             'repeaters': self.repeaters,
         }
 
-
 class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     urlname = 'add_repeater'
     page_title = ugettext_noop("Forward Data")
@@ -1708,10 +1707,17 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     @memoized
+    def repeater_form_class(self):
+        if self.repeater_type == "FormRepeater": # Is hardcoding this string bad?
+            return FormRepeaterForm
+        return GenericRepeaterForm
+
+    @property
+    @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return FormRepeaterForm(self.request.POST)
-        return FormRepeaterForm()
+            return self.repeater_form_class(self.request.POST)
+        return self.repeater_form_class()
 
     @property
     def page_context(self):
@@ -1724,7 +1730,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         if self.add_repeater_form.is_valid():
             repeater = self.repeater_class(
                 domain=self.domain,
-                url=self.add_repeater_form.cleaned_data['url']
+                url=self.add_repeater_form.cleaned_data['url'],
             )
             repeater.save()
             messages.success(request, _("Forwarding set up to %s" % repeater.url))
