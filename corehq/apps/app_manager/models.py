@@ -1556,7 +1556,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and not self.schedule:
+        if module.has_schedule and not self.schedule and not self.schedule.anchor:
             errors.append(_("All forms in this module require a visit schedule."))
 
         if validate_module:

@@ -2,7 +2,7 @@
 import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase, FormActionCondition
+    AutoSelectCase, FormActionCondition, FormSchedule, ScheduleVisit
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -74,31 +74,6 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.close_case = FormAction()
         self.form.actions.close_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('close_case'), self.form.render_xform())
-
-    def test_form_schedule(self):
-        self.form.requires = 'case'
-        self.form.actions.update_case.condition.type = 'always'
-        schedule = self.form.schedule
-        schedule.anchor = 'edd'
-        xml = self.get_xml('schedule').format(
-            form_id=self.form.schedule_form_id,
-            form_index=1
-        )
-        self.assertXmlEqual(xml, self.form.render_xform())
-
-    def test_form_schedule_index(self):
-        form = self.app.new_form(0, 'New Form', lang='en')
-        form.source = self.get_xml('original')
-
-        form.requires = 'case'
-        form.actions.update_case.condition.type = 'always'
-        schedule = form.schedule
-        schedule.anchor = 'edd'
-        xml = self.get_xml('schedule').format(
-            form_id=form.schedule_form_id,
-            form_index=2
-        )
-        self.assertXmlEqual(xml, form.render_xform())
 
 
 class SubcaseRepeatTest(TestCase, TestFileMixin):
@@ -272,6 +247,36 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
+    def test_schedule(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'}
+        ))
+        self.module.has_schedule = True
+        self.form.schedule = FormSchedule(anchor='edd')
+        xml = self.get_xml('schedule').format(
+            form_id=self.form.schedule_form_id,
+            form_index=1
+        )
+        self.assertXmlEqual(xml, self.form.render_xform())
+
+    def test_schedule_index(self):
+        self.module.has_schedule = True
+        form = self.app.new_form(0, 'New Form', lang='en')
+        form.source = self.get_xml('original')
+        form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={'question1': '/data/question1'}
+        ))
+        form.schedule = FormSchedule(anchor='edd')
+
+        xml = self.get_xml('schedule').format(
+            form_id=form.schedule_form_id,
+            form_index=2
+        )
+        self.assertXmlEqual(xml, form.render_xform())
 
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
