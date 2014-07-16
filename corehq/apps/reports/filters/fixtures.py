@@ -1,9 +1,11 @@
 import json
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
+from corehq import Domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.users.models import CouchUser
 
 
 class AsyncDrillableFilter(BaseReportFilter):
@@ -110,15 +112,31 @@ class AsyncLocationFilter(BaseReportFilter):
                                                         'resource_name': 'location',
                                                         'api_name': 'v0.3'})
         selected_loc_id = self.request.GET.get('location_id')
+        user = CouchUser.get_by_username(unicode(self.request.user))
+        domain = Domain.get_by_name(self.domain)
 
-        return {
+        context = {}
+        location_id = None
+
+        domain_membership = user.get_domain_membership(self.domain)
+        if domain_membership:
+            location_id = domain_membership.location_id
+
+        if not selected_loc_id and location_id and domain.commtrack_enabled:
+            selected_loc_id = location_id
+            if domain.location_restriction_for_users:
+                context.update({'restriction': domain.location_restriction_for_users})
+
+        context.update({
             'api_root': api_root,
             'control_name': self.label, # todo: cleanup, don't follow this structure
             'control_slug': self.slug, # todo: cleanup, don't follow this structure
             'loc_id': selected_loc_id,
             'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
-            'hierarchy': location_hierarchy_config(self.domain),
-        }
+            'hierarchy': location_hierarchy_config(self.domain)
+        })
+
+        return context
 
 class MultiLocationFilter(AsyncDrillableFilter):
     template = "reports/filters/multi_location.html"

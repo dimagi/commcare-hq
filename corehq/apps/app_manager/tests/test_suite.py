@@ -76,6 +76,19 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
 
+    def test_advanced_suite_case_list_filter(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        clinic_module = app.get_module(0)
+        clinic_module.case_details.short.columns.append(DetailColumn(
+            header={"en": "Filter"},
+            format='filter',
+            filter_xpath=". = 'danny'",
+            field='filter'
+        ))
+        clinic_module_id = clinic_module.unique_id
+        app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+        self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
+
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.commtrack_enabled = True

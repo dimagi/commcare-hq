@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_consumption
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_monthly_consumption
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack import const
@@ -448,7 +448,7 @@ class CommtrackConfig(Document):
         return dict((a.keyword, a) for a in actions).get(keyword)
 
     def get_consumption_config(self):
-        def _default_consumption_function(case_id, product_id):
+        def _default_monthly_consumption(case_id, product_id):
             # note: for now as an optimization hack, per-supply point type is not supported
             # unless explicitly configured, because it will require looking up the case
             facility_type = None
@@ -464,7 +464,7 @@ class CommtrackConfig(Document):
             min_periods=self.consumption_config.min_transactions,
             min_window=self.consumption_config.min_window,
             max_window=self.consumption_config.optimal_window,
-            default_consumption_function=_default_consumption_function,
+            default_monthly_consumption_function=_default_monthly_consumption,
         )
 
     def get_ota_restore_settings(self):
@@ -956,13 +956,9 @@ class SupplyPointCase(CommCareCase):
             }
         ]
 
-DAYS_PER_MONTH = 365.2425 / 12.
-
-# TODO make settings
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
-
 DEFAULT_CONSUMPTION = 10.  # per month
 
 
@@ -1339,15 +1335,16 @@ class StockState(models.Model):
     def months_remaining(self):
         return months_of_stock_remaining(
             self.stock_on_hand,
-            self.get_consumption()
+            self.get_daily_consumption()
         )
 
     @property
     def resupply_quantity_needed(self):
-        if self.get_consumption() is not None:
+        monthly_consumption = self.get_monthly_consumption()
+        if monthly_consumption is not None:
             stock_levels = self.get_domain().commtrack_settings.stock_levels_config
             needed_quantity = int(
-                self.get_consumption() * 30 * stock_levels.overstock_threshold
+                monthly_consumption * stock_levels.overstock_threshold
             )
             return int(max(needed_quantity - self.stock_on_hand, 0))
         else:
@@ -1363,29 +1360,33 @@ class StockState(models.Model):
             DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
         )
 
-    def get_consumption(self):
+    def get_daily_consumption(self):
         if self.daily_consumption is not None:
             return self.daily_consumption
         else:
-            domain = self.get_domain()
-
-            if domain and domain.commtrack_settings:
-                config = domain.commtrack_settings.get_consumption_config()
-            else:
-                config = None
-
-            return compute_default_consumption(
-                self.case_id,
-                self.product_id,
-                config
-            )
+            monthly = self._get_default_monthly_consumption()
+            if monthly is not None:
+                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
 
     def get_monthly_consumption(self):
-        consumption = self.get_consumption()
-        if consumption is not None:
-            return consumption * Decimal(DAYS_IN_MONTH)
+
+        if self.daily_consumption is not None:
+            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
         else:
-            return None
+            return self._get_default_monthly_consumption()
+
+    def _get_default_monthly_consumption(self):
+        domain = self.get_domain()
+        if domain and domain.commtrack_settings:
+            config = domain.commtrack_settings.get_consumption_config()
+        else:
+            config = None
+
+        return compute_default_monthly_consumption(
+            self.case_id,
+            self.product_id,
+            config
+        )
 
     class Meta:
         unique_together = ('section_id', 'case_id', 'product_id')

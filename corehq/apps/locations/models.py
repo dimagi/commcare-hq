@@ -54,6 +54,16 @@ class Location(CachedCouchDocumentMixin, Document):
         return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
 
     @classmethod
+    def filter_by_type_count(cls, domain, loc_type, root_loc=None):
+        loc_id = root_loc._id if root_loc else None
+        return cls.get_db().view('locations/by_type',
+            reduce=True,
+            startkey=[domain, loc_type, loc_id],
+            endkey=[domain, loc_type, loc_id, {}],
+        ).one()['value']
+
+
+    @classmethod
     def by_domain(cls, domain):
         relevant_ids = set([r['id'] for r in cls.get_db().view('locations/by_type',
             reduce=False,

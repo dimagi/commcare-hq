@@ -20,12 +20,13 @@ class LocationFilter(AsyncLocationFilter):
 
         locations = load_locs_json(self.domain, selected_loc_id)
 
-        f = lambda y: 'children' in y
-        districts = filter(f, locations)
-        if districts:
-            PPS = filter(f, districts[0]['children'])
-            if PPS:
-                del PPS[0]['children']
+        if self.required != 2:
+            f = lambda y: 'children' in y
+            districts = filter(f, locations)
+            if districts:
+                PPS = filter(f, districts[0]['children'])
+                if PPS:
+                    del PPS[0]['children']
         return {
             'api_root': api_root,
             'control_name': self.label,

@@ -132,7 +132,7 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        }).after($('<span> <a><i class="icon-question-sign" data-trigger="click"></i></a><span>')).popover({
+        }).after($('<a style="padding-left: 6px;"><i class="icon-question-sign" data-trigger="click"></i></a>')).popover({
             placement: 'right',
             title: 'Auto Fill translations',
             content: 'This will pick the most common translations for your selected language.  You can then edit them as needed.'
