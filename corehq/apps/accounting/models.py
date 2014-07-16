@@ -1115,13 +1115,6 @@ class Subscription(models.Model):
         today = datetime.date.today()
         date_start = date_start or today
 
-        if (date_start < today and adjustment_method
-                and not SubscriptionAdjustmentMethod.TASK):
-            raise NewSubscriptionError(_(
-                "You cannot create a subscription with a start date in the "
-                "past."
-            ))
-
         # find subscriptions that end in the future / after this subscription
         available_subs = Subscription.objects.filter(
             subscriber=subscriber,
