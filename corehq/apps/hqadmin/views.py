@@ -28,6 +28,7 @@ from django.core import management
 from django.template.loader import render_to_string
 from django.http import Http404
 
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
@@ -36,6 +37,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -675,7 +677,10 @@ def get_es_couch_comparisons():
     ).one()
     couch_docs = res['value']
 
-    es_docs = 10
+    q = UserES().remove_default_filter('active')\
+        .remove_default_filter('mobile_worker')\
+        .size(0)
+    es_docs = q.run().total
 
     sql_rows = User.objects.count()
 
