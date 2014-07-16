@@ -926,7 +926,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 )
         self.actions = sorted_actions
         if rebuild:
-            self.rebuild()
+            # it's pretty important not to block new case changes
+            # just because previous case changes have been bad
+            self.rebuild(strict=False)
 
     def rebuild(self, strict=True):
         """
