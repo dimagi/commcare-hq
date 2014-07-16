@@ -142,6 +142,10 @@ var VisitScheduler = (function () {
                 }));
             };
 
+            self.removeVisit = function(visit) {
+                self.visits.remove(visit);
+            };
+
             return self;
         },
 

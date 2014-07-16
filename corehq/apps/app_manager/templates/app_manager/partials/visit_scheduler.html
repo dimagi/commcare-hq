@@ -49,12 +49,14 @@
                 </div>
                 <div data-bind="foreach: visits">
                     <div class="control-group">
-                        <a href="#" data-bind="
-                            click: $parent.removeVisit,
-                            visible: $root.edit">
-                            <i class="icon-remove"></i>
-                        </a>
-                        <label class="control-label">{% trans "Visit" %} <span data-bind="text: $index() + 1"/>:</label>
+                        <label class="control-label">
+                            <a href="#" data-bind="
+                                click: $parent.removeVisit,
+                                visible: $root.edit">
+                                <i class="icon-remove"></i>
+                            </a>
+                            {% trans "Visit" %} <span data-bind="text: $index() + 1"/>:
+                        </label>
                         <div class="controls">
                             <input type="text" class="input-mini" data-bind="numericValue: due, enable: $root.edit"/>
                             {% trans "days" %}
