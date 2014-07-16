@@ -926,13 +926,23 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 )
         self.actions = sorted_actions
         if rebuild:
-            self.rebuild()
+            # it's pretty important not to block new case changes
+            # just because previous case changes have been bad
+            self.rebuild(strict=False)
 
     def rebuild(self, strict=True):
         """
         Rebuilds the case state from its actions.
 
         If strict is True, this will enforce that the first action must be a create.
+
+        TODO: this implementation has a number of flaws:
+          - it starts from whatever the cases current state is,
+            not a clean slate
+          - it simply ignores all case create blocks,
+            except to report whether they're in order;
+            it does not apply their changes.
+
         """
         # try to re-sort actions if necessary
         try:
@@ -952,6 +962,23 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             actions.pop(0)
         else:
             actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
+            # Log weirdly placed 'create' actions so we can investigate.
+            # This is temporary, for information gathering.
+            for a in self.actions[1:]:
+                if a.action_type == const.CASE_ACTION_CREATE:
+                    logging.exception(
+                        "There's a second case create for case {} "
+                        "from form {} submitted at {} in domain {}, "
+                        "caught during rebuild. Action order: {}."
+                        .format(
+                            self.case_id,
+                            a.xform_id,
+                            a.server_date,
+                            self.domain,
+                            [a.action_type for a in self.actions],
+                        )
+                    )
+                    break
 
         for a in actions:
             self._apply_action(a)
