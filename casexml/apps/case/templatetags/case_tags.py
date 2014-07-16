@@ -13,8 +13,6 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from corehq.apps.hqwebapp.templatetags.proptable_tags import (
-    get_tables_as_rows, get_definition, get_display_data)
 from casexml.apps.case.models import CommCareCase
 
 register = template.Library()
@@ -33,6 +31,8 @@ def render_case(case, options):
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
     """
+    # todo: what are these doing here?
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_definition
     case = wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
     _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
@@ -242,6 +242,9 @@ def get_flat_descendant_case_list(case, get_case_url, type_info=None):
 
 @register.simple_tag
 def render_case_hierarchy(case, options):
+    # todo: what are these doing here?
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
+
     case = wrapped_case(case)
     get_case_url = options.get('get_case_url')
     timezone = options.get('timezone', pytz.utc)
