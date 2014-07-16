@@ -363,13 +363,6 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
-                <li>
-                    <a href="#visit-scheduler" data-toggle="tab">
-                        {% trans "Visit Scheduler" %}
-                    </a>
-                </li>
-            {% endif %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
@@ -430,75 +423,6 @@
         {% endif %}
         {% endif %}
         </div>
-
-        {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
-            <div class="tab-pane" id="visit-scheduler">
-                <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_schedule" domain app.id form.get_unique_id %}">
-                    <div class="save-button-holder clearfix"></div>
-                    <h4>{% trans "Transitions" %}</h4>
-                    <div class="control-group">
-                        <div class="controls">
-                            <label class="checkbox">
-                                <input type="checkbox"> {% trans "Transition to the next form when the following condition is met:" %}
-                            </label>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <input type="text" id="transition_condition_question" placeholder="Question ID">
-                            <input type="text" id="transition_condition_value" placeholder="Value">
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <label class="checkbox">
-                                <input type="checkbox"> {% trans "Terminate the schedule if the following condition is met:" %}
-                            </label>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <input type="text" id="termination_condition_question" placeholder="Question ID">
-                            <input type="text" id="termination_condition_value" placeholder="Value">
-                        </div>
-                    </div>
-
-                    <h4>{% trans "Visit Schedule" %}</h4>
-                    <div class="control-group">
-                        <label class="control-label" for="anchor">{% trans "Anchor Date" %}</label>
-                        <div class="controls">
-                            <input type="text" id="anchor" placeholder="Anchor">
-                            <label class="checkbox inline" for="expires">{% trans "Expires" %}</label>
-                            <input type="checkbox"/>
-                            <input type="text" class="input-mini" />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="anchor">{% trans "Visit 1" %}:</label>
-                        <div class="controls">
-                            <input type="text" class="input-mini" />
-                            {% trans "days" %}
-                            <select>
-                                <option>{% trans "Before the anchor date" %}</option>
-                                <option>{% trans "After the anchor date" %}</option>
-                                <option>{% trans "After the last visit" %}</option>
-                            </select>
-                            {% trans "and up to" %}
-                            <input type="text" class="input-mini" />
-                            {% trans "days late" %}
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <button type="submit" class="btn">
-                                <i class="icon-plus"></i>
-                                {% trans "Add Visit" %}
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        {% endif %}
 
         <div class="tab-pane" id="advanced">
             <h4>XForm</h4>

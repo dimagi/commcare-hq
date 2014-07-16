@@ -247,6 +247,13 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
+            {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
+                <li>
+                    <a href="#visit-scheduler" data-toggle="tab">
+                        {% trans "Visit Scheduler" %}
+                    </a>
+                </li>
+            {% endif %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
@@ -286,6 +293,9 @@
         {% endif %}
         {% endif %}
         </div>
+
+        {% include "app_manager/partials/visit_scheduler.html" %}
+
         <div class="tab-pane" id="advanced">
             <h4>XForm</h4>
             <ul class="nav nav-pills nav-stacked">

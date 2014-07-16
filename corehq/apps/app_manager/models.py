@@ -539,7 +539,6 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
-    schedule = SchemaProperty(FormSchedule)
 
     @classmethod
     def wrap(cls, data):
@@ -1168,7 +1167,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     name = DictProperty()
     unique_id = StringProperty()
     case_type = StringProperty()
-    has_schedule = BooleanProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1486,6 +1484,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    schedule = SchemaProperty(FormSchedule, default=None)
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -1597,6 +1596,7 @@ class AdvancedModule(ModuleBase):
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
+    has_schedule = BooleanProperty()
 
     @classmethod
     def new_module(cls, name, lang):

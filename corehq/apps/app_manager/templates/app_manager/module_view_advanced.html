@@ -179,6 +179,9 @@
                 </div>
 
                 {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                {% if request|toggle_enabled:"VISIT_SCHEDULER" %}
+                {% include "app_manager/partials/enable_schedule.html" %}
+                {% endif %}
             </fieldset>
         </form>
     </div>
