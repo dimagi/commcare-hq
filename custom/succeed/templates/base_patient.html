@@ -31,7 +31,7 @@
                         {% endif %}
                         {% if patient_careplan_url != '' %}
                         <li {% if view_mode == "plan" %}class="active"{% endif %}>
-                            <a href="{{ patient_careplan_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Care Plan" %}</a></li>
+                            <a href="{{ patient_careplan_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Patient Tasks" %}</a></li>
                         {% endif %}
                         {% if patient_status_url != '' %}
                         <li {% if view_mode == "status" %}class="active"{% endif %}>
