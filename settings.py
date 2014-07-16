@@ -214,6 +214,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
