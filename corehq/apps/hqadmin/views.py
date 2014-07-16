@@ -59,10 +59,9 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 from phonelog.utils import device_users_by_xform
-from pillowtop import get_all_pillows_json
+from pillowtop import get_all_pillows_json, get_pillow_by_name
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
-from corehq.toggles import IS_DEVELOPER
 
 from .multimech import GlobalConfig
 
@@ -663,17 +662,8 @@ def system_info(request):
 @require_POST
 @require_superuser_or_developer
 def reset_pillow_checkpoint(request):
-    all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
-    for full_name in all_pillows:
-        parts = full_name.split('.')
-        if request.POST["pillow_name"] == parts[-1]:
-            clazz = __import__(full_name[:full_name.rfind('.')])
-            for comp in parts[1:]:
-                clazz = getattr(clazz, comp)
-
-            instance = clazz()
-            instance.reset_checkpoint()
-            break
+    pillow = get_pillow_by_name(request.POST["pillow_name"])
+    pillow.reset_checkpoint()
 
     return HttpResponseRedirect("../system")
 
