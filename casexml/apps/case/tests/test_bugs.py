@@ -5,6 +5,8 @@ from casexml.apps.case import settings
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
@@ -196,3 +198,18 @@ class CaseBugTest(TestCase):
         case = CommCareCase.get(case_id)
         self.assertEqual('bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)
+
+
+class TestCaseHierarchy(TestCase):
+
+    def test_recursive_indexes(self):
+        c = CommCareCase(
+            _id='infinite-recursion',
+            name='infinite_recursion',
+            type='bug',
+            indices=[CommCareCaseIndex(identifier='self', referenced_type='bug', referenced_id='infinite-recursion')],
+        )
+        c.save()
+        # this call used to fail with infinite recursion
+        hierarchy = get_case_hierarchy(c, {})
+        self.assertEqual(1, len(hierarchy['case_list']))
