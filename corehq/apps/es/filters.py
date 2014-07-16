@@ -1,3 +1,7 @@
+def match_all():
+    return {"match_all": {}}
+
+
 def term(field, value):
     """
     Filter docs by a field

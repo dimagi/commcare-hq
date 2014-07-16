@@ -54,7 +54,34 @@ class ESQuery(object):
                 "query": {'match_all': {}}
             }
         }}
-        # when the filters are needed, add remaining default filters and query
+
+    @property
+    def builtin_filters(self):
+        """
+        A list of callables that return filters
+        These will all be available as instance methods, so you can do
+            self.term(field, value)
+        instead of
+            self.filter(filters.term(field, value))
+        """
+        return [
+            filters.term,
+            filters.OR,
+            filters.AND,
+            filters.range_filter,
+            filters.date_range,
+        ]
+
+    def __getattr__(self, attr):
+        # This is syntactic sugar
+        # If you do query.<attr> and attr isn't found as a classmethod,
+        # this will look for it in self.builtin_filters.
+        for fn in self.builtin_filters:
+            if fn.__name__ == attr:
+                def add_filter(*args, **kwargs):
+                    return self.filter(fn(*args, **kwargs))
+                return add_filter
+        raise AttributeError("There is no builtin filter named %s" % attr)
 
     def run(self):
         raw = run_query(self.url, self.raw_query)
@@ -151,21 +178,6 @@ class ESQuery(object):
         query.default_filters.pop(default)
         return query
 
-    def fuzzy_query(self, q):
-        self.set_query({"fuzzy_like_this": {"like_text": q}})
-
-    def term(self, field, value):
-        return self.filter(filters.term(field, value))
-
-    def OR(self, *filters):
-        return self.filter(filters.OR(*filters))
-
-    def range(self, field, gt=None, gte=None, lt=None, lte=None):
-        return self.filter(filters.range_filter(field, gt, gte, lt, lte))
-
-    def date_range(self, field, gt=None, gte=None, lt=None, lte=None):
-        return  self.filter(filters.date_range(field, gt, gte, lt, lte))
-
 
 class ESQuerySet(object):
     """
@@ -196,32 +208,9 @@ class HQESQuery(ESQuery):
     """
     Query logic specific to CommCareHQ
     """
-    core_filters = [
-        filters.domain,
-        filters.doc_type,
-    ]
-    index_filters = []
-    # TODO make this a property and call super
-
-    def __getattr__(self, attr, *args, **kwargs):
-        # https://docs.python.org/2/reference/datamodel.html#object.__getattr__
-        for fn in self.index_filters + self.core_filters:
-            if fn.__name__ == attr:
-                return self.filter(fn(*args, **kwargs))
-        raise AttributeError("There is no builtin filter named %s" % attr)
-
-
-class Example(object):
-    def example_query(self):
-        q = FormsES()\
-            .domain(self.domain)\
-            .xmlns(self.xmlns)\
-            .submitted(gte=self.datespan.startdate_param,
-                       lt=self.datespan.enddateparam)\
-            .sort('received_on', desc=False)\
-            .size(self.pagination.count)\
-            .start(self.pagination.start)
-
-        result = q.run()
-        total_docs = result.total()
-        hits = result.hits()
+    @property
+    def builtin_filters(self):
+        return [
+            filters.domain,
+            filters.doc_type,
+        ] + super(HQESQuery, self).builtin_filters

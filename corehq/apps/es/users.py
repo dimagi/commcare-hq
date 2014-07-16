@@ -2,17 +2,6 @@ from .es_query import HQESQuery
 from . import filters
 
 
-def domain(self, domain):
-    self.OR(
-        filters.term("domain.exact", domain),
-        filters.term("domain_memberships.domain.exact", domain)
-    )
-
-
-def show_inactive(self):
-    return self.remove_default_filter('active')
-
-
 class UserES(HQESQuery):
     index = 'users'
     default_filters = {
@@ -20,7 +9,18 @@ class UserES(HQESQuery):
         'not_deleted': {"term": {"base_doc": "couchuser"}},
         'active': {"term": {"is_active": True}},
     }
-    index_filters = [
-        domain,
-        show_inactive
-    ]
+    @property
+    def builtin_filters(self):
+        return [
+            domain,
+        ] + super(UserES, self).builtin_filters
+
+    def show_inactive(self):
+        return self.remove_default_filter('active')
+
+
+def domain(self, domain):
+    filters.OR(
+        filters.term("domain.exact", domain),
+        filters.term("domain_memberships.domain.exact", domain)
+    )
