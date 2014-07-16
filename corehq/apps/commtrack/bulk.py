@@ -73,7 +73,9 @@ def import_products(domain, importer):
                 products.append(p)
             importer.add_progress()
         except Exception, e:
-            messages.append(str(e))
+            messages.append(
+                'Failed to import product ' + row['name'] + ' ' + str(e)
+            )
     if products:
         Product.get_db().bulk_save(products)
         messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
