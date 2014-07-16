@@ -124,7 +124,7 @@
             })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-            }
+            };
         }
 
         function PillowtopViewModel() {
@@ -150,6 +150,12 @@
             setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
             setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
             setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
+        });
+
+        $(document).on("click", "#reset_pillow_checkpoint_btn", function () {
+            var pillowName = $(this).val();
+            $(".modal-header h3").text(pillowName);
+            $(".modal-body #pillow_name").val(pillowName);
         });
     </script>
 
@@ -249,6 +255,7 @@
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
+                    <th>Reset pillow checkpoint</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: pillows">
@@ -269,6 +276,11 @@
                     <td>
                         <span data-bind="text: seq"></span>
                         / <span data-bind="text: db_seq"></span>
+                    </td>
+                    <td>
+                        <a id="reset_pillow_checkpoint_btn" data-bind="value: name" class="btn btn-info pull-right" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
+                            {% trans "Reset" %}
+                        </a>
                     </td>
                 </tr>
             </tbody>
@@ -369,4 +381,8 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
 {% endblock %}

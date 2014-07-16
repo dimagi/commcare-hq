@@ -1,0 +1,17 @@
+{% load i18n %}
+<div id="reset_pillow_checkpoint_modal" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3></h3>
+    </div>
+    <form name="reset_pillow_checkpoint" method="post" action="{% url "reset_pillow_checkpoint" %}">
+        <div class="modal-body">
+            <p>{% trans "Are you sure you want to reset chcekpoint for this pillow?" %}</p>
+            <input type="hidden" id="pillow_name" name="pillow_name" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-info" type="submit">{% trans "Reset" %}</button>
+            <a href="#" class="btn" data-dismiss="modal">{% trans "Close" %}</a>
+        </div>
+    </form>
+</div>

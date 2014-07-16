@@ -660,6 +660,23 @@ def system_info(request):
 
     return render(request, "hqadmin/system_info.html", context)
 
+@require_POST
+@require_superuser_or_developer
+def reset_pillow_checkpoint(request):
+    all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
+    for full_name in all_pillows:
+        parts = full_name.split('.')
+        if request.POST["pillow_name"] == parts[-1]:
+            clazz = __import__(full_name[:full_name.rfind('.')])
+            for comp in parts[1:]:
+                clazz = getattr(clazz, comp)
+
+            instance = clazz()
+            instance.reset_checkpoint()
+            break
+
+    return HttpResponseRedirect("../system")
+
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context = get_hqadmin_base_context(request)
