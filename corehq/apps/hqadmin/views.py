@@ -49,6 +49,7 @@ from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import  CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
@@ -696,7 +697,7 @@ def get_es_couch_comparisons():
          'es_query': FormES().remove_default_filter('has_xmlns')\
             .remove_default_filter('has_user')\
             .size(0),
-         'sql_rows': None,
+         'sql_rows': FormData.objects.count(),
          },
 
         {'description': 'Cases (doc_type is "CommCareCase")',
@@ -718,7 +719,7 @@ def get_es_couch_comparisons():
             'es_docs': comp['es_query'].run().total,
             'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })
-    return {'es_couch_comparisons':comparisons}
+    return {'es_couch_comparisons': comparisons}
 
 
 @require_superuser
