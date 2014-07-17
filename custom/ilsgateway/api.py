@@ -96,10 +96,15 @@ class ILSGatewayEndpoint(EndpointMixin):
         params = params if params else {}
         if 'date' in kwargs:
             params.update({'date': kwargs['date']})
+
+        if 'next_url_params' in kwargs and kwargs['next_url_params']:
+            url = url + "?" + kwargs['next_url_params']
+            params = {}
+
         response = requests.get(url, params=params,
                                 auth=self._auth())
         objects = []
-        meta = []
+        meta = {}
         if response.status_code == 200 and 'objects' in response.json():
             meta = response.json()['meta']
             objects = response.json()['objects']
@@ -115,14 +120,7 @@ class ILSGatewayEndpoint(EndpointMixin):
         for user in users:
             yield ILSUser.from_json(user)
 
-    def get_smsusers(self, next_url_params=None, **kwargs):
-        params = {}
-        if not next_url_params:
-            url = self.smsusers_url
-            params = {'limit': 500}
-        else:
-            url = self.smsusers_url + "?" + next_url_params
-
-        meta, users = self.get_objects(url, params=params, **kwargs)
+    def get_smsusers(self, **kwargs):
+        meta, users = self.get_objects(self.smsusers_url, **kwargs)
         return meta, [SMSUser.from_json(user) for user in users]
 

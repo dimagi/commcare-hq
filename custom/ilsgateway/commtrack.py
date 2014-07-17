@@ -122,11 +122,11 @@ def smsusers_sync(project, endpoint, **kwargs):
     next_url = None
     while has_next:
         next_url_params = next_url.split('?')[1] if next_url else None
-        meta, users = endpoint.get_smsusers(next_url_params, **kwargs)
+        meta, users = endpoint.get_smsusers(next_url_params=next_url_params, **kwargs)
         for user in users:
             sync_ilsgateway_smsusers(project, user)
 
-        if not meta['next']:
+        if not meta.get('next', False):
             has_next = False
         else:
             next_url = meta['next']
