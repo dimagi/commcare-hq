@@ -45,7 +45,7 @@ class LocationCache(object):
 
 
 def import_locations(domain, importer):
-    for worksheet in importer.worksheets():
+    for worksheet in importer.worksheets:
         location_type = worksheet.worksheet.title
         if location_type not in defined_location_types(domain):
             yield "location with type %s not found, this worksheet will not be imported" % location_type
