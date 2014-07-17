@@ -76,3 +76,6 @@
 [submodule "corehq/apps/style/static/style/lib/bootstrap-3.2.0"]
 	path = corehq/apps/style/static/style/lib/bootstrap-3.2.0
 	url = https://github.com/twbs/bootstrap.git
+[submodule "corehq/apps/style/static/style/lib/fontawesome-4.1.0"]
+	path = corehq/apps/style/static/style/lib/fontawesome-4.1.0
+	url = https://github.com/FortAwesome/Font-Awesome.git
