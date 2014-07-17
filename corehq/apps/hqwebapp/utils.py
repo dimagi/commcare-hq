@@ -101,7 +101,7 @@ class InvitationView():
         self.validate_invitation(invitation)
 
         if request.user.is_authenticated():
-            is_invited_user = request.couch_user.username == invitation.email
+            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted

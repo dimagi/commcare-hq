@@ -133,15 +133,17 @@ class SubscriptionInterface(AddItemInterface):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.StartDateFilter',
-              'corehq.apps.accounting.interface.EndDateFilter',
-              'corehq.apps.accounting.interface.DateCreatedFilter',
-              'corehq.apps.accounting.interface.SubscriberFilter',
-              'corehq.apps.accounting.interface.SalesforceContractIDFilter',
-              'corehq.apps.accounting.interface.ActiveStatusFilter',
-              'corehq.apps.accounting.interface.DoNotInvoiceFilter',
-              'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
-              ]
+    fields = [
+        'corehq.apps.accounting.interface.StartDateFilter',
+        'corehq.apps.accounting.interface.EndDateFilter',
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.ActiveStatusFilter',
+        'corehq.apps.accounting.interface.DoNotInvoiceFilter',
+        'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
+        'corehq.apps.accounting.interface.TrialStatusFilter',
+    ]
     hide_filters = False
 
     def validate_document_class(self):
@@ -154,7 +156,7 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn("Subscriber"),
             DataTablesColumn("Account"),
             DataTablesColumn("Plan"),
@@ -164,8 +166,10 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
-            DataTablesColumn("Action"),
         )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        return header
 
     @property
     def rows(self):
@@ -219,6 +223,11 @@ class SubscriptionInterface(AddItemInterface):
                 'subscriptionadjustment__method': filter_created_by,
             })
 
+        trial_status_filter = TrialStatusFilter.get_value(self.request, self.domain)
+        if trial_status_filter is not None:
+            is_trial = trial_status_filter == TrialStatusFilter.TRIAL
+            filters.update(is_trial=is_trial)
+
         for subscription in Subscription.objects.filter(**filters):
             try:
                 created_by_adj = SubscriptionAdjustment.objects.filter(
@@ -229,18 +238,25 @@ class SubscriptionInterface(AddItemInterface):
                     created_by_adj.method, "Unknown")
             except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
                 created_by = "Unknown"
-            rows.append([subscription.subscriber.domain,
-                         mark_safe('<a href="%s">%s</a>'
-                                   % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
-                                      subscription.account.name)),
-                         subscription.plan_version.plan.name,
-                         subscription.is_active,
-                         subscription.salesforce_contract_id,
-                         subscription.date_start,
-                         subscription.date_end,
-                         subscription.do_not_invoice,
-                         created_by,
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+            columns = [
+                subscription.subscriber.domain,
+                format_datatables_data(
+                    text=mark_safe('<a href="%s">%s</a>' % (
+                        reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)
+                        ), subscription.account.name)),
+                    sort_key=subscription.account.name,
+                ),
+                subscription.plan_version.plan.name,
+                subscription.is_active,
+                subscription.salesforce_contract_id,
+                subscription.date_start,
+                subscription.date_end,
+                subscription.do_not_invoice,
+                created_by,
+            ]
+            if not self.is_rendered_as_email:
+                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+            rows.append(columns)
 
         return rows
 

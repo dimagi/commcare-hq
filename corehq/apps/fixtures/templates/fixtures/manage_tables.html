@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
 {% block js %}{{ block.super }}
 <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
 <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -21,7 +20,6 @@
         var UpdateTableUrl = "{% url 'update_lookup_tables' domain %}";
     </script>
 {% endblock %}
-
 {% block main_column %}
 <header>
     <div class="row-fluid">
@@ -67,7 +65,7 @@
                 <thead>
                     <tr>
                         <th>
-                            {% trans "Table Id" %}
+                            {% trans "Table ID" %}
                         </th>
                         <th>
                             {% trans "View Table" %}
@@ -138,20 +136,20 @@
         </div>
 </div>
 <div class="row-fluid" id="fixture-upload">
-        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain%}" method="post" enctype="multipart/form-data">
+        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain %}" method="post" enctype="multipart/form-data">
             <div class="form-actions" style="padding-left: 1em;">
                 <fieldset class="modal-body">
                     <label for="bulk_upload_file" class="control-label">{% trans "Fixtures File" %}</label>
                     <div class="controls">
                         <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
                     </div>
-                    <label for="replace-check" class="control-label">{% trans "Replace Existing Tables" %}</label>
+                    <label for="replace" class="control-label">{% trans "Replace Existing Tables" %}</label>
                     <div class="controls">
-                        <input id="replace-check" type="checkbox" name="replace"/>
+                        <input id="replace" type="checkbox" name="replace"/>
                     </div>
                 </fieldset>
                 <div class="controls modal-footer">
-                    <button type="submit" class="btn btn-primary" data-bind="click: $root.uploadExcels, attr: {'disabled': !file()}">
+                    <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
                         <i class="icon icon-cloud-upload"></i> {% trans 'Upload Tables' %}
                     </button>
                 </div>
@@ -175,17 +173,6 @@
                 <i class="icon icon-cloud-download"></i> {% trans 'Download File Now' %}
             </button>
             </a>
-        </div>
-    </div>
-</div>
-<div class="modal hide fade" id="uploadModal">
-    <div class="modal-header">
-        <h3>{% trans "Updating Lookup Tables" %}</h3>
-    </div>
-    <div class="modal-body">
-        <div class="span12" id="uploading">
-          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-          {% trans 'Processing data. Please wait...' %}
         </div>
     </div>
 </div>

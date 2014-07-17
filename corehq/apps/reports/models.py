@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 import pytz
 from corehq import Domain
 from corehq.apps import reports
-from corehq.apps.app_manager.models import get_app, Form
+from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
@@ -47,20 +47,38 @@ class HQUserType(object):
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
                       ugettext_noop("CommTrack")]
-    toggle_defaults = [True, False, False, False, False]
+    toggle_defaults = (True, False, False, False, False)
+    count = len(human_readable)
+    included_defaults = (True, True, True, True, False)
 
     @classmethod
-    def use_defaults(cls, show_all=False):
-        defaults = cls.toggle_defaults
-        if show_all:
-            defaults = [True] * len(cls.human_readable)
-        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable))]
+    def use_defaults(cls):
+        return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
 
     @classmethod
     def all_but_users(cls):
-        no_users = [True] * len(cls.human_readable)
+        no_users = (True,) * cls.count
         no_users[cls.REGISTERED] = False
-        return [HQUserToggle(i, no_users[i]) for i in range(len(cls.human_readable))]
+        return cls._get_manual_filterset(cls.included_defaults, no_users)
+
+    @classmethod
+    def commtrack_defaults(cls):
+        # this is just a convenience method for clairty on commtrack projects
+        return cls.all()
+
+    @classmethod
+    def all(cls):
+        defaults = (True,) * cls.count
+        return cls._get_manual_filterset(defaults, cls.toggle_defaults)
+
+    @classmethod
+    def _get_manual_filterset(cls, included, defaults):
+        """
+        manually construct a filter set. included and defaults should both be
+        arrays of booleans mapping to values in human_readable and whether they should be
+        included and defaulted, respectively.
+        """
+        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable)) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
@@ -661,7 +679,7 @@ class FormExportSchema(HQExportSchema):
         return {'#': self.question_order}
 
     def uses_cases(self):
-        if not self.app:
+        if not self.app or isinstance(self.app, RemoteApp):
             return False
         form = self.app.get_form_by_xmlns(self.xmlns)
         if form and isinstance(form, Form):

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -75,6 +75,19 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
 
+    def test_advanced_suite_case_list_filter(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        clinic_module = app.get_module(0)
+        clinic_module.case_details.short.columns.append(DetailColumn(
+            header={"en": "Filter"},
+            format='filter',
+            filter_xpath=". = 'danny'",
+            field='filter'
+        ))
+        clinic_module_id = clinic_module.unique_id
+        app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+        self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
+
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.commtrack_enabled = True
@@ -126,6 +139,15 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
+    def test_picture_format(self):
+        self._test_generic_suite('app_picture_format', 'suite-picture-format')
+
+    def test_audio_format(self):
+        self._test_generic_suite('app_audio_format', 'suite-audio-format')
+
+    def test_attached_picture(self):
+        self._test_generic_suite('app_attached_image', 'suite-attached-image')
+
     def test_form_workflow_previous(self):
         """
         m0 - standard module - no case
@@ -163,7 +185,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         Ensure form filter gets added correctly and appropriate instances get added to the entry.
         """
         app = Application.wrap(self.get_json('suite-advanced'))
-        form = app.get_module(2).get_form(0)
+        form = app.get_module(1).get_form(1)
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 

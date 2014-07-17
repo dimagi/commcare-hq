@@ -8,9 +8,6 @@ import json
 import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
-from django.http import HttpResponse
-from django.core.servers.basehttp import FileWrapper
-import tempfile
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -25,7 +22,7 @@ from corehq.apps.app_manager.exceptions import (
     ConflictingCaseTypeError,
     RearrangeError,
 )
-from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX
+
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -70,7 +67,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm, VELLUM_TYPES
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -97,7 +94,7 @@ from django_prbac.utils import ensure_request_has_privilege
 logger = logging.getLogger(__name__)
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
-
+require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
 
 def set_file_download(response, filename):
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
@@ -139,7 +136,8 @@ class ApplicationViewMixin(DomainViewMixin):
         return None
 
 
-@login_and_domain_required
+
+@require_deploy_apps
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
                  unique_form_id=None, edit=True):
     """
@@ -212,7 +210,8 @@ def _get_xform_source(request, app, form, filename="form.xml"):
     else:
         return json_response(source)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     try:
@@ -221,7 +220,8 @@ def get_xform_source(req, domain, app_id, module_id, form_id):
         raise Http404()
     return _get_xform_source(req, app, form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
@@ -250,7 +250,7 @@ def xform_display(req, domain, form_unique_id):
         return json_response(questions)
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def form_casexml(req, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
@@ -261,16 +261,19 @@ def form_casexml(req, domain, form_unique_id):
     return HttpResponse(form.create_casexml())
 
 @login_or_digest
+@require_can_edit_apps
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app_check_domain(req, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
     return back_to_main(req, app_copy.domain, app_id=app_copy._id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app(req, domain):
     app_id = req.POST.get('app')
     form = CopyApplicationForm(app_id, req.POST)
@@ -279,7 +282,8 @@ def copy_app(req, domain):
     else:
         return view_generic(req, domain, app_id=app_id, copy_app_form=form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
@@ -334,6 +338,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         })
 
 
+@require_deploy_apps
 def default(req, domain):
     """
     Handles a url that does not include an app_id.
@@ -341,8 +346,6 @@ def default(req, domain):
     but this view exists so that there's something to
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
-
-
     """
     return view_app(req, domain)
 
@@ -388,6 +391,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                 raise
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
+        else:
+            # remove upload questions (attachemnts) until MM Case Properties
+            # are released to general public
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
+            xform_questions = [q for q in xform_questions
+                               if q["tag"] != "upload" or is_previewer]
 
         try:
             form_action_errors = form.validate_for_build()
@@ -582,8 +591,8 @@ def get_apps_base_context(request, domain, app):
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
-        edit = (request.GET.get('edit', 'true') == 'true') and\
-               (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        edit = ((request.GET.get('edit', 'true') == 'true') and
+                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
         edit = False
@@ -620,7 +629,7 @@ def get_apps_base_context(request, domain, app):
 
 
 @cache_control(no_cache=True, no_store=True)
-@login_and_domain_required
+@require_deploy_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
@@ -649,7 +658,7 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@login_and_domain_required
+@require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
@@ -780,14 +789,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if is_user_registration:
             if not app.show_user_registration:
                 raise Http404()
-            if not app.user_registration.unique_id:
-                # you have to do it this way because get_user_registration
-                # changes app.user_registration.unique_id
-                form = app.get_user_registration()
-                app.save()
-            else:
-                form = app.get_user_registration()
-
+            form = app.get_user_registration()
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -873,24 +875,32 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_commcare_version(request, app_id, app_version):
     options = CommCareBuildConfig.fetch().get_menu(app_version)
     return json_response(options)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_user_registration(request, domain, app_id):
     return view_generic(request, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_form(req, domain, app_id, module_id, form_id):
     return view_generic(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_module(req, domain, app_id, module_id):
     return view_generic(req, domain, app_id, module_id)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_app(req, domain, app_id=None):
     # redirect old m=&f= urls
     module_id = req.GET.get('m', None)
@@ -901,15 +911,18 @@ def view_app(req, domain, app_id=None):
 
     return view_generic(req, domain, app_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_designer(req, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     app = get_app(domain, app_id)
@@ -1728,7 +1741,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('name', None),
         ('platform', None),
         ('recipients', None),
-        ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
         ('secure_submissions', None),
@@ -1770,6 +1782,12 @@ def edit_app_attr(request, domain, app_id, attr):
         except PermissionDenied:
             app.cloudcare_enabled = False
 
+    if should_edit('show_user_registration'):
+        show_user_registration = hq_settings['show_user_registration']
+        app.show_user_registration = show_user_registration
+        if show_user_registration:
+            #  load the form source and also set its unique_id
+            app.get_user_registration()
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
@@ -2273,7 +2291,7 @@ def emulator_page(req, domain, app_id, template):
     })
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return emulator_page(req, domain, app_id, template)
 
@@ -2292,7 +2310,8 @@ def emulator_commcare_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def formdefs(request, domain, app_id):
     langs = [json.loads(request.GET.get('lang', '"en"'))]
     format = request.GET.get('format', 'json')
@@ -2365,7 +2384,8 @@ def _find_name(names, langs):
         name = names[lang]
     return name
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def app_summary(request, domain, app_id):
     return summary(request, domain, app_id, should_edit=True)
 
@@ -2403,7 +2423,8 @@ def summary(request, domain, app_id, should_edit=True):
     else:
         return render(request, "app_manager/exchange_summary.html", context)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     properties = tuple(["property"] + app.langs + ["default"])

@@ -15,19 +15,19 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
-import sys
-from collections import defaultdict
 import datetime
-
-from fabric.context_managers import settings, cd
-
-from fabric.operations import require, local, prompt
 import os
-from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.contrib import files, console
-from fabric import utils
 import posixpath
+import sys
 import time
+from collections import defaultdict
+from distutils.util import strtobool
+
+from fabric import utils
+from fabric.api import run, roles, execute, task, sudo, env, parallel
+from fabric.context_managers import settings, cd
+from fabric.contrib import files, console
+from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -94,6 +94,7 @@ env.roledefs = {
 
 env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
+env.use_separate_reminder_rule_queue = False
 env.pillow_retry_queue_enabled = True
 
 
@@ -257,6 +258,7 @@ def production():
     env.django_port = '9010'
     env.should_migrate = True
     env.sms_queue_enabled = True
+    env.use_separate_reminder_rule_queue = True
     env.pillow_retry_queue_enabled = True
 
     if env.code_branch != 'master':
@@ -761,8 +763,10 @@ def _deploy_without_asking():
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
+        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
+        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
@@ -777,9 +781,9 @@ def _deploy_without_asking():
 
 
 @task
-def awesome_deploy():
+def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
-    if not console.confirm(
+    if strtobool(confirm) and not console.confirm(
             'Are you sure you want to preindex and deploy '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
@@ -969,10 +973,40 @@ def flip_es_aliases():
 
 @parallel
 @roles(*ROLES_STATIC)
+def _do_compress():
+    """Run Django Compressor after a code update"""
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env, user=env.sudo_user)
+    update_manifest(save=True)
+
+
+@parallel
+@roles(*ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+
+
+@roles(*ROLES_DJANGO)
+@parallel
+def update_manifest(save=False):
+    """
+    Puts the manifest.json file with the references to the compressed files
+    from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
+    governs the actual static reference.
+
+    save=True saves the manifest.json file to redis, otherwise it grabs the
+    manifest.json file from redis and inserts it into the staticfiles dir.
+    """
+    withpath = env.code_root
+    venv = env.virtualenv_root
+
+    cmd = 'resource_compress save' if save else 'resource_compress'
+    with cd(withpath):
+        sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
+            user=env.sudo_user
+        )
 
 
 @roles(*ROLES_DJANGO)
@@ -1005,6 +1039,8 @@ def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
     update_code()
+    _do_compress()
+    update_manifest(save=True)
     _do_collectstatic()
 
 
@@ -1075,6 +1111,8 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    if env.use_separate_reminder_rule_queue:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated

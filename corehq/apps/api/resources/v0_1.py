@@ -16,7 +16,7 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import require_permission, require_permission_raw
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -97,10 +97,9 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         PASSED_AUTH = 'is_authenticated'
-
+        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
         @api_auth
-        @domain_admin_required
-        @login_or_digest
+        @require_permission_raw(permission_check, login_decorator=login_or_digest)
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 

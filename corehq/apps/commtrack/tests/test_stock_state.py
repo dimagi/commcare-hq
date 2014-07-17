@@ -4,7 +4,7 @@ from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from datetime import datetime
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_domain
+from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 
 
 class StockStateTest(CommTrackTest):
@@ -30,7 +30,7 @@ class StockStateBehaviorTest(StockStateTest):
         )
 
         self.assertEqual(10, state.stock_on_hand)
-        self.assertEqual(3.0, state.get_consumption())
+        self.assertEqual(3.0, state.get_daily_consumption())
 
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
@@ -61,10 +61,10 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(None, state.get_consumption())
+        self.assertEqual(None, state.get_daily_consumption())
 
     def test_pre_set_defaults(self):
-        set_default_consumption_for_domain(self.domain.name, 50)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
         self.report(25, 0)
 
         state = StockState.objects.get(
@@ -73,11 +73,11 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50, float(state.get_consumption()))
+        self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
         self.report(25, 0)
-        set_default_consumption_for_domain(self.domain.name, 50)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
 
         state = StockState.objects.get(
             section_id='stock',
@@ -85,4 +85,4 @@ class StockStateConsumptionTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.assertEqual(50, float(state.get_consumption()))
+        self.assertEqual(5, float(state.get_daily_consumption()))

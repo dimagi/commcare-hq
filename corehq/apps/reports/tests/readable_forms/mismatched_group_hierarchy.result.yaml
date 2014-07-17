@@ -607,29 +607,15 @@
   tag: group
   type: Group
   value: /data/whole_form
-- {group: null, label: fada_facility_id, repeat: null, response: null, tag: hidden,
+- {group: null, label: fada_facility_id, repeat: null, response: '600', tag: hidden,
   type: DataBindOnly, value: /data/fada_facility_id}
-- {group: null, label: fada_patient_id, repeat: null, response: null, tag: hidden,
+- {group: null, label: fada_patient_id, repeat: null, response: '2093402934', tag: hidden,
   type: DataBindOnly, value: /data/fada_patient_id}
-- {group: null, label: facility_number_usage, repeat: null, response: null, tag: hidden,
+- {group: null, label: facility_number_usage, repeat: null, response: '1', tag: hidden,
   type: DataBindOnly, value: /data/facility_number_usage}
-- {group: null, label: patient_number, repeat: null, response: null, tag: hidden,
+- {group: null, label: patient_number, repeat: null, response: '1234', tag: hidden,
   type: DataBindOnly, value: /data/patient_number}
-- {group: null, label: patient_number_padded, repeat: null, response: null, tag: hidden,
+- {group: null, label: patient_number_padded, repeat: null, response: '01225', tag: hidden,
   type: DataBindOnly, value: /data/patient_number_padded}
-- {group: null, label: facility_owner_id, repeat: null, response: null, tag: hidden,
+- {group: null, label: facility_owner_id, repeat: null, response: '', tag: hidden,
   type: DataBindOnly, value: /data/facility_owner_id}
-- {group: null, label: facility_number_usage, repeat: null, response: '1', tag: null,
-  type: null, value: /facility_number_usage}
-- {group: null, label: facility_owner_id, repeat: null, response: '', tag: null, type: null,
-  value: /facility_owner_id}
-- {group: null, label: fada_facility_id, repeat: null, response: '600', tag: null,
-  type: null, value: /fada_facility_id}
-- {group: null, label: fada_patient_id, repeat: null, response: '2093402934', tag: null,
-  type: null, value: /fada_patient_id}
-- {group: null, label: patient_number, repeat: null, response: '1234', tag: null,
-  type: null, value: /patient_number}
-- {group: null, label: patient_number_padded, repeat: null, response: '01225', tag: null,
-  type: null, value: /patient_number_padded}
-- {group: null, label: whole_form, repeat: null, response: '', tag: null, type: null,
-  value: /whole_form}

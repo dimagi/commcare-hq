@@ -52,16 +52,14 @@ def import_stock_reports(domain, f):
     return annotate_csv(data, reader.fieldnames)
 
 
-def import_products(domain, download, task):
+def import_products(domain, importer):
     messages = []
-    products = []
-    data = download.get_content().split('\n')
-    processed = 0
-    total_rows = len(data) - 1
-    reader = csv.DictReader(data)
-    for row in reader:
+    to_save = []
+    product_count = 0
+
+    for row in importer.worksheet:
         try:
-            p = Product.from_csv(row)
+            p = Product.from_excel(row)
             if p:
                 if p.domain:
                     if p.domain != domain:
@@ -73,16 +71,21 @@ def import_products(domain, download, task):
                         continue
                 else:
                     p.domain = domain
-                products.append(p)
-            if task:
-                processed += 1
-                DownloadBase.set_progress(task, processed, total_rows)
+
+                product_count += 1
+                to_save.append(p)
+
+            importer.add_progress()
+            if len(to_save) > 500:
+                Product.get_db().bulk_save(to_save)
+                to_save = []
         except Exception, e:
-            messages.append(str(e))
-    if products:
-        Product.get_db().bulk_save(products)
-        messages.insert(0, _('Successfullly updated {products} products with {errors} errors.').format(
-            products=len(products), errors=len(messages))
+            messages.append(
+                'Failed to import product ' + str(row['name']) + ' ' + str(e)
+            )
+    if product_count:
+        messages.insert(0, _('Successfullly updated {number_of_products} products with {errors} errors.').format(
+            number_of_products=product_count, errors=len(messages))
         )
     return messages
 

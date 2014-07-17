@@ -1,0 +1,8 @@
+{% extends "base_patient.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block patient-tab-container %}
+    <a target="_blank" href="{{ patient_task_list_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "View All Tasks" %}</a>
+    </br/>
+    <a target="_blank" href="{{ create_new_task_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Add New Task" %}</a>
+{% endblock %}

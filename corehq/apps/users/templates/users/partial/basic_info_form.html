@@ -14,7 +14,7 @@
         </div>
         {% crispy form_user_update %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update Information' %}</button>
         </div>
     </fieldset>
 </form>
@@ -118,7 +118,7 @@
             </div>
         </div>
     </fieldset>
-    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Add Number' %}</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Add Number' %}</button></div>
 </form>
 
 {% if update_form %}
@@ -129,7 +129,7 @@
         {% include 'hqstyle/forms/basic_fieldset.html' with form=update_form %}
     </fieldset>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">{% trans 'Update CommTrack Settings' %}</button>
+      <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommTrack Settings' %}</button>
     </div>
 </form>
 {% endif %}

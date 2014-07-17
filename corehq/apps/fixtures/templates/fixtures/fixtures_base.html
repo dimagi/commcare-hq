@@ -24,7 +24,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ report.url_root }}"><strong>{% trans report.section_name|default:"Lookup Tables" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if report.breadcrumbs %}
             {% for crumb in report.breadcrumbs %}
@@ -34,13 +34,13 @@
             {% endfor %}
         {% endif %}
         <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|safe %}</a></div>
         </li>
     </ul>
 {% endblock %}
-
 {% block main_column %}
     <div id="report-content">
+
             {% block reportcontent %}
             {% endblock %}
     </div>

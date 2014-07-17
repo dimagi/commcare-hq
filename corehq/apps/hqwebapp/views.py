@@ -339,12 +339,12 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
-def logout(req, template_name="hqwebapp/loggedout.html"):
+def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
-    req.base_template = settings.BASE_TEMPLATE
-    response = django_logout(req, **{"template_name": template_name})
+    # we don't actually do anything with the response here:
+    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
     
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])

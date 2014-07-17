@@ -5,34 +5,36 @@ from couchdbkit import ResourceNotFound
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.core.validators import ValidationError
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.shortcuts import render
 from django.template.defaultfilters import yesno
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
 from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.fixtures.tasks import fixture_upload_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField, FixtureItemField
+from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureAPIException, DuplicateFixtureTagException, \
+    FixtureUploadError
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc, FieldList, FixtureTypeField
+from corehq.apps.fixtures.upload import run_upload, DELETE_HEADER, validate_file_format, get_workbook
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.bulkupload import GroupMemoizer
-from corehq.apps.users.models import CommCareUser, Permissions
-from corehq.apps.users.util import normalize_username
+from corehq.apps.users.models import Permissions
 from couchexport.export import export_raw
 from couchexport.models import Format
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+from dimagi.utils.excel import WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
 from soil import CachedDownload
-from soil.util import expose_download
+from soil.util import expose_download, get_download_context
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -204,7 +206,6 @@ def data_table(request, domain):
         data_table["rows"] = [["--" for x in range(0, len(headers))]]
     return data_table
 
-DELETE_HEADER = "Delete(Y/N)"
 
 @require_can_edit_fixtures
 def download_item_lists(request, domain, html_response=False):
@@ -430,6 +431,19 @@ def download_file(request, domain):
         return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 
+def fixtures_home(domain):
+    return reverse("fixture_interface_dispatcher", args=[],
+                   kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'})
+
+
+class FixtureViewMixIn(object):
+    section_name = ugettext_noop("Lookup Tables")
+
+    @property
+    def section_url(self):
+        return fixtures_home(self.domain)
+
+
 class UploadItemLists(TemplateView):
 
     def get_context_data(self, **kwargs):
@@ -439,61 +453,72 @@ class UploadItemLists(TemplateView):
         }
 
     def get(self, request):
-        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        return HttpResponseRedirect(fixtures_home(self.domain))
+
     @method_decorator(get_file)
     def post(self, request):
-        """View's dispatch method automatically calls this"""
+        replace = 'replace' in request.POST
 
-        def error_redirect():
-            return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        file_ref = expose_download(request.file.read(),
+                                   expiry=1*60*60)
 
+        # catch basic validation in the synchronous UI
         try:
-            replace = request.POST["replace"]
-            replace = True
-        except KeyError:
-            replace = False
+            validate_file_format(file_ref.get_filename())
+        except FixtureUploadError as e:
+            messages.error(request, unicode(e))
+            return HttpResponseRedirect(fixtures_home(self.domain))
 
-        try:
-            workbook = WorkbookJSONReader(request.file)
-        except AttributeError:
-            messages.error(request, _("Error processing your Excel (.xlsx) file"))
-            return error_redirect()
-        except Exception as e:
-            messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
-            return error_redirect()
-
-        try:
-            upload_result = run_upload(request, self.domain, workbook, replace=replace)
-            if upload_result["unknown_groups"]:
-                for group_name in upload_result["unknown_groups"]:
-                    messages.error(request, _("Unknown group: '%(name)s'") % {'name': group_name})
-            if upload_result["unknown_users"]:
-                for user_name in upload_result["unknown_users"]:
-                    messages.error(request, _("Unknown user: '%(name)s'") % {'name': user_name})
-        except WorksheetNotFound as e:
-            messages.error(request, _("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
-            return error_redirect()
-        except ExcelMalformatException as e:
-            messages.error(request, _("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
-            return error_redirect()
-        except DuplicateFixtureTagException as e:
-            messages.error(request, e)
-        except FixtureAPIException as e:
-            messages.error(request, _(str(e)))
-            return error_redirect()
-        except Exception as e:
-            notify_exception(request, message=str(e))
-            messages.error(request, str(e))
-            messages.error(request, _("Fixture upload failed for some reason and we have noted this failure. "
-                                      "Please make sure the excel file is correctly formatted and try again."))
-            return error_redirect()
-
-        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': self.domain, 'report_slug': 'edit_lookup_tables'}))
+        # hand off to async
+        task = fixture_upload_async.delay(
+            self.domain,
+            file_ref.download_id,
+            replace,
+        )
+        file_ref.set_task(task)
+        return HttpResponseRedirect(
+            reverse(
+                FixtureUploadStatusView.urlname,
+                args=[self.domain, file_ref.download_id]
+            )
+        )
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
         return super(UploadItemLists, self).dispatch(request, *args, **kwargs)
+
+
+class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
+    urlname = 'fixture_upload_status'
+    page_title = ugettext_noop('Lookup Table Upload Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(FixtureUploadStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('fixture_upload_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _(self.page_title),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_fixtures
+def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
+    context = get_download_context(download_id, check_state=True)
+    context.update({
+        'on_complete_short': _('Upload complete.'),
+        'on_complete_long': _('Lookup table upload has finished'),
+
+    })
+    return render(request, template, context)
+
 
 @require_POST
 @login_or_digest
@@ -535,33 +560,31 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_message)
 
     try:
-        workbook = WorkbookJSONReader(upload_file)
+        workbook = get_workbook(upload_file)
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
     try:
-        upload_resp = run_upload(request, domain, workbook, replace=replace)  # error handle for other files
+        upload_resp = run_upload(domain, workbook, replace=replace)  # error handle for other files
     except WorksheetNotFound as e:
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
     except ExcelMalformatException as e:
-        notify_exception(request)
         return _return_response(response_codes["fail"], str(e))
     except DuplicateFixtureTagException as e:
         return _return_response(response_codes["fail"], str(e))
     except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
-        notify_exception(request, message=e)
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 
-    num_unknown_groups = len(upload_resp["unknown_groups"])
-    num_unknown_users = len(upload_resp["unknown_users"])
+    num_unknown_groups = len(upload_resp.unknown_groups)
+    num_unknown_users = len(upload_resp.unknown_users)
     resp_json = {}
 
     if not num_unknown_users and not num_unknown_groups:
-        num_uploads = upload_resp["number_of_fixtures"]
+        num_uploads = upload_resp.number_of_fixtures
         success_message = "Successfully uploaded %d fixture%s." % (num_uploads, 's' if num_uploads > 1 else '')
         return _return_response(response_codes["success"], success_message)
     else:
@@ -571,257 +594,8 @@ def upload_fixture_api(request, domain, **kwargs):
     warn_users = "%d user%s unknown" % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
     resp_json["message"] = "Fixtures have been uploaded. But following "
     if num_unknown_groups:
-        resp_json["message"] += "%s %s" % (warn_groups, upload_resp["unknown_groups"])
+        resp_json["message"] += "%s %s" % (warn_groups, upload_resp.unknown_groups)
     if num_unknown_users:
-        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp["unknown_users"])
+        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
     return HttpResponse(json.dumps(resp_json), mimetype="application/json")
-
-
-def run_upload(request, domain, workbook, replace=False):
-    return_val = {
-        "unknown_groups": [], 
-        "unknown_users": [], 
-        "number_of_fixtures": 0,
-    }
-    failure_messages = {
-        "has_no_column": "Workbook 'types' has no column '{column_name}'.",
-        "has_no_field_column": "Excel-sheet '{tag}' does not contain the column '{field}' "
-                               "as specified in its 'types' definition",
-        "has_extra_column": "Excel-sheet '{tag}' has an extra column" + 
-                            "'{field}' that's not defined in its 'types' definition",
-        "wrong_property_syntax": "Properties should be specified as 'field 1: property 1'. In 'types' sheet, " +
-                            "'{prop_key}' for field '{field}' is not correctly formatted",
-        "sheet_has_no_property": "Excel-sheet '{tag}' does not contain property " +
-                            "'{property}' of the field '{field}' as specified in its 'types' definition",
-        "sheet_has_extra_property": "Excel-sheet '{tag}'' has an extra property " +
-                            "'{property}' for the field '{field}' that's not defined in its 'types' definition. Re-check the formatting", 
-        "invalid_field_with_property": "Fields with attributes should be numbered as 'field: {field} integer",
-        "invalid_property": "Attribute should be written as '{field}: {prop} interger'",
-        "wrong_field_property_combos": "Number of values for field '{field}' and attribute '{prop}' should be same",
-        "replace_with_UID": "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
-    }
-
-    group_memoizer = GroupMemoizer(domain)
-
-    data_types = workbook.get_worksheet(title='types')
-
-    def _get_or_raise(container, attr):
-        try:
-            return container[attr]
-        except KeyError:
-            raise ExcelMalformatException(_(failure_messages["has_no_column"].format(column_name=attr)))
-
-    def diff_lists(list_a, list_b):
-        set_a = set(list_a)
-        set_b = set(list_b)
-        not_in_b = set_a.difference(set_b)
-        not_in_a = set_a.difference(set_a)
-        return list(not_in_a), list(not_in_b)
-   
-    number_of_fixtures = -1
-    with CouchTransaction() as transaction:
-        fixtures_tags = []
-        type_sheets = []
-        for number_of_fixtures, dt in enumerate(data_types):
-            try:
-                tag = _get_or_raise(dt, 'table_id')
-            except ExcelMalformatException:
-                tag = _get_or_raise(dt, 'tag')
-            if tag in fixtures_tags:
-                error_message = "Upload Failed: Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
-                raise DuplicateFixtureTagException(_(error_message.format(tag=tag)))
-            fixtures_tags.append(tag)
-            type_sheets.append(dt)
-        for number_of_fixtures, dt in enumerate(type_sheets):
-            try:
-                tag = _get_or_raise(dt, 'table_id')
-            except ExcelMalformatException:
-                messages.info(request, _("Excel-header 'tag' is renamed as 'table_id' and 'name' header is no longer needed."))
-                tag = _get_or_raise(dt, 'tag')
-
-            type_definition_fields = _get_or_raise(dt, 'field')
-            type_fields_with_properties = []
-            for count, field in enumerate(type_definition_fields):
-                prop_key = "field " + str(count + 1)
-                if dt.has_key(prop_key):
-                    try:
-                        property_list = dt[prop_key]["property"]
-                    except KeyError:
-                        error_message = failure_messages["wrong_property_syntax"].format(
-                            prop_key=prop_key,
-                            field=field
-                        )
-                        raise ExcelMalformatException(_(error_message))
-                else:
-                    property_list = []
-                field_with_prop = FixtureTypeField(
-                    field_name=field,
-                    properties=property_list
-                )
-                type_fields_with_properties.append(field_with_prop)
-
-            new_data_type = FixtureDataType(
-                domain=domain,
-                is_global=dt.get('is_global', False),
-                tag=tag,
-                fields=type_fields_with_properties,
-            )
-            try:
-                tagged_fdt = FixtureDataType.fixture_tag_exists(domain, tag)
-                if tagged_fdt:
-                    data_type = tagged_fdt
-                # support old usage with 'UID'
-                elif 'UID' in dt and dt['UID']:
-                    data_type = FixtureDataType.get(dt['UID'])
-                else:
-                    data_type = new_data_type
-                    pass
-                if replace:
-                    data_type.recursive_delete(transaction)
-                    data_type = new_data_type
-                data_type.fields = type_fields_with_properties
-                data_type.is_global = dt.get('is_global', False)
-                assert data_type.doc_type == FixtureDataType._doc_type
-                if data_type.domain != domain:
-                    data_type = new_data_type
-                    messages.error(request, _("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': dt['UID']})
-                if dt[DELETE_HEADER] == "Y" or dt[DELETE_HEADER] == "y":
-                    data_type.recursive_delete(transaction)
-                    continue
-            except (ResourceNotFound, KeyError) as e:
-                data_type = new_data_type
-            transaction.save(data_type)
-
-            data_items = workbook.get_worksheet(data_type.tag)
-            for sort_key, di in enumerate(data_items):
-                # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields_list = di['field'].keys()
-                not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
-                if len(not_in_sheet) > 0:
-                    error_message = failure_messages["has_no_field_column"].format(tag=tag, field=not_in_sheet[0])
-                    raise ExcelMalformatException(_(error_message))
-                if len(not_in_types) > 0:
-                    error_message = failure_messages["has_extra_column"].format(tag=tag, field=not_in_types[0])
-                    raise ExcelMalformatException(_(error_message))
-
-                # check that properties in 'types' sheet vs item-sheet MATCH
-                for field in data_type.fields:
-                    if len(field.properties) > 0:
-                        sheet_props = di.get(field.field_name, {})
-                        sheet_props_list = sheet_props.keys()
-                        type_props = field.properties
-                        not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
-                        if len(not_in_sheet) > 0:
-                            error_message = failure_messages["sheet_has_no_property"].format(
-                                tag=tag,
-                                property=not_in_sheet[0],
-                                field=field.field_name
-                            )
-                            raise ExcelMalformatException(_(error_message))
-                        if len(not_in_types) > 0:
-                            error_message = failure_messages["sheet_has_extra_property"].format(
-                                tag=tag,
-                                property=not_in_types[0],
-                                field=field.field_name
-                            )
-                            raise ExcelMalformatException(_(error_message))
-                        # check that fields with properties are numbered
-                        if type(di['field'][field.field_name]) != list:
-                            error_message = failure_messages["invalid_field_with_property"].format(field=field.field_name)
-                            raise ExcelMalformatException(_(error_message))
-                        field_prop_len = len(di['field'][field.field_name])
-                        for prop in sheet_props:
-                            if type(sheet_props[prop]) != list:
-                                error_message = failure_messages["invalid_property"].format(
-                                    field=field.field_name,
-                                    prop=prop
-                                )
-                                raise ExcelMalformatException(_(error_message))
-                            if len(sheet_props[prop]) != field_prop_len:
-                                error_message = failure_messages["wrong_field_property_combos"].format(
-                                    field=field.field_name,
-                                    prop=prop
-                                )
-                                raise ExcelMalformatException(_(error_message))
-
-                # excel format check should have been covered by this line. Can make assumptions about data now
-                type_fields = data_type.fields
-                item_fields = {}
-                for field in type_fields:
-                    # if field doesn't have properties
-                    if len(field.properties) == 0:
-                        item_fields[field.field_name] = FieldList(
-                            field_list=[FixtureItemField(
-                                # using unicode here, to cast ints, and multi-language strings
-                                field_value=unicode(di['field'][field.field_name]),
-                                properties={}
-                            )]
-                        )
-                    else:
-                        field_list = []
-                        field_prop_combos = di['field'][field.field_name]
-                        prop_combo_len = len(field_prop_combos)
-                        prop_dict = di[field.field_name]
-                        for x in range(0, prop_combo_len):
-                            fix_item_field = FixtureItemField(
-                                field_value=unicode(field_prop_combos[x]),
-                                properties={prop: unicode(prop_dict[prop][x]) for prop in prop_dict}
-                            )
-                            field_list.append(fix_item_field)
-                        item_fields[field.field_name] = FieldList(
-                            field_list=field_list
-                        )
-
-                new_data_item = FixtureDataItem(
-                    domain=domain,
-                    data_type_id=data_type.get_id,
-                    fields=item_fields,
-                    sort_key=sort_key
-                )
-                try:
-                    if di['UID'] and not replace:
-                        old_data_item = FixtureDataItem.get(di['UID'])
-                    else:
-                        old_data_item = new_data_item
-                        pass
-                    old_data_item.fields = item_fields   
-                    if old_data_item.domain != domain or not old_data_item.data_type_id == data_type.get_id:
-                        old_data_item = new_data_item
-                        messages.error(request, _("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
-                    assert old_data_item.doc_type == FixtureDataItem._doc_type
-                    if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
-                        old_data_item.recursive_delete(transaction)
-                        continue               
-                except (ResourceNotFound, KeyError):
-                    old_data_item = new_data_item
-                transaction.save(old_data_item)
-
-                old_groups = old_data_item.groups
-                for group in old_groups:
-                    old_data_item.remove_group(group)
-                old_users = old_data_item.users
-                for user in old_users:
-                    old_data_item.remove_user(user)
-
-                for group_name in di.get('group', []):
-                    group = group_memoizer.by_name(group_name)
-                    if group:
-                        old_data_item.add_group(group, transaction=transaction)
-                    else:
-                        messages.error(request, _("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
-
-                for raw_username in di.get('user', []):
-                    try:
-                        username = normalize_username(str(raw_username), domain)
-                    except ValidationError:
-                        messages.error(request, _("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
-                        continue
-                    user = CommCareUser.get_by_username(username)
-                    if user:
-                        old_data_item.add_user(user)
-                    else:
-                        messages.error(request, _("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
-
-    return_val["number_of_fixtures"] = number_of_fixtures + 1
-    return return_val

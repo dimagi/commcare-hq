@@ -284,6 +284,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
 
 class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
+    id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
 
     modules = fields.ListField()

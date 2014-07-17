@@ -7,7 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -305,6 +305,10 @@ def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
         raise Http404
+    if handler.locked:
+        messages.error(request, _("Please wait until the rule finishes "
+            "processing before making further changes."))
+        return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     handler.retire()
     view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
@@ -392,6 +396,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     sample_list = get_sample_list(domain)
     
     if request.method == "POST":
+        if h and h.locked:
+            messages.error(request, _("Could not save changes. This reminder "
+                "has been updated by someone else."))
+            return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
         form = ComplexCaseReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
@@ -455,6 +463,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
+            if h.locked:
+                messages.error(request, _("Please wait until the rule finishes "
+                    "processing before making further changes."))
+                return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
             initial = {
                 "active"                : h.active,
                 "case_type"             : h.case_type,
@@ -1690,4 +1702,42 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+def int_or_none(i):
+    try:
+        i = int(i)
+    except (ValueError, TypeError):
+        i = None
+    return i
+
+
+@reminders_framework_permission
+def rule_progress(request, domain):
+    handler_id = request.GET.get("handler_id", None)
+    response = {
+        "success": False,
+    }
+
+    try:
+        assert isinstance(handler_id, basestring)
+        handler = CaseReminderHandler.get(handler_id)
+        assert handler.doc_type == "CaseReminderHandler"
+        assert handler.domain == domain
+        if handler.locked:
+            response["complete"] = False
+            client = get_redis_client()
+            current = client.get("reminder-rule-processing-current-%s" % handler_id)
+            total = client.get("reminder-rule-processing-total-%s" % handler_id)
+            response["current"] = int_or_none(current)
+            response["total"] = int_or_none(total)
+            response["success"] = True
+        else:
+            response["complete"] = True
+            response["success"] = True
+    except:
+        pass
+
+    return HttpResponse(json.dumps(response))
+
 

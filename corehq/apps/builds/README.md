@@ -11,11 +11,19 @@ Adding CommCare Builds to CommCare HQ
     5. Select the "Build Parameters" tab and write down the version (all
        the way at the bottom in the "Environment Variables" table.) This will
        be referenced as `$version` below
-    6. Select the "Artifacts" tab and click on "Download all (.zip)" on the
-       right hand side. Note the path of the downloaded file. This will be
-       referenced as `$build_path` below
-* Now `cd` into the commcare-hq root directory, and run the following command:
-  `python manage.py add_commcare_build $build_path $version $build_number`
+    6. Select the "Artifacts" tab and find "Download all (.zip)" on the
+       right hand side. If you use the commandline option below,
+       note the path of the downloaded file. This will be
+       referenced as `$build_path`.
+       If you use the web UI, copy the download URL. This will be called `build_url`.
+
+You now have two options for how to install it.
+
+* Command line:
+    * `cd` into the commcare-hq root directory, and run the following command:
+      `python manage.py add_commcare_build $build_path $version $build_number`
+* Web UI
+    * Go to `/builds/edit_menu/` and follow the instructions at the bottom for adding your build.
 
 Now make sure the build is available in the app settings.  Go to `/builds/edit_menu/`, then add the version and a label. You can also set the default here to be the version you've added.
 

@@ -129,9 +129,9 @@
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -222,9 +222,7 @@
         {% if edit %}
         <div class="span1">
             <h3>
-                <a href="./source/" class="btn btn-primary" onclick="
-                    _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
-                ">
+                <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
                     <i class="icon-pencil"></i>
                     {% trans "Edit" %}
                 </a>

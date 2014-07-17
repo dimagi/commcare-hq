@@ -233,9 +233,9 @@
 {% block head %}
     {{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
-    <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -333,9 +333,7 @@
 
     {% if edit %}
     <div class="btn-group">
-        <a href="./source/" class="btn btn-primary" onclick="
-            _gaq.push(['_trackEvent', 'App Builder', 'Open Form', 'Edit Label']);
-        ">
+        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>
@@ -429,6 +427,7 @@
         <div class="tab-pane" id="advanced">
             <h4>XForm</h4>
             <ul class="nav nav-pills nav-stacked">
+{% if edit %}
                 <li>
                     <a class="dialog_opener" href="#">
                         <i class="icon-arrow-up"></i>
@@ -442,6 +441,7 @@
                         </form>
                     </div>
                 </li>
+{% endif %}
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
                        href="{% url "get_user_registration_source" domain app.id %}?download=true"
@@ -483,6 +483,7 @@
                     </div>
                 </li>
             </ul>
+{% if edit %}
             <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
                 <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
                 <select name='to_module_id'>{% for mod in app.get_modules %}
@@ -490,6 +491,7 @@
                 {% endfor %}</select>
                 <button class='btn btn-primary' type="submit">Copy</button>
             </form>
+{% endif %}
         </div>
         </div>
     </div>

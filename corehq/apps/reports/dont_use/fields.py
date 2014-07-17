@@ -2,30 +2,18 @@
 DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
-import datetime
 from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 import warnings
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.models import Location, Program
-from corehq.apps.domain.models import Domain, LICENSES
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.orgs.models import Organization
+from corehq.apps.commtrack.models import Program
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.datespan import datespan_in_request
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
-from django.conf import settings
-import json
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
-from django.core.urlresolvers import reverse
+from corehq.apps.reports.cache import CacheableRequestMixIn
 import uuid
 from corehq.apps.users.models import WebUser
 
@@ -114,25 +102,7 @@ class FilterUsersField(ReportField):
 
     @classmethod
     def get_user_filter(cls, request):
-        ufilter = group = individual = None
-        try:
-            if request.GET.get('ufilter', ''):
-                ufilter = request.GET.getlist('ufilter')
-            group = request.GET.get('group', '')
-            individual = request.GET.get('individual', '')
-        except KeyError:
-            pass
-        except AttributeError:
-            pass
-
-        show_filter = True
-        toggle = HQUserType.use_defaults()
-
-        if not cls.always_show_filter and (group or individual):
-            show_filter = False
-        elif ufilter:
-            toggle = HQUserType.use_filter(ufilter)
-        return toggle, show_filter
+        return get_user_toggle(request)
 
 
 class SelectMobileWorkerMixin(object):

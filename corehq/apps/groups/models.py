@@ -3,7 +3,7 @@ from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from django.conf import settings
 
 
@@ -215,6 +215,10 @@ class Group(UndoableDocument):
 
     def is_member_of(self, domain):
         return self.domain == domain
+
+    @property
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
 
     def __repr__(self):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
