@@ -15,8 +15,8 @@ SQLAlchemy. Here's an example usage:
         .size(self.pagination.count)\
         .start(self.pagination.start)
     result = q.run()
-    total_docs = result.total()
-    hits = result.hits()
+    total_docs = result.total
+    hits = result.hits
 
 Generally useful filters and queries should be abstracted away for re-use,
 but you can always add your own like so:
