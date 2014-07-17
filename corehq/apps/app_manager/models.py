@@ -3152,18 +3152,56 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
+        to_module = self.get_module(to_module_id)
+        self._copy_form(from_module, form, to_module)
+
+    def _copy_form(self, from_module, form, to_module):
         if not form.source:
             raise BlankXFormError()
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        to_module = self.get_module(to_module_id)
+
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
+
+    def convert_module_to_advanced(self, module_id):
+        from_module = self.get_module(module_id)
+
+        case_details = deepcopy(from_module.case_details.to_json())
+        to_module = AdvancedModule(
+            name=from_module.name,
+            forms=[],
+            case_type=from_module.case_type,
+            case_label=from_module.case_label,
+            put_in_root=from_module.put_in_root,
+            case_list=from_module.case_list,
+            case_details=DetailPair.wrap(case_details),
+            product_details=DetailPair(
+                short=Detail(
+                    columns=[
+                        DetailColumn(
+                            format='plain',
+                            header={'en': ugettext("Product")},
+                            field='name',
+                            model='product',
+                        ),
+                    ],
+                ),
+                long=Detail(),
+            ),
+        )
+        to_module.get_or_create_unique_id()
+        to_module = self.add_module(to_module)
+
+        for form in from_module.get_forms():
+            self._copy_form(from_module, form, to_module)
+
+        return to_module
 
     @cached_property
     def has_case_management(self):
