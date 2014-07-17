@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -1726,9 +1727,14 @@ def rule_progress(request, domain):
         assert handler.domain == domain
         if handler.locked:
             response["complete"] = False
-            client = get_redis_client()
-            current = client.get("reminder-rule-processing-current-%s" % handler_id)
-            total = client.get("reminder-rule-processing-total-%s" % handler_id)
+            current = None
+            total = None
+            # It shouldn't be necessary to lock this out, but a deadlock can
+            # happen in rare cases without it
+            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
+                client = get_redis_client()
+                current = client.get("reminder-rule-processing-current-%s" % handler_id)
+                total = client.get("reminder-rule-processing-total-%s" % handler_id)
             response["current"] = int_or_none(current)
             response["total"] = int_or_none(total)
             response["success"] = True
