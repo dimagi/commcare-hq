@@ -27,10 +27,15 @@ def case_changed(case_id, handler_ids, retry_num=0):
         _case_changed(case_id, handler_ids)
     except Exception:
         if retry_num <= CASE_CHANGED_RETRY_MAX:
-            # Try running the rule update again
-            case_changed.apply_async(args=[case_id, handler_ids],
-                kwargs={"retry_num": retry_num + 1},
-                countdown=(60*CASE_CHANGED_RETRY_INTERVAL))
+            try:
+                # Try running the rule update again
+                case_changed.apply_async(args=[case_id, handler_ids],
+                    kwargs={"retry_num": retry_num + 1},
+                    countdown=(60*CASE_CHANGED_RETRY_INTERVAL))
+            except Exception:
+                notify_exception(None,
+                    message="Error processing reminder rule updates for case %s" %
+                    case_id)
         else:
             notify_exception(None,
                 message="Error processing reminder rule updates for case %s" %
