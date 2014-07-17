@@ -51,13 +51,23 @@
 {% endblock %}
 
 {% block group-info %}
+{% if group.is_deleted %}
+    <div class="alert alert-info">{% trans "Whoa, how did you get here? This group has been deleted already. If you would like to undelete it you can do so below."%}</div>
+    <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
+        <button class="btn btn-primary disable-on-submit" type="submit">
+            {% blocktrans with group.name as group_name %}
+                Restore Group "{{group_name}}"
+            {% endblocktrans %}
+        </button>
+    </form>
+{% else %}
 <div class="row-fluid">
     <div class="span12">
         <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count group.users|length as num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> {% trans "Edit Settings" %}</a>
             <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url "delete_group" domain group.get_id %}" method="post">
-                <button class="btn btn-danger" type="submit">
+                <button class="btn btn-danger disable-on-submit" type="submit">
                     {% blocktrans with group.name as group_name %}
                         <i class="icon icon-white icon-remove"></i> Delete Group "{{group_name}}"
                     {% endblocktrans %}
@@ -109,9 +119,9 @@
                 </div>
             </form>
         </div>
-
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block group-view %}
@@ -128,4 +138,3 @@
         <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Information" %}</button></div>
     </form>
 {% endblock %}
-
