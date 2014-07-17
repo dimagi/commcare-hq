@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from django.views.decorators.http import require_POST, require_GET
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.template.defaultfilters import yesno
@@ -59,10 +59,9 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 from phonelog.utils import device_users_by_xform
-from pillowtop import get_all_pillows_json
+from pillowtop import get_all_pillows_json, get_pillow_by_name
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
-from corehq.toggles import IS_DEVELOPER
 
 from .multimech import GlobalConfig
 
@@ -659,6 +658,15 @@ def system_info(request):
     context.update(check_es_cluster_health())
 
     return render(request, "hqadmin/system_info.html", context)
+
+@require_POST
+@require_superuser_or_developer
+def reset_pillow_checkpoint(request):
+    pillow = get_pillow_by_name(request.POST["pillow_name"])
+    if pillow:
+        pillow.reset_checkpoint()
+
+    return redirect("system_info")
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
