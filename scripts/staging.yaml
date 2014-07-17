@@ -11,15 +11,15 @@ branches:
   - offline-install-multimedia  # Danny 5/28
   - logos # Nick P 5/28
   - 109909-case-performance  # ethan/cory 5/30
-  - switch_to_site_code # tw 6/17
+#  - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - formsql # SK 7/7
   - coredb # SK 7/7
   - all-filter-hack # Noah 7/7
-#  - universal-analytics-upgrade # Nick P 7/8
-  - formviewbase+universal-analytics-upgrade # SK 7/9
+  - formviewbase
   - module-view # SK 7/10
   - dynmic-opm # sravan 7/10
+  - product-excel # tw 7/16
 submodules:
   submodules/couchlog-src:
     branches:
@@ -37,6 +37,7 @@ submodules:
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
-#  submodules/dimagi-utils-src:
-#    branches:
+  submodules/dimagi-utils-src:
+    branches:
+      - excel-importer-tooling # tw 7/16
 #      - json_response-status

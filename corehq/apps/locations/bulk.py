@@ -55,10 +55,9 @@ def top_level_location_types(domain):
 
 
 class LocationImporter(object):
-    def __init__(self, domain, worksheets, task):
+    def __init__(self, domain, excel_importer):
         self.domain = domain
-        self.worksheets = worksheets
-        self.task = task
+        self.excel_importer = excel_importer
 
         self.processed = 0
         self.results = []
@@ -66,8 +65,10 @@ class LocationImporter(object):
 
         self.parent_child_map = parent_child(self.domain)
 
-        self.total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
-        self.types = [ws.worksheet.title for ws in worksheets]
+        self.total_rows = sum(
+            ws.worksheet.get_highest_row() for ws in self.excel_importer.worksheets
+        )
+        self.types = [ws.worksheet.title for ws in self.excel_importer.worksheets]
         self.top_level_types = top_level_location_types(domain)
 
     def run(self):
@@ -78,7 +79,9 @@ class LocationImporter(object):
 
     def import_loc_type(self, loc_type):
         if loc_type in self.types:
-            self.import_worksheet(self.worksheets[self.types.index(loc_type)])
+            self.import_worksheet(
+                self.excel_importer.worksheets[self.types.index(loc_type)]
+            )
 
             if loc_type in self.parent_child_map:
                 for child_type in self.parent_child_map[loc_type]:
@@ -96,9 +99,7 @@ class LocationImporter(object):
                 )
             )
         else:
-            data = list(worksheet)
-
-            for loc in data:
+            for loc in worksheet:
                 if loc['site_code'] and loc['site_code'] in self.seen_site_codes:
                     self.results.append(_(
                         "Location {name} with site code {site_code} could not \
@@ -118,18 +119,12 @@ class LocationImporter(object):
                         loc,
                         self.parent_child_map
                     )['message'])
-                if self.task:
-                    self.processed += 1
-                    DownloadBase.set_progress(
-                        self.task,
-                        self.processed,
-                        self.total_rows
-                    )
+                self.excel_importer.add_progress()
 
 
-def import_locations(domain, worksheets, task=None):
-    importer = LocationImporter(domain, worksheets, task)
-    results = importer.run()
+def import_locations(domain, excel_importer):
+    location_importer = LocationImporter(domain, excel_importer)
+    results = location_importer.run()
 
     return results
 

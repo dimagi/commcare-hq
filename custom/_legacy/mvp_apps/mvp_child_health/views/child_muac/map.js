@@ -18,11 +18,13 @@ function (doc) {
             }
 
             if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY) {
-                if (indicators.cur_muac && indicators.cur_muac.value) {
+                if ((indicators.cur_muac && indicators.cur_muac.value) ||
+                    (indicators.koraro_cur_muac && indicators.koraro_cur_muac.value)) {
                     try {
                         var cur_muac = parseFloat(indicators.cur_muac.value);
+                        var koraro_cur_muac = parseFloat(indicators.koraro_cur_muac.value);
                         last_muac_indicators["muac_reading"] = case_id;
-                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac <12.5)) {
+                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac <12.5) || (koraro_cur_muac <12)) {
                             last_muac_indicators["muac_wasting"] = case_id;
                         }
                     } catch (e) {
@@ -34,13 +36,15 @@ function (doc) {
                 }
             }
 
-            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY && indicators.cur_muac
-                && indicators.cur_muac.value && visit_diff < 30*MS_IN_DAY) {
+            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY && ((indicators.cur_muac
+                && indicators.cur_muac.value) || (indicators.koraro_cur_muac
+                    && indicators.koraro_cur_muac.value)) && visit_diff < 30*MS_IN_DAY) {
                 try {
                     var cur_muac_under5 = parseFloat(indicators.cur_muac.value);
+                    var koraro_cur_muac_u5 = parseFloat(indicators.koraro_cur_muac.value);
                     visit_indicators["active_gam"] = {
                         "_id": case_id,
-                        "value": (cur_muac_under5 < 125.0 && cur_muac_under5 > 49.0) ? 1 : 0 || (cur_muac_under5 < 12.5) ? 1 : 0
+                        "value": (cur_muac_under5 < 125.0 && cur_muac_under5 > 49.0) ? 1 : 0 || (cur_muac_under5 < 12.5) ? 1 : 0 || (koraro_cur_muac_u5 < 12.0) ? 1 : 0
                     }
                 } catch (e) {
                     // do nothing

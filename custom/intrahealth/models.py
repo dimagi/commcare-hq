@@ -1,9 +1,9 @@
 import fluff
 from couchforms.models import XFormInstance
-from fluff.filters import ORFilter
+from fluff.filters import ORFilter, ANDFilter
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products
+    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter
 
 
 def _get_all_forms():
@@ -52,7 +52,11 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
 
 class IntraHealthFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    document_filter = ANDFilter([
+        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
+        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district_name'),
+        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
+    ])
     domains = INTRAHEALTH_DOMAINS
     save_direct_to_sql = True
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
@@ -71,7 +75,10 @@ class IntraHealthFluff(fluff.IndicatorDocument):
 
 class RecapPassageFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    document_filter = ANDFilter([
+        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
+        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
+    ])
 
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)

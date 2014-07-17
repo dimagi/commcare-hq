@@ -39,11 +39,12 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
 
         total_row = []
         charts = []
+        self.data_source = data_provider
         if self.needs_filters:
             headers = []
             rows = []
         else:
-            if isinstance(data_provider, ConventureData):
+            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData):
                 columns = [c.data_tables_column for c in data_provider.columns]
                 headers = DataTablesHeader(*columns)
                 rows = data_provider.rows
@@ -108,21 +109,47 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
                 charts.append({'x': s, 'y': data[i+1]})
             chart.add_dataset('products', charts)
 
+    @property
+    def export_table(self):
+        reports = [r['report_table'] for r in self.report_context['reports']]
+        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
+
 class TableuDeBoardReport(MultiReport):
     title = "Tableu De Bord"
     fields = [DatespanFilter, LocationFilter]
     name = "Tableu De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
+    exportable = True
 
     @property
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [
-            ConventureData(config=config),
-            DispDesProducts(config=config),
-            ConsommationData(config=config),
-            TauxConsommationData(config=config),
-            NombreData(config=config)
-        ]
+        if 'district_id' in config:
+            return [
+                ConventureData(config=config),
+                ConsommationData(config=config),
+                TauxConsommationData(config=config),
+                NombreData(config=config)
+            ]
+        else:
+            return [
+                ConventureData(config=config),
+                DispDesProducts(config=config),
+                ConsommationData(config=config),
+                TauxConsommationData(config=config),
+                NombreData(config=config)
+            ]
