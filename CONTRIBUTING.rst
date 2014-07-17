@@ -12,7 +12,7 @@ any you feel equipped to do.  When you update or add comments to an issue
 please mention **@dimagiupdate** to send an alert to our internal issue
 tracking system.  Before submitting a PR, review our `Contributor
 Checklist`_.  You may also be interested in our `CommCare Developers`_
-email group.
+email group if you have questions or need feedback.
 
 Bug Reports
 -----------
