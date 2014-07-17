@@ -2,6 +2,23 @@ from .es_query import HQESQuery
 from . import filters
 
 
+class FormsES(HQESQuery):
+    index = 'forms'
+    default_filters = {
+        'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
+        'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
+        'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
+    }
+    @property
+    def builtin_filters(self):
+        return [
+            xmlns,
+            app,
+            submitted,
+            completed,
+        ] + super(FormsES, self).builtin_filters
+
+
 def xmlns(xmlns):
     return filters.term('xmlns.exact', xmlns)
 

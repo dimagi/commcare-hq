@@ -1,15 +1,12 @@
-"""
-This file is a decent reference for seeing how the query builder maps to
-the eventual elasticsearch query.
-"""
 import json
 from unittest import TestCase
 
-from .es_query import HQESQuery
+from .es_query import HQESQuery, ESQuerySet
+from . import filters
 from . import forms, users
 
 
-class TestHQESQuery(TestCase):
+class TestESQuery(TestCase):
     maxDiff = 1000
 
     def checkQuery(self, query, json_output):
@@ -80,6 +77,8 @@ class TestHQESQuery(TestCase):
                 "filtered": {
                     "filter": {
                         "and": [
+                            {"term": {"domain.exact": "zombocom"}},
+                            {"term": {"xmlns.exact": "banana"}},
                             {"term": {"doc_type": "xforminstance"}},
                             {"not": {"missing":
                                 {"field": "xmlns"}}},
@@ -91,9 +90,10 @@ class TestHQESQuery(TestCase):
                 }
             }
         }
-        query = forms.FormES()
-        # TODO add filters
-        # self.checkQuery(query, json_output)
+        query = forms.FormsES()\
+                .filter(filters.domain("zombocom"))\
+                .xmlns('banana')
+        self.checkQuery(query, json_output)
 
 
 class TestESQuerySet(TestCase):
@@ -129,6 +129,27 @@ class TestESQuerySet(TestCase):
             },
         u'timed_out': False,
         u'took': 4
-        }
-    example_error = {u'error': u'IndexMissingException[[xforms_123jlajlaf] missing]',
-             u'status': 404}
+    }
+
+    def test_response(self):
+        hits = [
+            {
+                u'app_id': u'fe8481a39c3738749e6a4766fca99efd',
+                u'doc_type': u'xforminstance',
+                u'domain': u'mikesproject',
+                u'xmlns': u'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
+            },
+            {
+                u'app_id': u'3d622620ca00d7709625220751a7b1f9',
+                u'doc_type': u'xforminstance',
+                u'domain': u'mikesproject',
+                u'xmlns': u'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
+            }
+        ]
+        fields = [u'app_id', u'doc_type', u'domain', u'xmlns']
+        response = ESQuerySet(
+            self.example_response,
+            HQESQuery('forms').fields(fields)
+        )
+        self.assertEquals(response.total, 5247)
+        self.assertEquals(response.hits, hits)
