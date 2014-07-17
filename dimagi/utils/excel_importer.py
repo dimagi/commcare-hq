@@ -3,7 +3,11 @@ from soil import DownloadBase
 
 
 class ExcelImporter(object):
-    # TODO make sure people can't instantiate ExcelImporter directly
+    """
+    Base class for `SingleExcelImporter` and `MultiExcelImporter`.
+    This is not meant to be used directly.
+    """
+
     def __init__(self, task, file_ref_id):
         self.task = task
         self.progress = 0
@@ -25,6 +29,11 @@ class ExcelImporter(object):
 
 
 class SingleExcelImporter(ExcelImporter):
+    """
+    Manage importing from an excel file with only one
+    worksheet.
+    """
+
     def __init__(self, *args, **kwargs):
         super(SingleExcelImporter, self).__init__(*args, **kwargs)
         self.worksheet = self.workbook.worksheets[0]
@@ -32,6 +41,11 @@ class SingleExcelImporter(ExcelImporter):
 
 
 class MultiExcelImporter(ExcelImporter):
+    """
+    Manage importing from an excel file with multiple
+    relevant worksheets.
+    """
+
     def __init__(self, *args, **kwargs):
         super(MultiExcelImporter, self).__init__(*args, **kwargs)
         self.worksheets = self.workbook.worksheets
