@@ -1653,6 +1653,21 @@ class AdvancedModule(ModuleBase):
                     case_properties=update.update if update else {},
                     preload=convert_preload(preload.preload) if preload else {}
                 )
+
+                if from_module.parent_select.active:
+                    gen = suite_xml.SuiteGenerator(self.get_app())
+                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    for n, link in enumerate(reversed(list(enumerate(select_chain)))):
+                        i, module = link
+                        new_form.actions.load_update_cases.append(LoadUpdateAction(
+                            case_type=module.case_type,
+                            case_tag='_'.join(['parent'] * (i + 1)),
+                            details_module=module.unique_id,
+                            parent_tag='_'.join(['parent'] * (i + 2)) if n > 0 else ''
+                        ))
+
+                    base_action.parent_tag = 'parent'
+
                 if close:
                     base_action.close_condition = close.condition
                 new_form.actions.load_update_cases.append(base_action)
