@@ -1,7 +1,9 @@
+from decimal import Decimal
 import os
 from datetime import date, datetime
 from django.test import TestCase
 from couchforms import create_xform_from_xml
+from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
 
@@ -28,9 +30,10 @@ class TestMeta(TestCase):
             'timeStart': '2010-07-22T13:54:27Z',
             'deprecatedID': None,
             'deviceID': None,
-            'clinic_id': u'5020280'
+            'clinic_id': u'5020280',
+            'location': None,
         })
-        
+
     def testDecimalAppVersion(self):
         '''
         Tests that an appVersion that looks like a decimal:
@@ -54,6 +57,7 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': None,
             'clinic_id': u'5020280',
+            'location': None,
         })
 
     def testMetaBadUsername(self):
@@ -72,7 +76,8 @@ class TestMeta(TestCase):
                 'appVersion': u'2.0',
                 'timeStart': '2013-07-19T21:21:31Z',
                 'deprecatedID': None,
-                'deviceID': u'commconnect'
+                'deviceID': u'commconnect',
+                'location': None,
             })
             xform.delete()
 
@@ -93,7 +98,39 @@ class TestMeta(TestCase):
                 'appVersion': u'2.0',
                 'timeStart': '2013-07-19T21:21:31Z',
                 'deprecatedID': None,
-                'deviceID': u'commconnect'
+                'deviceID': u'commconnect',
+                'location': None,
+            })
+            xform.delete()
+
+    def test_gps_location(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "gps_location.xml")
+        xml_data = open(file_path, "rb").read()
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
+            self.assertEqual(
+                xform.metadata.location,
+                # '42.3739063 -71.1109113 0.0 886.0'
+                GeoPoint(
+                    latitude=Decimal('42.3739063'),
+                    longitude=Decimal('-71.1109113'),
+                    altitude=Decimal('0.0'),
+                    accuracy=Decimal('886.0'),
+                )
+            )
+
+            j = xform.metadata.to_json()
+            self.assertEqual(xform.metadata.to_json(), {
+                'username': u'some_username@test.commcarehq.org',
+                'doc_type': 'Metadata',
+                'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
+                'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+                'timeEnd': '2013-07-20T00:02:27Z',
+                'appVersion': u'2.0',
+                'timeStart': '2013-07-19T21:21:31Z',
+                'deprecatedID': None,
+                'deviceID': u'commconnect',
+                'location': '42.3739063 -71.1109113 0.0 886.0',
             })
             xform.delete()
 
