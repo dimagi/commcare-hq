@@ -11,7 +11,8 @@ for public facing issues.  Feel free to browse the issues there and tackle
 any you feel equipped to do.  When you update or add comments to an issue
 please mention **@dimagiupdate** to send an alert to our internal issue
 tracking system.  Before submitting a PR, review our `Contributor
-Checklist`_.
+Checklist`_.  You may also be interested in our `CommCare Developers`_
+email group.
 
 Bug Reports
 -----------
@@ -28,3 +29,4 @@ We manage feature requests on `uservoice`_.
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
 .. _uservoice: http://dimagi.uservoice.com/
 .. _Contributor Checklist: https://github.com/dimagi/commcare-hq/wiki/Contributor-Checklists
+.. _CommCare Developers: https://groups.google.com/forum/#!forum/commcare-developers
