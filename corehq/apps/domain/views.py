@@ -1747,11 +1747,8 @@ class AddFormRepeaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
     def make_repeater(self):
-        repeater = self.repeater_class(
-            domain=self.domain,
-            url=self.add_repeater_form.cleaned_data['url'],
-            exclude_device_reports=self.add_repeater_form.cleaned_data['exclude_device_reports']
-        )
+        repeater = super(AddFormRepeaterView, self).make_repeater()
+        repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
         return repeater
 
 
