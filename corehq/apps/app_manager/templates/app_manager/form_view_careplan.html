@@ -1,124 +1,25 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/form_view_base.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+{% block case_management_js %}
+    var edit = {% if edit %}true{% else %}false{% endif %};
 
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-    <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-    <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=form image_default="jr://file/commcare/image/form_name.png" audio_default="jr://file/commcare/audio/form_name.mp3" %}
-    <script>
-        $(function(){
-            var edit = {% if edit %}true{% else %}false{% endif %};
-            var form_empty = {% if form.source and xform_questions %}false{% else %}true{% endif %};
-
-            var careplan = new CareplanConfig.Careplan({
-                home: $('#case-config-ko'),
-                edit: edit,
-                mode: "{{ mode }}",
-                caseType: {{ form.get_case_type|JSON }},
-                questions: {{ xform_questions|JSON }},
-                fixedQuestions: {{ fixed_questions|JSON }},
-                customCaseUpdates: {{ custom_case_properties|JSON }},
-                case_preload: {{ case_preload|JSON }},
-                reserved_words: {{ case_reserved_words_json|JSON }},
-                caseType: {{ form.get_case_type|JSON }},
-                save_url: "{% url "corehq.apps.app_manager.views.edit_careplan_form_actions" app.domain app.id module.id nav_form.id %}",
-                moduleCaseTypes: {{ module_case_types|JSON }},
-                propertiesMap: {{ case_properties|JSON }}
-            });
-            careplan.init();
-        });
-    </script>
-    <script>
-        $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
-        });
-    </script>
-{% endblock %}
-
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-
-{% block head %}
-    {{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-{% endblock %}
-{% block form-view %}
-
-    <div id="build_errors"></div>
-
-    <h3>
-        <i class="icon icon-file-alt"></i>
-        <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    </h3>
-
-    {% if edit %}
-    <div class="btn-group">
-        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
-            <i class="icon-pencil"></i>
-            {% trans "Edit" %}
-        </a>
-    </div>
-    <hr/>
-    {% endif %}
-
-    <div class="tabbable">
-        <ul class="nav nav-tabs">
-            <li class="active">
-                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
-            </li>
-            <li>
-                <a href="#careplan-configuration" data-toggle="tab">
-                    {% trans "Careplan config" %}
-                </a>
-            </li>
-        </ul>
-        <div class="tab-content">
-        <div class="tab-pane active" id="form-settings">
-            <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
-                <div class="save-button-holder clearfix"></div>
-                <div class="control-group">
-                    <label class="control-label">{% trans "Form Name" %}</label>
-                    <div class="controls">
-                        {% if edit %}
-                            {{ form.name|input_trans:langs|safe }}
-                        {% else %}
-                            {{ form.name|html_trans:langs|safe }}
-                        {% endif %}
-                    </div>
-                </div>
-                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
-            </form>
-        </div>
-        <div class="tab-pane" id="careplan-configuration">
-        {% if form_errors or xform_validation_errored %}
-            <p class="alert alert-warning">
-                {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-            </p>
-        {% else %}
-            {% if form.source %}
-                <div class="casexml" id="casexml_home">
-                    {% include 'app_manager/partials/case_config_careplan.html' %}
-                </div>
-            {% else %}
-                <p class="alert alert-warning">
-                    {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-                </p>
-            {% endif %}
-        {% endif %}
-        </div>
-        </div>
-    </div>
-    <div id="questions"></div>
+    var careplan = new CareplanConfig.Careplan({
+        home: $('#case-config-ko'),
+        edit: edit,
+        mode: "{{ mode }}",
+        caseType: {{ form.get_case_type|JSON }},
+        questions: {{ xform_questions|JSON }},
+        fixedQuestions: {{ fixed_questions|JSON }},
+        customCaseUpdates: {{ custom_case_properties|JSON }},
+        case_preload: {{ case_preload|JSON }},
+        reserved_words: {{ case_reserved_words_json|JSON }},
+        caseType: {{ form.get_case_type|JSON }},
+        save_url: "{% url "corehq.apps.app_manager.views.edit_careplan_form_actions" app.domain app.id module.id nav_form.id %}",
+        moduleCaseTypes: {{ module_case_types|JSON }},
+        propertiesMap: {{ case_properties|JSON }}
+    });
+    careplan.init();
 {% endblock %}

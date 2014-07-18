@@ -211,7 +211,7 @@ class Product(Document):
         return property_dict
 
     @classmethod
-    def from_csv(cls, row):
+    def from_excel(cls, row):
         if not row:
             return None
 
@@ -221,11 +221,11 @@ class Product(Document):
         else:
             p = cls()
 
-        p.code = row.get('product_id')
+        p.code = str(row.get('product_id'))
 
         for attr in cls._csv_attrs():
             if attr in row or (isinstance(attr, tuple) and attr[0] in row):
-                val = row.get(attr, '').decode('utf-8')
+                val = str(row.get(attr, '') or '').decode('utf-8')
                 if isinstance(attr, tuple):
                     attr, f = attr
                     val = f(val)

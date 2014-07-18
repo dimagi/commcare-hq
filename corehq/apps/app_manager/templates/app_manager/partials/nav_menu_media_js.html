@@ -9,8 +9,12 @@
             mediaAudioAllowed: {{ app.profile.features.sense|JSON }} == "true"
         };
 
-        ko.applyBindings(viewModel, $('#media_image').get(0));
-        ko.applyBindings(viewModel, $('#media_audio').get(0));
+        if ($('#media_image').length) {
+            ko.applyBindings(viewModel, $('#media_image').get(0));
+        }
+        if ($('#media_audio').length) {
+            ko.applyBindings(viewModel, $('#media_audio').get(0));
+        }
         $(document).on('correction', function (e, key, value) {
             if (viewModel[key] !== undefined) {
                 viewModel[key](value);

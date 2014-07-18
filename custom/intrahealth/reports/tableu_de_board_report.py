@@ -39,11 +39,12 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
 
         total_row = []
         charts = []
+        self.data_source = data_provider
         if self.needs_filters:
             headers = []
             rows = []
         else:
-            if isinstance(data_provider, ConventureData):
+            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData):
                 columns = [c.data_tables_column for c in data_provider.columns]
                 headers = DataTablesHeader(*columns)
                 rows = data_provider.rows
