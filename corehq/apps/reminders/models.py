@@ -840,7 +840,9 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
+        if (case.closed or case.type != self.case_type or
+            case.doc_type.endswith("-Deleted") or self.deleted() or
+            (self.recipient == RECIPIENT_USER and not user)):
             if reminder:
                 reminder.retire()
         else:
