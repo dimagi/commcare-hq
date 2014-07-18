@@ -1,0 +1,32 @@
+<?xml version='1.0' ?>
+<data version="5" uiVersion="4" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://bihar.commcarehq.org/pregnancy/registration">
+	<Meta>
+		<DeviceID>ZQKXWCOE9S4C9K3BTENGJFWTJ</DeviceID>
+		<TimeStart>2011-12-27T21:07:34.445Z</TimeStart>
+		<TimeEnd>2011-12-27T21:07:51.085Z</TimeEnd>
+		<username>testuser</username>
+		<uid>05f9c90f-8e2e-4e3f-b392-002058c46b00</uid>
+		<chw_id>d5ce3a980b5b69e793445ec0e3b2138e</chw_id>
+		<CommCareVersion>v1.4.0dev (efb8c4-3c8aff-unvers-??-Generic/AnyPhone)
+			b:2011-Dec-27 r:--</CommCareVersion>
+	</Meta>
+	<n0:case case_id="14cc2770-2d1c-49c2-b252-22d6ecce385a"
+		date_modified="2011-12-27" user_id="d5ce3a980b5b69e793445ec0e3b2138e"
+		xmlns:n0="http://commcarehq.org/case/transaction/v2">
+		<n0:create>
+			<n0:case_type>cc_bihar_pregnancy</n0:case_type>
+			<n0:owner_id>347b31fab217f6f28e0c8d6ff4f0651b</n0:owner_id>
+			<n0:case_name>TEST</n0:case_name>
+		</n0:create>
+		<n0:update>
+			<n0:village>JGN.GM</n0:village>
+			<n0:edd>2012-02-27</n0:edd>
+			<n0:partner_name>JD.MH</n0:partner_name>
+			<n0:next_form>bp</n0:next_form>
+			<n0:next_due>2012-01-10</n0:next_due>
+		</n0:update>
+	</n0:case>
+	<mother_name>TEST</mother_name>
+	<done>OK</done>
+</data>

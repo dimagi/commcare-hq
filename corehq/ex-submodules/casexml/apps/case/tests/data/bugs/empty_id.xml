@@ -1,0 +1,29 @@
+<?xml version='1.0' ?>
+<anc version="8" uiVersion="2" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://www.commcarehq.org/case/test/">
+	<Meta>
+		<DeviceID>6YE3THZNAVT40K5XGQSF09WL1</DeviceID>
+		<timeStart>2011-02-15T22:00:52.312</timeStart>
+		<timeEnd>2011-02-15T22:01:18.957</timeEnd>
+		<username>user1</username>
+		<chw_id>82WS6S0JPCKFK82SPGF6W023L</chw_id>
+		<uid>3A6B9P0AYZD0OGC3U5XQ3HN45</uid>
+	</Meta>
+	<case>
+		<case_id></case_id>
+		<date_modified>2011-02-15T22:01:18.957</date_modified>
+		<create>
+			<case_type_id>care_anc</case_type_id>
+			<user_id>82WS6S0JPCKFK82SPGF6W023L</user_id>
+			<case_name>adgad</case_name>
+			<external_id>324</external_id>
+		</create>
+		<update>
+			<currentvisit>1</currentvisit>
+			<ga>8.857142857142858</ga>
+			<edd>11-09-2011</edd>
+			<caste>Reserved</caste>
+			<lnmp>2010-12-15</lnmp>
+			<registration_number>324</registration_number>
+		</update>
+	</case>
+</anc>
