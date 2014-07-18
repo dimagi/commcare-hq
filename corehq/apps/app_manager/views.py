@@ -801,7 +801,7 @@ def get_module_view_context_and_template(app, module):
 
             return details
 
-        return "app_manager/module_view.html", {
+        return "app_manager/module_view_advanced.html", {
             'details': get_details(),
         }
     else:

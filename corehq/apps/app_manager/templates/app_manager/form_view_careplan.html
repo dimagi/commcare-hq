@@ -3,6 +3,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js_extra %}
+    <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
+{% endblock %}
+
 {% block case_management_js %}
     var edit = {% if edit %}true{% else %}false{% endif %};
 
@@ -22,4 +26,8 @@
         propertiesMap: {{ case_properties|JSON }}
     });
     careplan.init();
+{% endblock %}
+
+{% block case_management_content %}
+    {% include 'app_manager/partials/case_config_careplan.html' %}
 {% endblock %}

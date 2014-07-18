@@ -1,0 +1,25 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+<div class="tab-pane active" id="form-settings">
+    <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
+        <div class="save-button-holder clearfix"></div>
+        <div class="control-group">
+            <label class="control-label">{% trans "Form Name" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    {{ form.name|input_trans:langs|safe }}
+                {% else %}
+                    {{ form.name|html_trans:langs|safe }}
+                {% endif %}
+            </div>
+        </div>
+        {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+        {% if allow_form_filtering %}
+            {% include "app_manager/partials/form_filter.html" %}
+        {% endif %}
+        {% if allow_form_workflow %}
+            {% include "app_manager/partials/form_workflow.html" %}
+        {% endif %}
+    </form>
+</div>

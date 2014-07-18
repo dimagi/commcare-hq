@@ -1,0 +1,10 @@
+{% extends "app_manager/module_view.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block settings_fields %}{{ block.super }}
+    {% if request|toggle_enabled:"VISIT_SCHEDULER" %}
+    {% include "app_manager/partials/enable_schedule.html" %}
+    {% endif %}
+{% endblock %}
