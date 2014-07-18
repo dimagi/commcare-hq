@@ -560,7 +560,8 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         default_langs = ['en']
         try:
             translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
-            return translation_doc.langs or default_langs
+            return (translation_doc.langs or default_langs
+                    if translation_doc is not None else default_langs)
         except ResourceNotFound:
             pass
         return default_langs
