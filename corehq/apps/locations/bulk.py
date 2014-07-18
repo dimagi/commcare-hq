@@ -44,22 +44,15 @@ class LocationCache(object):
                 self._existing_by_type[key][location.name] = location
 
 
-def import_locations(domain, worksheets, task=None):
-    processed = 0
-    total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
-
-    for worksheet in worksheets:
+def import_locations(domain, importer):
+    for worksheet in importer.worksheets:
         location_type = worksheet.worksheet.title
         if location_type not in defined_location_types(domain):
             yield "location with type %s not found, this worksheet will not be imported" % location_type
         else:
-            data = list(worksheet)
-
-            for loc in data:
+            for loc in worksheet:
                 yield import_location(domain, location_type, loc)['message']
-                if task:
-                    processed += 1
-                    DownloadBase.set_progress(task, processed, total_rows)
+                importer.add_progress()
 
 
 def import_location(domain, location_type, location_data):

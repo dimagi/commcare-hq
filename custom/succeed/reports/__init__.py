@@ -13,6 +13,8 @@ CM4 = 'http://openrosa.org/formdesigner/263cc99e9f0cdbc55d307359c7b45a1e555f35d1
 CM5 = 'http://openrosa.org/formdesigner/8abd54794d8c5d592100b8cdf1f642903b7f4abe'
 CM6 = 'http://openrosa.org/formdesigner/9b47556945c6476438c2ac2f0583e2ca0055e46a'
 CM7 = 'http://openrosa.org/formdesigner/4b924f784e8dd6a23045649730e82f6a2e7ce7cf'
+CM_NEW_TASK = 'http://openrosa.org/formdesigner/BBDEBCBD-5EC6-47F9-A8E3-5CCF74AB9EFE'
+CM_UPDATE_TASK = 'http://openrosa.org/formdesigner/2447a22e4a648d5510db9a4db65f3b60ac91ed98'
 HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1af'
 HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
 PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
@@ -60,6 +62,7 @@ CHW_APP_CHW1_MODULE = 2
 CHW_APP_CHW2_MODULE = 3
 CHW_APP_CM_MODULE = 4
 CHW_APP_MA_MODULE = 5
+CHW_APP_TASK_MODULE = 6
 
 VISIT_SCHEDULE = [
     {
@@ -331,6 +334,21 @@ SUBMISSION_SELECT_FIELDS = [
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 MEDICATION_DETAILS = ['MEDS_at_prescribed', 'MEDS_bp_prescribed', 'MEDS_cholesterol_prescribed', 'MEDS_depression_prescribed',
                       'MEDS_diabetes_prescribed', 'MEDS_smoking_prescribed', 'MEDS_other_prescribed']
+
+TASK_RISK_FACTOR = {
+    "stroke_literacy": "Stroke Literacy",
+    "blood_pressure": "Blood Pressure",
+    "cholesterol": "Cholesterol",
+    "diabetes": "Diabetes",
+    "psycho-social": "Psycho/social",
+    "healthy-eating": "Healthy Eating",
+    "physical_activity": "Physical activity",
+    "transportation": "Transportation",
+    "insurance": "Access to Insurance",
+    "alcohol-drug": "Alcohol and Drug Use",
+    "medication": "Medication Management",
+    "general": "General"
+}
 
 class DrilldownReportMixin(object):
 

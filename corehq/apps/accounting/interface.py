@@ -133,15 +133,17 @@ class SubscriptionInterface(AddItemInterface):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.StartDateFilter',
-              'corehq.apps.accounting.interface.EndDateFilter',
-              'corehq.apps.accounting.interface.DateCreatedFilter',
-              'corehq.apps.accounting.interface.SubscriberFilter',
-              'corehq.apps.accounting.interface.SalesforceContractIDFilter',
-              'corehq.apps.accounting.interface.ActiveStatusFilter',
-              'corehq.apps.accounting.interface.DoNotInvoiceFilter',
-              'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
-              ]
+    fields = [
+        'corehq.apps.accounting.interface.StartDateFilter',
+        'corehq.apps.accounting.interface.EndDateFilter',
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.ActiveStatusFilter',
+        'corehq.apps.accounting.interface.DoNotInvoiceFilter',
+        'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
+        'corehq.apps.accounting.interface.TrialStatusFilter',
+    ]
     hide_filters = False
 
     def validate_document_class(self):
@@ -220,6 +222,11 @@ class SubscriptionInterface(AddItemInterface):
                 'subscriptionadjustment__reason': SubscriptionAdjustmentReason.CREATE,
                 'subscriptionadjustment__method': filter_created_by,
             })
+
+        trial_status_filter = TrialStatusFilter.get_value(self.request, self.domain)
+        if trial_status_filter is not None:
+            is_trial = trial_status_filter == TrialStatusFilter.TRIAL
+            filters.update(is_trial=is_trial)
 
         for subscription in Subscription.objects.filter(**filters):
             try:

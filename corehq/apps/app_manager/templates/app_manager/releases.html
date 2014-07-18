@@ -63,11 +63,15 @@
     }
 
     function track_deploy_type_and_redirect(type, href) {
-        ga('send', 'event', 'App Manager', 'Deploy Type', type, {
-            'hitCallback': function () {
-                document.location = href;
-            }
-        });
+        {% if GOOGLE_ANALYTICS_ID %}
+            ga('send', 'event', 'App Manager', 'Deploy Type', type, {
+                'hitCallback': function () {
+                    document.location = href;
+                }
+            });
+        {% else %}
+            return true;
+        {% endif %}
     }
 </script>
 {% endblock %}
