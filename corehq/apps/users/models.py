@@ -968,7 +968,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     # Couch view wrappers
     @classmethod
     def all(cls):
-        return CouchUser.view("users/by_username", include_docs=True, recuce=False)
+        return CouchUser.view("users/by_username", include_docs=True, reduce=False)
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
