@@ -166,14 +166,14 @@ class RepeaterTest(TestCase):
         # This is deterministic but easily affected by minor code changes
 
         # check case stuff
-        self.assertEqual(self.log[1][:2], (self.case_repeater.url, 200))
-        self.assertIn('server-modified-on', self.log[1][3])
-        check_xml_line_by_line(self, self.log[1][2], case_block)
+        self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
+        self.assertIn('server-modified-on', self.log[3][3])
+        check_xml_line_by_line(self, self.log[3][2], case_block)
 
         # check form stuff
-        self.assertEqual(self.log[3][:3],
+        self.assertEqual(self.log[1][:3],
                          (self.form_repeater.url, 200, xform_xml))
-        self.assertIn('received-on', self.log[3][3])
+        self.assertIn('received-on', self.log[1][3])
 
         repeat_records = RepeatRecord.all(
             domain=self.domain,
