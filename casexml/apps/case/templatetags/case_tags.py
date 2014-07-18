@@ -196,7 +196,7 @@ def get_case_hierarchy(case, type_info):
         seen = seen or set()
         seen.add(case._id)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in case.indices
+            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
             if i.referenced_id not in seen
         ]
 

@@ -202,6 +202,26 @@ class CaseBugTest(TestCase):
 
 class TestCaseHierarchy(TestCase):
 
+    def test_normal_index(self):
+        cp = CommCareCase(
+            _id='parent',
+            name='parent',
+            type='parent',
+        )
+        cp.save()
+
+        cc = CommCareCase(
+            _id='child',
+            name='child',
+            type='child',
+            indices=[CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')],
+        )
+        cc.save()
+
+        hierarchy = get_case_hierarchy(cp, {})
+        self.assertEqual(2, len(hierarchy['case_list']))
+        self.assertEqual(1, len(hierarchy['child_cases']))
+
     def test_recursive_indexes(self):
         c = CommCareCase(
             _id='infinite-recursion',
