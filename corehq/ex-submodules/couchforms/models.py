@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import base64
 
 import datetime
 import hashlib
@@ -240,6 +241,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return node and option in node.split(" ")
     
     def get_xml(self):
+        if ATTACHMENT_NAME in self._attachments and 'data' in self._attachments[ATTACHMENT_NAME]:
+            return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])
         try:
             return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:

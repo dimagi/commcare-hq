@@ -29,14 +29,14 @@ def process_cases(xform, config=None):
     reconciling the case update history after the case is processed.
     """
 
-    config = config or CaseProcessingConfig()
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        return _process_cases(xform, config, case_db)
+        return process_cases_with_casedb(xform, case_db, config=config)
 
 
-def _process_cases(xform, config, case_db):
+def process_cases_with_casedb(xform, case_db, config=None):
+    config = config or CaseProcessingConfig()
     cases = get_or_update_cases(xform, case_db).values()
 
     if config.reconcile:
@@ -87,14 +87,6 @@ def _process_cases(xform, config, case_db):
                 case.reconcile_actions(rebuild=True)
             except ReconciliationError:
                 pass
-        case.force_save()
-
-    # set flags for indicator pillows and save
-    xform.initial_processing_complete = True
-    # if there are pillows or other _changes listeners competing to update
-    # this form, override them. this will create a new entry in the feed
-    # that they can re-pick up on
-    xform.save(force_update=True)
 
     return cases
 
