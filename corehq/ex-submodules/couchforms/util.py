@@ -425,16 +425,28 @@ class SubmissionPost(object):
                     unicode(e),
                 )
             )
-            return self.get_error_response(e.error_log)
+            return self.get_exception_response(e.error_log)
         else:
-            with lock_manager as doc:
-                return self.get_success_response(doc)
+            with lock_manager as instance:
+                if instance.doc_type == "XFormInstance":
+                    from casexml.apps.case import process_cases
+                    process_cases(instance)
+                    responses, errors = self.process_signals(instance)
+                    response = self.get_success_response(instance,
+                                                         responses, errors)
+                else:
+                    response = self.get_failure_response(instance)
 
-    def get_failed_auth_response(self):
-        return HttpResponseForbidden('Bad auth')
+                # this hack is required for ODK
+                response["Location"] = self.location
 
-    def success_actions_and_respond(self, doc):
-        feedback = successful_form_received.send_robust(sender='receiver', xform=doc)
+                # this is a magic thing that we add
+                response['X-CommCareHQ-FormID'] = instance.get_id
+                return response
+
+    @staticmethod
+    def process_signals(instance):
+        feedback = successful_form_received.send_robust(None, xform=instance)
         responses = []
         errors = []
         for func, resp in feedback:
@@ -443,10 +455,18 @@ class SubmissionPost(object):
                 logging.error((
                     u"Receiver app: problem sending "
                     u"post-save signal %s for xform %s: %s: %s"
-                ) % (func, doc._id, type(resp).__name__, error_message))
+                ) % (func, instance._id, type(resp).__name__, error_message))
                 errors.append(error_message)
             elif resp and isinstance(resp, ReceiverResult):
                 responses.append(resp)
+        return responses, errors
+
+    @staticmethod
+    def get_failed_auth_response():
+        return HttpResponseForbidden('Bad auth')
+
+    @staticmethod
+    def get_success_response(doc, responses, errors):
 
         if errors:
             # in the event of errors, respond with the errors,
@@ -471,27 +491,15 @@ class SubmissionPost(object):
             ).response()
         return response
 
-    def fail_actions_and_respond(self, doc):
+    @staticmethod
+    def get_failure_response(doc):
         return OpenRosaResponse(
             message=doc.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=201,
         ).response()
 
-    def get_success_response(self, instance):
-        if instance.doc_type == "XFormInstance":
-            response = self.success_actions_and_respond(instance)
-        else:
-            response = self.fail_actions_and_respond(instance)
-
-        # this hack is required for ODK
-        response["Location"] = self.location
-
-        # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = instance.get_id
-        return response
-
-    def get_error_response(self, error_log):
+    def get_exception_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
         self._attach_shared_props(error_doc)
         error_doc.save()
