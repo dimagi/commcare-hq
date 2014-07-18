@@ -8,8 +8,11 @@ from couchforms import fetch_and_wrap_form
 class TestFormArchiving(TestCase):
 
     def testArchive(self):
-        form = XFormInstance(form={'foo': 'bar'})
+        form = XFormInstance(
+            form={'foo': 'bar'}
+        )
         form.save()
+        form.put_attachment(name='form.xml', content='<data/>')
         self.assertEqual("XFormInstance", form.doc_type)
         self.assertEqual(0, len(form.history))
 
@@ -56,6 +59,8 @@ class TestFormArchiving(TestCase):
 
         form = XFormInstance(form={'foo': 'bar'})
         form.save()
+        form.put_attachment(name='form.xml', content='<data/>')
+
         self.assertEqual(0, archive_counter)
         self.assertEqual(0, restore_counter)
 
