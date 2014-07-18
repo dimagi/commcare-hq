@@ -229,8 +229,12 @@ class Excel2007ExportWriter(ExportWriter):
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://packages.python.org/openpyxl/optimized.html
-        sheet.append([dirty_chars.sub(u'?', unicode(v, encoding="utf-8"))
-                      for v in self.get_data(row)])
+        sheet.append(
+            [dirty_chars.sub(
+                u'?',
+                v if type(v) is unicode else unicode(v, encoding="utf-8"))
+             for v in self.get_data(row)]
+        )
 
     def _close(self):
         """
