@@ -1,4 +1,4 @@
-from casexml.apps.case import settings
+from django.test.utils import override_settings
 from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
@@ -24,13 +24,14 @@ OTHER_USER_ID = "someone_else"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
     """
     Shared functionality among tests
     """
 
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()

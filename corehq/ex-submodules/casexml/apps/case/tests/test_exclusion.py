@@ -1,18 +1,19 @@
 from django.test import TestCase
 import os
-from casexml.apps.case import settings
+from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case import process_cases
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing
     """
     
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testTopLevelExclusion(self):

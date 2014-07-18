@@ -1,7 +1,7 @@
 import uuid
 from django.test import TestCase
 import os
-from casexml.apps.case import settings
+from django.test.utils import override_settings
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -13,13 +13,14 @@ from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case import process_cases
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseBugTest(TestCase):
     """
     Tests bugs that come up in case processing
     """
-    
+
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testConflictingIds(self):
@@ -37,7 +38,7 @@ class CaseBugTest(TestCase):
         except Exception:
             pass
 
-        
+
     def testStringFormatProblems(self):
         """
         If two forms share an ID it's a conflict
@@ -49,8 +50,8 @@ class CaseBugTest(TestCase):
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
         process_cases(form)
-        
-        
+
+
     def testEmptyCaseId(self):
         """
         How do we do when submitting an empty case id?
@@ -65,7 +66,7 @@ class CaseBugTest(TestCase):
             self.fail("Empty Id should crash")
         except:
             pass
-            
+
 
     def _testCornerCaseDatatypeBugs(self, value):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
@@ -131,7 +132,7 @@ class CaseBugTest(TestCase):
         case = CommCareCase.get(form.xpath("form/case/@case_id"))
         # make sure the property is there, but empty
         self.assertEqual("", case.foo)
-        
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
                                  "duplicate_case_properties_2.xml")
         with open(file_path, "rb") as f:
@@ -141,7 +142,7 @@ class CaseBugTest(TestCase):
         case = CommCareCase.get(form.xpath("form/case/@case_id"))
         # make sure the property takes the last defined value
         self.assertEqual("2", case.bar)
-    
+
     def testMultipleCaseBlocks(self):
         """
         How do we do when submitting a form with multiple blocks for the same case?

@@ -1,17 +1,18 @@
 import uuid
 from django.test import TestCase
 from django.conf import settings
+from django.test.utils import override_settings
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from dimagi.utils.post import post_data
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseFromXFormTest(TestCase):
     
     def testCreate(self):
-        from casexml.apps.case import settings
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         case = bootstrap_case_from_xml(self, "create.xml")
         self._check_static_properties(case)
         self.assertEqual(False, case.closed)

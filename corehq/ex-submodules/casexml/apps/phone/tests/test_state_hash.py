@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 from casexml.apps.case.exceptions import BadStateException
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import SyncLog, User
@@ -11,6 +12,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 
 
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class StateHashTest(TestCase):
     
     def setUp(self):
@@ -45,7 +47,7 @@ class StateHashTest(TestCase):
         response = generate_restore_response(self.user, self.sync_log.get_id, version=V2,
                                              state_hash=str(wrong_hash))
         self.assertEqual(412, response.status_code)
-        
+
     def testMismatch(self):
         self.assertEqual(CaseStateHash(EMPTY_HASH), self.sync_log.get_state_hash())
         

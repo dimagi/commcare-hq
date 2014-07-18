@@ -11,7 +11,7 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
     ReconciliationError,
 )
-from casexml.apps.case import settings
+from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const

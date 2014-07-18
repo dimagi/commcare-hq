@@ -1,5 +1,6 @@
 from django.test import TestCase
 import os
+from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
@@ -7,18 +8,18 @@ from casexml.apps.case import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
-from casexml.apps.case import const, settings
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class Version2CaseParsingTest(TestCase):
     """
     Tests parsing v2 casexml
     """
     
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testParseCreate(self):

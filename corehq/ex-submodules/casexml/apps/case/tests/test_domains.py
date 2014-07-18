@@ -1,5 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case import settings
+from django.test.utils import override_settings
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
@@ -73,11 +73,8 @@ ALICE_DOMAIN = 'domain1'
 EVE_DOMAIN = 'domain2'
 
 
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class DomainTest(TestCase):
-
-    def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = True
-
     def testCantPwnCase(self):
         form = post_xform_to_couch(ALICE_XML)
         form.domain = ALICE_DOMAIN

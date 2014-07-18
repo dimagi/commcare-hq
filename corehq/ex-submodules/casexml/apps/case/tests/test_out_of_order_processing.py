@@ -1,5 +1,5 @@
 import os
-from casexml.apps.case import settings
+from django.test.utils import override_settings
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
@@ -13,10 +13,11 @@ def post_util(**kwargs):
     kwargs['form_extras'] = form_extras
     return real_post_util(**kwargs)
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OutOfOrderCaseTest(TestCase):
 
     def setUp(self):
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         delete_all_cases()
 
     def testOutOfOrderSubmissions(self):
