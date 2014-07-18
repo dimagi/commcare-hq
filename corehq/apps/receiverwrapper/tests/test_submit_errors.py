@@ -48,7 +48,7 @@ class SubmissionErrorTest(TestCase):
                 "xml_submission_file": "this isn't a file"
         })
         self.assertEqual(400, res.status_code)
-        self.assertTrue("xml_submission_file" in res.content)
+        self.assertIn("xml_submission_file", res.content)
             
     def testSubmitDuplicate(self):
         file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
@@ -57,14 +57,14 @@ class SubmissionErrorTest(TestCase):
                     "xml_submission_file": f
             })
             self.assertEqual(201, res.status_code)
-            self.assertTrue("Thanks for submitting" in res.content)
+            self.assertIn("Thanks for submitting", res.content)
         
         with open(file) as f:
             res = self.client.post(self.url, {
                     "xml_submission_file": f
             })
             self.assertEqual(201, res.status_code)
-            self.assertTrue("Form is a duplicate" in res.content)
+            self.assertIn("Form is a duplicate", res.content)
         
         # make sure we logged it
         log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
@@ -75,7 +75,7 @@ class SubmissionErrorTest(TestCase):
                                       classes={'XFormDuplicate': SubmissionErrorLog}).one()
         
         self.assertTrue(log is not None)
-        self.assertTrue("Form is a duplicate" in log.problem)
+        self.assertIn("Form is a duplicate", log.problem)
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
         
@@ -96,7 +96,7 @@ class SubmissionErrorTest(TestCase):
                     "xml_submission_file": f
                 })
                 self.assertEqual(201, res.status_code)
-                self.assertTrue(evil_laugh in res.content)
+                self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it
             log = SubmissionErrorLog.view(
@@ -108,7 +108,7 @@ class SubmissionErrorTest(TestCase):
             ).one()
 
             self.assertTrue(log is not None)
-            self.assertTrue(evil_laugh in log.problem)
+            self.assertIn(evil_laugh, log.problem)
             with open(file) as f:
                 self.assertEqual(f.read(), log.get_xml())
         
