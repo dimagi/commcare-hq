@@ -1,7 +1,26 @@
+import csv
 from couchdbkit import Consumer
 
 
-def get_recent_changes(db, limit=500):
+def download_changes(db, limit, target):
+    """
+    Download changes to a target file-like object
+    """
+    writer = csv.writer(target, dialect=csv.excel)
+    # headings
+    keys = [
+        'domain',
+        'doc_type',
+        'date',
+        'id',
+        'rev',
+    ]
+    writer.writerow(keys)
+    for row in get_recent_changes(db, limit):
+        writer.writerow([row[k] for k in keys])
+
+
+def get_recent_changes(db, limit):
     c = Consumer(db)
     changes = c.fetch(limit=limit, descending=True, include_docs=True)['results']
     for row in changes:

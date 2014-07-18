@@ -29,7 +29,7 @@ from django.http import Http404
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
-from corehq.apps.hqadmin.history import get_recent_changes
+from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -574,6 +574,16 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
+
+
+@require_superuser_or_developer
+def download_recent_changes(request):
+    count = int(request.GET.get('changes', 10000))
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="recent_changes.csv"'
+    download_changes(get_db(), count, resp)
+    return resp
+
 
 @require_superuser_or_developer
 def system_ajax(request):
