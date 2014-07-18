@@ -4,7 +4,7 @@
 import uuid
 import os
 from couchforms.util import post_xform_to_couch
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 
 
 class XMLElementTest(TestCase):

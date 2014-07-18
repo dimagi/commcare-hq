@@ -1,7 +1,7 @@
+from django.test import TestCase
 from couchforms.models import DefaultAuthContext
 from couchforms.util import post_xform_to_couch
 import os
-from django.utils.unittest.case import TestCase
 
 
 class AuthTest(TestCase):

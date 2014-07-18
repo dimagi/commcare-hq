@@ -1,5 +1,5 @@
 import json
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 import os
 from couchforms.models import XFormInstance
 from couchforms import create_xform_from_xml
