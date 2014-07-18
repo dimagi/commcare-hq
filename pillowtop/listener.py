@@ -89,6 +89,10 @@ class PillowtopNetworkError(Exception):
     pass
 
 
+class PillowtopCheckpointReset(Exception):
+    pass
+
+
 def ms_from_timedelta(td):
     """
     Given a timedelta object, returns a float representing milliseconds
@@ -111,6 +115,7 @@ class BasicPillow(object):
     couch_db = None
     include_docs = True
     use_locking = False
+    _current_checkpoint = None
 
     def __init__(self, couch_db=None, document_class=None):
         if document_class:
@@ -131,10 +136,14 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter, include_docs=self.include_docs, **self.extra_args) as st:
-            for c in st:
-                self.processor(c)
+        try:
+            with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
+                               filter=self.couch_filter, include_docs=self.include_docs, **self.extra_args) as st:
+                for c in st:
+                    self.processor(c)
+        except PillowtopCheckpointReset:
+            self.changes_seen = 0
+            self.new_changes()
 
     def run(self):
         """
@@ -199,6 +208,11 @@ class BasicPillow(object):
 
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint()
+        if self._current_checkpoint and checkpoint['seq'] != self._current_checkpoint['seq']:
+            raise PillowtopCheckpointReset()
+
+        self._current_checkpoint = checkpoint
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
         )
@@ -528,17 +542,6 @@ class ElasticPillow(BulkPillow):
         doc_path = self.get_doc_path(doc_id)
         head_result = es.head(doc_path)
         return head_result
-
-    def processor(self, change, do_set_checkpoint=True):
-        """
-        Parent processor for a pillow class - this should not be overridden.
-        This workflow is made for the situation where 1 change yields 1 transport/transaction
-        """
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            self.set_checkpoint(change)
-
-        self.process_change(change)
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
