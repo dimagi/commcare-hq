@@ -55,6 +55,7 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class IndexTest(TestCase):
     def testIndexes(self):
         CASE_ID = 'test-index-case'
@@ -133,7 +134,6 @@ class IndexTest(TestCase):
 
         check_user_has_case(self, user, update_index_expected, version=V2)
 
-    @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     def testBadIndexReference(self):
         CASE_ID = 'test-bad-index-case'
         block = CaseBlock(create=True, case_id=CASE_ID, user_id=USER_ID, version=V2,

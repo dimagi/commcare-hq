@@ -1,6 +1,7 @@
 from django.test import TestCase
 import os
 import time
+from django.test.utils import override_settings
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
@@ -16,6 +17,8 @@ from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
     dummy_user_xml
 
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
 

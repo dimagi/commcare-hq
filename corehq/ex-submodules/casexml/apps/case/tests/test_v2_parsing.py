@@ -11,6 +11,7 @@ from django.http import HttpRequest
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case import const
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
