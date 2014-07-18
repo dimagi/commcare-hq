@@ -671,9 +671,6 @@ def system_info(request):
 
 
 def get_es_couch_comparisons():
-    # escheck.py and system_info/checks.py both seem like appealing places to
-    # put this function, but it doesn't quite fit the form of the other
-    # functions in those files.
     comparison_config = [
         {'description': 'Users (base_doc is "CouchUser")',
          'couch_db': CommCareUser.get_db(),
@@ -865,7 +862,6 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
                             }}}]}}}}
 
     histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-    # NOTE
 
     del q["facets"]
     q["filter"] = {
