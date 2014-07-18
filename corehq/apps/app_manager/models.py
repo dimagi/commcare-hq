@@ -3187,7 +3187,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def convert_module_to_advanced(self, module_id):
         from_module = self.get_module(module_id)
 
-        name = {lang: '{} (advanced)'.format(name) for lang, name in from_module.name.items()}
+        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
 
         case_details = deepcopy(from_module.case_details.to_json())
         to_module = AdvancedModule(
