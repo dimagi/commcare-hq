@@ -332,9 +332,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
