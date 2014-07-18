@@ -232,7 +232,7 @@ class Excel2007ExportWriter(ExportWriter):
         sheet.append(
             [dirty_chars.sub(
                 u'?',
-                v if type(v) is unicode else unicode(v, encoding="utf-8"))
+                unicode(v, encoding="utf-8") if isinstance(v, str) else unicode(v))
              for v in self.get_data(row)]
         )
 
