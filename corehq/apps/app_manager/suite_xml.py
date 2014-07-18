@@ -840,7 +840,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         This method is used by CloudCare when filtering cases.
         """
         details_by_id = self.get_detail_mapping()
-        detail_ids = [self.id_strings.detail(module, detail_type)
+        detail_ids = [self.get_detail_id_safe(module, detail_type)
                       for detail_type, detail, enabled in module.get_details()
                       if enabled]
         xpaths = set()
