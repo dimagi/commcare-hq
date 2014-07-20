@@ -15,7 +15,7 @@
 
                 if (this.checked) {
                     var excelField = $(this).closest('tr').find(".excel_field");
-                    customField.val(excelField.val());
+                    customField.val(excelField.val().replace(/[^\w\s]/gi, ''));
                     customField.closest('td').removeClass('hide');
                     caseField.closest('td').addClass('hide');
                 } else {
