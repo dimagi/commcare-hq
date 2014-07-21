@@ -832,10 +832,14 @@ class MetReport(BaseReport):
                 es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
         if self.default_case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
+        url = REPORT_CASE_INDEX + '/_search'
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__,
-                self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False,
-                        start_at=self.pagination.start, size=self.pagination.count)
+                self.domain, simplejson.dumps(q, indent=4)))
+        if self.is_rendered_as_email:
+            return es_query(q=q, es_url=url)
+        else:
+            return es_query(q=q, es_url=url, start_at=self.pagination.start,
+                               size=self.pagination.count)
 
     def get_rows(self, datespan):
         return self.es_results['hits'].get('hits', [])
