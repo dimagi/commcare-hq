@@ -1,14 +1,15 @@
 {
     "domain": "user-reports",
-    "doc_type": "CommCareCase",
+    "doc_type": "IndicatorConfiguration",
+    "referenced_doc_type": "CommCareCase",
     "table_id": "sample",
     "display_name": "CommBugz",
-    "_filter": {
+    "configured_filter": {
         "type": "property_match",
         "property_name": "type",
         "property_value": "ticket"
     },
-    "_indicators": [
+    "configured_indicators": [
         {
             "column_id": "date",
             "type": "raw",

@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import date
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import IndicatorConfiguration
 
 
@@ -18,7 +18,7 @@ class IndicatorConfigurationTest(SimpleTestCase):
     def testMetadata(self):
         # metadata
         self.assertEqual('user-reports', self.config.domain)
-        self.assertEqual('CommCareCase', self.config.doc_type)
+        self.assertEqual('CommCareCase', self.config.referenced_doc_type)
         self.assertEqual('CommBugz', self.config.display_name)
         self.assertEqual('sample', self.config.table_id)
 
@@ -86,3 +86,29 @@ def get_sample_doc_and_indicators():
         'estimate': 2,
     }
     return sample_doc, expected_indicators
+
+
+class IndicatorConfigurationDbTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        IndicatorConfiguration(domain='foo', table_id='foo1').save()
+        IndicatorConfiguration(domain='foo', table_id='foo2').save()
+        IndicatorConfiguration(domain='bar', table_id='bar1').save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for config in IndicatorConfiguration.all():
+            config.delete()
+
+    def testGetByDomain(self):
+        results = IndicatorConfiguration.by_domain('foo')
+        self.assertEqual(2, len(results))
+        for item in results:
+            self.assertTrue(item.table_id in ('foo1', 'foo2'))
+
+        results = IndicatorConfiguration.by_domain('not-foo')
+        self.assertEqual(0, len(results))
+
+    def testGetAll(self):
+        self.assertEqual(3, len(list(IndicatorConfiguration.all())))
