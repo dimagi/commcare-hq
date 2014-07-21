@@ -20,6 +20,9 @@ var ManageRemindersViewModel = function (
     self.available_languages = ko.observableArray(_.map(available_languages, function (langcode) {
         return new ReminderLanguage(langcode, self.default_lang);
     }));
+    self.showDefaultLanguageOption = ko.computed(function () {
+        return self.available_languages().length > 1;
+    });
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -129,32 +132,7 @@ var ManageRemindersViewModel = function (
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
-
-        self.languagePicker.init();
     };
-
-    self.addLanguage = function (langcode) {
-        var currentLangcodes = _.map(self.available_languages(), function (lang) {
-            return lang.langcode();
-        });
-        if (currentLangcodes.indexOf(langcode) === -1) {
-            var newLanguage = new ReminderLanguage(langcode, self.default_lang);
-            self.available_languages.push(newLanguage);
-             _(self.eventObjects()).each(function (event) {
-                event.addTranslation(newLanguage.langcode());
-            });
-        }
-        self.default_lang(langcode);
-    };
-
-    self.removeLanguage = function (reminderLang) {
-        self.available_languages.remove(reminderLang);
-        _(self.eventObjects()).each(function (event) {
-            event.removeTranslation(reminderLang.langcode());
-        });
-    };
-
-    self.languagePicker = new LanguagePickerViewModel(self.addLanguage);
 
     self.initCasePropertyChoices = function (field) {
         var fieldInput = $('[name="' + field.name + '"]');

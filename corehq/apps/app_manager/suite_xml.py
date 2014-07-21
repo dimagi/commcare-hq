@@ -840,7 +840,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         This method is used by CloudCare when filtering cases.
         """
         details_by_id = self.get_detail_mapping()
-        detail_ids = [self.id_strings.detail(module, detail_type)
+        detail_ids = [self.get_detail_id_safe(module, detail_type)
                       for detail_type, detail, enabled in module.get_details()
                       if enabled]
         xpaths = set()
@@ -1276,8 +1276,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 getattr(form, 'form_filter', None):
                             if isinstance(form, AdvancedForm):
                                 try:
-                                    var = form.actions.load_update_cases[-1].case_session_var
-                                    case = CaseIDXPath(session_var(var)).case()
+                                    action = next(a for a in form.actions.load_update_cases if not a.auto_select)
+                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
                                 except IndexError:
                                     case = None
                             else:

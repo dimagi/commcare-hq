@@ -49,7 +49,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
-SERVER_ENVIRONMENT = 'changeme' #identify the target type of this running environment
+SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
 ####### Log/debug setup ########
 

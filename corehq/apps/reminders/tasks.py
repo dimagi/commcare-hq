@@ -5,6 +5,10 @@ from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.models import CommCareCase
 
+# In minutes
+CASE_CHANGED_RETRY_INTERVAL = 5
+CASE_CHANGED_RETRY_MAX = 3
+
 @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def fire_reminders():
     CaseReminderHandler.fire_reminders()
@@ -18,13 +22,24 @@ def get_subcases(case):
     return subcases
 
 @task
-def case_changed(case_id, handler_ids):
+def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
     except Exception:
-        notify_exception(None,
-            message="Error processing reminder rule updates for case %s" %
-            case_id)
+        if retry_num <= CASE_CHANGED_RETRY_MAX:
+            try:
+                # Try running the rule update again
+                case_changed.apply_async(args=[case_id, handler_ids],
+                    kwargs={"retry_num": retry_num + 1},
+                    countdown=(60*CASE_CHANGED_RETRY_INTERVAL))
+            except Exception:
+                notify_exception(None,
+                    message="Error processing reminder rule updates for case %s" %
+                    case_id)
+        else:
+            notify_exception(None,
+                message="Error processing reminder rule updates for case %s" %
+                case_id)
 
 def _case_changed(case_id, handler_ids):
     subcases = None
