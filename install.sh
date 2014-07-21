@@ -105,7 +105,7 @@ if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
     sudo mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0
 
-    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 
+    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
     sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
 
