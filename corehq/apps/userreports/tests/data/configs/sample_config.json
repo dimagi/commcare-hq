@@ -10,6 +10,20 @@
     },
     "_indicators": [
         {
+            "column_id": "date",
+            "type": "raw",
+            "display_name": "date opened",
+            "datatype": "date",
+            "property_name": "opened_on"
+        },
+        {
+            "column_id": "owner",
+            "type": "raw",
+            "display_name": "owner",
+            "datatype": "string",
+            "property_name": "owner_id"
+        },
+        {
             "column_id": "count",
             "type": "count",
             "display_name": "Count"
