@@ -189,7 +189,7 @@ def remind_subscription_ending_30_days(based_on_date=None):
     """
     Sends reminder emails for subscriptions ending 10 days from now.
     """
-    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(10, exclude_trials=False)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -197,15 +197,15 @@ def remind_subscription_ending_30_days(based_on_date=None):
     """
     Sends reminder emails for subscriptions ending tomorrow.
     """
-    send_subscription_reminder_emails(1)
+    send_subscription_reminder_emails(1, exclude_trials=False)
 
 
-def send_subscription_reminder_emails(num_days):
+def send_subscription_reminder_emails(num_days, exclude_trials=True):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(
-        is_trial=False, date_end=date_in_n_days
-    )
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    if exclude_trials:
+        ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
         subscription.send_ending_reminder_email()
 
