@@ -442,6 +442,7 @@ class ReportNotification(Document):
 
     timezone_source = StringProperty(choices=["domain", "user"], default='domain')
     hour = IntegerProperty(default=8)
+    minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
 

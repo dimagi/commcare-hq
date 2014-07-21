@@ -126,6 +126,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
     scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
+    for report in scheduled_reports:
+        time_difference = get_timezone_difference(report.timezone_source, unicode(request.user), domain)
+        (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
+        report.minute = 0
+        if day_change:
+            report.day = calculate_day(report.interval, report.day, day_change)
 
     context = dict(
         couch_user=request.couch_user,
@@ -537,14 +543,46 @@ def delete_config(request, domain, config_id):
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
-
-def calculate_hour(hour, time_difference):
-    hour += time_difference
+def normalize_hour(hour):
+    day_change = 0
     if hour < 0:
+        day_change = -1
         hour += 24
     elif hour > 24:
+        day_change = 1
         hour -= 24
-    return hour
+    return (hour, day_change)
+
+def calculate_hour(hour, hour_difference, minute_difference):
+    hour += hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour -= 1
+    return normalize_hour(hour)
+
+
+def recalculate_hour(hour, hour_difference, minute_difference):
+    hour -= hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour += 1
+    return normalize_hour(hour)
+
+
+def get_timezone_difference(timezone_source, username, domain):
+    if timezone_source == 'user':
+        user = CouchUser.get_by_username(username)
+        timezone = user.get_domain_membership(domain)['timezone']
+    else:
+        timezone = Domain._get_by_name(domain)['default_timezone']
+
+    return datetime.now(pytz.timezone(timezone)).strftime('%z')
+
+
+def calculate_day(interval, day, day_change):
+    if interval == "weekly":
+        return (day + day_change) % 7
+    elif interval == "monthly":
+        return (day - 1 + day_change) % 31 + 1
+    return day
 
 
 @login_and_domain_required
@@ -579,11 +617,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     if scheduled_report_id:
         instance = ReportNotification.get(scheduled_report_id)
+        time_difference = get_timezone_difference(instance.timezone_source, unicode(request.user), domain)
+        (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = 0
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
+
         if instance.owner_id != user_id or instance.domain != domain:
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8, timezone_source='domain',
+                                      config_ids=[], hour=8, minute=0, timezone_source='domain',
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -601,12 +645,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
 
-        if instance.timezone_source == 'user':
-            user = CouchUser.get_by_username(unicode(request.user))
-            timezone = user.get_domain_membership(domain)['timezone']
-        else:
-            timezone = Domain._get_by_name(domain)['default_timezone']
-        instance.hour = calculate_hour(instance.hour, int(datetime.now(pytz.timezone(timezone)).strftime('%z')[:3]))
+        time_difference = get_timezone_difference(instance.timezone_source, unicode(request.user), domain)
+        (instance.hour, day_change) = calculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = int(time_difference[3:])
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
         if is_new:
