@@ -238,6 +238,10 @@ class GlobalAdminReports(AdminReport):
         })
         return context
 
+    @property
+    def domains(self):
+        return Domain.get_all()
+
 
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
@@ -253,7 +257,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
     @property
     def rows(self):
         return [
-            [domain.name, domain.deployment] for domain in Domain.get_all()
+            [domain.name, domain.deployment] for domain in self.domains
         ]
 
 
