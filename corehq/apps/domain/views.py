@@ -74,7 +74,8 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
+    RepeatRecord
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -1671,6 +1672,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     def page_context(self):
         return {
             'repeaters': self.repeaters,
+            'pending_record_count': RepeatRecord.count(self.domain),
         }
 
 
