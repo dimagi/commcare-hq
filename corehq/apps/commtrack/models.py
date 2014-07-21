@@ -225,7 +225,7 @@ class Product(Document):
 
         for attr in cls._csv_attrs():
             if attr in row or (isinstance(attr, tuple) and attr[0] in row):
-                val = str(row.get(attr, '') or '').decode('utf-8')
+                val = row.get(attr, '')
                 if isinstance(attr, tuple):
                     attr, f = attr
                     val = f(val)
