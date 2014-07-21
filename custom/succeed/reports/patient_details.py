@@ -124,10 +124,10 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
 
     @property
     def patient_careplan_url(self):
-        from custom.succeed.reports.patient_careplan import PatientCarePlanReport
-        if self.is_all_reports_enabled or unicode(PatientCarePlanReport.__module__+'.'+PatientCarePlanReport.__name__) in self.get_available_report_list:
+        from custom.succeed.reports.patient_tasks import PatientTasksReport
+        if self.is_all_reports_enabled or unicode(PatientTasksReport.__module__+'.'+PatientTasksReport.__name__) in self.get_available_report_list:
             return html.escape(
-                PatientCarePlanReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientTasksReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
             return EMPTY_URL
 

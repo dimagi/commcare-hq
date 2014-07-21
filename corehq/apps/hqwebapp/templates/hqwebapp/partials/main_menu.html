@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load cache %}
 {% get_current_language as LANGUAGE_CODE %}
-<ul class="nav" role="menu">
+<ul class="nav navbar-nav" role="menu">
     {% for tab in tabs %}
     {% cache 500 header_tab tab.domain tab.org tab.view tab.is_active_tab tab.couch_user.get_id LANGUAGE_CODE %}
     {% with tab.dropdown_items as items %}

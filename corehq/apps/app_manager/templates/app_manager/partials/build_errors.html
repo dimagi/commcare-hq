@@ -154,6 +154,10 @@
                             The form action "{{ error.case_tag }}" does not have a case type selected
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
+                        {% if error.type == "no case type in action" %}
+                            The form has filtering enabled but no cases are being loaded (excluding auto-loaded cases)
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}.
+                        {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>
                     </span>

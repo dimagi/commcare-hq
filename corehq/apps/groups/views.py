@@ -10,6 +10,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
@@ -62,6 +63,17 @@ def undo_delete_group(request, domain, record_id):
     record.undo()
     return HttpResponseRedirect(
         reverse('group_members', args=[domain, record.doc_id])
+    )
+
+@require_POST
+@require_can_edit_groups
+def restore_group(request, domain, group_id):
+    group = Group.get(group_id)
+    group.doc_type = group.doc_type.rstrip(DELETED_SUFFIX)
+    group.save()
+    messages.info(request, _('The "{0}" group has been restored.'.format(group.name)))
+    return HttpResponseRedirect(
+        reverse('group_members', args=[domain, group._id])
     )
 
 @require_can_edit_groups

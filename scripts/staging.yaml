@@ -13,12 +13,9 @@ branches:
   - 109909-case-performance  # ethan/cory 5/30
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
-  - formsql # SK 7/7
   - coredb # SK 7/7
   - all-filter-hack # Noah 7/7
-#  - universal-analytics-upgrade # Nick P 7/8
-  - formviewbase+universal-analytics-upgrade # SK 7/9
-  - module-view # SK 7/10
+  - schedule # SK 7/17
   - dynmic-opm # sravan 7/10
 submodules:
   submodules/couchlog-src:
