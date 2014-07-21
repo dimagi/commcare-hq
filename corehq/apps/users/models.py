@@ -1935,6 +1935,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
                             name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
             #set up a domain_membership
 
+    @classmethod
+    def get_admins_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            web_user = cls.wrap(user_doc)
+            if web_user.is_domain_admin(domain):
+                yield web_user
+
 
 class FakeUser(WebUser):
     """
