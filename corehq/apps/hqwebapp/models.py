@@ -1048,8 +1048,14 @@ class ProjectSettingsTab(UITab):
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain]),
                  'subpages': [
-                     {'title': forward_name,
-                      'urlname': 'add_repeater'}
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_repeater',
+                     },
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_form_repeater',
+                     },
                  ]}
             ])
 
