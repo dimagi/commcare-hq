@@ -23,6 +23,13 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
+            $(".rule-status").each(function(index) {
+                o = new RuleProgressBar(
+                    $(this).attr("data-handler-id"),
+                    '{% url "reminder_rule_progress" domain %}'
+                );
+                ko.applyBindings(o, this);
+            });
             $("#table_1").dataTable({
                 "sPaginationType" : "bootstrap",
                 "bLengthChange" : false,
@@ -40,13 +47,6 @@
                 "bSort" : true,
                 {% if reminder_type == 'ONE_TIME' %}"aaSorting" : [[0, "desc"]],{% endif %}
                 "iDisplayLength" : 5
-            });
-            $(".rule-status").each(function(index) {
-                o = new RuleProgressBar(
-                    $(this).attr("data-handler-id"),
-                    '{% url "reminder_rule_progress" domain %}'
-                );
-                ko.applyBindings(o, this);
             });
         });
     </script>
