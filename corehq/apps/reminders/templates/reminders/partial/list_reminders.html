@@ -24,11 +24,11 @@
     <script type="text/javascript">
         $(function(){
             $(".rule-status").each(function(index) {
-                o = new RuleProgressBar(
+                var bar = new RuleProgressBar(
                     $(this).attr("data-handler-id"),
                     '{% url "reminder_rule_progress" domain %}'
                 );
-                ko.applyBindings(o, this);
+                ko.applyBindings(bar, this);
             });
             $("#table_1").dataTable({
                 "sPaginationType" : "bootstrap",
