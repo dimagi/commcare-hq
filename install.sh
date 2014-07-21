@@ -135,25 +135,30 @@ fi
 ## Install couchdb ##
 # from http://onabai.wordpress.com/2012/05/10/installing-couchdb-1-2-in-ubuntu-12-04/
 if [ ! -f /etc/init.d/couchdb ]; then
+    
+    if [ "$PM" = "apt-ubuntu" ]; then
+        #In ubunt, we use the nilya/couchdb-1.3 as done on the travis build
+        sudo add-apt-repository -y ppa:nilya/couchdb-1.3
+        sudo apt-get update
+        sudo apt-get install -y couchdb
+    elif  [ "$PM" = "yum-rhel" ]; then
+    #We have to download the file and make it if we're using yum
     if [ ! -f apache-couchdb-1.2.1.tar.gz ]; then
-        wget http://mirrors.ibiblio.org/apache/couchdb/source/1.3.1/apache-couchdb-1.3.1.tar.gz
+        wget http://pkgs.fedoraproject.org/repo/pkgs/couchdb/apache-couchdb-1.3.1.tar.gz/2ff71e7c55634bb52eca293368183b40/apache-couchdb-1.3.1.tar.gz
     fi
 
     tar xzf apache-couchdb-1.3.1.tar.gz
     cd apache-couchdb-1.3.1
-    if [ "$PM" = "apt-ubuntu" ]; then
-        ./configure
-    elif  [ "$PM" = "yum-rhel" ]; then
         sudo mkdir -p /usr/local/var/log/couchdb \
             /usr/local/var/lib/couchdb \
             /usr/local/var/run/couchdb
 
         # this is not actually for all yum installs, just 64-bit
         ./configure --prefix=/usr/local --enable-js-trunk --with-erlang=/usr/lib64/erlang/usr/include
+        make 
+        sudo make install
+        cd .. && rm -r apache-couchdb-1.3.1
     fi
-    make 
-    sudo make install
-    cd .. && rm -r apache-couchdb-1.3.1
 
     if [ "$PM" = "apt-ubuntu" ]; then
         sudo adduser --disabled-login --disabled-password --no-create-home couchdb
