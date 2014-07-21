@@ -64,7 +64,7 @@ def import_products(domain, importer):
                 if p.domain:
                     if p.domain != domain:
                         messages.append(
-                            _("Product {product_name} belongs to another domain and was not updated").format(
+                            _(u"Product {product_name} belongs to another domain and was not updated").format(
                                 product_name=p.name
                             )
                         )
@@ -79,10 +79,10 @@ def import_products(domain, importer):
 
         except Exception, e:
             messages.append(
-                u'Failed to import product {name}: {ex}'.format(
+                _(u'Failed to import product {name}: {ex}'.format(
                     name=row['name'],
                     ex=e,
-                )
+                ))
             )
 
         if len(to_save) > 500:
