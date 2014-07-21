@@ -35,6 +35,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
 from corehq import toggles, privileges, feature_previews
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
@@ -575,6 +576,34 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     @property
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
+
+class AddOpsUserAsDomainAdminView(BaseAdminProjectSettingsView):
+    urlname = 'domain_ops_billing_admin'
+    template_name = 'domain/new_ops_billing_admin.html'
+    page_title = ugettext_noop("Join Billing Account Admins")
+
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    def dispatch(self, request, *args, **kwargs):
+        is_domain_admin, self.account = BillingAccountAdmin.get_admin_status_and_account(
+            request.couch_user, self.domain
+        )
+        if is_domain_admin:
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return super(AddOpsUserAsDomainAdminView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        admin = BillingAccountAdmin.objects.get_or_create(
+            web_user=request.user.username,
+            domain=self.domain,
+        )[0]
+        self.account.billing_admins.add(admin)
+        self.account.save()
+        messages.success(
+            request,
+            _("Successfully added as Billing Admin for project %s" % self.domain)
+        )
+        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
