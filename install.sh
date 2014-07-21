@@ -23,7 +23,7 @@ COUCHDB_PW="commcarehq"
 
 ## Misc settings
 
-ES_VERSION=0.20.5
+ES_VERSION=0.90.13
 MINIMAL_INSTALL=
 JDK=1
 
