@@ -53,10 +53,8 @@
             default: property.defaultKey,
             edit: $root.edit,
             casePropertyTypeahead: suggestedProperties,
-            event: { keyup: function(data, event){
-                if (event.keyCode == 32) {
+            event: { change: function(){
                     $element.value =  $element.value.replace(/ /g,'_');
-                }
                 return true;
             }}
         "/>
