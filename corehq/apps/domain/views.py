@@ -537,6 +537,32 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
+    def main_context(self):
+        context = super(DomainAccountingSettings, self).main_context
+        if (hasattr(self.request, 'is_billing_admin')
+            and not self.request.is_billing_admin
+            and self.request.couch_user.is_superuser
+        ):
+            # check to see if superuser is accounting admin
+            # If not, notify that they should change it.
+            from corehq.apps.accounting.utils import is_accounting_admin
+            has_privs = is_accounting_admin(self.request.user)
+            if has_privs:
+                context.update(is_ops_user_but_not_admin=True)
+                messages.info(
+                    self.request, mark_safe(_(
+                        "Hi there, Operations User. You are currently not "
+                        "a Billing Admin for this account.<br />"
+                        "<a href='%(url)s' class='btn btn-primary'>"
+                        "Change This</a>"
+                    ) % {
+                        'url': reverse(AddOpsUserAsDomainAdminView.urlname,
+                                       args=[self.domain]),
+                    })
+                )
+        return context
+
+    @property
     @memoized
     def product(self):
         return SoftwareProductType.get_type_by_domain(self.domain_object)
