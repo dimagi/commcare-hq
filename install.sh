@@ -5,9 +5,22 @@
 # - ensures all necessary processes will run on startup
 # - creates databases 
 #
-# Before running, you must download the JDK 7 tar.gz from
-# http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
-# it as jdk.tar.gz in the same directory as this script.
+# Assumptions when running this install script:
+# - You have downloaded Git (sudo apt-get install git) and cloned this repository (git clone URL_OF_THIS_REPOSITORY)
+#   because it references the requirements folder
+# - Before running, you must download the JDK 7 tar.gz from
+#   http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
+#   it as jdk.tar.gz in the commcare_hq directory, where this script resides.
+#       Note: If you're running this install from terminal, do the following to install oracle JDK 7
+#             - In a browser visit http://www.oracle.com/technetwork/java/javase/downloads/index.html
+#             - Click the Java SE 7 download link under 'JDK'
+#             - Accept the license agreement
+#             - Right Click and copy the download link.
+#             - Paste the download link at the end of the following line of code then execute this code
+#               wget --header "Cookie: oraclelicense=accept-securebackup-cookie" PASTE_DOWNLOAD_URL_HERE
+#             - Rename the file to jdk.tar.gz as per the install instructions
+#             - mv NAME_OF_DOWNLOADED_FILE.tar.gz commcare-hq/jdk.tar.gz
+
 
 
 # Database settings; change these if desired
@@ -32,6 +45,15 @@ if [ ! -f jdk.tar.gz ]; then
     JDK=
     MINIMAL_INSTALL=1
 fi
+
+#We have to get the latest apt-packages.txt file from the dimagi site
+if [ ! -d requirements  ]; then
+    echo "Requirements haven't yet been downloaded"
+    mkdir requirements && cd requirements
+    wget https://raw.github.com/dimagi/commcare-hq/master/requirements/apt-packages.txt
+    cd ..
+fi
+
 
 ## Install OS-level package dependencies
 command -v apt-get > /dev/null 2>&1
