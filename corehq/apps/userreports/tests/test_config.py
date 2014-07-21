@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import date
 from django.test import SimpleTestCase
 from corehq.apps.userreports.models import IndicatorConfiguration
 
@@ -38,6 +39,8 @@ class IndicatorConfigurationTest(SimpleTestCase):
         # columns
         expected_columns = [
             'doc_id',
+            'date',
+            'owner',
             'count',
             'category_bug', 'category_feature', 'category_app', 'category_schedule',
             'tags_easy-win', 'tags_potential-dupe', 'tags_roadmap', 'tags_public',
@@ -59,8 +62,11 @@ class IndicatorConfigurationTest(SimpleTestCase):
 
 
 def get_sample_doc_and_indicators():
+    date_opened = date(2014, 6, 21)
     sample_doc = dict(
         _id='some-doc-id',
+        opened_on=date_opened,
+        owner_id='some-user-id',
         doc_type="CommCareCase",
         domain='user-reports',
         type='ticket',
@@ -71,6 +77,8 @@ def get_sample_doc_and_indicators():
     )
     expected_indicators = {
         'doc_id': 'some-doc-id',
+        'date': date_opened,
+        'owner': 'some-user-id',
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
         'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,
