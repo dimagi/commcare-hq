@@ -1,6 +1,7 @@
 import json
 from unittest import TestCase
 
+from corehq.elastic import ESError
 from .es_query import HQESQuery, ESQuerySet
 from . import filters
 from . import forms, users
@@ -130,6 +131,8 @@ class TestESQuerySet(TestCase):
         u'timed_out': False,
         u'took': 4
     }
+    example_error = {u'error': u'IndexMissingException[[xforms_123jlajlaf] missing]',
+             u'status': 404}
 
     def test_response(self):
         hits = [
@@ -153,3 +156,7 @@ class TestESQuerySet(TestCase):
         )
         self.assertEquals(response.total, 5247)
         self.assertEquals(response.hits, hits)
+
+    def test_error(self):
+        with self.assertRaises(ESError):
+            ESQuerySet(self.example_error, HQESQuery('forms'))

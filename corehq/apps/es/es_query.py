@@ -123,15 +123,6 @@ class ESQuery(object):
         Actually run the query.  Return an ESQuerySet object.
         """
         raw = run_query(self.url, self.raw_query)
-        if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=self.index,
-                       url=self.url,
-                       query=self.dumps(pretty=True),
-                    )
-            raise ESError(msg)
         return ESQuerySet(raw, deepcopy(self))
 
     @property
@@ -253,6 +244,15 @@ class ESQuerySet(object):
     ESQuerySet.query is the ESQuery object
     """
     def __init__(self, raw, query):
+        if 'error' in raw:
+            msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
+                   "\nQuery: {query}").format(
+                       error=raw['error'],
+                       index=query.index,
+                       url=query.url,
+                       query=query.dumps(pretty=True),
+                    )
+            raise ESError(msg)
         self.raw = raw
         self.query = query
 
