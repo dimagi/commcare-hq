@@ -120,7 +120,8 @@ if [ "$JDK" ] && [ ! -d /usr/local/lib/jython ]; then
     fi
 
     # Set /usr/local/lib/jython as the target directory
-    sudo java -jar jython_installer-2.5.2.jar --silent -d /usr/local/lib/jython
+    echo "Make sure to enter  /usr/local/lib/jython as the Target Directory"
+    sudo java -jar jython_installer-2.5.2.jar -d /usr/local/lib/jython
 
     sudo ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
 
