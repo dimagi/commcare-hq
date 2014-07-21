@@ -337,7 +337,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_type',
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
-                'default_sms_backend_id',
                 'restrict_superusers',
                 'ota_restore_caching',
                 'secure_submissions',
