@@ -167,6 +167,14 @@ def path_relative_to_context(path, path_context):
         return path
 
 
+def absolute_path_from_context(path, path_context):
+    assert path_context.endswith('/')
+    if path.startswith('/'):
+        return path
+    else:
+        return path_context + path
+
+
 def _html_interpolate_output_refs(itext_value, context):
     if hasattr(itext_value, 'with_refs'):
         underline_template = u'<u>&nbsp;&nbsp;%s&nbsp;&nbsp;</u>'
@@ -216,6 +224,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
     result = []
     for question in questions:
         path = path_relative_to_context(question.value, path_context)
+        absolute_path = absolute_path_from_context(question.value, path_context)
         node = pop_from_form_data(relative_data, absolute_data, path)
         # response=True on a question with children indicates that one or more
         # child has a response, i.e. that the entire group wasn't skipped
@@ -227,7 +236,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                 children=zip_form_data_and_questions(
                     node,
                     children,
-                    path_context=question.value,
+                    path_context=absolute_path,
                     output_context=output_context,
                     process_label=process_label,
                     absolute_data=absolute_data,
@@ -246,7 +255,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                         children=zip_form_data_and_questions(
                             entry,
                             children,
-                            path_context=question.value,
+                            path_context=absolute_path,
                             output_context=output_context,
                             process_label=process_label,
                             absolute_data=absolute_data,
