@@ -179,7 +179,7 @@
                         }
                     },
                     putInDefaultOrder: function (index, columns) {
-                        tag_order = {
+                        var tag_order = {
                             '': 5,
                             'case': 4,
                             'info': 3,
@@ -361,10 +361,6 @@
                     });
                 }, 0);
 
-{#                _(self.table_configuration()).each(function (table) {#}
-{#                    var sorted = self.utils.putInDefaultOrder(table.index(), table.column_configuration());#}
-{#                    table.column_configuration(sorted);#}
-{#                });#}
                 return self;
             },
             excludedTables: {
