@@ -87,6 +87,10 @@ def get_questions(domain, app_id, xmlns):
                 _("We could not find the question list "
                   "associated with this form")
             )
+    # Search for 'READABLE FORMS TEST' for more info
+    # to bootstrap a test and have it print out your form xml
+    # uncomment this line. Ghetto but it works.
+    # print form.wrapped_xform().render()
     return get_questions_from_xform_node(form.wrapped_xform(), app.langs)
 
 
