@@ -1335,7 +1335,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            path = '../../' + path
+            install_path = '../../{}'.format(path)
+            local_path = './{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
@@ -1343,9 +1344,11 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
 
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
-                path=path,
+                path=install_path,
                 version=m.version,
-                local=None,
+                local=(local_path
+                       if self.app.enable_local_resource
+                       else None),
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]

@@ -1,11 +1,11 @@
 from StringIO import StringIO
 import logging
 import hashlib
+import itertools
 from lxml import etree
 import os
 import re
 import json
-import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
 
@@ -27,6 +27,7 @@ from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
+from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
@@ -41,6 +42,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
+from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -86,18 +88,13 @@ from corehq.apps.app_manager.models import Application, get_app, DetailColumn, F
     IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
+from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
+    require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
-
-require_can_edit_apps = require_permission(Permissions.edit_apps)
-require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
-
-def set_file_download(response, filename):
-    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
 
 
 def _encode_if_unicode(s):
@@ -109,32 +106,6 @@ CASE_TYPE_CONFLICT_MSG = (
     "Make sure all case properties you are loading "
     "are available in the new case type"
 )
-
-
-class ApplicationViewMixin(DomainViewMixin):
-    """
-    Helper for class-based views in app manager
-
-    Currently only used in hqmedia
-
-    """
-
-    @property
-    @memoized
-    def app_id(self):
-        return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
-
-    @property
-    @memoized
-    def app(self):
-        try:
-            # if get_app is mainly used for views,
-            # maybe it should be a classmethod of this mixin? todo
-            return get_app(self.domain, self.app_id)
-        except Exception:
-            pass
-        return None
-
 
 
 @require_deploy_apps
@@ -2049,24 +2020,25 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     })
 
 
-def _make_zip_payload(files):
-    buffer = StringIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
-        for filename, f in files:
-            z.writestr(filename, f)
-    return buffer.getvalue()
+class DownloadCCZ(DownloadMultimediaZip):
+    name = 'download_ccz'
+    compress_zip = True
+    zip_name = 'commcare.ccz'
 
+    def check_before_zipping(self):
+        pass
 
-@safe_download
-def download_ccz(req, domain, app_id):
-    files = ((name, f.encode('utf-8'))
-             for name, f in _download_index_files(req))
-    response = HttpResponse(
-        _make_zip_payload(files),
-        content_type='application/x-zip-compressed',
-    )
-    set_file_download(response, 'commcare.ccz')
-    return response
+    def iter_files(self):
+        skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+
+        def _files():
+            for name, f in _download_index_files(self.request):
+                if name not in skip_files:
+                    yield (get_name(name), f.encode('utf-8'))
+
+        media_files, errors = super(DownloadCCZ, self).iter_files()
+        return itertools.chain(_files(), media_files), errors
 
 
 @safe_download

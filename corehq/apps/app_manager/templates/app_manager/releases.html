@@ -38,7 +38,7 @@
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
-            ccz: '{% url "corehq.apps.app_manager.views.download_ccz" domain '___' %}',
+            ccz: '{% url "download_ccz" domain '___' %}',
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
@@ -56,6 +56,7 @@
         ko.applyBindings(new ReleasesMain(o), el.get(0));
         el.show();
     });
+
 </script>
 <script>
     function track_deploy_type(type) {
@@ -346,6 +347,72 @@
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
+                            {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
+                                <div data-bind="ifnot: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0')">
+                                    Upgrade to CommCare 2.13 to use this feature
+                                </div>
+                                <div data-bind="if: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0'), bootstrapTabs: true">
+                                    <div class="tabbable">
+                                        <ul class="nav nav-pills">
+                                            <li class="active">
+                                                <a>{% trans "Online Install" %}</a>
+                                            </li>
+                                            <li>
+                                                <a>{% trans "Offline Install" %}</a>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content">
+                                            <div class="tab-pane">
+                                                <label class="checkbox" data-bind="visible: allow_media_install">
+                                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                                                    {% trans "Include Multimedia" %}
+                                                    <span data-bind="visible: !mm_supported()" class="label">
+                                                        {% trans "Only supported for builds made after 2013-10-15" %}
+                                                    </span>
+                                                </label>
+                                                <p>
+                                                    <span data-bind="visible: get_short_odk_url()">
+                                                        {% blocktrans %}
+                                                            Install by typing the following URL
+                                                            into the application install screen:
+                                                        {% endblocktrans %}
+                                                        <code class="bitly"><a data-bind="
+                                                            attr: {href: get_short_odk_url()},
+                                                            text: get_short_odk_url()
+                                                        "></a></code>
+                                                    </span>
+                                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
+                                                        {% trans "No short code available; try making another version." %}
+                                                    </span>
+                                                </p>
+                                                <p>
+                                                    {% trans "Or" %}
+                                                    <a href="#" data-bind="openJqm: get_odk_install_url">
+                                                    {% trans "scan the bar code" %}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                            <div class="tab-pane">
+                                                <ol>
+                                                    <li>
+                                                        {% trans "Download" %}
+                                                        <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                    </li>
+                                                    <li>
+                                                        {% trans "Transfer it to your Android phone's filesystem" %}
+                                                    </li>
+                                                    <li>
+                                                        {% trans "From CommCare ODK's install screen menu, select Offline Mode" %}
+                                                    </li>
+                                                    <li>
+                                                        {% trans "You'll be prompted to select this file from your phone's filesystem and install will begin" %}
+                                                    </li>
+                                                </ol>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
                                 <label class="checkbox" data-bind="visible: allow_media_install">
                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                     {% trans "Include Multimedia" %}
@@ -374,6 +441,7 @@
                                     {% trans "scan the bar code" %}
                                     </a>
                                 </p>
+                            {% endif %}
                             </div>
                         </div>
                     </div>
@@ -458,34 +526,6 @@
                                 </a>
                             </div>
                         </div>
-                    {% endif %}
-                    {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle">
-                                {% trans "Download Zip Archive" %}
-                            </a>
-                        </div>
-                        <div class="accordion-body collapse">
-                            <div class="accordion-inner">
-                                <label class="checkbox" data-bind="visible: allow_media_install">
-                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
-                                    {% trans "Include Multimedia" %}
-                                    <span data-bind="visible: !mm_supported()" class="label">
-                                        {% trans "Only supported for builds made after 2013-10-15" %}
-                                    </span>
-                                </label>
-                            </div>
-                            <div class="accordion-inner">
-                                <ol>
-                                    <li>
-                                        {% trans "Download the following file:" %}
-                                        <p><a data-bind="attr: {href: $root.url('ccz', id)}">{% trans "Download" %} CommCare.ccz</a></p>
-                                    </li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
                     {% endif %}
                 </div>
             </div>
