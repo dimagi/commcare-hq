@@ -2,7 +2,7 @@ from .es_query import HQESQuery
 from . import filters
 
 
-class FormsES(HQESQuery):
+class FormES(HQESQuery):
     index = 'forms'
     default_filters = {
         'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
@@ -16,7 +16,7 @@ class FormsES(HQESQuery):
             app,
             submitted,
             completed,
-        ] + super(FormsES, self).builtin_filters
+        ] + super(FormES, self).builtin_filters
 
 
 def xmlns(xmlns):
@@ -33,18 +33,3 @@ def submitted(gt=None, gte=None, lt=None, lte=None):
 
 def completed(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('form.meta.timeEnd', gt, gte, lt, lte)
-
-
-class FormES(HQESQuery):
-    index = 'forms'
-    default_filters = {
-        'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
-        'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
-        'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
-    }
-    index_filters = [
-        xmlns,
-        app,
-        submitted,
-        completed,
-    ]
