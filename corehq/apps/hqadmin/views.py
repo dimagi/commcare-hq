@@ -25,7 +25,6 @@ from django.core import management
 from django.template.loader import render_to_string
 from django.http import Http404
 
-
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
