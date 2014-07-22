@@ -474,6 +474,8 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
+            # FIXME: This will always evaluate to True, for more, see
+            # http://manage.dimagi.com/default.asp?125511
             if self.couch_user.is_previewer:
                 edit_section[0][1].append({
                     'title': CaseGroupListView.page_title,

@@ -569,6 +569,10 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def is_previewer(self):
+        # FIXME: is_previewer is a callable, this is currently passing around
+        # a reference to the function, so it will always evaluate to True
+        # except in templates, where it's evaluated.  For more, see
+        # http://manage.dimagi.com/default.asp?125511
         return self.request.couch_user.is_previewer
 
     @property

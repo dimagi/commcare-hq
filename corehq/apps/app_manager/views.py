@@ -871,7 +871,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         )
         module_context["enable_enum_image"] = (
-            req.couch_user.is_previewer or
             feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
         )
         context.update(module_context)
