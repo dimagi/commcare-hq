@@ -1,83 +1,11 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/module_view.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
-    <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script>
-    window.FEATURE_enable_enum_image = {{ enable_enum_image|BOOL }};
-    window.FEATURE_mm_case_properties = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
-    </script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
-{% endblock %}
-{% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
-{% endblock %}
+
 {% block js-inline %}{{ block.super }}
-    {% include 'hqwebapp/key_value_mapping.html' %}
-
     <script>
-        {% if app.enable_multi_sort %}
-            window.enableNewSort = true;
-        {% else %}
-            window.enableNewSort = false;
-        {% endif %}
-
         $(function () {
-            var $goal_home = $("#careplan_goal-detail-screen-config");
-            var goal_detailScreenConfig = DetailScreenConfig.init($goal_home, {
-                state: {
-                    type: 'careplan_goal',
-                    short: {{ module.goal_details.short|JSON }},
-                    long: {{ module.goal_details.long|JSON }}
-                },
-                properties: {{ goal_case_properties|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }},
-                edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
-            });
-
-            {% if goal_sortElements %}
-            var goal_parsedSortRows = JSON.parse({{ goal_sortElements|JSON }});
-            for (var i = 0; i < goal_parsedSortRows.length; i++) {
-                goal_detailScreenConfig.sortRows.addSortRow(
-                    goal_parsedSortRows[i].field,
-                    goal_parsedSortRows[i].type,
-                    goal_parsedSortRows[i].direction
-                );
-            }
-            {% endif %}
-
-            var $task_home = $("#careplan_task-detail-screen-config");
-            var task_detailScreenConfig = DetailScreenConfig.init($task_home, {
-                state: {
-                    type: 'careplan_task',
-                    short: {{ module.task_details.short|JSON }},
-                    long: {{ module.task_details.long|JSON }}
-                },
-                properties: {{ task_case_properties|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }},
-                edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}"
-            });
-
-            {% if task_sortElements %}
-            var task_parsedSortRows = JSON.parse({{ task_sortElements|JSON }});
-            for (var i = 0; i < task_parsedSortRows.length; i++) {
-                task_detailScreenConfig.sortRows.addSortRow(
-                    task_parsedSortRows[i].field,
-                    task_parsedSortRows[i].type,
-                    task_parsedSortRows[i].direction
-                );
-            }
-            {% endif %}
-
             var parent_select_model = {{ module.parent_select|JSON }};
             var parentSelect = new ParentSelect({
                 active: parent_select_model.active,
@@ -88,270 +16,33 @@
             });
             ko.applyBindings(parentSelect, $('#detail-screen-parent').get(0));
         });
-        $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_module_for_build" domain app.id module.id %}');
-        });
     </script>
 {% endblock %}
 
-{% block form-view %}
-    <div id="build_errors"></div>
-    {% if edit %}
-    <div class="delete-me">
-        <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
-            <button type="submit" class="disable-on-submit btn btn-danger">
-                <i class="icon-trash"></i>
-                {% trans "Delete Module" %}
-            </button>
-        </form>
-    </div>
-    {% endif %}
-
-    <h3>
-        <i class="icon-folder-open"></i>
-        <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
-    </h3>
-
-<div class="tabbable">
-<ul class="nav nav-tabs" id="module-view-tabs">
-    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    <li>
-        <a href="#careplan_goal-detail-screen-config-tab" data-toggle="tab">
-            {% trans "Goal List" %}
-        </a>
-    </li>
-    <li>
-        <a href="#careplan_task-detail-screen-config-tab" data-toggle="tab">
-            {% trans "Task List" %}
-        </a>
-    </li>
-</ul>
-<div class="tab-content">
-    <div class="tab-pane active" id="module-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
-            <div class="save-button-holder clearfix"></div>
-            <fieldset>
-                <div class="control-group">
-                    <label class="control-label">{% trans "Module Name" %}</label>
-                    <div class="controls">
-                        {% if edit %}
-                            {{ module.name|input_trans:langs|safe }}
-                        {% else %}
-                            {{ module.name|html_trans:langs|safe }}
-                        {% endif %}
-                    </div>
-                </div>
-                <div id="detail-screen-parent" class="control-group">
-                    <label class="control-label">{% trans "Attached to" %}</label>
-                    <div class="controls">
-                        <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId"></select>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label">
-                        {% trans "Menu Mode" %}
-                    </label>
-                    <div class="controls">
-                        {% if edit %}
-                            <select type="text" name="display_separately" data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
-                                <option value="false">{% trans "Display careplan inside attached module" %}</option>
-                                <option value="true">{% trans "Display careplan separately" %}</option>
-                            </select>
-                        {% else %}
-                            {% if not module.display_separately %}
-                                {% trans "Display careplan inside attached module" %}
-                            {% else %}
-                                {% trans "Display careplan separately" %}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-            </fieldset>
-        </form>
-    </div>
-    <div class="tab-pane" id="careplan_goal-detail-screen-config-tab">
-        <div id="careplan_goal-detail-screen-config-body">
-            <div id="careplan_goal-detail-screen-sort">
-            {% if app.enable_multi_sort %}
-                <legend data-bind="visible: rowCount() > 0">
-                    {% trans "Sort Properties" %}
-                    <span style="font-size: 13px">
-                        <span class="hq-help-template"
-                              data-title="{% trans "Sort Properties" %}"
-                              data-content=
-                                  "{% blocktrans %}
-                                      Properties in this list determine how
-                                      cases are ordered in your case list. This
-                                      is useful if for example you want higher
-                                      priority cases to appear closer to the
-                                      top of the list. The case list will sort
-                                      by the first property, then the second,
-                                      etc.
-                                  {% endblocktrans %}" ></span>
-                    </span>
-                </legend>
-                <div id="sorting-list" class="ui-sortable">
-                    <table data-bind="visible: rowCount() > 0"
-                           class="table table-condensed">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>{% trans "Property" %}</th>
-                                <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Format" %}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: sortRows, sortableList: sortRows">
-                            <tr>
-                                <td>
-                                    <i class="grip
-                                            icon-resize-vertical
-                                            icon-blue"
-                                       style="cursor: move"></i>
-                                </td>
-
-                                <td data-bind="html: fieldHtml">
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: direction">
-                                        <option value="ascending"
-                                                data-bind="text: ascendText">
-                                        </option>
-                                        <option value="descending"
-                                                data-bind="text: descendText">
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: type">
-                                        <option value="plain">
-                                            {% trans "Plain" %}
-                                        </option>
-                                        <option value="date">
-                                            {% trans "Date" %}
-                                        </option>
-                                        <option value="int">
-                                            {% trans "Integer" %}
-                                        </option>
-                                        <option value="double">
-                                            {% trans "Decimal" %}
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <a data-bind="click: $root.removeSortRow">
-                                        <i class="icon-remove icon-blue"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-            </div>
-            <div id="careplan_goal-detail-screen-config">
-                <legend>
-                    {% trans "Goal Display Properties" %}
-                </legend>
-            </div>
+{% block settings_fields %}
+    <div id="detail-screen-parent" class="control-group">
+        <label class="control-label">{% trans "Attached to" %}</label>
+        <div class="controls">
+            <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId"></select>
         </div>
     </div>
-    <div class="tab-pane" id="careplan_task-detail-screen-config-tab">
-        <div id="careplan_task-detail-screen-config-body">
-            <div id="careplan_task-detail-screen-sort">
-            {% if app.enable_multi_sort %}
-                <legend data-bind="visible: rowCount() > 0">
-                    {% trans "Sort Properties" %}
-                    <span style="font-size: 13px">
-                        <span class="hq-help-template"
-                              data-title="{% trans "Sort Properties" %}"
-                              data-content=
-                                  "{% blocktrans %}
-                                      Properties in this list determine how
-                                      cases are ordered in your case list. This
-                                      is useful if for example you want higher
-                                      priority cases to appear closer to the
-                                      top of the list. The case list will sort
-                                      by the first property, then the second,
-                                      etc.
-                                  {% endblocktrans %}" ></span>
-                    </span>
-                </legend>
-                <div id="sorting-list" class="ui-sortable">
-                    <table data-bind="visible: rowCount() > 0"
-                           class="table table-condensed">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>{% trans "Property" %}</th>
-                                <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Format" %}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: sortRows, sortableList: sortRows">
-                            <tr>
-                                <td>
-                                    <i class="grip
-                                            icon-resize-vertical
-                                            icon-blue"
-                                       style="cursor: move"></i>
-                                </td>
-
-                                <td data-bind="html: fieldHtml">
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: direction">
-                                        <option value="ascending"
-                                                data-bind="text: ascendText">
-                                        </option>
-                                        <option value="descending"
-                                                data-bind="text: descendText">
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: type">
-                                        <option value="plain">
-                                            {% trans "Plain" %}
-                                        </option>
-                                        <option value="date">
-                                            {% trans "Date" %}
-                                        </option>
-                                        <option value="int">
-                                            {% trans "Integer" %}
-                                        </option>
-                                        <option value="double">
-                                            {% trans "Decimal" %}
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <a data-bind="click: $root.removeSortRow">
-                                        <i class="icon-remove icon-blue"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <div class="control-group">
+        <label class="control-label">
+            {% trans "Menu Mode" %}
+        </label>
+        <div class="controls">
+            {% if edit %}
+                <select type="text" name="display_separately" data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
+                    <option value="false">{% trans "Display careplan inside attached module" %}</option>
+                    <option value="true">{% trans "Display careplan separately" %}</option>
+                </select>
+            {% else %}
+                {% if not module.display_separately %}
+                    {% trans "Display careplan inside attached module" %}
+                {% else %}
+                    {% trans "Display careplan separately" %}
+                {% endif %}
             {% endif %}
-            </div>
-            <div id="careplan_task-detail-screen-config">
-                <legend>
-                    {% trans "Task Display Properties" %}
-                </legend>
-            </div>
         </div>
     </div>
-</div>
-</div>
 {% endblock %}

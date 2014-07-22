@@ -3,6 +3,7 @@ from corehq.apps.commtrack.models import Product
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
+from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 
 
 class IntraHealthLocationMixin(object):
@@ -37,6 +38,7 @@ class IntraHealthReportConfigMixin(object):
 
 class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     model = None
+    data_source = None
     groups = []
     no_value = {'sort_key': 0, 'html': 0}
 
@@ -58,11 +60,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         else:
             header.add_column(columns[0].data_tables_column)
 
-        if self.model.data.keys():
-            groups = list(set(zip(*self.model.data.keys())[0]))
-            self.groups = sorted({self._safe_get(self.PRODUCT_NAMES, group) or group for group in groups})
-        else:
-            self.groups = [group.name for group in Product.by_domain(self.domain)]
+        self.groups = [group.name for group in Product.by_domain(self.domain)]
         for group in self.groups:
             if self.model.have_groups:
                 header.add_column(DataTablesColumnGroup(group,
@@ -75,21 +73,56 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     @property
     def rows(self):
         data = self.model.data
-        ppss = sorted(list(set(zip(*data.keys())[1]))) if data.keys() else []
-
+        localizations = sorted(list(set(zip(*data.keys())[1]))) if data.keys() else []
         rows = []
 
         formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
-        data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
+        if isinstance(self.data_source, NombreData) or isinstance(self.data_source, TauxConsommationData):
+            result = {}
+            ppss = set()
+            for k, v in data.iteritems():
+                ppss.add(k[2])
+                if 'region_id' in self.data_source.config:
+                    helper_tuple = (k[3], k[2], k[1])
+                else:
+                    helper_tuple = (k[2], k[1])
+                if helper_tuple in result:
+                    r = result[helper_tuple]
+                    if r['date'] <= v['date']:
+                        result[helper_tuple] = v
+                else:
+                    result[helper_tuple] = v
+            if 'region_id' in self.data_source.config:
+                result_sum = {}
+                for localization in localizations:
+                    for pps in ppss:
+                        for group in self.groups:
+                            if(group, localization) in result_sum:
+                                r = result_sum[(group, localization)]
+                                cols = self.data_source.sum_cols
+                                for col in cols:
+                                    r[col] += result.get((group, pps, localization), {col: 0})[col]
+                            else:
+                                helper_dict = {}
+                                for col in self.data_source.sum_cols:
+                                    helper_dict[col] = 0
+                                helper_dict['district_name'] = localization
+                                result_sum[(group, localization)] = result.get((group, pps, localization), helper_dict)
+                result = result_sum
+
+            data = dict(formatter.format(result, keys=self.model.keys, group_by=self.model.group_by))
+        else:
+            data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
+
         reversed_map = dict(zip(self.PRODUCT_NAMES.values(), self.PRODUCT_NAMES.keys()))
-        for pps in ppss:
-            row = [pps]
+        for localization in localizations:
+            row = [localization]
             for group in self.groups:
-                if (group, pps) in data:
-                    product = data[(group, pps)]
+                if (group, localization) in data:
+                    product = data[(group, localization)]
                     row.extend([product[p] for p in self.model.col_names])
-                elif (self._safe_get(reversed_map, group), pps) in data:
-                    product = data[(reversed_map[group], pps)]
+                elif (self._safe_get(reversed_map, group), localization) in data:
+                    product = data[(reversed_map[group], localization)]
                     row.extend([product[p] for p in self.model.col_names])
                 else:
                     row.extend([self.no_value for p in self.model.col_names])

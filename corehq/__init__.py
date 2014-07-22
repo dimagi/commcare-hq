@@ -280,3 +280,5 @@ TABS = (
     OrgSettingsTab, # separate menu?
     AdminTab,
 )
+
+from corehq.db import Session

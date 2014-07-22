@@ -1113,21 +1113,41 @@ class Subscription(models.Model):
                                 **kwargs):
         subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
         today = datetime.date.today()
-        future_subscriptions = Subscription.objects.filter(
-            models.Q(subscriber=subscriber, date_end__gt=today) | models.Q(subscriber=subscriber, date_end__exact=None)
+        date_start = date_start or today
+
+        # find subscriptions that end in the future / after this subscription
+        available_subs = Subscription.objects.filter(
+            subscriber=subscriber,
         )
-        if future_subscriptions.filter(is_active=True).count() > 0:
-            raise NewSubscriptionError(_("Project '%s' currently has an active subscription. "
-                                         "Please cancel the current subscription.") % domain)
-        try:
-            next_subscription = future_subscriptions.filter(date_start__gt=today).order_by('date_start')[0]
-            date_end = kwargs.get('date_end')
-            if date_end is None or date_end > next_subscription.date_start:
-                raise NewSubscriptionError(_("The end date for this subscription overlaps with the start date "
-                                             "of the next subscription on %s. Please cancel this subscription first.")
-                                           % next_subscription.date_start)
-        except (Subscription.DoesNotExist, IndexError):
-            pass
+
+        future_subscription_no_end = available_subs.filter(
+            date_end__exact=None,
+        )
+        if date_end is not None:
+            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
+        if future_subscription_no_end.count() > 0:
+            raise NewSubscriptionError(_(
+                "There is already a subscription '%s' with no end date "
+                "that conflicts with the start and end dates of this "
+                "subscription." %
+                future_subscription_no_end.latest('date_created')
+            ))
+
+        future_subscriptions = available_subs.filter(
+            date_end__gt=date_start
+        )
+        if date_end is not None:
+            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
+        if future_subscriptions.count() > 0:
+            raise NewSubscriptionError(_(
+                "There is already a subscription '%s' that has an end date "
+                "that conflicts with the start and end dates of this "
+                "subscription %s - %s." % (
+                    future_subscriptions.latest('date_created'),
+                    date_start,
+                    date_end
+                )
+            ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1141,19 +1161,23 @@ class Subscription(models.Model):
             return last_subscription
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        subscription = Subscription(
+        subscription = Subscription.objects.create(
             account=account,
             plan_version=plan_version,
             subscriber=subscriber,
-            date_start=date_start or datetime.date.today(),
+            date_start=date_start,
             date_end=date_end,
             **kwargs
         )
-        subscription.save()
         subscriber.apply_upgrades_and_downgrades(
             new_plan_version=plan_version, web_user=web_user,
         )
-        SubscriptionAdjustment.record_adjustment(subscription, method=adjustment_method, note=note, web_user=web_user)
+        SubscriptionAdjustment.record_adjustment(
+            subscription, method=adjustment_method, note=note,
+            web_user=web_user
+        )
+        subscription.save()
+
         return subscription
 
     @classmethod

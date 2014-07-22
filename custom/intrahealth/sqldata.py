@@ -4,7 +4,7 @@ from corehq.apps.commtrack.models import Product
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
-    TableDataFormat, DictDataFormat
+    TableDataFormat, DictDataFormat, format_data
 from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
@@ -183,10 +183,43 @@ class FicheData(BaseSqlData):
                 [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
 
+class DateSource(BaseSqlData):
+    title = ''
+    table_name = 'fluff_RecapPassageFluff'
+
+    @property
+    def filters(self):
+        filters = super(DateSource, self).filters
+        if 'PPS_name' in self.config:
+            filters.append(EQ("PPS_name", "PPS_name"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['date',]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Date"), SimpleColumn('date')),
+        ]
+
+
 class RecapPassageData(BaseSqlData):
     title = ''
     table_name = 'fluff_RecapPassageFluff'
+    datatables = True
     show_total = True
+    fix_left_col = True
+    have_groups = False
+
+    @property
+    def slug(self):
+        return 'recap_passage_%s' % self.config['startdate'].strftime("%Y-%m-%d")
+
+    @property
+    def title(self):
+        return 'Recap Passage %s' % self.config['startdate'].strftime("%Y-%m-%d")
 
     @property
     def filters(self):
@@ -197,7 +230,7 @@ class RecapPassageData(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['product_name',]
+        return ['date', 'product_name',]
 
     @property
     def columns(self):
@@ -207,14 +240,15 @@ class RecapPassageData(BaseSqlData):
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
-            DatabaseColumn(_("Stock Total (disponible + livree)"), SumColumn('product_display_total_stock')),
+            DatabaseColumn(_("Stock Total"), SumColumn('product_display_total_stock', alias='stock_total')),
             DatabaseColumn(_("Precedent"), SumColumn('product_old_stock_pps')),
             DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('product_outside_receipts_amount')),
             AggregateColumn(_("Non Facturable"), diff,
                 [AliasColumn('aconsumption'), AliasColumn("bconsumption")]),
             DatabaseColumn(_("Facturable"), SumColumn('product_billed_consumption', alias='bconsumption')),
             DatabaseColumn(_("Reelle"), SumColumn('product_actual_consumption', alias='aconsumption')),
-            DatabaseColumn(_("PPS Restant"), SumColumn('product_pps_restant'))
+            DatabaseColumn("Stock Total", AliasColumn('stock_total')),
+            DatabaseColumn("PPS Restant", SumColumn('product_pps_restant'))
         ]
 
 class ConsommationData(BaseSqlData):
@@ -259,15 +293,17 @@ class TauxConsommationData(BaseSqlData):
     custom_total_calculate = True
     fix_left_col = True
     col_names = ['consumption', 'stock', 'taux-consommation']
+    sum_cols = ['consumption', 'stock']
     have_groups = True
 
     @property
     def group_by(self):
-        group_by = ['product_name']
+        group_by = ['date']
         if 'region_id' in self.config:
-            group_by.append('district_name')
+            group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
+        group_by.extend(['product_name', 'consumption', 'stock'])
         return group_by
 
     @property
@@ -278,8 +314,8 @@ class TauxConsommationData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Consommation reelle"), SumColumn('actual_consumption_total', alias="consumption")))
-        columns.append(DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('stock_total', alias="stock")))
+        columns.append(DatabaseColumn(_("Consommation reelle"), SimpleColumn('actual_consumption_total', alias="consumption"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("Stock apres derniere livraison"), SimpleColumn('stock_total', alias="stock"), format_fn=format_data))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
                                    [AliasColumn('stock'), AliasColumn('consumption')]))
         return columns
@@ -310,15 +346,18 @@ class NombreData(BaseSqlData):
     custom_total_calculate = True
     fix_left_col = True
     col_names = ['quantity', 'cmm', 'nombre-mois-stock-disponible-et-utilisable']
+    sum_cols = ['quantity', 'cmm']
     have_groups = True
 
     @property
     def group_by(self):
-        group_by = ['product_name']
+        group_by = ['date']
         if 'region_id' in self.config:
-            group_by.append('district_name')
+            group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
+        group_by.extend(['product_name', 'quantity', 'cmm'])
+
         return group_by
 
     @property
@@ -330,8 +369,8 @@ class NombreData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"), SumColumn('quantity_total', alias="quantity")))
-        columns.append(DatabaseColumn(_("CMM"), SumColumn('cmm_total', alias="cmm")))
+        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"), SimpleColumn('quantity_total', alias="quantity"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("CMM"), SimpleColumn('cmm_total', alias="cmm"), format_fn=format_data))
         columns.append(AggregateColumn(_("Nombre mois stock disponible et utilisable"), div,
                                    [AliasColumn('quantity'), AliasColumn('cmm')]))
         return columns

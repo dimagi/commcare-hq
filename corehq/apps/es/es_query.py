@@ -82,6 +82,7 @@ class ESQuery(object):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_URLS.keys()))
             raise IndexError(msg)
+        self._default_filters = deepcopy(self.default_filters)
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -122,15 +123,6 @@ class ESQuery(object):
         Actually run the query.  Return an ESQuerySet object.
         """
         raw = run_query(self.url, self.raw_query)
-        if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=self.index,
-                       url=self.url,
-                       query=self.dumps(pretty=True),
-                    )
-            raise ESError(msg)
         return ESQuerySet(raw, deepcopy(self))
 
     @property
@@ -152,7 +144,7 @@ class ESQuery(object):
         Return a list of the filters used in this query, suitable if you
         want to reproduce a query with additional filtering.
         """
-        return self.default_filters.values() + self._filters
+        return self._default_filters.values() + self._filters
 
     @property
     def _query(self):
@@ -172,7 +164,7 @@ class ESQuery(object):
         """
         Build out the es_query dict
         """
-        self._filters.extend(self.default_filters.values())
+        self._filters.extend(self._default_filters.values())
         if self._fields is not None:
             self.es_query['fields'] = self._fields
         if self._start is not None:
@@ -236,12 +228,12 @@ class ESQuery(object):
         Some sensible defaults are provided.  Use this if you don't want 'em
         """
         query = deepcopy(self)
-        query.default_filters = {"match_all": filters.match_all()}
+        query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def remove_default_filter(self, default):
         query = deepcopy(self)
-        query.default_filters.pop(default)
+        query._default_filters.pop(default)
         return query
 
 
@@ -252,6 +244,15 @@ class ESQuerySet(object):
     ESQuerySet.query is the ESQuery object
     """
     def __init__(self, raw, query):
+        if 'error' in raw:
+            msg = ("ElasticSearch Error\n{error}\nIndex: {index}\nURL:{url}"
+                   "\nQuery: {query}").format(
+                       error=raw['error'],
+                       index=query.index,
+                       url=query.url,
+                       query=query.dumps(pretty=True),
+                    )
+            raise ESError(msg)
         self.raw = raw
         self.query = query
 

@@ -16,6 +16,12 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
+        'use_bootstrap_3': (
+            hasattr(request, 'use_bootstrap_3')
+            and request.use_bootstrap_3
+            and hasattr(request, 'user')
+            and toggles.BOOTSTRAP3_PREVIEW.enabled(request.user.username)
+        ),
     }
 
 

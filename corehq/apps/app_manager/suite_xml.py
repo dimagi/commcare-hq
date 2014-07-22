@@ -840,7 +840,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         This method is used by CloudCare when filtering cases.
         """
         details_by_id = self.get_detail_mapping()
-        detail_ids = [self.id_strings.detail(module, detail_type)
+        detail_ids = [self.get_detail_id_safe(module, detail_type)
                       for detail_type, detail, enabled in module.get_details()
                       if enabled]
         xpaths = set()
@@ -1276,8 +1276,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 getattr(form, 'form_filter', None):
                             if isinstance(form, AdvancedForm):
                                 try:
-                                    var = form.actions.load_update_cases[-1].case_session_var
-                                    case = CaseIDXPath(session_var(var)).case()
+                                    action = next(a for a in form.actions.load_update_cases if not a.auto_select)
+                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
                                 except IndexError:
                                     case = None
                             else:
@@ -1335,7 +1335,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            path = '../../' + path
+            install_path = '../../{}'.format(path)
+            local_path = './{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
@@ -1343,9 +1344,11 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
 
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
-                path=path,
+                path=install_path,
                 version=m.version,
-                local=None,
+                local=(local_path
+                       if self.app.enable_local_resource
+                       else None),
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
