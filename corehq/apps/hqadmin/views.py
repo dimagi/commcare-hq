@@ -3,7 +3,7 @@ import time
 import json
 from copy import deepcopy
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from StringIO import StringIO
 import socket
 from django.contrib.auth.models import User
