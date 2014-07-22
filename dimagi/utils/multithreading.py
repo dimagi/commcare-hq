@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import logging
 from time import sleep
 from threading import Thread
+from dimagi.utils.couch import CriticalSection
+
 try:
     # Python 2.x
     import Queue as queue
@@ -13,10 +15,15 @@ class ErrorObject(object):
     def __init__(self, *args, **kwargs):
         self.error_occurred = False
 
-def worker_thread(q, err, function, *args, **kwargs):
+def worker_thread(q, err, function, use_critical_section, *args, **kwargs):
+    q_id = str(id(q))
     while True:
         try:
-            item = q.get_nowait()
+            if use_critical_section:
+                with CriticalSection(["process-fast-queue-lock-%s" % q_id]):
+                    item = q.get_nowait()
+            else:
+                item = q.get_nowait()
         except queue.Empty:
             break
         except Exception as e:
@@ -32,7 +39,7 @@ def worker_thread(q, err, function, *args, **kwargs):
             logging.exception("Error in %s" % function.__name__)
 
 def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
-    args=None, kwargs=None):
+    args=None, kwargs=None, use_critical_section=False):
     """
     Spawns a number of threads which will process the given items.
     items - the list of items to process
@@ -57,7 +64,7 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
         q.put(item)
 
     err = ErrorObject()
-    passed_args = (q, err, function) + (args or ())
+    passed_args = (q, err, function, use_critical_section) + (args or ())
     kwargs = kwargs or {}
     threads = []
     for i in range(num_threads):
