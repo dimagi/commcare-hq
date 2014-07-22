@@ -679,39 +679,38 @@ def system_info(request):
 
 def get_es_couch_comparisons():
     comparison_config = [
-        namedtuple(
-            description='Users (base_doc is "CouchUser")',
-            couch_db=CommCareUser.get_db(),
-            view_name='users/by_username',
-            es_query=UserES().remove_default_filter('active')
+        {
+            'description': 'Users (base_doc is "CouchUser")',
+            'couch_db': CommCareUser.get_db(),
+            'view_name': 'users/by_username',
+            'es_query': UserES().remove_default_filter('active')
                 .remove_default_filter('mobile_worker')
                 .size(0),
-            sql_rows=User.objects.count(),
-        ),
-        namedtuple(
-            description='Domains (doc_type is "Domain")',
-            couch_db=Domain.get_db(),
-            view_name='domain/by_status',
-            es_query=DomainES().size(0),
-            sql_rows=None,
-        ),
-        namedtuple(
-            description='Forms (doc_type is "XFormInstance")',
-            couch_db=XFormInstance.get_db(),
-            view_name='couchforms/by_xmlns',
-            es_query=FormES().remove_default_filter('has_xmlns')
+            'sql_rows': User.objects.count(),
+        },
+        {
+            'description': 'Domains (doc_type is "Domain")',
+            'couch_db': Domain.get_db(),
+            'view_name': 'domain/by_status',
+            'es_query': DomainES().size(0),
+            'sql_rows': None,
+        },
+        {
+            'description': 'Forms (doc_type is "XFormInstance")',
+            'couch_db': XFormInstance.get_db(),
+            'view_name': 'couchforms/by_xmlns',
+            'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
-            sql_rows=FormData.objects.count(),
-        ),
-        namedtuple(
-            description='Cases (doc_type is "CommCareCase")',
-            couch_db=CommCareCase.get_db(),
-            view_name='case/by_owner',
-            es_query=CaseES().size(0),
-            sql_rows=None,
-        
-        ),
+            'sql_rows': FormData.objects.count(),
+        },
+        {
+            'description': 'Cases (doc_type is "CommCareCase")',
+            'couch_db': CommCareCase.get_db(),
+            'view_name': 'case/by_owner',
+            'es_query': CaseES().size(0),
+            'sql_rows': None,
+        }
     ]
 
     comparisons = []
