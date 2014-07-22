@@ -2,6 +2,7 @@ Vellum
 ======
 
 [![Build Status](https://travis-ci.org/mwhite/Vellum.svg?branch=master)](https://travis-ci.org/mwhite/Vellum)
+[![Build Status](https://drone.io/github.com/mwhite/Vellum/status.png)](https://drone.io/github.com/mwhite/Vellum/latest)
 
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
@@ -76,7 +77,7 @@ Install dependencies:
 $ npm install
 ```
 
-Build optimized version (test locally by changing `isLocal` in `tests/main.js`):
+Build optimized version (test locally by changing `useBuilt` in `tests/main.js`):
 ```
 $ make
 ```
@@ -91,9 +92,9 @@ By default, the test page will load the non-built version on 'localhost' and the
 built version otherwise.  Append `?built` or `?async` to the URL to override this
 behavior.
 
-Run tests headlessly (currently just does JSHint):
+Run tests headlessly:
 ```
-$ make test
+$ npm test
 ```
 
 Make dependency graph image:

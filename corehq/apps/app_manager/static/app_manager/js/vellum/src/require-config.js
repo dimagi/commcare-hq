@@ -10,11 +10,13 @@ define(['module'], function (module) {
     var MAIN_COMPONENTS = [
         'vellum/core',
         'vellum/ignoreButRetain',
+        'vellum/intentManager',
         'vellum/itemset',
         'vellum/javaRosa',
         'vellum/lock',
         'vellum/uploader',
-        'vellum/window'
+        'vellum/window',
+        'vellum/polyfills'
     ];
 
     // not working correctly for local modules
