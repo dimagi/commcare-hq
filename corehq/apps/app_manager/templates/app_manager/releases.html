@@ -347,7 +347,6 @@
                         </div>
                         <div class="accordion-body collapse">
                             <div class="accordion-inner">
-                            {% if request|toggle_enabled:"ANDROID_OFFLINE_INSTALL" %}
                                 <div data-bind="bootstrapTabs: true">
                                     <div class="tabbable">
                                         <ul class="nav nav-pills">
@@ -412,36 +411,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            {% else %}
-                                <label class="checkbox" data-bind="visible: allow_media_install">
-                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
-                                    {% trans "Include Multimedia" %}
-                                    <span data-bind="visible: !mm_supported()" class="label">
-                                        {% trans "Only supported for builds made after 2013-10-15" %}
-                                    </span>
-                                </label>
-                                <p>
-                                    <span data-bind="visible: get_short_odk_url()">
-                                        {% blocktrans %}
-                                            Install by typing the following URL
-                                            into the application install screen:
-                                        {% endblocktrans %}
-                                        <code class="bitly"><a data-bind="
-                                            attr: {href: get_short_odk_url()},
-                                            text: get_short_odk_url()
-                                        "></a></code>
-                                    </span>
-                                    <span class="text-warning" data-bind="visible: !get_short_odk_url()">
-                                        {% trans "No short code available; try making another version." %}
-                                    </span>
-                                </p>
-                                <p>
-                                    {% trans "Or" %}
-                                    <a href="#" data-bind="openJqm: get_odk_install_url">
-                                    {% trans "scan the bar code" %}
-                                    </a>
-                                </p>
-                            {% endif %}
                             </div>
                         </div>
                     </div>
