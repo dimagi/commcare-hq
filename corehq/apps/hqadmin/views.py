@@ -29,14 +29,10 @@ from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
-<<<<<<< HEAD
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
-from corehq.apps.hqadmin.history import get_recent_changes
-=======
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
->>>>>>> master
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -50,12 +46,8 @@ from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
-<<<<<<< HEAD
 from corehq.apps.sofabed.models import FormData
-from corehq.apps.users.models import  CommCareUser, WebUser
-=======
 from corehq.apps.users.models import CommCareUser, WebUser
->>>>>>> master
 from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
