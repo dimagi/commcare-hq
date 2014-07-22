@@ -94,12 +94,6 @@ CASE_REBUILD = StaticToggle(
     'Show UI-based case rebuild option',
 )
 
-ANDROID_OFFLINE_INSTALL = StaticToggle(
-    'android_offline_install',
-    'Android Offline Install',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer'
