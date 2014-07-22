@@ -297,6 +297,7 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.care_pathways'
 )
 
 TEST_APPS = ()
@@ -1218,7 +1219,9 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'pathways-india-mis': 'custom.care_pathways',
+    'pathways-tanzania': 'custom.care_pathways',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
