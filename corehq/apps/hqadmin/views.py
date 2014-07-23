@@ -1,31 +1,45 @@
-from datetime import timedelta, datetime
-import time
 import json
-from copy import deepcopy
 import logging
+import socket
+import time
+from datetime import timedelta, datetime
+from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
-import socket
-from django.contrib.auth.models import User
 
 from django.views.decorators.http import require_POST, require_GET
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.core import management
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.template.defaultfilters import yesno
-from django.contrib import messages
-from django.conf import settings
-from restkit import Resource
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.core import management
 from django.template.loader import render_to_string
-from django.http import Http404
+from django.http import (
+    HttpResponseRedirect,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
+    Http404,
+)
+from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from couchexport.export import export_raw, export_from_tables
+from couchexport.shortcuts import export_response
+from couchexport.models import Format
+from couchforms.models import XFormInstance
+from phonelog.utils import device_users_by_xform
+from phonelog.models import DeviceReportEntry
+from phonelog.reports import TAGS
+from pillowtop import get_all_pillows_json, get_pillow_by_name
+
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.es.cases import CaseES
@@ -35,6 +49,7 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
@@ -50,25 +65,17 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, get_url_base
-from couchexport.export import export_raw, export_from_tables
-from couchexport.shortcuts import export_response
-from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
-from phonelog.utils import device_users_by_xform
-from pillowtop import get_all_pillows_json, get_pillow_by_name
-from phonelog.models import DeviceReportEntry
-from phonelog.reports import TAGS
 
 from .multimech import GlobalConfig
+
 
 @require_superuser
 def default(request):
