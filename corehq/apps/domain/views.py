@@ -2031,19 +2031,19 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            if feature.save_fn is not None:
-                feature.save_fn(self.domain, new_state)
             slug = feature.slug
             toggle = self.get_toggle(slug)
-            item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
+            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
             if new_state:
                 if not item in toggle.enabled_users:
                     toggle.enabled_users.append(item)
             else:
                 toggle.enabled_users.remove(item)
             toggle.save()
-            cache_key = get_toggle_cache_key(slug, item)
-            cache.set(cache_key, new_state)
+            update_toggle_cache(slug, item, new_state)
+
+            if feature.save_fn is not None:
+                feature.save_fn(self.domain, new_state)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
