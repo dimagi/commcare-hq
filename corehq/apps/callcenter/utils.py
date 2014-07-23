@@ -22,6 +22,7 @@ def sync_user_cases(commcare_user):
     # case submission
     fields = {
         'name': commcare_user.name or commcare_user.raw_username,
+        'username': commcare_user.raw_username,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or ''
