@@ -82,6 +82,30 @@ class SMSUser(object):
             backend=json_rep['backend']
         )
 
+
+class Location(object):
+    def __init__(self, id, name, type, parent, latitude, longitude, code):
+        self.id = id
+        self.name = name
+        self.type = type
+        self.parent = parent
+        self.latitude = latitude
+        self.longitude = longitude
+        self.code = code
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            id=json_rep['id'],
+            name=json_rep['name'],
+            type=json_rep['type'],
+            parent=json_rep['parent_id'],
+            latitude=json_rep['latitude'],
+            longitude=json_rep['longitude'],
+            code=json_rep['code']
+        )
+
+
 class ILSGatewayEndpoint(EndpointMixin):
 
     def __init__(self, base_uri, username, password):
@@ -91,6 +115,7 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.products_url = self._urlcombine(self.base_uri, '/products/')
         self.webusers_url = self._urlcombine(self.base_uri, '/webusers/')
         self.smsusers_url = self._urlcombine(self.base_uri, '/smsusers/')
+        self.locations_url = self._urlcombine(self.base_uri, '/locations/')
 
     def get_objects(self, url, params=None, **kwargs):
         params = params if params else {}
@@ -123,4 +148,15 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_smsusers(self, **kwargs):
         meta, users = self.get_objects(self.smsusers_url, **kwargs)
         return meta, [SMSUser.from_json(user) for user in users]
+
+    def get_location(self, id):
+        response = requests.get(self.locations_url + str(id), auth=self._auth())
+        return response.json()
+
+    def get_locations(self, type=None, **kwargs):
+        params = {}
+        if type:
+            params['loc_type'] = type
+        meta, locations = self.get_objects(self.locations_url, params=params, **kwargs)
+        return meta, [Location.from_json(location) for location in locations]
 

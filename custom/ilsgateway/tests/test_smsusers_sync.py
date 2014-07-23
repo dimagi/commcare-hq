@@ -5,7 +5,7 @@ from corehq import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.api import SMSUser
-from custom.ilsgateway.commtrack import sync_ilsgateway_smsusers
+from custom.ilsgateway.commtrack import sync_ilsgateway_smsuser
 
 TEST_DOMAIN = 'ilsgateway-commtrack-smsusers-test'
 
@@ -24,7 +24,7 @@ class WebUsersSyncTest(TestCase):
             smsuser = SMSUser.from_json(json.loads(f.read()))
 
         self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
-        ilsgateway_smsuser = sync_ilsgateway_smsusers(TEST_DOMAIN, smsuser)
+        ilsgateway_smsuser = sync_ilsgateway_smsuser(TEST_DOMAIN, smsuser)
         first_name, last_name = ilsgateway_smsuser.name.split(' ', 1)
         username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), smsuser.id)
         username = "%s@%s.commcarehq.org" % (username_part, TEST_DOMAIN)

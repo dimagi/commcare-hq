@@ -5,7 +5,7 @@ from corehq import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.users.models import WebUser
 from custom.ilsgateway.api import ILSUser
-from custom.ilsgateway.commtrack import sync_ilsgateway_webusers
+from custom.ilsgateway.commtrack import sync_ilsgateway_webuser
 
 TEST_DOMAIN = 'ilsgateway-commtrack-webusers-test'
 
@@ -24,7 +24,7 @@ class WebUsersSyncTest(TestCase):
             webuser = ILSUser.from_json(json.loads(f.read()))
 
         self.assertEqual(0, len(WebUser.by_domain(TEST_DOMAIN)))
-        ilsgateway_webuser = sync_ilsgateway_webusers(TEST_DOMAIN, webuser)
+        ilsgateway_webuser = sync_ilsgateway_webuser(TEST_DOMAIN, webuser)
         self.assertEqual(webuser.email, ilsgateway_webuser.username)
         self.assertEqual(webuser.password, ilsgateway_webuser.password)
         self.assertEqual(webuser.first_name, ilsgateway_webuser.first_name)

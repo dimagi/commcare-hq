@@ -1,7 +1,7 @@
 import json
 import os
 from django.test.testcases import TestCase
-from custom.ilsgateway.api import Product, ILSUser, SMSUser
+from custom.ilsgateway.api import Product, ILSUser, SMSUser, Location
 
 
 class ProductApiTest(TestCase):
@@ -45,4 +45,16 @@ class ProductApiTest(TestCase):
         self.assertEqual(smsuser.email, "test@gmail.com")
         self.assertEqual(bool(smsuser.is_active), True)
         self.assertEqual(smsuser.phone_numbers, ["4224242442"])
+
+
+    def testParseLocationJSON(self):
+        with open(os.path.join(self.datapath, 'sample_location.json')) as f:
+            location = Location.from_json(json.loads(f.read()))
+        self.assertEqual(location.id, 1)
+        self.assertEqual(location.name, "MOHSW")
+        self.assertEqual(location.type, "MOHSW")
+        self.assertEqual(location.parent, None)
+        self.assertEqual(location.latitude, -10.6676087700)
+        self.assertEqual(location.longitude, 39.1621900200)
+        self.assertEqual(location.code, "MOHSW-MOHSW")
 
