@@ -2,7 +2,7 @@ from .es_query import HQESQuery
 from . import filters
 
 
-class FormsES(HQESQuery):
+class FormES(HQESQuery):
     index = 'forms'
     default_filters = {
         'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
@@ -16,7 +16,7 @@ class FormsES(HQESQuery):
             app,
             submitted,
             completed,
-        ] + super(FormsES, self).builtin_filters
+        ] + super(FormES, self).builtin_filters
 
 
 def xmlns(xmlns):

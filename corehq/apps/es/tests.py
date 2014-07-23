@@ -51,7 +51,7 @@ class TestESQuery(TestCase):
                 }
             }
         }
-        query = forms.FormsES()
+        query = forms.FormES()
         self.checkQuery(query, json_output)
 
     def test_user_query(self):
@@ -91,7 +91,7 @@ class TestESQuery(TestCase):
                 }
             }
         }
-        query = forms.FormsES()\
+        query = forms.FormES()\
                 .filter(filters.domain("zombocom"))\
                 .xmlns('banana')
         self.checkQuery(query, json_output)
