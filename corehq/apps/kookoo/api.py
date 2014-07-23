@@ -127,7 +127,7 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         call_log_entry.error = True
         call_log_entry.error_message = message
         if (message.strip().upper() in [
-            'CALLS WILL NOT BE MADE BETWEEN 9PM TO 9AM',
+            'CALLS WILL NOT BE MADE BETWEEN 9PM TO 9AM.',
             'PHONE NUMBER IN DND LIST',
         ]):
             do_not_retry = True

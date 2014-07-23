@@ -1,11 +1,11 @@
 from StringIO import StringIO
 import logging
 import hashlib
+import itertools
 from lxml import etree
 import os
 import re
 import json
-import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
 
@@ -27,6 +27,7 @@ from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
+from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
@@ -41,6 +42,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
+from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -86,18 +88,13 @@ from corehq.apps.app_manager.models import Application, get_app, DetailColumn, F
     IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
+from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
+    require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
-
-require_can_edit_apps = require_permission(Permissions.edit_apps)
-require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
-
-def set_file_download(response, filename):
-    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
 
 
 def _encode_if_unicode(s):
@@ -109,32 +106,6 @@ CASE_TYPE_CONFLICT_MSG = (
     "Make sure all case properties you are loading "
     "are available in the new case type"
 )
-
-
-class ApplicationViewMixin(DomainViewMixin):
-    """
-    Helper for class-based views in app manager
-
-    Currently only used in hqmedia
-
-    """
-
-    @property
-    @memoized
-    def app_id(self):
-        return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
-
-    @property
-    @memoized
-    def app(self):
-        try:
-            # if get_app is mainly used for views,
-            # maybe it should be a classmethod of this mixin? todo
-            return get_app(self.domain, self.app_id)
-        except Exception:
-            pass
-        return None
-
 
 
 @require_deploy_apps
@@ -441,6 +412,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         app.save()
 
     context = {
+        'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
@@ -448,6 +420,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
+        'allow_form_copy': isinstance(form, Form),
+        'allow_form_filtering': not isinstance(form, CareplanForm),
+        'allow_form_workflow': not isinstance(form, CareplanForm),
     }
 
     if isinstance(form, CareplanForm):
@@ -474,7 +450,6 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
-            'is_user_registration': is_user_registration,
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
@@ -751,25 +726,71 @@ def get_module_view_context_and_template(app, module):
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
-            'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
-            'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
-            "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
-            "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
+            'details': [
+                {
+                    'label': _('Goal List'),
+                    'type': 'careplan_goal',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
+                    'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
+                    'short': module.goal_details.short,
+                    'long': module.goal_details.long,
+                },
+                {
+                    'label': _('Task List'),
+                    'type': 'careplan_task',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
+                    'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
+                    'short': module.task_details.short,
+                    'long': module.task_details.long,
+                },
+            ],
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        return "app_manager/module_view_advanced.html", {
-            'case_properties': sorted(builder.get_properties(case_type)),
-            'product_properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-            'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
-            'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
+        def get_details():
+            details = [{
+                'label': _('Case List'),
+                'type': 'case',
+                'model': 'case',
+                'properties': sorted(builder.get_properties(case_type)),
+                'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                'short': module.case_details.short,
+                'long': module.case_details.long,
+            }]
+
+            if app.commtrack_enabled:
+                details.append({
+                    'label': _('Product List'),
+                    'type': 'product',
+                    'model': 'product',
+                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                    'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
+                    'short': module.product_details.short,
+                })
+
+            return details
+
+        return "app_manager/module_view.html", {
+            'details': get_details(),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
-            'case_properties': sorted(builder.get_properties(case_type)),
-            "sortElements": json.dumps(get_sort_elements(module.case_details.short))
+            'details': [
+                {
+                    'label': _('Case List'),
+                    'type': 'case',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(case_type)),
+                    'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                    'short': module.case_details.short,
+                    'long': module.case_details.long,
+                    'parent_select': module.parent_select,
+                },
+            ],
         }
 
 
@@ -850,7 +871,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         )
         module_context["enable_enum_image"] = (
-            req.couch_user.is_previewer or
             feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
         )
         context.update(module_context)
@@ -1999,24 +2019,25 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     })
 
 
-def _make_zip_payload(files):
-    buffer = StringIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
-        for filename, f in files:
-            z.writestr(filename, f)
-    return buffer.getvalue()
+class DownloadCCZ(DownloadMultimediaZip):
+    name = 'download_ccz'
+    compress_zip = True
+    zip_name = 'commcare.ccz'
 
+    def check_before_zipping(self):
+        pass
 
-@safe_download
-def download_ccz(req, domain, app_id):
-    files = ((name, f.encode('utf-8'))
-             for name, f in _download_index_files(req))
-    response = HttpResponse(
-        _make_zip_payload(files),
-        content_type='application/x-zip-compressed',
-    )
-    set_file_download(response, 'commcare.ccz')
-    return response
+    def iter_files(self):
+        skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+
+        def _files():
+            for name, f in _download_index_files(self.request):
+                if name not in skip_files:
+                    yield (get_name(name), f.encode('utf-8'))
+
+        media_files, errors = super(DownloadCCZ, self).iter_files()
+        return itertools.chain(_files(), media_files), errors
 
 
 @safe_download

@@ -29,7 +29,7 @@ from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
+from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
@@ -176,7 +176,7 @@ class Product(Document):
         return len(cls.ids_by_domain(domain))
 
     @classmethod
-    def _csv_attrs(cls):
+    def _export_attrs(cls):
         return [
             'name',
             'unit',
@@ -193,7 +193,7 @@ class Product(Document):
         product_dict['id'] = self._id
         product_dict['product_id'] = self.code_
 
-        for attr in self._csv_attrs():
+        for attr in self._export_attrs():
             real_attr = attr[0] if isinstance(attr, tuple) else attr
             product_dict[real_attr] = encode_if_needed(
                 getattr(self, real_attr)
@@ -211,7 +211,7 @@ class Product(Document):
         return property_dict
 
     @classmethod
-    def from_csv(cls, row):
+    def from_excel(cls, row):
         if not row:
             return None
 
@@ -221,17 +221,22 @@ class Product(Document):
         else:
             p = cls()
 
-        p.code = row.get('product_id')
+        p.code = str(row.get('product_id') or '')
 
-        for attr in cls._csv_attrs():
+        for attr in cls._export_attrs():
             if attr in row or (isinstance(attr, tuple) and attr[0] in row):
-                val = row.get(attr, '').decode('utf-8')
+                val = row.get(attr, '')
                 if isinstance(attr, tuple):
                     attr, f = attr
                     val = f(val)
                 setattr(p, attr, val)
             else:
                 break
+
+        if not p.code:
+            raise InvalidProductException(_('Product ID is a required field and cannot be blank!'))
+        if not p.name:
+            raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
         # pack and add custom data items
         product_data = {}

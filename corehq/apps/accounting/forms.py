@@ -528,8 +528,6 @@ class SubscriptionForm(forms.Form):
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
         )
-        # this is likely temporary, see PR#3725
-        sub.save()
         return sub
 
     def clean_active_accounts(self):

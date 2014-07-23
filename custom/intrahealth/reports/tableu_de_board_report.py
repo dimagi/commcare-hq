@@ -15,6 +15,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
     title = ''
     report_template_path = "intrahealth/multi_report.html"
     flush_layout = True
+    export_format_override = 'csv'
 
     @property
     @memoized

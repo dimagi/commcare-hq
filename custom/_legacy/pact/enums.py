@@ -167,7 +167,7 @@ PACT_HIV_CLINIC_CHOICES = (
     ("massachusetts_general_hospital_charlestown", "Massachusetts General Hospital - Charlestown"),
     ("boston_healthcare_for_the_homeless_program", "Boston Healthcare for the Homeless Program"),
     ("beth_israel_deaconess_medical_center", "Beth Israel Deaconess Medical Center"),
-    ("cambridge_health_alliance", "Cambridge Health Alliance"),
+    ("cambridge_health_alliance", "Cambridge Health Alliance - Zinberg Clinic"),
     ("cambridge_health_alliance_somerville", "Cambridge Health Alliance - Somerville"),
     ("cambridge_health_alliancewindsor_st", "Cambridge Health Alliance-Windsor St"),
     ("childrens_hospital", "Children's Hospital"),

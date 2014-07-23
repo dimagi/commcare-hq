@@ -5,9 +5,22 @@
 # - ensures all necessary processes will run on startup
 # - creates databases 
 #
-# Before running, you must download the JDK 7 tar.gz from
-# http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
-# it as jdk.tar.gz in the same directory as this script.
+# Assumptions when running this install script:
+# - You have downloaded Git (sudo apt-get install git) and cloned this repository (git clone URL_OF_THIS_REPOSITORY)
+#   because it references the requirements folder
+# - Before running, you must download the JDK 7 tar.gz from
+#   http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
+#   it as jdk.tar.gz in the commcare_hq directory, where this script resides.
+#       Note: If you're running this install from terminal, do the following to install oracle JDK 7
+#             - In a browser visit http://www.oracle.com/technetwork/java/javase/downloads/index.html
+#             - Click the Java SE 7 download link under 'JDK'
+#             - Accept the license agreement
+#             - Right Click and copy the download link.
+#             - Paste the download link at the end of the following line of code then execute this code
+#               wget --header "Cookie: oraclelicense=accept-securebackup-cookie" PASTE_DOWNLOAD_URL_HERE
+#             - Rename the file to jdk.tar.gz as per the install instructions
+#             - mv NAME_OF_DOWNLOADED_FILE.tar.gz commcare-hq/jdk.tar.gz
+
 
 
 # Database settings; change these if desired
@@ -23,7 +36,7 @@ COUCHDB_PW="commcarehq"
 
 ## Misc settings
 
-ES_VERSION=0.20.5
+ES_VERSION=0.90.13
 MINIMAL_INSTALL=
 JDK=1
 
@@ -32,6 +45,15 @@ if [ ! -f jdk.tar.gz ]; then
     JDK=
     MINIMAL_INSTALL=1
 fi
+
+#We have to get the latest apt-packages.txt file from the dimagi site
+if [ ! -d requirements  ]; then
+    echo "Requirements haven't yet been downloaded"
+    mkdir requirements && cd requirements
+    wget https://raw.github.com/dimagi/commcare-hq/master/requirements/apt-packages.txt
+    cd ..
+fi
+
 
 ## Install OS-level package dependencies
 command -v apt-get > /dev/null 2>&1
@@ -105,7 +127,7 @@ if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
     sudo mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0
 
-    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 
+    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
     sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
 
@@ -120,7 +142,8 @@ if [ "$JDK" ] && [ ! -d /usr/local/lib/jython ]; then
     fi
 
     # Set /usr/local/lib/jython as the target directory
-    sudo java -jar jython_installer-2.5.2.jar --silent -d /usr/local/lib/jython
+    echo "Make sure to enter  /usr/local/lib/jython as the Target Directory"
+    sudo java -jar jython_installer-2.5.2.jar -d /usr/local/lib/jython
 
     sudo ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
 
@@ -134,25 +157,30 @@ fi
 ## Install couchdb ##
 # from http://onabai.wordpress.com/2012/05/10/installing-couchdb-1-2-in-ubuntu-12-04/
 if [ ! -f /etc/init.d/couchdb ]; then
+    
+    if [ "$PM" = "apt-ubuntu" ]; then
+        #In ubunt, we use the nilya/couchdb-1.3 as done on the travis build
+        sudo add-apt-repository -y ppa:nilya/couchdb-1.3
+        sudo apt-get update
+        sudo apt-get install -y couchdb
+    elif  [ "$PM" = "yum-rhel" ]; then
+    #We have to download the file and make it if we're using yum
     if [ ! -f apache-couchdb-1.2.1.tar.gz ]; then
-        wget http://mirrors.ibiblio.org/apache/couchdb/source/1.3.1/apache-couchdb-1.3.1.tar.gz
+        wget http://pkgs.fedoraproject.org/repo/pkgs/couchdb/apache-couchdb-1.3.1.tar.gz/2ff71e7c55634bb52eca293368183b40/apache-couchdb-1.3.1.tar.gz
     fi
 
     tar xzf apache-couchdb-1.3.1.tar.gz
     cd apache-couchdb-1.3.1
-    if [ "$PM" = "apt-ubuntu" ]; then
-        ./configure
-    elif  [ "$PM" = "yum-rhel" ]; then
         sudo mkdir -p /usr/local/var/log/couchdb \
             /usr/local/var/lib/couchdb \
             /usr/local/var/run/couchdb
 
         # this is not actually for all yum installs, just 64-bit
         ./configure --prefix=/usr/local --enable-js-trunk --with-erlang=/usr/lib64/erlang/usr/include
+        make 
+        sudo make install
+        cd .. && rm -r apache-couchdb-1.3.1
     fi
-    make 
-    sudo make install
-    cd .. && rm -r apache-couchdb-1.3.1
 
     if [ "$PM" = "apt-ubuntu" ]; then
         sudo adduser --disabled-login --disabled-password --no-create-home couchdb

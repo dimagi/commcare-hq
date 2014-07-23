@@ -7,13 +7,10 @@ from collections import defaultdict
 from StringIO import StringIO
 import socket
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 from django.views.decorators.http import require_POST, require_GET
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.template.defaultfilters import yesno
@@ -29,7 +26,7 @@ from django.http import Http404
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
-from corehq.apps.hqadmin.history import get_recent_changes
+from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -42,8 +39,9 @@ from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import  CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
+from corehq.db import Session
 from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -59,10 +57,9 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 from phonelog.utils import device_users_by_xform
-from pillowtop import get_all_pillows_json
+from pillowtop import get_all_pillows_json, get_pillow_by_name
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import TAGS
-from corehq.toggles import IS_DEVELOPER
 
 from .multimech import GlobalConfig
 
@@ -576,6 +573,16 @@ def domain_list_download(request):
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
 
+
+@require_superuser_or_developer
+def download_recent_changes(request):
+    count = int(request.GET.get('changes', 10000))
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="recent_changes.csv"'
+    download_changes(get_db(), count, resp)
+    return resp
+
+
 @require_superuser_or_developer
 def system_ajax(request):
     """
@@ -659,6 +666,15 @@ def system_info(request):
     context.update(check_es_cluster_health())
 
     return render(request, "hqadmin/system_info.html", context)
+
+@require_POST
+@require_superuser_or_developer
+def reset_pillow_checkpoint(request):
+    pillow = get_pillow_by_name(request.POST["pillow_name"])
+    if pillow:
+        pillow.reset_checkpoint()
+
+    return redirect("system_info")
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
@@ -862,21 +878,12 @@ def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html
 
-    db_settings = settings.DATABASES["default"].copy()
-    db_settings['PORT'] = db_settings.get('PORT', '') or '5432'
-    db_url = "postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
-        **db_settings
-    )
-    engine = create_engine(db_url)
-    session = sessionmaker(bind=engine)
-    current = session()
-
     scripts = ['submit_form.py', 'ota_restore.py']
 
     tests = []
     # datetime info seems to be buried in GlobalConfig.results[0].run_id,
     # which makes ORM-level sorting problematic
-    for gc in current.query(GlobalConfig).all()[::-1]:
+    for gc in Session.query(GlobalConfig).all()[::-1]:
         gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
         if gc.results:
             for script, uc in gc.scripts.items():

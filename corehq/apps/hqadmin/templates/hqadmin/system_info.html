@@ -124,7 +124,7 @@
             })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-            }
+            };
         }
 
         function PillowtopViewModel() {
@@ -150,6 +150,12 @@
             setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
             setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
             setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
+        });
+
+        $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
+            var pillowName = $(this).val();
+            $(".modal-header h3").text(pillowName);
+            $(".modal-body #pillow_name").val(pillowName);
         });
     </script>
 
@@ -249,6 +255,7 @@
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
+                    <th>Reset pillow checkpoint</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: pillows">
@@ -269,6 +276,11 @@
                     <td>
                         <span data-bind="text: seq"></span>
                         / <span data-bind="text: db_seq"></span>
+                    </td>
+                    <td>
+                        <a class="btn btn-info pull-right reset_pillow_checkpoint_btn" data-bind="value: name" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
+                            {% trans "Reset" %}
+                        </a>
                     </td>
                 </tr>
             </tbody>
@@ -347,12 +359,13 @@
     {% include "hqadmin/partials/deploy_history.html" %}
     </div>
     <div class="row-fluid">
-        <h3>Recent Database Changes</h3>
+        <h3>Recent Database Changes <small><a href="{% url 'download_recent_changes' %}">download</a></small></h3>
         <table class="table table-striped">
             <thead>
             <tr>
                 <th>Domain</th>
                 <th>Doc Type</th>
+                <th>Date modified (guess)</th>
                 <th>id</th>
                 <th>rev</th>
             </tr>
@@ -362,6 +375,7 @@
             <tr>
                 <td>{{ change.domain }}</td>
                 <td>{{ change.doc_type }}</td>
+                <td>{{ change.date }}</td>
                 <td>{{ change.id }}</td>
                 <td>{{ change.rev }}</td>
             </tr>
@@ -369,4 +383,8 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
 {% endblock %}
