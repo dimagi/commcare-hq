@@ -1,4 +1,5 @@
 from casexml.apps.case.signals import case_post_save
+from casexml.apps.case.xform import is_device_report
 from couchforms.signals import successful_form_received
 
 
@@ -22,7 +23,10 @@ def create_repeat_records(repeater_cls, payload):
     if domain:
         repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
-            repeater.register(payload)
+            if not (hasattr(repeater, 'exclude_device_reports')
+                    and repeater.exclude_device_reports
+                    and is_device_report(payload)):
+                repeater.register(payload)
 
 
 successful_form_received.connect(create_form_repeat_records)

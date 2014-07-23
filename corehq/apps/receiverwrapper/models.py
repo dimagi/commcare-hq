@@ -128,6 +128,9 @@ class FormRepeater(Repeater):
     Record that forms should be repeated to a new url
 
     """
+
+    exclude_device_reports = BooleanProperty(default=False)
+
     @memoized
     def _payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
