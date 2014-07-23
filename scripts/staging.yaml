@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - subtree-merge-forms-cases
 #  - add-build-ui
   - time-ago-deployed
   - hq-dropdown # sravan 5/7
