@@ -85,7 +85,7 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key
+from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2013,7 +2013,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
         if not slug in [f.slug for f, _ in self.features()]:
             raise Http404()
         try:
-            return Toggle.get(generate_toggle_id(slug))
+            return Toggle.get(slug)
         except ResourceNotFound:
             return Toggle(slug=slug)
 
