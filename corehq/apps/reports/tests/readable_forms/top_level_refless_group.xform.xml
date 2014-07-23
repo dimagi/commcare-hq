@@ -1,0 +1,1063 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms">
+
+<h:head>
+        <h:title ref="jr:itext('odk_form_title')">Progress Note</h:title>
+        <meta jr:name="pact_progress_note"/>
+    <model>
+                    <itext>
+
+                        <translation lang="en" default="true">
+                                <text id="odk_form_title">
+                                        <value>Client #<output ref="/progress_note/note/pact_id"/></value>
+                                </text>
+
+                                <text id="encounter_date">
+                                        <value>Date of Encounter</value>
+                                </text>
+                                <text id="time_entry">
+                                        <value>Activity Time</value>
+                                </text>
+                                <text id="time_hint">
+                                        <value>Enter a Time for this activity in minutes, skip if no time was spent</value>
+                                </text>
+                                <text id="time_office">
+                                        <value>PACT Office Visit</value>
+                                </text>
+                                <text id="time_home">
+                                        <value>Home Visit</value>
+                                </text>
+                                <text id="time_wait">
+                                        <value>Time Waiting for Client</value>
+                                </text>
+                                <text id="time_other">
+                                        <value>Other Visit</value>
+                                </text>
+                                <text id="time_other_location">
+                                        <value>Location of Other Visit</value>
+                                </text>
+                                <text id="accompaniment">
+                                        <value>Accompaniment Time</value>
+                                </text>
+                                <text id="accompaniment_type">
+                                        <value>Accompaniment Type</value>
+                                </text>
+                                <text id="accompaniment_type_hivmd">
+                                        <value>HIV MD</value>
+                                </text>
+                                <text id="accompaniment_type_pcp">
+                                        <value>PCP</value>
+                                </text>
+                                <text id="accompaniment_type_psych">
+                                        <value>Psychiatry</value>
+                                </text>
+                                <text id="accompaniment_type_obgyn">
+                                        <value>OB/GYN</value>
+                                </text>
+                                <text id="accompaniment_type_opth">
+                                        <value>Ophthalmologist</value>
+                                </text>
+                                <text id="accompaniment_type_social">
+                                        <value>Social Service</value>
+                                </text>
+                                <text id="accompaniment_type_other">
+                                        <value>Other</value>
+                                </text>
+                                <text id="accompaniment_other">
+                                    <value>Specify Accompaniment Type</value>
+                                </text>
+                                <text id="time_phone">
+                                        <value>Phone Call/Leave Message</value>
+                                </text>
+                                <text id="missed_visit">
+                                        <value>Missed Visit</value>
+                                </text>
+                                <text id="time_discussion">
+                                        <value>Provider/Discussion Message</value>
+                                </text>
+                                <text id="time_administrative">
+                                        <value>Administrative</value>
+                                </text>
+                                <text id="time_travel">
+                                        <value>Travel</value>
+                                </text>
+                                <text id="discussed_appointments">
+                                        <value>Discussed scheduled appointments</value>
+                                </text>
+                                <text id="discussed_goals">
+                                        <value>Discussed goals for current/upcoming appointment</value>
+                                </text>
+                                <text id="discussed_followup">
+                                        <value>Discussed follow up after appointment</value>
+                                </text>
+                                <text id="yes">
+                                        <value>Yes</value>
+                                </text>
+                                <text id="no">
+                                        <value>No</value>
+                                </text>
+                                <text id="reviewed_cd">
+                                        <value>Reviewed patient&#8217;s CD4 &amp; VL</value>
+                                </text>
+                                <text id="discussed_qsp">
+                                        <value>Discussed QSP</value>
+                                </text>
+                                <text id="pill_check">
+                                        <value>Did you do a pillbox check?</value>
+                                </text>
+                                <text id="adherence">
+                                        <value>Adherence</value>
+                                </text>
+                                <text id="doses_missed">
+                                        <value>Doses Missed in the Last 7 Days</value>
+                                </text>
+                                <text id="doses_possible">
+                                        <value>Doses Possible in the Last 7 Days</value>
+                                </text>
+                                <text id="adherence_freetext">
+                                        <value>Patient's response to "How was it taking your meds today?"</value>
+                                </text>
+                                <text id="self_report">
+                                        <value>Patient Self Report: How much of your medicine did you take in the last week</value>
+                                </text>
+                                <text id="self_report_all">
+                                        <value>All</value>
+                                </text>
+                                <text id="self_report_most">
+                                        <value>Most</value>
+                                </text>
+                                <text id="self_report_half">
+                                        <value>About Half</value>
+                                </text>
+                                <text id="self_report_few">
+                                        <value>Very Few</value>
+                                </text>
+                                <text id="self_report_none">
+                                        <value>None</value>
+                                </text>
+                                <text id="referral">
+                                        <value>Referral</value>
+                                </text>
+                                <text id="referral_type">
+                                        <value>Type of Referral</value>
+                                </text>
+                                <text id="referral_social">
+                                        <value>Social</value>
+                                </text>
+                                <text id="referral_medical">
+                                        <value>Medical</value>
+                                </text>
+                                <text id="referral_other">
+                                        <value>Other</value>
+                                </text>
+                                <text id="referral_date">
+                                        <value>Referral Date</value>
+                                </text>
+
+                                <text id="newentries">
+                                        <value>Does the patient have any new records to enter?</value>
+                                </text>
+
+                                <text id="newreferral">
+                                        <value>New Referral(s)</value>
+                                </text>
+
+                                <text id="newbw">
+                                        <value>New Bloodwork Record(s)</value>
+                                </text>
+
+                                <text id="bloodwork">
+                                        <value>Bloodwork</value>
+                                </text>
+                                <text id="bloodwork_date">
+                                        <value>Date of Tests</value>
+                                </text>
+                                <text id="bloodwork_types">
+                                        <value>Types of test performed</value>
+                                </text>
+                                <text id="bloodwork_vl">
+                                        <value>Viral Load</value>
+                                </text>
+                                <text id="bloodwork_cd">
+                                        <value>CD4 Count</value>
+                                </text>
+                                <text id="vl_count">
+                                        <value>Viral Load Result</value>
+                                </text>
+                                <text id="cd_count">
+                                        <value>CD4 Count Result</value>
+                                </text>
+                                <text id="cd_per">
+                                        <value>CD4 Percent Result (Optional)</value>
+                                </text>
+
+                                <text id="convseration_header">
+                                        <value>Conversations</value>
+                                </text>
+
+                                <text id="conversations_which">
+                                        <value>In what topics did you have a discussion?</value>
+                                </text>
+
+                                <text id="conversations_1">
+                                        <value>Introduction to the Health Promotion Curriculum</value>
+                                </text>
+
+                                <text id="conversations_2">
+                                        <value>Me and IHV</value>
+                                </text>
+
+                                <text id="conversations_3">
+                                        <value>Using a Pillbox</value>
+                                </text>
+
+                                <text id="conversations_4">
+                                        <value>Handling your ART Medications</value>
+                                </text>
+
+                                <text id="conversations_5">
+                                        <value>What is Adherence</value>
+                                </text>
+
+                                <text id="conversations_6">
+                                        <value>Side Effects</value>
+                                </text>
+
+                                <text id="conversations_7">
+                                        <value>What is HIV and How does it Affect My Body</value>
+                                </text>
+
+                                <text id="conversations_8">
+                                        <value>Identifying and Building Social Support Networks</value>
+                                </text>
+
+                                <text id="conversations_9">
+                                        <value>Adherence Strengths and Difficulties</value>
+                                </text>
+
+                                <text id="conversations_10">
+                                        <value>Medical Appointments and Providers</value>
+                                </text>
+
+                                <text id="conversations_11">
+                                        <value>Health Maintenance</value>
+                                </text>
+
+                                <text id="conversations_12">
+                                        <value>Harm Reduction</value>
+                                </text>
+
+                                <text id="conversations_13">
+                                        <value>Harm Reduction - Substance Abuse</value>
+                                </text>
+
+                                <text id="conversations_14">
+                                        <value>Harm Reduction - Safety in Relationships</value>
+                                </text>
+
+                                <text id="conversations_15">
+                                        <value>Healthy Living - Diet and Exercise</value>
+                                </text>
+
+                                <text id="conversations_16">
+                                        <value>Wrap Up</value>
+                                </text>
+
+                                <text id="conversation_01_A_c">
+                                        <value>Initial Adherence Assessment</value>
+                                </text>
+                                <text id="conversation_01_B_c">
+                                        <value>Introduce the Health Promotion Curriculum</value>
+                                </text>
+                                <text id="conversation_01_C_c">
+                                        <value>PACT&#8217;s Goals</value>
+                                </text>
+                                <text id="conversation_01_D_c">
+                                        <value>Goal Setting</value>
+                                </text>
+                                <text id="conversation_01_E_c">
+                                        <value>Quarterly Service Plan</value>
+                                </text>
+                                <text id="conversation_01_F_c">
+                                        <value>Patient Workbook storage</value>
+                                </text>
+                                <text id="conversation_02_A_c">
+                                        <value>Me and HIV</value>
+                                </text>
+                                <text id="conversation_02_B_c">
+                                        <value>My Life Goals</value>
+                                </text>
+                                <text id="conversation_02_C_c">
+                                        <value>Me, My HIV, and Other People</value>
+                                </text>
+                                <text id="conversation_03_A_c">
+                                        <value>How to read a pill bottle</value>
+                                </text>
+                                <text id="conversation_03_B_c">
+                                        <value>Medication List</value>
+                                </text>
+                                <text id="conversation_03_C_d">
+                                        <value>Benefits of Pillboxes</value>
+                                </text>
+                                <text id="conversation_03_D_c">
+                                        <value>Medication Organizing</value>
+                                </text>
+                                <text id="conversation_03_E_d">
+                                        <value>Filling a Pillbox</value>
+                                </text>
+                                <text id="conversation_03_F_d">
+                                        <value>Correct use of Pillboxes</value>
+                                </text>
+                                <text id="conversation_04_A_c">
+                                        <value>Pharmacy Plan</value>
+                                </text>
+                                <text id="conversation_04_B_c">
+                                        <value>Refilling your Medication</value>
+                                </text>
+                                <text id="conversation_04_C_c">
+                                        <value>Barriers and Solutions</value>
+                                </text>
+                                <text id="conversation_04_D_c">
+                                        <value>Practice calling pharmacy</value>
+                                </text>
+                                <text id="conversation_04_E_c">
+                                        <value>When to call the pharmacy</value>
+                                </text>
+                                <text id="conversation_04_F_c">
+                                        <value>Medication Logistics</value>
+                                </text>
+                                <text id="conversation_05_A_c">
+                                        <value>Your patient&#8217;s perceptions of treatment</value>
+                                </text>
+                                <text id="conversation_05_B_c">
+                                        <value>What is adherence?</value>
+                                </text>
+                                <text id="conversation_05_C_c">
+                                        <value>Why is adherence to ART important?</value>
+                                </text>
+                                <text id="conversation_05_D_c">
+                                        <value>Taking medications on time</value>
+                                </text>
+                                <text id="conversation_05_E_c">
+                                        <value>Resistance</value>
+                                </text>
+                                <text id="conversation_05_F_c">
+                                        <value>Daily routine chart</value>
+                                </text>
+                                <text id="conversation_06_A_d">
+                                        <value>Understanding Side Effects</value>
+                                </text>
+                                <text id="conversation_06_B_d">
+                                        <value>Identifying Side Effects</value>
+                                </text>
+                                <text id="conversation_06_C_d">
+                                        <value>Severe Side Effects</value>
+                                </text>
+                                <text id="conversation_06_D_d">
+                                        <value>Managing Side Effects</value>
+                                </text>
+                                <text id="conversation_07_A_c">
+                                        <value>What is HIV and how does it affect my body?</value>
+                                </text>
+                                <text id="conversation_07_B_c">
+                                        <value>The Immune System</value>
+                                </text>
+                                <text id="conversation_07_C_c">
+                                        <value>What is HIV?</value>
+                                </text>
+                                <text id="conversation_07_D_c">
+                                        <value>What is AIDS?</value>
+                                </text>
+                                <text id="conversation_07_E_c">
+                                        <value>What is a viral load?</value>
+                                </text>
+                                <text id="conversation_07_F_c">
+                                        <value>What is an opportunistic infection?</value>
+                                </text>
+                                <text id="conversation_07_G_c">
+                                        <value>How is HIV Transmitted?</value>
+                                </text>
+                                <text id="conversation_08_A_c">
+                                        <value>Understanding Social Support</value>
+                                </text>
+                                <text id="conversation_08_B_c">
+                                        <value>Community Influences</value>
+                                </text>
+                                <text id="conversation_08_C_c">
+                                        <value>Disclosure and Networks of Social Support</value>
+                                </text>
+                                <text id="conversation_08_D_c">
+                                        <value>Important Contact Information</value>
+                                </text>
+                                <text id="conversation_09_A_c">
+                                        <value>Your ART Experience</value>
+                                </text>
+                                <text id="conversation_09_B_c">
+                                        <value>Adherence Strengths and Difficulties</value>
+                                </text>
+                                <text id="conversation_09_C_c">
+                                        <value>Difficult Days</value>
+                                </text>
+                                <text id="conversation_10_A_c">
+                                        <value>Appointment logistics</value>
+                                </text>
+                                <text id="conversation_10_B_c">
+                                        <value>Communicating with Providers</value>
+                                </text>
+                                <text id="conversation_10_C_c">
+                                        <value>Keeping Track of Medical Information</value>
+                                </text>
+                                <text id="conversation_11_A_d">
+                                        <value>Introduction to Health Maintenance</value>
+                                </text>
+                                <text id="conversation_11_B_d">
+                                        <value>Building Patient-Doctor Relationships</value>
+                                </text>
+                                <text id="conversation_11_C_d">
+                                        <value>Routine Questions and Tests at the Doctor&#8217;s Office</value>
+                                </text>
+                                <text id="conversation_11_D_d">
+                                        <value>Appointment Tracking</value>
+                                </text>
+                                <text id="conversation_11_E_d">
+                                        <value>Roles of Different Service Providers</value>
+                                </text>
+                                <text id="conversation_12_A_d">
+                                        <value>What is Harm Reduction?</value>
+                                </text>
+                                <text id="conversation_12_B_d">
+                                        <value>Risky sex and possible harms</value>
+                                </text>
+                                <text id="conversation_12_C_d">
+                                        <value>Safer Sex</value>
+                                </text>
+                                <text id="conversation_12_D_d">
+                                        <value>Why Safer Sex is Important for People with HIV</value>
+                                </text>
+                                <text id="conversation_12_E_d">
+                                        <value>My Sexual Behaviors</value>
+                                </text>
+                                <text id="conversation_12_F_d">
+                                        <value>Condom Demonstration</value>
+                                </text>
+                                <text id="conversation_13_A_d">
+                                        <value>Assessment</value>
+                                </text>
+                                <text id="conversation_13_B_d">
+                                        <value>Introduction to Harm Reduction</value>
+                                </text>
+                                <text id="conversation_13_C_d">
+                                        <value>ART adherence and substance use</value>
+                                </text>
+                                <text id="conversation_13_D_d">
+                                        <value>Substances commonly used</value>
+                                </text>
+                                <text id="conversation_13_E_d">
+                                        <value>Relationships and Substance Use</value>
+                                </text>
+                                <text id="conversation_13_F_d">
+                                        <value>Substance Use and HIV Transmission</value>
+                                </text>
+                                <text id="conversation_13_G_d">
+                                        <value>Create a Harm Reduction plan</value>
+                                </text>
+                                <text id="conversation_14_A_d">
+                                        <value>What is Harm Reduction?</value>
+                                </text>
+                                <text id="conversation_14_B_d">
+                                        <value>Healthy Relationships</value>
+                                </text>
+                                <text id="conversation_14_C_d">
+                                        <value>Relationship Dynamics</value>
+                                </text>
+                                <text id="conversation_14_D_d">
+                                        <value>Identifying Safe/Unsafe Situations</value>
+                                </text>
+                                <text id="conversation_14_E_d">
+                                        <value>Personal Safety Plan</value>
+                                </text>
+                                <text id="conversation_14_F_d">
+                                        <value>Additional Resources</value>
+                                </text>
+                                <text id="conversation_15_A_d">
+                                        <value>Healthy eating assessment</value>
+                                </text>
+                                <text id="conversation_15_B_d">
+                                        <value>Why does eating healthy matter HIV?</value>
+                                </text>
+                                <text id="conversation_15_C_d">
+                                        <value>Principles of Good Nutrition and Exercise</value>
+                                </text>
+                                <text id="conversation_15_D_d">
+                                        <value>Barriers to Healthy Eating and Potential Solutions</value>
+                                </text>
+                                <text id="conversation_15_E_d">
+                                        <value>Food Safety</value>
+                                </text>
+                                <text id="conversation_15_F_d">
+                                        <value>Setting Healthy Eating Goals</value>
+                                </text>
+                                <text id="conversation_16_A_c">
+                                        <value>Review the Patient Workbook tools</value>
+                                </text>
+                                <text id="conversation_16_B_c">
+                                        <value>Review goals</value>
+                                </text>
+
+                                <text id="notes">
+                                        <value>
+Any other notes from the meeting?
+
+     Please Include:
+     1) Environment/context
+     2) Themes/activities
+     3) Take-home message
+                                        </value>
+                                </text>
+                        </translation>
+
+              </itext>
+
+                    <instance>
+                  <progress_note xmlns="http://dev.commcarehq.org/pact/progress_note" xmlns:cc="http://commcarehq.org/xforms" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" version="6" uiVersion="9">
+                            <orx:meta>
+                                        <orx:deviceID/>
+                                        <orx:timeStart/>
+                                        <orx:timeEnd/>
+                                        <orx:username/>
+                                        <orx:userID/>
+                                        <orx:instanceID/>
+                                        <cc:appVersion/>
+                                </orx:meta>
+
+                                <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+                          <update>
+                                <last_note/>
+                          </update>
+                                </case>
+
+                            <note>
+                              <pact_id/>
+                              <encounter_date/>
+                              <times>
+                                <office/>
+                                <home/>
+                                <other/>
+                                <other_location/>
+                                <accompaniment/>
+                                <accompaniment_type/>
+                                <accompaniment_other/>
+                                <phone/>
+                                <missed_visit>no</missed_visit>
+                                <discussion/>
+                                <administrative/>
+                                <travel/>
+                                <wait/>
+                              </times>
+                              <discussed_appointments>no</discussed_appointments>
+                              <discussed_goals>no</discussed_goals>
+                              <discussed_followup>no</discussed_followup>
+                              <reviewed_cd>no</reviewed_cd>
+                              <discussed_qsp>no</discussed_qsp>
+                              <adherence>
+                                <missed/>
+                                <possible/>
+                                <freetext/>
+                                <self_report/>
+                              </adherence>
+
+                              <newreferral/>
+                              <newbw/>
+
+                              <referrals>
+                                <referral jr:template="">
+                                        <ref_type/>
+                                        <ref_date/>
+                                </referral>
+                                <referral>
+                                        <ref_type/>
+                                        <ref_date/>
+                                </referral>
+                              </referrals>
+
+
+                              <bwresults>
+                                <bw jr:template="">
+                                        <test_date/>
+                                        <tests/>
+                                        <vl/>
+                                        <cd>
+                                                <cdcnt/>
+                                                <cdper/>
+                                        </cd>
+                                </bw>
+                                <bw>
+                                        <test_date/>
+                                        <tests/>
+                                        <vl/>
+                                        <cd>
+                                                <cdcnt/>
+                                                <cdper/>
+                                        </cd>
+                                </bw>
+                              </bwresults>
+
+                              <conversations>
+                                        <which/>
+                                        <conversations_1/>
+                                                <conversations_2/>
+                                                <conversations_3/>
+                                                <conversations_4/>
+                                                <conversations_5/>
+                                                <conversations_6/>
+                                                <conversations_7/>
+                                                <conversations_8/>
+                                                <conversations_9/>
+                                                <conversations_10/>
+                                                <conversations_11/>
+                                                <conversations_12/>
+                                                <conversations_13/>
+                                                <conversations_14/>
+                                                <conversations_15/>
+                                                <conversations_16/>
+                              </conversations>
+                              <memo/>
+                        </note>
+
+                          </progress_note>
+                    </instance>
+
+                        <instance id="commcaresession" src="jr://instance/session"/>
+                        <instance id="casedb" src="jr://instance/casedb"/>
+
+
+                    <setvalue event="xforms-ready" ref="/progress_note/meta/timeStart" value="now()"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/instanceID" value="uuid()"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/username" value="instance('commcaresession')/session/context/username"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/userID" value="instance('commcaresession')/session/context/userid"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+                        <setvalue event="xforms-revalidate" ref="/progress_note/meta/timeEnd" value="now()"/>
+
+                        <setvalue event="xforms-ready" ref="/progress_note/case/@case_id" value="instance('commcaresession')/session/data/case_id"/>
+
+                        <bind nodeset="/progress_note/meta/timeStart" type="dateTime"/>
+                <bind nodeset="/progress_note/meta/timeEnd" type="dateTime"/>
+
+                        <bind nodeset="/progress_note/case/@date_modified" type="xsd:dateTime" calculate="/progress_note/meta/timeEnd"/>
+                        <bind nodeset="/progress_note/case/@user_id" calculate="/progress_note/meta/userID"/>
+
+                        <bind nodeset="/progress_note/case/update/last_note" calculate="/progress_note/note/encounter_date"/>
+
+                        <bind nodeset="/progress_note/note/pact_id" type="xsd:string" calculate="instance('casedb')/casedb/case[@case_id= /progress_note/case/@case_id]/pactid"/>
+
+                        <bind nodeset="/progress_note/note/encounter_date" type="xsd:date" constraint="int(.) &lt;= (int(today())+1)" jr:constraintMsg="Encounter date cannot be in the future" required="true()"/>
+
+                        <bind nodeset="/progress_note/note/times/office" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/home" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/other" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/other_location" relevant="/progress_note/note/times/other &gt; 0"/>
+                <bind nodeset="/progress_note/note/times/accompaniment" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/accompaniment_type" relevant="/progress_note/note/times/accompaniment &gt; 0"/>
+                <bind nodeset="/progress_note/note/times/accompaniment_other" relevant="/progress_note/note/times/accompaniment_type = 'other'"/>
+                <bind nodeset="/progress_note/note/times/phone" type="xsd:int" jr:preload="meta" jr:preloadParams="callduration"/>
+                <bind nodeset="/progress_note/note/times/discussion" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/administrative" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/travel" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/times/wait" type="xsd:int"/>
+
+                <bind nodeset="/progress_note/note/adherence/missed" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/adherence/possible" type="xsd:int" jr:constraint=". &gt;= ../missed" jr:constraintMsg="Possible doses should be greater than missed doses"/>
+
+                        <bind nodeset="/progress_note/note/referrals" relevant="/progress_note/note/newreferral = 'yes'"/>
+                <bind nodeset="/progress_note/note/referrals/referral/ref_date" type="xsd:date"/>
+
+                    <bind nodeset="/progress_note/note/conversations/conversations_1" relevant="selected(/progress_note/note/conversations/which, 'conversations_1')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_2" relevant="selected(/progress_note/note/conversations/which, 'conversations_2')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_3" relevant="selected(/progress_note/note/conversations/which, 'conversations_3')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_4" relevant="selected(/progress_note/note/conversations/which, 'conversations_4')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_5" relevant="selected(/progress_note/note/conversations/which, 'conversations_5')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_6" relevant="selected(/progress_note/note/conversations/which, 'conversations_6')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_7" relevant="selected(/progress_note/note/conversations/which, 'conversations_7')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_8" relevant="selected(/progress_note/note/conversations/which, 'conversations_8')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_9" relevant="selected(/progress_note/note/conversations/which, 'conversations_9')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_10" relevant="selected(/progress_note/note/conversations/which, 'conversations_10')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_11" relevant="selected(/progress_note/note/conversations/which, 'conversations_11')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_12" relevant="selected(/progress_note/note/conversations/which, 'conversations_12')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_13" relevant="selected(/progress_note/note/conversations/which, 'conversations_13')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_14" relevant="selected(/progress_note/note/conversations/which, 'conversations_14')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_15" relevant="selected(/progress_note/note/conversations/which, 'conversations_15')"/>
+                        <bind nodeset="/progress_note/note/conversations/conversations_16" relevant="selected(/progress_note/note/conversations/which, 'conversations_16')"/>
+
+                        <bind nodeset="/progress_note/note/bwresults" relevant="/progress_note/note/newbw = 'yes'"/>
+                <bind nodeset="/progress_note/note/bwresults/bw/test_date" required="true()" type="xsd:date"/>
+                <bind nodeset="/progress_note/note/bwresults/bw/vl" required="true()" type="xsd:int" relevant="selected(../tests,'vl')"/>
+                <bind nodeset="/progress_note/note/bwresults/bw/cd" relevant="selected(../tests,'cd')"/>
+                <bind nodeset="/progress_note/note/bwresults/bw/cd/cdcnt" required="true()" type="xsd:int"/>
+                <bind nodeset="/progress_note/note/bwresults/bw/cd/cdper" type="xsd:int" jr:constraint=".='' or (. &lt;= 100 and . &gt;= 0)" jr:constraintMsg="Percent (if entered) must be between 0 and 100"/>
+
+            </model>
+
+     </h:head>
+
+     <h:body>
+
+     <group>
+        <label ref="jr:itext('odk_form_title')"/>
+
+                <group appearance="field-list">
+                    <input ref="/progress_note/note/encounter_date">
+                        <label ref="jr:itext('encounter_date')"/>
+                </input>
+                        <select1 ref="/progress_note/note/times/missed_visit">
+                                <label ref="jr:itext('missed_visit')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+                        </select1>
+           </group>
+
+       <group appearance="field-list">
+           <label ref="jr:itext('time_entry')"/>
+
+                        <input ref="/progress_note/note/times/office">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_office')"/>
+                        </input>
+                        <input ref="/progress_note/note/times/home">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_home')"/>
+                        </input>
+                        <input ref="/progress_note/note/times/other">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_other')"/>
+                        </input>
+
+                        <input ref="/progress_note/note/times/wait">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_wait')"/>
+                        </input>
+
+                        <input ref="/progress_note/note/times/accompaniment">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('accompaniment')"/>
+                        </input>
+
+            <input ref="/progress_note/note/times/phone">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_phone')"/>
+                        </input>
+
+                        <input ref="/progress_note/note/times/discussion">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_discussion')"/>
+                        </input>
+                        <input ref="/progress_note/note/times/administrative">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_administrative')"/>
+                        </input>
+
+                        <input ref="/progress_note/note/times/travel">
+                                <hint ref="jr:itext('time_hint')"/>
+                                <label ref="jr:itext('time_travel')"/>
+                        </input>
+       </group>
+
+       <group appearance="field-list">
+                <input ref="/progress_note/note/times/other_location">
+                                <label ref="jr:itext('time_other_location')"/>
+                        </input>
+
+                <select1 ref="/progress_note/note/times/accompaniment_type">
+                                <label ref="jr:itext('accompaniment_type')"/>
+                                <item><value>hivmd</value><label ref="jr:itext('accompaniment_type_hivmd')"/></item>
+                                <item><value>pcp</value><label ref="jr:itext('accompaniment_type_pcp')"/></item>
+                                <item><value>psych</value><label ref="jr:itext('accompaniment_type_psych')"/></item>
+                                <item><value>obgyn</value><label ref="jr:itext('accompaniment_type_obgyn')"/></item>
+                                <item><value>opth</value><label ref="jr:itext('accompaniment_type_opth')"/></item>
+                                <item><value>social</value><label ref="jr:itext('accompaniment_type_social')"/></item>
+                                <item><value>other</value><label ref="jr:itext('accompaniment_type_other')"/></item>
+                        </select1>
+                </group>
+
+                <input ref="/progress_note/note/times/accompaniment_other">
+                        <label ref="jr:itext('accompaniment_other')"/>
+                </input>
+
+           <group appearance="field-list">
+                   <select1 ref="/progress_note/note/discussed_appointments">
+                                <label ref="jr:itext('discussed_appointments')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+               </select1>
+               <select1 ref="/progress_note/note/discussed_goals">
+                                <label ref="jr:itext('discussed_goals')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+               </select1>
+               <select1 ref="/progress_note/note/discussed_followup">
+                                <label ref="jr:itext('discussed_followup')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+               </select1>
+       </group>
+
+       <group appearance="field-list">
+               <select1 ref="/progress_note/note/reviewed_cd">
+                                <label ref="jr:itext('reviewed_cd')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+               </select1>
+
+               <select1 ref="/progress_note/note/discussed_qsp">
+                                <label ref="jr:itext('discussed_qsp')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+               </select1>
+           </group>
+
+       <group appearance="field-list">
+            <label ref="jr:itext('adherence')"/>
+                        <input ref="/progress_note/note/adherence/missed">
+                                <label ref="jr:itext('doses_missed')"/>
+                        </input>
+                        <input ref="/progress_note/note/adherence/possible">
+                                <label ref="jr:itext('doses_possible')"/>
+                        </input>
+
+                        <input ref="/progress_note/note/adherence/freetext">
+                                <label ref="jr:itext('adherence_freetext')"/>
+                        </input>
+
+                        <select1 ref="/progress_note/note/adherence/self_report">
+                                <label ref="jr:itext('self_report')"/>
+                                <item><value>all</value><label ref="jr:itext('self_report_all')"/></item>
+                                <item><value>most</value><label ref="jr:itext('self_report_most')"/></item>
+                                <item><value>half</value><label ref="jr:itext('self_report_half')"/></item>
+                                <item><value>few</value><label ref="jr:itext('self_report_few')"/></item>
+                                <item><value>none</value><label ref="jr:itext('self_report_none')"/></item>
+                        </select1>
+                </group>
+
+                <group appearance="field-list">
+                        <select1 ref="/progress_note/note/newreferral">
+                                <label ref="jr:itext('newreferral')"/>
+                                <hint ref="jr:itext('newentries')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+                        </select1>
+                        <select1 ref="/progress_note/note/newbw">
+                                <label ref="jr:itext('newbw')"/>
+                                <hint ref="jr:itext('newentries')"/>
+                                <item><value>yes</value><label ref="jr:itext('yes')"/></item>
+                                <item><value>no</value><label ref="jr:itext('no')"/></item>
+                        </select1>
+                </group>
+
+        <group appearance="field-list">
+           <label ref="jr:itext('referral')"/>
+           <repeat nodeset="/progress_note/note/referrals/referral">
+
+                <group appearance="field-list">
+                   <input ref="ref_date">
+                           <label ref="jr:itext('referral_date')"/>
+                       </input>
+                       <select1 ref="ref_type">
+                           <label ref="jr:itext('referral_type')"/>
+                           <item><value>social</value><label ref="jr:itext('referral_social')"/></item>
+                           <item><value>medical</value><label ref="jr:itext('referral_medical')"/></item>
+                           <item><value>other</value><label ref="jr:itext('referral_other')"/></item>
+                       </select1>
+
+                       </group>
+           </repeat>
+       </group>
+
+       <group>
+           <label ref="jr:itext('bloodwork')"/>
+           <repeat nodeset="/progress_note/note/bwresults/bw">
+
+                <group appearance="field-list">
+                   <input ref="test_date">
+                           <label ref="jr:itext('bloodwork_date')"/>
+                       </input>
+                       <select ref="tests">
+                           <label ref="jr:itext('bloodwork_types')"/>
+                           <item><value>vl</value><label ref="jr:itext('bloodwork_vl')"/></item>
+                           <item><value>cd</value><label ref="jr:itext('bloodwork_cd')"/></item>
+                       </select>
+                       </group>
+
+                       <input ref="vl">
+                           <label ref="jr:itext('vl_count')"/>
+                       </input>
+
+                       <group ref="cd" appearance="field-list">
+                           <input ref="cdcnt">
+                                   <label ref="jr:itext('cd_count')"/>
+                               </input>
+                               <input ref="cdper">
+                                   <label ref="jr:itext('cd_per')"/>
+                               </input>
+                       </group>
+
+           </repeat>
+       </group>
+
+           <group>
+                <label ref="jr:itext('convseration_header')"/>
+
+                <select ref="/progress_note/note/conversations/which">
+                                <label ref="jr:itext('conversations_which')"/>
+                                        <item><value>conversations_1</value><label ref="jr:itext('conversations_1')"/></item>
+                                        <item><value>conversations_2</value><label ref="jr:itext('conversations_2')"/></item>
+                                        <item><value>conversations_3</value><label ref="jr:itext('conversations_3')"/></item>
+                                        <item><value>conversations_4</value><label ref="jr:itext('conversations_4')"/></item>
+                                        <item><value>conversations_5</value><label ref="jr:itext('conversations_5')"/></item>
+                                        <item><value>conversations_6</value><label ref="jr:itext('conversations_6')"/></item>
+                                        <item><value>conversations_7</value><label ref="jr:itext('conversations_7')"/></item>
+                                        <item><value>conversations_8</value><label ref="jr:itext('conversations_8')"/></item>
+                                        <item><value>conversations_9</value><label ref="jr:itext('conversations_9')"/></item>
+                                        <item><value>conversations_10</value><label ref="jr:itext('conversations_10')"/></item>
+                                        <item><value>conversations_11</value><label ref="jr:itext('conversations_11')"/></item>
+                                        <item><value>conversations_12</value><label ref="jr:itext('conversations_12')"/></item>
+                                        <item><value>conversations_13</value><label ref="jr:itext('conversations_13')"/></item>
+                                        <item><value>conversations_14</value><label ref="jr:itext('conversations_14')"/></item>
+                                        <item><value>conversations_15</value><label ref="jr:itext('conversations_15')"/></item>
+                                        <item><value>conversations_16</value><label ref="jr:itext('conversations_16')"/></item>
+                </select>
+
+                        <select ref="/progress_note/note/conversations/conversations_1">
+                                <label ref="jr:itext('conversations_1')"/>
+                                <item><value>conversation_01_A_c</value><label ref="jr:itext('conversation_01_A_c')"/></item>
+                                <item><value>conversation_01_B_c</value><label ref="jr:itext('conversation_01_B_c')"/></item>
+                                <item><value>conversation_01_C_c</value><label ref="jr:itext('conversation_01_C_c')"/></item>
+                                <item><value>conversation_01_D_c</value><label ref="jr:itext('conversation_01_D_c')"/></item>
+                                <item><value>conversation_01_E_c</value><label ref="jr:itext('conversation_01_E_c')"/></item>
+                                <item><value>conversation_01_F_c</value><label ref="jr:itext('conversation_01_F_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_2">
+                                <label ref="jr:itext('conversations_2')"/>
+                                <item><value>conversation_02_A_c</value><label ref="jr:itext('conversation_02_A_c')"/></item>
+                                <item><value>conversation_02_B_c</value><label ref="jr:itext('conversation_02_B_c')"/></item>
+                                <item><value>conversation_02_C_c</value><label ref="jr:itext('conversation_02_C_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_3">
+                                <label ref="jr:itext('conversations_3')"/>
+                                <item><value>conversation_03_A_c</value><label ref="jr:itext('conversation_03_A_c')"/></item>
+                                <item><value>conversation_03_B_c</value><label ref="jr:itext('conversation_03_B_c')"/></item>
+                                <item><value>conversation_03_C_d</value><label ref="jr:itext('conversation_03_C_d')"/></item>
+                                <item><value>conversation_03_D_c</value><label ref="jr:itext('conversation_03_D_c')"/></item>
+                                <item><value>conversation_03_E_d</value><label ref="jr:itext('conversation_03_E_d')"/></item>
+                                <item><value>conversation_03_F_d</value><label ref="jr:itext('conversation_03_F_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_4">
+                                <label ref="jr:itext('conversations_4')"/>
+                                <item><value>conversation_04_A_c</value><label ref="jr:itext('conversation_04_A_c')"/></item>
+                                <item><value>conversation_04_B_c</value><label ref="jr:itext('conversation_04_B_c')"/></item>
+                                <item><value>conversation_04_C_c</value><label ref="jr:itext('conversation_04_C_c')"/></item>
+                                <item><value>conversation_04_D_c</value><label ref="jr:itext('conversation_04_D_c')"/></item>
+                                <item><value>conversation_04_E_c</value><label ref="jr:itext('conversation_04_E_c')"/></item>
+                                <item><value>conversation_04_F_c</value><label ref="jr:itext('conversation_04_F_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_5">
+                                <label ref="jr:itext('conversations_5')"/>
+                                <item><value>conversation_05_A_c</value><label ref="jr:itext('conversation_05_A_c')"/></item>
+                                <item><value>conversation_05_B_c</value><label ref="jr:itext('conversation_05_B_c')"/></item>
+                                <item><value>conversation_05_C_c</value><label ref="jr:itext('conversation_05_C_c')"/></item>
+                                <item><value>conversation_05_D_c</value><label ref="jr:itext('conversation_05_D_c')"/></item>
+                                <item><value>conversation_05_E_c</value><label ref="jr:itext('conversation_05_E_c')"/></item>
+                                <item><value>conversation_05_F_c</value><label ref="jr:itext('conversation_05_F_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_6">
+                                <label ref="jr:itext('conversations_6')"/>
+                                <item><value>conversation_06_A_d</value><label ref="jr:itext('conversation_06_A_d')"/></item>
+                                <item><value>conversation_06_B_d</value><label ref="jr:itext('conversation_06_B_d')"/></item>
+                                <item><value>conversation_06_C_d</value><label ref="jr:itext('conversation_06_C_d')"/></item>
+                                <item><value>conversation_06_D_d</value><label ref="jr:itext('conversation_06_D_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_7">
+                                <label ref="jr:itext('conversations_7')"/>
+                                <item><value>conversation_07_A_c</value><label ref="jr:itext('conversation_07_A_c')"/></item>
+                                <item><value>conversation_07_B_c</value><label ref="jr:itext('conversation_07_B_c')"/></item>
+                                <item><value>conversation_07_C_c</value><label ref="jr:itext('conversation_07_C_c')"/></item>
+                                <item><value>conversation_07_D_c</value><label ref="jr:itext('conversation_07_D_c')"/></item>
+                                <item><value>conversation_07_E_c</value><label ref="jr:itext('conversation_07_E_c')"/></item>
+                                <item><value>conversation_07_F_c</value><label ref="jr:itext('conversation_07_F_c')"/></item>
+                                <item><value>conversation_07_G_c</value><label ref="jr:itext('conversation_07_G_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_8">
+                                <label ref="jr:itext('conversations_8')"/>
+                                <item><value>conversation_08_A_c</value><label ref="jr:itext('conversation_08_A_c')"/></item>
+                                <item><value>conversation_08_B_c</value><label ref="jr:itext('conversation_08_B_c')"/></item>
+                                <item><value>conversation_08_C_c</value><label ref="jr:itext('conversation_08_C_c')"/></item>
+                                <item><value>conversation_08_D_c</value><label ref="jr:itext('conversation_08_D_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_9">
+                                <label ref="jr:itext('conversations_9')"/>
+                                <item><value>conversation_09_A_c</value><label ref="jr:itext('conversation_09_A_c')"/></item>
+                                <item><value>conversation_09_B_c</value><label ref="jr:itext('conversation_09_B_c')"/></item>
+                                <item><value>conversation_09_C_c</value><label ref="jr:itext('conversation_09_C_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_10">
+                                <label ref="jr:itext('conversations_10')"/>
+                                <item><value>conversation_10_A_c</value><label ref="jr:itext('conversation_10_A_c')"/></item>
+                                <item><value>conversation_10_B_c</value><label ref="jr:itext('conversation_10_B_c')"/></item>
+                                <item><value>conversation_10_C_c</value><label ref="jr:itext('conversation_10_C_c')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_11">
+                                <label ref="jr:itext('conversations_11')"/>
+                                <item><value>conversation_11_A_d</value><label ref="jr:itext('conversation_11_A_d')"/></item>
+                                <item><value>conversation_11_B_d</value><label ref="jr:itext('conversation_11_B_d')"/></item>
+                                <item><value>conversation_11_C_d</value><label ref="jr:itext('conversation_11_C_d')"/></item>
+                                <item><value>conversation_11_D_d</value><label ref="jr:itext('conversation_11_D_d')"/></item>
+                                <item><value>conversation_11_E_d</value><label ref="jr:itext('conversation_11_E_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_12">
+                                <label ref="jr:itext('conversations_12')"/>
+                                <item><value>conversation_12_A_d</value><label ref="jr:itext('conversation_12_A_d')"/></item>
+                                <item><value>conversation_12_B_d</value><label ref="jr:itext('conversation_12_B_d')"/></item>
+                                <item><value>conversation_12_C_d</value><label ref="jr:itext('conversation_12_C_d')"/></item>
+                                <item><value>conversation_12_D_d</value><label ref="jr:itext('conversation_12_D_d')"/></item>
+                                <item><value>conversation_12_E_d</value><label ref="jr:itext('conversation_12_E_d')"/></item>
+                                <item><value>conversation_12_F_d</value><label ref="jr:itext('conversation_12_F_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_13">
+                                <label ref="jr:itext('conversations_13')"/>
+                                <item><value>conversation_13_A_d</value><label ref="jr:itext('conversation_13_A_d')"/></item>
+                                <item><value>conversation_13_B_d</value><label ref="jr:itext('conversation_13_B_d')"/></item>
+                                <item><value>conversation_13_C_d</value><label ref="jr:itext('conversation_13_C_d')"/></item>
+                                <item><value>conversation_13_D_d</value><label ref="jr:itext('conversation_13_D_d')"/></item>
+                                <item><value>conversation_13_E_d</value><label ref="jr:itext('conversation_13_E_d')"/></item>
+                                <item><value>conversation_13_F_d</value><label ref="jr:itext('conversation_13_F_d')"/></item>
+                                <item><value>conversation_13_G_d</value><label ref="jr:itext('conversation_13_G_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_14">
+                                <label ref="jr:itext('conversations_14')"/>
+                                <item><value>conversation_14_A_d</value><label ref="jr:itext('conversation_14_A_d')"/></item>
+                                <item><value>conversation_14_B_d</value><label ref="jr:itext('conversation_14_B_d')"/></item>
+                                <item><value>conversation_14_C_d</value><label ref="jr:itext('conversation_14_C_d')"/></item>
+                                <item><value>conversation_14_D_d</value><label ref="jr:itext('conversation_14_D_d')"/></item>
+                                <item><value>conversation_14_E_d</value><label ref="jr:itext('conversation_14_E_d')"/></item>
+                                <item><value>conversation_14_F_d</value><label ref="jr:itext('conversation_14_F_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_15">
+                                <label ref="jr:itext('conversations_15')"/>
+                                <item><value>conversation_15_A_d</value><label ref="jr:itext('conversation_15_A_d')"/></item>
+                                <item><value>conversation_15_B_d</value><label ref="jr:itext('conversation_15_B_d')"/></item>
+                                <item><value>conversation_15_C_d</value><label ref="jr:itext('conversation_15_C_d')"/></item>
+                                <item><value>conversation_15_D_d</value><label ref="jr:itext('conversation_15_D_d')"/></item>
+                                <item><value>conversation_15_E_d</value><label ref="jr:itext('conversation_15_E_d')"/></item>
+                                <item><value>conversation_15_F_d</value><label ref="jr:itext('conversation_15_F_d')"/></item>
+                        </select>
+                        <select ref="/progress_note/note/conversations/conversations_16">
+                                <label ref="jr:itext('conversations_16')"/>
+                                <item><value>conversation_16_A_c</value><label ref="jr:itext('conversation_16_A_c')"/></item>
+                                <item><value>conversation_16_B_c</value><label ref="jr:itext('conversation_16_B_c')"/></item>
+                        </select>
+           </group>
+
+           <input ref="/progress_note/note/memo" appearance="full">
+                        <label ref="jr:itext('notes')"/>
+           </input>
+             </group>
+     </h:body>
+</h:html>
