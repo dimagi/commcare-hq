@@ -1737,7 +1737,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         return self.get(request, *args, **kwargs)
 
 
-# TODO: For some reason the left side navigation does not work when this class is called. Figure out why!!
 class AddFormRepeaterView(AddRepeaterView):
     urlname = 'add_form_repeater'
     repeater_form_class = FormRepeaterForm
