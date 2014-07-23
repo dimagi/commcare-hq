@@ -1,6 +1,10 @@
 /*
-    Implemented (I think) directly from the pseudocode at
-    http://en.wikipedia.org/wiki/Longest_common_substring_problem
+    Adapted from the algorithms presented on
+    http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
+
+    lcsMerge returns the "unified diff" of two sequences.
+    If you read off [item.token for item in lcsMerge(X, Y) if item.x]
+    you should get back X. (And analogously for Y.)
  */
 function lcsMerge(X, Y, isEqual) {
     'use strict';
