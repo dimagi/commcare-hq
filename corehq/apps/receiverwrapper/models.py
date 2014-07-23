@@ -254,6 +254,15 @@ class RepeatRecord(Document, LockableMixIn):
         )
         return repeat_records
 
+    @classmethod
+    def count(cls, domain=None):
+        results = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=True,
+        ).one()
+        return results['value'] if results else 0
+
     def update_success(self):
         self.last_checked = datetime.utcnow()
         self.next_check = None

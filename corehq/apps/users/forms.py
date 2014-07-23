@@ -56,7 +56,7 @@ class BaseUpdateUserForm(forms.Form):
     def direct_properties(self):
         return []
 
-    def update_user(self, existing_user=None, **kwargs):
+    def update_user(self, existing_user=None, save=True, **kwargs):
         is_update_successful = False
         if not existing_user and 'email' in self.cleaned_data:
             from django.contrib.auth.models import User
@@ -90,7 +90,7 @@ class BaseUpdateUserForm(forms.Form):
             setattr(existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
-        if is_update_successful:
+        if is_update_successful and save:
             existing_user.save()
         return is_update_successful
 
@@ -106,7 +106,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
     def update_user(self, existing_user=None, domain=None, **kwargs):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user)
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user, save=False)
 
         if domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
@@ -116,6 +116,8 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 is_update_successful = True
             except KeyError:
                 pass
+        elif is_update_successful:
+            existing_user.save()
 
         return is_update_successful
 

@@ -214,6 +214,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -764,6 +765,8 @@ COMPRESS_PRECOMPILERS = (
    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0

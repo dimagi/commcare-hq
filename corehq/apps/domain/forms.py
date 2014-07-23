@@ -373,12 +373,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         choices=[]
     )
-    default_sms_backend_id = CharField(
-        label=_("Default SMS Backend"),
-        required=False,
-        help_text=_("This SMS backend will be used if a contact has no "
-                    "backend specified.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -508,7 +502,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
-            domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True

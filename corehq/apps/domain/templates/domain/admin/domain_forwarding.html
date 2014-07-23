@@ -2,6 +2,11 @@
 {% load i18n %}
 
 {% block main_column %}
+    <div class="pull-right label {% if pending_record_count <= 5 %}label-success{% elif pending_record_count <= 20 %}label-warning{% else %}label-important{% endif %}">
+    {% blocktrans %}
+        {{ pending_record_count }} pending items to be forwarded
+    {% endblocktrans %}
+    </div>
     {% for cls, form_repeaters, type in repeaters %}
     <div style="padding-bottom:2em;">
         <h2>{% blocktrans %}Forward {{ type }}:{% endblocktrans %}</h2>

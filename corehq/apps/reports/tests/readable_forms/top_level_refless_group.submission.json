@@ -1,0 +1,61 @@
+{
+   "@uiVersion": "9",
+   "@xmlns": "http://dev.commcarehq.org/pact/progress_note",
+   "#type": "progress_note",
+   "note": {
+       "conversations": {
+           "which": ""
+       },
+       "discussed_followup": "no",
+       "discussed_qsp": "no",
+       "discussed_goals": "no",
+       "encounter_date": "2010-09-06",
+       "discussed_appointments": "no",
+       "pact_id": "111",
+       "newbw": "no",
+       "reviewed_cd": "no",
+       "adherence": {
+           "self_report": "all",
+           "missed": "",
+           "possible": "",
+           "freetext": "67"
+       },
+       "times": {
+           "office": "",
+           "discussion": "",
+           "phone": "",
+           "other": "",
+           "accompaniment": "",
+           "home": "12",
+           "missed_visit": "no",
+           "administrative": "",
+           "travel": "",
+           "wait": ""
+       },
+       "memo": "We talked and it was good.",
+       "newreferral": "no"
+   },
+   "case": {
+       "@xmlns": "http://commcarehq.org/case/transaction/v2",
+       "@date_modified": "2010-01-01T01:01:01Z",
+       "@user_id": "xxxxxxx",
+       "@case_id": "xxxxxxx",
+       "update": {
+           "last_note": "2009-01-11"
+       }
+   },
+   "meta": {
+       "@xmlns": "http://openrosa.org/jr/xforms",
+       "username": "xxxxxxx",
+       "instanceID": "xxxxxxx",
+       "userID": "xxxxxxx",
+       "timeEnd": "2014-07-16T17:49:32Z",
+       "appVersion": {
+           "@xmlns": "http://commcarehq.org/xforms",
+           "#text": "2.0"
+       },
+       "timeStart": "2010-01-11T01:18:00Z",
+       "deviceID": "cloudcare"
+   },
+   "@version": "62"
+}

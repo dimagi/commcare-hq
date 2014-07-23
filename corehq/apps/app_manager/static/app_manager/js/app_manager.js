@@ -7,24 +7,24 @@
         COMMCAREHQ.app_manager.commcareVersion(version);
     };
     COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
-        function versionGE(commcareVersion1, commcareVersion2) {
-            function parse(version) {
-                version = version.split('.');
-                version = [parseInt(version[0]), parseInt(version[1])];
-                return version;
-            }
-            commcareVersion1 = parse(commcareVersion1);
-            commcareVersion2 = parse(commcareVersion2);
-            if (commcareVersion1[0] > commcareVersion2[0]) {
-                return true;
-            } else if (commcareVersion1[0] === commcareVersion2[0]) {
-                return commcareVersion1[1] >= commcareVersion2[1];
-
-            } else {
-                return false;
-            }
+        return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
+    };
+    COMMCAREHQ.app_manager.versionGE = function (commcareVersion1, commcareVersion2) {
+        function parse(version) {
+            version = version.split('.');
+            version = [parseInt(version[0]), parseInt(version[1])];
+            return version;
         }
-        return versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
+        commcareVersion1 = parse(commcareVersion1);
+        commcareVersion2 = parse(commcareVersion2);
+        if (commcareVersion1[0] > commcareVersion2[0]) {
+            return true;
+        } else if (commcareVersion1[0] === commcareVersion2[0]) {
+            return commcareVersion1[1] >= commcareVersion2[1];
+
+        } else {
+            return false;
+        }
     };
     COMMCAREHQ.app_manager.init = function (args) {
         var appVersion = args.appVersion,

@@ -7,6 +7,9 @@ from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import AppEditingError, get_app
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.apps.domain.decorators import login_and_domain_required
 
 
 def safe_download(f):
@@ -45,3 +48,6 @@ def no_conflict_require_POST(f):
         except ResourceConflict:
             return HttpResponse(status=409)
     return _no_conflict
+
+require_can_edit_apps = require_permission(Permissions.edit_apps)
+require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
