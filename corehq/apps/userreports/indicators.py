@@ -29,11 +29,11 @@ class ConfigurableIndicatorMixIn(object):
     def get_values(self, item):
         raise NotImplementedError()
 
+
 class ConfigurableIndicator(ConfigurableIndicatorMixIn):
 
     def __init__(self, display_name):
         self.display_name = display_name
-
 
 
 class SingleColumnIndicator(ConfigurableIndicator):
