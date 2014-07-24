@@ -802,8 +802,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         else:
             return parent_module
 
-    def get_select_chain(self, module):
-        select_chain = [module]
+    def get_select_chain(self, module, include_self=True):
+        select_chain = [module] if include_self else []
         current_module = module
         while current_module.parent_select.active:
             current_module = self.get_module_by_id(

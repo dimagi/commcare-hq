@@ -1660,6 +1660,21 @@ class AdvancedModule(ModuleBase):
                     case_properties=update.update if update else {},
                     preload=convert_preload(preload.preload) if preload else {}
                 )
+
+                if from_module.parent_select.active:
+                    gen = suite_xml.SuiteGenerator(self.get_app())
+                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    for n, link in enumerate(reversed(list(enumerate(select_chain)))):
+                        i, module = link
+                        new_form.actions.load_update_cases.append(LoadUpdateAction(
+                            case_type=module.case_type,
+                            case_tag='_'.join(['parent'] * (i + 1)),
+                            details_module=module.unique_id,
+                            parent_tag='_'.join(['parent'] * (i + 2)) if n > 0 else ''
+                        ))
+
+                    base_action.parent_tag = 'parent'
+
                 if close:
                     base_action.close_condition = close.condition
                 new_form.actions.load_update_cases.append(base_action)
@@ -3144,18 +3159,58 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
+        to_module = self.get_module(to_module_id)
+        self._copy_form(from_module, form, to_module)
+
+    def _copy_form(self, from_module, form, to_module):
         if not form.source:
             raise BlankXFormError()
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        to_module = self.get_module(to_module_id)
+
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
+
+    def convert_module_to_advanced(self, module_id):
+        from_module = self.get_module(module_id)
+
+        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
+
+        case_details = deepcopy(from_module.case_details.to_json())
+        to_module = AdvancedModule(
+            name=name,
+            forms=[],
+            case_type=from_module.case_type,
+            case_label=from_module.case_label,
+            put_in_root=from_module.put_in_root,
+            case_list=from_module.case_list,
+            case_details=DetailPair.wrap(case_details),
+            product_details=DetailPair(
+                short=Detail(
+                    columns=[
+                        DetailColumn(
+                            format='plain',
+                            header={'en': ugettext("Product")},
+                            field='name',
+                            model='product',
+                        ),
+                    ],
+                ),
+                long=Detail(),
+            ),
+        )
+        to_module.get_or_create_unique_id()
+        to_module = self.add_module(to_module)
+
+        for form in from_module.get_forms():
+            self._copy_form(from_module, form, to_module)
+
+        return to_module
 
     @cached_property
     def has_case_management(self):
