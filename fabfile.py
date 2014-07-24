@@ -1002,7 +1002,7 @@ def update_manifest(save=False):
     withpath = env.code_root
     venv = env.virtualenv_root
 
-    cmd = 'resource_compress save' if save else 'resource_compress'
+    cmd = 'update_manifest save' if save else 'update_manifest'
     with cd(withpath):
         sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
             user=env.sudo_user
