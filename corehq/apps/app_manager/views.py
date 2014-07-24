@@ -2100,15 +2100,27 @@ def download_file(req, domain, app_id, path):
                 except Resolver404:
                     # ok this was just a url that doesn't exist
                     logging.error(
-                        'Unknown build resource %s not found' % path)
+                        'Unknown build resource %s not found' % path,
+                        extra={'request': req}
+                    )
                     pass
                 else:
                     # this resource should exist but doesn't
                     logging.error(
-                        'Expected build resource %s not found' % path)
-                    req.app.build_broken = True
-                    req.app.build_broken_reason = 'incomplete-build'
-                    req.app.save()
+                        'Expected build resource %s not found' % path,
+                        extra={'request': req}
+                    )
+                    if not req.app.build_broken:
+                        req.app.build_broken = True
+                        req.app.build_broken_reason = 'incomplete-build'
+                        try:
+                            req.app.save()
+                        except ResourceConflict:
+                            # this really isn't a big deal:
+                            # It'll get updated next time a resource is req'd;
+                            # in fact the conflict is almost certainly from
+                            # another thread doing this exact update
+                            pass
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)

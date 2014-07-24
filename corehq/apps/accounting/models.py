@@ -1017,17 +1017,32 @@ class Subscription(models.Model):
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain.title()
         product = self.plan_version.core_product
-        subject = _("%(product)s Alert: %(domain)s's subscription to "
-                    "%(plan_name)s ends %(ending_on)s") % {
-                        'product': product,
-                        'plan_name': plan_name,
-                        'domain': domain_name,
-                        'ending_on': ending_on,
-                    }
+        if self.is_trial:
+            subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
+                        "ends %(ending_on)s" % {
+                'product': product,
+                'domain': domain_name,
+                'ending_on': ending_on,
+            })
+            emails = [a.username for a in WebUser.get_admins_by_domain(domain_name)]
+            template = 'accounting/trial_ending_reminder_email.html'
+            template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
+        else:
+            subject = _("%(product)s Alert: %(domain)s's subscription to "
+                        "%(plan_name)s ends %(ending_on)s") % {
+                            'product': product,
+                            'plan_name': plan_name,
+                            'domain': domain_name,
+                            'ending_on': ending_on,
+                        }
 
-        billing_admins = self.account.billing_admins.filter(
-            domain=self.subscriber.domain
-        )
+            billing_admins = self.account.billing_admins.filter(
+                domain=self.subscriber.domain
+            )
+            emails = [admin.web_user for admin in billing_admins]
+            template = 'accounting/subscription_ending_reminder_email.html'
+            template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
+
         from corehq.apps.domain.views import DomainSubscriptionView
         base_url = Site.objects.get_current().domain
         context = {
@@ -1042,15 +1057,11 @@ class Subscription(models.Model):
             ),
             'base_url': base_url,
         }
-        email_html = render_to_string(
-            'accounting/subscription_ending_reminder_email.html', context)
-        email_plaintext = render_to_string(
-            'accounting/subscription_ending_reminder_email_plaintext.html',
-            context
-        )
-        for admin in billing_admins:
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        for email in emails:
             send_HTML_email(
-                subject, admin.web_user, email_html,
+                subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
             )
@@ -1059,7 +1070,7 @@ class Subscription(models.Model):
                 "email for %(domain)s to %(email)s." % {
                     'days_left': num_days_left,
                     'domain': domain_name,
-                    'email': admin.web_user,
+                    'email': email,
                 })
 
     @classmethod

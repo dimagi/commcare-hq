@@ -80,7 +80,7 @@ def import_products(domain, importer):
         except Exception, e:
             messages.append(
                 _(u'Failed to import product {name}: {ex}'.format(
-                    name=row['name'],
+                    name=row['name'] or '',
                     ex=e,
                 ))
             )

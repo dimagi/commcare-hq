@@ -183,7 +183,7 @@ class ConsumptionForm(forms.Form):
         super(ConsumptionForm, self).__init__(*args, **kwargs)
         products = Product.by_domain(domain)
         for p in products:
-            field_name = 'default_%s' % p.code
+            field_name = 'default_%s' % p._id
             display = _('Default %(product_name)s') % {'product_name': p.name}
             self.fields[field_name] = forms.DecimalField(
                 label=display,
@@ -199,13 +199,14 @@ class ConsumptionForm(forms.Form):
     def save(self):
         for field in self.fields:
             val = self.cleaned_data[field]
+            product = Product.get(field.split('_')[1])
+            assert product.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
+                product._id, self.domain
+            )
             set_default_consumption_for_product(
                 self.domain,
-                Product.get_by_code(
-                    self.domain,
-                    field.split('_')[1]
-                )._id,
-                val
+                product._id,
+                val,
             )
 
 

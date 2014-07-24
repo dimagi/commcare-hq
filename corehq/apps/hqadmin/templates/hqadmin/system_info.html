@@ -286,6 +286,31 @@
             </tbody>
         </table>
     </div>
+
+    <div class="row-fluid" id="elastic-vs-couch">
+        <h3>Elasticsearch/Couch/Postgres comparison</h3>
+        <table class="table">
+            <thread>
+            <tr>
+                <th>Description</th>
+                <th>CouchDB</th>
+                <th>Elasticsearch</th>
+                <th>PostgreSQL</th>
+            </tr>
+            </thread>
+            <tbody>
+            {% for comparison in es_couch_comparisons %}
+            <tr>
+                <td>{{ comparison.description }}</td>
+                <td>{{ comparison.couch_docs }}</td>
+                <td>{{ comparison.es_docs }}</td>
+                <td>{{ comparison.sql_rows }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
         <table class="table">

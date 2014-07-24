@@ -12,6 +12,7 @@ from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.feature_previews import CALLCENTER
 import settings
 
 from django import forms
@@ -433,7 +434,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        if not (user and user.is_previewer):
+        if not CALLCENTER.enabled(domain):
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
