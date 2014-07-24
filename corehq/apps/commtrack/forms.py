@@ -199,13 +199,13 @@ class ConsumptionForm(forms.Form):
     def save(self):
         for field in self.fields:
             val = self.cleaned_data[field]
-            p = Product.get(field.split('_')[1])
-            assert p.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
-                p._id, self.domain
+            product = Product.get(field.split('_')[1])
+            assert product.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
+                product._id, self.domain
             )
             set_default_consumption_for_product(
                 self.domain,
-                p._id,
+                product._id,
                 val,
             )
 
