@@ -757,17 +757,17 @@ def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
+        execute(_do_compress)
+        # softly update manifest (original keys remain)
+        execute(update_manifest, soft=True)
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
-        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
-        # softly update manifest (original keys remain)
-        execute(update_manifest, soft=True)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
