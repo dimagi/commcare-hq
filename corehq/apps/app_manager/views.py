@@ -2100,12 +2100,16 @@ def download_file(req, domain, app_id, path):
                 except Resolver404:
                     # ok this was just a url that doesn't exist
                     logging.error(
-                        'Unknown build resource %s not found' % path)
+                        'Unknown build resource %s not found' % path,
+                        extra={'request': req}
+                    )
                     pass
                 else:
                     # this resource should exist but doesn't
                     logging.error(
-                        'Expected build resource %s not found' % path)
+                        'Expected build resource %s not found' % path,
+                        extra={'request': req}
+                    )
                     req.app.build_broken = True
                     req.app.build_broken_reason = 'incomplete-build'
                     req.app.save()
