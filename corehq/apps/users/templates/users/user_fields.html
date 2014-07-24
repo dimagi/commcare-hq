@@ -1,0 +1,26 @@
+{% extends 'settings/base_template.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script type="text/javascript" src="{% static 'users/js/custom_fields.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var customFieldsModel = new CustomFieldsModel();
+        ko.applyBindings(customFieldsModel, $('#user-fields-form').get(0));
+        customFieldsModel.init([
+            {"name": "age", "isRequired": true},
+            {"name": "DOB", "isRequired": false},
+        ]);
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    {% crispy user_fields_form %}
+{% endblock %}
