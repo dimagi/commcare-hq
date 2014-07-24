@@ -486,7 +486,7 @@ def last_if_none(month, year):
             "You must pass either nothing or a month AND a year"
         return month, year
     else:
-        last_month = datetime.datetime.now() - datetime.timedelta(days=27)
+        last_month = datetime.datetime.now()
         return last_month.month, last_month.year
 
 

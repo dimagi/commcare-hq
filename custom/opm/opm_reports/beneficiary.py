@@ -2,6 +2,7 @@
 Fluff calculators that pertain to specific cases/beneficiaries (mothers)
 These are used in the Incentive Payment Report
 """
+from decimal import Decimal
 import re
 from .constants import *
 
@@ -46,6 +47,8 @@ class Beneficiary(object):
             return case.get_case_property(property)
 
         account = case_data('bank_account_number')
+        if isinstance(account, Decimal):
+            account = int(account)
         self.account_number = unicode(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):

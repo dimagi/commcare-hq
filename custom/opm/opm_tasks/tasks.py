@@ -1,6 +1,7 @@
 """
 Celery tasks to save a snapshot of the reports each month
 """
+import datetime
 import logging
 import traceback
 
@@ -56,18 +57,27 @@ def save_report(ReportClass, month=None, year=None):
 
 
 @periodic_task(
-    run_every=crontab(hour=10, minute=1, day_of_month=1),
+    run_every=crontab(hour=23, minute=55, day_of_month="28-31"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def snapshot():
-    save_ip_report.delay(IncentivePaymentReport)
-    save_bp_report.delay(BeneficiaryPaymentReport)
-    save_met_report.delay(MetReport)
+    now = datetime.datetime.now()
+    tomorrow_date = now + datetime.timedelta(days=1)
+    if tomorrow_date.month > now.month:
+        save_ip_report.delay(IncentivePaymentReport)
+        save_bp_report.delay(BeneficiaryPaymentReport)
+        save_met_report.delay(MetReport)
 
 
 def get_admins_emails():
+    def get_role_or_none(user):
+        role = user.get_role(DOMAIN, False, False)
+        if role:
+            return role.name
+        return None
+
     return map(lambda user: user.get_email(),
-               filter(lambda user: user.get_role(DOMAIN, False, False).name == 'Succeed Admin',
+               filter(lambda user: get_role_or_none(user) == 'Succeed Admin',
                WebUser.by_domain(DOMAIN)))
 
 def send_emails(title, msg):
