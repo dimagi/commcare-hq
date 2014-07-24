@@ -13,7 +13,6 @@ branches:
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - schedule # SK 7/17
-#  - dynmic-opm # sravan 7/10
 submodules:
   submodules/couchlog-src:
     branches:
