@@ -23,8 +23,7 @@ def create_repeat_records(repeater_cls, payload):
     if domain:
         repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
-            if not (hasattr(repeater, 'exclude_device_reports')
-                    and repeater.exclude_device_reports
+            if not (getattr(repeater, 'exclude_device_reports', False)
                     and is_device_report(payload)):
                 repeater.register(payload)
 
