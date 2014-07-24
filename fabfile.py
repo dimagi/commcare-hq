@@ -766,10 +766,10 @@ def _deploy_without_asking():
         execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
-        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
+        execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
