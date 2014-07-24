@@ -122,6 +122,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
         replace = ''
+
+        #make headers and subheaders consistent
         for k, v in enumerate(table[0]):
             if v != ' ':
                 replace = v
