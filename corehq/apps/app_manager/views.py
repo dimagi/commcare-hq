@@ -2118,7 +2118,7 @@ def download_file(req, domain, app_id, path):
                         except ResourceConflict:
                             # this really isn't a big deal:
                             # It'll get updated next time a resource is req'd;
-                            # in fact the conflict is almost certianly from
+                            # in fact the conflict is almost certainly from
                             # another thread doing this exact update
                             pass
                 raise Http404()
