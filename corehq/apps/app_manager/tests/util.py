@@ -61,7 +61,7 @@ def normalize_attributes(xml):
 def add_build(version, build_number):
     path = os.path.join(os.path.dirname(__file__), "jadjar")
     jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
-    CommCareBuild.create_from_zip(jad_path, version, build_number)
+    return CommCareBuild.create_from_zip(jad_path, version, build_number)
 
 
 def _get_default(self, application_version):

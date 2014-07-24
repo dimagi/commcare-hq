@@ -2110,9 +2110,17 @@ def download_file(req, domain, app_id, path):
                         'Expected build resource %s not found' % path,
                         extra={'request': req}
                     )
-                    req.app.build_broken = True
-                    req.app.build_broken_reason = 'incomplete-build'
-                    req.app.save()
+                    if not req.app.build_broken:
+                        req.app.build_broken = True
+                        req.app.build_broken_reason = 'incomplete-build'
+                        try:
+                            req.app.save()
+                        except ResourceConflict:
+                            # this really isn't a big deal:
+                            # It'll get updated next time a resource is req'd;
+                            # in fact the conflict is almost certianly from
+                            # another thread doing this exact update
+                            pass
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)
