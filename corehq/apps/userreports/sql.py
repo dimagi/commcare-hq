@@ -27,8 +27,7 @@ class IndicatorSqlAdapter(object):
         indicators = self.config.get_values(doc)
         table = self.get_table()
         if indicators:
-            connection = self.engine.connect()
-            try:
+            with self.engine.begin() as connection:
                 # delete all existing rows for this doc to ensure we aren't left with stale data
                 delete = table.delete(table.c.doc_id == doc['_id'])
                 connection.execute(delete)
@@ -36,8 +35,6 @@ class IndicatorSqlAdapter(object):
                 all_values = {i.column.id: i.value for i in indicators}
                 insert = table.insert().values(**all_values)
                 connection.execute(insert)
-            finally:
-                connection.close()
 
 
 def get_indicator_table(indicator_config):
