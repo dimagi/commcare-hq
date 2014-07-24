@@ -209,8 +209,6 @@ class ConditionsMet(object):
                 child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
                 birth_weight = [child[weight_key] for child in child_forms if weight_key in child]
                 child_birth_weight_taken = '1' in birth_weight
-                if self.case_id == "3134c7bf-644d-45d8-bf4a-b7c0ac8c0363":
-                    import pdb; pdb.set_trace()
             if self.child_age == 6:
                 prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(180) <= form.received_on <= report.datespan.enddate]
                 excl_key = "child1_child_excbreastfed"
