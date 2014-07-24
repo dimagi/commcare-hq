@@ -85,7 +85,7 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key
+from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2013,7 +2013,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
         if not slug in [f.slug for f, _ in self.features()]:
             raise Http404()
         try:
-            return Toggle.get(generate_toggle_id(slug))
+            return Toggle.get(slug)
         except ResourceNotFound:
             return Toggle(slug=slug)
 
@@ -2031,19 +2031,19 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            if feature.save_fn is not None:
-                feature.save_fn(self.domain, new_state)
             slug = feature.slug
             toggle = self.get_toggle(slug)
-            item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
+            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
             if new_state:
                 if not item in toggle.enabled_users:
                     toggle.enabled_users.append(item)
             else:
                 toggle.enabled_users.remove(item)
             toggle.save()
-            cache_key = get_toggle_cache_key(slug, item)
-            cache.set(cache_key, new_state)
+            update_toggle_cache(slug, item, new_state)
+
+            if feature.save_fn is not None:
+                feature.save_fn(self.domain, new_state)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
