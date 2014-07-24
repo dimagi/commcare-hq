@@ -766,10 +766,13 @@ def _deploy_without_asking():
         execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
+        # softly update manifest (original keys remain)
         execute(update_manifest, soft=True)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
+        # hard update of manifest.json
+        execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -777,14 +780,7 @@ def _deploy_without_asking():
         raise
     else:
         execute(services_restart)
-        try:
-            execute(update_manifest)
-            execute(record_successful_deploy)
-        except Exception:
-            execute(
-                mail_admins, "Update Manifest.json failed",
-                "Shit's about to look weird."
-            )
+        execute(record_successful_deploy)
 
 
 @task
