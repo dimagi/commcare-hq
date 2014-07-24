@@ -178,8 +178,8 @@ class Product(Document):
     @classmethod
     def _export_attrs(cls):
         return [
-            'name',
-            'unit',
+            ('name', unicode),
+            ('unit', unicode),
             'description',
             'category',
             'program_id',
@@ -224,12 +224,14 @@ class Product(Document):
         p.code = str(row.get('product_id') or '')
 
         for attr in cls._export_attrs():
-            if attr in row or (isinstance(attr, tuple) and attr[0] in row):
-                val = row.get(attr, '')
+            key = attr[0] if isinstance(attr, tuple) else attr
+            if key in row:
+                val = row[key]
+                if val is None:
+                    val = ''
                 if isinstance(attr, tuple):
-                    attr, f = attr
-                    val = f(val)
-                setattr(p, attr, val)
+                    val = attr[1](val)
+                setattr(p, key, val)
             else:
                 break
 
