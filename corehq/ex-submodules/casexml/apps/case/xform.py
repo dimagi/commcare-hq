@@ -32,7 +32,16 @@ def process_cases(xform, config=None):
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        return process_cases_with_casedb(xform, case_db, config=config)
+        cases = process_cases_with_casedb(xform, case_db, config=config)
+
+    docs = [xform] + cases
+    XFormInstance.get_db().bulk_save(
+        docs,
+        # this does not check for update conflicts
+        # but all of these docs should have been locked
+        # I don't know what it does in the case of a timeout
+        all_or_none=True,
+    )
 
 
 def process_cases_with_casedb(xform, case_db, config=None):
