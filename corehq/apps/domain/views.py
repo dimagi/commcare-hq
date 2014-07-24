@@ -73,7 +73,7 @@ from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import FormRepeaterForm
+from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord
 from django.contrib import messages
@@ -480,7 +480,7 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = FormRepeaterForm({"url": url})
+    form = GenericRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -1679,6 +1679,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     urlname = 'add_repeater'
     page_title = ugettext_noop("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
+    repeater_form_class = GenericRepeaterForm
 
     @property
     def page_url(self):
@@ -1711,8 +1712,8 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return FormRepeaterForm(self.request.POST)
-        return FormRepeaterForm()
+            return self.repeater_form_class(self.request.POST)
+        return self.repeater_form_class()
 
     @property
     def page_context(self):
@@ -1721,16 +1722,34 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             'repeater_type': self.repeater_type,
         }
 
+    def make_repeater(self):
+        repeater = self.repeater_class(
+            domain=self.domain,
+            url=self.add_repeater_form.cleaned_data['url'],
+        )
+        return repeater
+
     def post(self, request, *args, **kwargs):
         if self.add_repeater_form.is_valid():
-            repeater = self.repeater_class(
-                domain=self.domain,
-                url=self.add_repeater_form.cleaned_data['url']
-            )
+            repeater = self.make_repeater()
             repeater.save()
             messages.success(request, _("Forwarding set up to %s" % repeater.url))
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+class AddFormRepeaterView(AddRepeaterView):
+    urlname = 'add_form_repeater'
+    repeater_form_class = FormRepeaterForm
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def make_repeater(self):
+        repeater = super(AddFormRepeaterView, self).make_repeater()
+        repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
+        return repeater
 
 
 class OrgSettingsView(BaseAdminProjectSettingsView):
