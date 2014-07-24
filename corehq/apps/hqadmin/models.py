@@ -1,5 +1,4 @@
 from couchdbkit.ext.django.schema import *
-import datetime
 
 
 class HqDeploy(Document):
@@ -31,7 +30,3 @@ class HqDeploy(Document):
             limit=limit,
             include_docs=False
         ).all()
-
-    def get_time_ago(self):
-        if self.date:
-            return datetime.datetime.utcnow() - self.date
