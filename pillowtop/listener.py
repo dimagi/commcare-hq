@@ -25,12 +25,14 @@ from .utils import import_settings
 
 from couchdbkit.changes import ChangesStream
 from django import db
+from dateutil import parser
 
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
 
 CHECKPOINT_FREQUENCY = 100
+CHECKPOINT_MIN_WAIT = 300
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
@@ -141,7 +143,7 @@ class BasicPillow(object):
         uri = '{}/_changes'.format(self.couch_db.uri)
         query_params = {
             'feed': 'continuous',
-            'heartbeat': True,
+            'heartbeat': 'true',  # default of one minute
         }
         while True:
             query_params.update({
@@ -156,6 +158,8 @@ class BasicPillow(object):
                     change = self._parse_change(line)
                     if change:
                         self.processor(change)
+                    else:
+                        self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
             except PillowtopCheckpointReset:
                 self.changes_seen = 0
 
@@ -193,7 +197,7 @@ class BasicPillow(object):
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
 
-    def get_checkpoint(self):
+    def get_checkpoint(self, verify_unchanged=False):
         doc_name = self.get_checkpoint_doc_name()
 
         if self.couch_db.doc_exist(doc_name):
@@ -216,6 +220,12 @@ class BasicPillow(object):
                 "seq": starting_seq
             }
             self.couch_db.save_doc(checkpoint_doc)
+
+        if verify_unchanged and self._current_checkpoint and checkpoint_doc['seq'] != self._current_checkpoint['seq']:
+            raise PillowtopCheckpointReset()
+
+        self._current_checkpoint = checkpoint_doc
+
         return checkpoint_doc
 
     def reset_checkpoint(self):
@@ -231,11 +241,7 @@ class BasicPillow(object):
         return checkpoint['seq']
 
     def set_checkpoint(self, change):
-        checkpoint = self.get_checkpoint()
-        if self._current_checkpoint and checkpoint['seq'] != self._current_checkpoint['seq']:
-            raise PillowtopCheckpointReset()
-
-        self._current_checkpoint = checkpoint
+        checkpoint = self.get_checkpoint(verify_unchanged=True)
 
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
@@ -243,6 +249,27 @@ class BasicPillow(object):
         checkpoint['seq'] = change['seq']
         checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
+
+    def touch_checkpoint(self, min_interval=0):
+        """
+        Update the checkpoint timestamp without altering the sequence.
+        :param min_interval: minimum interval between timestamp updates
+        """
+        checkpoint = self.get_checkpoint(verify_unchanged=True)
+
+        now = datetime.now(tz=pytz.UTC)
+        previous = self._current_checkpoint.get('timestamp')
+        do_update = True
+        if previous:
+            diff = now - parser.parse(previous).replace(tzinfo=pytz.UTC)
+            do_update = diff.total_seconds() >= min_interval
+
+        if do_update:
+            pillow_logging.info(
+                "(%s) touching checkpoint" % checkpoint['_id']
+            )
+            checkpoint['timestamp'] = now.isoformat()
+            self.couch_db.save_doc(checkpoint)
 
     def get_db_seq(self):
         return self.couch_db.info()['update_seq']
