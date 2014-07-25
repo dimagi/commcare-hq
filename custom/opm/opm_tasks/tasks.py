@@ -15,7 +15,7 @@ from corehq.apps.users.models import WebUser
 from custom.opm.opm_tasks import DEVELOPERS_EMAILS
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
-                                   IncentivePaymentReport, MetReport, get_report, last_if_none)
+                                   IncentivePaymentReport, MetReport, get_report)
 from ..opm_reports.constants import DOMAIN
 from .models import OpmReportSnapshot
 from dimagi.utils.django.email import send_HTML_email
@@ -47,7 +47,7 @@ def save_report(ReportClass, month=None, year=None):
     Save a snapshot of the report.
     Pass a month and year to save an arbitrary month.
     """
-    month, year = last_if_none(month, year)
+    month, year = this_month_if_none(month, year)
     if ReportClass.__name__ == "MetReport":
         for block in ['atri', 'wazirganj']:
             snapshot = prepare_snapshot(month, year, ReportClass, block, 'en')

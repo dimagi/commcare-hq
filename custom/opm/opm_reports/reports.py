@@ -512,21 +512,21 @@ class IncentivePaymentReport(BaseReport):
         form_sql_data = OpmFormSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
-def last_if_none(month, year):
+def this_month_if_none(month, year):
     if month is not None:
         assert year is not None, \
             "You must pass either nothing or a month AND a year"
         return month, year
     else:
-        last_month = datetime.datetime.now()
-        return last_month.month, last_month.year
+        this_month = datetime.datetime.now()
+        return this_month.month, this_month.year
 
 
 def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     """
     Utility method to run a report for an arbitrary month without a request
     """
-    month, year = last_if_none(month, year)
+    month, year = this_month_if_none(month, year)
     class Report(ReportClass):
         snapshot = None
         report_class = ReportClass
