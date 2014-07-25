@@ -64,9 +64,9 @@ def snapshot():
     now = datetime.datetime.now()
     tomorrow_date = now + datetime.timedelta(days=1)
     if tomorrow_date.month > now.month:
-        save_ip_report.delay(IncentivePaymentReport)
-        save_bp_report.delay(BeneficiaryPaymentReport)
-        save_met_report.delay(MetReport)
+        save_ip_report.delay(IncentivePaymentReport, now.month, now.year)
+        save_bp_report.delay(BeneficiaryPaymentReport, now.month, now.year)
+        save_met_report.delay(MetReport, now.month, now.year)
 
 
 def get_admins_emails():
@@ -87,9 +87,9 @@ def send_emails(title, msg):
                         email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-def save(report, f):
+def save(report, f, month, year):
     try:
-        snapshot = save_report(report)
+        snapshot = save_report(report, month, year)
         title = "[commcarehq] {0} saving success.".format(report.__name__)
         msg = "Saving {0} to doc {1} was finished successfully".format(report.__name__, snapshot._id)
         send_emails(title, msg)
@@ -106,15 +106,15 @@ def save(report, f):
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_ip_report(report):
-    save(report, save_ip_report)
+def save_ip_report(report, month, year):
+    save(report, save_ip_report, month, year)
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_bp_report(report):
-    save(report, save_bp_report)
+def save_bp_report(report, month, year):
+    save(report, save_bp_report, month, year)
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_met_report(report):
-    save(report, save_met_report)
+def save_met_report(report, month, year):
+    save(report, save_met_report, month, year)
