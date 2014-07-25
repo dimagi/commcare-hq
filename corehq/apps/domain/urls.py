@@ -19,7 +19,7 @@ from corehq.apps.domain.views import (
     BillingStatementPdfView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
-    AddFormRepeaterView
+    AddFormRepeaterView, AddOpsUserAsDomainAdminView,
 )
 
 #
@@ -104,6 +104,8 @@ domain_settings = patterns(
         name=DomainBillingStatementsView.urlname),
     url(r'^billing/make_payment/$', InvoiceStripePaymentView.as_view(),
         name=InvoiceStripePaymentView.urlname),
+    url(r'^billing/join_billing_admins/$', AddOpsUserAsDomainAdminView.as_view(),
+        name=AddOpsUserAsDomainAdminView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^subscription/renew/$', ConfirmSubscriptionRenewalView.as_view(),
         name=ConfirmSubscriptionRenewalView.urlname),

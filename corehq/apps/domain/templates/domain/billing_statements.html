@@ -89,12 +89,19 @@
         <td class="span2">
             <span data-bind="text: payment_status, attr: {class: payment_class}"></span>
             <!-- ko if: canMakePayment -->
+            {% if not is_ops_user_but_not_admin %}
             <button type="button"
                     class="btn btn-success payment-button"
                     data-toggle="modal"
                     data-target="#paymentModal">
                 {% trans 'Make Payment' %}
             </button>
+            {% else %}
+                <span class="label">
+                    <i class="icon-info-sign"></i>
+                    {% trans "Not Billing Admin, Can't Make Payment" %}
+                </span>
+            {% endif %}
             <!-- /ko -->
         </td>
         <td class="span2">
