@@ -1,3 +1,4 @@
+import json
 import logging
 from psycopg2._psycopg import InterfaceError
 import pytz
@@ -10,6 +11,7 @@ import time
 
 from django.core.mail import send_mail
 from requests import ConnectionError
+import requests
 import simplejson
 import rawes
 from django.conf import settings
@@ -136,14 +138,36 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        try:
-            with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                               filter=self.couch_filter, include_docs=self.include_docs, **self.extra_args) as st:
-                for c in st:
-                    self.processor(c)
-        except PillowtopCheckpointReset:
-            self.changes_seen = 0
-            self.new_changes()
+        uri = '{}/_changes'.format(self.couch_db.uri)
+        query_params = {
+            'feed': 'continuous',
+            'heartbeat': True,
+        }
+        while True:
+            query_params.update({
+                'since': self.since,
+                'filter': self.couch_filter,
+                'include_docs': self.include_docs,
+            })
+            query_params.update(self.extra_args)
+            try:
+                r = requests.get(uri, params=query_params, stream=True)
+                for line in r.iter_lines():
+                    change = self._parse_change(line)
+                    if change:
+                        self.processor(change)
+            except PillowtopCheckpointReset:
+                self.changes_seen = 0
+
+    def _parse_change(self, line):
+        if line.startswith('{"results":') or line.startswith('"last_seq'):
+            return None
+        else:
+            try:
+                obj = json.loads(line)
+                return obj
+            except ValueError:
+                return None
 
     def run(self):
         """
