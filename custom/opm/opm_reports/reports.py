@@ -37,7 +37,7 @@ from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
 from custom.opm import HealthStatusMixin, normal_format, format_percent
 from custom.opm.opm_reports.conditions_met import ConditionsMet
-from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
+from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter, SnapshotFilter
 from custom.opm.opm_reports.health_status import HealthStatus
 from dimagi.utils.decorators.memoized import memoized
 
@@ -275,6 +275,7 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     exportable_all = True
     export_format_override = "csv"
     block = ''
+    load_snapshot = True
     filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
 
     @property
@@ -322,7 +323,11 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
         # instead, calculate again.
         if self.filter_data.get('is_open', False):
             return None
-        return OpmReportSnapshot.from_view(self)
+        snapshot = OpmReportSnapshot.from_view(self)
+        if snapshot and self.load_snapshot:
+            return snapshot
+        else:
+            return None
 
 
     @property
@@ -416,8 +421,12 @@ class BeneficiaryPaymentReport(BaseReport):
     model = Beneficiary
 
     @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
+
+    @property
     def fields(self):
-        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
+        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
 
     # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
@@ -453,7 +462,11 @@ class IncentivePaymentReport(BaseReport):
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter, GramPanchayatFilter] + super(BaseReport, self).fields
+        return [BlockFilter, AWCFilter, GramPanchayatFilter] + super(BaseReport, self).fields + [SnapshotFilter,]
+
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
 
     @property
     @memoized
@@ -716,6 +729,9 @@ class MetReport(BaseReport):
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
         return subtitles
 
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
 
     @property
     def block(self):
@@ -734,7 +750,8 @@ class MetReport(BaseReport):
             GramPanchayatFilter,
             MonthFilter,
             YearFilter,
-            SelectOpenCloseFilter
+            SelectOpenCloseFilter,
+            SnapshotFilter
         ]
 
     @property

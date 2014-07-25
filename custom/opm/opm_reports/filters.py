@@ -1,5 +1,5 @@
 from corehq.apps.reports.filters.base import (
-    BaseMultipleOptionFilter, BaseSingleOptionFilter)
+    BaseMultipleOptionFilter, BaseSingleOptionFilter, CheckboxFilter)
 
 from .constants import get_user_data_set
 
@@ -41,4 +41,17 @@ class GramPanchayatFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(awc, awc) for awc in get_user_data_set()['gp']]
+
+
+class SnapshotFilter(CheckboxFilter):
+    label = 'Load from snapshot'
+    slug = 'load_snapshot'
+
+    @property
+    def filter_context(self):
+        first_load = self.request.GET.get('hq_filters', False)
+        if first_load:
+            return {'checked': True}
+        else:
+            return {'checked': self.request.GET.get(self.slug, False)}
 
