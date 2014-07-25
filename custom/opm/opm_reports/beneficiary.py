@@ -15,20 +15,21 @@ class Beneficiary(object):
     # maps method name to header
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', "List of Beneficiaries"),
-        ('husband_name', "Husband Name"),
-        ('awc_name', "AWC Name"),
-        ('bank_name', "Bank Name"),
-        ('ifs_code', "IFS Code"),
-        ('account_number', "Bank Account Number"),
-        ('block', "Block Name"),
-        ('village', "Village Name"),
-        ('bp1_cash', "Birth Preparedness Form 1"),
-        ('bp2_cash', "Birth Preparedness Form 2"),
-        ('delivery_cash', "Delivery Form"),
-        ('child_cash', "Child Followup Form"),
-        ('spacing_cash', "Birth Spacing Bonus"),
-        ('total', "Amount to be paid to beneficiary"),
+        ('name', "List of Beneficiaries", True),
+        ('husband_name', "Husband Name", True),
+        ('awc_name', "AWC Name", True),
+        ('bank_name', "Bank Name", True),
+        ('ifs_code', "IFS Code", True),
+        ('account_number', "Bank Account Number", True),
+        ('block', "Block Name", True),
+        ('village', "Village Name", True),
+        ('bp1_cash', "Birth Preparedness Form 1", True),
+        ('bp2_cash', "Birth Preparedness Form 2", True),
+        ('delivery_cash', "Delivery Form", True),
+        ('child_cash', "Child Followup Form", True),
+        ('spacing_cash', "Birth Spacing Bonus", True),
+        ('total', "Amount to be paid to beneficiary", True),
+        ('owner_id', 'Owner ID', False)
     ]
 
     def __init__(self, case, report, sql_form_data=None):
@@ -61,6 +62,7 @@ class Beneficiary(object):
         self.ifs_code = case_data('ifsc')
         self.block = case_data('block_name')
         self.village = case_data('village_name')
+        self.owner_id = case_data('owner_id')
 
         def get_sql_property(property):
             property = int(0 if sql_form_data.get(property) is None

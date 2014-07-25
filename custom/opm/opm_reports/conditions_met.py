@@ -1,8 +1,8 @@
 import datetime
 from dimagi.utils.dates import months_between
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.users.models import CommCareCase
-from custom.opm.opm_reports.constants import InvalidRow
+from corehq.apps.users.models import CommCareCase, CommCareUser
+from custom.opm.opm_reports.constants import InvalidRow, DOMAIN
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
@@ -149,6 +149,15 @@ class ConditionsMet(object):
         self.name = case_property('name', EMPTY_FIELD)
         self.awc_name = case_property('awc_name', EMPTY_FIELD)
         self.husband_name = case_property('husband_name', EMPTY_FIELD)
+
+        user = None
+        user_id = case_property('user_id', None)
+        if user_id:
+            user = CommCareUser.get_by_user_id(user_id, DOMAIN)
+
+        self.gp = None
+        if user:
+            self.gp = user.user_data.get('gp', None)
 
         reporting_month = report.month
         reporting_year = report.year
