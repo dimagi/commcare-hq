@@ -229,13 +229,14 @@ class EmwfMixin(object):
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         user_types = [getattr(HQUserType, t) for t in types]
-        user_types = [("t__0", _("[All mobile workers]"))] + \
+        user_type_tuples = [("t__0", _("[All mobile workers]"))] + \
             [self.user_type_tuple(t) for t in user_types]
         if (getattr(self, "show_all_filter", False)
             or (getattr(self, "kwargs", None)
                 and "all_data" in self.kwargs)):
-            user_types = [("t__x", "[All Data]")] + user_types
-        return user_types
+            user_type_tuples = [("all_data", "[All Data]")] + user_type_tuples
+        return user_type_tuples
+
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -273,7 +274,8 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
         emws = request.GET.getlist(cls.slug)
-        return [int(t[3:]) for t in emws if t.startswith("t__")],
+        return [int(t[3:]) for t in emws
+                if t.startswith("t__") and t[3:].isdigit()],
 
     @classmethod
     def selected_group_ids(cls, request):
@@ -301,7 +303,8 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         user_types = self.selected_user_types(self.request)
         group_ids = self.selected_group_ids(self.request)
 
-        selected = [t for t in self.user_types if int(t[0][3:]) in user_types]
+        selected = [t for t in self.user_types
+                    if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
         if group_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": group_ids}
@@ -468,7 +471,7 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
     @classmethod
     def show_all_data(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return 't__x' in emws
+        return 'all_data' in emws
 
 
 def get_user_toggle(request):
