@@ -8,20 +8,15 @@
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-
-    {% if use_bootstrap_3 %}
         {% compress css %}
+            {% if use_bootstrap_3 %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/bootstrap.less' %}"/>
-            {% block bootstrap3_stylesheets %}
-            {% endblock %}
-        {% endcompress %}
-    {% else %}
-        {% compress css %}
+            {% else %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+            {% endif %}
             {% block stylesheets %}
             {% endblock %}
         {% endcompress %}
-    {% endif %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
