@@ -15,6 +15,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from redis import ConnectionError
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
@@ -124,27 +125,29 @@ def create_xform_from_xml_return_xform(xml_string, attachments=None, _id=None, p
     _id = (_id or _extract_meta_instance_id(json_form)
            or XFormInstance.get_db().server.next_uuid())
     assert _id
-    _attachments = {
-        "form.xml": {
-            "content_type": "text/xml",
-            "data": xml_string,
-        }
-    }
-    for key, value in attachments.items():
-        attachments[key] = {
-            'data': value,
-            'content_type': value.content_type,
-            'content_length': value.size
-        }
-    kwargs = dict(
-        _id=_id,
-        _attachments=resource.encode_attachments(_attachments),
-        form=json_form,
-        xmlns=json_form.get('@xmlns'),
-        received_on=datetime.datetime.utcnow(),
+    attachments_builder = CouchAttachmentsBuilder()
+    attachments_builder.add(
+        content=xml_string,
+        name='form.xml',
+        content_type='text/xml',
     )
 
-    xform = XFormInstance(**kwargs)
+    for key, value in attachments.items():
+        attachments_builder.add(
+            content=value,
+            name=key,
+            content_type=value.content_type,
+        )
+
+    xform = XFormInstance(
+        # form has to be wrapped
+        {'form': json_form},
+        # other properties can be set post-wrap
+        _id=_id,
+        xmlns=json_form.get('@xmlns'),
+        _attachments=attachments_builder.to_json(),
+        received_on=datetime.datetime.utcnow(),
+    )
 
     # this had better not fail, don't think it ever has
     # if it does, nothing's saved and we get a 500

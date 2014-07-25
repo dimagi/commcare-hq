@@ -81,9 +81,10 @@ class BaseCaseMultimediaTest(TestCase):
         """
         form = post_xform_to_couch(xml_data, dict_attachments)
         form.domain = TEST_DOMAIN
-        self.assertEqual(len(dict_attachments.keys()), len(form.attachments))
-        process_cases(form)
-
+        self.assertEqual(set(dict_attachments.keys()),
+                         set(form.attachments.keys()))
+        case, = process_cases(form)
+        self.assertEqual(case.case_id, TEST_CASE_ID)
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
         self._do_submit(xml_data, dict_attachments)

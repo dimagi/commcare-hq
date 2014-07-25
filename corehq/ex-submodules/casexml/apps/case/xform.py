@@ -2,8 +2,9 @@ import copy
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+import datetime
 import redis
-from casexml.apps.case.signals import cases_received
+from casexml.apps.case.signals import cases_received, case_post_save
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import (
@@ -35,13 +36,19 @@ def process_cases(xform, config=None):
         cases = process_cases_with_casedb(xform, case_db, config=config)
 
     docs = [xform] + cases
-    XFormInstance.get_db().bulk_save(
+    now = datetime.datetime.utcnow()
+    for case in cases:
+        case.server_modified_on = now
+    result = XFormInstance.get_db().bulk_save(
         docs,
         # this does not check for update conflicts
         # but all of these docs should have been locked
         # I don't know what it does in the case of a timeout
         all_or_none=True,
     )
+    for case in cases:
+        case_post_save.send(CommCareCase, case=case)
+    return cases
 
 
 def process_cases_with_casedb(xform, case_db, config=None):
@@ -93,7 +100,7 @@ def process_cases_with_casedb(xform, case_db, config=None):
     for case in cases:
         if not case.check_action_order():
             try:
-                case.reconcile_actions(rebuild=True)
+                case.reconcile_actions(rebuild=True, xforms={xform._id: xform})
             except ReconciliationError:
                 pass
 
