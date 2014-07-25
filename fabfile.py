@@ -757,19 +757,22 @@ def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
+        execute(_do_compress)
+        # softly update manifest (original keys remain)
+        execute(update_manifest, soft=True)
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
-        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
-        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
+        # hard update of manifest.json
+        execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -990,7 +993,7 @@ def _do_collectstatic():
 
 @roles(*ROLES_DJANGO)
 @parallel
-def update_manifest(save=False):
+def update_manifest(save=False, soft=False):
     """
     Puts the manifest.json file with the references to the compressed files
     from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
@@ -1002,7 +1005,12 @@ def update_manifest(save=False):
     withpath = env.code_root
     venv = env.virtualenv_root
 
-    cmd = 'resource_compress save' if save else 'resource_compress'
+    args = ''
+    if save:
+        args = ' save'
+    if soft:
+        args = ' soft'
+    cmd = 'update_manifest%s' % args
     with cd(withpath):
         sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
             user=env.sudo_user
