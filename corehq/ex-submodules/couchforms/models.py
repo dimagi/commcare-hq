@@ -206,6 +206,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
+        # default to encode_attachments=False
+        if 'encode_attachments' not in kwargs:
+            kwargs['encode_attachments'] = False
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.

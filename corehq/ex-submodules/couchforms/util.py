@@ -101,8 +101,10 @@ def acquire_lock_for_xform(xform_id):
 
 
 def create_xform_from_xml(xml_string, attachments=None, _id=None, process=None):
-    # boo
-    xform, lock = create_xform_from_xml_return_xform(xml_string, attachments=attachments, _id=_id, process=process)
+    assert getattr(settings, 'UNIT_TESTING', False)
+    xform, lock = create_xform_from_xml_return_xform(
+        xml_string, attachments=attachments or {}, _id=_id, process=process)
+    xform.save()
     return LockManager(xform.get_id, lock)
 
 
@@ -174,6 +176,7 @@ def post_xform_to_couch(instance, attachments=None, process=None,
     xform_lock = create_and_lock_xform(instance, attachments=attachments,
                                        process=process, domain=domain)
     with xform_lock as xform:
+        xform.save()
         return xform
 
 
@@ -274,7 +277,7 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
         new_form.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(new_form.to_json())
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-        dupe.save(encode_attachments=False)
+        dupe.save()
         return LockManager(dupe, lock)
 
 
