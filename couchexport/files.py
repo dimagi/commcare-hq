@@ -23,22 +23,30 @@ class PathTemp(TempBase):
         with open(self.path, 'rb') as f:
             return f.read()
 
+    def delete(self):
+        os.remove(self.path)
 
 class StringIOTemp(TempBase):
     def __init__(self, buffer):
         self.buffer = buffer
+        self._path = None
 
     @property
     def payload(self):
         return self.buffer.getvalue()
 
     @property
-    @memoized
     def path(self):
-        fd, path = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as file:
-            file.write(self.buffer.getvalue())
-        return path
+        if self._path is None:
+            fd, path = tempfile.mkstemp()
+            with os.fdopen(fd, 'wb') as file:
+                file.write(self.buffer.getvalue())
+            self._path = path
+        return self._path
+
+    def delete(self):
+        if self._path is not None:
+            os.remove(self._path)
 
 class ExportFiles(object):
 
@@ -46,3 +54,9 @@ class ExportFiles(object):
         self.file = Temp(file)
         self.checkpoint = checkpoint
         self.format = format
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.delete()
