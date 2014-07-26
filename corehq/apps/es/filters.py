@@ -53,3 +53,7 @@ def domain(domain):
 
 def doc_type(doc_type):
     return term('doc_type', doc_type)
+
+
+def doc_id(doc_id):
+    return term("_id", doc_id)
