@@ -7,7 +7,8 @@ from StringIO import StringIO
 from django.conf import settings
 from django.test.client import Client
 
-from couchdbkit import ResourceConflict, ResourceNotFound, resource
+from couchdbkit import ResourceConflict, ResourceNotFound, resource, \
+    BulkSaveError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -423,12 +424,15 @@ class SubmissionPost(object):
             from casexml.apps.case.models import CommCareCase
             from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
             from casexml.apps.case.signals import case_post_save
+            from corehq.apps.commtrack.processing import process_stock
 
             with lock_manager as instance:
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True) as case_db:
-                        cases = process_cases_with_casedb(instance, case_db)
+                        process_cases_with_casedb(instance, case_db)
+                        process_stock(instance, case_db)
+                        cases = case_db.get_changed()
                         responses, errors = self.process_signals(instance)
                         # todo: this property is useless now
                         instance.initial_processing_complete = True
@@ -440,13 +444,16 @@ class SubmissionPost(object):
                         now = datetime.datetime.utcnow()
                         for case in cases:
                             case.server_modified_on = now
-                        result = XFormInstance.get_db().bulk_save(
-                            docs,
-                            # this does not check for update conflicts
-                            # but all of these docs should have been locked
-                            # I don't know what it does in the case of a timeout
-                            all_or_none=True,
-                        )
+                        try:
+                            XFormInstance.get_db().bulk_save(
+                                docs,
+                                # this does not check for update conflicts
+                                # but all of these docs should have been locked
+                                # I don't know what it does in the case of a timeout
+                                all_or_none=True,
+                            )
+                        except BulkSaveError as e:
+                            raise
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
 

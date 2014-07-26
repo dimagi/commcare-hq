@@ -103,6 +103,7 @@ def process_cases_with_casedb(xform, case_db, config=None):
                 case.reconcile_actions(rebuild=True, xforms={xform._id: xform})
             except ReconciliationError:
                 pass
+        case_db.mark_changed(case)
 
     return cases
 
@@ -135,6 +136,7 @@ class CaseDbCache(object):
         self.deleted_ok = deleted_ok
         self.lock = lock
         self.locks = []
+        self._changed = set()
 
     def __enter__(self):
         return self
@@ -207,6 +209,16 @@ class CaseDbCache(object):
         for raw_case in  _iter_raw_cases(case_ids):
             case = CommCareCase.wrap(raw_case)
             self.set(case._id, case)
+
+    def mark_changed(self, case):
+        assert self.cache.get(case.case_id) is case
+        self._changed.add(case.case_id)
+
+    def get_changed(self):
+        return [self.cache[case_id] for case_id in self._changed]
+
+    def clear_changed(self):
+        self._changed = set()
 
 
 def get_and_check_xform_domain(xform):

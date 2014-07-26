@@ -618,7 +618,7 @@ class NewStockReport(object):
         return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
-    def create_models(self):
+    def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -630,6 +630,9 @@ class NewStockReport(object):
                 section_id=txn.section_id,
                 product_id=txn.product_id,
             )
+            if domain:
+                # set this as a shortcut for post save signal receivers
+                db_txn.domain = domain
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
@@ -1509,9 +1512,12 @@ def update_stock_state_for_transaction(instance):
     state.last_modified_date = instance.report.date
     state.stock_on_hand = instance.stock_on_hand
 
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
+    try:
+        domain_name = instance.domain
+    except AttributeError:
+        domain_name = CommCareCase.get(instance.case_id).domain
+
+    domain = Domain.get_by_name(domain_name)
 
     if domain and domain.commtrack_settings:
         consumption_calc = domain.commtrack_settings.get_consumption_config()
@@ -1525,6 +1531,8 @@ def update_stock_state_for_transaction(instance):
         'stock',
         consumption_calc
     )
+    # so you don't have to look it up again in the signal receivers
+    state.domain = domain
     state.save()
 
 
@@ -1548,11 +1556,17 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
+    try:
+        domain_name = instance.domain
+        if not domain_name:
+            raise ValueError()
+    except (AttributeError, ValueError):
+        domain_name = CommCareCase.get(case_id).domain
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
         mapping = DocDomainMapping(
             doc_id=case_id,
             doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
+            domain_name=domain_name,
         )
         mapping.save()
 
@@ -1575,7 +1589,8 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    process_stock(xform)
+    for case in process_stock(xform):
+        case.save()
 
 # import signals
 from . import signals
