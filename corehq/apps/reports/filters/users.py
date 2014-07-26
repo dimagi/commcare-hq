@@ -378,17 +378,6 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 filters.OR(*user_type_filters),
             )
 
-    @classmethod
-    def other_users(cls, domain, user_types, simplified=False,
-            CommCareUser=CommCareUser):
-        user_filter = tuple([HQUserToggle(id, id in user_types)
-            for id in range(len(HQUserType.human_readable))])
-        return util.get_all_users_by_domain(
-                domain=domain,
-                user_filter=user_filter,
-                simplified=simplified,
-                CommCareUser=CommCareUser,
-        )
 
     @classmethod
     @memoized
@@ -405,8 +394,9 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 simplified=simplified_users,
                 CommCareUser=CommCareUser,
             )
-        other_users = cls.other_users(domain, user_types, simplified=simplified_users,
-                CommCareUser=CommCareUser)
+        user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
+        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
+                                                   CommCareUser=CommCareUser)
         groups = [Group.get(g) for g in group_ids]
         all_users = users + other_users
         if combined:
