@@ -67,6 +67,12 @@ ACCOUNTING_PREVIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+BOOTSTRAP3_PREVIEW = StaticToggle(
+    'bootstrap3_preview',
+    'Bootstrap 3 Preview',
+    [NAMESPACE_USER]
+)
+
 INVOICE_TRIGGER = StaticToggle(
     'invoice_trigger',
     'Accounting Trigger Invoices',
@@ -86,12 +92,6 @@ REMINDERS_UI_PREVIEW = StaticToggle(
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
     'Show UI-based case rebuild option',
-)
-
-ANDROID_OFFLINE_INSTALL = StaticToggle(
-    'android_offline_install',
-    'Android Offline Install',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 IS_DEVELOPER = StaticToggle(

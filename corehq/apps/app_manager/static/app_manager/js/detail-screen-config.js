@@ -443,7 +443,7 @@ var DetailScreenConfig = (function () {
             }
 
             var longColumns = spec.long ? spec.long.columns : [];
-            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
+            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {

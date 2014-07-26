@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
 from dimagi.utils.dates import add_months
-from django_prbac.models import Role
+from django_prbac.models import Role, UserRole
 
 
 EXCHANGE_RATE_DECIMAL_PLACES = 9
@@ -191,3 +191,14 @@ def get_customer_cards(account, username, domain):
     except (PaymentMethod.DoesNotExist, BillingAccountAdmin.DoesNotExist):
         pass
     return None
+
+
+def is_accounting_admin(user):
+    roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
+    if not roles:
+        return False
+    accounting_privilege = roles[0].instantiate({})
+    try:
+        return user.prbac_role.has_privilege(accounting_privilege)
+    except (AttributeError, UserRole.DoesNotExist):
+        return False

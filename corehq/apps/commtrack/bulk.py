@@ -64,7 +64,7 @@ def import_products(domain, importer):
                 if p.domain:
                     if p.domain != domain:
                         messages.append(
-                            _("Product {product_name} belongs to another domain and was not updated").format(
+                            _(u"Product {product_name} belongs to another domain and was not updated").format(
                                 product_name=p.name
                             )
                         )
@@ -76,13 +76,22 @@ def import_products(domain, importer):
                 to_save.append(p)
 
             importer.add_progress()
-            if len(to_save) > 500:
-                Product.get_db().bulk_save(to_save)
-                to_save = []
+
         except Exception, e:
             messages.append(
-                'Failed to import product ' + str(row['name']) + ' ' + str(e)
+                _(u'Failed to import product {name}: {ex}'.format(
+                    name=row['name'] or '',
+                    ex=e,
+                ))
             )
+
+        if len(to_save) > 500:
+            Product.get_db().bulk_save(to_save)
+            to_save = []
+
+    if to_save:
+        Product.get_db().bulk_save(to_save)
+
     if product_count:
         messages.insert(0, _('Successfullly updated {number_of_products} products with {errors} errors.').format(
             number_of_products=product_count, errors=len(messages))

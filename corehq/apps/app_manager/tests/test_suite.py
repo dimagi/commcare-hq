@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, ScheduleVisit, \
-    FormSchedule, DetailColumn
+from corehq.apps.app_manager.models import (Application, AutoSelectCase,
+    AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -237,6 +237,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 form.post_form_workflow = WORKFLOW_MODULE
 
         self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
+
+    def test_form_workflow_root(self):
+        # app = Application.wrap(self.get_json('suite-workflow-root'))
+        
+        app = Application.wrap(self.get_json('suite-workflow'))
+        for m in [1, 2]:
+            module = app.get_module(m)
+            module.put_in_root = True
+
+        self.assertXmlEqual(self.get_xml('suite-workflow-root'), app.create_suite())
 
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
