@@ -34,8 +34,8 @@ class SingleExcelImporter(ExcelImporter):
     worksheet.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(SingleExcelImporter, self).__init__(*args, **kwargs)
+    def __init__(self, task, file_ref_id):
+        super(SingleExcelImporter, self).__init__(task, file_ref_id)
         self.worksheet = self.workbook.worksheets[0]
         self.total_rows = self.worksheet.worksheet.get_highest_row()
 
@@ -46,7 +46,7 @@ class MultiExcelImporter(ExcelImporter):
     relevant worksheets.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(MultiExcelImporter, self).__init__(*args, **kwargs)
+    def __init__(self, task, file_ref_id):
+        super(MultiExcelImporter, self).__init__(task, file_ref_id)
         self.worksheets = self.workbook.worksheets
         self.total_rows = sum(ws.worksheet.get_highest_row() for ws in self.worksheets)
