@@ -13,6 +13,23 @@ from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
 from corehq.toggles import IS_DEVELOPER
 
 
+INDICATOR_DATA = {
+    "domain_count": {
+        "chart_name": "domains",
+        "chart_title": "Total Project Spaces",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+}
+
+
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = "hqadmin/faceted_report.html"
@@ -227,13 +244,15 @@ class AdminAppReport(AdminFacetedReport):
 
 
 class GlobalAdminReports(AdminReport):
-    base_template = "hqadmin/hqadmin_base_report.html"
+    base_template = "hqadmin/indicator_report.html"
     section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
 
     @property
     def template_context(self):
         context = super(AdminReport, self).template_context
         context.update({
+            'indicator_data': INDICATOR_DATA,
+            'indicators': self.indicators,
             'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
         })
         return context
@@ -242,10 +261,17 @@ class GlobalAdminReports(AdminReport):
     def domains(self):
         return Domain.get_all()
 
+    @property
+    def indicators(self):
+        raise NotImplementedError
+
 
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
     name = ugettext_noop('Real Project Spaces')
+    indicators = [
+        'domain_count',
+    ]
 
     @property
     def headers(self):

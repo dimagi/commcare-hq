@@ -941,6 +941,12 @@ def stats_data(request):
 
 
 @require_superuser
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+def admin_reports_stats_data(request):
+    return stats_data(request)
+
+
+@require_superuser
 def loadtest(request):
     # The multimech results api is kinda all over the place.
     # the docs are here: http://testutils.org/multi-mechanize/datastore.html
