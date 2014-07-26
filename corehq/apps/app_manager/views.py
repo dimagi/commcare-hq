@@ -2099,10 +2099,9 @@ def download_file(req, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    logging.error(
-                        'Unknown build resource %s not found' % path,
-                        extra={'request': req}
-                    )
+                    # todo: log since it likely exposes a mobile bug
+                    # logging was removed because such a mobile bug existed
+                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't
