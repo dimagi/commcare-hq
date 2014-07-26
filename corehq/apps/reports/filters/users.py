@@ -1,9 +1,10 @@
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 
+from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
@@ -266,7 +267,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     @classmethod
     def selected_user_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [u[3:] for u in emws if u.startswith("u__")],
+        return [u[3:] for u in emws if u.startswith("u__")]
 
     @classmethod
     def selected_user_types(cls, request):
@@ -275,12 +276,12 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         """
         emws = request.GET.getlist(cls.slug)
         return [int(t[3:]) for t in emws
-                if t.startswith("t__") and t[3:].isdigit()],
+                if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
     def selected_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [g[3:] for g in emws if g.startswith("g__")],
+        return [g[3:] for g in emws if g.startswith("g__")]
 
     @property
     @memoized
@@ -347,46 +348,35 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return [Group.get(g) for g in group_ids]
 
     @classmethod
-    def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
+    def user_es_query(cls, domain, request):
         user_ids = cls.selected_user_ids(request)
         user_types = cls.selected_user_types(request)
         group_ids = cls.selected_group_ids(request)
 
-        if initial_query is None:
-            initial_query = {"match_all": {}}
-        q = {"query": initial_query}
-        doc_types_to_include = ["CommCareUser"]
+        user_type_filters = []
         if HQUserType.ADMIN in user_types:
-            doc_types_to_include.append("AdminUser")
+            user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
-            doc_types_to_include.append("UnknownUser")
-
-        query_filter = {"and": [
-            {"terms": {"doc_type": doc_types_to_include}},
-            {"term": {"domain.exact": domain}},
-            {"term": {"is_active": True}},
-            {"term": {"base_doc": "couchuser"}},
-        ]}
-        if HQUserType.REGISTERED not in user_types:
-            or_filter = {"or": [
-                {"terms": {"_id": user_ids}},
-                {"terms": {"__group_ids": group_ids}},
-            ]}
-
-            # for setting up an 'or' filter for non commcare users. This occurs when all mobile workers is not selected,
-            # but admin, demo, or unknown users are
-            other_doc_types = doc_types_to_include[:]
-            other_doc_types.remove("CommCareUser")
-            if doc_types_to_include:
-                or_filter["or"].append({"terms": {"doc_type": other_doc_types}})
-
-            query_filter["and"].append(or_filter)
-
+            user_type_filters.append(user_es.unknown_users())
+            user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
-            query_filter = {"or": [{"term": {"username": "demo_user"}}, query_filter]}
+            user_type_filters.append(user_es.demo_users())
 
-        q["filter"] = query_filter
-        return es_query(es_url=ES_URLS["users"], q=q, **kwargs)
+        q = user_es.UserES().domain(domain)
+        if HQUserType.REGISTERED in user_types:
+            # return all users with selected user_types
+            user_type_filters.append(user_es.mobile_users())
+            return q.OR(*user_type_filters)
+        else:
+            # return matching user types and exact matches
+            id_filter = filters.OR(
+                filters.term("_id", user_ids),
+                filters.term("__group_ids", group_ids),
+            )
+            return q.OR(
+                id_filter,
+                filters.OR(*user_type_filters),
+            )
 
     @classmethod
     def other_users(cls, domain, user_types, simplified=False,
