@@ -178,6 +178,7 @@ class CsvExportWriter(ExportWriter):
             tmpfile, path = self.table_files[index]
             tmpfile.close()
             archive.write(path, "%s.csv" % name)
+            os.remove(path)
         archive.close()
         self.file.seek(0)
 
