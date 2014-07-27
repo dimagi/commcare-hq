@@ -20,10 +20,6 @@ class UndoableDocument(Document):
     def soft_delete(self, domain_included=True):
         if not self.doc_type.endswith(DELETED_SUFFIX):
             self.doc_type += DELETED_SUFFIX
-            try:
-                domain = self.domain
-            except Exception:
-                domain = None
             extra_args = {}
             if domain_included:
                 extra_args["domain"] = self.domain
