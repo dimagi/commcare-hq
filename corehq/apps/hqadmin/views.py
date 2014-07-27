@@ -1,3 +1,6 @@
+import HTMLParser
+from datetime import timedelta, datetime
+import time
 import json
 import logging
 import socket
@@ -910,12 +913,16 @@ def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
     datefield = request.GET.get("datefield")
+    params_es = request.GET.get("params_es", None)
+    params_es = (json.loads(HTMLParser.HTMLParser().unescape(params_es))
+                 if params_es is not None else {})
     individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+    params.update(params_es)
 
     if histo_type == "domains":
         return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))

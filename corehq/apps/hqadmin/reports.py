@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -23,6 +24,22 @@ INDICATOR_DATA = {
                 "value": "date_created",
             },
         ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "domain_self_started_count": {
+        "chart_name": "self_started_domains",
+        "chart_title": "Self-Started Project Spaces",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "params_es": json.dumps({
+            "internal.self_started": ["T"],
+        }),
         "histogram_type": "domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -271,6 +288,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('Real Project Spaces')
     indicators = [
         'domain_count',
+        'domain_self_started_count',
     ]
 
     @property

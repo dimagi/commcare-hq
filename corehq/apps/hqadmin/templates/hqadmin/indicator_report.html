@@ -60,7 +60,8 @@
                     xaxis_label: visualizations[key].xaxis_label,
                     ajax_url: "{% url "admin_reports_stats_data" %}",
                     data: url_params,
-                    interval: visualizations[key].interval
+                    interval: visualizations[key].interval,
+                    params_es: visualizations[key].params_es
                 });
                 visualizations[key].viz.init();
             }
