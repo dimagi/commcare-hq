@@ -1,6 +1,10 @@
 from datetime import datetime
 import json
 from corehq import Domain
+from corehq.apps.accounting.models import (
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -308,3 +312,41 @@ class RealProjectSpacesReport(GlobalAdminReports):
 class RealProjectSpacesPlansReport(GlobalAdminReports):
     slug = 'real_project_spaces_plans'
     name = ugettext_noop('Real Project Spaces - Plans')
+    indicators = []
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("# Community Projects")),
+            DataTablesColumn(_("# Standard Projects")),
+            DataTablesColumn(_("# Pro Projects")),
+            DataTablesColumn(_("# Advanced Projects")),
+            DataTablesColumn(_("# Enterprise Projects")),
+        )
+
+    @property
+    def rows(self):
+        return [
+            [
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.STANDARD,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.PRO,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.ADVANCED,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE,
+                    is_active=True,
+                ).count(),
+            ]
+        ]
