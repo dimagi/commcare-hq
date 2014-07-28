@@ -1,3 +1,6 @@
+# Use modern Python
+from __future__ import unicode_literals, absolute_import, print_function
+
 from optparse import make_option
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
@@ -27,20 +30,55 @@ class Command(BaseCommand):
                 from_role=ops_role,
                 to_role=accounting_admin,
             )
+        remove_user = options.get('remove_user', False)
 
         for arg in args:
             try:
                 user = User.objects.get(username=arg)
-                user_role, is_new = UserRole.objects.get_or_create(
-                    user=user,
-                    role=ops_role,
-                )
-                if options.get('remove_user', False):
-                    user_role.delete()
-                    print "User %s was removed from the operations team" % arg
-                elif not is_new:
-                    print "User %s was already part of the operations team" % arg
+                user_privs = Role.objects.get_or_create(
+                    name="Privileges for %s" % user.username,
+                    slug="%s_privileges" % user.username,
+                )[0]
+                try:
+                    user_role = UserRole.objects.get(user=user)
+                    if user_role.role.id != user_privs.id:
+                        confirm = raw_input(
+                            "Are you sure you want to update role for %s? "
+                            "Type 'yes' to continue.\n" % user.username
+                        )
+                        if confirm != 'yes':
+                            continue
+                    user_role.role = user_privs
+                    user_role.save()
+                    print ("Updated user role for %s" % user.username)
+                except UserRole.DoesNotExist:
+                    UserRole.objects.create(
+                        user=user,
+                        role=user_privs,
+                    )
+
+                if remove_user:
+                    try:
+                        # remove grant object
+                        grant = Grant.objects.get(
+                            from_role=user_privs,
+                            to_role=ops_role
+                        )
+                        grant.delete()
+                        print("Removed %s from the operations team"
+                              % user.username)
+                    except Grant.DoesNotExist:
+                        print("The user %s was never part of the operations "
+                              "team. Leaving alone." % user.username)
+                elif not user_privs.has_privilege(ops_role):
+                    Grant.objects.create(
+                        from_role=user_privs,
+                        to_role=ops_role,
+                    )
+                    print("Added %s to the operations team" % user.username)
                 else:
-                    print "User %s was added to the operations team" % arg
+                    print("User %s is already part of the operations team"
+                          % user.username)
+
             except User.DoesNotExist:
-                print "User %s does not exist" % arg
+                print("User %s does not exist" % arg)
