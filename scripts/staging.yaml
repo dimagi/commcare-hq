@@ -34,3 +34,6 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  submodules/pillowtop-src:
+    branches:
+      - reset # SK 7/28
