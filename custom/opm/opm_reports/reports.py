@@ -794,6 +794,13 @@ class MetReport(BaseReport):
     @property
     def rows(self):
         if self.snapshot is not None:
+            current_status_index = None
+            for k, v in enumerate(self.snapshot.slugs):
+                if v == 'status':
+                    current_status_index = k
+                    break
+            for row in self.snapshot.rows:
+                row[current_status_index] = _(row[current_status_index])
             return self.snapshot.rows
         rows = []
         for row in self.row_objects:

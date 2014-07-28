@@ -1,8 +1,9 @@
 import datetime
-from dimagi.utils.dates import months_between
-from django.utils.translation import ugettext_lazy as _
 from corehq.apps.users.models import CommCareCase, CommCareUser
-from custom.opm.opm_reports.constants import InvalidRow, DOMAIN
+from custom.opm.opm_reports.constants import DOMAIN
+from django.utils.translation import ugettext as _
+from corehq.util.translation import localize
+from custom.opm.opm_reports.constants import InvalidRow
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
@@ -80,7 +81,10 @@ class ConditionsMet(object):
                 # case.awc_name, case.block_name
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
-        img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        if not report.is_rendered_as_email:
+            img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        else:
+            img_elem = '<div><img src="/static/opm/img/%s"></div>'
         def condition_image(image_y, image_n, condition):
             if condition is None:
                 return ''
@@ -316,3 +320,7 @@ class ConditionsMet(object):
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
+
+        if report.is_rendered_as_email:
+            with localize('hin'):
+                self.status = _(status)

@@ -7,6 +7,7 @@
 {% block js %}
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
     <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
     {{ block.super }}
 {% endblock %}
 
@@ -17,7 +18,7 @@
         $(function() {
             document.body.style.zoom="55%"
             setTimeout(function() {
-                $('.hq-loading').hide();
+                splitTable($(".table"), 600);
                 window.print();
             }, 2000);
         })
@@ -31,6 +32,9 @@
         @page {
             size: A4 landscape;
         }
+        thead   {display: table-header-group;   }
+
+        tfoot   {display: table-footer-group;   }
         tr{
             page-break-before: always;
         }
@@ -40,8 +44,5 @@
 {% endblock %}
 
 {% block modals %}
-    <div class="hq-loading">
-        <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator">
-        <h6>{% trans "Loading ..." %}</h6>
-    </div>
+
 {% endblock %}
