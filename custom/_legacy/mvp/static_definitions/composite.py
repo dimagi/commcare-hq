@@ -230,4 +230,22 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="over5_positive_rdt_medicated",
         denominator_slug="over5_positive_rdt",
     ),
+
+    #Functioning Bednet
+    functioning_bednet_proportion=dict(
+        description="Proportion of households ASSESSED with at least one functioning bednet"\
+                    "per sleeping site during the time period",
+        title="% of households ASSESSED with at least one functioning bednet per sleeping site",
+        numerator_slug="household_num_func_bednets",
+        denominator_slug="household_num_bednets",
+    ),
+
+    #Handwashing
+    latrine_with_handwashing_proportion=dict(
+        description="Proportion of households ASSESSED with handwashing station within 10m"\
+                    " of the latrine during the time period",
+        title="% of households ASSESSED with handwashing station within 10m of the latrine",
+        numerator_slug="num_handwashing_latrine",
+        denominator_slug="num_handwashing",
+    ),
 )
