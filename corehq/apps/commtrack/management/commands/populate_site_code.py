@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
+from corehq.apps.locations.util import generate_site_code
+from dimagi.utils.couch.database import iter_docs
 
 
 class Command(BaseCommand):
@@ -8,14 +10,31 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Populating site codes...\n")
 
+        site_codes_by_domain = {}
+
         relevant_ids = set([r['id'] for r in Location.get_db().view(
             'locations/by_type',
             reduce=False,
         ).all()])
 
-        for loc_id in relevant_ids:
-            loc = Location.get(loc_id)
-            if not loc.site_code:
+        to_save = []
+
+        for loc in iter_docs(Location.get_db(), relevant_ids):
+            if not loc['site_code']:
                 # triggering the safe will cause this to get populated
-                self.stdout.write("Updating location %s\n" % loc.name)
-                loc.save()
+                self.stdout.write("Updating location %s\n" % loc['name'])
+
+                if loc['domain'] not in site_codes_by_domain:
+                    site_codes_by_domain[loc['domain']] = list(
+                        Location.site_codes_for_domain(loc['domain'])
+                    )
+
+                loc['site_code'] = generate_site_code(
+                    loc['name'],
+                    site_codes_by_domain[loc['domain']]
+                )
+                site_codes_by_domain[loc['domain']].append(loc['site_code'])
+
+                to_save.append(loc)
+
+        Location.get_db().bulk_save(to_save)

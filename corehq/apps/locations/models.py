@@ -5,9 +5,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
-import re
 from django.dispatch import receiver
-from unidecode import unidecode
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -48,22 +46,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def save(self, *args, **kwargs):
         if not self.site_code:
-            matcher = re.compile("[\W\d]+")
-            name_slug = matcher.sub(
-                '_',
-                unidecode(self.name.lower())
-            ).strip('_')
-            postfix = ''
-
-            site_codes = Location.site_codes_for_domain(self.domain)
-
-            while name_slug + postfix in site_codes:
-                if postfix:
-                    postfix = str(int(postfix) + 1)
-                else:
-                    postfix = '1'
-
-            self.site_code = name_slug + postfix
+            self.site_code = generate_site_code(
+                self.name,
+                Location.site_codes_for_domain(self.domain)
+            )
 
         return super(Location, self).save(*args, **kwargs)
 
