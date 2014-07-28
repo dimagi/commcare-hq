@@ -1,9 +1,8 @@
 import datetime
 from corehq.apps.users.models import CommCareCase, CommCareUser
-from custom.opm.opm_reports.constants import DOMAIN
+from custom.opm.opm_reports.constants import DOMAIN, InvalidRow
 from django.utils.translation import ugettext as _
 from corehq.util.translation import localize
-from custom.opm.opm_reports.constants import InvalidRow
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
@@ -323,4 +322,4 @@ class ConditionsMet(object):
 
         if report.is_rendered_as_email:
             with localize('hin'):
-                self.status = _(status)
+                self.status = _(self.status)

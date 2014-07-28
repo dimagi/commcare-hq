@@ -1,3 +1,5 @@
+var SEPARATOR_DIV = '<div style="page-break-after: always; margin:0; padding:0; border: none;"></div>';
+
 function splitTable(table, maxHeight) {
     var header = table.children("thead");
     if (!header.length)
@@ -30,7 +32,7 @@ function splitTable(table, maxHeight) {
         rows.slice(splitIndices[i], splitIndices[i+1]).appendTo(newTable.children('tbody'));
         newTable.appendTo("#_split_table_wrapper");
         if (splitIndices[i+1] !== undefined) {
-            $('<div style="page-break-after: always; margin:0; padding:0; border: none;"></div>').appendTo("#_split_table_wrapper");
+            $(SEPARATOR_DIV).appendTo("#_split_table_wrapper");
         }
     }
 }
@@ -41,7 +43,7 @@ function split($table, chunkSize) {
 
     var $newTable = $table.clone()
     $table.after($newTable);
-    $table.after($('<div style="page-break-after: always; margin:0; padding:0; border: none;"></div>'))
+    $table.after($(SEPARATOR_DIV))
     for (var i = chunkSize; i > 0; i--) {
         $('td:nth-child('+i+'),th:nth-child('+i+')', $newTable).remove();
     }
