@@ -8,6 +8,8 @@ from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+import re
+from unidecode import unidecode
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -295,3 +297,20 @@ def dump_locations(response, domain):
 
     writer.close()
     response.write(file.getvalue())
+
+
+def generate_site_code(location_name, existing_site_codes):
+    matcher = re.compile("[\W\d]+")
+    name_slug = matcher.sub(
+        '_',
+        unidecode(location_name.lower())
+    ).strip('_')
+    postfix = ''
+
+    while name_slug + postfix in existing_site_codes:
+        if postfix:
+            postfix = str(int(postfix) + 1)
+        else:
+            postfix = '1'
+
+    return name_slug + postfix
