@@ -2224,7 +2224,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
         unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
