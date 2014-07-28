@@ -49,6 +49,10 @@ def defined_location_types(domain):
     return [k for k, v in location_hierarchy_config(domain)]
 
 def parent_child(domain):
+    """
+    Returns a dict mapping from a location type to its possible
+    child types
+    """
     return map_reduce(lambda (k, v): [(p, k) for p in v], data=dict(location_hierarchy_config(domain)).iteritems())
 
 def allowed_child_types(domain, parent):
@@ -136,21 +140,11 @@ def location_custom_properties(domain, loc_type):
             ),
         ],
     }
-    prop_site_code = CustomProperty(
-        name='site_code',
-        label='SMS Code',
-        required=True,
-        unique='global',
-    )
 
     try:
         properties = hardcoded[loc_type]
     except KeyError:
         properties = []
-
-    loc_config = get_loc_config(domain)
-    if not loc_config[loc_type].administrative:
-        properties.insert(0, prop_site_code)
 
     return properties
 
@@ -211,8 +205,8 @@ def property_uniqueness(domain, loc, prop_name, val, scope='global'):
         return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
 
 
-def get_custom_property_names(domain, loc_type):
-    return [prop.name for prop in location_custom_properties(domain, loc_type)]
+def get_custom_property_names(domain, loc_type, common_types):
+    return [prop.name for prop in location_custom_properties(domain, loc_type) if prop.name not in common_types]
 
 
 def get_default_column_data(domain, location_types):
@@ -257,12 +251,12 @@ def dump_locations(response, domain):
 
     defaults = get_default_column_data(domain, location_types)
 
-    common_types = ['id', 'name', 'parent_id', 'latitude', 'longitude']
+    common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
     writer.open(
         header_table=[
             (loc_type, [
                 common_types +
-                get_custom_property_names(domain, loc_type) +
+                get_custom_property_names(domain, loc_type, common_types) +
                 defaults['headers'].get(loc_type, [])
             ])
             for loc_type in location_types
@@ -274,9 +268,14 @@ def dump_locations(response, domain):
         tab_rows = []
         locations = Location.filter_by_type(domain, loc_type)
         for loc in locations:
-            parent_id = loc.parent._id if loc.parent else ''
+            parent_site_code = loc.parent.site_code if loc.parent else ''
 
-            custom_prop_values = [loc[prop.name] or '' for prop in location_custom_properties(domain, loc.location_type)]
+            custom_prop_values = []
+            for prop in location_custom_properties(domain, loc.location_type):
+                if prop.name not in common_types:
+                    custom_prop_values.append(
+                        loc[prop.name] or ''
+                    )
 
             if loc._id in defaults['values']:
                 default_column_values = defaults['values'][loc._id]
@@ -285,9 +284,9 @@ def dump_locations(response, domain):
 
             tab_rows.append(
                 [
-                    loc._id,
+                    loc.site_code,
                     loc.name,
-                    parent_id,
+                    parent_site_code,
                     loc.latitude or '',
                     loc.longitude or ''
                 ] + custom_prop_values + default_column_values
