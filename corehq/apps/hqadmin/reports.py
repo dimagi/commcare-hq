@@ -295,19 +295,6 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'domain_self_started_count',
     ]
 
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn(_("Project Space")),
-            DataTablesColumn(_("Number of Countries")),
-        )
-
-    @property
-    def rows(self):
-        return [
-            [domain.name, domain.deployment] for domain in self.domains
-        ]
-
 
 class RealProjectSpacesPlansReport(GlobalAdminReports):
     slug = 'real_project_spaces_plans'
