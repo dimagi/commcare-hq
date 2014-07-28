@@ -561,9 +561,6 @@ var CaseConfig = (function () {
                     condition: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'open';
                     }),
-                    close_condition: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'update';
-                    }),
                     case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
                     }),
@@ -657,9 +654,6 @@ var CaseConfig = (function () {
                 allow: {
                     condition: function () {
                         return true;
-                    },
-                    close_condition: function () {
-                        return false;
                     },
                     case_preload: function () {
                         return false;

@@ -827,7 +827,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             if self.requires == 'none':
                 action_types = (
-                    'open_case', 'update_case', 'subcases',
+                    'open_case', 'update_case', 'close_case', 'subcases',
                 )
             elif self.requires == 'case':
                 action_types = (
