@@ -48,6 +48,10 @@ def string_to_prertty_time(date_string, to_tz, from_tz=pytz.utc, fmt="%b %d, %Y 
 def is_timezone_in_dst(tz, compare_time=None):
     now = datetime.datetime.now(tz=tz) if not compare_time else tz.localize(compare_time)
     transitions = []
+    if not hasattr(tz, '_utc_transition_times'):
+        return False
+
+    # todo: should be cleaned up to not rely on the internals of pytz
     for dst_transition in tz._utc_transition_times:
         if dst_transition.year == now.year:
             transitions.append(tz.localize(dst_transition))
