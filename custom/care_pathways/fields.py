@@ -8,7 +8,6 @@ from custom.care_pathways.api.v0_1 import GeographySqlData
 class GeographyFilter(AsyncLocationFilter):
     label = ugettext_noop("Geography")
     slug = "geography"
-    template = "/reports/filters/geography.html"
 
     @property
     def filter_context(self):

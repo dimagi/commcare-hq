@@ -33,4 +33,4 @@ class GeographyResource(JsonResource):
         resource_name = 'geography'
         detail_uri_name = 'slug'
         allowed_methods = ['get']
-        collection_name = 'geography'
+        collection_name = 'objects'

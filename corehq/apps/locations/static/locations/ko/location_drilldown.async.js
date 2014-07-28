@@ -4,11 +4,7 @@ function api_get_children(loc_uuid, callback) {
   $('#loc_ajax').show();
   $.getJSON(LOAD_LOCS_URL, params, function(allData) {
       $('#loc_ajax').hide();
-      if (allData.objects !== undefined) {
-          callback(allData.objects);
-      } else {
-          callback(allData.geography);
-      }
+      callback(allData.objects);
     });
 }
 

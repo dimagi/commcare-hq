@@ -1,6 +1,7 @@
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
+KEYS = [u'lvl_1', u'lvl_2', u'lvl_3', u'lvl_4', u'lvl_5']
 
 class GeographySqlData(SqlData):
     table_name = "fluff_GeographyFluff"
@@ -19,7 +20,7 @@ class GeographySqlData(SqlData):
     def filter_values(self):
         dict = {}
         if self.domain:
-            dict[u'domain'] = self.domain
+            dict['domain'] = self.domain
         if self.level and self.name:
             dict[self.level] = self.name
 
@@ -29,9 +30,9 @@ class GeographySqlData(SqlData):
     def filters(self):
         filters = []
         if self.domain:
-            filters.append(u'domain = :domain')
-        if self.level and self.name:
-            filters.append(self.level + u'= :' + self.level)
+            filters.append('domain = :domain')
+        if self.level:
+            filters.append(self.level + '= :' + self.level)
 
         return filters
 
@@ -39,46 +40,47 @@ class GeographySqlData(SqlData):
     def group_by(self):
         if self.selected_id:
             group = []
-            for k in keys:
+            for k in KEYS:
                 if k <= self.level:
                     group.append(k)
             return group
 
-        return [u'lvl_' + unicode(int(self.level[-1]) + 1)] if self.level else [u'lvl_1']
+        return ['lvl_' + unicode(int(self.level[-1]) + 1)] if self.level else ['lvl_1']
 
     @property
     def columns(self):
         if self.selected_id:
             columns = []
-            for k in keys:
+            for k in KEYS:
                 if k <= self.level:
                     columns.append(DatabaseColumn(k, SimpleColumn(k)))
             return columns
 
-        if self.level:
-            next_level = u'lvl_' + unicode(int(self.level[-1]) + 1)
+        elif self.level:
+            next_level = 'lvl_' + unicode(int(self.level[-1]) + 1)
             return [DatabaseColumn(next_level, SimpleColumn(next_level))]
 
-        return [DatabaseColumn(u'lvl_1', SimpleColumn(u'lvl_1'))]
+        else:
+            return [DatabaseColumn('lvl_1', SimpleColumn('lvl_1'))]
 
     def get_result(self, path):
         path = path.values()[0]
         result = []
-        reversed_keys = keys[::-1]
+        reversed_keys = KEYS[::-1]
         deepest_child = True
         for k in reversed_keys:
             if path.has_key(k):
                 if deepest_child:
                     deepest_child = False
                     result = GeographySqlData(self.domain, level=k, name=path[k]).data.values()
-                if self.level != u'lvl_5':
-                    previous_level = u'lvl_' + unicode(int(k[-1]) - 1)
-                    if previous_level == u'lvl_0':
+                if self.level != 'lvl_5':
+                    previous_level = 'lvl_' + unicode(int(k[-1]) - 1)
+                    if previous_level == 'lvl_0':
                         temp_result = GeographySqlData(self.domain).data.values()
                     else:
                         temp_result = GeographySqlData(self.domain, level=previous_level, name=path[previous_level]).data.values()
-                    index = [i for i, item in enumerate(temp_result) if item[u'name']==path[k]][0]
-                    temp_result[index][u'children'] = result
+                    index = [i for i, item in enumerate(temp_result) if item['name']==path[k]][0]
+                    temp_result[index]['children'] = result
                     result = temp_result
 
         return result
@@ -87,12 +89,10 @@ class GeographySqlData(SqlData):
     def data(self):
         result = super(GeographySqlData, self).data
         for v in result.values():
-            for k in keys:
+            for k in KEYS:
                 if k in v:
-                    v[u'name'] = v[k]
-                    v[u'uuid'] = k+'__'+v[k]
+                    v['name'] = v[k]
+                    v['uuid'] = k+'__'+v[k]
         if self.selected_id:
             return self.get_result(result)
         return dict((k, v) for k, v in result.iteritems() if v)
-
-keys = [u'lvl_1', u'lvl_2', u'lvl_3', u'lvl_4', u'lvl_5']
