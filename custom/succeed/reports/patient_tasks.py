@@ -21,7 +21,7 @@ class PatientTasksReport(PatientDetailsReport):
         user = self.request.couch_user
         ret['patient_task_list_url'] = html.escape(PatientTaskListReport.get_url(*[case["domain"]]) + "?patient_id=%s&task_status=%s" % (case["_id"], "open"))
         if is_cm(user):
-            ret['create_new_task_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_NEW_TASK)
+            ret['create_new_task_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_NEW_TASK, ret['patient']['_id'])
         elif is_chw(user):
-            ret['create_new_task_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_TASK_MODULE, CM_NEW_TASK)
+            ret['create_new_task_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_TASK_MODULE, CM_NEW_TASK, ret['patient']['_id'])
         return ret
