@@ -37,4 +37,9 @@ class Command(BaseCommand):
 
                 to_save.append(loc)
 
-        Location.get_db().bulk_save(to_save)
+                if len(to_save) > 500:
+                    Location.get_db().bulk_save(to_save)
+                    to_save = []
+
+        if to_save:
+            Location.get_db().bulk_save(to_save)
