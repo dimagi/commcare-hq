@@ -3,7 +3,6 @@ name: autostaging
 branches:
   - subtree-merge-forms-cases
 #  - add-build-ui
-  - time-ago-deployed
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
 #  - vellum-requirejs+use-django-compressor
