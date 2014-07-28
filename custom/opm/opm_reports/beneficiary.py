@@ -38,7 +38,8 @@ class Beneficiary(object):
         report.filter(
             lambda key: case.get_case_property(key),
             # case.awc_name, case.block_name
-            report.filter_fields,
+            # need to be hardcoded because in case we have block_name not block property
+            [('awc_name', 'awcs'), ('block_name', 'blocks'), ('owner_id', 'gp')],
         )
 
         if case.closed and case.closed_on <= report.datespan.startdate_utc:
