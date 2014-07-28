@@ -11,6 +11,7 @@ from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_monthly_consumption
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.commtrack import const
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -395,7 +396,7 @@ class StockRestoreConfig(DocumentSchema):
         return super(StockRestoreConfig, cls).wrap(obj)
 
 
-class CommtrackConfig(Document):
+class CommtrackConfig(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain

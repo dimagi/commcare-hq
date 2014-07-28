@@ -117,3 +117,11 @@ class DomainInvitationGenerationCache(GenerationCache):
     views = [
         'users/open_invitations_by_email',
     ]
+
+
+class CommtrackConfigGenerationCache(GenerationCache):
+    generation_key = '#gen#commtrackconfig#'
+    doc_types = ['CommtrackConfig']
+    views = [
+        'commtrack/domain_config',
+    ]
