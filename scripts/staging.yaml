@@ -13,6 +13,7 @@ branches:
   - schedule # SK 7/17
   - emwf-refactor  # Ethan 7/25
   - real-project-spaces # Nick P 7/27
+  - closecase  # SK 7/28
 submodules:
   submodules/couchlog-src:
     branches:
