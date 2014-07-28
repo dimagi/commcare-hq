@@ -65,12 +65,16 @@ from .exceptions import (
     AppEditingError,
     BlankXFormError,
     ConflictingCaseTypeError,
+    FormNotFoundException,
+    IncompatibleFormTypeException,
+    LocationXpathValidationError,
+    ModuleNotFoundException,
     RearrangeError,
     VersioningError,
     XFormError,
     XFormIdNotUnique,
     XFormValidationError,
-    LocationXpathValidationError)
+)
 from corehq.apps.app_manager import id_strings
 
 WORKFLOW_DEFAULT = 'default'
@@ -115,18 +119,6 @@ def partial_escape(xpath):
 
     """
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
-
-
-class ModuleNotFoundException(Exception):
-    pass
-
-
-class FormNotFoundException(Exception):
-    pass
-
-
-class IncompatibleFormTypeException(Exception):
-    pass
 
 
 class IndexedSchema(DocumentSchema):
@@ -1172,8 +1164,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     @parse_int([1])
     def get_form(self, i):
-        self__forms = self.forms
-        return self__forms[i].with_id(i%len(self.forms), self)
+
+        try:
+            return self.forms[i].with_id(i % len(self.forms), self)
+        except IndexError:
+            raise FormNotFoundException()
 
     def requires_case_details(self):
         return False
@@ -2995,9 +2990,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def get_module(self, i):
-        self__modules = self.modules
         try:
-            return self__modules[i].with_id(i%len(self__modules), self)
+            return self.modules[i].with_id(i % len(self.modules), self)
         except IndexError:
             raise ModuleNotFoundException()
 
