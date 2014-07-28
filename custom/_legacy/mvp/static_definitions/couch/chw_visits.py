@@ -142,12 +142,20 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# of households ASSESSED  for functioning bednet",
                 indicator_key="household bednet",
             ),
+<<<<<<< HEAD
             num_handwashing_latrine=dict(
+=======
+            household_num_latrine=dict(
+>>>>>>> 02f60b463dfcddc6984c075f96e28b417a0f6957
                 description="No. of households ASSESSED with handwashing station within 10m of the latrine",
                 title="# of households with handwashing station within 10m of the latrine",
                 indicator_key="household handwashing10metres",
             ),
+<<<<<<< HEAD
             num_handwashing=dict(
+=======
+            household_num_handwashing=dict(
+>>>>>>> 02f60b463dfcddc6984c075f96e28b417a0f6957
                 description="No. of households ASSESSED with handwashing station",
                 title="# of households with handwashing station",
                 indicator_key="household handwashing",
