@@ -164,6 +164,9 @@ class BasicPillow(object):
                 self.changes_seen = 0
 
     def _parse_change(self, line):
+        """
+        Copied from CouchDBKit ChangesStream class
+        """
         if line.startswith('{"results":') or line.startswith('"last_seq'):
             return None
         else:
