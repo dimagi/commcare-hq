@@ -29,31 +29,33 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-def send_for_all_domains(task_execute_day, date):
-    if task_execute_day == date.day:
-        for domain in Domain.get_all():
-            #TODO Merge with ILSGateway integration?
-            ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
-            if ilsgateway_config and ilsgateway_config.enabled:
-                send_soh_reminder(domain.name, date)
+def send_for_all_domains(date):
+    for domain in Domain.get_all():
+        #TODO Merge with ILSGateway integration?
+        ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
+        if ilsgateway_config and ilsgateway_config.enabled:
+            send_soh_reminder(domain.name, date)
 
 
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def first_soh_task():
     now = datetime.datetime.utcnow()
-    day = get_business_day_of_month(month=now.month, year=now.year, count=-1).day
-    send_for_all_domains(day, now)
+    last_buisness_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day == last_buisness_day.day:
+        send_for_all_domains(last_buisness_day)
 
 
 @periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def second_soh_task():
     now = datetime.datetime.utcnow()
-    last_month_last_day, first_business_day = get_last_and_nth_business_day(1, now)
-    send_for_all_domains(first_business_day.day, now)
+    last_month_last_day, first_business_day = get_last_and_nth_business_day(now, 1)
+    if now.day == first_business_day.day:
+        send_for_all_domains(last_month_last_day)
 
 
 @periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def third_soh_task():
     now = datetime.datetime.utcnow()
-    last_month_last_day, fifth_business_day = get_last_and_nth_business_day(5, now)
-    send_for_all_domains(fifth_business_day.day, now)
+    last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
+    if now.day == fifth_business_day.day:
+        send_for_all_domains(last_month_last_day)
