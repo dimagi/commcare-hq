@@ -345,7 +345,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         def format_bool(val):
             if isinstance(val, bool):
-                return val
+                return u"{}".format(val)
             return _('No info')
 
         for dom in domains:
@@ -369,8 +369,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('notes') or _('No notes'),
                     dom.get('internal', {}).get('services') or _('No info'),
                     dom.get('internal', {}).get('project_state') or _('No info'),
-                    dom.get('internal', {}).get('using_adm') or False,
-                    dom.get('internal', {}).get('using_call_center') or False,
+                    format_bool(dom.get('internal', {}).get('using_adm')),
+                    format_bool(dom.get('internal', {}).get('using_call_center')),
                     format_date(dom.get("cp_last_updated"), _("No Info")),
                     dom.get('internal', {}).get('area') or _('No info'),
                     dom.get('internal', {}).get('sub_area') or _('No info'),
