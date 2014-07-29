@@ -73,7 +73,7 @@ ALICE_DOMAIN = 'domain1'
 EVE_DOMAIN = 'domain2'
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
     def testCantPwnCase(self):
         form = post_xform_to_couch(ALICE_XML)
