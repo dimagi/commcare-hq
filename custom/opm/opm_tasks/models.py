@@ -33,21 +33,29 @@ class OpmReportSnapshot(Document):
 
         need_filering = False
         filters = []
+        keys_list = []
         for key, field in report.filter_fields:
             keys = report.filter_data.get(field, [])
             if keys:
                 need_filering = True
                 filters.append((key, field))
-        if need_filering:
-            for row in snapshot.rows:
-                def key_finder(key):
-                    index = snapshot.slugs.index(key)
-                    return row[index]
-                try:
-                    report.filter(fn=key_finder, filter_fields=filters)
-                except InvalidRow:
-                    pass
+                if field == 'gp':
+                    keys_list.append([user._id for user in report.users if 'user_data' in user and 'gp' in user.user_data and
+                        user.user_data['gp'] and user.user_data['gp'] in keys])
                 else:
+                    keys_list.append(keys)
+        if need_filering:
+
+            def get_slug(key):
+                if key in snapshot.slugs:
+                    return snapshot.slugs.index(key)
+                return None
+
+            filters = filter(lambda x: x is not None, [get_slug(key) for key, value in filters])
+            get_element = lambda row, i: row[i] if row[i] else ""
+            for row in snapshot.rows:
+                values = [(bool(keys_list[i]) and get_element(row, f) in keys_list[i]) for i, f in enumerate(filters)]
+                if all(values):
                     filtered_rows.append(row)
             snapshot.rows = filtered_rows
         return snapshot
