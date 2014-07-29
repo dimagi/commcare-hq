@@ -11,7 +11,7 @@ branches:
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - schedule # SK 7/17
-  - emwf-refactor  # Ethan 7/25
+#  - emwf-refactor  # Ethan 7/25
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
 submodules:
