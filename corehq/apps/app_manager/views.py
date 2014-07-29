@@ -17,9 +17,13 @@ from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     AppManagerException,
     BlankXFormError,
     ConflictingCaseTypeError,
+    FormNotFoundException,
+    IncompatibleFormTypeException,
+    ModuleNotFoundException,
     RearrangeError,
 )
 
@@ -82,10 +86,32 @@ from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
-from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
-    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException, FormSchedule
+from corehq.apps.app_manager.models import (
+    AdvancedForm,
+    AdvancedFormActions,
+    AdvancedModule,
+    AppEditingError,
+    Application,
+    ApplicationBase,
+    CareplanForm,
+    CareplanModule,
+    DeleteApplicationRecord,
+    DeleteFormRecord,
+    DeleteModuleRecord,
+    DetailColumn,
+    Form,
+    FormActions,
+    FormNotFoundException,
+    FormSchedule,
+    IncompatibleFormTypeException,
+    Module,
+    ModuleNotFoundException,
+    ParentSelect,
+    SavedAppBuild,
+    get_app,
+    load_case_reserved_words,
+    str_to_cls,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -2113,10 +2139,9 @@ def download_file(req, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    logging.error(
-                        'Unknown build resource %s not found' % path,
-                        extra={'request': req}
-                    )
+                    # todo: log since it likely exposes a mobile bug
+                    # logging was removed because such a mobile bug existed
+                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't
@@ -2239,7 +2264,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
         unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id

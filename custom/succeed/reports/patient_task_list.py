@@ -18,7 +18,7 @@ from corehq.pillows.base import restore_property_dict
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed import PatientInfoReport
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, \
-    INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR
+    INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import is_succeed_admin, has_any_role, SUCCEED_CM_APPNAME, get_app_build
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.decorators.memoized import memoized
@@ -141,12 +141,14 @@ class PatientTaskListReportDisplay(CaseDisplay):
             return EMPTY_FIELD
 
     @property
-    def task_type(self):
-        return self.get_property("task_type")
+    def task_activity(self):
+        key = self.case.get("task_activity", EMPTY_FIELD)
+        return TASK_ACTIVITY.get(key, key)
 
     @property
     def task_risk_factor(self):
-        return TASK_RISK_FACTOR[self.get_property("task_risk_factor")]
+        key = self.case.get("task_risk_factor", EMPTY_FIELD)
+        return TASK_RISK_FACTOR.get(key, key)
 
     @property
     def task_details(self):
@@ -195,44 +197,17 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Patient Name")),
+            DataTablesColumn(_("Patient Name"), sortable=False),
             DataTablesColumn(_("Task Name"), prop_name="name"),
             DataTablesColumn(_("Responsible Party"), prop_name="task_responsible", sortable=False),
             DataTablesColumn(_("Status"), prop_name='status', sortable=False),
             DataTablesColumn(_("Action Due"), prop_name="task_due.#value"),
             DataTablesColumn(_("Last Update"), prop_name='last_updated.#value'),
-            DataTablesColumn(_("Task Type"), prop_name="task_type"),
+            DataTablesColumn(_("Task Type"), prop_name="task_activity.#value"),
             DataTablesColumn(_("Associated Risk Factor"), prop_name="task_risk_factor.#value"),
             DataTablesColumn(_("Details"), prop_name="task_details", sortable=False),
         )
         return headers
-
-    def get_visit_script(self, order, responsible_party):
-        return {
-            "script":
-                """
-                    next_visit=visits_list[0];
-                    before_action=null;
-                    count=0;
-                    foreach(visit : visits_list) {
-                        skip = false;
-                        foreach(action : _source.actions) {
-                            if (!skip && visit.xmlns.equals(action.xform_xmlns) && !action.xform_id.equals(before_action)) {
-                                next_visit=visits_list[count+1];
-                                before_visit=action.xform_id;
-                                skip=true;
-                                count++;
-                            }
-                            before_visit=action.xform_id;
-                        }
-                    }
-                    return next_visit.get('responsible_party').equals(responsible_party);
-                """,
-            "params": {
-                "visits_list": VISIT_SCHEDULE,
-                "responsible_party": responsible_party
-            }
-        }
 
     @property
     @memoized
@@ -297,6 +272,56 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
             query_block = {"queryString": {"query": "*" + search_string + "*"}}
             q["query"]["filtered"]["query"] = query_block
 
+        sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
+        order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
+        if sorting_block == 'task_risk_factor.#value':
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            foreach(String key : task_risk_factor_list.keySet()) {
+                                String value = _source.task_risk_factor.get('#value');
+                                if (value == null) {
+                                    return '';
+                                } else {
+                                    return task_risk_factor_list.get(value);
+                                }
+                            }
+                            return ''
+                        """,
+                    "type": "string",
+                    "params": {
+                        "task_risk_factor_list": TASK_RISK_FACTOR
+                    },
+                    "order": order
+                }
+            }
+            q['sort'] = sort
+
+        if sorting_block == 'task_activity.#value':
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            foreach(String key : task_activity_list.keySet()) {
+                                String value = _source.task_activity.get('#value');
+                                if (value == null) {
+                                    return value;
+                                } else {
+                                    return task_activity_list.get(value);
+                                }
+                            }
+                            return ''
+                        """,
+                    "type": "string",
+                    "params": {
+                        "task_activity_list": TASK_ACTIVITY
+                    },
+                    "order": order
+                }
+            }
+            q['sort'] = sort
+
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
 
         if self.pagination:
@@ -313,12 +338,6 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
         case_displays = (PatientTaskListReportDisplay(self, restore_property_dict(self.get_case(case)))
                          for case in self.es_results['hits'].get('hits', []))
 
-        if self.request_params["iSortCol_0"] == 0:
-            if self.request_params["sSortDir_0"] == "asc":
-                case_displays = sorted(case_displays, key=lambda x: x.full_name)
-            else:
-                case_displays = sorted(case_displays, key=lambda x: x.full_name, reverse=True)
-
         for disp in case_displays:
             yield [
                 disp.full_name_link,
@@ -327,7 +346,7 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
                 disp.status,
                 disp.task_due,
                 disp.last_modified,
-                disp.task_type,
+                disp.task_activity,
                 disp.task_risk_factor,
                 disp.task_details
             ]

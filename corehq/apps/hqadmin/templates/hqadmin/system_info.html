@@ -1,6 +1,7 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -165,7 +166,7 @@
     <div class="row-fluid">
         {% with deploy_history|first as last_deploy %}
         <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
-         at {{ last_deploy.date|date:"H:i:s"}} UTC by {{ last_deploy.user }}</span>
+         at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}</span>
         {% endwith %}
     </div>
     <div class="row-fluid">

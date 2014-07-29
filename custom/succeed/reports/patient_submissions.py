@@ -128,7 +128,7 @@ class PatientSubmissionReport(PatientDetailsReport):
 
     def form_completion_time(self, date_string):
         if date_string != EMPTY_FIELD:
-            return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT)
+            return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT, localize=True)
         else:
             return EMPTY_FIELD
     @property
