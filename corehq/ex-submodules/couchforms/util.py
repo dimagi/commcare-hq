@@ -371,12 +371,12 @@ class SubmissionPost(object):
 
         return doc
 
-    def get_response(self):
+    def run(self):
         if not self.auth_context.is_valid():
-            return self.failed_auth_response
+            return self.failed_auth_response, None, []
 
         if isinstance(self.instance, const.BadRequest):
-            return HttpResponseBadRequest(self.instance.message)
+            return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
             self._attach_shared_props(xform)
@@ -384,9 +384,9 @@ class SubmissionPost(object):
 
         try:
             lock_manager = process_xform(self.instance,
-                                                 attachments=self.attachments,
-                                                 process=process,
-                                                 domain=self.domain)
+                                         attachments=self.attachments,
+                                         process=process,
+                                         domain=self.domain)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
@@ -394,15 +394,17 @@ class SubmissionPost(object):
                     unicode(e),
                 )
             )
-            return self.get_exception_response(e.error_log)
+            return self.get_exception_response(e.error_log), None, []
         else:
-
             from casexml.apps.case import process_cases_with_casedb
             from casexml.apps.case.models import CommCareCase
             from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
             from casexml.apps.case.signals import case_post_save
             from corehq.apps.commtrack.processing import process_stock
 
+            cases = []
+            responses = []
+            errors = []
             with lock_manager as instance:
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
@@ -420,7 +422,19 @@ class SubmissionPost(object):
                         # done in CommCareCase.save()
                         now = datetime.datetime.utcnow()
                         for case in cases:
+                            case.initial_processing_complete = True
                             case.server_modified_on = now
+                            try:
+                                rev = CommCareCase.get_db().get_rev(case.case_id)
+                            except ResourceNotFound:
+                                pass
+                            else:
+                                assert rev == case.get_rev, (
+                                    "Aborting because there would have been "
+                                    "a document update conflict. {} {} {}".format(
+                                        case.get_id, case.get_rev, rev
+                                    )
+                                )
                         try:
                             XFormInstance.get_db().bulk_save(
                                 docs,
@@ -445,7 +459,11 @@ class SubmissionPost(object):
 
             # this is a magic thing that we add
             response['X-CommCareHQ-FormID'] = instance.get_id
-            return response
+            return response, instance, cases
+
+    def get_response(self):
+        response, _, _ = self.run()
+        return response
 
     @staticmethod
     def process_signals(instance):

@@ -30,6 +30,7 @@ def process_cases(xform, config=None):
     reconciling the case update history after the case is processed.
     """
 
+    assert getattr(settings, 'UNIT_TESTING', False)
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
@@ -74,14 +75,15 @@ def process_cases_with_casedb(xform, case_db, config=None):
 
     # handle updating the sync records for apps that use sync mode
 
-    last_sync_token = getattr(xform, 'last_sync_token', None)
+    last_sync_token = xform.last_sync_token
     if last_sync_token:
         relevant_log = SyncLog.get(last_sync_token)
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases,
-                                    case_id_blacklist=config.case_id_blacklist)
+                                    case_id_blacklist=config.case_id_blacklist,
+                                    case_db=case_db)
 
         if config.reconcile:
             relevant_log.reconcile_cases()
