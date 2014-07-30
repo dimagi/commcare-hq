@@ -97,7 +97,7 @@
         <fieldset>
             <legend><span>{% trans "Report Filters" %}</span></legend>
             <input type="hidden" name="format" value="json"/>
-            {% for slug, filter in report.filters %}
+            {% for filter in report.filters %}
                 {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
             {% endfor %}
         </fieldset>
