@@ -65,7 +65,7 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day"):
+def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
                         for d in domains])
@@ -81,6 +81,18 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
             },
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
+        if user_type_mobile is not None:
+            from corehq.apps.users.models import WebUser, CommCareUser
+            q["filter"]["and"].extend(
+                {
+                    "terms": {
+                        "form.meta.userID":
+                            [mobile_user._id for mobile_user in CommCareUser.all() if mobile_user.doc_type == "CommCareUser"]
+                            if user_type_mobile else
+                            [web_user._id for web_user in WebUser.all() if web_user.doc_type == "WebUser"]
+                    }
+                }
+            )
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 

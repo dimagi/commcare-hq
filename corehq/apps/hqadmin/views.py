@@ -922,9 +922,9 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
-    params.update(params_es)
 
     if histo_type == "domains":
+        params.update(params_es)
         return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
 
     if params:
@@ -943,7 +943,8 @@ def stats_data(request):
     else:
         domain_info = [{"names": None, "display_name": _("All Domains")}]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
+    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval,
+                                user_type_mobile=params_es.get("user_type_mobile"))
     return json_response(stats_data)
 
 

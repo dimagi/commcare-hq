@@ -51,13 +51,28 @@ INDICATOR_DATA = {
     "forms": {
         "chart_name": "forms",
         "chart_title": "All Forms",
-        # "date_field_opts": [
-        #     {
-        #         # TODO
-        #     }
-        # ],
         "histogram_type": "forms",
         "interval": "week",
+        "xaxis_label": "# forms",
+    },
+    "forms_mobile": {
+        "chart_name": "forms_mobile",
+        "chart_title": "Forms Submitted by Mobile Workers",
+        "histogram_type": "forms",
+        "interval": "week",
+        "params_es": json.dumps({
+            "user_type_mobile": True,
+        }),
+        "xaxis_label": "# forms",
+    },
+    "forms_web": {
+        "chart_name": "forms_mobile",
+        "chart_title": "Forms Submitted by Web Users",
+        "histogram_type": "forms",
+        "interval": "week",
+        "params_es": json.dumps({
+            "user_type_mobile": False,
+        }),
         "xaxis_label": "# forms",
     },
 }
@@ -356,4 +371,6 @@ class FormSubmissionsReport(GlobalAdminReports):
     name = _('Form Submissions')
     indicators = [
         'forms',
+        'forms_mobile',
+        'forms_web',
     ]
