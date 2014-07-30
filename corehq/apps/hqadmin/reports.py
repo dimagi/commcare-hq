@@ -48,6 +48,18 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "forms": {
+        "chart_name": "forms",
+        "chart_title": "All Forms",
+        # "date_field_opts": [
+        #     {
+        #         # TODO
+        #     }
+        # ],
+        "histogram_type": "forms",
+        "interval": "week",
+        "xaxis_label": "# forms",
+    },
 }
 
 
@@ -343,4 +355,5 @@ class FormSubmissionsReport(GlobalAdminReports):
     slug = 'form_submissions'
     name = _('Form Submissions')
     indicators = [
+        'forms',
     ]
