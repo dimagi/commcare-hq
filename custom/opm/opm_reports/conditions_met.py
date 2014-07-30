@@ -1,8 +1,8 @@
 import datetime
-from dimagi.utils.dates import months_between
-from django.utils.translation import ugettext_lazy as _
-from corehq.apps.users.models import CommCareCase
-from custom.opm.opm_reports.constants import InvalidRow
+from corehq.apps.users.models import CommCareCase, CommCareUser
+from custom.opm.opm_reports.constants import DOMAIN, InvalidRow
+from django.utils.translation import ugettext as _
+from corehq.util.translation import localize
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
@@ -80,7 +80,10 @@ class ConditionsMet(object):
                 # case.awc_name, case.block_name
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
-        img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        if not report.is_rendered_as_email:
+            img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        else:
+            img_elem = '<div><img src="/static/opm/img/%s"></div>'
         def condition_image(image_y, image_n, condition):
             if condition is None:
                 return ''
@@ -149,6 +152,15 @@ class ConditionsMet(object):
         self.name = case_property('name', EMPTY_FIELD)
         self.awc_name = case_property('awc_name', EMPTY_FIELD)
         self.husband_name = case_property('husband_name', EMPTY_FIELD)
+
+        user = None
+        user_id = case_property('user_id', None)
+        if user_id:
+            user = CommCareUser.get_by_user_id(user_id, DOMAIN)
+
+        self.gp = None
+        if user:
+            self.gp = user.user_data.get('gp', None)
 
         reporting_month = report.month
         reporting_year = report.year
@@ -309,3 +321,7 @@ class ConditionsMet(object):
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
+
+        if report.is_rendered_as_email:
+            with localize('hin'):
+                self.status = _(self.status)

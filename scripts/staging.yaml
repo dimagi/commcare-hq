@@ -3,16 +3,17 @@ name: autostaging
 branches:
   - subtree-merge-forms-cases
 #  - add-build-ui
-  - time-ago-deployed
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
 #  - vellum-requirejs+use-django-compressor
 #  - use-django-compressor # bb 7/1
   - logos # Nick P 5/28
-  - 109909-case-performance  # ethan/cory 5/30
   - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
   - schedule # SK 7/17
+#  - emwf-refactor  # Ethan 7/25
+  - real-project-spaces # Nick P 7/27
+  - closecase  # SK 7/28
 submodules:
   submodules/couchlog-src:
     branches:
@@ -33,3 +34,6 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  submodules/pillowtop-src:
+    branches:
+      - reset # SK 7/28
