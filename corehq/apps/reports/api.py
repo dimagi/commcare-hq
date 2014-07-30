@@ -20,11 +20,11 @@ class ReportDataSource(object):
         """
         self.config = config or {}
         if hasattr(self, 'filters'):
-            for name, filter in self.filters:
-                if check_conflicts and hasattr(self, name):
-                    raise Exception("Conflicting property name: {}".format(name))
+            for filter in self.filters:
+                if check_conflicts and hasattr(self, filter.name):
+                    raise Exception("Conflicting property name: {}".format(filter.name))
 
-                setattr(self, name, self.config.get(name, None))
+                setattr(self, filter.name, self.config.get(filter.name, None))
 
         return config
 

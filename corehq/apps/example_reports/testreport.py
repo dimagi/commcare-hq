@@ -21,8 +21,7 @@ class TestReportData(ReportDataSource):
     title = "Test Report"
     slug = "test_report"
     filters = [
-        # (slug, class)
-        ('datespan', DatespanFilter(required=False)),
+        DatespanFilter(name='datespan', required=False),
     ]
 
     def columns(self):
@@ -80,8 +79,8 @@ class TestReport(JSONResponseMixin, TemplateView):
     def get_context_data(self, **kwargs):
         # get filter context namespaced by slug
         filter_context = {}
-        for name, filter in self.data_model.filters:
-            filter_context[filter.css_id] = filter.context(self.filter_params[name])
+        for filter in self.data_model.filters:
+            filter_context[filter.name] = filter.context(self.filter_params[filter.css_id])
         return {
             'project': self.domain,
             'report': self.data_model,
@@ -113,8 +112,10 @@ class TestReport(JSONResponseMixin, TemplateView):
     @memoized
     def filter_params(self):
         request_dict = self.request_dict
-        return {name: filter.get_value(request_dict)
-                for name, filter in self.data_model.filters}
+        return {
+            filter.name: filter.get_value(request_dict)
+            for filter in self.data_model.filters
+        }
 
     def get_ajax(self, request, domain=None, **kwargs):
         try:

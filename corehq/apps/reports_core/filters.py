@@ -24,17 +24,14 @@ class BaseFilter(object):
     """
     Base object for filters. These objects deal with data only are not concerned with being
     rendered on a view.
-
-    :params: A list of FilterParams which are used by this filter.
     """
-    params = []
 
-    def __init__(self, required=False):
+    def __init__(self, name, required=False, params=None):
+        self.name = name
         self.required = required
+        self.params = params or []
 
     def get_value(self, context):
-        from pprint import pprint
-        pprint(context)
         context_ok = self.check_context(context)
         if self.required and not context_ok:
             required_slugs = ', '.join([slug.name for slug in self.params if slug.required])
@@ -82,14 +79,20 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
-    label = "Datespan Filter"
-    template = "reports_core/filter_new.html"
-    css_id = 'datespan'
-    params = [
-        FilterParam('startdate', True),
-        FilterParam('enddate', True),
-        FilterParam('date_range_inclusive', False),
-    ]
+
+    def __init__(self, name, required=True, label='Datespan Filter', template='reports_core/filter_new.html',
+                 css_id=None):
+        # todo: should these be in the constructor as well?
+        params = [
+            FilterParam('startdate', True),
+            FilterParam('enddate', True),
+            FilterParam('date_range_inclusive', False),
+        ]
+        super(DatespanFilter, self).__init__(required=required, name=name, params=params)
+        self.label = label
+        self.template = template
+        self.css_id = css_id or self.name
+
 
     @memoized
     def value(self, startdate, enddate, date_range_inclusive=True):
