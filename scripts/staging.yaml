@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - auto-gps
   - subtree-merge-forms-cases
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
