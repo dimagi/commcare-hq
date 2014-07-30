@@ -98,7 +98,8 @@ class FacilityDataFormat(TableDataFormat):
         self.users = users
         self.facility_user_map = defaultdict(lambda: [])
         for u in users:
-            self.facility_user_map[u.user_data.get('health_facility') or NO_VALUE].append(u)
+            if u.user_data.get('health_facility'):
+                self.facility_user_map[u.user_data.get('health_facility')].append(u)
 
     def get_headers(self):
         return sorted(self.facility_user_map.keys())
@@ -356,7 +357,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     SECTIONS = None  # override
-    format_class = None # override
+    format_class = None  # override
     extra_context_providers = [section_context]
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
