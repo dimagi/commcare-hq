@@ -7,7 +7,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
         CustomProjectReportDispatcher, BasicReportDispatcher)
 
 # from .filters.urls import urlpatterns as filter_urls
-from .testreport import TestReport
+from corehq.apps.example_reports.testreport import TestReport
 from .filters import urls as filter_urls
 
 
