@@ -19,7 +19,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         ops_role = Role.objects.get_or_create(
             name="Dimagi Operations Team",
-            slug='dimagi_ops',
+            slug=privileges.OPERATIONS_TEAM,
         )[0]
         accounting_admin = Role.objects.get_or_create(
             name="Accounting Admin",
@@ -35,23 +35,13 @@ class Command(BaseCommand):
         for arg in args:
             try:
                 user = User.objects.get(username=arg)
-                user_privs = Role.objects.get_or_create(
-                    name="Privileges for %s" % user.username,
-                    slug="%s_privileges" % user.username,
-                )[0]
                 try:
                     user_role = UserRole.objects.get(user=user)
-                    if user_role.role.id != user_privs.id:
-                        confirm = raw_input(
-                            "Are you sure you want to update role for %s? "
-                            "Type 'yes' to continue.\n" % user.username
-                        )
-                        if confirm != 'yes':
-                            continue
-                    user_role.role = user_privs
-                    user_role.save()
-                    print ("Updated user role for %s" % user.username)
                 except UserRole.DoesNotExist:
+                    user_privs = Role.objects.get_or_create(
+                        name="Privileges for %s" % user.username,
+                        slug="%s_privileges" % user.username,
+                    )[0]
                     UserRole.objects.create(
                         user=user,
                         role=user_privs,
@@ -61,7 +51,7 @@ class Command(BaseCommand):
                     try:
                         # remove grant object
                         grant = Grant.objects.get(
-                            from_role=user_privs,
+                            from_role=user_role.role,
                             to_role=ops_role
                         )
                         grant.delete()
