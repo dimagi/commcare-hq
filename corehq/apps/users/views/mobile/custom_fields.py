@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -21,6 +23,7 @@ class UserFieldsForm(forms.Form):
         # self.helper.form_class = 'form-horizontal'
         self.helper.form_method = 'post'
         # self.helper.template = 'bootstrap/table_inline_formset.html'
+        # crispy_forms/templates/bootstrap/table_inline_formset.html
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 UserFieldsView.page_name,
@@ -69,17 +72,26 @@ class UserFieldsView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(UserFieldsView, self).dispatch(request, *args, **kwargs)
 
+    def get_custom_fields(self):
+        # TODO load me from db
+        return [
+            {"slug": "dob", "label": "DOB", "isRequired": True},
+            {"slug": "gender", "label": "Gender", "isRequired": False},
+        ]
+
+    def save_custom_fields(self, fields):
+        # TODO actually save me
+        print json.loads(fields)
+
     @property
     def page_context(self):
         return {
             # "user_fields_form": self.form_class(),
-            "custom_fields": [
-                {"label": "dob", "isRequired": True},
-                {"label": "gender", "isRequired": False},
-            ]
+            "custom_fields": self.get_custom_fields(),
         }
 
     def post(self, request, *args, **kwargs):
+        self.save_custom_fields(self.request.POST.get('customFields', u'[]'))
         return self.get(request, success=True, *args, **kwargs)
 
     # def post(self, request, *args, **kwargs):

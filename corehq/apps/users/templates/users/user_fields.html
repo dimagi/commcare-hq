@@ -4,13 +4,15 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+{{ block.super }}
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script type="text/javascript" src="{% static 'users/js/custom_fields.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
+{% block js-inline %}
+{{ block.super }}
     <script>
         var customFieldsModel = new CustomFieldsModel();
         ko.applyBindings(customFieldsModel, $('#user-fields-form').get(0));
@@ -20,12 +22,14 @@
 
 {% block main_column %}
     {# {% crispy user_fields_form %} #}
-    <form id="user-fields-form" action="." method="POST">{% csrf_token %}
+    <form id="user-fields-form" action="." method="POST" data-bind="submit: submitFields">
+        {% csrf_token %}
         <table class="table table-striped">
-            <caption><h3>Edit User Fields</h3></caption>
+            <caption><h3>{{ view.page_name }}</h3></caption>
             <thead>
                 <tr>
                     <th></th>
+                    <th>{% trans "Key" %}</th>
                     <th>{% trans "Field Label" %}</th>
                     <th>{% trans "Required" %}</th>
                     <th>{% trans "Delete" %}</th>
@@ -35,6 +39,9 @@
                 <tr>
                     <td class="sortable-handle">
                         <i class="icon-resize-vertical"></i>
+                    </td>
+                    <td>
+                        <input type="text" data-bind="value: slug"/>
                     </td>
                     <td>
                         <input type="text" data-bind="value: label"/>

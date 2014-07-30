@@ -1,5 +1,6 @@
 function CustomField (field) {
     var self = this;
+    self.slug = ko.observable(field.slug);
     self.label = ko.observable(field.label);
     self.isRequired = ko.observable(field.isRequired);
 }
@@ -19,33 +20,35 @@ function CustomFieldsModel () {
 
     self.init = function (initialFields) {
         _.each(initialFields, function (field) {
-            console.log(field.label);
-            console.log(field.isRequired);
             self.customFields.push(new CustomField(field));
         });
     }
+
+    self.serialize = function () {
+        var fields = [];
+        _.each(self.customFields(), function (field) {
+            fields.push({
+                'slug': field.slug(),
+                'label': field.label(),
+                'isRequired': field.isRequired(),
+            });
+        });
+        return fields;
+    }
+
+    self.submitFields = function (fieldsForm) {
+        var customFieldsForm = $("<form>")
+            .attr("method", "post")
+            .attr("action", fieldsForm.action);
+        $('<input type="hidden">')
+            .attr('name', 'customFields')
+            .attr('value', JSON.stringify(self.serialize()))
+            .appendTo(customFieldsForm);
+        customFieldsForm.appendTo("body");
+        customFieldsForm.submit();
+    }
+
 }
 
 
-function submitCustomFields (url, params) {
-    var $form = $("<form>")
-        .attr("method", "post")
-        .attr("action", url);
-    $.each(params, function (name, value) {
-        $("<input type='hidden'>")
-            .attr("name", name)
-            .attr("value", value)
-            .appendTo($form);
-    });
-    $form.appendTo("body");
-    $form.submit();
-}
 
-
-$('#submit-menu-form').click(function(e) {
-    e.preventDefault();
-    var response = postGo(
-        $('#menu-form')[0].action,
-        {'doc': JSON.stringify(outputJSON(buildsMenu))}
-    );
-});
