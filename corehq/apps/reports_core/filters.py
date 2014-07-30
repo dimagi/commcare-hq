@@ -83,7 +83,7 @@ class BaseFilter(object):
 
 class DatespanFilter(BaseFilter):
     label = "Datespan Filter"
-    template = "reports/filter_new.html"
+    template = "reports_core/filter_new.html"
     css_id = 'datespan'
     params = [
         FilterParam('startdate', True),

@@ -61,7 +61,7 @@ class TestReportData(ReportDataSource):
 
 
 class TestReport(JSONResponseMixin, TemplateView):
-    template_name = 'reports/base_template_new.html'
+    template_name = 'reports_core/base_template_new.html'
     data_model = TestReportData
 
     def dispatch(self, request, domain=None, **kwargs):
