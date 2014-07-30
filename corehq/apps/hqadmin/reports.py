@@ -337,3 +337,10 @@ class RealProjectSpacesPlansReport(GlobalAdminReports):
                 ).count(),
             ]
         ]
+
+
+class FormSubmissionsReport(GlobalAdminReports):
+    slug = 'form_submissions'
+    name = _('Form Submissions')
+    indicators = [
+    ]

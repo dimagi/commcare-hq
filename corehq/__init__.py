@@ -2,6 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminAppReport,
     AdminUserReport,
+    FormSubmissionsReport,
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
 )
@@ -268,6 +269,7 @@ ADMIN_REPORTS = (
         PillowErrorsReport,
         RealProjectSpacesReport,
         RealProjectSpacesPlansReport,
+        FormSubmissionsReport,
     )),
 )
 
