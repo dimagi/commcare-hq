@@ -8,6 +8,10 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.hqadmin.reports import (
+    RealProjectSpacesReport,
+    RealProjectSpacesPlansReport,
+)
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -1210,15 +1214,13 @@ class AdminReportsTab(UITab):
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [
                 {
-                    'title': _('Real Project Spaces'),
+                    'title': report.name,
                     'url': reverse('admin_report_dispatcher',
-                                   args=('real_project_spaces',)),
-                },
-                {
-                    'title': _('Real Project Spaces - Plans'),
-                    'url': reverse('admin_report_dispatcher',
-                                   args=('real_project_spaces_plans',)),
-                },
+                                   args=(report.slug,)),
+                } for report in [
+                    RealProjectSpacesReport,
+                    RealProjectSpacesPlansReport,
+                ]
             ]),
         ]
 
