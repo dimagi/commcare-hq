@@ -1,7 +1,9 @@
 trunk: master
 name: autostaging
 branches:
+  - auto-gps+schedule
   - auto-gps
+  - schedule # SK 7/17
   - app-buttons # Emord 7/30
   - subtree-merge-forms-cases
 #  - add-build-ui
@@ -11,7 +13,6 @@ branches:
 #  - use-django-compressor # bb 7/1
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
-  - schedule # SK 7/17
 #  - emwf-refactor  # Ethan 7/25
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
