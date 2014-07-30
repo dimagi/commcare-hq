@@ -80,11 +80,11 @@ def rebuild_table(engine, pillow_class, indicator_doc):
     logger.warn('Rebuilding table and resetting checkpoint for %s', pillow_class)
     table = indicator_doc._table
     with engine.begin() as connection:
-            table.drop(connection, checkfirst=True)
-            table.create(connection)
-            owner = getattr(settings, 'SQL_REPORTING_OBJECT_OWNER', None)
-            if owner:
-                connection.execute('ALTER TABLE "%s" OWNER TO %s' % (table.name, owner))
+        table.drop(connection, checkfirst=True)
+        table.create(connection)
+        owner = getattr(settings, 'SQL_REPORTING_OBJECT_OWNER', None)
+        if owner:
+            connection.execute('ALTER TABLE "%s" OWNER TO %s' % (table.name, owner))
     if pillow_class:
         pillow_class().reset_checkpoint()
 
