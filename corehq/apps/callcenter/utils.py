@@ -39,6 +39,7 @@ def sync_user_cases(commcare_user):
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
     owner_id = domain.call_center_config.case_owner_id
+    caseblock = None
     if found:
         props = dict(case.dynamic_case_properties())
 
