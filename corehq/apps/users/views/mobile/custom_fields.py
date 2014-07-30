@@ -62,7 +62,7 @@ class UserFieldsForm(forms.Form):
 class UserFieldsView(BaseUserSettingsView):
     urlname = "user_fields_view"
     template_name = "users/user_fields.html"
-    form_class = UserFieldsForm
+    # form_class = UserFieldsForm
     page_name = ugettext_noop("Edit User Fields")
 
     @method_decorator(require_can_edit_commcare_users)
@@ -72,14 +72,21 @@ class UserFieldsView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            "user_fields_form": self.form_class(),
+            # "user_fields_form": self.form_class(),
+            "custom_fields": [
+                {"label": "dob", "isRequired": True},
+                {"label": "gender", "isRequired": False},
+            ]
         }
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(data=self.request.POST)
-        if form.is_valid():
-            print "valid form!!"
-        else:
-            print "invalid form :("
-        messages.success(self.request, _('Fields added successfully'))
-        return self.get(request, *args, **kwargs)
+        return self.get(request, success=True, *args, **kwargs)
+
+    # def post(self, request, *args, **kwargs):
+        # form = self.form_class(data=self.request.POST)
+        # if form.is_valid():
+            # print "valid form!!"
+        # else:
+            # print "invalid form :("
+        # messages.success(self.request, _('Fields added successfully'))
+        # return self.get(request, *args, **kwargs)

@@ -14,13 +14,44 @@
     <script>
         var customFieldsModel = new CustomFieldsModel();
         ko.applyBindings(customFieldsModel, $('#user-fields-form').get(0));
-        customFieldsModel.init([
-            {"name": "age", "isRequired": true},
-            {"name": "DOB", "isRequired": false},
-        ]);
+        customFieldsModel.init({{ custom_fields|JSON }});
     </script>
 {% endblock %}
 
 {% block main_column %}
-    {% crispy user_fields_form %}
+    {# {% crispy user_fields_form %} #}
+    <form id="user-fields-form" action="." method="POST">{% csrf_token %}
+        <table class="table table-striped">
+            <caption><h3>Edit User Fields</h3></caption>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>{% trans "Field Label" %}</th>
+                    <th>{% trans "Required" %}</th>
+                    <th>{% trans "Delete" %}</th>
+                </tr>
+            </thead>
+            <tbody data-bind="sortable: customFields">
+                <tr>
+                    <td class="sortable-handle">
+                        <i class="icon-resize-vertical"></i>
+                    </td>
+                    <td>
+                        <input type="text" data-bind="value: label"/>
+                    </td>
+                    <td>
+                        <input type="checkbox" data-bind="checked: isRequired"/>
+                    </td>
+                    <td>
+                        <button type="button" class="close" data-bind="click: $root.removeField">&times;</button>
+                    </td>
+                </tr>
+            </tbody>
+            <tr><td></td><td></td><td></td><td>
+                <button class="pull-right" data-bind="click: addField">Add a Field</button>
+            </td></tr>
+        </table>
+
+        <p><input id="save-user-fields" class="pull-right btn btn-primary" type="submit" value="Save Fields"></p>
+    </form>
 {% endblock %}
