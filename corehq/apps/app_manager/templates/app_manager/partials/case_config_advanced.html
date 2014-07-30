@@ -20,7 +20,7 @@
     <!--ko if: actionType == 'open'-->
     <div data-bind="template: {
         name: 'case-config:condition',
-        data: {condition: open_condition, case_transaction: $data},
+        data: {condition: open_condition, config: $data},
     }"></div>
     <!-- /ko -->
     <div data-bind="if: actionType == 'load'" class="row-fluid">
@@ -105,7 +105,7 @@
                 </label>
                 <div data-bind="template: {
                     name: 'case-config:condition',
-                    data: {condition: close_condition, case_transaction: $data},
+                    data: {condition: close_condition, config: $data},
                     if: close_case
                 }"></div>
             </div>

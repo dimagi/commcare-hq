@@ -23,18 +23,24 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
+    def select_raw(self, expression):
+        return XPath(u"{self}[{expression}]".format(self=self, expression=expression))
+
     def select(self, ref, value, quote=None):
         if quote is None:
             quote = not isinstance(value, XPath)
         if quote:
             value = XPath.string(value)
-        return XPath("{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
+        return XPath(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def count(self):
-        return XPath('count({self})'.format(self=self))
+        return XPath(u'count({self})'.format(self=self))
 
-    def equals(self, b):
+    def eq(self, b):
         return XPath(u'{} = {}'.format(self, b))
+
+    def neq(self, b):
+        return XPath(u'{} != {}'.format(self, b))
 
     def not_equals(self, b):
         return XPath(u'{} != {}'.format(self, b))
@@ -47,6 +53,30 @@ class XPath(unicode):
     def string(a):
         # todo: escape text
         return XPath(u"'{}'".format(a))
+
+    @staticmethod
+    def and_(*args):
+        return XPath(u' and '.join(args))
+
+    @staticmethod
+    def or_(*args):
+        return XPath(u' or '.join(args))
+
+    @staticmethod
+    def not_(a):
+        return XPath(u"not ({})".format(a))
+
+    @staticmethod
+    def date(a):
+        return XPath(u'date({})'.format(a))
+
+    @staticmethod
+    def int(a):
+        return XPath(u'int({})'.format(a))
+
+    @staticmethod
+    def group(a):
+        return XPath(u'({})'.format(a))
 
 
 class CaseSelectionXPath(XPath):
@@ -224,3 +254,12 @@ class IndicatorXpath(InstanceXpath):
 class CommCareSession(object):
     username = SessionInstanceXpath().instance().slash(u"username")
     userid = SessionInstanceXpath().instance().slash(u"userid")
+
+
+class ScheduleFixtureInstance(XPath):
+
+    def visit(self):
+        return XPath(u"instance('{0}')/schedule/visit".format(self))
+
+    def expires(self):
+        return XPath(u"instance('{0}')/schedule/@expires".format(self))

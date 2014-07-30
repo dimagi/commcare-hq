@@ -1,0 +1,95 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+<div class="tab-pane" id="visit-scheduler">
+    <form class="form-horizontal">
+        <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
+        <!--ko with: formSchedule -->
+        <fieldset>
+            <legend>{% trans "Transitions" %}</legend>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: transition, enable: $root.edit">
+                        {% trans "Transition to the next form" %}
+                    </label>
+                    <div data-bind="template: {
+                    name: 'case-config:condition',
+                    data: {condition: transition_condition, config: $data},
+                    }"></div>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox"  data-bind="checked: terminate, enable: $root.edit">
+                        {% trans "Terminate the schedule" %}
+                    </label>
+                    <div data-bind="template: {
+                    name: 'case-config:condition',
+                    data: {condition: termination_condition, config: $data},
+                    }"></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Visit Schedule" %}</legend>
+            <div class="control-group">
+                <label class="control-label" for="anchor">{% trans "Anchor Date" %}</label>
+                <div class="controls">
+                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: anchor, enable: $root.edit">
+                    <span data-bind="visible: allowExpiry">
+                    <label class="checkbox inline" for="expires">{% trans "Expires" %}</label>
+                    <input type="checkbox" data-bind="checked: hasExpiry, enable: $root.edit"/>
+                    <input type="text" class="input-mini" data-bind="numericValue: expires, enable: hasExpiry() && $root.edit"/>
+                    </span>
+                </div>
+            </div>
+            <div data-bind="foreach: visits">
+                <div class="control-group">
+                    <label class="control-label">
+                        <a href="#" data-bind="
+                            click: $parent.removeVisit,
+                            visible: $root.edit">
+                            <i class="icon-remove"></i>
+                        </a>
+                        {% trans "Visit" %} <span data-bind="text: $index() + 1"/>:
+                    </label>
+                    <div class="controls">
+                        <input type="text" class="input-mini" data-bind="numericValue: due, enable: $root.edit"/>
+                        {% trans "days" %}
+                        <select data-bind="value: type, enable: $root.edit">
+                            <option value="before">{% trans "Before the anchor date" %}</option>
+                            <option value="after">{% trans "After the anchor date" %}</option>
+                        </select>
+                        {% trans "and up to" %}
+                        <input type="text" class="input-mini" data-bind="numericValue: late_window, enable: $root.edit"/>
+                        {% trans "days late" %}
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <button class="btn" data-bind="click: addVisit, visible: $root.edit">
+                        <i class="icon-plus"></i>
+                        {% trans "Add Fixed Visit" %}
+                    </button>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox"  data-bind="checked: hasPostSchedule, enable: $root.edit">
+                        {% trans "Schedule recurring visit after the last fixed visit" %}
+                    </label>
+                    <div data-bind="visible: hasPostSchedule">
+                        <input type="text" class="input-mini" data-bind="numericValue: post_schedule_increment, enable: $root.edit"/>
+                        {% trans "days after previous visit" %}
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <!--/ko-->
+    </form>
+</div>

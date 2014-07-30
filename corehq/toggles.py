@@ -115,3 +115,9 @@ AUTO_GPS_CAPTURE = StaticToggle(
     'Auto GPS Capture',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+VISIT_SCHEDULER = StaticToggle(
+    'app_builder_visit_scheduler',
+    'Visit Scheduler',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

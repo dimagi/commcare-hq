@@ -127,3 +127,21 @@ ko.extenders.withPrevious = function (target) {
     // Return modified observable
     return target;
 };
+
+ko.bindingHandlers.numericValue = {
+    init : function(element, valueAccessor, allBindingsAccessor) {
+        var underlyingObservable = valueAccessor();
+        var interceptor = ko.dependentObservable({
+            read: underlyingObservable,
+            write: function(value) {
+                if ($.isNumeric(value)) {
+                    underlyingObservable(parseFloat(value));
+                } else if (value === '') {
+                    underlyingObservable(null);
+                }
+            }
+        });
+        ko.bindingHandlers.value.init(element, function() { return interceptor }, allBindingsAccessor);
+    },
+    update : ko.bindingHandlers.value.update
+};

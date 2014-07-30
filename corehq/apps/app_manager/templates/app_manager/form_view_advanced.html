@@ -3,6 +3,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js_extra %}
+    <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
+    <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
+{% endblock %}
+
 {% block case_management_js %}{{ block.super }}
     {% if form.source %}
     var edit = {% if edit %}true{% else %}false{% endif %};
@@ -23,4 +28,20 @@
     });
     caseConfig.init();
     {% endif %}
+
+    {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
+    var visitScheduler = new VisitScheduler.Scheduler({
+        home: $('#visit-scheduler'),
+        questions: {{ xform_questions|JSON }},
+        edit: edit,
+        save_url: "{% url "corehq.apps.app_manager.views.edit_visit_schedule" app.domain app.id module.id nav_form.id %}",
+        schedule: {{ form.schedule|JSON }}
+    });
+    visitScheduler.init();
+    {% endif %}
 {% endblock %}
+
+{% block case_management_content %}
+    {% include 'app_manager/partials/case_config_advanced.html' %}
+{% endblock %}
+

@@ -92,6 +92,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AdvancedModule,
+    AppEditingError,
     Application,
     ApplicationBase,
     CareplanForm,
@@ -102,7 +103,11 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Form,
     FormActions,
+    FormNotFoundException,
+    FormSchedule,
+    IncompatibleFormTypeException,
     Module,
+    ModuleNotFoundException,
     ParentSelect,
     SavedAppBuild,
     get_app,
@@ -806,7 +811,7 @@ def get_module_view_context_and_template(app, module):
 
             return details
 
-        return "app_manager/module_view.html", {
+        return "app_manager/module_view_advanced.html", {
             'details': get_details(),
         }
     else:
@@ -1225,7 +1230,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None,
+        'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "parent_module": None,
@@ -1291,6 +1296,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if should_edit(SLUG):
             module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
             module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
+
+    module.has_schedule = should_edit('has_schedule')
 
     _handle_media_edits(req, module, should_edit, resp)
 
@@ -1503,6 +1510,18 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_visit_schedule(request, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(request.POST.get('schedule'))
+    form.schedule = FormSchedule.wrap(json_loads)
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 
 @no_conflict_require_POST

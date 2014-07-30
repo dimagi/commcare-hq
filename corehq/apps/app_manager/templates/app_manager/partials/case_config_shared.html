@@ -10,7 +10,7 @@
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "Only if the answer to" %}
         <input class="input-large" type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select select1', false, $parent.case_transaction.allow.repeats()),
+            questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
             value: question,
             optionsCaption: ' ',
             edit: $root.edit"

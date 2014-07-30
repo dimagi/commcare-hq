@@ -406,7 +406,7 @@ class PropertyXpathGenerator(BaseXpathGenerator):
             group.count().not_equals(0),
             group.slash('name'),
             XPath.if_(
-                CommCareSession.userid.equals(owner_id),
+                CommCareSession.userid.eq(owner_id),
                 CommCareSession.username,
                 XPath.string('')
             )
@@ -445,3 +445,11 @@ class LedgerXpathGenerator(BaseXpathGenerator):
             LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id').count(),
             LedgerdbXpath(session_case_id).ledger().section(section).entry(u'current()/@id')
         )
+
+
+@register_type_processor(sx.FIELD_TYPE_SCHEDULE)
+class ScheduleXpathGenerator(BaseXpathGenerator):
+
+    @property
+    def xpath(self):
+        return self.column.field_property
