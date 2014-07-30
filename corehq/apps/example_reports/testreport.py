@@ -11,7 +11,7 @@ from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports_core.api import ReportDataSource
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports_core.filters import DatespanFilter
 
 
