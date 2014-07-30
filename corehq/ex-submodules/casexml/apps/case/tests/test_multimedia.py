@@ -12,7 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, XFormDeprecated
 from couchforms.util import post_xform_to_couch
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
@@ -113,8 +113,7 @@ class BaseCaseMultimediaTest(TestCase):
         raw_xform = self._getXFormString('multimedia_update.xml')
         doc_id = uuid.uuid4().hex
         final_xform = self._formatXForm(doc_id, raw_xform, attachment_block)
-        form = self._submit_and_verify(doc_id, final_xform, dict_attachments)
-
+        self._submit_and_verify(doc_id, final_xform, dict_attachments)
 
 
 class CaseMultimediaTest(BaseCaseMultimediaTest):
@@ -122,6 +121,15 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     Tests new attachments for cases and case properties
     Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
     """
+    def tearDown(self):
+        deprecated_xforms = XFormDeprecated.view(
+            'couchforms/edits',
+            include_docs=True,
+        ).all()
+        for form in deprecated_xforms:
+            form.delete()
+            pass
+
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
