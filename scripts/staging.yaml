@@ -14,7 +14,8 @@ branches:
 #  - emwf-refactor  # Ethan 7/25
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
-  - basic-auth  # cz 7/30
+  - basic-auth
+  - archive-to-deactivate  # cz 7/30
 submodules:
   submodules/couchlog-src:
     branches:
