@@ -12,7 +12,7 @@ from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports_core.filters import DatespanFilter
+from corehq.apps.reports_core.filters import DatespanFilter, FilterException
 
 
 Column = namedtuple("Column", ["slug", "display_name", "sortable"])
