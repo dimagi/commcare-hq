@@ -5,8 +5,8 @@ from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CouchUser
-from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.reminders import REMINDER_STOCKONHAND
+from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusTypes
+from custom.ilsgateway.reminders import REMINDER_STOCKONHAND, update_status
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import get_business_day_of_month
 import settings
@@ -19,6 +19,8 @@ def send_soh_reminder(domain, date):
             if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,
                                                           type='stockonhand').exists():
                 couch_user = CouchUser.wrap(user.to_json())
+                update_status(sp._id, SupplyPointStatusTypes.SOH_FACILITY,
+                    SupplyPointStatusValues.REMINDER_SENT)
                 send_sms(domain, user, couch_user.default_phone_number, REMINDER_STOCKONHAND)
 
 
@@ -32,9 +34,9 @@ def get_last_and_nth_business_day(date, n):
 def send_for_all_domains(date):
     for domain in Domain.get_all():
         #TODO Merge with ILSGateway integration?
-        ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
-        if ilsgateway_config and ilsgateway_config.enabled:
-            send_soh_reminder(domain.name, date)
+        #ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
+        #if ilsgateway_config and ilsgateway_config.enabled:
+        send_soh_reminder(domain.name, date)
 
 
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
