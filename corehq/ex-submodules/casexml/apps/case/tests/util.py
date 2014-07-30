@@ -11,7 +11,7 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases

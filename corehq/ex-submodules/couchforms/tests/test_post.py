@@ -2,7 +2,7 @@ import json
 from django.test import TestCase
 import os
 from couchforms.models import XFormInstance
-from couchforms import create_xform_from_xml
+from couchforms.tests.testutils import create_and_save_xform
 
 
 class PostTest(TestCase):
@@ -12,7 +12,7 @@ class PostTest(TestCase):
     def _test(self, name, any_id_ok=False):
         with open(os.path.join(os.path.dirname(__file__), 'data', '{name}.xml'.format(name=name))) as f:
             instance = f.read()
-        with create_xform_from_xml(instance) as doc_id:
+        with create_and_save_xform(instance) as doc_id:
             xform = XFormInstance.get(doc_id)
             try:
                 xform_json = xform.to_json()

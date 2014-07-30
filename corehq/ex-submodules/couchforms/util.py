@@ -101,15 +101,7 @@ def acquire_lock_for_xform(xform_id):
     return lock
 
 
-def create_xform_from_xml(xml_string, attachments=None, _id=None, process=None):
-    assert getattr(settings, 'UNIT_TESTING', False)
-    xform, lock = create_xform_from_xml_return_xform(
-        xml_string, attachments=attachments or {}, _id=_id, process=process)
-    xform.save()
-    return LockManager(xform.get_id, lock)
-
-
-def create_xform_from_xml_return_xform(xml_string, attachments=None, _id=None, process=None):
+def create_xform(xml_string, attachments=None, _id=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -165,24 +157,8 @@ def create_xform_from_xml_return_xform(xml_string, attachments=None, _id=None, p
     return LockManager(xform, lock)
 
 
-def post_xform_to_couch(instance, attachments=None, process=None,
-                        domain='test-domain'):
-    """
-    create a new xform and releases the lock
-
-    this is a testing entry point only and is not to be used in real code
-
-    """
-    assert getattr(settings, 'UNIT_TESTING', False)
-    xform_lock = create_and_lock_xform(instance, attachments=attachments,
-                                       process=process, domain=domain)
-    with xform_lock as xform:
-        xform.save()
-        return xform
-
-
-def create_and_lock_xform(instance, attachments=None, process=None,
-                          domain=None, _id=None):
+def process_xform(instance, attachments=None, process=None, domain=None,
+                  _id=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -195,7 +171,8 @@ def create_and_lock_xform(instance, attachments=None, process=None,
     attachments = attachments or {}
 
     try:
-        xform, lock = create_xform_from_xml_return_xform(instance, process=process, attachments=attachments, _id=_id)
+        xform, lock = create_xform(instance, process=process,
+                                   attachments=attachments, _id=_id)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, attachments, e)
         raise SubmissionError(xform)
@@ -231,7 +208,7 @@ def _handle_id_conflict(instance, attachments, process, domain):
     if existing_doc.get('domain') != domain\
             or existing_doc.get('doc_type') not in doc_types():
         # exit early
-        return create_and_lock_xform(instance, attachments=attachments,
+        return process_xform(instance, attachments=attachments,
                                      process=process, _id=uid.new())
     else:
         existing_doc = XFormInstance.wrap(existing_doc)
@@ -265,12 +242,12 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
 
         # after that delete the original document and resubmit.
         XFormInstance.get_db().delete_doc(conflict_id)
-        return create_and_lock_xform(instance, attachments=attachments,
+        return process_xform(instance, attachments=attachments,
                                      process=process)
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
-        new_form, lock = create_xform_from_xml_return_xform(instance, attachments=attachments, _id=new_doc_id, process=process)
+        new_form, lock = create_xform(instance, attachments=attachments, _id=new_doc_id, process=process)
 
         # create duplicate doc
         # get and save the duplicate to ensure the doc types are set correctly
@@ -406,7 +383,7 @@ class SubmissionPost(object):
             scrub_meta(xform)
 
         try:
-            lock_manager = create_and_lock_xform(self.instance,
+            lock_manager = process_xform(self.instance,
                                                  attachments=self.attachments,
                                                  process=process,
                                                  domain=self.domain)

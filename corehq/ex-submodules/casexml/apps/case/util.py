@@ -6,7 +6,7 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from couchforms.models import XFormInstance
-from couchforms.util import create_and_lock_xform
+from couchforms.util import process_xform
 
 
 def couchable_property(prop):
@@ -36,7 +36,7 @@ def post_case_blocks(case_blocks, form_extras=None):
     for block in case_blocks:
         form.append(block)
 
-    with create_and_lock_xform(ElementTree.tostring(form)) as xform:
+    with process_xform(ElementTree.tostring(form)) as xform:
         for k, v in form_extras.items():
             setattr(xform, k, v)
         process_cases(xform=xform)

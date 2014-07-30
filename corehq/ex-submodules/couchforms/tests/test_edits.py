@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 from couchforms.models import XFormDeprecated
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 
 
 class EditFormTest(TestCase):

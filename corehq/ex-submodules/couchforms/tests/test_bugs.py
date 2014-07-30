@@ -1,6 +1,6 @@
 import os
 from django.test import TestCase
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 import uuid
 
 class CloudantTest(TestCase):

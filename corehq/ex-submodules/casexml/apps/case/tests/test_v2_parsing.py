@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from casexml.apps.case import process_cases
 from datetime import datetime

@@ -3,7 +3,7 @@ from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,

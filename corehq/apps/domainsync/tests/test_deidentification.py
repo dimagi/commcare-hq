@@ -1,6 +1,6 @@
 from django.test import TestCase
 from couchforms.models import XFormInstance
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 import os
 import json
 from dimagi.utils.couch.database import get_db
