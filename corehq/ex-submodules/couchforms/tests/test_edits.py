@@ -5,10 +5,11 @@ from couchforms.util import post_xform_to_couch
 
 
 class EditFormTest(TestCase):
+    ID = '7H46J37FGH3'
 
     def tearDown(self):
         try:
-            XFormInstance.get_db().delete_doc("7H46J37FGH3")
+            XFormInstance.get_db().delete_doc(self.ID)
         except:
             pass
         deprecated_xforms = XFormDeprecated.view(
@@ -30,7 +31,7 @@ class EditFormTest(TestCase):
         docs = []
 
         doc = post_xform_to_couch(xml_data1)
-        self.assertEqual("7H46J37FGH3", doc.get_id)
+        self.assertEqual(self.ID, doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
@@ -38,7 +39,7 @@ class EditFormTest(TestCase):
         doc.save()
 
         doc = post_xform_to_couch(xml_data2, domain='test-domain')
-        self.assertEqual("7H46J37FGH3", doc.get_id)
+        self.assertEqual(self.ID, doc.get_id)
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual("100", doc.form['vitals']['height'])
         self.assertEqual("Edited Baby!", doc.form['assessment']['categories'])
@@ -46,8 +47,8 @@ class EditFormTest(TestCase):
         docs.append(doc)
 
         doc = XFormDeprecated.view('couchforms/edits', include_docs=True).first()
-        self.assertEqual("7H46J37FGH3", doc.orig_id)
-        self.assertNotEqual("7H46J37FGH3", doc.get_id)
+        self.assertEqual(self.ID, doc.orig_id)
+        self.assertNotEqual(self.ID, doc.get_id)
         self.assertEqual(XFormDeprecated.__name__, doc.doc_type)
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
