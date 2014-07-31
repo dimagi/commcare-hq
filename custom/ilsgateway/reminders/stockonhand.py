@@ -9,6 +9,7 @@ from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusT
 from custom.ilsgateway.reminders import REMINDER_STOCKONHAND, update_status
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import get_business_day_of_month
+from custom.ilsgateway.utils import send_for_all_domains
 import settings
 
 
@@ -31,20 +32,12 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-def send_for_all_domains(date):
-    for domain in Domain.get_all():
-        #TODO Merge with ILSGateway integration?
-        #ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
-        #if ilsgateway_config and ilsgateway_config.enabled:
-        send_soh_reminder(domain.name, date)
-
-
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def first_soh_task():
     now = datetime.datetime.utcnow()
     last_buisness_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
     if now.day == last_buisness_day.day:
-        send_for_all_domains(last_buisness_day)
+        send_for_all_domains(last_buisness_day, send_soh_reminder)
 
 
 @periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -52,7 +45,7 @@ def second_soh_task():
     now = datetime.datetime.utcnow()
     last_month_last_day, first_business_day = get_last_and_nth_business_day(now, 1)
     if now.day == first_business_day.day:
-        send_for_all_domains(last_month_last_day)
+        send_for_all_domains(last_month_last_day, send_soh_reminder)
 
 
 @periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
