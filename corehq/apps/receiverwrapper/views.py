@@ -13,7 +13,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.util import get_app_and_build_ids
+from corehq.apps.receiverwrapper.util import get_app_and_build_ids, J2ME, ANDROID, guess_phone_type_from_user_agent
 from couchforms import convert_xform_to_json
 import couchforms
 from django.views.decorators.http import require_POST
@@ -177,5 +177,9 @@ def _determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
-    # todo: add smarts to differentiate ODK from J2ME based on something in the request
-    return 'basic'
+    user_agent = request.META.get('HTTP_USER_AGENT')
+    type_to_auth_map = {
+        J2ME: 'digest',
+        ANDROID: 'basic',
+    }
+    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]
