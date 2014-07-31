@@ -15,7 +15,7 @@ import settings
 
 def send_soh_reminder(domain, date):
     for user in CommTrackUser.by_domain(domain):
-        if user.location and user.location.location_type == 'FACILITY':
+        if user.is_active and user.location and user.location.location_type == 'FACILITY':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,
                                                           type='stockonhand').exists():

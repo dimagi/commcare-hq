@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 
 REMINDER_STOCKONHAND = _("Please send in your stock on hand information in the format 'soh <product> <amount> <product> <amount>...'")
 REMINDER_R_AND_R_FACILITY = _("Have you sent in your R&R form yet for this quarter? Please reply \"submitted\" or \"not submitted\"")
+REMINDER_DELIVERY_FACILITY = _("Did you receive your delivery yet? Please reply 'delivered <product> <amount> <product> <amount>...'")
 
 
 def update_status(supply_point_id, type, value):
