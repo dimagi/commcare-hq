@@ -1,4 +1,4 @@
-from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.domain.decorators import login_or_basic
 from django.views.decorators.http import require_POST, require_GET
 import json
 from django.http import HttpResponse
@@ -16,7 +16,7 @@ from custom.uth.const import UTH_DOMAIN
 
 @require_POST
 @require_uth_domain
-@login_or_digest
+@login_or_basic
 def vscan_upload(request, domain, **kwargs):
     """
     End point for uploading data from vscan.
@@ -59,7 +59,7 @@ def vscan_upload(request, domain, **kwargs):
 
 @require_GET
 @require_uth_domain
-@login_or_digest
+@login_or_basic
 def pending_exams(request, domain, scanner_serial, **kwargs):
     """
     Return a list of exam id's that have not had either successful
@@ -88,7 +88,7 @@ def pending_exams(request, domain, scanner_serial, **kwargs):
 
 @require_POST
 @require_uth_domain
-@login_or_digest
+@login_or_basic
 def sonosite_upload(request, domain, **kwargs):
     """
     End point for uploading data from sonosite.
