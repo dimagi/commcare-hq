@@ -33,13 +33,7 @@ var DrilldownOptionFilterControl = function (options) {
             self.controls()[trigger_level + 1].control_options([]);
         }
         else {
-            var next_options = []
-            for (var op = 0; op < current_selection.length; op++) {
-                self.controls()[op].selected([]);
-            }
-
-
-
+            var next_options = [];
             for(var i=0; i < current_selection.length; i++) {
                 var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection[i]);
 

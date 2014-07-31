@@ -12,7 +12,6 @@ from django.http import HttpResponseNotFound
 from tastypie.api import Api
 from corehq.apps.api.es import XFormES
 from dimagi.utils.decorators import inline
-from custom.care_pathways.api.v0_1 import GeographyResource
 
 API_LIST = (
     ((0, 1), (
@@ -65,7 +64,6 @@ API_LIST = (
         v0_5.BulkUserResource,
         FixtureResource,
         ReportResource,
-        GeographyResource,
         v0_5.DeviceReportResource,
     )),
 )

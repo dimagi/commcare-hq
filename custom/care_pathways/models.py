@@ -12,8 +12,8 @@ class Numerator(fluff.Calculator):
 
 def get_property(case, property):
     configuration = get_domain_configuration(case.domain)
-    if property in configuration:
-        result = case.get_case_property(configuration[property])
+    if property in configuration['geography_hierarchy']:
+        result = case.get_case_property(configuration['geography_hierarchy'][property]['prop'])
         return result.lower() if result else result
     return None
 

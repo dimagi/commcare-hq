@@ -1,6 +1,20 @@
 {
-    "lvl_1": "group_district",
-    "lvl_2": "group_block",
-    "lvl_3": "group_gp",
-    "lvl_4": "group_village_name"
+    "geography_hierarchy": {
+        "lvl_1": {
+            "prop": "group_district",
+            "name": "District"
+        },
+        "lvl_2": {
+            "prop": "group_block",
+            "name": "Block"
+        },
+        "lvl_3": {
+            "prop": "group_gp",
+            "name": "GP"
+        },
+        "lvl_4": {
+            "prop": "group_village_name",
+            "name": "Village"
+        }
+    }
 }
