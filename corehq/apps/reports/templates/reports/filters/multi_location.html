@@ -7,37 +7,35 @@
 <label class="control-label">{{ control_name }}</label> {# this is wrong, this should be inheriting the structure from filters/base.html, see base/drilldown_options #}
 <div class="controls">
     <div data-bind="foreach: selected_path" style="display: inline-block;">
-        <select multiple=false data-bind="options: children, optionsText: 'display_name', selectedOptions: selected_child"></select>
+        <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
     </div>
     <img id="fdi_ajax" src="/static/formplayer/img/loading_small.gif" style="display: none;">
 </div>
-<input name="fixture_id" type="hidden" data-ajax-select2="true"/>
+<input name="fixture_id" type="hidden" />
 
 <script type="text/javascript">
 
     var LOAD_FDIS_URL = '{{ api_root }}';
     var hierarchy = {{ hierarchy|JSON }};
-    var selected = {{ selected|safe}};
-
+    var selected = '{{ selected_fdi_id|safe }}';
+    var prev_selected_fixt ;
+    var prev_selected_child;
 
     function api_get_children(fdi_uuid, depth, callback) {
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
-        if(hierarchy[depth] !== undefined) {
-            params["parent_ref_name"] = hierarchy[depth]["parent_ref"];
-            if (fdi_uuid != "_all") {
-                params["child_type"] = hierarchy[depth]["id"];
-            }
-            else {
-                params["fixture_type"] = hierarchy[depth]["type"];
-            }
-            params["references"] = hierarchy[depth]["references"];
-            $('#fdi_ajax').show();
-            $.getJSON(LOAD_FDIS_URL, params, function (allData) {
-                $('#fdi_ajax').hide();
-                callback(allData.objects);
-            });
+        params["parent_ref_name"] = hierarchy[depth]["parent_ref"];
+        if (fdi_uuid != "_all"){
+            params["child_type"] = hierarchy[depth]["id"];}
+        else{
+            params["fixture_type"] = hierarchy[depth]["type"];
         }
-    }
+        params["references"] = hierarchy[depth]["references"];
+        $('#fdi_ajax').show();
+        $.getJSON(LOAD_FDIS_URL, params, function(allData) {
+            $('#fdi_ajax').hide();
+            callback(allData.objects);
+        });
+    };
 
     $(function() {
         var fdis = {{ fdis|safe }};
@@ -51,6 +49,7 @@
         model.load(fdis, null);
     });
 
+
     function FixtureSelectViewModel() {
         var model = this;
 
@@ -59,38 +58,7 @@
 
         // add a new level of drill-down to the tree
         this.path_push = function(fixt) {
-            var last = this.selected_path.pop();
-
-            function sort_and_remove_duplicates(array) {
-                var filteredArray = [];
-                var i;
-                $.each(array, function (index, item) {
-                    var alreadyAdded = false;
-                    for (i in filteredArray) {
-                        if (filteredArray[i].uuid() === item.uuid()) {
-                            alreadyAdded = true;
-                        }
-                    }
-                    if (!alreadyAdded) {
-                        filteredArray.push(item);
-                    }
-                });
-
-                return filteredArray.sort(function(a, b){
-                    a_id = a.uuid();
-                    b_id = b.uuid();
-                    return a_id > b_id ? 1 : -1;
-                });
-            }
-
-            if (last !== undefined && last.depth === fixt.depth) {
-                last.children(sort_and_remove_duplicates(last.children().concat(fixt.children())));
-
-                this.selected_path.push(last);
-            } else {
-                if (last !== undefined) this.selected_path.push(last);
-                this.selected_path.push(fixt);
-            }
+            this.selected_path.push(fixt);
             if (fixt.num_children() == 1) {
                 fixt.selected_child(fixt.get_child(0));
             }
@@ -100,67 +68,68 @@
         this.load = function(fdis) {
             this.root(new FixtureModel({name: '_root', fields: {}, children: fdis}, this));
             this.path_push(this.root());
-
         };
     }
 
     function FixtureModel(data, root, depth) {
         var fixt = this;
+
         this.name = ko.observable();
         this.type = ko.observable();
         this.uuid = ko.observable();
         this.children = ko.observableArray();
         this.depth = depth || 0;
         this.children_loaded = false;
-        var prev_selected_fixt ;
-        var prev_selected_child;
         // helper in loading fixtures fields one by one
+        all_loaded = false
 
 
         this.display_name = ko.computed(function() {
-            if (depth>0 && this.name() == '_all') {
-
+            if (depth>0 && this.name() == '_all') 
                 return "All ("+hierarchy[depth-1]["type"]+")";
-            }
 
-            return this.name() == '_all' ? 'All '+data.fixture_type : data.name;
+            return this.name() == '_all' ? 'All '+data.fixture_type : this.name();
         }, this);
 
         this.selected_child = ko.observable();
         // when a fixture is selected, update the drill-down tree
         // only if all fixtures are not loaded already at the start
-        this.selected_child.subscribe(function() {
-            if (this.selected_child().length === 0 && prev_selected_child && prev_selected_fixt.selected_child()) {
-{#                Możliwe że chodzi o root -> selected_path ale źle kombinowałem ,tak  to w miare działa trzeba#}
-{#                jeszcze ogarnąć po stronie sql_data żeby lepiej wspierało listy bo teraz jest tymczasowo #}
-{#                ten plik trzeba skopiować w dobre miejsce i na tym zrobić reverta żeby nie było żadnych zmian w nim#}
-                prev_selected_fixt.selected_child( prev_selected_fixt.selected_child().concat([prev_selected_child]));
+        this.selected_child.subscribe(function(val) {
+            if (all_loaded) {
+                if (val != "_all" && val != null && val.uuid() != "_all")
+                    $("input[name = 'fixture_id']").val(val.type() + ":" + val.uuid());
+                else
+                    $("input[name = 'fixture_id']").val("");
+
+                return val;}
+            if (val == null || val.depth >= hierarchy.length || val == "_all") { 
+                all_loaded = true;                
+                if (prev_selected_child){
+                    prev_selected_fixt.selected_child(prev_selected_child);
+                }
                 return;
             }
-            $.each(this.selected_child(), function(id, val) {
-                var input_value = [];
-                if (val != "_all" && val != null && val.uuid() != "_all") {
-                    input_value.push(val.uuid());
-                }
 
-                if (id === 0) {
-                    var removed = root.selected_path.splice(val.depth, 99);
-                }
-                var post_children_loaded = function(parent) {
-                    if (parent.num_children()) {
-                        root.path_push(parent);
-                    }
-                };
-                if (val.uuid() != null) {
-                    val.load_children_async(post_children_loaded);
-                } else {
-                    post_children_loaded(val);
-                }
-                $("input[name = 'fixture_id']").val(input_value);
+            var removed = root.selected_path.splice(val.depth, 99);
+            $.each(removed, function(i, e) {
+                // reset so dropdown for fixt will default to 'all' if shown again
+                e.selected_child("_all");
             });
+
+            var post_children_loaded = function(parent) {
+                if (parent.num_children() && !all_loaded) {
+                    root.path_push(parent);
+                }
+            };
+
+            if (val.uuid() != null && !val.children_loaded) {
+                val.load_children_async(post_children_loaded);
+            } else {
+                post_children_loaded(val);
+            }
         }, this);
         this.selected_is_valid = ko.computed(function() {
-            return this.selected_child() && this.selected_child() !="_all" && this.selected_child().name != '_all';
+            return this.selected_child() && this.selected_child() !="_all" && this.selected_child().name() != '_all';
         }, this);
 
         // helpers to account for the 'all' meta-entry
@@ -172,15 +141,13 @@
         };
 
         this.load = function(data) {
-            if (data.fields !== undefined && data.fields.name == '_all'){
+            if (data.fields.name == '_all') 
                 this.name('_all');
-            } else if (this.depth > 0) {
-                this.name(data.name);
-            }
-
+            else if (this.depth > 0) 
+                this.name(data.fields[hierarchy[this.depth-1]["display"]] || null);
             this.type(data.fixture_type);
             this.uuid(data.id || "_all");
-            if (data.children !== null && data.children !== undefined) {
+            if (data.children != null) {
                 this.set_children(data.children);
             }
         };
@@ -188,7 +155,7 @@
         this.set_children = function(data) {
             var children = [];
             if (data) {
-                children = _.sortBy(data, function(e) { return e.uuid; });
+                children = _.sortBy(data, function(e) { return e.name; });
 
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
@@ -196,7 +163,7 @@
                 children.splice(0, 0, {fields: {name: '_all'}});
             }
             this.children($.map(children, function(e) {
-                if ($.inArray(e.uuid, selected) > -1){
+                if (e.id == selected){
                     var to_ret = new FixtureModel(e, root, fixt.depth + 1);
                     prev_selected_fixt = fixt;
                     prev_selected_child = to_ret;
@@ -220,7 +187,6 @@
         };
 
         this.load(data);
-        this.selected_child([])
     }
 
 </script>
