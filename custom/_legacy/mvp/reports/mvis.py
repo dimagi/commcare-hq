@@ -21,7 +21,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
     emailable = True
-    
+
     @property
     def timezone(self):
         return pytz.utc
@@ -119,13 +119,15 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "low_birth_weight_proportion",
                     "family_planning_proportion", # A2 - 1
                 ]
-            }, 
+            },
             {
                 'category_title': "Child Health",
                 'category_slug': 'child_health',
                 'indicator_slugs': [
                     "muac_routine_proportion",
                     "muac_wasting_proportion",
+                    "moderate_muac_wasting_proportion",
+                    "severe_muac_wasting_proportion",
                     "under5_diarrhea_ors_proportion", # A2 - 37
                     "under5_diarrhea_zinc_proportion", # B - 38
                     "under5_complicated_fever_referred_proportion",
