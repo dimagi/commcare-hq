@@ -1,8 +1,9 @@
 import json
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter, MultiLocationFilter
+from corehq.apps.reports.filters.select import YearFilter
 from custom.care_pathways.api.v0_1 import GeographySqlData
 from casexml.apps.case.models import CommCareCase
 
@@ -89,3 +90,82 @@ class ScheduleTribeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return []
+
+
+class PPTYearFilter(YearFilter):
+    label = "PPT Year"
+
+
+class TypeFilter(BaseDrilldownOptionFilter):
+    label = "Filter by Type"
+    slug = "type"
+    template = "care_pathways/filters/drilldown_options.html"
+
+    @property
+    def drilldown_map(self):
+        return [
+            {
+                'val': 'Paddy',
+                'text': 'Paddy',
+                'next': [
+                        {
+                            'val': 'domain1',
+                            'text': 'Domain1',
+                            'next': [
+                                {
+                                    'val': 'practice1',
+                                    'text': 'Pracice1',
+                                }
+                            ]
+                        },
+                        {
+                            'val': 'domain2',
+                            'text': 'Domain2',
+                            'next': [
+                                {
+                                    'val': 'practice2',
+                                    'text': 'Pracice2',
+                                }
+                            ]
+                        }
+                    ]
+            },
+            {
+                'val': 'Maize',
+                'text': 'Maize',
+                'next': [
+                        {
+                            'val': 'domain3',
+                            'text': 'Domain3',
+                            'next': [
+                                {
+                                    'val': 'practice3',
+                                    'text': 'Pracice3',
+                                }
+                            ]
+                        }
+                    ]
+            }
+        ]
+
+    @classmethod
+    def get_labels(cls):
+        return [
+                ('Value Chain', 'Any', 'value_chain'),
+                ('Domain', '', 'domain'),
+                ('Practice', '', 'practice')
+        ]
+
+
+    @classmethod
+    def _get_label_value(cls, request, label):
+        slug = str(label[2])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        print {
+            'slug': slug,
+            'value': val,
+        }
+        return {
+            'slug': slug,
+            'value': val,
+        }

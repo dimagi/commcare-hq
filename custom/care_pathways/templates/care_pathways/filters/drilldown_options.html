@@ -1,0 +1,66 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<label for="{{ css_id }}" class="control-label">{{ label }}</label>
+<div class="controls">
+    {% block filter_content %}
+    <div id="{{ css_id }}" class="well" style="padding-bottom: 0;">
+        <div data-bind="foreach: controls">
+            <div class="control-group"
+                 data-bind="{% if use_last %}fadeVisibleInOnly{% else %}fadeVisible{% endif %}: is_visible">
+                <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
+                       class="control-label"></label>
+                <div class="controls">
+                    <div data-bind="if: level == 0">
+                        <select  class="{{ css_class }}" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+                        options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
+                        selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+                    </div>
+                    <div data-bind="if: level != 0">
+                        <select id="multi_sel" class="{{ css_class }}" multiple="true" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+                        options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
+                        selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
+     </div>
+    {% endblock %}
+</div>
+
+{% block filter_js %}
+<link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+<script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'care_pathways/ko/report_filter.drilldown_options.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+       $('#{{ css_id }}').drilldownOptionFilter({
+           drilldown_map: {{ option_map|JSON }},
+           controls: {{ controls|JSON }},
+           selected: {{ selected|JSON }},
+           notifications: {{ notifications|JSON }},
+       });
+    });
+    $('#report_filter_type_domain').select2();
+    $('#report_filter_type_practice').select2();
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

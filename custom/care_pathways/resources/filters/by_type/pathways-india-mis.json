@@ -1,0 +1,240 @@
+{
+    "config" : [
+        {
+            "val": "Paddy",
+            "text": "Paddy",
+            "next": [
+                    {
+                        "val": "swm",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "ils",
+                        "text": "Input and Land Selection",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "swm2",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "uoi",
+                        "text": "Use of Inputs",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "p",
+                        "text": "Planting",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "pdm",
+                        "text": "Pest and Disease Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "swm3",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "rkf",
+                        "text": "Record Keeping and Finance",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "g",
+                        "text": "Gender",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "sav",
+                        "text": "Savings and Loans",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "h",
+                        "text": "Harvest",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "phm",
+                        "text": "Post Harvest Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "m",
+                        "text": "Marketing",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "rkf_ppt2",
+                        "text": "Record Keeping and Finance",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "g_ppt2",
+                        "text": "Gender",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "sav_ppt2",
+                        "text": "Savings and Loans",
+                        "next": [
+
+                        ]
+                    }
+                ]
+        },
+        {
+            "val": "Maize",
+            "text": "Maize",
+            "next": [
+                    {
+                        "val": "swm",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "ils",
+                        "text": "Input and Land Selection",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "swm2",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "uoi",
+                        "text": "Use of Inputs",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "p",
+                        "text": "Planting",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "pdm",
+                        "text": "Pest and Disease Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "swm3",
+                        "text": "Soil and Water Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "rkf",
+                        "text": "Record Keeping and Finance",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "g",
+                        "text": "Gender",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "sav",
+                        "text": "Savings and Loans",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "h",
+                        "text": "Harvest",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "phm",
+                        "text": "Post Harvest Management",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "m",
+                        "text": "Marketing",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "rkf_ppt2",
+                        "text": "Record Keeping and Finance",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "g_ppt2",
+                        "text": "Gender",
+                        "next": [
+
+                        ]
+                    },
+                    {
+                        "val": "sav_ppt2",
+                        "text": "Savings and Loans",
+                        "next": [
+
+                        ]
+                    }
+                ]
+        }
+    ]
+}
