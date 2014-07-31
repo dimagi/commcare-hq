@@ -34,4 +34,22 @@ class GeographyFluff(fluff.IndicatorDocument):
     lvl_4 = case_property('lvl_4')
     lvl_5 = case_property("lvl_5")
 
+class FarmerRecordFluff(fluff.IndicatorDocument):
+    def case_property(property):
+        return flat_field(lambda case: get_property(case, property))
+
+    document_class = CommCareCase
+    document_filter = CasePropertyFilter(type= 'farmer_record')
+    domains = ('pathways-india-mis','pathways-tanzania',)
+    group_by = ('domain',)
+
+    save_direct_to_sql = True
+    numerator = Numerator()
+    lvl_1 = case_property('group_name')
+    lvl_2 = case_property('farmer_gender')
+    lvl_3 = case_property('lvl_3')
+    lvl_4 = case_property('lvl_4')
+    lvl_5 = case_property("lvl_5")
+
 GeographyFluffPillow = GeographyFluff.pillow()
+FarmerRecordFluffPillow = FarmerRecordFluff.pillow()

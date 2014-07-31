@@ -17,11 +17,12 @@ class GeographyResource(JsonResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        (level, name) = bundle.request.GET['parent_id'].split('__')
+        parent_id = bundle.request.GET['parent_id']
+        (level, name) = parent_id.split('__') if '__' in parent_id else (None, None)
         if level:
             return GeographySqlData(domain, level=level, name=name).data.items()
         else:
-            return GeographySqlData(domain).data
+            return GeographySqlData(domain, level=bundle.request.GET['parent_ref_name']).data.items()
 
     def dehydrate(self, bundle):
         bundle.data.update(bundle.obj[1])

@@ -6,10 +6,10 @@ KEYS = [u'lvl_1', u'lvl_2', u'lvl_3', u'lvl_4', u'lvl_5']
 class GeographySqlData(SqlData):
     table_name = "fluff_GeographyFluff"
 
-    def __init__(self, domain, level=None, name=None, selected_id=None):
+    def __init__(self, domain, level=None, name=None, selected_ids=None):
         self.domain = domain
-        if selected_id:
-            self.level, self.name = selected_id.split('__') if selected_id else (None, None)
+        if selected_ids:
+            self.level, self.name = selected_ids[0].split('__') if selected_ids else (None, None)
             self.selected_id = True
         else:
             self.level = level
@@ -31,7 +31,7 @@ class GeographySqlData(SqlData):
         filters = []
         if self.domain:
             filters.append('domain = :domain')
-        if self.level:
+        if self.level and self.name:
             filters.append(self.level + '= :' + self.level)
 
         return filters
@@ -91,8 +91,19 @@ class GeographySqlData(SqlData):
         for v in result.values():
             for k in KEYS:
                 if k in v:
+                    v['fixture_type'] = k
                     v['name'] = v[k]
                     v['uuid'] = k+'__'+v[k]
+                    v['id'] = k+'__'+v[k]
         if self.selected_id:
             return self.get_result(result)
         return dict((k, v) for k, v in result.iteritems() if v)
+
+    @property
+    def path(self):
+        result = super(GeographySqlData, self).data
+        for v in result.values():
+            for k in KEYS:
+                if k in v:
+                    v['uuid'] = k+'__'+v[k]
+        return ["lvl_" + str(i+1) + '__' + v for sublist in result.keys() for i, v in enumerate(sublist)]
