@@ -17,6 +17,7 @@ branches:
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
   - basic-auth-submissions  # cz 7/30
+  - novartis-basic-auth  # cz 7/31
   - archive-to-deactivate  # cz 7/30
 submodules:
   submodules/couchlog-src:
