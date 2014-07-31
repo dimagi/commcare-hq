@@ -87,10 +87,10 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
                 "terms": {
                     "form.meta.userID":
                         [mobile_user._id for mobile_user in CommCareUser.all()
-                         if mobile_user.doc_type == "CommCareUser"]
+                         if mobile_user.doc_type == "CommCareUser"][:3]
                         if user_type_mobile else
                         [web_user._id for web_user in WebUser.all()
-                         if web_user.doc_type == "WebUser"]
+                         if web_user.doc_type == "WebUser"][:3]
                 }
             }])
 
