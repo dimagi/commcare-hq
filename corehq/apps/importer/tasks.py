@@ -127,7 +127,17 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             too_many_matches += 1
             continue
 
+        try:
+            uploaded_owner_name = row[columns.index('owner_name')]
+        except ValueError:
+            uploaded_owner_name = None
+
         uploaded_owner_id = fields_to_update.pop('owner_id', None)
+
+        if uploaded_owner_name:
+            # If an owner name was provided, replace the provided
+            # uploaded_owner_id with the id of the provided group or owner name
+            uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, id_cache)
         if uploaded_owner_id:
             # If an owner_id mapping exists, verify it is a valid user
             # or case sharing group
