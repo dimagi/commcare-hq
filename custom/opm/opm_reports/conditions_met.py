@@ -1,6 +1,7 @@
 import datetime
-from corehq.apps.users.models import CommCareCase, CommCareUser
-from custom.opm.opm_reports.constants import DOMAIN, InvalidRow
+from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.users.models import CommCareCase
+from custom.opm.opm_reports.constants import InvalidRow
 from django.utils.translation import ugettext as _
 from corehq.util.translation import localize
 
@@ -141,7 +142,10 @@ class ConditionsMet(object):
                             met_properties[k] = form.form[k]
             return met_properties
 
-        case_obj = CommCareCase.get(case['_source']['_id'])
+        try:
+            case_obj = CommCareCase.get(case['_source']['_id'])
+        except ResourceNotFound:
+            raise InvalidRow
         case_property = lambda _property, default: get_property(case_obj, _property, default=default)
 
         self.case_id = case_property('_id', '')

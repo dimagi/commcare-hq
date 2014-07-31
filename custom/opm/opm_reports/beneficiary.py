@@ -35,11 +35,20 @@ class Beneficiary(object):
     def __init__(self, case, report, sql_form_data=None):
 
         # make sure beneficiary passes the filters
+        filter_by = []
+        if hasattr(report, 'request'):
+            if report.awcs:
+                filter_by = [('awc_name', 'awcs')]
+            elif report.gp:
+                filter_by = [('owner_id', 'gp')]
+            elif report.block:
+                filter_by = [('block_name', 'blocks')]
+
         report.filter(
             lambda key: case.get_case_property(key),
             # case.awc_name, case.block_name
             # need to be hardcoded because in case we have block_name not block property
-            [('awc_name', 'awcs'), ('block_name', 'blocks'), ('owner_id', 'gp')],
+            filter_by,
         )
 
         if case.closed and case.closed_on <= report.datespan.startdate_utc:
