@@ -131,50 +131,8 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
 
     @property
     def drilldown_map(self):
-        return [
-            {
-                'val': 'Paddy',
-                'text': 'Paddy',
-                'next': [
-                        {
-                            'val': 'domain1',
-                            'text': 'Domain1',
-                            'next': [
-                                {
-                                    'val': 'practice1',
-                                    'text': 'Pracice1',
-                                }
-                            ]
-                        },
-                        {
-                            'val': 'domain2',
-                            'text': 'Domain2',
-                            'next': [
-                                {
-                                    'val': 'practice2',
-                                    'text': 'Pracice2',
-                                }
-                            ]
-                        }
-                    ]
-            },
-            {
-                'val': 'Maize',
-                'text': 'Maize',
-                'next': [
-                        {
-                            'val': 'domain3',
-                            'text': 'Domain3',
-                            'next': [
-                                {
-                                    'val': 'practice3',
-                                    'text': 'Pracice3',
-                                }
-                            ]
-                        }
-                    ]
-            }
-        ]
+        hierarchy_config = get_domain_configuration('pathways-india-mis')['by_type_hierarchy']
+        return hierarchy_config
 
     @classmethod
     def get_labels(cls):
