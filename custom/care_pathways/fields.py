@@ -2,6 +2,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.select import YearFilter
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
 from custom.care_pathways.sqldata import GeographySqlData
 from custom.care_pathways.utils import get_domain_configuration
 
@@ -47,17 +48,13 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
 
     @classmethod
     def get_labels(cls):
-        return [(v['name'], '', v['prop']) for k,v in get_domain_configuration('pathways-india-mis')['geography_hierarchy'].iteritems()]
+        return [(v['name'], 'All', v['prop']) for k,v in get_domain_configuration('pathways-india-mis')['geography_hierarchy'].iteritems()]
 
 
     @classmethod
     def _get_label_value(cls, request, label):
         slug = str(label[2])
         val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
-        print {
-            'slug': slug,
-            'value': val,
-        }
         return {
             'slug': slug,
             'value': val,
@@ -91,32 +88,25 @@ class CBTNameFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [(awc, awc) for awc in get_user_data_set()]
-
-
-def get_user_data_set():
-    cases = CommCareCase.view("case/all_cases", key=["all", "pathways-india-mis", "*"], include_docs=True, reduce=False).all()
-    return sorted(list(set(u.group_name.get('group_name') for u in cases)))
+        return [(user._id, user.username) for user in CommCareUser.by_domain(self.domain)]
 
 
 class ScheduleCasteFilter(BaseSingleOptionFilter):
     slug = "schedule_caste"
     label = "Schedule Caste"
-    default_text = "All"
 
     @property
     def options(self):
-        return []
+        return [('yes', 'Yes'), ('no', 'No')]
 
 
 class ScheduleTribeFilter(BaseSingleOptionFilter):
     slug = "schedule_tribe"
     label = "Schedule Tribe"
-    default_text = "All"
 
     @property
     def options(self):
-        return []
+        return [('yes', 'Yes'), ('no', 'No')]
 
 
 class PPTYearFilter(YearFilter):
@@ -147,10 +137,6 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
     def _get_label_value(cls, request, label):
         slug = str(label[2])
         val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
-        print {
-            'slug': slug,
-            'value': val,
-        }
         return {
             'slug': slug,
             'value': val,

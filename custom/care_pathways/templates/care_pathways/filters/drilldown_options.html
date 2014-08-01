@@ -19,7 +19,8 @@
                     <div data-bind="if: level != {{ single_option_select }}">
                         <select id="multi_sel" class="{{ css_class }}" multiple="true" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                         options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
-                        selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+                        selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }},
+                        select2: {}"></select>
                     </div>
                 </div>
             </div>
@@ -42,11 +43,6 @@
            selected: {{ selected|JSON }},
            notifications: {{ notifications|JSON }}
        });
-       var controls = {{ controls|JSON }}
-       for (var i = 0; i < controls.length; i++) {
-           var control = controls[i];
-           $('#{{ css_id }}_' + control.slug + '').select2();
-       }
     });
 
 

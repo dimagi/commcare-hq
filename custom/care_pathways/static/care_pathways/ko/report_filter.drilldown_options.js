@@ -1,3 +1,47 @@
+ko.bindingHandlers.select2 = {
+    init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
+      ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
+        $(el).select2('destroy');
+      });
+
+      var allBindings = allBindingsAccessor(),
+          select2 = ko.utils.unwrapObservable(allBindings.select2);
+
+      $(el).select2(select2);
+    },
+    update: function (el, valueAccessor, allBindingsAccessor, viewModel) {
+        var allBindings = allBindingsAccessor();
+
+        if ("value" in allBindings) {
+            $(el).select2("data", allBindings.value());
+        } else if ("selectedOptions" in allBindings) {
+            var converted = [];
+            var textAccessor = function(value) {
+                return value; };
+            if ("optionsText" in allBindings) {
+                textAccessor = function(value) {
+                    var valueAccessor = function (item) { return item; }
+                    if ("optionsValue" in allBindings) {
+                        valueAccessor = function (item) { return item[allBindings.optionsValue]; }
+                    }
+                    var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
+                    if (items.length == 0 || items.length > 1) {
+                        return ''
+                    } else {
+                        return items[0][allBindings.optionsText];
+                    }
+                }
+            }
+            $.each(allBindings.selectedOptions(), function (key, value) {
+                if (textAccessor(value) !== '') {
+                    converted.push({id: value, text: textAccessor(value)});
+                }
+            });
+            $(el).select2("data", converted);
+        }
+    }
+};
+
 var DrilldownOptionFilterControl = function (options) {
     var self = this;
 
@@ -7,9 +51,7 @@ var DrilldownOptionFilterControl = function (options) {
     }));
 
     self.init = function () {
-        console.log(options);
         for (var op = 0; op < options.selected.length; op++) {
-            console.log(self.controls()[op].selected(options.selected[op]));
             self.controls()[op].selected(options.selected[op]);
             self.updateNextDrilldown(self.controls()[op].level);
         }
@@ -19,7 +61,6 @@ var DrilldownOptionFilterControl = function (options) {
         var current_control = self.controls()[trigger_level];
         var current_selection = current_control.selected(),
             current_options = current_control.control_options();
-        console.log(current_control);
         if (trigger_level+1 === self.controls().length) {
             for(var i=0; i < current_selection.length; i++) {
                 self.notification.changeMessage(current_selection[i]);
@@ -31,6 +72,7 @@ var DrilldownOptionFilterControl = function (options) {
         if (current_selection.length == 0) {
             self.controls()[trigger_level + 1].selected.removeAll();
             self.controls()[trigger_level + 1].control_options([]);
+            self.updateNextDrilldown(self.controls()[trigger_level + 1].level);
         }
         else {
             var next_options = [];
@@ -77,6 +119,9 @@ var DrilldownOption = function (select, drilldown_map) {
     self.selected = ko.observableArray();
 
     self.is_visible = ko.computed(function () {
+        if (!(self.control_options().length)) {
+            self.selected.removeAll()
+        }
         return !!(self.control_options().length);
     });
 
