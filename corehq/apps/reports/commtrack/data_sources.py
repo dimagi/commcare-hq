@@ -1,3 +1,4 @@
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
@@ -282,15 +283,18 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
     """
 
     def get_data(self):
+        # todo: this will probably have to paginate eventually
         sp_ids = get_relevant_supply_point_ids(
             self.domain,
-            self.active_location
+            self.active_location,
         )
 
-        for sp_id in sp_ids:
-            loc = SupplyPointCase.get(sp_id).location
+        supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
+        for supply_point in supply_points:
+            # todo: get locations in bulk
+            loc = supply_point.location
             transactions = StockTransaction.objects.filter(
-                case_id=sp_id,
+                case_id=supply_point._id,
             ).exclude(
                 report__date__lte=self.start_date
             ).exclude(
