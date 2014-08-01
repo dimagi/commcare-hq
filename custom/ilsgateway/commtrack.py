@@ -115,6 +115,7 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
             user.is_active = bool(ilsgateway_smsuser.is_active)
             if "phone_numbers" in user_dict:
                 user.set_default_phone_number(user_dict["phone_numbers"][0])
+                user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
             user.save()
             add_location(user, location_id)
         except Exception as e:
@@ -246,10 +247,10 @@ def bootstrap_domain(domain, ilsgateway_config):
         date = None
 
     try:
-        locations_type_sync(domain)
-        locations_sync(domain, endpoint, date=date)
+        #locations_type_sync(domain)
+        #locations_sync(domain, endpoint, date=date)
         products_sync(domain, endpoint, date=date)
-        webusers_sync(domain, endpoint, date=date)
+        #webusers_sync(domain, endpoint, date=date)
         smsusers_sync(domain, endpoint, date=date)
 
         checkpoint.date = start_date
