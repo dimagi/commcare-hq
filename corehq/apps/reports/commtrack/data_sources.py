@@ -15,15 +15,6 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
 
 
-def reporting_status(transaction, start_date, end_date):
-    # for now we have decided to remove the "late" distinction
-    # so we are only checking if a time even exists in this period
-    if transaction:
-        return 'reporting'
-    else:
-        return 'nonreporting'
-
-
 class CommtrackDataSourceMixin(object):
 
     @property
@@ -284,62 +275,45 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
 
     def get_data(self):
         # todo: this will probably have to paginate eventually
-        sp_ids = get_relevant_supply_point_ids(
-            self.domain,
-            self.active_location,
-        )
-
-        supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
-        for supply_point in supply_points:
-            # todo: get locations in bulk
-            loc = supply_point.location
-            transactions = StockTransaction.objects.filter(
-                case_id=supply_point._id,
-            ).exclude(
-                report__date__lte=self.start_date
-            ).exclude(
-                report__date__gte=self.end_date
+        if self.all_relevant_forms:
+            sp_ids = get_relevant_supply_point_ids(
+                self.domain,
+                self.active_location,
             )
 
-            if transactions:
-                transactions = sorted(
-                    transactions,
-                    key=lambda trans: trans.report.date
-                )
+            supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
+            form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
 
-            if self.all_relevant_forms:
-                forms_xmlns = []
+            for supply_point in supply_points:
+                # todo: get locations in bulk
+                loc = supply_point.location
+                transactions = StockTransaction.objects.filter(
+                    case_id=supply_point._id,
+                ).exclude(
+                    report__date__lte=self.start_date
+                ).exclude(
+                    report__date__gte=self.end_date
+                ).order_by('-report__date')
 
-                for form in self.all_relevant_forms.values():
-                    forms_xmlns.append(form['xmlns'])
-
-                form_filtered_transactions = [
-                    t for t in transactions if XFormInstance.get(t.report.form_id).xmlns in forms_xmlns
-                ]
-
-                if form_filtered_transactions:
+                matched = False
+                for trans in transactions:
+                    if XFormInstance.get(trans.report.form_id) in form_xmlnses:
+                        yield {
+                            'loc_id': loc._id,
+                            'loc_path': loc.path,
+                            'name': loc.name,
+                            'type': loc.location_type,
+                            'reporting_status': 'reporting',
+                            'geo': loc._geopoint,
+                        }
+                        matched = True
+                        break
+                if not matched:
                     yield {
                         'loc_id': loc._id,
                         'loc_path': loc.path,
                         'name': loc.name,
                         'type': loc.location_type,
-                        'reporting_status': reporting_status(
-                            form_filtered_transactions[-1],
-                            self.start_date,
-                            self.end_date
-                        ),
-                        'geo': loc._geopoint,
-                    }
-                else:
-                    yield {
-                        'loc_id': loc._id,
-                        'loc_path': loc.path,
-                        'name': loc.name,
-                        'type': loc.location_type,
-                        'reporting_status': reporting_status(
-                            None,
-                            self.start_date,
-                            self.end_date
-                        ),
+                        'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
                     }
