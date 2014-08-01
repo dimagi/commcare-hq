@@ -273,6 +273,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
 
+
 class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, MultiFormDrilldownMixin):
     """
     Config:
@@ -285,12 +286,6 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             self.domain,
             self.active_location
         )
-
-        products = Product.by_domain(self.domain)
-        if self.program_id:
-            products = filter(
-                lambda product: product.program_id == self.program_id, products
-            )
 
         for sp_id in sp_ids:
             loc = SupplyPointCase.get(sp_id).location
