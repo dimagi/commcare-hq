@@ -1,8 +1,7 @@
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, \
-    ScheduleCasteFilter, ScheduleTribeFilter
-from custom.care_pathways.fields import GeographyFilter, PPTYearFilter, TypeFilter
+    ScheduleCasteFilter, ScheduleTribeFilter, GroupByFilter, PPTYearFilter, TypeFilter
 
 
 class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectReport):
@@ -13,6 +12,7 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
     @property
     def fields(self):
         filters = [GeographyFilter,
+              GroupByFilter,
               PPTYearFilter,
               TypeFilter,
               GenderFilter,

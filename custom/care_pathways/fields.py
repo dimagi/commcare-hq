@@ -141,3 +141,11 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
             'slug': slug,
             'value': val,
         }
+
+class GroupByFilter(BaseSingleOptionFilter):
+    slug = "group_by"
+    label = "Group By"
+
+    @property
+    def options(self):
+        return [('value_chain', 'Value Chain'), ('domain', 'Domain'), ('practice', 'Practice')]
