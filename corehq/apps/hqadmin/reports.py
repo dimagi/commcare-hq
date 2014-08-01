@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 import json
 from corehq import Domain
@@ -20,6 +21,7 @@ from corehq.toggles import IS_DEVELOPER
 
 INDICATOR_DATA = {
     "domain_count": {
+        "ajax_view": "admin_reports_stats_data",
         "chart_name": "domains",
         "chart_title": "Total Project Spaces",
         "date_field_opts": [
@@ -33,6 +35,7 @@ INDICATOR_DATA = {
         "xaxis_label": "# domains",
     },
     "domain_self_started_count": {
+        "ajax_view": "admin_reports_stats_data",
         "chart_name": "self_started_domains",
         "chart_title": "Self-Started Project Spaces",
         "date_field_opts": [
@@ -49,6 +52,7 @@ INDICATOR_DATA = {
         "xaxis_label": "# domains",
     },
     "forms": {
+        "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms",
         "chart_title": "All Forms",
         "histogram_type": "forms",
@@ -56,6 +60,7 @@ INDICATOR_DATA = {
         "xaxis_label": "# forms",
     },
     "forms_mobile": {
+        "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_mobile",
         "chart_title": "Forms Submitted by Mobile Workers",
         "histogram_type": "forms",
@@ -66,6 +71,7 @@ INDICATOR_DATA = {
         "xaxis_label": "# forms",
     },
     "forms_web": {
+        "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_mobile",
         "chart_title": "Forms Submitted by Web Users",
         "histogram_type": "forms",
@@ -298,8 +304,13 @@ class GlobalAdminReports(AdminReport):
     @property
     def template_context(self):
         context = super(AdminReport, self).template_context
+        indicator_data = copy.deepcopy(INDICATOR_DATA)
+        from django.core.urlresolvers import reverse
+        for key in indicator_data:
+            indicator_data[key]["ajax_url"] = \
+                reverse(indicator_data[key]["ajax_view"])
         context.update({
-            'indicator_data': INDICATOR_DATA,
+            'indicator_data': indicator_data,
             'indicators': self.indicators,
             'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
         })

@@ -58,7 +58,7 @@
                     chart_name: visualizations[key].chart_name,
                     histogram_type: visualizations[key].histogram_type,
                     xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: "{% url "admin_reports_stats_data" %}",
+                    ajax_url: visualizations[key].ajax_url,
                     data: url_params,
                     interval: visualizations[key].interval,
                     params_es: visualizations[key].params_es
