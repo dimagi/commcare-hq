@@ -9,11 +9,17 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
     report_title = 'Adoption Bar Chart'
-    fields = [GeographyFilter,
+
+    @property
+    def fields(self):
+        filters = [GeographyFilter,
               PPTYearFilter,
               TypeFilter,
               GenderFilter,
               GroupLeadershipFilter,
               CBTNameFilter,
-              ScheduleCasteFilter,
-              ScheduleTribeFilter]
+              ]
+        if self.domain == 'pathways-india-mis':
+            filters.extend([ScheduleCasteFilter, ScheduleTribeFilter])
+
+        return filters
