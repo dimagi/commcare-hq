@@ -44,9 +44,9 @@ INDICATOR_DATA = {
                 "value": "date_created",
             },
         ],
-        "params_es": json.dumps({
+        "params_es_dict": {
             "internal.self_started": ["T"],
-        }),
+        },
         "histogram_type": "domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -65,9 +65,9 @@ INDICATOR_DATA = {
         "chart_title": "Forms Submitted by Mobile Workers",
         "histogram_type": "forms",
         "interval": "week",
-        "params_es": json.dumps({
+        "params_es_dict": {
             "user_type_mobile": True,
-        }),
+        },
         "xaxis_label": "# forms",
     },
     "forms_web": {
@@ -76,9 +76,9 @@ INDICATOR_DATA = {
         "chart_title": "Forms Submitted by Web Users",
         "histogram_type": "forms",
         "interval": "week",
-        "params_es": json.dumps({
+        "params_es_dict": {
             "user_type_mobile": False,
-        }),
+        },
         "xaxis_label": "# forms",
     },
 }
@@ -306,9 +306,19 @@ class GlobalAdminReports(AdminReport):
         context = super(AdminReport, self).template_context
         indicator_data = copy.deepcopy(INDICATOR_DATA)
         from django.core.urlresolvers import reverse
-        for key in indicator_data:
-            indicator_data[key]["ajax_url"] = \
-                reverse(indicator_data[key]["ajax_view"])
+        for key in self.indicators:
+            indicator_data[key]["ajax_url"] = reverse(
+                indicator_data[key]["ajax_view"]
+            )
+            if not ("params_es_dict" in indicator_data[key]):
+                indicator_data[key]["params_es_dict"] = {}
+            if self.use_real_project_spaces:
+                indicator_data[key]["params_es_dict"].update({
+                    "is_test": ["false"],
+                })
+            indicator_data[key]["params_es"] = json.dumps(
+                indicator_data[key]["params_es_dict"]
+            )
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
@@ -323,6 +333,10 @@ class GlobalAdminReports(AdminReport):
     @property
     def indicators(self):
         raise NotImplementedError
+
+    @property
+    def use_real_project_spaces(self):
+        return True
 
 
 class RealProjectSpacesReport(GlobalAdminReports):
