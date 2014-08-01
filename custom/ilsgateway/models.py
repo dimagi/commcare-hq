@@ -22,7 +22,6 @@ class SupplyPointStatusTypes(object):
     SUPERVISION_FACILITY = "super_fac"
     LOSS_ADJUSTMENT_FACILITY = "la_fac"
     DELINQUENT_DELIVERIES = "del_del"
-    DELIVERY_FACILITY = "del_fac"
 
     CHOICE_MAP = {
         DELIVERY_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
