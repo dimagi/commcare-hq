@@ -18,13 +18,23 @@ function (doc) {
             }
 
             if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY) {
-                if ((indicators.cur_muac && indicators.cur_muac.value) ||
-                    (indicators.koraro_cur_muac && indicators.koraro_cur_muac.value)) {
+                if (indicators.cur_muac && indicators.cur_muac.value) {
                     try {
                         var cur_muac = parseFloat(indicators.cur_muac.value);
+                        last_muac_indicators["muac_reading"] = case_id;
+                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac < 12.5)) {
+                            last_muac_indicators["muac_wasting"] = case_id;
+                        }
+                    } catch (e) {
+                        // do nothing
+                    }
+                }
+                //Koraro
+                if (indicators.koraro_cur_muac && indicators.koraro_cur_muac.value) {
+                    try {
                         var koraro_cur_muac = parseFloat(indicators.koraro_cur_muac.value);
                         last_muac_indicators["muac_reading"] = case_id;
-                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac <12.5) || (koraro_cur_muac <12)) {
+                        if (koraro_cur_muac < 12) {
                             last_muac_indicators["muac_wasting"] = case_id;
                         }
                     } catch (e) {

@@ -12,6 +12,7 @@ from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.feature_previews import CALLCENTER
 import settings
 
 from django import forms
@@ -373,12 +374,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         choices=[]
     )
-    default_sms_backend_id = CharField(
-        label=_("Default SMS Backend"),
-        required=False,
-        help_text=_("This SMS backend will be used if a contact has no "
-                    "backend specified.")
-    )
     call_center_enabled = BooleanField(
         label=_("Call Center Application"),
         required=False,
@@ -439,7 +434,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         domain = kwargs.pop('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        if not (user and user.is_previewer):
+        if not CALLCENTER.enabled(domain):
             self.fields['call_center_enabled'].widget = forms.HiddenInput()
             self.fields['call_center_case_owner'].widget = forms.HiddenInput()
             self.fields['call_center_case_type'].widget = forms.HiddenInput()
@@ -508,7 +503,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
-            domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True

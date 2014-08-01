@@ -54,7 +54,7 @@
             {% if question.options %}
                 <div class="form-data-readable">
                 {% for option in question.options %}
-                    {% if option.value == question.response %}
+                    {% if option.value in question.response.split %}
                         {{ option.label|linebreaksbr }}
                     {% endif %}
                 {% endfor %}
