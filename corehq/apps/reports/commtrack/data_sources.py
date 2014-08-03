@@ -294,10 +294,9 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 ).exclude(
                     report__date__gte=self.end_date
                 ).order_by('-report__date')
-
                 matched = False
                 for trans in transactions:
-                    if XFormInstance.get(trans.report.form_id) in form_xmlnses:
+                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
                         yield {
                             'loc_id': loc._id,
                             'loc_path': loc.path,
