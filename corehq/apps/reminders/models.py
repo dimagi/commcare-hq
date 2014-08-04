@@ -10,9 +10,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.reminders.util import get_form_name
-from corehq.apps.reminders.management.commands.run_reminder_queue import (
-    ReminderEnqueuingOperation)
+from corehq.apps.reminders.util import get_form_name, enqueue_reminder_directly
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
@@ -942,7 +940,7 @@ class CaseReminderHandler(Document):
             if settings.REMINDERS_QUEUE_ENABLED:
                 reminder.save()
                 if send_immediately:
-                    ReminderEnqueuingOperation().enqueue_directly(reminder)
+                    enqueue_reminder_directly(reminder)
             else:
                 sent = False
                 if send_immediately:
