@@ -61,6 +61,10 @@ class ESError(Exception):
     pass
 
 
+def run_query(url, q):
+    return get_es().get(url, data=q)
+
+
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))

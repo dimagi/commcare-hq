@@ -133,9 +133,9 @@ class RecapPassage(fluff.Calculator):
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
         for product in form.form['products']:
-            if 'product_name' in product:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                 yield {
-                    "date": form_date(form),
+                    "date": real_date(form),
                     "value": product['outside_receipts_amt'],
                     "group_by": [product['product_name']]
                 }

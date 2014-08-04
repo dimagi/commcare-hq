@@ -4,3 +4,7 @@ class LinkedSupplyPointNotFoundError(Exception):
 
 class NotAUserClassError(Exception):
     pass
+
+
+class InvalidProductException(Exception):
+    pass

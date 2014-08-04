@@ -1,6 +1,7 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -124,7 +125,7 @@
             })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-            }
+            };
         }
 
         function PillowtopViewModel() {
@@ -151,6 +152,12 @@
             setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
             setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
         });
+
+        $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
+            var pillowName = $(this).val();
+            $(".modal-header h3").text(pillowName);
+            $(".modal-body #pillow_name").val(pillowName);
+        });
     </script>
 
 
@@ -159,7 +166,7 @@
     <div class="row-fluid">
         {% with deploy_history|first as last_deploy %}
         <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
-         at {{ last_deploy.date|date:"H:i:s"}} UTC by {{ last_deploy.user }}</span>
+         at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}</span>
         {% endwith %}
     </div>
     <div class="row-fluid">
@@ -249,6 +256,7 @@
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
+                    <th>Reset pillow checkpoint</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: pillows">
@@ -270,10 +278,40 @@
                         <span data-bind="text: seq"></span>
                         / <span data-bind="text: db_seq"></span>
                     </td>
+                    <td>
+                        <a class="btn btn-info pull-right reset_pillow_checkpoint_btn" data-bind="value: name" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
+                            {% trans "Reset" %}
+                        </a>
+                    </td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <div class="row-fluid" id="elastic-vs-couch">
+        <h3>Elasticsearch/Couch/Postgres comparison</h3>
+        <table class="table">
+            <thread>
+            <tr>
+                <th>Description</th>
+                <th>CouchDB</th>
+                <th>Elasticsearch</th>
+                <th>PostgreSQL</th>
+            </tr>
+            </thread>
+            <tbody>
+            {% for comparison in es_couch_comparisons %}
+            <tr>
+                <td>{{ comparison.description }}</td>
+                <td>{{ comparison.couch_docs }}</td>
+                <td>{{ comparison.es_docs }}</td>
+                <td>{{ comparison.sql_rows }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
         <table class="table">
@@ -347,12 +385,13 @@
     {% include "hqadmin/partials/deploy_history.html" %}
     </div>
     <div class="row-fluid">
-        <h3>Recent Database Changes</h3>
+        <h3>Recent Database Changes <small><a href="{% url 'download_recent_changes' %}">download</a></small></h3>
         <table class="table table-striped">
             <thead>
             <tr>
                 <th>Domain</th>
                 <th>Doc Type</th>
+                <th>Date modified (guess)</th>
                 <th>id</th>
                 <th>rev</th>
             </tr>
@@ -362,6 +401,7 @@
             <tr>
                 <td>{{ change.domain }}</td>
                 <td>{{ change.doc_type }}</td>
+                <td>{{ change.date }}</td>
                 <td>{{ change.id }}</td>
                 <td>{{ change.rev }}</td>
             </tr>
@@ -369,4 +409,8 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
 {% endblock %}

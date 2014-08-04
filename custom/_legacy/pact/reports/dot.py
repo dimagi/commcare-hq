@@ -5,6 +5,7 @@ from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from dimagi.utils.decorators.memoized import memoized
 
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
 from pact.models import PactPatientCase, DOTSubmission, CObservation
@@ -17,18 +18,20 @@ class PactDOTPatientField(BaseSingleOptionFilter):
     default_option = "Select DOT Patient"
 
     @property
+    @memoized
     def options(self):
-        patient_cases = self.get_pact_cases()
-        case_type = self.request.GET.get(self.slug, '')
-
-        self.selected = case_type
-        self.options = [
+        return [
             dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid.#value', '[none]'), case['name']))
-            for case in patient_cases]
+            for case in self.get_pact_cases()
+        ]
+
+    @property
+    def selected(self):
+        return self.request.GET.get(self.slug, '')
 
     @classmethod
     def get_pact_cases(cls):
-        #query couch to get reduce count of all PACT cases
+        # query couch to get reduce count of all PACT cases
         case_es = ReportCaseES(PACT_DOMAIN)
         total_count = CommCareCase.get_db().view('hqcase/types_by_domain',
                                                  key=["pact", PACT_CASE_TYPE]).first().get('value', 100)

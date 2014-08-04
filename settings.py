@@ -214,6 +214,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -794,6 +795,8 @@ COMPRESS_PRECOMPILERS = (
 )
 COMPRESS_ENABLED = True
 
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
@@ -1134,6 +1137,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

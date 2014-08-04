@@ -24,6 +24,7 @@ def require_billing_admin():
                 raise Http404()
             is_billing_admin = BillingAccountAdmin.get_admin_status_and_account(
                 request.couch_user, request.domain)[0]
+            request.is_billing_admin = is_billing_admin
             if not (is_billing_admin or request.couch_user.is_superuser):
                 raise Http404()
             return fn(request, *args, **kwargs)

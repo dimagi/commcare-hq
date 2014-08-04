@@ -5,16 +5,20 @@ from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from corehq import toggles
+from django.db import models
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
-from corehq.apps.accounting.models import Subscription, Invoice
+from corehq.apps.accounting.models import (
+    Subscription, Invoice, BillingAccount, BillingAccountType,
+)
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -23,6 +27,7 @@ from corehq.apps.users.models import FakeUser, WebUser
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
+import corehq.apps.accounting.filters as filters
 
 logger = get_task_logger('accounting')
 
@@ -188,7 +193,7 @@ def remind_subscription_ending_30_days(based_on_date=None):
     """
     Sends reminder emails for subscriptions ending 10 days from now.
     """
-    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(10, exclude_trials=False)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -196,15 +201,15 @@ def remind_subscription_ending_30_days(based_on_date=None):
     """
     Sends reminder emails for subscriptions ending tomorrow.
     """
-    send_subscription_reminder_emails(1)
+    send_subscription_reminder_emails(1, exclude_trials=False)
 
 
-def send_subscription_reminder_emails(num_days):
+def send_subscription_reminder_emails(num_days, exclude_trials=True):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(
-        is_trial=False, date_end=date_in_n_days
-    )
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    if exclude_trials:
+        ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
         subscription.send_ending_reminder_email()
 
@@ -258,6 +263,7 @@ def weekly_digest():
         ('end_date_startdate', today.isoformat()),
         ('end_date_enddate', in_forty_days.isoformat()),
         ('active_status', 'Active'),
+        (filters.TrialStatusFilter.slug, filters.TrialStatusFilter.NON_TRIAL),
     ))
     request.GET = QueryDict(params)
     request.couch_user = FakeUser(
@@ -299,3 +305,30 @@ def weekly_digest():
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
+
+
+# Email this out every Tuesday morning
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=2))
+def blank_contact_emails_digest():
+    all_billing_accounts_no_emails = BillingAccount.objects.filter(
+        models.Q(billingcontactinfo=None) |
+        models.Q(billingcontactinfo__emails=None)
+    ).exclude(account_type=BillingAccountType.TRIAL)
+    if all_billing_accounts_no_emails.count() > 0:
+        email_content = render_to_string(
+            'accounting/account_emails_digest.html', {
+                'accounts': all_billing_accounts_no_emails,
+                'base_url': Site.objects.get_current().domain,
+            }
+        )
+        from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
+        send_HTML_email(
+            "Accounts Without Contact Emails: %d needing attention" % all_billing_accounts_no_emails.count(),
+            settings.INVOICING_CONTACT_EMAIL,
+            email_content,
+            email_from=from_email,
+        )
+        logger.info(
+            "[BILLING] Sent summary of accounts without contact emails"
+        )
+

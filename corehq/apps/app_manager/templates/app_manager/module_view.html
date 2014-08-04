@@ -31,29 +31,36 @@
         {% endif %}
 
         $(function () {
-            var $home = $("#case-detail-screen-config");
-            var detailScreenConfig = DetailScreenConfig.init($home, {
-                state: {
-                    type: 'case',
-                    short: {{ module.case_details.short|JSON }},
-                    long: {{ module.case_details.long|JSON }}
-                },
-                properties: {{ case_properties|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }},
-                edit: {{ edit|JSON }},
-                saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
-                parentModules: {{ parent_modules|JSON }},
-                parentSelect: {{ module.parent_select|JSON }}
-            });
+            var details = {{ details|JSON }};
+            for (var i = 0; i < details.length; i++) {
+                var detail = details[i];
+                var $detail_home = $("#" + detail.type + "-detail-screen-config");
+                var detailScreenConfig = DetailScreenConfig.init($detail_home, {
+                    state: {
+                        type: detail.type,
+                        short: detail.short,
+                        long: detail.long
+                    },
+                    model: detail.model,
+                    properties: detail.properties,
+                    lang: {{ lang|JSON }},
+                    langs: {{ app.langs|JSON }},
+                    edit: {{ edit|JSON }},
+                    saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
+                    parentModules: {{ parent_modules|JSON }},
+                    parentSelect: detail.parent_select
+                });
 
-            var parsedSortRows = JSON.parse({{ sortElements|JSON }});
-            for (var i = 0; i < parsedSortRows.length; i++) {
-                detailScreenConfig.sortRows.addSortRow(
-                    parsedSortRows[i].field,
-                    parsedSortRows[i].type,
-                    parsedSortRows[i].direction
-                );
+                if (detail.sort_elements) {
+                    var parsedSortRows = JSON.parse(detail.sort_elements);
+                    for (var j = 0; j < parsedSortRows.length; j++) {
+                        detailScreenConfig.sortRows.addSortRow(
+                                parsedSortRows[j].field,
+                                parsedSortRows[j].type,
+                                parsedSortRows[j].direction
+                        );
+                    }
+                }
             }
         });
         $(function () {
@@ -76,7 +83,9 @@
             COMMCAREHQ.app_manager.module_view = {
                 requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
             };
-            ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
+            if ($('#detail-screen-config-warning').length) {
+                ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
+            }
         });
         $(function () {
             COMMCAREHQ.app_manager.setupValidation(
@@ -107,11 +116,13 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% for detail in details %}
     <li>
-        <a href="#detail-screen-config-tab" data-toggle="tab">
-            {% trans "Case List" %}
+        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
+            {{ detail.label }}
         </a>
     </li>
+    {% endfor %}
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="module-settings">
@@ -128,7 +139,8 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="control-group">
+                {% block settings_fields %}
+                 <div class="control-group">
                     <label class="control-label">
                         {% trans "Menu Mode" %}
                     </label>
@@ -149,6 +161,7 @@
                 </div>
 
                 {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                {% endblock %}
             </fieldset>
         </form>
     </div>
@@ -210,21 +223,16 @@
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
-                {% if app.application_version == '2.0' and request.project.survey_management_enabled %}
+                {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
             </fieldset>
         </form>
     </div>
 
-    {% comment %}
-    <div class="message" id="case-properties-warning">
-        I can't find any properties for this module's case. To generate
-        cases with properties, select "Updates a case" under a form's "Actions" and make a list of properties.
-    </div>
-    {% endcomment %}
-
-    <div class="tab-pane" id="detail-screen-config-tab">
+    {% for detail in details %}
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+        {% if detail.type == 'case' %}
         <div class="alert alert-warning" id="detail-screen-config-warning"
              data-bind="visible: !requires_case_details()">
             {% blocktrans %}
@@ -236,8 +244,9 @@
                 </ol>
             {% endblocktrans %}
         </div>
-        <div id="case-detail-screen-config-body">
-            <div id="case-detail-screen-sort">
+        {% endif %}
+        <div id="{{ detail.type }}-detail-screen-config-body">
+            <div id="{{ detail.type }}-detail-screen-sort">
             {% if app.enable_multi_sort %}
                 <legend data-bind="visible: rowCount() > 0">
                     {% trans "Sort Properties" %}
@@ -256,7 +265,7 @@
                                   {% endblocktrans %}" ></span>
                     </span>
                 </legend>
-                <div id="sorting-list" class="ui-sortable">
+                <div class="ui-sortable">
                     <table data-bind="visible: rowCount() > 0"
                            class="table table-condensed">
                         <thead>
@@ -319,24 +328,27 @@
                 </div>
             {% endif %}
             </div>
-            <div id="case-detail-screen-config">
+            <div id="{{ detail.type }}-detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
             </div>
-            <div id="case-detail-screen-parent" data-bind="visible: moduleOptions().length">
+            {% if detail.parent_select %}
+            <div id="{{ detail.type }}-detail-screen-parent" data-bind="visible: moduleOptions().length">
                 <legend>{% trans "Parent Child Selection" %}</legend>
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: active"/>
                     {% trans "Select Parent First" %}
                 </label>
                 <div data-bind="visible: active">
-                {% trans "Use Case List from module" %}
-                <select data-bind="optstr: moduleOptions, value: moduleId"></select>
+                    {% trans "Use Case List from module" %}
+                    <select data-bind="optstr: moduleOptions, value: moduleId"></select>
                 </div>
-            </div>
+             </div>
+            {% endif %}
         </div>
     </div>
+    {% endfor %}
 </div>
 </div>
 {% endblock %}

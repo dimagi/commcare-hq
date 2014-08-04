@@ -19405,6 +19405,14 @@ msgstr "गृह भ्रमण की जानकारी"
 msgid "Update Billing Info"
 msgstr ""
 
+#: custom/opm/opm_reports/condition_met.py:194
+msgid "pregnant"
+msgstr "गर्भवती"
+
+#: custom/opm/opm_reports/condition_met.py:194
+msgid "mother"
+msgstr "माँ"
+
 #, fuzzy
 #~ msgid "Update it with new information."
 #~ msgstr "गृह भ्रमण की जानकारी"

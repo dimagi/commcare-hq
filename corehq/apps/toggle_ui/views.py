@@ -62,7 +62,7 @@ class ToggleEditView(ToggleBaseView):
         if not self.toggle_slug in [t.slug for t in self.all_toggles()]:
             raise Http404()
         try:
-            return Toggle.get(generate_toggle_id(self.toggle_slug))
+            return Toggle.get(self.toggle_slug)
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 

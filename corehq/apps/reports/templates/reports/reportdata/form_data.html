@@ -32,5 +32,10 @@
 {% endblock %}
 
 {% block main_column %}
+    {% if not instance.initial_processing_complete and request|toggle_enabled:'CASE_REBUILD'%}
+    <div class="alert alert-error">
+        {% trans "This form's case changes were not processed because of errors that occurred during case processing." %}
+    </div>
+    {% endif %}
     {% render_form instance domain form_render_options %}
 {% endblock %}

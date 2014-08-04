@@ -1,6 +1,7 @@
 import copy
 import json
 import re
+from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -718,6 +719,7 @@ MATCH_TYPE_CHOICES = (
     (MATCH_REGEX, ugettext_noop("matches regular expression")),
 )
 
+START_REMINDER_ALL_CASES = 'start_all_cases'
 START_REMINDER_ON_CASE_DATE = 'case_date'
 START_REMINDER_ON_CASE_PROPERTY = 'case_property'
 
@@ -726,6 +728,8 @@ START_DATE_OFFSET_AFTER = 'offset_after'
 
 START_PROPERTY_OFFSET_DELAY = 'offset_delay'
 START_PROPERTY_OFFSET_IMMEDIATE = 'offset_immediate'
+
+START_PROPERTY_ALL_CASES_VALUE = '_id'
 
 EVENT_TIMING_IMMEDIATE = 'immediate'
 
@@ -754,11 +758,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label=ugettext_noop("Send Reminder"),
+        label=ugettext_noop("Send Reminder To"),
         required=False,
         choices=(
-            (START_REMINDER_ON_CASE_DATE, ugettext_noop("on a date specified in the Case")),
-            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("when the Case is in the following state")),
+            (START_REMINDER_ALL_CASES, ugettext_noop("All Cases")),
+            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("Only Cases in Following State")),
+            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Cases Based on Date in Case")),
         ),
     )
     ## send options > start_reminder_on = case_date
@@ -942,17 +947,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Please Specify Custom Content Handler")
     )
 
-    def __init__(self, data=None, is_previewer=False, is_superuser=False,
+    def __init__(self, data=None, is_previewer=False,
                  domain=None, is_edit=False, can_use_survey=False,
                  use_custom_content_handler=False,
-                 custom_content_handler=None, *args, **kwargs
+                 custom_content_handler=None,
+                 available_languages=None, *args, **kwargs
     ):
+        available_languages = available_languages or ['en']
         self.initial_event = {
             'day_num': 1,
             'fire_time_type': FIRE_TIME_DEFAULT,
-            'message': {
-                'en': "",
-            },
+            'message': dict([(l, '') for l in available_languages]),
         }
 
         if 'initial' not in kwargs:
@@ -966,11 +971,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         self.domain = domain
         self.is_edit = is_edit
-        self.is_superuser = is_superuser
+        self.is_previewer = is_previewer
         self.use_custom_content_handler = use_custom_content_handler
         self.custom_content_handler = custom_content_handler
 
         self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
+        self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
             method_choices = copy.copy(self.fields['method'].choices)
@@ -988,9 +994,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'nickname',
-                css_class='input-large',
+            crispy.Fieldset(
+                _("Basic Information"),
+                crispy.Field(
+                    'nickname',
+                    css_class='input-large',
+                ),
             ),
             self.section_start,
             self.section_recipient,
@@ -1250,18 +1259,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                    "the start condition is no longer true."),
                 css_id="stop-condition-group",
             ),
-            BootstrapMultiField(
-                _("Default Language"),
-                InlineField(
-                    'default_lang',
-                    data_bind="options: available_languages, "
-                              "value: default_lang, "
-                              "optionsText: 'name', optionsValue: 'langcode'",
-                    css_class="input-xlarge",
+            crispy.Div(
+                BootstrapMultiField(
+                    _("Default Language"),
+                    InlineField(
+                        'default_lang',
+                        data_bind="options: available_languages, "
+                                  "value: default_lang, "
+                                  "optionsText: 'name', optionsValue: 'langcode'",
+                        css_class="input-xlarge",
+                    ),
                 ),
-                crispy.HTML('<a href="#add-language-modal" '
-                            'class="btn btn-primary" style="margin-left: 5px;" '
-                            'data-toggle="modal">Manage Languages</a>'),
+                data_bind="visible: showDefaultLanguageOption",
             ),
             crispy.Div(
                 FieldWithHelpBubble(
@@ -1310,13 +1319,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
-            crispy.Div(*self.additional_advanced_options),
+            BootstrapMultiField(
+                "",
+                InlineField(
+                    'use_custom_content_handler',
+                    data_bind="checked: use_custom_content_handler",
+                ),
+                InlineField(
+                    'custom_content_handler',
+                    css_class="input-xxlarge",
+                    data_bind="visible: use_custom_content_handler",
+                ),
+            ),
             active=False,
         )
-
-    @property
-    def additional_advanced_options(self):
-        return []
 
     @property
     def current_values(self):
@@ -1387,18 +1403,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return case_property
 
     def clean_start_property(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+        start_reminder_on = self.cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
             start_property = self.cleaned_data['start_property'].strip()
             if not start_property:
                 raise ValidationError(_(
                     "Please enter a case property for the match criteria."
                 ))
             return start_property
+        if start_reminder_on == START_REMINDER_ALL_CASES:
+            return START_PROPERTY_ALL_CASES_VALUE
         return None
 
     def clean_start_match_type(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
+        start_reminder_on = self.cleaned_data['start_reminder_on']
+        if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
             return self.cleaned_data['start_match_type']
+        if start_reminder_on == START_REMINDER_ALL_CASES:
+            return MATCH_ANY_VALUE
         return None
 
     def clean_start_value(self):
@@ -1480,6 +1502,24 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return match_value
         return None
 
+    def clean_global_timeouts(self):
+        global_timeouts = self.cleaned_data['global_timeouts']
+        if global_timeouts:
+            timeouts_str = global_timeouts.split(",")
+            timeouts_int = []
+            for t in timeouts_str:
+                try:
+                    t = int(t.strip())
+                    assert t > 0
+                    timeouts_int.append(t)
+                except (ValueError, AssertionError):
+                    raise ValidationError(_(
+                        "Timeout intervals must be a list of positive "
+                        "numbers separated by commas."
+                    ))
+            return timeouts_int
+        return []
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1558,21 +1598,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if (method == METHOD_SMS_CALLBACK
                 or method == METHOD_IVR_SURVEY
                 or method == METHOD_SMS_SURVEY):
-                global_timeouts = self.cleaned_data['global_timeouts']
-                if global_timeouts:
-                    timeouts_str = global_timeouts.split(",")
-                    timeouts_int = []
-                    for t in timeouts_str:
-                        try:
-                            t = int(t.strip())
-                            assert t > 0
-                            timeouts_int.append(t)
-                        except (ValueError, AssertionError):
-                            raise ValidationError(_(
-                                "Timeout intervals must be a list of positive "
-                                "numbers separated by commas."
-                            ))
-                    event['callback_timeout_intervals'] = timeouts_int
+                event['callback_timeout_intervals'] = self.cleaned_data.get(
+                    'global_timeouts', [])
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
@@ -1632,13 +1659,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return self.cleaned_data['force_surveys_to_use_triggered_case']
 
     def clean_use_custom_content_handler(self):
-        if self.is_superuser:
+        if self.is_previewer:
             return self.cleaned_data["use_custom_content_handler"]
         else:
             return self.use_custom_content_handler
 
     def clean_custom_content_handler(self):
-        if self._cchq_is_superuser:
+        if self.is_previewer:
             value = self.cleaned_data["custom_content_handler"]
             if self.cleaned_data["use_custom_content_handler"]:
                 if value in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
@@ -1709,7 +1736,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         reminder_handler.save()
 
     @classmethod
-    def compute_initial(cls, reminder_handler):
+    def compute_initial(cls, reminder_handler, available_languages):
         initial = {}
         fields = cls.__dict__['base_fields'].keys()
         for field in fields:
@@ -1717,14 +1744,21 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
                     for event in current_val:
-                        if not event.message:
-                            event.message = {(reminder_handler.default_lang or 'en'): ''}
+                        messages = dict([(l, '') for l in available_languages])
+                        if event.message:
+                            for language, text in event.message.items():
+                                if language in available_languages:
+                                    messages[language] = text
+                        event.message = messages
                         if event.form_unique_id:
-                            form = CCHQForm.get_form(event.form_unique_id)
-                            event.form_unique_id = json.dumps({
-                                'text': form.full_path_name,
-                                'id': event.form_unique_id,
-                            })
+                            try:
+                                form = CCHQForm.get_form(event.form_unique_id)
+                                event.form_unique_id = json.dumps({
+                                    'text': form.full_path_name,
+                                    'id': event.form_unique_id,
+                                })
+                            except ResourceNotFound:
+                                pass
                     current_val = json.dumps([e.to_json() for e in current_val])
                 if field == 'callback_timeout_intervals':
                     current_val = ",".join(current_val)
@@ -1735,14 +1769,25 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     current_val = RECIPIENT_ALL_SUBCASES
                 if current_val is not Ellipsis:
                     initial[field] = current_val
+                if field is 'custom_content_handler' and current_val is not None:
+                    initial['use_custom_content_handler'] = True
+                if field is 'default_lang' and current_val not in available_languages:
+                    initial['default_lang'] = 'en'
             except AttributeError:
                 pass
 
         if reminder_handler.start_date is None:
-            start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
-            initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
-                                                     if reminder_handler.start_offset == 0
-                                                     else START_PROPERTY_OFFSET_DELAY)
+            if (initial['start_property'] == START_PROPERTY_ALL_CASES_VALUE
+                and initial['start_match_type'] == MATCH_ANY_VALUE
+            ):
+                start_reminder_on = START_REMINDER_ALL_CASES
+                del initial['start_property']
+                del initial['start_match_type']
+            else:
+                start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
+                initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
+                                                         if reminder_handler.start_offset == 0
+                                                         else START_PROPERTY_OFFSET_DELAY)
         else:
             start_reminder_on = START_REMINDER_ON_CASE_DATE
             initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
@@ -1876,23 +1921,6 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
                                    "option is useful, for example, if the recipient has chosen a "
                                    "specific time to receive the message.")
-            ),
-        ]
-
-    @property
-    def additional_advanced_options(self):
-        return [
-            BootstrapMultiField(
-                "",
-                InlineField(
-                    'use_custom_content_handler',
-                    data_bind="checked: use_custom_content_handler",
-                ),
-                InlineField(
-                    'custom_content_handler',
-                    css_class="input-xxlarge",
-                    data_bind="visible: use_custom_content_handler",
-                ),
             ),
         ]
 

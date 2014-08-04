@@ -243,8 +243,11 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
     try:
-        client = get_redis_client()
-        client.incr("reminder-rule-processing-current-%s" % handler._id)
+        # It shouldn't be necessary to lock this out, but a deadlock can
+        # happen in rare cases without it
+        with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
+            client = get_redis_client()
+            client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
 
@@ -837,7 +840,9 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if case.closed or case.type != self.case_type or case.doc_type.endswith("-Deleted") or (self.recipient == RECIPIENT_USER and not user):
+        if (case.closed or case.type != self.case_type or
+            case.doc_type.endswith("-Deleted") or self.deleted() or
+            (self.recipient == RECIPIENT_USER and not user)):
             if reminder:
                 reminder.retire()
         else:
@@ -984,13 +989,14 @@ class CaseReminderHandler(Document):
                 except:
                     pass
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
-                    args=(self, schedule_changed, prev_definition))
+                    args=(self, schedule_changed, prev_definition),
+                    use_critical_section=True)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5)
+                max_threads=5, use_critical_section=True)
 
     @classmethod
     def get_handlers(cls, domain, case_type=None, ids_only=False):
