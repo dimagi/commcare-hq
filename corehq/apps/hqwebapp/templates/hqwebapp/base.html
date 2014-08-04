@@ -378,6 +378,40 @@
                 </div>
             </div>
             {% endif %}
+
+            {% if billing_notify_contact_missing %}
+            <div class="modal hide fade" id="billingContactMissing">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans 'Important Message' %} <small>{% trans 'Missing Contact Information' %}</small></h3>
+                </div>
+                <div class="modal-body">
+                    <p class="lead">
+                        {% blocktrans %}
+                        We appear to be missing your billing contact information,
+                        and may not be able to communicate important announcements
+                        regarding your subscription.
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans %}
+                        Please take a moment
+                        to <a href="{{ billing_update_contact_url }}">fill out your contact infomration</a>.
+                        Thank you.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn"
+                            data-dismiss="modal">
+                        {% trans "Close" %}
+                    </button>
+                    <a href="{{ billing_update_contact_url }}" class="btn btn-success">
+                        {% trans 'Fix This' %}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
         {% endblock %}
         </div>
         <!--Begin javascript -->
@@ -574,6 +608,14 @@
         <script>
             $(function () {
                 $('#trial-notice').modal('show');
+            });
+        </script>
+        {% endif %}
+
+        {% if billing_notify_contact_missing %}
+        <script>
+            $(function () {
+                $('#billingContactMissing').modal('show');
             });
         </script>
         {% endif %}
