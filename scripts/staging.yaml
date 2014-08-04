@@ -10,8 +10,6 @@ branches:
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
-#  - vellum-requirejs+use-django-compressor
-#  - use-django-compressor # bb 7/1
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
 #  - emwf-refactor  # Ethan 7/25
@@ -19,6 +17,7 @@ branches:
   - closecase  # SK 7/28
   - basic-auth-submissions  # cz 7/30
   - archive-to-deactivate  # cz 7/30
+  - subscription-no-contact-info # bb 8/4
 submodules:
   submodules/couchlog-src:
     branches:
