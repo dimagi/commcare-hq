@@ -3,6 +3,8 @@ from corehq.apps.hqadmin.reports import (
     AdminAppReport,
     AdminUserReport,
     FormSubmissionsReport,
+    FormSubmissionsMobileReport,
+    FormSubmissionsWebReport,
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
 )
@@ -270,6 +272,8 @@ ADMIN_REPORTS = (
         RealProjectSpacesReport,
         RealProjectSpacesPlansReport,
         FormSubmissionsReport,
+        FormSubmissionsMobileReport,
+        FormSubmissionsWebReport,
     )),
 )
 

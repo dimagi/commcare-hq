@@ -396,6 +396,20 @@ class FormSubmissionsReport(GlobalAdminReports):
     name = _('Form Submissions')
     indicators = [
         'forms',
+    ]
+
+
+class FormSubmissionsMobileReport(GlobalAdminReports):
+    slug = 'form_submissions_mobile'
+    name = _('Form Submissions - Mobile')
+    indicators = [
         'forms_mobile',
+    ]
+
+
+class FormSubmissionsWebReport(GlobalAdminReports):
+    slug = 'form_submissions_web'
+    name = _('Form Submissions - Web')
+    indicators = [
         'forms_web',
     ]
