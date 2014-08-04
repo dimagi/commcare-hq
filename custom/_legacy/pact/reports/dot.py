@@ -20,8 +20,9 @@ class PactDOTPatientField(BaseSingleOptionFilter):
     @property
     @memoized
     def options(self):
+        fmt = lambda case: "(%s) - %s" % (case.get('pactid.#value', '[none]'), case['name'])
         return [
-            dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid.#value', '[none]'), case['name']))
+            (case['_id'], fmt(case))
             for case in self.get_pact_cases()
         ]
 
