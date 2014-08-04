@@ -10,7 +10,7 @@ from dimagi.utils.couch import CriticalSection
 # In minutes
 CASE_CHANGED_RETRY_INTERVAL = 5
 CASE_CHANGED_RETRY_MAX = 3
-CELERY_REMINDERS_QUEUE = "reminders_queue"
+CELERY_REMINDERS_QUEUE = "reminder_queue"
 
 if not settings.REMINDERS_QUEUE_ENABLED:
     @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings,
