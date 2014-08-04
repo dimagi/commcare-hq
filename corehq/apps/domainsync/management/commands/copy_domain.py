@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue
 import sys
 import os
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
@@ -61,7 +62,13 @@ class Command(BaseCommand):
                     default='',
                     help="Name of postgres database to pull additional data from. This should map to a "
                          "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommTrack models.")
+                         "copied. This is currently used to pull CommTrack models."),
+        make_option('--postgres-password',
+                    action='store',
+                    dest='postgres_password',
+                    default='',
+                    help="Password for postgres database to pull additional data from. If not specified will "
+                         "default to the value in settings.DATABASES")
     )
 
     def handle(self, *args, **options):
@@ -81,7 +88,11 @@ class Command(BaseCommand):
         if simulate:
             print "\nSimulated run, no data will be copied.\n"
 
+        if options['postgres_db'] and options['postgres_password']:
+            settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
+
         self.targetdb = get_db()
+
 
         domain_doc = Domain.get_by_name(domain)
         if domain_doc is None:
