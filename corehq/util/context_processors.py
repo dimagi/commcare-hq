@@ -1,3 +1,4 @@
+import datetime
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
@@ -105,4 +106,36 @@ def raven(request):
     """lets you know whether raven is being used"""
     return {
         'RAVEN': RAVEN
+    }
+
+
+def accounting(request):
+    """"""
+    billing_notify_contact_missing = False
+    update_contact_url = None
+    if (hasattr(request, 'subscription')
+        and request.subscription is not None
+    ):
+        from corehq.apps.accounting.models import BillingContactInfo
+        try:
+            contact_info = request.subscription.account.billingcontactinfo
+            contact_missing = contact_info.emails is None
+        except BillingContactInfo.DoesNotExist:
+            contact_missing = True
+        if contact_missing:
+            from corehq.apps.domain.views import EditExistingBillingAccountView
+            update_contact_url = reverse(
+                EditExistingBillingAccountView.urlname,
+                args=[request.subscription.subscriber.domain]
+            )
+            billing_notify_contact_missing = (
+                hasattr(request, 'couch_user')
+                and request.couch_user.is_domain_admin()
+                and request.subscription.subscriber.subscription_set.filter(
+                    is_trial=False).count() > 0
+                and not request.META['PATH_INFO'].startswith(update_contact_url)
+            )
+    return {
+        'billing_notify_contact_missing': billing_notify_contact_missing,
+        'billing_update_contact_url': update_contact_url,
     }
