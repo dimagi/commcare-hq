@@ -35,7 +35,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
-from custom.opm import HealthStatusMixin, normal_format, format_percent
+from custom.opm import BaseMixin, normal_format, format_percent
 from custom.opm.opm_reports.conditions_met import ConditionsMet
 from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter, SnapshotFilter
 from custom.opm.opm_reports.health_status import HealthStatus
@@ -256,7 +256,7 @@ class OpmHealthStatusSqlData(SqlData):
         ]
 
 
-class BaseReport(HealthStatusMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
+class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -976,7 +976,7 @@ class HealthMapSource(HealthStatusReport):
         return new_rows
 
 
-class HealthMapReport(HealthStatusMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
+class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 

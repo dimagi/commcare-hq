@@ -1,4 +1,4 @@
-class HealthStatusMixin(object):
+class BaseMixin(object):
 
     @property
     def blocks(self):
