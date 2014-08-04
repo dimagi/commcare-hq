@@ -76,7 +76,8 @@ def fire_reminder(reminder_id):
     reminder = CaseReminder.get(reminder_id)
     # This key prevents doc update conflicts with rule running
     key = "rule-update-definition-%s-case-%s" % (reminder.handler_id, reminder.case_id)
-    with CriticalSection([key], timeout=(REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)):
+    with CriticalSection([key],
+        timeout=(settings.REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)):
         # Refresh the reminder
         reminder = CaseReminder.get(reminder_id)
         if (not reminder.retired and reminder.active
