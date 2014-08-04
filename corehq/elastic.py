@@ -67,7 +67,7 @@ def run_query(url, q):
 
 def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None):
     histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval, user_type_mobile=user_type_mobile))
                         for d in domains])
 
     def _total_until_date(histo_type, doms=None):
@@ -87,10 +87,10 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
                 "terms": {
                     "form.meta.userID":
                         [mobile_user._id for mobile_user in CommCareUser.all()
-                         if mobile_user.doc_type == "CommCareUser"][:3]
+                         if mobile_user.doc_type == "CommCareUser"]
                         if user_type_mobile else
                         [web_user._id for web_user in WebUser.all()
-                         if web_user.doc_type == "WebUser"][:3]
+                         if web_user.doc_type == "WebUser"]
                 }
             }])
 
@@ -105,7 +105,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_mobile=None):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -129,6 +129,19 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
                             }}}]}}},
         "size": 0
     })
+
+    if user_type_mobile is not None:
+        from corehq.apps.users.models import WebUser, CommCareUser
+        q["facets"]["histo"]["facet_filter"]["and"].extend([{
+            "terms": {
+                "form.meta.userID":
+                    [mobile_user._id for mobile_user in CommCareUser.all()
+                     if mobile_user.doc_type == "CommCareUser"]
+                    if user_type_mobile else
+                    [web_user._id for web_user in WebUser.all()
+                     if web_user.doc_type == "WebUser"]
+            }
+        }])
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
