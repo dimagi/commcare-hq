@@ -12,10 +12,27 @@ function lcsMerge(X, Y, isEqual) {
         return a === b;
     };
     var cache = {};
+    cache.get = function (i, j) {
+        var cache_key = i + ' ' + j;
+        var val = cache[cache_key];
+        if (val) {
+            return {
+                lcs_length: val.lcs_length,
+                merge: val.merge.slice(0)
+            };
+        } else {
+            return null;
+        }
+    };
+    cache.set = function (i, j, val) {
+        var cache_key = i + ' ' + j;
+        cache[cache_key] = val;
+    };
     function recLcsMerge(i, j) {
-        var val, val1, val2, recur = recLcsMerge, cache_key = i + ' ' + j;
-        if (cache[cache_key]) {
-            return cache[cache_key];
+        var val, val1, val2, recur = recLcsMerge;
+        val = cache.get(i, j);
+        if (val) {
+            return val;
         }
         if (i === 0 && j === 0) {
             val = {
@@ -43,11 +60,8 @@ function lcsMerge(X, Y, isEqual) {
                 val.merge.push({x: false, y: true, token: Y[j - 1]});
             }
         }
-        cache[cache_key] = {
-            lcs_length: val.lcs_length,
-            merge: val.merge.slice(0)
-        };
-        return val;
+        cache.set(i, j, val);
+        return cache.get(i, j);
     }
 
     return recLcsMerge(X.length, Y.length).merge;
