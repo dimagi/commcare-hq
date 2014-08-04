@@ -19,6 +19,9 @@ branches:
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 submodules:
+  submodules/casexml-src:
+    branches:
+      - stock-migration # cz 8/4
   submodules/couchlog-src:
     branches:
       - static-tags # Nick P 5/20
