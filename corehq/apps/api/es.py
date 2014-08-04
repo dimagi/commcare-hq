@@ -553,7 +553,8 @@ class ESQuerySet(object):
                 direction = 'desc'
                 field = field[1:]
 
-            new_payload['sort'].append({field: direction})
+            new_payload['sort'].append({field: {'order': direction,
+                                                'ignore_unmapped': True}})
 
         return self.with_fields(payload=new_payload)
 
