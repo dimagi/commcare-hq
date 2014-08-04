@@ -13,8 +13,8 @@ CASE_CHANGED_RETRY_MAX = 3
 CELERY_REMINDERS_QUEUE = "reminder_queue"
 
 if not settings.REMINDERS_QUEUE_ENABLED:
-    @periodic_task(run_every=timedelta(minutes=1), queue=getattr(settings,
-        'CELERY_PERIODIC_QUEUE', settings.CELERY_MAIN_QUEUE))
+    @periodic_task(run_every=timedelta(minutes=1),
+        queue=settings.CELERY_PERIODIC_QUEUE)
     def fire_reminders():
         CaseReminderHandler.fire_reminders()
 
@@ -26,7 +26,7 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
 def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
