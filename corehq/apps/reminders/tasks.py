@@ -72,6 +72,13 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
 
 @task(queue=CELERY_REMINDERS_QUEUE)
 def fire_reminder(reminder_id):
+    try:
+        _fire_reminder(reminder_id)
+    except Exception:
+        notify_exception(None,
+            message="Error firing reminder %s" % reminder_id)
+
+def _fire_reminder(reminder_id):
     utcnow = datetime.utcnow()
     reminder = CaseReminder.get(reminder_id)
     # This key prevents doc update conflicts with rule running
