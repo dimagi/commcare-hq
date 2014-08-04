@@ -1,8 +1,12 @@
 import fluff
 from casexml.apps.case.models import CommCareCase
+from couchdbkit.ext.django.schema import Document
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.care_pathways.utils import get_domain_configuration
 from custom.opm.opm_reports.models import flat_field
+
+class _(Document):
+    pass
 
 # This calculator is necessary to generate 'date' field which is required in the database
 class Numerator(fluff.Calculator):
