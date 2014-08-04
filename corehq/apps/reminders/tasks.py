@@ -26,8 +26,7 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task(queue=(CELERY_REMINDERS_QUEUE if settings.REMINDERS_QUEUE_ENABLED
-    else settings.CELERY_MAIN_QUEUE))
+@task
 def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
