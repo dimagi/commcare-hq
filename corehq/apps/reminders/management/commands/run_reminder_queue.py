@@ -1,7 +1,7 @@
 from django.core.management.base import CommandError
 from django.conf import settings
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminder
 from corehq.apps.reminders.tasks import fire_reminder
 from hqscripts.generic_queue import GenericEnqueuingOperation
 
@@ -16,9 +16,13 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
         return settings.REMINDERS_QUEUE_ENQUEUING_TIMEOUT
 
     def get_items_to_be_processed(self, utcnow):
-        # We're just querying for ids here, so no need to limit
-        return CaseReminderHandler.get_all_reminders(due_before=utcnow,
-            ids_only=True)
+        utcnow_json = json_format_datetime(utcnow)
+        result = CaseReminder.view('reminders/by_next_fire',
+            startkey=[None],
+            endkey=[None, utcnow_json],
+            include_docs=False,
+        ).all()
+        return [{"id": e["id"], "key": e["key"][1]} for e in result]
 
     def use_queue(self):
         return settings.REMINDERS_QUEUE_ENABLED
