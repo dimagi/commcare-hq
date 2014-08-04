@@ -13,7 +13,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es
+from corehq.elastic import get_es, ESError
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 
 from no_exceptions.exceptions import Http400
@@ -130,7 +130,7 @@ class ESView(View):
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
-            return None
+            raise ESError(msg)
 
         hits = []
         for res in es_results['hits']['hits']:
