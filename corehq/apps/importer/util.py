@@ -372,7 +372,7 @@ def get_id_from_name(uploaded_name, domain, cache):
         user = CouchUser.get_by_username(uploaded_name)
         id = getattr(user, 'couch_id', None)
     except NoResultFound:
-        pass
+        id = None
     if not id:
         group = Group.by_name(domain, uploaded_name, one=True)
         id = getattr(group, 'get_id', None)
