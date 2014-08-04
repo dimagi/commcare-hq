@@ -2,6 +2,7 @@ import logging
 import simplejson
 import six
 import copy
+import datetime
 
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
@@ -14,6 +15,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import get_es
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
+
+from no_exceptions.exceptions import Http400
 
 
 DEFAULT_SIZE = 10
@@ -597,13 +600,17 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
+def validate_date(date):
+    datetime.datetime.strptime(date, '%Y-%m-%d')
+    return date
+
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {
     'xmlns': lambda v: {'term':{'xmlns.exact':v}},
-    'received_on_start': lambda v: {'range':{'received_on': {'from': v}}},
-    'received_on_end': lambda v: {'range':{'received_on': {'to': v}}},
+    'received_on_start': lambda v: {'range':{'received_on': {'from': validate_date(v)}}},
+    'received_on_end': lambda v: {'range':{'received_on': {'to': validate_date(v)}}},
 }
 
 def es_search(request, domain):
@@ -639,7 +646,10 @@ def es_search(request, domain):
         value = request.GET[key]
 
         if key in query_param_transforms:
-            payload["filter"]["and"].append(query_param_transforms[key](value))
+            try:
+                payload["filter"]["and"].append(query_param_transforms[key](value))
+            except ValueError:
+                raise Http400("Bad query parameter")
         else:
             payload["filter"]["and"].append({"term": {key: value}})
 
