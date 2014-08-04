@@ -78,6 +78,10 @@ def fire_reminder(reminder_id):
         notify_exception(None,
             message="Error firing reminder %s" % reminder_id)
 
+def reminder_is_stale(reminder, utcnow):
+    delta = timedelta(hours=REMINDERS_QUEUE_STALE_REMINDER_DURATION)
+    return (utcnow - delta) > reminder.next_fire
+
 def _fire_reminder(reminder_id):
     utcnow = datetime.utcnow()
     reminder = CaseReminder.get(reminder_id)
@@ -90,6 +94,10 @@ def _fire_reminder(reminder_id):
         if (not reminder.retired and reminder.active
             and utcnow >= reminder.next_fire):
             handler = reminder.handler
+            if reminder_is_stale(reminder, utcnow):
+                handler.set_next_fire(reminder, utcnow)
+                reminder.save()
+                return
             if handler.fire(reminder):
                 handler.set_next_fire(reminder, utcnow)
                 reminder.save()

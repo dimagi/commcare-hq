@@ -561,7 +561,7 @@ REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 
 # The number of hours to wait before counting a reminder as stale. Stale
 # reminders will not be processed.
-REMINDERS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
