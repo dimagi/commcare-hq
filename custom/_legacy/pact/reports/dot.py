@@ -50,7 +50,7 @@ class PactDOTPatientField(BaseSingleOptionFilter):
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin,
                     DatespanMixin):
-    label = "DOT Patient List"
+    name = "DOT Patient List"
     slug = "dots"
 
     report_template_path = "pact/dots/dots_report.html"
