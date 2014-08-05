@@ -78,7 +78,7 @@ def fire_reminder(reminder_id):
             message="Error firing reminder %s" % reminder_id)
 
 def reminder_is_stale(reminder, utcnow):
-    delta = timedelta(hours=REMINDERS_QUEUE_STALE_REMINDER_DURATION)
+    delta = timedelta(hours=settings.REMINDERS_QUEUE_STALE_REMINDER_DURATION)
     return (utcnow - delta) > reminder.next_fire
 
 def _fire_reminder(reminder_id):
