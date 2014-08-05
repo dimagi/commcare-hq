@@ -10,3 +10,11 @@
 nav#sessions > ul > li.nav-header {
     color: #6c6c6c;
 }
+
+#current-case > h2 {
+    display: inline-block;
+    padding: 8px;
+    color: #ffffff;
+    background-color: #1557a2;
+    border: 3px solid #286A80;
+}

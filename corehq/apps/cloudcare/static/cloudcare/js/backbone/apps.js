@@ -591,12 +591,22 @@ cloudCare.AppView = Backbone.View.extend({
         var self = this;
         options = options || {};
 
-        // clear current case information
+        // clear current case tables
         self._clearMainPane();
         var form = options.form;
         var caseModel = options.caseModel;
         var submitUrl = self.model.getSubmitUrl();
         var selectedModule = self.formListView.model;
+
+        // Insert the case name headings here.
+        if (caseModel) {
+            // Not all forms have a case associated with them.
+            // TODO: don't hardcode english here!!
+            var case_label = selectedModule.attributes.case_label.en;
+            var case_name = caseModel.attributes.properties.case_name;
+            $('#current-case').html('<h2>' + case_label + ': ' + case_name + '</h2>');
+        }
+
         data.onsubmit = function (xml) {
             window.mainView.router.view.dirty = false;
             // post to receiver
@@ -712,6 +722,8 @@ cloudCare.AppView = Backbone.View.extend({
     },
     _clearFormPlayer: function () {
         // TODO: clean hack/hard coded id
+        //       One posibility would be to set an `el` for this View. Then the id is only in one place.
+        $('#current-case').html("");
         $('#webforms').html("");
     }
 });
@@ -875,6 +887,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                 var app = new cloudCare.App(self.initialApp);
                 var module = app.modules[moduleIndex];
                 var form = module.forms[formIndex];
+                // Why make a new instance of this object?
                 var caseModel = new cloudCare.Case(self.initialCase);
                 self.appView.playForm(module, form, caseModel);
             } else {
