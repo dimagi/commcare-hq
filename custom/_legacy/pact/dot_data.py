@@ -9,8 +9,6 @@ from pact.enums import DAY_SLOTS_BY_TIME, \
     DOT_NONART, \
     CASE_ART_REGIMEN_PROP, \
     CASE_NONART_REGIMEN_PROP, \
-    DOT_OBSERVATION_PILLBOX, \
-    DOT_ADHERENCE_UNCHECKED, \
     DOT_OBSERVATION_DIRECT,\
     DOT_UNCHECKED_CELL
 
@@ -18,12 +16,12 @@ from pact.models import CObservation
 
 
 class DOTDayDose(object):
-    drug_class=None #DOT_ART, DOT_NONART
+    drug_class=None  # DOT_ART, DOT_NONART
     total_doses = 0
 
     def __init__(self, drug_class):
         self.drug_class=drug_class
-        self.total_doses_hist = {} # debug tool
+        self.total_doses_hist = {}  # debug tool
         self.dose_dict = {}
 
     def has_obs(self, obs):
@@ -66,7 +64,7 @@ class DOTDay(object):
         if obs.is_art:
             drug_attr = 'art'
         else:
-            drug_attr='nonart'
+            drug_attr = 'nonart'
         getattr(self,drug_attr).update_total_doses(obs)
         getattr(self, drug_attr).add_obs(obs)
 
@@ -115,20 +113,24 @@ class DOTDay(object):
             labels_arr = regimen_labels[ix]
             dose_nums = dose_data.dose_dict.keys()
             dose_nums.sort()
+
             for dose_num in dose_nums:
-                #for each dose num in the observed array of the drug type, there maybe more than one observation
-                obs_list = dose_data.dose_dict[dose_num]
-                drug_arr.append(get_obs_for_dosenum(obs_list, dose_num, labels_arr[dose_num]))
+                if dose_num is not None:
+                    # for each dose num in the observed array of the drug type, there maybe more than one observation
+                    obs_list = dose_data.dose_dict[dose_num]
+                    drug_arr.append(get_obs_for_dosenum(obs_list, dose_num, labels_arr[dose_num]))
+                else:
+                    # just to get a sense of how widespread this problem is in sentry
+                    logging.error('A pact case had an empty dose number.')
 
-
-            #don't fill because we're looking at what was submitted.
+            # don't fill because we're looking at what was submitted.
             if len(drug_arr) <= dose_data.total_doses:
                 if dose_data.drug_class == DOT_NONART:
-                    max_doses = int(casedoc.nonartregimen)
+                    max_doses = int(getattr(casedoc, 'nonartregimen', None) or 0)
                 elif dose_data.drug_class == DOT_ART:
-                    max_doses = int(casedoc.artregimen)
+                    max_doses = int(getattr(casedoc, 'artregimen', None) or 0)
 
-                #hack, in cases where we have zero data, put in the current regimen delta count
+                # hack, in cases where we have zero data, put in the current regimen delta count
                 delta = max_doses - dose_data.total_doses
                 for x in range(0, delta):
                     drug_arr.append(["unchecked", "pillbox", '', labels_arr[x] if x < len(labels_arr) else -1])
@@ -274,8 +276,8 @@ def get_dots_case_json(casedoc, anchor_date=None):
     ret = {}
 
     ret['regimens'] = [
-        int(getattr(casedoc, CASE_NONART_REGIMEN_PROP, 0)), #non art is 0
-        int(getattr(casedoc, CASE_ART_REGIMEN_PROP, 0)), #art is 1
+        int(getattr(casedoc, CASE_NONART_REGIMEN_PROP, None) or 0),  # non art is 0
+        int(getattr(casedoc, CASE_ART_REGIMEN_PROP, None) or 0),  # art is 1
     ]
     ret['regimen_labels'] = [
         list(casedoc.nonart_labels),
@@ -292,9 +294,9 @@ def get_dots_case_json(casedoc, anchor_date=None):
         day_arr = filter_obs_for_day(obs_date.date(), observations)
         day_data = DOTDay.merge_from_observations(day_arr)
         ret['days'].append(day_data.to_case_json(casedoc, ret['regimen_labels']))
+
     ret['days'].reverse()
     return ret
-
 
 
 def calculate_regimen_caseblock(case):
