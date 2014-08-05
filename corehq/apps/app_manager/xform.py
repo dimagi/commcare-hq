@@ -909,7 +909,7 @@ class XForm(WrappedNode):
         )
 
         if form.get_auto_gps_capture():
-            self.add_pollsensor(ref="meta/location")
+            self.add_pollsensor(ref="/data/meta/location")
         elif self.model_node.findall("{f}bind[@type='geopoint']"):
             self.add_pollsensor()
 
