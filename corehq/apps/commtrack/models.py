@@ -8,7 +8,8 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_monthly_consumption
+from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
+    compute_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -1466,8 +1467,11 @@ def sync_location_supply_point(loc):
 
 
 @receiver(post_save, sender=DbStockTransaction)
-def update_stock_state(sender, instance, *args, **kwargs):
-    from casexml.apps.stock.consumption import compute_consumption
+def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
+    update_stock_state_for_transaction(instance)
+
+
+def update_stock_state_for_transaction(instance):
     try:
         state = StockState.objects.get(
             section_id=instance.section_id,
@@ -1511,7 +1515,7 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
         product_id=instance.product_id,
     ).order_by('-report__date')
     if qs:
-        update_stock_state(sender, qs[0])
+        update_stock_state_for_transaction(qs[0])
     else:
         StockState.objects.filter(
             section_id=instance.section_id,

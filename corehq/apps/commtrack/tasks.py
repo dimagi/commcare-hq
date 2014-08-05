@@ -1,5 +1,6 @@
 from celery.task import task
 from django.core.cache import cache
+from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from soil import DownloadBase
 from corehq.apps.locations.bulk import import_locations
 from corehq.apps.commtrack.bulk import import_stock_reports, import_products
@@ -42,3 +43,8 @@ def import_products_async(domain, file_ref_id):
     return {
         'messages': results
     }
+
+
+@task
+def recalculate_domain_consumption_task(domain):
+    recalculate_domain_consumption(domain)
