@@ -11,6 +11,7 @@ from numbers import Number
 import re
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
+from decimal import Decimal
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
@@ -375,9 +376,14 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             # needed to support old snapshots
             if isinstance(self, BeneficiaryPaymentReport):
                 for i, val in enumerate(self.snapshot.rows):
+                    if 'account_number' in self.snapshot.slugs:
+                        index = self.snapshot.slugs.index('account_number')
+                        if isinstance(self.snapshot.rows[i][index], Decimal):
+                            self.snapshot.rows[i][index] = int(self.snapshot.rows[i][index])
                     if 'bank_branch_name' in self.snapshot.slugs:
                         index = self.snapshot.slugs.index('bank_branch_name')
                         del self.snapshot.rows[i][index]
+
             return self.snapshot.rows
         rows = []
         for row in self.row_objects:
