@@ -50,6 +50,14 @@ args=''
 
 [[ $skip_fetch = 'y' ]] && args="$args sync check rebuild"
 
+# if staging.yaml isn't up-to-date, warn and quit
+if [[ -n $(git diff master -- scripts/staging.yaml) ]]
+then
+    echo "scripts/staging.yaml on this branch different from the one on master"
+    echo "Aborting."
+    exit 1
+fi
+
 if [[ $deploy = 'y' ]]
 then
     rebuildstaging $args && git checkout autostaging && fab staging awesome_deploy:confirm=no
