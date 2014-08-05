@@ -1,6 +1,7 @@
 import logging
 from django.contrib.auth.models import User
 from corehq.apps.locations.models import Location
+from corehq.apps.sms.mixin import PhoneNumberInUseException
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -40,8 +41,6 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
         'is_superuser': ilsgateway_webuser.is_superuser,
         'last_login': force_to_datetime(ilsgateway_webuser.last_login),
         'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
-        # 'location': ilsgateway_webuser.location,
-        # 'supply_point': ilsgateway_webuser.supply_point,
         'is_ilsuser': True,
     }
     sp = SupplyPointCase.view('hqcase/by_domain_external_id',
@@ -115,17 +114,28 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
             user.is_active = bool(ilsgateway_smsuser.is_active)
             if "phone_numbers" in user_dict:
                 user.set_default_phone_number(user_dict["phone_numbers"][0])
-                user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                try:
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                except PhoneNumberInUseException as e:
+                    logging.error(e)
+            dm = user.get_domain_membership(domain)
+            dm.location_id = location_id
             user.save()
             add_location(user, location_id)
+
         except Exception as e:
             logging.error(e)
     else:
         dm = user.get_domain_membership(domain)
-        loc_id = user.get_domain_membership(domain).location_id if dm else None
+        current_location_id = dm.location_id if dm else None
+        save = False
 
-        add_location(user, loc_id)
-        if apply_updates(user, user_dict):
+        if current_location_id != location_id:
+            dm.location_id = location_id
+            add_location(user, location_id)
+            save = True
+
+        if apply_updates(user, user_dict) or save:
             user.save()
     return user
 
@@ -151,6 +161,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             location.lineage = []
         location.domain = domain
         location.name = ilsgateway_location.name
+        location.metadata = {'groups': ilsgateway_location.groups}
         if ilsgateway_location.latitude:
             location.latitude = float(ilsgateway_location.latitude)
         if ilsgateway_location.longitude:
@@ -244,15 +255,15 @@ def bootstrap_domain(domain, ilsgateway_config):
         date = checkpoint.date
     except MigrationCheckpoint.DoesNotExist:
         checkpoint = MigrationCheckpoint()
+        checkpoint.domain = domain
         date = None
-
     try:
-        #locations_type_sync(domain)
-        #locations_sync(domain, endpoint, date=date)
+        locations_type_sync(domain)
+        locations_sync(domain, endpoint, date=date)
         products_sync(domain, endpoint, date=date)
-        #webusers_sync(domain, endpoint, date=date)
+        webusers_sync(domain, endpoint, date=date)
         smsusers_sync(domain, endpoint, date=date)
-
+        
         checkpoint.date = start_date
         checkpoint.save()
     except ConnectionError as e:

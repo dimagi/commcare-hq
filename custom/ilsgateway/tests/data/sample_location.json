@@ -5,5 +5,6 @@
     "parent_id": null,
     "latitude": -10.6676087700,
     "longitude": 39.1621900200,
-    "code": "MOHSW-MOHSW"
+    "code": "MOHSW-MOHSW",
+    "groups": ["A"]
 }
