@@ -241,30 +241,29 @@ class XFormES(ESView):
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
-        if es_results:
-            for res in es_results.get('hits', {}).get('hits', []):
-                if '_source' in res:
-                    xmlns = res['_source'].get('xmlns', None)
-                    name = None
-                    if xmlns:
-                        name = form_filter.get_unknown_form_name(xmlns,
-                                                                 app_id=res['_source'].get('app_id',
-                                                                                           None),
-                                                                 none_if_not_found=True)
-                    if not name:
-                        name = 'unknown' # try to fix it below but this will be the default
-                        # fall back
-                        try:
-                            if res['_source']['form'].get('@name', None):
-                                name = res['_source']['form']['@name']
-                            else:
-                                backup = res['_source']['form'].get('#type', 'data')
-                                if backup != 'data':
-                                    name = backup
-                        except (TypeError, KeyError):
-                            pass
+        for res in es_results.get('hits', {}).get('hits', []):
+            if '_source' in res:
+                xmlns = res['_source'].get('xmlns', None)
+                name = None
+                if xmlns:
+                    name = form_filter.get_unknown_form_name(xmlns,
+                                                             app_id=res['_source'].get('app_id',
+                                                                                       None),
+                                                             none_if_not_found=True)
+                if not name:
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form']['@name']
+                        else:
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
-                    res['_source']['es_readable_name'] = name
+                res['_source']['es_readable_name'] = name
         return es_results
 
 
@@ -397,32 +396,31 @@ class ReportXFormES(XFormES):
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
-        if es_results:
-            for res in es_results.get('hits', {}).get('hits', []):
-                if '_source' in res:
-                    res_source = restore_property_dict(res['_source'])
-                    res['_source'] = res_source
-                    xmlns = res['_source'].get('xmlns', None)
-                    name = None
-                    if xmlns:
-                        name = form_filter.get_unknown_form_name(xmlns,
-                                                                 app_id=res['_source'].get('app_id',
-                                                                                           None),
-                                                                 none_if_not_found=True)
-                    if not name:
-                        name = 'unknown' # try to fix it below but this will be the default
-                        # fall back
-                        try:
-                            if res['_source']['form'].get('@name', None):
-                                name = res['_source']['form']['@name']
-                            else:
-                                backup = res['_source']['form'].get('#type', 'data')
-                                if backup != 'data':
-                                    name = backup
-                        except (TypeError, KeyError):
-                            pass
+        for res in es_results.get('hits', {}).get('hits', []):
+            if '_source' in res:
+                res_source = restore_property_dict(res['_source'])
+                res['_source'] = res_source
+                xmlns = res['_source'].get('xmlns', None)
+                name = None
+                if xmlns:
+                    name = form_filter.get_unknown_form_name(xmlns,
+                                                             app_id=res['_source'].get('app_id',
+                                                                                       None),
+                                                             none_if_not_found=True)
+                if not name:
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form']['@name']
+                        else:
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
-                    res['_source']['es_readable_name'] = name
+                res['_source']['es_readable_name'] = name
         return es_results
 
     @classmethod
