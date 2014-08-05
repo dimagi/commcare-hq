@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.reminders import REMINDER_DELIVERY_FACILITY, REMINDER_DELIVERY_DISTRICT, update_statuses
-from custom.ilsgateway.utils import send_for_day, get_current_group
+from custom.ilsgateway.utils import send_for_day, get_current_group, get_groups
 import settings
 
 
@@ -23,7 +23,7 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY'):
     for user in CommTrackUser.by_domain(domain):
         if user.is_active and user.location and user.location.location_type == loc_type:
             sp = SupplyPointCase.get_by_location(user.location)
-            if sp and sp.location.metadata.get('group', None) == current_group and not \
+            if sp and current_group in get_groups(sp.location.metadata.get('groups', None)) and not \
                     SupplyPointStatus.objects.filter(supply_point=sp._id,
                                                      status_type=status_type,
                                                      status_date__gte=date).exists():

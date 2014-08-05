@@ -4,6 +4,16 @@ from corehq.apps.domain.models import Domain
 
 GROUPS = ('A', 'B', 'C')
 
+
+def get_groups(groups):
+    if isinstance(groups, list):
+        return groups
+    elif isinstance(groups, str):
+        return groups.split(',')
+    else:
+        return None
+
+
 def get_current_group():
     month = datetime.utcnow().month
     return GROUPS[(month+2) % 3]
