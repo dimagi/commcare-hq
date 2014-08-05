@@ -38,7 +38,6 @@ from django.db.models.signals import post_save, post_delete
 from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
-from custom.ilsgateway.models import ILSGatewayConfig
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -367,6 +366,24 @@ class OpenLMISConfig(DocumentSchema):
     password = StringProperty()
 
     using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
+
+    @property
+    def is_configured(self):
+        return True if self.enabled and self.url and self.password and self.username else False
+
+
+class ILSGatewayConfig(DocumentSchema):
+    enabled = BooleanProperty(default=False)
+    url = StringProperty()
+    username = StringProperty()
+    password = StringProperty()
+
+    @classmethod
+    def for_domain(cls, name):
+        commtrack_settings = CommtrackConfig.for_domain(name)
+        if commtrack_settings and commtrack_settings.ilsgateway_config:
+            return commtrack_settings.ilsgateway_config
+        return None
 
     @property
     def is_configured(self):
