@@ -81,7 +81,12 @@ def bulk_export_async(bulk_export_helper, download_id,
                 expiry=expiry
             )
         finally:
-            os.remove(path)
+            try:
+                os.remove(path)
+            except OSError as e:
+                # the file has already been removed
+                pass
+
     else:
         export_object = bulk_export_helper.bulk_files[0]
         return cache_file_to_be_served(
