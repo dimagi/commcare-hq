@@ -604,7 +604,10 @@ def validate_date(date):
     try:
         datetime.datetime.strptime(date, '%Y-%m-%d')
     except ValueError:
-        raise DateTimeError("Date not in the correct format")
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            raise DateTimeError("Date not in the correct format")
     return date
 
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
