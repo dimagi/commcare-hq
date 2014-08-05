@@ -91,9 +91,6 @@
             var edit_data_fail = failure("Group data");
 
             $(document).ready(function() {
-                $('#edit_membership').ajaxForm();
-                $('#edit-group-settings').ajaxForm();
-                $('#group-data-form').ajaxForm();
                 $('#edit_membership').submit(function() {
                     $(this).ajaxSubmit({
                         success: edit_membership_succ,
