@@ -369,7 +369,10 @@ def get_id_from_name(uploaded_name, domain, cache):
     if uploaded_name in cache:
         return cache[uploaded_name]
     try:
-        user = CouchUser.get_by_username(uploaded_name)
+        name_as_address = uploaded_name
+        if '@' not in name_as_address:
+            name_as_address += '@' + domain + '.commcarehq.org'
+        user = CouchUser.get_by_username(name_as_address)
         id = getattr(user, 'couch_id', None)
     except NoResultFound:
         id = None
