@@ -24,6 +24,8 @@ DEFAULT_SIZE = 10
 class ESUserError(Http400):
     pass
 
+class DateTimeError(ValueError):
+    pass
 
 class ESView(View):
     """
@@ -599,7 +601,10 @@ class ESQuerySet(object):
             raise TypeError('Unsupported type: %s', type(idx))
 
 def validate_date(date):
-    datetime.datetime.strptime(date, '%Y-%m-%d')
+    try:
+        datetime.datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        raise DateTimeError("Date not in the correct format")
     return date
 
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
@@ -646,7 +651,7 @@ def es_search(request, domain):
         if key in query_param_transforms:
             try:
                 payload["filter"]["and"].append(query_param_transforms[key](value))
-            except ValueError:
+            except DateTimeError:
                 raise Http400("Bad query parameter")
         else:
             payload["filter"]["and"].append({"term": {key: value}})
