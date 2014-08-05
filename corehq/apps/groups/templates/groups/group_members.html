@@ -34,9 +34,6 @@
 
             // "are you sure?" stuff
             var unsavedChanges = {};
-            unsavedChanges["Group settings"] = false;
-            unsavedChanges["Group data"] = false;
-            unsavedChanges["Group membership"] = false;
 
             $("#edit_membership").change(function () {
                 unsavedChanges["Group membership"] = true;
@@ -51,15 +48,21 @@
             });
 
             $(window).bind('beforeunload', function () {
+                var someUnsavedChanges = false;
                 var ret = "{% trans "The following changes will not be saved: " %}";
 
                 for (var key in unsavedChanges) {
-                    if (unsavedChanges[key] == true) {
+                    if (unsavedChanges.hasOwnProperty(key) && unsavedChanges[key]) {
                         ret += "\n" + key;
+                        someUnsavedChanges = true;
                     }
                 }
 
-                return ret;
+                if (someUnsavedChanges) {
+                    return ret;
+                }
+
+                return;
             });
 
             function success(name) {
