@@ -7,7 +7,6 @@ branches:
   - schedule # SK 7/17
   - app-buttons # Emord 7/30
   - es_none_type # Emord 8/4
-  - subtree-merge-forms-cases
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
@@ -16,7 +15,6 @@ branches:
   - emwf-refactor  # Ethan 8/06
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
-  - basic-auth-submissions  # cz 7/30
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 submodules:
