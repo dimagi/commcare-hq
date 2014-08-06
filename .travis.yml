@@ -4,8 +4,8 @@ python:
 env:
   global:
     - CFLAGS=-O0
-    - COUCHDB_USER=
-    - COUCHDB_PW=
+    - COUCHDB_USER=""
+    - COUCHDB_PW=""
   matrix:
     - TEST_RUNNER=testrunner.GroupTestRunnerCatchall
     - TEST_RUNNER=testrunner.GroupTestRunner0
