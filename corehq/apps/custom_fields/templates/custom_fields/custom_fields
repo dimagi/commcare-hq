@@ -8,21 +8,21 @@
 {{ block.super }}
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
-    <script type="text/javascript" src="{% static 'users/js/custom_fields.js' %}"></script>
+    <script type="text/javascript" src="{% static 'custom_fields/js/custom_fields.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
 {{ block.super }}
     <script>
         var customFieldsModel = new CustomFieldsModel();
-        ko.applyBindings(customFieldsModel, $('#user-fields-form').get(0));
+        ko.applyBindings(customFieldsModel, $('#custom-fields-form').get(0));
         customFieldsModel.init({{ custom_fields|JSON }});
     </script>
 {% endblock %}
 
 {% block main_column %}
-    {# {% crispy user_fields_form %} #}
-    <form id="user-fields-form" action="." method="POST" data-bind="submit: submitFields">
+    {# {% crispy custom_fields_form %} #}
+    <form id="custom-fields-form" action="." method="POST" data-bind="submit: submitFields">
         {% csrf_token %}
         <table class="table table-striped">
             <caption><h3>{{ view.page_name }}</h3></caption>
@@ -59,6 +59,6 @@
             </td></tr>
         </table>
 
-        <p><input id="save-user-fields" class="pull-right btn btn-primary" type="submit" value="Save Fields"></p>
+        <p><input id="save-custom-fields" class="pull-right btn btn-primary" type="submit" value="Save Fields"></p>
     </form>
 {% endblock %}
