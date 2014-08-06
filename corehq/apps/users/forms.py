@@ -16,7 +16,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, validate_password
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import CommTrackUser, Program
 import re
@@ -261,6 +261,7 @@ class CommCareAccountForm(forms.Form):
                 raise forms.ValidationError("Passwords do not match")
             if self.password_format == 'n' and not password.isnumeric():
                 raise forms.ValidationError("Password is not numeric")
+            validate_password(password)
 
         try:
             username = self.cleaned_data['username']

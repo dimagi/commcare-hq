@@ -19,6 +19,7 @@
 
 from django.contrib.auth.models import User
 from django.core.validators import MaxLengthValidator
+from corehq.apps.users.util import validate_password
 
 NEW_USERNAME_LENGTH = 128
 
@@ -30,3 +31,11 @@ def monkey_patch_username(model, field):
             v.limit_value = NEW_USERNAME_LENGTH
 
 monkey_patch_username(User, 'username')
+
+old_set_password = User.set_password
+
+def set_password(self, raw_password):
+    validate_password(raw_password)
+    old_set_password(self, raw_password)
+
+User.set_password = set_password

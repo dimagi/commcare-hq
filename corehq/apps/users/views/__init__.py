@@ -38,6 +38,7 @@ from corehq.apps.domain.decorators import (login_and_domain_required, require_su
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
+from corehq.apps.users.util import validate_password
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
@@ -678,6 +679,10 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
+class ValidatePassword(SetPasswordForm):
+    def clean_new_password1(self):
+        new_password1 = self.cleaned_data['new_password1']
+        validate_password(new_password1)
 
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
@@ -690,13 +695,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetPasswordForm(user=django_user, data=request.POST)
+        form = ValidatePassword(user=django_user, data=request.POST)
         if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
             form.save()
             json_dump['status'] = 'OK'
-            form = SetPasswordForm(user=django_user)
+            form = ValidatePassword(user=django_user)
     else:
-        form = SetPasswordForm(user=django_user)
+        form = ValidatePassword(user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,
