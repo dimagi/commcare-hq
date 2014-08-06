@@ -1,0 +1,56 @@
+{
+    "_attachments": {
+        "form.xml": {
+            "content_type": "text/xml",
+            "digest": "md5-cEcUD5FEk17g8V/LLWhIuQ==",
+            "length": 674,
+            "revpos": 1,
+            "stub": true
+        }
+    },
+    "_id": "a3b935f7789a2841512399610831c845",
+    "_rev": "1-aea9c78c61203abab0f62f952ee06bfd",
+    "computed_": {},
+    "computed_modified_on_": null,
+    "doc_type": "XFormInstance",
+    "form": {
+        "#type": "form",
+        "@uiVersion": "1",
+        "@version": "1",
+        "@xmlns": "http://commcarehq.org/test/ns",
+        "empty": "no namespace here",
+        "flat": {
+            "#text": "flat namespace",
+            "@xmlns": "http://commcarehq.org/test/flatns"
+        },
+        "lastempty": "nothing here either",
+        "parent": {
+            "@xmlns": "http://commcarehq.org/test/parent",
+            "childwith": {
+                "#text": "cw",
+                "@xmlns": "http://commcarehq.org/test/child1"
+            },
+            "childwithelement": {
+                "@xmlns": "http://commcarehq.org/test/child2",
+                "grandchild": "gc"
+            },
+            "childwithout": "cwo",
+            "lastchildwithout": "lcwo"
+        }
+    },
+    "history": [],
+    "initial_processing_complete": false,
+    "partial_submission": false,
+    "received_on": "2013-09-21T04:19:11Z",
+    "xmlns": "http://commcarehq.org/test/ns",
+    "#export_tag": null,
+    "app_id": null,
+    "auth_context": {},
+    "build_id": null,
+    "date_header": null,
+    "domain": null,
+    "last_sync_token": null,
+    "openrosa_headers": {},
+    "path": null,
+    "submit_ip": null
+}

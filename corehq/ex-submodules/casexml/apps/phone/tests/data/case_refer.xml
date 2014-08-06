@@ -1,0 +1,32 @@
+<?xml version='1.0' ?>
+<mobilize version="1" uiVersion="1" xmlns:jrm="http://dev.commcarehq.org/jr/xforms/mobilize/mobilize_trace_request" xmlns="http://dev.commcarehq.org/mobilize/mobilize_trace_request">
+	<Meta>
+		<DeviceID>IKN1CXNK0J8TIFAAPZT087ME5</DeviceID>
+		<TimeStart>2011-02-19T16:46:14.299</TimeStart>
+		<TimeEnd>2011-02-19T16:46:28.975</TimeEnd>
+		<username>msa</username>
+		<chw_id>ae179a62-38af-11e0-b6a3-005056aa7fb5</chw_id>
+		<uid>V2RLNE4VQYEMZRGYSOMLYU4PM</uid>
+	</Meta>
+	<case>
+		<case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id>
+		<date_modified>2011-02-19T16:46:28.975</date_modified>
+		<referral>
+			<referral_id>V2RLNE4VQYEMZRGYSOMLYU4PM</referral_id>
+			<followup_date>2011-02-20</followup_date>
+			<open>
+				<referral_types>referral</referral_types>
+			</open>
+		</referral>
+		<update>
+			<request_name>ME</request_name>
+			<request_rank>staff_nurse</request_rank>
+			<request_timestamp>2011-02-19T16:46:28.975</request_timestamp>
+		</update>
+	</case>
+	<request_reason>TEST</request_reason>
+	<request_name>ME</request_name>
+	<request_rank>staff_nurse</request_rank>
+	<request_timestamp>2011-02-19T16:46:14.302</request_timestamp>
+	<request_phone>OK</request_phone>
+</mobilize>
