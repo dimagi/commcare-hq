@@ -57,7 +57,7 @@ class HQUserType(object):
 
     @classmethod
     def all_but_users(cls):
-        no_users = (True,) * cls.count
+        no_users = [True] * cls.count
         no_users[cls.REGISTERED] = False
         return cls._get_manual_filterset(cls.included_defaults, no_users)
 

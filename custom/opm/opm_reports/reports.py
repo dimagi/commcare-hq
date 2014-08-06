@@ -732,6 +732,7 @@ class MetReport(BaseReport):
     exportable = False
     default_case_type = "Pregnancy"
     filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
+    is_rendered_as_email = False
 
     @property
     def report_subtitles(self):
@@ -767,8 +768,8 @@ class MetReport(BaseReport):
     def fields(self):
         return [
             SelectBlockFilter,
-            AWCFilter,
             GramPanchayatFilter,
+            AWCFilter,
             MonthFilter,
             YearFilter,
             SelectOpenCloseFilter,
