@@ -31,6 +31,12 @@ class GeographySqlData(SqlData):
 class AdoptionBarChartReportSqlData(SqlData):
     table_name = 'fluff_FarmerRecordFluff'
 
+    def __init__(self, domain, config):
+        self.domain = domain
+        self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
+        self.config = config
+        super(AdoptionBarChartReportSqlData, self).__init__(config=config)
+
     def percent_fn(self, x, y):
         return "%(p)s%%" % \
             {
@@ -49,13 +55,21 @@ class AdoptionBarChartReportSqlData(SqlData):
     @property
     def filters(self):
         filters = [EQ("ppt_year", "year")]
-        if self.config['value_chain']:
+        for k, v in self.geography_config.iteritems():
+            if v['prop'] in self.config and self.config[v['prop']]:
+                filters.append(IN(k, v['prop']))
+        if 'value_chain' in self.config and self.config['value_chain']:
             filters.append(EQ("value_chain", "value_chain"))
-        if self.config['domains']:
+        if 'domains' in self.config and self.config['domains']:
             filters.append(IN("domains", "domains"))
-        if self.config['practices']:
+        if 'practices' in self.config and self.config['practices']:
             filters.append(IN("practices", "practices"))
-
+        if 'gender' in self.config and self.config['gender']:
+            filters.append(EQ["gender", "gender"])
+        if 'group_leadership' in self.config and self.config['group_leadership']:
+            filters.append(EQ('group_leadership', 'group_leadership'))
+        if 'cbt_name' in self.config and self.config['cbt_name']:
+            filters.append(EQ('owner_id', 'cbt_name'))
         return filters
 
     @property

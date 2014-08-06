@@ -40,7 +40,7 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
 
     @property
     def model(self):
-        return AdoptionBarChartReportSqlData(config=self.report_config)
+        return AdoptionBarChartReportSqlData(domain=self.domain, config=self.report_config)
 
     @property
     def rows(self):
