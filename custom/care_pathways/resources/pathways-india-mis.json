@@ -19,7 +19,7 @@
     },
     "by_type_hierarchy" : [
         {
-            "val": "Paddy",
+            "val": "paddy",
             "text": "Paddy",
             "next": [
                 {
@@ -301,7 +301,7 @@
             ]
         },
         {
-            "val": "Maize",
+            "val": "maize",
             "text": "Maize",
             "next": [
                 {
