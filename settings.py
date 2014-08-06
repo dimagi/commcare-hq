@@ -18,10 +18,14 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 
-# clone http://github.com/mwhite/Vellum into submodules/vellum/Vellum and set
-# this to True to use non-built files on the form designer page.  However, you
-# should probably just use the standalone test page unless you have a reason.
-VELLUM_DEBUG = False
+# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
+# this to select various versions of Vellum source on the form designer page.
+# Acceptable values:
+# None - production mode
+# "dev" - use raw vellum source (submodules/formdesigner/src)
+# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
+VELLUM_DEBUG = None
+
 # enables all plugins, including ones that haven't been released on production
 # yet
 VELLUM_PRERELEASE = False
@@ -88,7 +92,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = (
-    ('vellum', os.path.join(FILEPATH, 'submodules', 'vellum')),
+    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
 )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
