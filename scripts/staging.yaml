@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - explicit_case_processing
   - auto-gps+schedule
   - auto-gps
   - schedule # SK 7/17
