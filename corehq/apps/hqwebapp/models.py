@@ -14,6 +14,7 @@ from corehq.apps.hqadmin.reports import (
     FormSubmissionsWebReport,
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
+    UserReport,
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -1226,6 +1227,7 @@ class AdminReportsTab(UITab):
                     FormSubmissionsWebReport,
                     RealProjectSpacesReport,
                     RealProjectSpacesPlansReport,
+                    UserReport,
                 ]
             ]),
         ]

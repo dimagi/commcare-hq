@@ -7,6 +7,7 @@ from corehq.apps.hqadmin.reports import (
     FormSubmissionsWebReport,
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
+    UserReport,
 )
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
@@ -274,6 +275,7 @@ ADMIN_REPORTS = (
         FormSubmissionsReport,
         FormSubmissionsMobileReport,
         FormSubmissionsWebReport,
+        UserReport,
     )),
 )
 

@@ -413,3 +413,10 @@ class FormSubmissionsWebReport(GlobalAdminReports):
     indicators = [
         'forms_web',
     ]
+
+
+class UserReport(GlobalAdminReports):
+    slug = 'user_report'
+    name = _('User Report')
+    indicators = [
+    ]
