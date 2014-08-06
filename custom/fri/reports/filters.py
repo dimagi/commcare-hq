@@ -34,11 +34,11 @@ class RiskProfileFilter(BaseSingleOptionFilter):
 
 class SurveyDateSelector(BaseSingleOptionFilter):
     """
-    Single option filter for selecting the dates on which surveys are
-    finished (not started).
+    Single option filter for selecting the dates on which surveys were
+    sent out.
     """
     slug = "survey_report_date"
-    label = _("View data as of")
+    label = _("Show participants who where sent a survey on")
     default_text = _("Choose...")
 
     @classmethod
@@ -48,7 +48,7 @@ class SurveyDateSelector(BaseSingleOptionFilter):
 
     @classmethod
     def get_date_choices(cls):
-        next_date = date(2014, 3, 19)
+        next_date = date(2014, 3, 18)
         last_date = pytz.utc.localize(datetime.utcnow())
         last_date = last_date.astimezone(pytz.timezone("US/Pacific"))
         last_date = last_date.date()

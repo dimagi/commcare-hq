@@ -408,8 +408,9 @@ class SurveyResponsesReport(FRIReport):
             if registration_date is None:
                 return False
             first_tuesday = self.get_first_tuesday(registration_date)
-            end_date = first_tuesday + timedelta(days=56)
-            return (end_date >= survey_report_date)
+            last_tuesday = first_tuesday + timedelta(days=49)
+            return (survey_report_date >= first_tuesday and
+                survey_report_date <= last_tuesday)
 
         result = filter(filter_function, result)
         return result
