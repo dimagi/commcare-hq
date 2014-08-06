@@ -178,7 +178,7 @@ class CaseBugTest(TestCase):
         self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
     def testSubmitToDeletedCase(self):
-        # submitting to a deleted case should fail and not affect the case
+        # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
         deleted_doc_type = 'CommCareCase-Deleted'
         post_case_blocks([
@@ -191,13 +191,12 @@ class CaseBugTest(TestCase):
         case.doc_type = deleted_doc_type
         case.save()
         self.assertEqual(deleted_doc_type, case.doc_type)
-        with self.assertRaises(IllegalCaseId):
-            post_case_blocks([
-                CaseBlock(create=False, case_id=case_id, user_id='whatever',
-                          version=V2, update={'foo': 'not_bar'}).as_xml()
-            ])
+        post_case_blocks([
+            CaseBlock(create=False, case_id=case_id, user_id='whatever',
+                      version=V2, update={'foo': 'not_bar'}).as_xml()
+        ])
         case = CommCareCase.get(case_id)
-        self.assertEqual('bar', case.foo)
+        self.assertEqual('not_bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)
 
 

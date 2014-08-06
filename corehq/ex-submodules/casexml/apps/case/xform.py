@@ -32,7 +32,7 @@ def process_cases(xform, config=None):
     config = config or CaseProcessingConfig()
     domain = get_and_check_xform_domain(xform)
 
-    with CaseDbCache(domain=domain, lock=True) as case_db:
+    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
         return _process_cases(xform, config, case_db)
 
 
