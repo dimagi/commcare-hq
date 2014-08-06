@@ -140,5 +140,5 @@ def can_add_extra_mobile_workers(request):
     return True
 
 def validate_password(raw_password):
-    if '|' in raw_password:
+    if raw_password and '|' in raw_password:
         raise ValidationError("'|' is not allowed in a password")

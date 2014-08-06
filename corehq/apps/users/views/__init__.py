@@ -17,7 +17,6 @@ from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
-from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
@@ -30,7 +29,9 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
+from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm,
+                                     UpdateMyAccountInfoForm, CommtrackUserForm,
+                                     ValidateSetPasswordForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -679,11 +680,6 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
-class ValidatePassword(SetPasswordForm):
-    def clean_new_password1(self):
-        new_password1 = self.cleaned_data['new_password1']
-        validate_password(new_password1)
-
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
@@ -695,13 +691,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = ValidatePassword(user=django_user, data=request.POST)
+        form = ValidateSetPasswordForm(user=django_user, data=request.POST)
         if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
             form.save()
             json_dump['status'] = 'OK'
-            form = ValidatePassword(user=django_user)
+            form = ValidateSetPasswordForm(user=django_user)
     else:
-        form = ValidatePassword(user=django_user)
+        form = ValidateSetPasswordForm(user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

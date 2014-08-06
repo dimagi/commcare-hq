@@ -30,8 +30,12 @@ from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
-from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
-                                     MultipleSelectionForm, ConfirmExtraUserChargesForm)
+from corehq.apps.users.forms import (CommCareAccountForm,
+                                     UpdateCommCareUserInfoForm,
+                                     CommtrackUserForm,
+                                     MultipleSelectionForm,
+                                     ConfirmExtraUserChargesForm,
+                                     ValidateSetPasswordForm)
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -87,7 +91,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetPasswordForm(user="")
+        return ValidateSetPasswordForm(user="")
 
     @property
     def commtrack_user_roles(self):

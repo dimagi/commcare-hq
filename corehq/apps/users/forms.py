@@ -4,6 +4,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
@@ -419,3 +420,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         self.account.date_confirmed_extra_charges = datetime.datetime.today()
         self.account.save()
         return True
+
+class ValidateSetPasswordForm(SetPasswordForm):
+    def clean_new_password1(self):
+        new_password1 = self.cleaned_data['new_password1']
+        validate_password(new_password1)
