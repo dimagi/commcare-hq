@@ -19,6 +19,7 @@ from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.multithreading import process_fast
+from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 
@@ -951,7 +952,9 @@ class CaseReminderHandler(Document):
                         # touchforms is down. So just pass, and let the reminder
                         # be saved below so that the framework will pick it up
                         # and try again.
-                        pass
+                        notify_exception(None,
+                            message="Error sending immediately for handler %s" %
+                            self._id)
                 if sent or not send_immediately:
                     self.set_next_fire(reminder, now)
                 reminder.save()
