@@ -30,10 +30,19 @@ class Worker(object):
     def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
 
         # make sure worker passes the filters
+        filter_by = []
+        if hasattr(report, 'request'):
+            if report.awcs:
+                filter_by = [('awc_name', 'awcs')]
+            elif report.gp:
+                filter_by = [('owner_id', 'gp')]
+            elif report.block:
+                filter_by = [('block', 'blocks')]
+
         report.filter(
             lambda key: worker.user_data.get(key),
             # user.awc, user.block
-            report.filter_fields
+            filter_by
         )
 
         def user_data(property):
