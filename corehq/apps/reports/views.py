@@ -889,7 +889,8 @@ def _get_form_context(request, domain, instance_id):
         "domain": domain,
         "display": display,
         "timezone": timezone,
-        "instance": instance
+        "instance": instance,
+        "user": request.couch_user,
     }
     context['form_render_options'] = context
     return context
@@ -927,6 +928,7 @@ def form_data(request, domain, instance_id):
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
+
 
 @require_form_view_permission
 @login_and_domain_required
