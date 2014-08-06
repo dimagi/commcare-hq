@@ -1,4 +1,5 @@
-from sqlagg.columns import SimpleColumn
+from sqlagg.columns import SimpleColumn, CountColumn
+from sqlagg.filters import *
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.care_pathways.utils import get_domain_configuration
 
@@ -26,3 +27,39 @@ class GeographySqlData(SqlData):
         for k in levels:
             columns.append(DatabaseColumn(k, SimpleColumn(k)))
         return columns
+
+class AdoptionBarChartReportSqlData(SqlData):
+    table_name = 'fluff_FarmerRecordFluff'
+
+    def percent_fn(self, x, y):
+        return "%(p)s%%" % \
+            {
+                "p": (100 * int(y or 0) / (x or 1))
+            }
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('', SimpleColumn('value_chain')),
+            DatabaseColumn('All', CountColumn('prop_value', alias='all')),
+            DatabaseColumn('None', CountColumn('prop_value', alias='none')),
+            DatabaseColumn('Some', CountColumn('prop_value', alias='some'))
+        ]
+
+    @property
+    def filters(self):
+        filters = [EQ("ppt_year", "year")]
+        if self.config['value_chain']:
+            filters.append(EQ("value_chain", "value_chain"))
+        if self.config['domains']:
+            filters.append(IN("domains", "domains"))
+        if self.config['practices']:
+            filters.append(IN("practices", "practices"))
+
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['domain', 'value_chain']
+
+        return group_by

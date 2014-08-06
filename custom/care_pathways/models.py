@@ -105,6 +105,7 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     lvl_3 = case_property('lvl_3')
     lvl_4 = case_property('lvl_4')
     lvl_5 = case_property("lvl_5")
+    ppt_year = flat_field(lambda c: c.get_case_property('ppt_year'))
     owner_id = flat_field(lambda c: c.get_case_property('owner_id'))
     gender = flat_field(lambda c: c.get_case_property('farmer_gender'))
     group_leadership = flat_field(lambda c: c.get_case_property('farmer_is_leader'))
