@@ -601,8 +601,7 @@ cloudCare.AppView = Backbone.View.extend({
         // Insert the case name headings here.
         if (caseModel) {
             // Not all forms have a case associated with them.
-            // TODO: don't hardcode english here!!
-            var case_label = selectedModule.attributes.case_label.en;
+            var case_label = selectedModule.attributes.case_label[self.options.language];
             var case_name = caseModel.attributes.properties.case_name;
             $('#current-case').html('<h2>' + case_label + ': ' + case_name + '</h2>');
         }
