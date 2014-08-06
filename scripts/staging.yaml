@@ -12,7 +12,7 @@ branches:
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
-#  - emwf-refactor  # Ethan 7/25
+  - emwf-refactor  # Ethan 8/06
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
   - basic-auth-submissions  # cz 7/30
