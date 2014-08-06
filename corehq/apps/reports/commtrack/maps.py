@@ -126,6 +126,9 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                         ('category', 'current_stock', 'consumption', 'months_remaining')],
         })
 
+        conf['display'] = {
+            'table': False,
+        }
         return conf
 
 
