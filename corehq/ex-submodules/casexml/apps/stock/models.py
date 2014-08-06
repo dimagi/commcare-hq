@@ -69,7 +69,7 @@ class DocDomainMapping(models.Model):
     """
     doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
     doc_type = models.CharField(max_length=100, db_index=True)
-    domain_name = models.CharField(max_length=100)
+    domain_name = models.CharField(max_length=100, db_index=True)
 
 
 # signal catchers

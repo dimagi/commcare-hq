@@ -11,4 +11,3 @@ def sync_logs_for_user(user_id):
                         include_docs=True)
     return render_to_string("phone/partials/sync_log_for_chw_table.html", 
                             {"sync_data": logs})
-    
