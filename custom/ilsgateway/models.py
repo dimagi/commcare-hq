@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -79,3 +80,14 @@ class SupplyPointStatus(models.Model):
         verbose_name_plural = "Facility Statuses"
         get_latest_by = "status_date"
         ordering = ('-status_date',)
+
+
+class DeliveryGroupReport(models.Model):
+    supply_point = models.CharField(max_length=100, db_index=True)
+    quantity = models.IntegerField()
+    report_date = models.DateTimeField(auto_now_add=True, default=datetime.now())
+    message = models.CharField(max_length=100, db_index=True)
+    delivery_group = models.CharField(max_length=1)
+
+    class Meta:
+        ordering = ('-report_date',)

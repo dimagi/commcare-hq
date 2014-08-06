@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.dispatch.dispatcher import Signal
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
@@ -21,10 +22,12 @@ from corehq.apps.commtrack.exceptions import NotAUserClassError
 
 import uuid
 
+signal = Signal(providing_args=['verivied_contact', 'domain', 'text', 'msg'])
 logger = logging.getLogger('commtrack.sms')
 
 class SMSError(RuntimeError):
     pass
+
 
 def handle(verified_contact, text, msg=None):
     """top-level handler for incoming stock report messages"""
@@ -46,6 +49,8 @@ def handle(verified_contact, text, msg=None):
 
     process(domain.name, data)
     send_confirmation(verified_contact, data)
+    #TODO check if domain has ils enabled
+    signal.send(verified_contact=verified_contact, sender="commtrack_sms", domain=domain.name, text=text, msg=msg)
     return True
 
 
