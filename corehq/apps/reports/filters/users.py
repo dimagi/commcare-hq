@@ -394,7 +394,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 simplified=simplified_users,
                 CommCareUser=CommCareUser,
             )
-        user_filter = tuple([HQUserToggle(id, id in user_type_ids) for id in range(4)])
+        user_filter = tuple([HQUserToggle(id, id in user_types) for id in range(4)])
         other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
                                                    CommCareUser=CommCareUser)
         groups = [Group.get(g) for g in group_ids]
