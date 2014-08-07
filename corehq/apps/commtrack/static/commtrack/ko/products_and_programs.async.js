@@ -4,7 +4,10 @@ var CommtrackProductsProgramsViewModel = function (o) {
     self.initial_load = ko.observable(false);
 
     self.data_list = ko.observableArray();
-    self.archive_action_users = ko.observableArray(); // what is this?
+
+    // track any products that were archived/unarchived
+    // asynchronously
+    self.archive_action_products = ko.observableArray();
 
     self.show_inactive = o.show_inactive;
 
@@ -40,7 +43,9 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return _.range(self.current_page()-2, Math.min(last_ind, self.current_page()+3));
     });
 
-    self.colspan = 7;
+    self.colspan = ko.computed(function () {
+        return 7;
+    });
 
     self.init = function () {
         $(function () {
@@ -82,18 +87,18 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return false;
     };
 
-    self.get_user_index = function (index) {
+    self.get_product_index = function (index) {
         return index() + ((self.current_page() - 1) * self.page_limit()) + 1;
     };
 
-    self.take_user_action = function (action_url, button, user_index) {
+    self.take_archive_action = function (action_url, button, product_index) {
         $(button).button('loading');
-        user_index = ko.utils.unwrapObservable(user_index);
+        product_index = ko.utils.unwrapObservable(product_index);
         $.ajax({
             url: action_url,
             dataType: 'json',
-            error: unsuccessful_archive_action(button, user_index),
-            success: successful_archive_action(button, user_index)
+            error: unsuccessful_archive_action(button, product_index),
+            success: successful_archive_action(button, product_index)
         });
     };
 
@@ -105,7 +110,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
                 }
                 self.current_page(data.current_page);
                 self.data_list(data.data_list);
-                //self.archive_action_users([]);
+                self.archive_action_products([]);
             }
         },
         format_url = function(page) {
@@ -122,13 +127,13 @@ var CommtrackProductsProgramsViewModel = function (o) {
                     var $modal = $(button).parent().parent();
                     $modal.modal('hide');
                     $modal.on('hidden', function () {
-                        var users = self.users_list(),
-                            actioned = self.archive_action_users();
-                        actioned.push(users[index]);
-                        users = _.difference(users, actioned);
+                        var products = self.data_list(),
+                            actioned = self.archive_action_products();
+                        actioned.push(products[index]);
+                        products = _.difference(products, actioned);
                         self.total(self.total()-1);
-                        self.users_list(users);
-                        self.archive_action_users(actioned);
+                        self.data_list(products);
+                        self.archive_action_products(actioned);
                     });
                 } else {
                     unsuccessful_archive_action(button, index)(data);

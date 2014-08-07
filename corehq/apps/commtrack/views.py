@@ -248,6 +248,13 @@ class FetchProductListView(ProductListView):
     def skip(self):
         return (int(self.page) - 1) * int(self.limit)
 
+    def get_archive_text(self, is_archived):
+        if is_archived:
+            return _("This will re-activate the product, and the product will show up in reports again.")
+        return _("As a result of archiving, this product will no longer appear in reports. "
+                 "This action is reversable; you can reactivate this product by viewing "
+                 "Show Archived Products and clicking 'Unarchive'.")
+
     @property
     def product_data(self):
         data = []
@@ -268,6 +275,8 @@ class FetchProductListView(ProductListView):
             info = p._doc
             info['program'] = program.name
             info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': self.domain, 'prod_id': p._id})
+            info['archive_action_desc'] = self.get_archive_text(self.show_inactive)
+            info['archive_action_text'] = _("Un-Archive") if self.show_inactive else _("Archive")
             info['archive_url'] = reverse(
                 'unarchive_product' if self.show_inactive else 'archive_product',
                 kwargs={'domain': self.domain, 'prod_id': p._id}
