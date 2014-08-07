@@ -12,7 +12,6 @@
         $(function(){
             var help_text = {
                 "Archive Product": "",
-                "Delete Product": ""
             };
 
             $('.help_popover').popover({
@@ -29,7 +28,7 @@
                 start_page: {{ data_list.page }},
                 limit: {{ data_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}'
+                list_url: '{% url "commtrack_product_fetch" domain %}',
             });
         });
     </script>
@@ -48,6 +47,17 @@
             </p>
             {% endif %}
          </div>
+        <div class="span4">
+            {% if not show_inactive %}
+                <a class="btn btn-inverse pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+                    {% trans "Show Archived Products" %}
+                </a>
+            {% else %}
+                <a class="btn pull-right" href="?" style="margin-right: 2.5em;">
+                    {% trans "Show Active Products" %}
+                </a>
+            {% endif %}
+        </div>
     </div>
 </header>
 
@@ -108,6 +118,7 @@
                             <th>{% trans "Program" %}</th>
                             <th>{% trans "Description" %}</th>
                             <th>{% trans "Units" %}</th>
+                            <th>{% trans "Archive" %}</th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: data_list">
@@ -118,6 +129,9 @@
                             <td data-bind="text: program"></td>
                             <td data-bind="text: description"></td>
                             <td data-bind="text: unit"></td>
+                            <td><a data-bind="attr: {href: archive_url}" class="btn {% if not show_inactive %}btn-inverse{% endif %}">
+                                {% if show_inactive %}Un-Archive{% else %}Archive{% endif %}
+                            </a></td>
                         </tr>
                     </tbody>
                 </table>
