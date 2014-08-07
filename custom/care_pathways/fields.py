@@ -48,7 +48,7 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
 
     @classmethod
     def get_labels(cls):
-        return [(v['name'], 'All', v['prop']) for k,v in get_domain_configuration('pathways-india-mis')['geography_hierarchy'].iteritems()]
+        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration('pathways-india-mis')['geography_hierarchy'].iteritems())]
 
 
     @classmethod
