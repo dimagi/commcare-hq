@@ -140,12 +140,13 @@ def get_patient_display_cache(case_ids):
     res = case_es.run_query(query)
 
     from pact.reports.patient import PactPatientInfoReport
+
     ret = {}
-    if res is not None:
-        for entry in res['hits']['hits']:
-            case_id = entry['fields']['case_id']
-            ret[case_id] = entry['fields']
-            ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
+    for entry in res['hits']['hits']:
+        case_id = entry['fields']['case_id']
+        ret[case_id] = entry['fields']
+        ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
+
     return ret
 
 
