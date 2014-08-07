@@ -51,6 +51,7 @@
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
+        var initialParent = {{ parent|JSON }};
         var sessionsEnabled = {{ sessions_enabled|JSON }};
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
@@ -62,6 +63,7 @@
             submitUrlRoot: submitUrlRoot,
             initialApp: initialApp,
             initialCase: initialCase,
+            initialParent: initialParent,
             sessionsEnabled: sessionsEnabled
         });
         // TODO: when we figure out what to do about get params, use this

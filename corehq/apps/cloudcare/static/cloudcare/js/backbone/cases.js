@@ -219,13 +219,13 @@ cloudCare.CaseListView = Backbone.View.extend({
         // set the app config on the case if it's there
         // so that other events can access it later
         item.set("appConfig", self.options.appConfig);
-        caseView.on("selected", function () {
+        caseView.on("selected", function (parentId) {
             if (self.selectedCaseView) {
                 self.selectedCaseView.deselect();
             }
             if (self.selectedCaseView !== this) {
                 self.selectedCaseView = this;
-                cloudCare.dispatch.trigger("case:selected", this.model);
+                cloudCare.dispatch.trigger("case:selected", this.model, parentId);
             } 
         });
         caseView.on("deselected", function () {
@@ -302,6 +302,8 @@ cloudCare.CaseMainView = Backbone.View.extend({
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
         // adding an internal section so that the filter button displays correctly
         self.el = self.options.el;
+        var case_label = self.options.appConfig.module.attributes.case_label[self.options.language];
+        self.el.append($("<h2>Select Case: "+case_label+"</h2>"));
         self.section = $('<section class="row-fluid" />');
         self.section.appendTo(self.el);
         // this is copy-pasted

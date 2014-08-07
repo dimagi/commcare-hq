@@ -91,9 +91,9 @@ def cloudcare_main(request, domain, urlPath):
     language = request.couch_user.language or _default_lang()
     
     def _url_context():
-        # given a url path, returns potentially the app and case, if they're
-        # selected. the front end optimizes with these to avoid excess server
-        # calls
+        # given a url path, returns potentially the app, parent, and case, if
+        # they're selected. the front end optimizes with these to avoid excess
+        # server calls
 
         # there's an annoying dependency between this logic and backbone's
         # url routing that seems hard to solve well. this needs to be synced
@@ -103,13 +103,24 @@ def cloudcare_main(request, domain, urlPath):
 
         # for cases it will be:
         # "view/:app/:module/:form/case/:case/"
+
+        # if there are parent cases, it will be:
+        # "view/:app/:module/:form/parent/:parent/case/:case/
         
         # could use regex here but this is actually simpler with the potential
         # absence of a trailing slash
         split = urlPath.split('/')
         app_id = split[1] if len(split) >= 2 else None
-        case_id = split[5] if len(split) >= 6 else None
-        
+
+        if len(split) >= 5 and split[4] == "parent":
+            print split
+            print len(split)
+            parent_id = split[5]
+            case_id = split[7] if len(split) >= 7 else None
+        else:
+            parent_id = None
+            case_id = split[5] if len(split) >= 6 else None
+
         app = None
         if app_id:
             if app_id in [a['_id'] for a in apps]:
@@ -126,9 +137,12 @@ def cloudcare_main(request, domain, urlPath):
             return case.get_json()
         
         case = _get_case(domain, case_id) if case_id else None
+        parent = _get_case(domain, parent_id) if parent_id else None
+
         return {
             "app": app,
-            "case": case
+            "case": case,
+            "parent": parent
         }
 
     context = {
