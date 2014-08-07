@@ -59,7 +59,8 @@ from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -561,7 +562,8 @@ class FormBase(DocumentSchema):
         vc = self.validation_cache
         if vc is None:
             try:
-                XForm(self.source).validate(version=self.get_app().application_version)
+                validate_xform(self.source,
+                               version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
