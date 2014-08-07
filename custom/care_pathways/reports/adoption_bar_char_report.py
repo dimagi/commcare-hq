@@ -3,6 +3,9 @@ from django.utils import html
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
+from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.sqlreport import SqlTabularReport, DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
@@ -112,3 +115,10 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
             return next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
 
         return group_name
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.model.columns, no_value=self.model.no_value))
+        print self.model.data
+        return formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by)
+

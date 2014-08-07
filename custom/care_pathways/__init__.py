@@ -6,3 +6,6 @@ CUSTOM_REPORTS = (
         AdoptionBarChartReport,
     )),
 )
+
+
+
