@@ -1,7 +1,7 @@
 from decimal import Decimal
 import functools
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from corehq.apps.commtrack.models import StockState, ConsumptionConfig
+from corehq.apps.commtrack.models import StockState
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest
@@ -32,6 +32,35 @@ class StockStateBehaviorTest(StockStateTest):
 
         self.assertEqual(10, state.stock_on_hand)
         self.assertEqual(3.0, state.get_daily_consumption())
+
+    def test_stock_state_for_archived_products(self):
+        self.report(10, 0)
+
+        # make sure that this StockState existed before archive
+        StockState.objects.get(
+            section_id='stock',
+            case_id=self.sp._id,
+            product_id=self.products[0]._id,
+        )
+
+        self.products[0].archive()
+
+        with self.assertRaises(StockState.DoesNotExist):
+            StockState.objects.get(
+                section_id='stock',
+                case_id=self.sp._id,
+                product_id=self.products[0]._id,
+            )
+
+        # should still show up in include_archived filter
+        self.assertEqual(
+            StockState.include_archived.get(
+                section_id='stock',
+                case_id=self.sp._id,
+                product_id=self.products[0]._id,
+            ).product_id,
+            self.products[0]._id
+        )
 
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
