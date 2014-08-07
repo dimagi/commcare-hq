@@ -20,6 +20,7 @@
 
 #opm-report-print {
     margin: 0px 30px;
+    page-break-after: always;
 }
 #opm-report-print h1 {
     text-align: center;

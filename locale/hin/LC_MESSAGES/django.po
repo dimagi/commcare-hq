@@ -19871,6 +19871,16 @@ msgstr ""
 msgid "Processed"
 msgstr ""
 
+#: custom/opm/opm_reports/reports.py:821
+#: custom/opm/opm_reports/condition_met.py:322
+msgid "pregnant"
+msgstr "गर्भवती"
+
+#: custom/opm/opm_reports/reports.py:821
+#: custom/opm/opm_reports/condition_met.py:322
+msgid "mother"
+msgstr "माँ"
+
 #, fuzzy
 #~ msgid "Case Display Properties"
 #~ msgstr "ऑगनवाड़ी कोड़ संख्या नही मिली"
@@ -19918,12 +19928,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Company Name"
 #~ msgstr "टीम का नाम"
-
-#~ msgid "pregnant"
-#~ msgstr "गर्भवती"
-
-#~ msgid "mother"
-#~ msgstr "माँ"
 
 #, fuzzy
 #~ msgid "Update it with new information."
