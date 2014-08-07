@@ -733,7 +733,7 @@ def hotfix_deploy():
     for small python-only hotfixes
 
     """
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
        not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
         utils.abort('Deployment aborted.')
@@ -757,7 +757,7 @@ def hotfix_deploy():
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
     _require_target()
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
@@ -799,7 +799,7 @@ def _deploy_without_asking():
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     if strtobool(confirm) and not console.confirm(
-            'Are you sure you want to preindex and deploy '
+            'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
     max_wait = datetime.timedelta(minutes=5)
