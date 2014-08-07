@@ -10,7 +10,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.reminders.util import get_form_name
+from corehq.apps.reminders.util import get_form_name, enqueue_reminder_directly
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
@@ -19,7 +19,9 @@ from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.multithreading import process_fast
+from dimagi.utils.logging import notify_exception
 from random import randint
+from django.conf import settings
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -936,18 +938,26 @@ class CaseReminderHandler(Document):
                 case = None
             reminder = self.spawn_reminder(case, self.start_datetime, recipient)
             reminder.start_condition_datetime = self.start_datetime
-            sent = False
-            if send_immediately:
-                try:
-                    sent = self.fire(reminder)
-                except Exception:
-                    # An exception could happen here, for example, if touchforms is down.
-                    # So just pass, and let the reminder be saved below so that the framework
-                    # will pick it up and try again.
-                    pass
-            if sent or not send_immediately:
-                self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
-            reminder.save()
+            if settings.REMINDERS_QUEUE_ENABLED:
+                reminder.save()
+                if send_immediately:
+                    enqueue_reminder_directly(reminder)
+            else:
+                sent = False
+                if send_immediately:
+                    try:
+                        sent = self.fire(reminder)
+                    except Exception:
+                        # An exception could happen here, for example, if
+                        # touchforms is down. So just pass, and let the reminder
+                        # be saved below so that the framework will pick it up
+                        # and try again.
+                        notify_exception(None,
+                            message="Error sending immediately for handler %s" %
+                            self._id)
+                if sent or not send_immediately:
+                    self.set_next_fire(reminder, now)
+                reminder.save()
 
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
@@ -1020,18 +1030,22 @@ class CaseReminderHandler(Document):
         return filter(None, referenced_forms)
 
     @classmethod
-    def get_all_reminders(cls, domain=None, due_before=None):
+    def get_all_reminders(cls, domain=None, due_before=None, ids_only=False):
         if due_before:
             now_json = json_format_datetime(due_before)
         else:
             now_json = {}
 
         # domain=None will actually get them all, so this works smoothly
-        return CaseReminder.view('reminders/by_next_fire',
+        result = CaseReminder.view('reminders/by_next_fire',
             startkey=[domain],
             endkey=[domain, now_json],
-            include_docs=True
+            include_docs=(not ids_only),
         ).all()
+        if ids_only:
+            return [entry["id"] for entry in result]
+        else:
+            return result
     
     @classmethod
     def fire_reminders(cls, now=None):

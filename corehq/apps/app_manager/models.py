@@ -660,6 +660,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    @memoized
     def get_case_property_name_formatter(self):
         """Get a function that formats case property names
 

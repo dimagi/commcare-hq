@@ -4,49 +4,50 @@ from custom.reports.mc.models import WEEKLY_SUMMARY_XMLNS
 HF_MONTHLY_REPORT = [
     {
         'section': _('mc_section_home_visits'),
+        'total_column': _('home_visits_total'),
         'columns': [
             _('home_visits_pregnant'),
             _('home_visits_postpartem'),
             _('home_visits_newborn'),
             _('home_visits_children'),
             _('home_visits_other'),
-            _('home_visits_total'),
         ]
     },
 
     {
         'section': _('mc_section_rdt'),
+        'total_column': _('rdt_total'),
         'columns': [
             _('rdt_positive_children'),
             _('rdt_positive_adults'),
             _('rdt_others'),
-            _('rdt_total'),
         ]
     },
 
     {
         'section': _('mc_section_diagnosed_cases'),
+        'total_column': _('diagnosed_total'),
         'columns': [
             _('diagnosed_malaria_child'),
             _('diagnosed_malaria_adult'),
             _('diagnosed_diarrhea'),
             _('diagnosed_ari'),
-            _('diagnosed_total'),
         ]
     },
 
     {
         'section': _('mc_section_treated_cases'),
+        'total_column': _('treated_total'),
         'columns': [
             _('treated_malaria'),
             _('treated_diarrhea'),
             _('treated_ari'),
-            _('treated_total'),
         ]
     },
 
     {
         'section': _('mc_section_transfers'),
+        'total_column': _('transfer_total'),
         'columns': [
             _('transfer_malnutrition'),
             _('transfer_incomplete_vaccination'),
@@ -54,18 +55,17 @@ HF_MONTHLY_REPORT = [
             _('transfer_prenatal_consult'),
             _('transfer_missing_malaria_meds'),
             _('transfer_other'),
-            _('transfer_total'),
         ]
     },
 
     {
         'section': _('mc_section_deaths'),
+        'total_column': _('deaths_total'),
         'columns': [
             _('deaths_newborn'),
             _('deaths_children'),
             _('deaths_mothers'),
             _('deaths_other'),
-            _('deaths_total'),
         ]
     },
     {
@@ -105,13 +105,13 @@ DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
 DISTRICT_WEEKLY_REPORT = [
     {
         'section': _('mc_section_home_visits'),
+        'total_column': _('home_visits_total'),
         'columns': [
             _('home_visits_newborn'),
             _('home_visits_children'),
             _('home_visits_pregnant'),
             _('home_visits_non_pregnant'),
             _('home_visits_followup'),
-            _('home_visits_total'),
         ]
     },
     {
@@ -159,11 +159,11 @@ DISTRICT_WEEKLY_REPORT = [
 HF_WEEKLY_REPORT = [
     {
         'section': _('mc_section_home_visits'),
+        'total_column': _('home_visits_total'),
         'columns': [
             _('home_visits_newborn'),
             _('home_visits_children'),
             _('home_visits_adult'),
-            _('home_visits_total'),
         ]
     },
     {

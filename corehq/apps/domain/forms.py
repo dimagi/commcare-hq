@@ -423,10 +423,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         choices=(
             ('stars', _('Latest starred version')),
-            ('nostars', _('Every version (not recommended)')),
+            ('nostars', _('Highest numbered version (not recommended)')),
         ),
         help_text=_("Choose whether CloudCare should use the latest "
-                    "starred build or every build in your application.")
+                    "starred build or highest numbered build in your "
+                    "application.")
     )
 
     def __init__(self, *args, **kwargs):
