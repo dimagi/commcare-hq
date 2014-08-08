@@ -166,6 +166,8 @@ define(['module'], function (module) {
             'save-button': '../lib/SaveButton',
 
             'yui-base': '../bower_components/MediaUploader/yui-base',
+            'yui-combo': '../bower_components/MediaUploader/yui-combo',
+            'yui-loader': '../bower_components/MediaUploader/yui-loader',
             'yui-uploader': '../bower_components/MediaUploader/yui-uploader',
 
             'swfobject': '../bower_components/MediaUploader/swfobject',
@@ -224,8 +226,11 @@ define(['module'], function (module) {
             'yui-base': {
                 exports: 'YUI'
             },
+            'yui-loader': {
+                exports: 'YUI'
+            },
             'yui-uploader': {
-                deps: ['yui-base'],
+                deps: ['yui-base', 'yui-loader', 'css!yui-combo'],
                 exports: 'YUI'
             },
             'swfobject': {
