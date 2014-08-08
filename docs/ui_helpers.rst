@@ -203,7 +203,7 @@ If you want to update data with your paginated view, you must implement the foll
         def get_updated_item_data(self, update_form):
             updated_puppy = update_form.update_puppy()
             return {
-                'newItem': {
+                'itemData': {
                     'id': updated_puppy._id,
                     'name': updated_puppy.name,
                     'breed': updated_puppy.breed,
@@ -295,7 +295,7 @@ If you want to delete data with your paginated view, you should implement someth
             deleted_puppy = Puppy.get(item_id)
             deleted_puppy.delete()
             return {
-                'newItem': {
+                'itemData': {
                     'id': deleted_puppy._id,
                     ...
                 },

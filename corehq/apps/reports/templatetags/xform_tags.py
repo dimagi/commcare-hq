@@ -82,6 +82,7 @@ def render_form(form, domain, options):
     timezone = pytz.utc
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
+    user = options.get('user', None)
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
@@ -168,4 +169,5 @@ def render_form(form, domain, options):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
         "side_pane": side_pane,
+        "user": user,
     })

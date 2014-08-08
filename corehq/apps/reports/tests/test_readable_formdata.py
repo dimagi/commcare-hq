@@ -1,3 +1,4 @@
+import functools
 import json
 import os
 from django.test import SimpleTestCase
@@ -220,8 +221,7 @@ class ReadableFormdataTest(SimpleTestCase):
             json.dumps([FormQuestionResponse(q).to_json() for q in expected])
         )
 
-    def test_corpus(self):
-        slug = 'mismatched_group_hierarchy'
+    def _test_corpus(self, slug):
         xform_file = os.path.join(
             os.path.dirname(__file__),
             'readable_forms', '{}.xform.xml'.format(slug))
@@ -239,10 +239,18 @@ class ReadableFormdataTest(SimpleTestCase):
             result = yaml.load(f)
         questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
         questions = get_readable_form_data(data, questions)
-        self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
-                             json.dumps(result))
 
+        # Search for 'READABLE FORMS TEST' for more info
         # to bootstrap a test and have it print out your yaml result
         # uncomment this line. Ghetto but it works.
         # print yaml.safe_dump([json.loads(json.dumps(x.to_json()))
         #                       for x in questions])
+
+        self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
+                             json.dumps(result))
+
+    def test_mismatched_group_hierarchy(self):
+        self._test_corpus('mismatched_group_hierarchy')
+
+    def test_top_level_refless_group(self):
+        self._test_corpus('top_level_refless_group')

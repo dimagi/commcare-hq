@@ -615,28 +615,48 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS
+        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE
 
+        def create_workflow_stack(suite, form_command, module_command, frame_children):
+            if not frame_children:
+                return
+
+            entry = self.get_form_entry(suite, form_command)
+            entry.stack = Stack()
+            frame = CreateFrame()
+            entry.stack.add_frame(frame)
+
+            for child in frame_children:
+                if isinstance(child, basestring):
+                    frame.add_command(child)
+                else:
+                    frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+            return frame
+
+        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        root_module_datums = [datum for module in root_modules
+                              for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
         for module in self.modules:
             for form in module.get_forms():
                 if form.post_form_workflow != WORKFLOW_DEFAULT:
                     form_command = self.id_strings.form_command(form)
                     module_id, form_id = form_command.split('-')
+                    module_command = self.id_strings.menu(module)
 
-                    entry = self.get_form_entry(suite, form_command)
-                    entry.stack = Stack()
-                    frame = CreateFrame()
-                    frame.add_command(self.id_strings.menu(module))
-                    entry.stack.add_frame(frame)
-
-                    if form.post_form_workflow == WORKFLOW_PREVIOUS:
+                    frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+                    if form.post_form_workflow == WORKFLOW_MODULE:
+                        create_workflow_stack(suite, form_command, module_command, frame_children)
+                    elif form.post_form_workflow == WORKFLOW_PREVIOUS:
                         module_datums = self.get_module_datums(suite, module_id)
                         form_datums = module_datums[form_id]
-                        datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+                        if module_command == self.id_strings.ROOT:
+                            datums_list = root_module_datums
+                        else:
+                            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
                         common_datums = commonprefix(datums_list)
                         remaining_datums = form_datums[len(common_datums):]
 
-                        frame_children = list(common_datums)
+                        frame_children.extend(common_datums)
                         frame_children.append(self.id_strings.form_command(form))
                         frame_children.extend(remaining_datums)
 
@@ -646,11 +666,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                             # or a non-autoselect datum
                             last = frame_children.pop()
 
-                        for child in frame_children:
-                            if isinstance(child, basestring):
-                                frame.add_command(child)
-                            else:
-                                frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
+                        create_workflow_stack(suite, form_command, module_command, frame_children)
 
     def get_module_datums(self, suite, module_id):
         _, datums = self._get_entries_datums(suite)
@@ -669,8 +685,11 @@ class SuiteGenerator(SuiteGeneratorBase):
             module_id, form_id = command.split('-', 1)
             if form_id != 'case-list':
                 entries[command] = e
-                for d in e.datums:
-                    datums[module_id][form_id].append(DatumMeta(d))
+                if not e.datums:
+                    datums[module_id][form_id] = []
+                else:
+                    for d in e.datums:
+                        datums[module_id][form_id].append(DatumMeta(d))
 
         return entries, datums
 
@@ -802,8 +821,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         else:
             return parent_module
 
-    def get_select_chain(self, module):
-        select_chain = [module]
+    def get_select_chain(self, module, include_self=True):
+        select_chain = [module] if include_self else []
         current_module = module
         while current_module.parent_select.active:
             current_module = self.get_module_by_id(
@@ -1335,7 +1354,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            path = '../../' + path
+            install_path = '../../{}'.format(path)
+            local_path = './{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
@@ -1343,9 +1363,11 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
 
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
-                path=path,
+                path=install_path,
                 version=m.version,
-                local=None,
+                local=(local_path
+                       if self.app.enable_local_resource
+                       else None),
                 remote=get_url_base() + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]

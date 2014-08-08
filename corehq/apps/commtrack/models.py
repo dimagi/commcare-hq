@@ -8,9 +8,11 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_default_monthly_consumption
+from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
+    compute_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.commtrack import const
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -178,8 +180,8 @@ class Product(Document):
     @classmethod
     def _export_attrs(cls):
         return [
-            'name',
-            'unit',
+            ('name', unicode),
+            ('unit', unicode),
             'description',
             'category',
             'program_id',
@@ -224,12 +226,14 @@ class Product(Document):
         p.code = str(row.get('product_id') or '')
 
         for attr in cls._export_attrs():
-            if attr in row or (isinstance(attr, tuple) and attr[0] in row):
-                val = row.get(attr, '')
+            key = attr[0] if isinstance(attr, tuple) else attr
+            if key in row:
+                val = row[key]
+                if val is None:
+                    val = ''
                 if isinstance(attr, tuple):
-                    attr, f = attr
-                    val = f(val)
-                setattr(p, attr, val)
+                    val = attr[1](val)
+                setattr(p, key, val)
             else:
                 break
 
@@ -393,7 +397,7 @@ class StockRestoreConfig(DocumentSchema):
         return super(StockRestoreConfig, cls).wrap(obj)
 
 
-class CommtrackConfig(Document):
+class CommtrackConfig(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -1463,8 +1467,11 @@ def sync_location_supply_point(loc):
 
 
 @receiver(post_save, sender=DbStockTransaction)
-def update_stock_state(sender, instance, *args, **kwargs):
-    from casexml.apps.stock.consumption import compute_consumption
+def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
+    update_stock_state_for_transaction(instance)
+
+
+def update_stock_state_for_transaction(instance):
     try:
         state = StockState.objects.get(
             section_id=instance.section_id,
@@ -1508,7 +1515,7 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
         product_id=instance.product_id,
     ).order_by('-report__date')
     if qs:
-        update_stock_state(sender, qs[0])
+        update_stock_state_for_transaction(qs[0])
     else:
         StockState.objects.filter(
             section_id=instance.section_id,

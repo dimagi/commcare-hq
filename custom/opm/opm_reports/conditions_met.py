@@ -1,16 +1,17 @@
 import datetime
-from dimagi.utils.dates import months_between
-from django.utils.translation import ugettext_lazy as _
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareCase
 from custom.opm.opm_reports.constants import InvalidRow
+from django.utils.translation import ugettext as _
+from corehq.util.translation import localize
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
 M_ATTENDANCE_N = 'attendance_vhnd_n.png'
 C_ATTENDANCE_Y = 'child_attendance_vhnd_y.png'
 C_ATTENDANCE_N = 'child_attendance_vhnd_n.png'
-M_WEIGHT_Y = 'mother_weight_y.png'
-M_WEIGHT_N = 'mother_weight_n.png'
+M_WEIGHT_Y = 'woman_checking_weight_yes.png'
+M_WEIGHT_N = 'woman_checking_weight_no.png'
 C_WEIGHT_Y = 'child_weight_y.png'
 C_WEIGHT_N = 'child_weight_n.png'
 MEASLEVACC_Y = 'child_child_measlesvacc_y.png'
@@ -80,7 +81,10 @@ class ConditionsMet(object):
                 # case.awc_name, case.block_name
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
-        img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        if not report.is_rendered_as_email:
+            img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        else:
+            img_elem = '<div><img src="/static/opm/img/%s"></div>'
         def condition_image(image_y, image_n, condition):
             if condition is None:
                 return ''
@@ -130,7 +134,7 @@ class ConditionsMet(object):
         def get_property_from_forms(forms, met_properties):
             for form in forms:
                 for k, v in met_properties.iteritems():
-                    if k == 'child1_suffer_diarrhea':
+                    if k in ['child1_suffer_diarrhea', 'child1_growthmon_calc', 'prev_child1_growthmon_calc']:
                         if 'child_1' in form.form and k in form.form['child_1']:
                             met_properties[k] = form.form['child_1'][k]
                     else:
@@ -138,7 +142,10 @@ class ConditionsMet(object):
                             met_properties[k] = form.form[k]
             return met_properties
 
-        case_obj = CommCareCase.get(case['_source']['_id'])
+        try:
+            case_obj = CommCareCase.get(case['_source']['_id'])
+        except ResourceNotFound:
+            raise InvalidRow
         case_property = lambda _property, default: get_property(case_obj, _property, default=default)
 
         self.case_id = case_property('_id', '')
@@ -206,12 +213,14 @@ class ConditionsMet(object):
             if self.child_age == 3:
                 prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(90) <= form.received_on <= report.datespan.enddate]
                 weight_key = "child1_child_weight"
-                birth_weight = [form.form[weight_key] for form in prev_forms if weight_key in form.form]
+                child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
+                birth_weight = [child[weight_key] for child in child_forms if weight_key in child]
                 child_birth_weight_taken = '1' in birth_weight
             if self.child_age == 6:
                 prev_forms = [form for form in forms if report.datespan.startdate - datetime.timedelta(180) <= form.received_on <= report.datespan.enddate]
                 excl_key = "child1_child_excbreastfed"
-                exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
+                child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
+                exclusive_breastfed = [child[excl_key] for child in child_forms if excl_key in child]
                 child_excusive_breastfed = exclusive_breastfed == ['1', '1', '1', '1', '1', '1']
             get_property_from_forms(filtered_forms, met)
 
@@ -228,11 +237,11 @@ class ConditionsMet(object):
             if self.preg_month != 9:
                 met_one = vhnd_attendance[self.preg_month] == '1'
             if self.preg_month == 6:
-                met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]
+                met_two = 'received' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]
                 if report.block.lower() == "atri":
-                    met_three = case_property('ifa_tri1', 0) == '1'
+                    met_three = case_property('ifa_tri_1', 0) == 'received'
             if self.preg_month == 9:
-                met_two = '1' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]         
+                met_two = 'received' in [case_property('weight_tri_1', 0), case_property('prev_weight_tri_1', 0)]         
             
             self.one = condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, met_one)
             self.two = condition_image(M_WEIGHT_Y, M_WEIGHT_N, met_two)
@@ -307,3 +316,7 @@ class ConditionsMet(object):
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
+
+        if report.is_rendered_as_email:
+            with localize('hin'):
+                self.status = _(self.status)

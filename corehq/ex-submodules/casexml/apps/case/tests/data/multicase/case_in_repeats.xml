@@ -1,0 +1,108 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="New Form1"
+	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/FB088320-11E3-406A-AA3F-1D8E7A81F40D">
+	<prev_type />
+	<prev_birth_type />
+	<prev_nevirapine />
+	<delivery_date>2011-09-19T00:00:00.000Z</delivery_date>
+	<Place>1</Place>
+	<type>1</type>
+	<nevirapine>1</nevirapine>
+	<birth_type>other</birth_type>
+	<birth_count>3</birth_count>
+	<preloads>
+		<taluka>athani</taluka>
+		<age>23</age>
+		<address>DAG</address>
+		<number>234234234</number>
+		<result1 />
+		<result2 />
+		<unique_id>234</unique_id>
+		<external_id />
+		<date_modified>2011-09-19T22:29:48.096Z</date_modified>
+		<userid>2XC1EINEJV1NZ7QXHVUMHUQQV</userid>
+		<name>ADG</name>
+	</preloads>
+	<child_repeat>
+		<outcome>1</outcome>
+		<sex>1</sex>
+		<breastfeeding>2</breastfeeding>
+		<case>
+			<case_id>32337c03-2b73-497f-ab18-2b587f8c21df</case_id>
+			<date_modified>2011-09-19T22:29:48.096Z</date_modified>
+			<create>
+				<case_type_id>newborn_hiv_child</case_type_id>
+				<case_name>ADG</case_name>
+				<user_id>2XC1EINEJV1NZ7QXHVUMHUQQV</user_id>
+				<external_id>32337c03-2b73-497f-ab18-2b587f8c21df</external_id>
+			</create>
+			<update>
+				<sex>1</sex>
+				<breastfeeding>2</breastfeeding>
+				<taluka>athani</taluka>
+				<age>23</age>
+				<address>DAG</address>
+				<number>234234234</number>
+				<result1 />
+				<result2 />
+				<unique_id>234</unique_id>
+			</update>
+		</case>
+	</child_repeat>
+	<child_repeat>
+		<outcome>2</outcome>
+		<sex>1</sex>
+		<close_confirmation>ok</close_confirmation>
+	</child_repeat>
+	<child_repeat>
+		<outcome>1</outcome>
+		<sex>2</sex>
+		<breastfeeding>2</breastfeeding>
+		<case>
+			<case_id>581b0506-7c94-4af5-ac67-f934566d5418</case_id>
+			<date_modified>2011-09-19T22:29:48.096Z</date_modified>
+			<create>
+				<case_type_id>newborn_hiv_child</case_type_id>
+				<case_name>ADG</case_name>
+				<user_id>2XC1EINEJV1NZ7QXHVUMHUQQV</user_id>
+				<external_id>581b0506-7c94-4af5-ac67-f934566d5418</external_id>
+			</create>
+			<update>
+				<sex>2</sex>
+				<breastfeeding>2</breastfeeding>
+				<taluka>athani</taluka>
+				<age>23</age>
+				<address>DAG</address>
+				<number>234234234</number>
+				<result1 />
+				<result2 />
+				<unique_id>234</unique_id>
+			</update>
+		</case>
+	</child_repeat>
+	<intcount>3</intcount>
+	<completed_form>OK</completed_form>
+	<end_form>OK</end_form>
+	<case>
+		<case_id>CMYOSI95QCED3ZWIP9ZK1QNQ6</case_id>
+		<date_modified>2011-09-19T22:31:48.902Z</date_modified>
+		<update>
+			<delivery_type>1</delivery_type>
+			<delivery_form_complete>OK</delivery_form_complete>
+			<nevirapine>1</nevirapine>
+			<place>1</place>
+			<birth_type>other</birth_type>
+			<delivery_date>2011-09-19</delivery_date>
+		</update>
+		<close />
+	</case>
+	<meta>
+		<deviceID>2XC1EINEJV1NZ7QXHVUMHUQQV</deviceID>
+		<timeStart>2011-09-19T22:29:48.097Z</timeStart>
+		<timeEnd>2011-09-19T22:31:48.905Z</timeEnd>
+		<username>admin</username>
+		<userID>2XC1EINEJV1NZ7QXHVUMHUQQV</userID>
+		<instanceID>JLP8BS71HFU3VGMIWW610W80T</instanceID>
+	</meta>
+</data>

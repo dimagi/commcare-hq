@@ -34,7 +34,10 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
         try:
             module = app_dict['modules'][module_idx]
-            form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
+            if len(module['forms']) == 1:
+                form_idx = 0
+            else:
+                form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
         except IndexError:
             form_idx = None
 
@@ -69,7 +72,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
             self.pm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_PM_APPNAME)
             self.latest_pm_build = get_app_build(self.pm_app_dict)
             self.chw_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CHW_APPNAME)
-            self.latest_chw_build = get_app_build(self.pm_app_dict)
+            self.latest_chw_build = get_app_build(self.chw_app_dict)
         except ResourceNotFound as ex:
             self.report_template_path = "patient_error.html"
             ret['error_message'] = ex.message

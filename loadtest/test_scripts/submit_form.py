@@ -1,6 +1,6 @@
 import time
 import requests
-from requests.auth import HTTPDigestAuth
+from requests.auth import HTTPBasicAuth
 from hq_settings import HQTransaction
 from datetime import datetime
 import uuid
@@ -123,7 +123,7 @@ class Transaction(HQTransaction):
             url,
             data=data,
             headers=headers,
-            auth=HTTPDigestAuth(self.submissions_username, self.submissions_password),
+            auth=HTTPBasicAuth(self.submissions_username, self.submissions_password),
             timeout=REQUEST_TIMEOUT,
         )
 
@@ -131,7 +131,7 @@ class Transaction(HQTransaction):
         return requests.post(
             url,
             files=data_dict,
-            auth=HTTPDigestAuth(self.submissions_username, self.submissions_password),
+            auth=HTTPBasicAuth(self.submissions_username, self.submissions_password),
             timeout=REQUEST_TIMEOUT,
         )
 

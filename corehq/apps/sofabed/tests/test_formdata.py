@@ -11,7 +11,10 @@ class FormDataTestCase(TestCase):
         
         for item in XFormInstance.view("hqadmin/forms_over_time", include_docs=True, reduce=False).all():
             item.delete()
-        
+
+        for item in FormData.objects.all():
+            item.delete()
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()

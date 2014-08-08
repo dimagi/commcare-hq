@@ -1,0 +1,94 @@
+<parent>
+	<case>
+		<case_id>0bd56681dce2b7a5160f75266d1e436e</case_id>
+		<date_modified>2010-10-06T07:23:23.000</date_modified>
+		<create>
+			<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
+			<case_type_id>cc_shine_client</case_type_id>
+			<case_name>Test Patient</case_name>
+			<external_id>9a2a9582d11a11df8f35005056977568</external_id>
+		</create>
+		<update>
+			<pactid>1000</pactid>
+			<gender>f</gender>
+			<type>HP</type>
+			<Phone1>555-555-5555</Phone1>
+			<Phone2>555-555-5555</Phone2>
+			<address1>12 Fake St, Fakeland</address1>
+			<dob>1959-11-23</dob>
+			<initials>TP</initials>
+			<hp>ma651</hp>
+			<last_note>2011-01-27</last_note>
+			<last_dot></last_dot>
+		</update>
+	</case>
+	<case>
+		<case_id>0bd56681dce2b7a5140f75266d1d93a6</case_id>
+		<date_modified>2010-10-06T07:23:25.000</date_modified>
+		<create>
+			<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
+			<case_type_id>cc_shine_client</case_type_id>
+			<case_name>Client, Fake</case_name>
+			<external_id>9b606de3d11a11df8f35005056977568</external_id>
+		</create>
+		<update>
+			<pactid>1001</pactid>
+			<gender>m</gender>
+			<type>HP</type>
+			<Phone1>555-555-5555</Phone1>
+			<Phone2>555-555-5555</Phone2>
+			<address1>12 Fake St, Fakeland</address1>
+			<dob>1947-14-09</dob>
+			<initials>FC</initials>
+			<hp>ma651</hp>
+			<last_note>2011-01-27</last_note>
+			<last_dot>2010-12-07</last_dot>
+		</update>
+	</case>
+	<case>
+		<case_id>0bd56681dce2b7a5140f75266d1d9312</case_id>
+		<date_modified>2010-10-06T07:23:25.000</date_modified>
+		<create>
+			<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
+			<case_type_id>cc_shine_client</case_type_id>
+			<case_name>Unreal, Person</case_name>
+			<external_id>9b606de4d11a11df8f35005056977568</external_id>
+		</create>
+		<update>
+			<pactid>2000</pactid>
+			<gender>m</gender>
+			<type>HP</type>
+			<Phone1>555-555-5555</Phone1>
+			<Phone2>555-555-5555</Phone2>
+			<address1>12 Fake St, Fakeland</address1>
+			<dob>1960-11-01</dob>
+			<initials>UP</initials>
+			<hp>lnb9</hp>
+			<last_note>2010-10-26</last_note>
+			<last_dot></last_dot>
+		</update>
+	</case>
+	<case>
+		<case_id>0bd56681dce2b7a5140f75266d2064c0</case_id>
+		<date_modified>2010-10-06T07:23:19.000</date_modified>
+		<create>
+			<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
+			<case_type_id>cc_shine_client</case_type_id>
+			<case_name>Patient, Imaginary</case_name>
+			<external_id>980247a4d11a11df8f35005056977568</external_id>
+		</create>
+		<update>
+			<pactid>2020</pactid>
+			<gender>f</gender>
+			<type>HP</type>
+			<Phone1>555-555-5555</Phone1>
+			<Phone2>555-555-5555</Phone2>
+			<address1>12 Fake St, Fakeland</address1>
+			<dob>1985-01-03</dob>
+			<initials>IP</initials>
+			<hp>lnb9</hp>
+			<last_note>2011-02-07</last_note>
+			<last_dot></last_dot>
+		</update>
+	</case>
+</parent>

@@ -1,8 +1,10 @@
-from corehq.apps.commtrack.models import StockState
+from decimal import Decimal
+import functools
+from corehq.apps.commtrack.consumption import recalculate_domain_consumption
+from corehq.apps.commtrack.models import StockState, ConsumptionConfig
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from datetime import datetime
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 
@@ -19,7 +21,6 @@ class StockStateTest(CommTrackTest):
 
 class StockStateBehaviorTest(StockStateTest):
     def test_stock_state(self):
-
         self.report(25, 5)
         self.report(10, 0)
 
@@ -66,7 +67,6 @@ class StockStateConsumptionTest(StockStateTest):
     def test_pre_set_defaults(self):
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
         self.report(25, 0)
-
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp._id,
@@ -86,3 +86,46 @@ class StockStateConsumptionTest(StockStateTest):
         )
 
         self.assertEqual(5, float(state.get_daily_consumption()))
+
+
+    def test_rebuild_for_domain(self):
+        # 5 days, 1 transaction
+        self.report(25, 5)
+        self.report(10, 0)
+        expected_result = Decimal(3)
+
+        commtrack_settings = self.domain.commtrack_settings
+        def _update_consumption_config(min_transactions, min_window, optimal_window):
+            commtrack_settings.consumption_config.min_transactions = min_transactions
+            commtrack_settings.consumption_config.min_window = min_window
+            commtrack_settings.consumption_config.optimal_window = optimal_window
+            commtrack_settings.save()
+
+
+        _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
+
+        tests = (
+            ((0, 3, 100), expected_result),  # normal result
+            ((2, 3, 100), None),   # not enough transactions
+            ((2, 3, 100), None),   # not enough transactions
+            ((0, 6, 100), None),   # too much time
+            ((2, 3, 4), None),   # not enough time
+        )
+        for consumption_params, test_result in tests:
+            _reset()
+            recalculate_domain_consumption(self.domain.name)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            self.assertEqual(expected_result, state.daily_consumption,
+                             'reset state failed for arguments: {}'.format(consumption_params))
+
+            # just changing the config shouldn't change the state
+            _update_consumption_config(*consumption_params)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            self.assertEqual(expected_result, state.daily_consumption,
+                             'update config failed for arguments: {}'.format(consumption_params))
+
+            # recalculating should though
+            recalculate_domain_consumption(self.domain.name)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            self.assertEqual(test_result, state.daily_consumption,
+                             'test failed for arguments: {}'.format(consumption_params))

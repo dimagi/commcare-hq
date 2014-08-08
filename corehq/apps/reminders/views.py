@@ -569,7 +569,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def is_previewer(self):
-        return self.request.couch_user.is_previewer
+        return self.request.couch_user.is_previewer()
 
     @property
     def parent_pages(self):

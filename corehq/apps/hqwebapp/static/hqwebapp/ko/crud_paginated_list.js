@@ -144,7 +144,11 @@ var CRUDPaginatedListModel = function (
                     $("#create-item-form")[0].reset();
                     self.createItemForm($(data.form).html());
                     if (data.newItem) {
-                        self.newList.push(new PaginatedItem(data.newItem, self.initRow));
+                        if (data.newItem.error) {
+                            self.alertHtml(data.newItem.error);
+                        } else {
+                            self.newList.push(new PaginatedItem(data.newItem, self.initRow));
+                        }
                     }
                 }
             });

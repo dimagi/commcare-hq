@@ -9,6 +9,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
+from corehq.db import Session
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.util import format_datatables_data
@@ -252,15 +253,12 @@ class SqlData(ReportDataSource):
             if not slugs or c.slug in slugs:
                 qc.append_column(c.view)
 
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-        conn = engine.connect()
+        session = Session()
         try:
-            data = qc.resolve(conn, self.filter_values)
-        finally:
-            conn.close()
-            engine.dispose()
-
-        return data
+            return qc.resolve(session.connection(), self.filter_values)
+        except:
+            session.rollback()
+            raise
 
     @property
     def data(self):
