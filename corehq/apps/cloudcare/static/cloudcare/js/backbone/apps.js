@@ -608,7 +608,7 @@ cloudCare.AppView = Backbone.View.extend({
                     self._clearFormPlayer();
                     self.showModule(selectedModule);
                     cloudCare.dispatch.trigger("form:submitted");
-                    showSuccess("Form successfully saved.", $("#cloudcare-notifications"), 2500);
+                    showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
                 }
             });
         };
