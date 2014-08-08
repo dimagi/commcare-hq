@@ -762,7 +762,7 @@ class MetReport(BaseReport):
         if self.awcs:
             subtitles.append("Awc's - %s" % ", ".join(self.awcs))
         elif self.gp:
-            subtitles.append("Gram Panchayat - %s" % self.gp)
+            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
         elif self.block:
             subtitles.append("Block - %s" % self.block)
         startdate = self.datespan.startdate_param_utc
