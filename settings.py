@@ -91,9 +91,14 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-)
+STATICFILES_DIRS = ()
+
+# bleh, why did this submodule have to be removed?
+# deploy fails if this item is present and the path does not exist
+_formdesigner_path = os.path.join(FILEPATH, 'submodules', 'formdesigner')
+if os.path.exists(_formdesigner_path):
+    STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
+del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
