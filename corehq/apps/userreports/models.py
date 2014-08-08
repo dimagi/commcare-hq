@@ -52,11 +52,11 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('userreports/by_domain', key=domain, reduce=False, include_docs=True).all()
+        return cls.view('userreports/indicator_configs_by_domain', key=domain, reduce=False, include_docs=True).all()
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/by_domain', reduce=False, include_docs=False)]
+        ids = [res['id'] for res in cls.view('userreports/indicator_configs_by_domain', reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 
