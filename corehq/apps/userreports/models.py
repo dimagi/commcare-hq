@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document
+from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
@@ -68,3 +68,22 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
             return self.indicators.get_values(item)
         else:
             return []
+
+
+class ReportConfiguration(Document):
+    domain = StringProperty(required=True)
+    config_id = StringProperty(required=True)
+    display_name = StringProperty()
+    aggregation_columns = StringListProperty()
+    configured_filters = ListProperty()
+    configured_columns = ListProperty()
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True).all()
+
+    @classmethod
+    def all(cls):
+        ids = [res['id'] for res in cls.view('userreports/report_configs_by_domain', reduce=False, include_docs=False)]
+        for result in iter_docs(cls.get_db(), ids):
+            yield cls.wrap(result)
