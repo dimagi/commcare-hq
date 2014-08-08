@@ -1,0 +1,36 @@
+{
+    "domain": "user-reports",
+    "doc_type": "ReportConfiguration",
+    "display_name": "CommBugz",
+    "config_id": "12345",
+    "filters": [
+        {
+            "type": "date",
+            "field": "date",
+            "display": "Date"
+        }
+    ],
+    "aggregation_columns": [
+        "owner"
+    ],
+    "columns": [
+        {
+            "type": "owner",
+            "display": "Owner",
+            "field": "owner",
+            "aggregation": "simple"
+        },
+        {
+            "type": "field",
+            "display": "Tickets",
+            "field": "count",
+            "aggregation": "sum"
+        },
+        {
+            "type": "field",
+            "display": "Starred",
+            "field": "is_starred",
+            "aggregation": "sum"
+        }
+    ]
+}
