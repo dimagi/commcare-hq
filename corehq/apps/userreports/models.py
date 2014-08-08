@@ -11,9 +11,9 @@ from fluff.filters import ANDFilter
 
 class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
-    domain = StringProperty()
-    referenced_doc_type = StringProperty()
-    table_id = StringProperty()
+    domain = StringProperty(required=True)
+    referenced_doc_type = StringProperty(required=True)
+    table_id = StringProperty(required=True)
     display_name = StringProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
