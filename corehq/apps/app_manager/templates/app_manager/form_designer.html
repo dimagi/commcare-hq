@@ -64,6 +64,7 @@
         require.config({
             // handle very bad connections
             waitSeconds: 60,
+            urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
             packages: [
                 {
                     name: 'jquery.vellum',

@@ -89,6 +89,11 @@ def static(url):
 
 
 @register.simple_tag
+def cachebuster(url):
+    return resource_versions.get(url, "")
+
+
+@register.simple_tag
 def domains_for_user(request, selected_domain=None):
     """
     Generate pulldown menu for domains.
