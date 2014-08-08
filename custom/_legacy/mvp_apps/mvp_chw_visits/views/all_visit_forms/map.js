@@ -146,6 +146,19 @@ function(doc) {
 
         if (isHomeVisitForm(doc)) {
             indicator_entries['household'] = case_id;
+            if (indicators.num_bednets_observerd && indicators.num_bednets_observerd.value){
+                indicator_entries['household bednet'] = case_id;
+                if(indicators.num_bednets_observerd.value > 0){
+                    indicator_entries['household atleastonebednet'] = case_id;
+                }
+            }
+            if (indicators.handwashing && indicators.handwashing.value){
+                indicator_entries['household handwashing'] = case_id;
+                var handwashing_area = indicators.handwashing.value;
+                if(handwashing_area.indexOf("latrine") >= 0){
+                    indicator_entries['household handwashing10metres'] = case_id;
+                }
+            }
         }
 
         emit_special(doc, visit_date, indicator_entries, [doc._id]);
