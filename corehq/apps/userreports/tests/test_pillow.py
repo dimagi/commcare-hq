@@ -12,7 +12,7 @@ class IndicatorPillowTest(TestCase):
 
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_config.json')
+        sample_file = os.path.join(folder, 'sample_indicator_config.json')
         self.pillow = ConfigurableIndicatorPillow()
         self.engine = self.pillow.get_sql_engine()
         with open(sample_file) as f:
