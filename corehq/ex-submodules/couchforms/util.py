@@ -408,7 +408,7 @@ class SubmissionPost(object):
             with lock_manager as instance:
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True) as case_db:
+                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
                         process_cases_with_casedb(instance, case_db)
                         process_stock(instance, case_db)
                         cases = case_db.get_changed()
