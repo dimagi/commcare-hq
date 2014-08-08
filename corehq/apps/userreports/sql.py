@@ -39,7 +39,7 @@ class IndicatorSqlAdapter(object):
 
 def get_indicator_table(indicator_config):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
-    table_name = _get_table_name(indicator_config.domain, indicator_config.table_id)
+    table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
     # is that valid?
     return sqlalchemy.Table(
@@ -70,5 +70,5 @@ def rebuild_table(engine, table):
     engine.dispose()
 
 
-def _get_table_name(domain, table_id):
+def get_table_name(domain, table_id):
     return 'configurable_indicators_{0}_{1}'.format(domain, table_id)
