@@ -81,6 +81,36 @@ INDICATOR_DATA = {
         },
         "xaxis_label": "# forms",
     },
+    "users": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users",
+        "chart_title": "Total Users",
+        "histogram_type": "users",
+        "interval": "week",
+        "xaxis_label": "# users",
+    },
+    "users_mobile": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users_mobile",
+        "chart_title": "Mobile Users (submitted)",
+        "histogram_type": "users",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": True,
+        },
+        "xaxis_label": "# users",
+    },
+    "users_web": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users_web",
+        "chart_title": "Web Users (submitted)",
+        "histogram_type": "users",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": False,
+        },
+        "xaxis_label": "# users",
+    },
 }
 
 
@@ -405,4 +435,7 @@ class UserReport(GlobalAdminReports):
     slug = 'user_report'
     name = _('User Report')
     indicators = [
+        'users',
+        'users_mobile',
+        'users_web',
     ]

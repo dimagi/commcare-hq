@@ -76,6 +76,10 @@ def get_user_type_filters(histo_type, user_type_mobile):
             [web_user._id for web_user in WebUser.all()
              if web_user.doc_type == "WebUser"]
         )
+    elif histo_type == 'users':
+        result['terms']['doc_type'] = [
+            "CommCareUser" if user_type_mobile else "WebUser"
+        ]
     return result
 
 
