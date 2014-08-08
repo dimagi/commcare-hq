@@ -72,7 +72,7 @@ INDICATOR_DATA = {
     },
     "forms_web": {
         "ajax_view": "admin_reports_stats_data",
-        "chart_name": "forms_mobile",
+        "chart_name": "forms_web",
         "chart_title": "Forms Submitted by Web Users",
         "histogram_type": "forms",
         "interval": "week",
@@ -396,21 +396,7 @@ class FormSubmissionsReport(GlobalAdminReports):
     name = _('Form Submissions')
     indicators = [
         'forms',
-    ]
-
-
-class FormSubmissionsMobileReport(GlobalAdminReports):
-    slug = 'form_submissions_mobile'
-    name = _('Form Submissions - Mobile')
-    indicators = [
         'forms_mobile',
-    ]
-
-
-class FormSubmissionsWebReport(GlobalAdminReports):
-    slug = 'form_submissions_web'
-    name = _('Form Submissions - Web')
-    indicators = [
         'forms_web',
     ]
 
