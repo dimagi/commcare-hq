@@ -258,6 +258,7 @@ class ChildFollowup(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
+        # FIXME This will make forms == None, but it's not being used anyways...
         forms = children_forms.append(CHILD_FOLLOWUP_XMLNS)
         if form.xmlns in children_forms:
             block = block_type(form)

@@ -1,6 +1,4 @@
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.fixtures.models import FixtureDataItem
-from corehq.apps.users.models import CommCareUser, CommCareCase
 
 DOMAIN = 'opm'
 
@@ -15,20 +13,10 @@ CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609
 
 children_forms = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]
 
-# @memoized
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
-
-# memoize or cache?
-def get_user_data_set():
-    users = CommCareUser.by_domain(DOMAIN)
-    return {
-        'blocks': sorted(list(set(u.user_data.get('block') for u in users))),
-        'awcs': sorted(list(set(u.user_data.get('awc') for u in users))),
-        'gp': sorted(list(set(u.user_data.get('gp') for u in users))),
-    }
 
 class InvalidRow(Exception):
     """

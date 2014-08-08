@@ -7,48 +7,47 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 import datetime
-from numbers import Number
+import logging
+import simplejson
 import re
-from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
 from decimal import Decimal
+from numbers import Number
+
+from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
-import simplejson
+from django.utils.translation import ugettext_noop, ugettext as _
+
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
+
 from corehq.apps.reports.cache import request_cache
-from django.http import HttpResponse
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
-
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-
-from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
-from dimagi.utils.dates import DateSpan
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
-from django.utils.translation import ugettext as _
-from custom.opm import BaseMixin, normal_format, format_percent
-from custom.opm.opm_reports.conditions_met import ConditionsMet
-from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter, SnapshotFilter
-from custom.opm.opm_reports.health_status import HealthStatus
-from dimagi.utils.decorators.memoized import memoized
 
+from custom.opm import BaseMixin, normal_format, format_percent
 from ..opm_tasks.models import OpmReportSnapshot
-from .beneficiary import Beneficiary
+from .beneficiary import Beneficiary, ConditionsMet
+from .health_status import HealthStatus
 from .incentive import Worker
+from .filters import (BlockFilter, AWCFilter, SelectBlockFilter,
+    GramPanchayatFilter, SnapshotFilter)
 from .constants import *
-from .filters import BlockFilter, AWCFilter
-import logging
-from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 
 
 DATE_FILTER ="date between :startdate and :enddate"
@@ -108,7 +107,6 @@ class OpmCaseSqlData(SqlData):
 
 
 class OpmFormSqlData(SqlData):
-
     table_name = "fluff_OpmFormFluff"
 
     def __init__(self, domain, case_id, datespan):
@@ -118,7 +116,6 @@ class OpmFormSqlData(SqlData):
 
     @property
     def filter_values(self):
-
         return dict(
             domain=self.domain,
             case_id=self.case_id,
@@ -161,6 +158,7 @@ class OpmFormSqlData(SqlData):
             return super(OpmFormSqlData, self).data[self.case_id]
         else:
             return None
+
 
 class OpmHealthStatusSqlData(SqlData):
 
@@ -318,6 +316,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
                         user.user_data['gp'] and user.user_data['gp'] in keys]
             if keys and value not in keys:
+                print "*"*40, 'ESOE: InvalidRow', "*"*40
                 raise InvalidRow
 
     @property
@@ -394,6 +393,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         return rows
 
     @property
+    @memoized
     def filter_data(self):
         return dict([
             (field.slug, field.get_value(self.request, DOMAIN))
@@ -459,6 +459,7 @@ class BeneficiaryPaymentReport(BaseReport):
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
+    default_case_type = "Pregnancy"
 
     @property
     def load_snapshot(self):
@@ -468,37 +469,68 @@ class BeneficiaryPaymentReport(BaseReport):
     def fields(self):
         return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
 
-    # TODO: Switch to ES. Peformance aaah!
     def get_rows(self, datespan):
-        cases = []
-        self.form_sql_data = OpmFormSqlData(domain=DOMAIN, case_id=None, datespan=self.datespan)
-        for case_id in self.form_sql_data.data.keys():
-            try:
-                cases.append(CommCareCase.get(case_id))
-            except ResourceNotFound:
-                pass
-
-        return [case for case in cases if self.passes_filter(case)]
-
-    def passes_filter(self, case):
-        status = self.filter_data.get('is_open', None)
-        if status:
-            if status == 'open' and not case.closed:
-                return True
-            elif status == 'closed' and case.closed:
-                return True
-            return False
-        return True
+        block = self.block
+        q = {
+            "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {},
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"domain.exact": self.domain}}
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        es_filters = q["query"]["filtered"]["filter"]
+        if self.snapshot is None and hasattr(self, 'request'):
+            if self.awcs:
+                awcs_lower = [awc.lower() for awc in self.awcs]
+                awc_term = {
+                    "or":
+                        [{"and": [{"term": {"awc_name.#value": term}} for term in re.split('\s', awc)
+                                    if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
+                        } for awc in awcs_lower]
+                }
+                es_filters["bool"]["must"].append(awc_term)
+            elif self.gp:
+                users = CouchUser.by_domain(self.domain)
+                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == self.gp]
+                es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
+            elif self.block:
+                es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
+            is_open = self.request_params.get('is_open', None)
+            # FIXME This is definitely wrong; it looks at current case status, not report-time
+            if is_open:
+                es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
+        else:
+            es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
+        if self.default_case_type:
+            es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        from pprint import pprint
+        pprint ([c['_id'] for c in es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])])
+        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 
     def get_row_data(self, row):
-        return self.model(row, self, self.form_sql_data.data.__getitem__(row._id))
+        return self.model(row, self)
+
+    def cases_meeting_bp1(self):
+        pass
+
+    def cases_meeting_bp1(self):
+        pass
 
 
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
-
 
     @property
     def fields(self):
@@ -886,8 +918,9 @@ class MetReport(BaseReport):
         if self.default_case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        from pprint import pprint
+        pprint ([c['_id'] for c in es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])])
         return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
-
 
     def get_row_data(self, row):
         return self.model(row, self)
