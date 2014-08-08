@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.models import Product, DbProduct
+from corehq.apps.commtrack.models import Product, SQLProduct
 
 
 class ProductsTest(CommTrackTest):
@@ -35,12 +35,12 @@ class ProductsTest(CommTrackTest):
         product.save()
 
         try:
-            db_product = DbProduct.objects.get(
+            sql_product = SQLProduct.objects.get(
                 name="new_name",
                 domain="new_domain",
             )
 
-            self.assertEqual(db_product.name, "new_name")
-            self.assertEqual(db_product.domain, "new_domain")
-        except DbProduct.DoesNotExist:
+            self.assertEqual(sql_product.name, "new_name")
+            self.assertEqual(sql_product.domain, "new_domain")
+        except SQLProduct.DoesNotExist:
             self.fail("Synced SQL object does not exist")

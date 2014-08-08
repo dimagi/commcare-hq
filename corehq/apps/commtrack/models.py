@@ -39,6 +39,7 @@ from django.db.models.signals import post_save, post_delete
 from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
+import json_field
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -114,7 +115,7 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
-        db_product, _ = DbProduct.objects.get_or_create(
+        sql_product, _ = SQLProduct.objects.get_or_create(
             domain=self.domain,
             name=self.name
         )
@@ -123,9 +124,9 @@ class Product(Document):
 
         properties_to_sync = ['domain', 'name', 'is_archived']
         for prop in properties_to_sync:
-            setattr(db_product, prop, getattr(self, prop))
+            setattr(sql_product, prop, getattr(self, prop))
 
-        db_product.save()
+        sql_product.save()
 
         return result
 
@@ -1364,14 +1365,22 @@ class CommTrackUser(CommCareUser):
             self.submit_location_block(caseblock)
 
 
-class DbProduct(models.Model):
+class SQLProduct(models.Model):
     domain = models.CharField(max_length=100, db_index=True)
-    name = models.CharField(max_length=100, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True)
+    name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
-    # TODO fill more in
+    code = models.CharField(max_length=100, default='', null=True)
+    description = models.CharField(max_length=100, null=True, default='')
+    category = models.CharField(max_length=100, null=True, default='')
+    program_id = models.CharField(max_length=100, null=True, default='')
+    cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
+    product_data = json_field.JSONField(
+        default={},
+    )
 
     def __repr__(self):
-        return "<DbProduct(domain=%s, name=%s)>" % (
+        return "<SQLProduct(domain=%s, name=%s)>" % (
             self.domain,
             self.name
         )
@@ -1379,7 +1388,7 @@ class DbProduct(models.Model):
 
 class ActiveManager(models.Manager):
     def get_query_set(self):
-        return super(ActiveManager, self).get_query_set().exclude(db_product__is_archived=True)
+        return super(ActiveManager, self).get_query_set().exclude(sql_product__is_archived=True)
 
 
 class StockState(models.Model):
@@ -1392,7 +1401,7 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
-    db_product = models.ForeignKey(DbProduct, null=True)
+    sql_product = models.ForeignKey(SQLProduct)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()
@@ -1536,7 +1545,7 @@ def update_stock_state_for_transaction(instance):
         CommCareCase.get(instance.case_id).domain
     )
 
-    db_product = DbProduct.objects.get(
+    sql_product = SQLProduct.objects.get(
         domain=domain.name,
         name=Product.get(instance.product_id).name
     )
@@ -1546,14 +1555,14 @@ def update_stock_state_for_transaction(instance):
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
-            db_product=db_product,
+            sql_product=sql_product,
         )
     except StockState.DoesNotExist:
         state = StockState(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
-            db_product=db_product,
+            sql_product=sql_product,
         )
 
     state.last_modified_date = instance.report.date
