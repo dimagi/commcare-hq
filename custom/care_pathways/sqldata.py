@@ -1,6 +1,6 @@
 from sqlagg.columns import SimpleColumn, CountColumn
 from sqlagg.filters import *
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, TableDataFormat, DataFormatter
 from custom.care_pathways.utils import get_domain_configuration
 
 KEYS = [u'lvl_1', u'lvl_2', u'lvl_3', u'lvl_4', u'lvl_5']
@@ -77,3 +77,8 @@ class AdoptionBarChartReportSqlData(SqlData):
         group_by = ['domain', 'value_chain']
 
         return group_by
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))

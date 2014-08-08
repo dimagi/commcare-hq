@@ -145,6 +145,7 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
 class GroupByFilter(BaseSingleOptionFilter):
     slug = "group_by"
     label = "Group By"
+    default_text = ugettext_noop("Group by...")
 
     @property
     def options(self):
