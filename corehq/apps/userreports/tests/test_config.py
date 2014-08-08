@@ -2,6 +2,7 @@ import json
 import os
 from datetime import date
 from django.test import SimpleTestCase, TestCase
+from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import IndicatorConfiguration
 
 
@@ -92,9 +93,9 @@ class IndicatorConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        IndicatorConfiguration(domain='foo', table_id='foo1').save()
-        IndicatorConfiguration(domain='foo', table_id='foo2').save()
-        IndicatorConfiguration(domain='bar', table_id='bar1').save()
+        IndicatorConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
+        IndicatorConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
+        IndicatorConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
 
     @classmethod
     def tearDownClass(cls):
@@ -112,3 +113,21 @@ class IndicatorConfigurationDbTest(TestCase):
 
     def testGetAll(self):
         self.assertEqual(3, len(list(IndicatorConfiguration.all())))
+
+    def testDomainIsRequired(self):
+        self.assertRaises(
+            BadValueError,
+            IndicatorConfiguration(table_id='table', referenced_doc_type='doc').save
+        )
+
+    def testTableIdIsRequired(self):
+        self.assertRaises(
+            BadValueError,
+            IndicatorConfiguration(domain='domain', referenced_doc_type='doc').save
+        )
+
+    def testDocTypeIsRequired(self):
+        self.assertRaises(
+            BadValueError,
+            IndicatorConfiguration(domain='domain', table_id='table').save
+        )
