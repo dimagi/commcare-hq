@@ -109,7 +109,7 @@ class VhndMonthly(fluff.Calculator):
             if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s"):
                 yield case_date_group(form)
                 break
-            elif form.xmlns in children_forms and form.form['child_1']['child1_attendance_vhnd'] == 1:
+            elif form.xmlns in CHILDREN_FORMS and form.form['child_1']['child1_attendance_vhnd'] == 1:
                 yield case_date_group(form)
                 break
 
@@ -130,7 +130,7 @@ class Status(fluff.Calculator):
     @fluff.date_emitter
     def total(self, case):
         for form in case.get_forms():
-            if form.xmlns in children_forms and check_status(form, self.status):
+            if form.xmlns in CHILDREN_FORMS and check_status(form, self.status):
                 yield case_date_group(form)
 
 
@@ -165,7 +165,7 @@ class BreastFed(fluff.Calculator):
 
 
 class ChildrenInfo(fluff.Calculator):
-    def __init__(self, prop, num_in_condition=0, forms=children_forms, *args, **kwargs):
+    def __init__(self, prop, num_in_condition=0, forms=CHILDREN_FORMS, *args, **kwargs):
         self.num_in_condition = num_in_condition
         self.prop1 = 'child_%s'
         self.prop2 = prop
@@ -259,8 +259,8 @@ class ChildFollowup(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         # FIXME This will make forms == None, but it's not being used anyways...
-        forms = children_forms.append(CHILD_FOLLOWUP_XMLNS)
-        if form.xmlns in children_forms:
+        forms = CHILDREN_FORMS.append(CHILD_FOLLOWUP_XMLNS)
+        if form.xmlns in CHILDREN_FORMS:
             block = block_type(form)
             followed_up = False
             if block == "soft" and "total_soft_conditions" in form.form and form.form["total_soft_conditions"] == 1:

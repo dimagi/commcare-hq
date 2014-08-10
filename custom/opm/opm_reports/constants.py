@@ -11,7 +11,7 @@ CFU1_XMLNS = "http://openrosa.org/formdesigner/d642dd328514f2af92c093d414d63e5b2
 CFU2_XMLNS = "http://openrosa.org/formdesigner/9ef423bba8595a99976f0bc9532617841253a7fa"
 CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609ed16649"
 
-children_forms = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]
+CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]
 
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',

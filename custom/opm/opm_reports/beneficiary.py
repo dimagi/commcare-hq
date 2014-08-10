@@ -61,11 +61,21 @@ class OPMCase(object):
     @property
     @memoized
     def form_properties(self):
+        # TODO this isn't the best way to do this - these properties come
+        # from a number of different forms, and how do we know which value
+        # to store for each property if there are multiple forms?
+        # The names are diverse enough that I don't think we have to worry
+        # about name clashes, but a better way would be to store a set of
+        # all values for each property and/or split these up by form xmlns
         properties = {
             'window_1_1': None,
             'window_1_2': None,
+            'window_1_3': None,
+            'soft_window_1_3': None,
             'window_2_1': None,
             'window_2_2': None,
+            'window_2_3': None,
+            'soft_window_2_3': None,
             'attendance_vhnd_3': None,
             'attendance_vhnd_6': None,
             'child1_vhndattend_calc': None,
@@ -213,7 +223,7 @@ class OPMCase(object):
 
         if report.snapshot is not None:
             report.filter(
-                lambda key: case['_source'][key],
+                lambda key: self.case[key],
                 # case.awc_name, case.block_name
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
@@ -222,14 +232,8 @@ class OPMCase(object):
         else:
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
-        # TODO get rid of this altogether and just wrap the ES result
-        try:
-            self.case_obj = CommCareCase.get(case['_source']['_id'])
-        except ResourceNotFound:
-            raise InvalidRow
-
         # TODO move this to initial query
-        if self.case_obj.closed and self.case_obj.closed_on <= self.datespan.startdate_utc:
+        if self.case.closed and self.case.closed_on <= self.datespan.startdate_utc:
             print "*"*40, 'ESOE: Case closed problem', "*"*40
             raise InvalidRow
 
@@ -240,12 +244,7 @@ class OPMCase(object):
                 self.status = _(self.status)
 
     def case_property(self, name, default=None):
-        if name in self.case_obj:
-            if type(self.case_obj[name]) is dict:
-                return self.case_obj[name]
-            return self.case_obj[name]
-        else:
-            return default if default is not None else EMPTY_FIELD
+        return getattr(self.case, name, default)
 
     def set_case_properties(self):
         # TODO clean up this block
@@ -307,12 +306,26 @@ class OPMCase(object):
     @property
     @memoized
     def forms(self):
-        return self.case_obj.get_forms()
+        return self.case.get_forms()
 
     @property
     def all_conditions_met(self):
         # TODO Sravan, please confirm this logic
-        return True
+        if self.status == 'mother':
+            relevant_conditions = [
+                self.child_attended_vhnd,
+                self.child_growth_calculated,
+                self.child_received_ors,
+                self.child_condition_four,
+                self.child_breastfed,
+            ]
+        else:
+            relevant_conditions = [
+                self.preg_attended_vhnd,
+                self.preg_weighed,
+                self.preg_received_ifa,
+            ]
+        return False not in relevant_conditions
 
     @property
     def month_amt(self):
@@ -401,6 +414,8 @@ class ConditionsMet(OPMCase):
             self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
             self.four = ''
             if self.block == 'wazirganj':
+                # TODO This can't ever evaluate to True, as
+                # birth_spacing_prompt is populated only for mothers
                 if self.child_age > 23 and '1' in self.birth_spacing_prompt:
                     self.five = self.img_elem % SPACING_PROMPT_Y
                 else:
@@ -444,17 +459,14 @@ class Beneficiary(OPMCase):
 
     def __init__(self, *args, **kwargs):
         super(Beneficiary, self).__init__(*args, **kwargs)
-        # TODO
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
         self.delivery_cash = MONTH_AMT if self.delivery else 0
-        self.child_cash = MONTH_AMT if self.chlid_followup else 0
-        self.total = min(250, self.bp1_cash, self.bp2_cash, self.delivery_cash,
-            self.child_cash)
-
-        MONTH_AMT = 250
-        TWO_YEAR_AMT = 2000
-        THREE_YEAR_AMT = 3000
+        self.child_cash = MONTH_AMT if self.child_followup else 0
+        self.total = min(
+            MONTH_AMT,
+            self.bp1_cash + self.bp2_cash + self.delivery_cash + self.child_cash
+        )
 
     @property
     def bp1(self):
@@ -488,23 +500,21 @@ class Beneficiary(OPMCase):
 
     @property
     def child_followup(self):
-        # WIP
-        xmlns_list = children_forms + [CHILD_FOLLOWUP_XMLNS]
-        if form.xmlns in children_forms:
-            block = block_type(form)
-            followed_up = False
-            if block == "soft" and "total_soft_conditions" in form.form and form.form["total_soft_conditions"] == 1:
-                yield case_date_group(form)
-            else:
-                for prop in [
-                    'window%d_child%d' % (window, child)
-                    for window in range(3, 15) for child in range(1, 4)
-                ]:
-                    if form.form.get(prop) == 1 and block == 'hard':
-                        followed_up = True
-                    elif form.form.get(prop) and block not in ['hard', 'soft']:
-                        followed_up = True
-                if followed_up:
-                    yield case_date_group(form)
-
-
+        """
+        wazirganj - total_soft_conditions = 1
+        """
+        xmlns_list = CHILDREN_FORMS + [CHILD_FOLLOWUP_XMLNS]
+        for form in self.forms:
+            if form.xmlns in CHILDREN_FORMS:
+                if self.block == "wazirganj":
+                    if form.form.get("total_soft_conditions", 0) == 1:
+                        return True
+                else:
+                    # TODO Sravan, is there an aggregated calc in the app?
+                    for prop in [
+                        'window%d_child%d' % (window, child)
+                        for window in range(3, 15) for child in range(1, 4)
+                    ]:
+                        if form.form.get(prop) == 1:
+                            return True
+        return False

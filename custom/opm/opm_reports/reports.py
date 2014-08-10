@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
@@ -454,21 +455,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def users(self):
         return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
 
-class BeneficiaryPaymentReport(BaseReport):
-    name = "Beneficiary Payment Report"
-    slug = 'beneficiary_payment_report'
-    report_template_path = "opm/beneficiary_report.html"
-    model = Beneficiary
-    default_case_type = "Pregnancy"
-
-    @property
-    def load_snapshot(self):
-        return self.request.GET.get("load_snapshot", False)
-
-    @property
-    def fields(self):
-        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
-
+class CaseReportMixin(object):
     def get_rows(self, datespan):
         block = self.block
         q = {
@@ -513,9 +500,25 @@ class BeneficiaryPaymentReport(BaseReport):
         if self.default_case_type:
             es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        from pprint import pprint
-        pprint ([c['_id'] for c in es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])])
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+        result = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', fields=[])
+        return map(CommCareCase, iter_docs(CommCareCase.get_db(),
+                (res['_id'] for res in result['hits']['hits'])))
+
+
+class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
+    name = "Beneficiary Payment Report"
+    slug = 'beneficiary_payment_report'
+    report_template_path = "opm/beneficiary_report.html"
+    model = Beneficiary
+    default_case_type = "Pregnancy"
+
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
+
+    @property
+    def fields(self):
+        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
 
     def get_row_data(self, row):
         return self.model(row, self)
@@ -776,7 +779,7 @@ def calculate_total_row(rows):
                     total_row.append('')
     return total_row
 
-class MetReport(BaseReport):
+class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
@@ -874,53 +877,6 @@ class MetReport(BaseReport):
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
                         raise InvalidRow
-
-    def get_rows(self, datespan):
-        block = self.block
-        q = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {},
-                    },
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}}
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        es_filters = q["query"]["filtered"]["filter"]
-        if self.snapshot is None and hasattr(self, 'request'):
-            if self.awcs:
-                awcs_lower = [awc.lower() for awc in self.awcs]
-                awc_term = {
-                    "or":
-                        [{"and": [{"term": {"awc_name.#value": term}} for term in re.split('\s', awc)
-                                    if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
-                        } for awc in awcs_lower]
-                }
-                es_filters["bool"]["must"].append(awc_term)
-            elif self.gp:
-                users = CouchUser.by_domain(self.domain)
-                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == self.gp]
-                es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
-            elif self.block:
-                es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
-            is_open = self.request_params.get('is_open', None)
-            if is_open:
-                es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
-        else:
-            es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
-        if self.default_case_type:
-            es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        from pprint import pprint
-        pprint ([c['_id'] for c in es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])])
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
 
     def get_row_data(self, row):
         return self.model(row, self)
