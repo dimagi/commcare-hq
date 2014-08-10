@@ -77,6 +77,20 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     # Child Nutrition
+    moderate_muac_wasting_proportion=dict(
+        description="Proportion of children aged 6-59 months with moderate wasting (MUAC 115<125) "\
+                    "at last MUAC reading this time period",
+        title="% 6-59 month Children with moderate MUAC (115<125)",
+        numerator_slug="child_moderate_muac_wasting",
+        denominator_slug="child_muac_reading"
+    ),
+    severe_muac_wasting_proportion=dict(
+        description="Proportion of children aged 6-59 months with severe wasting (MUAC <115) "\
+                    "at last MUAC reading this time period",
+        title="% 6-59 month Children with severe MUAC < 115",
+        numerator_slug="child_severe_muac_wasting",
+        denominator_slug="child_muac_reading"
+    ),
     muac_wasting_proportion=dict(
         description="Proportion of children aged 6-59 months with moderate or severe wasting (MUAC < 125) "\
                     "at last MUAC reading this time period",

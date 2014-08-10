@@ -32,7 +32,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser
@@ -46,8 +46,7 @@ from ..opm_tasks.models import OpmReportSnapshot
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import (BlockFilter, AWCFilter, SelectBlockFilter,
-    GramPanchayatFilter, SnapshotFilter)
+from .filters import SnapshotFilter, HierarchyFilter, MetHierarchyFilter
 from .constants import *
 
 
@@ -279,17 +278,17 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     @property
     def fields(self):
-        return [BlockFilter, GramPanchayatFilter, AWCFilter] + super(BaseReport, self).fields
+        return [HierarchyFilter] + super(BaseReport, self).fields
 
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
         if self.filter_data.get('awcs', []):
-            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
+            subtitles.append("Awc's - %s" % ", ".join(self.awcs))
         elif self.filter_data.get('gp', ''):
-            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
+            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
         elif self.filter_data.get('blocks', []):
-            subtitles.append("Blocks - %s" % ", ".join(self.filter_data.get('blocks', [])))
+            subtitles.append("Blocks - %s" % ", ".join(self.blocks))
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
         if startdate and enddate:
@@ -324,14 +323,14 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def filter_fields(self):
         filter_by = []
         if self.awcs:
-            filter_by = [('awc_name', 'awcs')]
+            filter_by = [('awc_name', 'awc')]
         elif self.gp:
             filter_by = [('owner_id', 'gp')]
         elif self.block:
             if isinstance(self, BeneficiaryPaymentReport):
-                filter_by = [('block_name', 'blocks')]
+                filter_by = [('block_name', 'block')]
             else:
-                filter_by = [('block', 'blocks')]
+                filter_by = [('block', 'block')]
         return filter_by
 
 
@@ -396,10 +395,15 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     @memoized
     def filter_data(self):
-        return dict([
-            (field.slug, field.get_value(self.request, DOMAIN))
-            for field in self.fields
-        ])
+        fields = []
+        for field in self.fields:
+            value = field.get_value(self.request, DOMAIN)
+            if isinstance(value, tuple):
+                for lvl in field.get_value(self.request, DOMAIN)[0]:
+                    fields.append((lvl['slug'], lvl['value']))
+            else:
+                fields.append((field.slug, field.get_value(self.request, DOMAIN)))
+        return dict(fields)
 
     @property
     def row_objects(self):
@@ -537,7 +541,7 @@ class IncentivePaymentReport(BaseReport):
 
     @property
     def fields(self):
-        return [BlockFilter, GramPanchayatFilter, AWCFilter] + super(BaseReport, self).fields + [SnapshotFilter,]
+        return [HierarchyFilter] + super(BaseReport, self).fields + [SnapshotFilter,]
 
     @property
     def load_snapshot(self):
@@ -648,7 +652,7 @@ class HealthStatusReport(BaseReport):
 
     @property
     def fields(self):
-        return [BlockFilter, GramPanchayatFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
 
     @property
     @memoized
@@ -794,7 +798,7 @@ class MetReport(CaseReportMixin, BaseReport):
         if self.awcs:
             subtitles.append("Awc's - %s" % ", ".join(self.awcs))
         elif self.gp:
-            subtitles.append("Gram Panchayat - %s" % self.gp)
+            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
         elif self.block:
             subtitles.append("Block - %s" % self.block)
         startdate = self.datespan.startdate_param_utc
@@ -821,9 +825,7 @@ class MetReport(CaseReportMixin, BaseReport):
     @property
     def fields(self):
         return [
-            SelectBlockFilter,
-            GramPanchayatFilter,
-            AWCFilter,
+            MetHierarchyFilter,
             MonthFilter,
             YearFilter,
             SelectOpenCloseFilter,
@@ -852,7 +854,9 @@ class MetReport(CaseReportMixin, BaseReport):
             try:
                 current_status_index = self.snapshot.slugs.index('status')
                 for row in self.snapshot.rows:
-                    row[current_status_index] = _(row[current_status_index])
+                    if self.is_rendered_as_email:
+                        with localize('hin'):
+                            row[current_status_index] = _(row[current_status_index])
                 return self.snapshot.rows
             except ValueError:
                 return []
@@ -975,7 +979,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [BlockFilter, GramPanchayatFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
 
     data_source = {
         'adapter': 'legacyreport',

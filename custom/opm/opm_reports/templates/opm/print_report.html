@@ -18,7 +18,7 @@
         $(function() {
             document.body.style.zoom="55%"
             setTimeout(function() {
-                splitTable($(".table"), 600);
+                splitTable($(".table"), 560);
                 window.print();
             }, 2000);
         })
@@ -34,12 +34,10 @@
         }
         th {
             font-weight:bold;
+            line-height: 1.3;
         }
-        thead   {display: table-header-group;   }
-
-        tfoot   {display: table-footer-group;   }
-        tr{
-            page-break-before: always;
+        tr {
+            line-height: 1.3;
         }
     </style>
     {% endcompress %}

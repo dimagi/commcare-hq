@@ -2,6 +2,7 @@ import logging
 import simplejson
 import six
 import copy
+import datetime
 
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
@@ -12,8 +13,10 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es
+from corehq.elastic import get_es, ESError
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
+
+from no_exceptions.exceptions import Http400
 
 
 DEFAULT_SIZE = 10
@@ -21,6 +24,8 @@ DEFAULT_SIZE = 10
 class ESUserError(Http400):
     pass
 
+class DateTimeError(ValueError):
+    pass
 
 class ESView(View):
     """
@@ -127,7 +132,7 @@ class ESView(View):
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
             notify_exception(None, message=msg)
-            return None
+            raise ESError(msg)
 
         hits = []
         for res in es_results['hits']['hits']:
@@ -238,30 +243,29 @@ class XFormES(ESView):
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
-        if es_results:
-            for res in es_results.get('hits', {}).get('hits', []):
-                if '_source' in res:
-                    xmlns = res['_source'].get('xmlns', None)
-                    name = None
-                    if xmlns:
-                        name = form_filter.get_unknown_form_name(xmlns,
-                                                                 app_id=res['_source'].get('app_id',
-                                                                                           None),
-                                                                 none_if_not_found=True)
-                    if not name:
-                        name = 'unknown' # try to fix it below but this will be the default
-                        # fall back
-                        try:
-                            if res['_source']['form'].get('@name', None):
-                                name = res['_source']['form']['@name']
-                            else:
-                                backup = res['_source']['form'].get('#type', 'data')
-                                if backup != 'data':
-                                    name = backup
-                        except (TypeError, KeyError):
-                            pass
+        for res in es_results.get('hits', {}).get('hits', []):
+            if '_source' in res:
+                xmlns = res['_source'].get('xmlns', None)
+                name = None
+                if xmlns:
+                    name = form_filter.get_unknown_form_name(xmlns,
+                                                             app_id=res['_source'].get('app_id',
+                                                                                       None),
+                                                             none_if_not_found=True)
+                if not name:
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form']['@name']
+                        else:
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
-                    res['_source']['es_readable_name'] = name
+                res['_source']['es_readable_name'] = name
         return es_results
 
 
@@ -394,32 +398,31 @@ class ReportXFormES(XFormES):
         # not necessarily available here. So `None` is passed here.
         form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
-        if es_results:
-            for res in es_results.get('hits', {}).get('hits', []):
-                if '_source' in res:
-                    res_source = restore_property_dict(res['_source'])
-                    res['_source'] = res_source
-                    xmlns = res['_source'].get('xmlns', None)
-                    name = None
-                    if xmlns:
-                        name = form_filter.get_unknown_form_name(xmlns,
-                                                                 app_id=res['_source'].get('app_id',
-                                                                                           None),
-                                                                 none_if_not_found=True)
-                    if not name:
-                        name = 'unknown' # try to fix it below but this will be the default
-                        # fall back
-                        try:
-                            if res['_source']['form'].get('@name', None):
-                                name = res['_source']['form']['@name']
-                            else:
-                                backup = res['_source']['form'].get('#type', 'data')
-                                if backup != 'data':
-                                    name = backup
-                        except (TypeError, KeyError):
-                            pass
+        for res in es_results.get('hits', {}).get('hits', []):
+            if '_source' in res:
+                res_source = restore_property_dict(res['_source'])
+                res['_source'] = res_source
+                xmlns = res['_source'].get('xmlns', None)
+                name = None
+                if xmlns:
+                    name = form_filter.get_unknown_form_name(xmlns,
+                                                             app_id=res['_source'].get('app_id',
+                                                                                       None),
+                                                             none_if_not_found=True)
+                if not name:
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form']['@name']
+                        else:
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
-                    res['_source']['es_readable_name'] = name
+                res['_source']['es_readable_name'] = name
         return es_results
 
     @classmethod
@@ -597,13 +600,23 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
+def validate_date(date):
+    try:
+        datetime.datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            raise DateTimeError("Date not in the correct format")
+    return date
+
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {
     'xmlns': lambda v: {'term':{'xmlns.exact':v}},
-    'received_on_start': lambda v: {'range':{'received_on': {'from': v}}},
-    'received_on_end': lambda v: {'range':{'received_on': {'to': v}}},
+    'received_on_start': lambda v: {'range':{'received_on': {'from': validate_date(v)}}},
+    'received_on_end': lambda v: {'range':{'received_on': {'to': validate_date(v)}}},
 }
 
 def es_search(request, domain):
@@ -639,7 +652,10 @@ def es_search(request, domain):
         value = request.GET[key]
 
         if key in query_param_transforms:
-            payload["filter"]["and"].append(query_param_transforms[key](value))
+            try:
+                payload["filter"]["and"].append(query_param_transforms[key](value))
+            except DateTimeError:
+                raise Http400("Bad query parameter")
         else:
             payload["filter"]["and"].append({"term": {key: value}})
 

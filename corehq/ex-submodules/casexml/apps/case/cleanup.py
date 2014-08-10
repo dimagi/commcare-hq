@@ -1,10 +1,31 @@
+from __future__ import absolute_import
+from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 from casexml.apps.case import const
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids, primary_actions
 from casexml.apps.case.xform import get_case_updates
+from casexml.apps.case.xml import V2
+from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms import fetch_and_wrap_form
+
+
+def close_case(case_id, domain, user):
+    """
+    Close a case by submitting a close form to it.
+
+    Returns the form id of the closing form.
+    """
+    case_block = ElementTree.tostring(CaseBlock(
+        create=False,
+        case_id=case_id,
+        close=True,
+        version=V2,
+    ).as_xml())
+
+    return submit_case_blocks([case_block], domain, user.username, user._id)
 
 
 def rebuild_case(case_id):
