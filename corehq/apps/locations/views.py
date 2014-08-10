@@ -22,7 +22,6 @@ import json
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from custom.openlmis.tasks import bootstrap_domain_task
-from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 from soil.util import expose_download, get_download_context
 from corehq.apps.commtrack.tasks import import_locations_async
 from couchexport.models import Format
@@ -262,14 +261,6 @@ class FacilitySyncView(BaseSyncView):
     template_name = 'locations/facility_sync.html'
     source = 'openlmis'
 
-class ILSFacilitySyncView(BaseSyncView):
-    urlname = 'sync_facilities_ils'
-    sync_urlname = 'sync_ilsgateway'
-    page_title = ugettext_noop("ILSGateway")
-    template_name = 'locations/facility_sync.html'
-    source = 'ilsgateway'
-
-
 
 class EditLocationHierarchy(BaseLocationView):
     urlname = 'location_hierarchy'
@@ -460,11 +451,5 @@ def sync_facilities(request, domain):
 def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')
-
-@domain_admin_required
-@require_POST
-def sync_ilsgateway(request, domain):
-    ils_bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
 

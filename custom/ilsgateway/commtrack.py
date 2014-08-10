@@ -247,7 +247,8 @@ def locations_type_sync(project):
     config.save()
 
 
-def bootstrap_domain(domain, ilsgateway_config):
+def bootstrap_domain(ilsgateway_config):
+    domain = ilsgateway_config.domain
     start_date = datetime.today()
     endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
     try:
@@ -259,8 +260,8 @@ def bootstrap_domain(domain, ilsgateway_config):
         date = None
     try:
         locations_type_sync(domain)
-        locations_sync(domain, endpoint, date=date)
-        products_sync(domain, endpoint, date=date)
+        #locations_sync(domain, endpoint, date=date)
+        #products_sync(domain, endpoint, date=date)
         webusers_sync(domain, endpoint, date=date)
         smsusers_sync(domain, endpoint, date=date)
         

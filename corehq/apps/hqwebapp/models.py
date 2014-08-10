@@ -343,13 +343,13 @@ class CommTrackSetupTab(UITab):
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
+            ILSConfigView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
             NewLocationView,
             EditLocationView,
             FacilitySyncView,
-            ILSFacilitySyncView,
             LocationImportView,
             LocationImportStatusView,
             LocationSettingsView,
@@ -437,8 +437,8 @@ class CommTrackSetupTab(UITab):
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
             {
-                'title': ILSFacilitySyncView.page_title,
-                'url': reverse(ILSFacilitySyncView.urlname, args=[self.domain]),
+                'title': ILSConfigView.page_title,
+                'url': reverse(ILSConfigView.urlname, args=[self.domain]),
             },
         ]])
         return items

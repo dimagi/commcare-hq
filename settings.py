@@ -927,6 +927,7 @@ COUCHDB_APPS = [
     'trialconnect',
     'accounting',
     'succeed',
+    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),

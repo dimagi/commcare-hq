@@ -372,24 +372,6 @@ class OpenLMISConfig(DocumentSchema):
         return True if self.enabled and self.url and self.password and self.username else False
 
 
-class ILSGatewayConfig(DocumentSchema):
-    enabled = BooleanProperty(default=False)
-    url = StringProperty()
-    username = StringProperty()
-    password = StringProperty()
-
-    @classmethod
-    def for_domain(cls, name):
-        commtrack_settings = CommtrackConfig.for_domain(name)
-        if commtrack_settings and commtrack_settings.ilsgateway_config:
-            return commtrack_settings.ilsgateway_config
-        return None
-
-    @property
-    def is_configured(self):
-        return True if self.enabled and self.url and self.password and self.username else False
-
-
 class AlertConfig(DocumentSchema):
     stock_out_facilities = BooleanProperty(default=False)
     stock_out_commodities = BooleanProperty(default=False)
@@ -430,7 +412,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
-    ilsgateway_config = SchemaProperty(ILSGatewayConfig)
 
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
