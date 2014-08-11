@@ -41,6 +41,23 @@
             }
         }
 
+        function RefreshableViewModel(url, model, sort_by) {
+            var self = this;
+            self.models = ko.observableArray();
+            self.refresh = function () {
+                $.getJSON(url, function (data) {
+                    var objects = _(data).map(function (item) {
+                        return new model(item);
+                    });
+                    if (sort_by) {
+                        objects = _(objects).sortBy(function (x) { return x[sort_by]; })
+                    }
+                    self.models(objects);
+                });
+            };
+            self.refresh();
+        }
+
         function ActiveTaskModel(data) {
 
             this.pid = ko.observable(data.pid);
@@ -52,26 +69,7 @@
             this.updated_on = ko.observable(format_date(data.updated_on));
             this.total_changes = ko.observable(data.total_changes);
         }
-        function ActiveTaskListViewModel() {
-            // Data
-            var self = this;
 
-            self.getTasks = function () {
-                $.getJSON("{% url "system_ajax" %}?api=_active_tasks", function (allData) {
-                            var mappedTasks = $.map(allData, function (item) {
-                                return new ActiveTaskModel(item)
-                            });
-                            self.couch_tasks(mappedTasks);
-                        }
-                );
-            };
-            self.couch_tasks = ko.observableArray(self.getTasks());
-            self.refresh = function () {
-                self.getTasks();
-            }
-        }
-
-        //CELERY model declarations
         function CeleryTaskModel(data) {
             this.name = ko.observable(data.name);
             this.uuid = ko.observable(data.uuid);
@@ -84,24 +82,6 @@
             this.args = ko.observable(data.args);
             this.kwargs = ko.observable(data.kwargs);
             this.runtime = ko.observable(number_fix(data.runtime));
-        }
-        function CeleryTaskListViewModel() {
-            // Data
-            var self = this;
-
-            self.getCeleryTasks = function () {
-                $.getJSON("{% url "system_ajax" %}?api=flower_poll", function (allData) {
-                            var mappedTasks = $.map(allData, function (item) {
-                                return new CeleryTaskModel(item)
-                            });
-                            self.celery_tasks(mappedTasks);
-                        }
-                );
-            };
-            self.celery_tasks = ko.observableArray(self.getCeleryTasks());
-            self.refresh = function () {
-                self.getCeleryTasks();
-            }
         }
 
         function PillowModel(pillow) {
@@ -128,19 +108,6 @@
             };
         }
 
-        function PillowtopViewModel() {
-            var self = this;
-            self.pillows = ko.observableArray();
-            self.refresh = function () {
-                $.getJSON("{% url "system_ajax" %}?api=pillowtop", function (data) {
-                    self.pillows(_(_(data).map(function (item) {
-                        return new PillowModel(item);
-                    })).sortBy(function (pillow) { return pillow.name; }));
-                });
-            };
-            self.refresh();
-        }
-
         function DbComparisons(data) {
             var self = this;
             self.description = data.description;
@@ -149,23 +116,10 @@
             self.sql_rows = data.sql_rows;
         }
 
-        function DbComparisonsViewModel() {
-            var self = this;
-            self.comparisons = ko.observableArray();
-            self.refresh = function () {
-                $.getJSON("{% url "db_comparisons" %}", function (data) {
-                    self.comparisons(_(_(data).map(function (item) {
-                        return new DbComparisons(item);
-                    })).sortBy(function (comp) { return comp.description; }));
-                });
-            };
-            self.refresh();
-        }
-
-        var celeryViewModel = new CeleryTaskListViewModel();
-        var couchViewModel = new ActiveTaskListViewModel();
-        var pillowtopViewModel = new PillowtopViewModel();
-        var dbComparisonsViewModel = new DbComparisonsViewModel();
+        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
+        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
         $(function () {
             ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
@@ -283,7 +237,7 @@
                     <th>Reset pillow checkpoint</th>
                 </tr>
             </thead>
-            <tbody data-bind="foreach: pillows">
+            <tbody data-bind="foreach: models">
                 <tr>
                     <td><code data-bind="text: name"></code></td>
                     <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
@@ -323,7 +277,7 @@
                 <th>PostgreSQL</th>
             </tr>
             </thread>
-            <tbody data-bind="foreach: comparisons">
+            <tbody data-bind="foreach: models">
             <tr>
                 <td data-bind="text: description"></td>
                 <td data-bind="text: couch_docs"></td>
@@ -349,7 +303,7 @@
                 <th></th>
             </tr>
             </thead>
-            <tbody data-bind="foreach: couch_tasks">
+            <tbody data-bind="foreach: models">
             <tr>
                 <td data-bind="text: pid"></td>
                 <td data-bind="text: name"></td>
@@ -385,7 +339,7 @@
                 <th>Args</th>
             </tr>
             </thead>
-            <tbody data-bind="foreach: celery_tasks">
+            <tbody data-bind="foreach: models">
             <tr>
                 <td data-bind="text: name"></td>
                 <td data-bind="text: state"></td>
