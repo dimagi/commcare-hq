@@ -1015,7 +1015,7 @@ class Subscription(models.Model):
 
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
-        domain_name = self.subscriber.domain.title()
+        domain_name = self.subscriber.domain
         product = self.plan_version.core_product
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
