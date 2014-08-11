@@ -18,6 +18,7 @@ branches:
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
+  - opm  # Ethan 8/11
 submodules:
   submodules/couchlog-src:
     branches:
