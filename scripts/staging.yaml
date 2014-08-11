@@ -19,6 +19,7 @@ branches:
   - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
+  - increase-es-timeout # Nick P 8/11
 submodules:
   submodules/couchlog-src:
     branches:
