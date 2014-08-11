@@ -412,7 +412,6 @@ class SubmissionPost(object):
                         process_cases_with_casedb(instance, case_db)
                         process_stock(instance, case_db)
                         cases = case_db.get_changed()
-                        responses, errors = self.process_signals(instance)
                         # todo: this property is useless now
                         instance.initial_processing_complete = True
                         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
@@ -447,7 +446,10 @@ class SubmissionPost(object):
                             raise
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
-
+                        responses, errors = self.process_signals(instance)
+                        if errors:
+                            # .problems was added to instance
+                            instance.save()
             if instance.doc_type == "XFormInstance":
                 response = self.get_success_response(instance,
                                                      responses, errors)

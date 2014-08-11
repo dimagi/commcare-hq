@@ -78,17 +78,16 @@ class SubmissionErrorTest(TestCase):
         self.assertIn("Form is a duplicate", log.problem)
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
-        
-            
+
     def testSubmissionError(self):
         evil_laugh = "mwa ha ha!"
-        
+
         def fail(sender, xform, **kwargs):
             raise Exception(evil_laugh)
-        
+
         successful_form_received.connect(fail)
-        
-        try:    
+
+        try:
             file = os.path.join(os.path.dirname(__file__), "data",
                                 "simple_form.xml")
             with open(file) as f:
