@@ -16,12 +16,13 @@ class Migration(DataMigration):
             'domain',
             'name',
             'is_archived',
-            'unit',
             ('code', 'code_'),
             'description',
             'category',
             'program_id',
-            'cost', 'cost',
+            'cost',
+            ('units', 'unit'),
+            'product_data',
         ]
 
         product_ids = [r['id'] for r in Product.get_db().view(

@@ -1375,6 +1375,7 @@ class SQLProduct(models.Model):
     category = models.CharField(max_length=100, null=True, default='')
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
+    units = models.CharField(max_length=100, null=True, default='')
     product_data = json_field.JSONField(
         default={},
     )

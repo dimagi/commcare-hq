@@ -26,6 +26,9 @@ class Migration(SchemaMigration):
         # Adding field 'SQLProduct.product_data'
         db.add_column(u'commtrack_sqlproduct', 'product_data', self.gf('json_field.fields.JSONField')(default={}), keep_default=False)
 
+        # Adding field 'SQLProduct.units'
+        db.add_column(u'commtrack_sqlproduct', 'units', self.gf('django.db.models.fields.CharField')(default='', max_length=100, null=True), keep_default=False)
+
 
     def backwards(self, orm):
         
@@ -47,6 +50,9 @@ class Migration(SchemaMigration):
         # Deleting field 'SQLProduct.product_data'
         db.delete_column(u'commtrack_sqlproduct', 'product_data')
 
+        # Deleting field 'SQLProduct.units'
+        db.delete_column(u'commtrack_sqlproduct', 'units')
+
 
     models = {
         u'commtrack.sqlproduct': {
@@ -55,6 +61,7 @@ class Migration(SchemaMigration):
             'code': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'cost': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '5'}),
             'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
+            'units': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
