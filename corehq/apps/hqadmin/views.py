@@ -663,6 +663,7 @@ def system_info(request):
     context = get_hqadmin_base_context(request)
     context['couch_update'] = request.GET.get('couch_update', 5000)
     context['celery_update'] = request.GET.get('celery_update', 10000)
+    context['db_update'] = request.GET.get('db_update', 30000)
     context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
     # recent changes
@@ -678,12 +679,13 @@ def system_info(request):
     context.update(check_celery_health())
     context.update(check_memcached())
     context.update(check_es_cluster_health())
-    context.update(get_es_couch_comparisons())
 
     return render(request, "hqadmin/system_info.html", context)
 
 
-def get_es_couch_comparisons():
+@cache_page(60 * 5)
+@require_superuser_or_developer
+def db_comparisons(request):
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
@@ -730,7 +732,7 @@ def get_es_couch_comparisons():
             'es_docs': comp['es_query'].run().total,
             'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })
-    return {'es_couch_comparisons': comparisons}
+    return json_response(comparisons)
 
 @require_POST
 @require_superuser_or_developer

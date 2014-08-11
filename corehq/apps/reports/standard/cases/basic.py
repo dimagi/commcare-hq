@@ -96,9 +96,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
                                  status=self.case_status, owner_ids=owner_ids+user_ids, user_ids=user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
+
         query_results = case_es.run_query(query)
 
-        if query_results is None or 'hits' not in query_results:
+        if 'hits' not in query_results:
             logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
                 self.__class__.__name__,
                 self.request.path,

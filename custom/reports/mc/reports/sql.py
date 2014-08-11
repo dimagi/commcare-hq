@@ -5,7 +5,7 @@ from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat, DictDataFormat
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username
@@ -16,9 +16,10 @@ from .composed import DataProvider, ComposedTabularReport
 
 NO_VALUE = u'\u2014'
 
+
 def transpose(columns, data):
-    return [[column.data_tables_column.html] + [r[i] for r in data] \
-            for i, column in enumerate(columns)]
+    return [[column] + [r[i] for r in data if i < len(r)] for i, column in enumerate(columns)]
+
 
 class Fraction(object):
 
@@ -55,7 +56,6 @@ class Fraction(object):
 
 
 def _to_column(coldef):
-
     def _slug_to_raw_column(slug):
         return SumColumn('%s_total' % slug)
 
@@ -69,8 +69,10 @@ def _to_column(coldef):
         )
     return DatabaseColumn(_(coldef), _slug_to_raw_column(coldef), sortable=False)
 
+
 def _empty_row(len):
     return [NO_VALUE] * len
+
 
 class UserDataFormat(TableDataFormat):
 
@@ -98,7 +100,8 @@ class FacilityDataFormat(TableDataFormat):
         self.users = users
         self.facility_user_map = defaultdict(lambda: [])
         for u in users:
-            self.facility_user_map[u.user_data.get('health_facility') or NO_VALUE].append(u)
+            if u.user_data.get('health_facility'):
+                self.facility_user_map[u.user_data.get('health_facility')].append(u)
 
     def get_headers(self):
         return sorted(self.facility_user_map.keys())
@@ -143,7 +146,7 @@ class Section(object):
     def __init__(self, report, section_def, format_class):
         self.report = report
         self.section_def = section_def
-        self.format_class  = format_class
+        self.format_class = format_class
 
     @property
     def title(self):
@@ -152,6 +155,14 @@ class Section(object):
     @property
     def column_slugs(self):
         return self.section_def['columns']
+
+    @property
+    def show_total(self):
+        return bool(self.total_slug)
+
+    @property
+    def total_slug(self):
+        return self.section_def.get('total_column')
 
 
 class SqlSection(Section, SqlData):
@@ -172,8 +183,19 @@ class SqlSection(Section, SqlData):
     @memoized
     def rows(self):
         formatter = DataFormatter(self.format_class(self.columns, self.report.get_users()))
-        raw_data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        return transpose(self.columns, list(raw_data))
+        column_headers = [column.data_tables_column.html for column in self.columns]
+        raw_data = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+
+        # manually bolt on an in-memory calculation of the total to the headers and each row
+        if self.show_total:
+            def _total(row):
+                return sum([val for val in row if val != NO_VALUE]) or NO_VALUE
+
+            column_headers += [_(self.total_slug)]
+            for row in raw_data:
+                row.append(_total(row))
+
+        return transpose(column_headers, raw_data)
 
 
 class FormPropertySection(Section):
@@ -356,7 +378,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     SECTIONS = None  # override
-    format_class = None # override
+    format_class = None  # override
     extra_context_providers = [section_context]
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):

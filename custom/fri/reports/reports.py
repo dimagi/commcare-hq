@@ -14,7 +14,8 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from custom.fri.models import FRISMSLog, PROFILE_DESC
-from custom.fri.reports.filters import InteractiveParticipantFilter, RiskProfileFilter
+from custom.fri.reports.filters import (InteractiveParticipantFilter,
+    RiskProfileFilter, SurveyDateSelector)
 from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
@@ -25,6 +26,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
+from dateutil.parser import parse
 
 RESPONSE_NOT_APPLICABLE = 1
 NO_RESPONSE = 2
@@ -331,6 +333,13 @@ class SurveyResponsesReport(FRIReport):
     slug = "fri_survey_responses"
     description = ugettext_noop("Shows information pertaining to survey responses.")
     emailable = False
+    fields = [
+        "custom.fri.reports.filters.SurveyDateSelector",
+    ]
+
+    @property
+    def survey_report_date(self):
+        return SurveyDateSelector.get_value(self.request, self.domain)
 
     @property
     def headers(self):
@@ -392,17 +401,16 @@ class SurveyResponsesReport(FRIReport):
                                    key=[self.domain, "participant"],
                                    include_docs=True,
                                    reduce=False).all()
-        local_now = tz_utils.adjust_datetime_to_timezone(
-            datetime.utcnow(), pytz.utc.zone, self.domain_obj.default_timezone)
-        local_date = local_now.date()
+        survey_report_date = parse(self.survey_report_date).date()
 
         def filter_function(case):
             registration_date = get_date(case, "start_date")
             if registration_date is None:
                 return False
             first_tuesday = self.get_first_tuesday(registration_date)
-            end_date = first_tuesday + timedelta(days=56)
-            return (not case.closed) and (end_date >= local_date)
+            last_tuesday = first_tuesday + timedelta(days=49)
+            return (survey_report_date >= first_tuesday and
+                survey_report_date <= last_tuesday)
 
         result = filter(filter_function, result)
         return result

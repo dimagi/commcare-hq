@@ -1,19 +1,23 @@
 trunk: master
 name: autostaging
 branches:
-  - subtree-merge-forms-cases
+  - explicit_case_processing
+  - auto-gps+schedule
+  - auto-gps
+  - schedule # SK 7/17
+  - app-buttons # Emord 7/30
+  - es_none_type # Emord 8/4
 #  - add-build-ui
-  - time-ago-deployed
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
-#  - vellum-requirejs+use-django-compressor
-#  - use-django-compressor # bb 7/1
   - logos # Nick P 5/28
-  - switch_to_site_code # tw 6/17
   - vellum-requirejs # Daniel 6/12
-  - schedule # SK 7/17
-  - emwf-refactor  # Ethan 7/25
+  - emwf-refactor  # Ethan 8/06
   - real-project-spaces # Nick P 7/27
+  - closecase  # SK 7/28
+  - archive-to-deactivate  # cz 7/30
+  - subscription-no-contact-info # bb 8/4
+#  - cachecomparisons  # SK 8/11
 submodules:
   submodules/couchlog-src:
     branches:
@@ -34,3 +38,9 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  submodules/pillowtop-src:
+    branches:
+      - reset # SK 7/28
+#  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+#    branches:
+#      - 124289-fix-mm-uploads-in-ff # Daniel 8/7

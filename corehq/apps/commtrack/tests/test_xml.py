@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.test.utils import override_settings
 from lxml import etree
 import os
 import random
@@ -166,9 +167,8 @@ class CommTrackSubmissionTest(CommTrackTest):
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
+    @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     def submit_xml_form(self, xml_method, **submit_extras):
-        from casexml.apps.case import settings
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,

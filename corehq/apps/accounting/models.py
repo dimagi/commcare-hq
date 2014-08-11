@@ -803,11 +803,11 @@ class Subscription(models.Model):
             and date_start > today and not date_start > self.date_end
         ):
             self.date_start = date_start
-        elif date_start > self.date_end:
+        elif self.date_end is not None and date_start > self.date_end:
             raise SubscriptionAdjustmentError(
                 "Can't have a subscription start after the end date."
             )
-        elif date_start is not None:
+        elif date_start is not None and date_start != self.date_start:
             raise SubscriptionAdjustmentError(
                 "Can't change the start date of a subscription to a date that "
                 "is today or in the past."
@@ -1015,8 +1015,9 @@ class Subscription(models.Model):
 
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
-        domain_name = self.subscriber.domain.title()
+        domain_name = self.subscriber.domain
         product = self.plan_version.core_product
+        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s" % {
@@ -1024,7 +1025,6 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             })
-            emails = [a.username for a in WebUser.get_admins_by_domain(domain_name)]
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1039,7 +1039,7 @@ class Subscription(models.Model):
             billing_admins = self.account.billing_admins.filter(
                 domain=self.subscriber.domain
             )
-            emails = [admin.web_user for admin in billing_admins]
+            emails |= {admin.web_user for admin in billing_admins}
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 

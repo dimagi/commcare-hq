@@ -12,10 +12,27 @@ function lcsMerge(X, Y, isEqual) {
         return a === b;
     };
     var cache = {};
+    cache.get = function (i, j) {
+        var cache_key = i + ' ' + j;
+        var val = cache[cache_key];
+        if (val) {
+            return {
+                lcs_length: val.lcs_length,
+                merge: val.merge.slice(0)
+            };
+        } else {
+            return null;
+        }
+    };
+    cache.set = function (i, j, val) {
+        var cache_key = i + ' ' + j;
+        cache[cache_key] = val;
+    };
     function recLcsMerge(i, j) {
-        var val, val1, val2, recur = recLcsMerge, cache_key = i + ' ' + j;
-        if (cache[cache_key]) {
-            return cache[cache_key];
+        var val, val1, val2, recur = recLcsMerge;
+        val = cache.get(i, j);
+        if (val) {
+            return val;
         }
         if (i === 0 && j === 0) {
             val = {
@@ -43,12 +60,50 @@ function lcsMerge(X, Y, isEqual) {
                 val.merge.push({x: false, y: true, token: Y[j - 1]});
             }
         }
-        cache[cache_key] = {
-            lcs_length: val.lcs_length,
-            merge: val.merge.slice(0)
-        };
-        return val;
+        cache.set(i, j, val);
+        return cache.get(i, j);
     }
 
     return recLcsMerge(X.length, Y.length).merge;
 }
+
+
+lcsMerge.test = function () {
+    var spec = {
+        "short": {
+            "columns": [
+                {"doc_type": "DetailColumn", "filter_xpath": "today() <= date(date(dob) + 1826)", "format": "filter", "late_flag": 30, "enum": [], "header": {"en": "Name", "hat": "Non"}, "time_ago_interval": 365.25, "calc_xpath": ".", "field": "name", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "plain", "late_flag": 30, "enum": [], "header": {"en": "Name", "hat": "Non"}, "time_ago_interval": 365.25, "field": "name", "calc_xpath": "concat(mother_name, ' - ', .)", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "plain", "late_flag": 30, "enum": [], "header": {"en": "Quarter", "hat": "Katye"}, "time_ago_interval": 365.25, "field": "quarter", "calc_xpath": ".", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "time-ago", "late_flag": 30, "enum": [], "header": {"en": "Weeks Since Visit", "hat": "Semen Depi Denye Vizit"}, "time_ago_interval": 7.0, "field": "date_last_visit", "calc_xpath": ".", "model": "case", "advanced": ""}
+            ]
+        },
+        "long": {
+            "columns": [
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "plain", "late_flag": 30, "enum": [], "header": {"en": "Name", "hat": "Non"}, "time_ago_interval": 365.25, "field": "name", "calc_xpath": "concat(mother_name, ' - ', .)", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "plain", "late_flag": 30, "enum": [], "header": {"en": "Quarter", "hat": "Katye"}, "time_ago_interval": 365.25, "field": "quarter", "calc_xpath": ".", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "phone", "late_flag": 30, "enum": [], "header": {"en": "Phone Number", "hat": "Nimewo telephon"}, "time_ago_interval": 365.25, "field": "phone_number", "calc_xpath": ".", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "phone", "late_flag": 30, "enum": [], "header": {"en": "Phone Number", "hat": "Nimewo telephon"}, "time_ago_interval": 365.25, "field": "parent/parent/phone_number", "calc_xpath": ".", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "time-ago", "late_flag": 30, "enum": [], "header": {"en": "Age (months)", "hat": "Gen Laj Nan Mwa"}, "time_ago_interval": 30.4375, "field": "dob", "calc_xpath": ".", "model": "case", "advanced": ""},
+                {"doc_type": "DetailColumn", "filter_xpath": "", "format": "enum", "late_flag": 30, "enum": [{"doc_type": "MappingItem", "key": "sam", "value": {"en": "Severe Malnutrition", "hat": "Malnutrition aigue severe"}},{"doc_type": "MappingItem", "key": "mam", "value": {"en": "Moderate Malnutrition", "hat": "Malnutrition aigue moderee"}},{"doc_type": "MappingItem", "key": "risky", "value": {"en": "At Risk of Malnutrition", "hat": "A risque de malnutrition"}}, {"doc_type": "MappingItem", "key": "normal", "value": {"en": "Normal", "hat": "Normal"}}], "header": {"en": "Nutrition Status", "hat": "Etat Nutritionnel"}, "time_ago_interval": 365.25, "field": "nutrition_status", "calc_xpath": ".", "model": "case", "advanced": ""}
+            ]
+        }
+    };
+    var expectedFields = [
+        "name", "name", "quarter", "date_last_visit", "phone_number",
+        "parent/parent/phone_number", "dob", "nutrition_status"
+    ];
+    var fields = _.pluck(
+        _.pluck(
+            lcsMerge(spec.short.columns, spec.long.columns, _.isEqual),
+            'token'
+        ),
+        'field'
+    );
+    if (!_.isEqual(fields, expectedFields)) {
+        throw {
+            'expected': expectedFields,
+            'actual': fields
+        };
+    }
+};

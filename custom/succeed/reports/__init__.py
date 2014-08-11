@@ -350,6 +350,22 @@ TASK_RISK_FACTOR = {
     "general": "General"
 }
 
+
+TASK_ACTIVITY = {
+    "review": "Review",
+    "call": "Call",
+    "clinic_visit": "Clinic Visit",
+    "home_visit": "Home Visit",
+    "huddle_action": "Huddle Action",
+    "medication": "Medication",
+    "medication_adjustment" : "Medication Adjustment",
+    "order_lab": "Order Lab",
+    "review_lab": "Review Lab",
+    "make_referral": "Make Referral",
+    "mail_document": "Mail Document(s)",
+    "visit_preparation": "Visit Preparation"
+}
+
 class DrilldownReportMixin(object):
 
     report_template_path = ""
