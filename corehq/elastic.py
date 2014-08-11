@@ -98,7 +98,24 @@ def get_user_type_filters(histo_type, user_type_mobile):
             for x in form_query_results
         }
 
-        filtered_real_users = existing_users & real_form_users
+        from corehq.apps.sms.models import INCOMING
+        sms_query_results = (
+            ESQuery('sms')
+            .fields(['couch_recipient'])
+            .term('couch_recipient_doc_type', user_doc_type())
+            .term('direction', INCOMING)
+            .size(LARGE_NUMBER)
+            .run()
+            .raw_hits()
+        )
+        real_sms_users = {
+            x.get('fields', {}).get('couch_recipient', [''])[0]
+            for x in sms_query_results
+        }
+
+        filtered_real_users = (
+            existing_users & (real_form_users | real_sms_users)
+        )
         result['terms']['_id'] = [
             user_id for user_id in filtered_real_users
         ]
