@@ -46,8 +46,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
             'category': 'Current Stock Status',
         }
 
-        products = sorted(Product.view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True),
-                          key=lambda p: p.name)
+        products = sorted(Product.by_domain(self.domain), key=lambda p: p.name)
+
         if self.program_id:
             products = filter(lambda c: c.program_id == self.program_id, products)
         for p in products:
