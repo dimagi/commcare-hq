@@ -141,16 +141,40 @@
             self.refresh();
         }
 
+        function DbComparisons(data) {
+            var self = this;
+            self.description = data.description;
+            self.es_docs = data.es_docs;
+            self.couch_docs = data.couch_docs;
+            self.sql_rows = data.sql_rows;
+        }
+
+        function DbComparisonsViewModel() {
+            var self = this;
+            self.comparisons = ko.observableArray();
+            self.refresh = function () {
+                $.getJSON("{% url "db_comparisons" %}", function (data) {
+                    self.comparisons(_(_(data).map(function (item) {
+                        return new DbComparisons(item);
+                    })).sortBy(function (comp) { return comp.description; }));
+                });
+            };
+            self.refresh();
+        }
+
         var celeryViewModel = new CeleryTaskListViewModel();
         var couchViewModel = new ActiveTaskListViewModel();
         var pillowtopViewModel = new PillowtopViewModel();
+        var dbComparisonsViewModel = new DbComparisonsViewModel();
         $(function () {
             ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
             ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
+            ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
             setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
             setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
             setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
+            setInterval(function () { dbComparisonsViewModel.refresh(); }, {{ db_update }});
         });
 
         $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
@@ -299,15 +323,13 @@
                 <th>PostgreSQL</th>
             </tr>
             </thread>
-            <tbody>
-            {% for comparison in es_couch_comparisons %}
+            <tbody data-bind="foreach: comparisons">
             <tr>
-                <td>{{ comparison.description }}</td>
-                <td>{{ comparison.couch_docs }}</td>
-                <td>{{ comparison.es_docs }}</td>
-                <td>{{ comparison.sql_rows }}</td>
+                <td data-bind="text: description"></td>
+                <td data-bind="text: couch_docs"></td>
+                <td data-bind="text: es_docs"></td>
+                <td data-bind="text: sql_rows"></td>
             </tr>
-            {% endfor %}
             </tbody>
         </table>
     </div>
