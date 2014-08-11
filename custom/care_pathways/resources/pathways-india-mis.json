@@ -13,7 +13,7 @@
             "name": "GP"
         },
         "lvl_4": {
-            "prop": "group_village_name",
+            "prop": "group_village",
             "name": "Village"
         }
     },

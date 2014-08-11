@@ -1,11 +1,9 @@
 import urllib
 from django.utils import html
+from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
-from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import SqlTabularReport, DataFormatter, TableDataFormat
+from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
@@ -36,11 +34,21 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
     def report_config(self):
         config = dict(
             domain=self.domain,
-            year=self.request.GET.get('year', ''),
+            ppt_year=self.request.GET.get('year', ''),
             value_chain=self.request.GET.get('type_value_chain', ''),
             domains=tuple(self.request.GET.getlist('type_domain', [])),
-            practices=tuple(self.request.GET.getlist('type_practice', []))
+            practices=tuple(self.request.GET.getlist('type_practice', [])),
+            group=self.request.GET.get('group_by', ''),
+            owner_id=self.request.GET.get('owner_id', ''),
+
+
         )
+        hierarchy_config = get_domain_configuration(self.domain)['geography_hierarchy']
+        for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
+            req_prop = 'geography_%s' % v['prop']
+            if self.request.GET.getlist(req_prop, []):
+                config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
+                break
         return config
 
     def get_chart(self, rows, columns, x_label, y_label):
@@ -118,7 +126,6 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
 
     @property
     def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.model.columns, no_value=self.model.no_value))
-        print self.model.data
-        return formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by)
+        formatter = DataFormatter(TableDataFormat(self.data_provider.columns, no_value=self.data_provider.no_value))
+        return formatter.format(self.data_provider.data, keys=self.data_provider.keys, group_by=self.data_provider.group_by)
 
