@@ -151,16 +151,6 @@ def not_found(request, template_name='404.html'):
          'STATIC_URL': settings.STATIC_URL
         })))
 
-def permission_denied(request, template_name='403.html'):
-    """
-    403 error handler.
-    """
-    t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
-
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
@@ -281,13 +271,16 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
-def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
-    next = redirect_to or request.GET.get('next', None)
-    if request.GET.get('switch', None) == 'true':
-        logout(request)
-        return redirect_to_login(next or request.path)
+def no_permissions(request, redirect_to=None, template_name="403.html"):
+    """
+    403 error handler.
+    """
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL
+        })))
 
-    return render(request, template_name, {'next': next})
 
 
 def _login(req, domain, template_name):

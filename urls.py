@@ -18,7 +18,7 @@ admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
-handler403 = 'corehq.apps.hqwebapp.views.permission_denied'
+handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
