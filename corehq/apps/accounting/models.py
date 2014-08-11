@@ -1017,6 +1017,7 @@ class Subscription(models.Model):
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
         product = self.plan_version.core_product
+        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s" % {
@@ -1024,7 +1025,6 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             })
-            emails = [a.username for a in WebUser.get_admins_by_domain(domain_name)]
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1039,7 +1039,7 @@ class Subscription(models.Model):
             billing_admins = self.account.billing_admins.filter(
                 domain=self.subscriber.domain
             )
-            emails = [admin.web_user for admin in billing_admins]
+            emails |= {admin.web_user for admin in billing_admins}
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
