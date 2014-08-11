@@ -46,7 +46,7 @@ Add esquery.iter() method
 from copy import deepcopy
 import json
 
-from corehq.elastic import ES_URLS, ESError, run_query
+from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
 from . import filters
 
@@ -169,8 +169,7 @@ class ESQuery(object):
             self.es_query['fields'] = self._fields
         if self._start is not None:
             self.es_query['start'] = self._start
-        if self._size is not None:
-            self.es_query['size'] = self._size
+        self.es_query['size'] = self._size or SIZE_LIMIT
 
     def fields(self, fields):
         """
@@ -256,19 +255,29 @@ class ESQuerySet(object):
         self.raw = raw
         self.query = query
 
+    @property
     def raw_hits(self):
         return self.raw['hits']['hits']
 
+    def doc_ids(self):
+        return [r['_id'] for r in self.raw_hits()]
+
     @property
     def hits(self):
-        if self.query._fields is not None:
-            return [r['fields'] for r in self.raw_hits()]
+        if self.query._fields == []:
+            return self.ids
+        elif self.query._fields is not None:
+            return [r['fields'] for r in self.raw_hits]
         else:
-            return [r['_source'] for r in self.raw_hits()]
+            return [r['_source'] for r in self.raw_hits]
 
     @property
     def total(self):
         return self.raw['hits']['total']
+
+    @property
+    def ids(self):
+        return [r['_id'] for r in self.raw_hits]
 
 
 class HQESQuery(ESQuery):
