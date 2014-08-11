@@ -170,6 +170,8 @@ class FormActionCondition(DocumentSchema):
     answer = StringProperty()
     operator = StringProperty(choices=['=', 'selected'], default='=')
 
+    def is_active(self):
+        return self.type in ('if', 'always')
 
 class FormAction(DocumentSchema):
     """
@@ -179,7 +181,7 @@ class FormAction(DocumentSchema):
     condition = SchemaProperty(FormActionCondition)
 
     def is_active(self):
-        return self.condition.type in ('if', 'always')
+        return self.condition.is_active()
 
     @classmethod
     def get_action_paths(cls, action):
@@ -247,6 +249,7 @@ class OpenSubCaseAction(FormAction):
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
+    close_condition = SchemaProperty(FormActionCondition)
 
 class FormActions(DocumentSchema):
 
@@ -822,7 +825,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             if self.requires == 'none':
                 action_types = (
-                    'open_case', 'update_case', 'subcases',
+                    'open_case', 'update_case', 'close_case', 'subcases',
                 )
             elif self.requires == 'case':
                 action_types = (
