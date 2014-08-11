@@ -94,8 +94,8 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .raw_hits()
         )
         real_form_users = {
-            x.get('fields', {}).get('form.meta.userID', [''])[0]
-            for x in form_query_results
+            query_result.get('fields', {}).get('form.meta.userID', [''])[0]
+            for query_result in form_query_results
         }
 
         from corehq.apps.sms.models import INCOMING
@@ -109,8 +109,8 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .raw_hits()
         )
         real_sms_users = {
-            x.get('fields', {}).get('couch_recipient', [''])[0]
-            for x in sms_query_results
+            query_result.get('fields', {}).get('couch_recipient', [''])[0]
+            for query_result in sms_query_results
         }
 
         filtered_real_users = (
