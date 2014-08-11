@@ -172,6 +172,7 @@ cloudCare.CaseListView = Backbone.View.extend({
       
         this.detailsShort = new cloudCare.Details();
         this.detailsShort.set(this.options.details);
+        this.parentId = this.options.parentId;
 
         this.caseList = new cloudCare.CaseList();
         this.caseList.bind('add', this.appendItem);
@@ -220,6 +221,16 @@ cloudCare.CaseListView = Backbone.View.extend({
         // so that other events can access it later
         item.set("appConfig", self.options.appConfig);
         caseView.on("selected", function (parentId) {
+            parentId = parentId || self.parentId; // This is a hack and I hate it
+            /*
+                This is what is going on above: When you get to this callback by manually calling
+                select() on the case view (like when a user enters a url directly) the parentId is
+                passed to select. However, when you get to this point by actually clicking on the
+                case parentId has been set on the CaseListView.
+`
+                It seems like we have to repeat ourselves quite a bit to get the app in the same
+                state whether you get there by clicks or by entering the url directly.
+             */
             if (self.selectedCaseView) {
                 self.selectedCaseView.deselect();
             }
@@ -310,6 +321,7 @@ cloudCare.CaseMainView = Backbone.View.extend({
         self.delegation = self.options.appConfig.form_index === 'task-list';
         self.listView = new cloudCare.CaseListView({
             details: self.options.listDetails,
+            parentId: self.options.parentId,
             cases: self.options.cases,
             case_type: self.options.case_type,
             language: self.options.language,

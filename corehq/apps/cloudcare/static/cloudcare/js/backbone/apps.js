@@ -498,28 +498,53 @@ cloudCare.AppView = Backbone.View.extend({
 
         this.model = app;
     },
-    selectCase: function (caseModel) {
+    selectCase: function (caseModel, parentId) {
         var self = this;
         self.formListView.caseView.selectCase(caseModel);
         if (caseModel) {
             var module = self.selectedModule;
             var form = self.selectedForm;
+
+            if (caseModel.get("properties").case_type === self.selectedModule.get("case_type")) {
+                // Construct a button which will take the user to the form
+
+                var buttonText = "Enter " + form.getLocalized("name", self.options.language);
+                var buttonUrl = getFormEntryUrl(self.options.urlRoot,
+                                                        form.get("app_id"),
+                                                        form.get("module_index"),
+                                                        form.get("index"),
+                                                        caseModel.id);
+                var buttonOnClick = function () {
+                    self.playForm(module, form, caseModel);
+                }
+
+            } else {
+                // Construct a button which will take the user to the next list of cases
+
+                //TODO: I think we want to force this to be plural. How do we do that?
+                var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
+                var buttonUrl = getChildSelectUrl(self.options.urlRoot,
+                                                        form.get("app_id"),
+                                                        form.get("module_index"),
+                                                        form.get("index"),
+                                                        caseModel.id);
+                var buttonOnClick = function () {
+                    self.selectForm(form, caseModel.id);
+                }
+            }
+
+
+            //formListView.enterForm is now a misnomer because sometimes this element is about viewing more cases.
             self.formListView.enterForm = $("<a />").text(
-                "Enter " + form.getLocalized("name", self.options.language)
+                buttonText
             ).addClass("btn btn-primary").appendTo(
                 self.formListView.caseView.detailsView.el
             );
-            $('<a />').attr('href', getFormEntryUrl(self.options.urlRoot,
-                                                    form.get("app_id"),
-                                                    form.get("module_index"),
-                                                    form.get("index"),
-                                                    caseModel.id)
-            ).attr('target', '_blank').text("open in new window").appendTo(
+            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text("open in new window").appendTo(
                 self.formListView.caseView.detailsView.el
             ).css("padding-left", "2em");
-            self.formListView.enterForm.click(function () {
-                self.playForm(module, form, caseModel);
-            });
+            self.formListView.enterForm.click(buttonOnClick);
+
         } else {
             if (self.formListView.enterForm) {
                 self.formListView.enterForm.detach();
@@ -667,62 +692,65 @@ cloudCare.AppView = Backbone.View.extend({
 
         if (form) {
             var module = self.moduleListView.getModuleView(form.get('module_index')).model;
+            var module_index = form.get("module_index");
             // clear anything existing
             self._clearCaseView();
 
             if (form.get("requires") === "none") {
 	            // no requirements, go ahead and play it
 	            self.playForm(module, form);
+
             } else if (form.get("requires") === "case") {
 
-                /*
-                    The logic that should happen in this function:
-
-                        If requires cases:
-                            if parentId included:
-                                get parent module and index
-                                (the trigger calls in this function may have to change)
-                            else:
-                                get top module and index
-                 */
-                //TODO: we still need to change the case detail button text and link (that will happen in the selectCase function)
-
-                var top_parent_id = module.attributes.parent_select.module_id
-                var top_parent_index = 0;
-                var top_parent = null;
-
-                // This is a weird way to get this. I could do it also by referenceing the AppMainView which is globally on the window I think
-                while (top_parent == null){
-                    possible_top_parent = self.moduleListView.getModuleView(top_parent_index).model;
-                    if (possible_top_parent.attributes.unique_id == top_parent_id){
-                        top_parent = possible_top_parent;
-                    } else {
-                        top_parent_index += 1;
-                    }
+                // If a parent Id is present, we want to show the regular module stuff but we want to filter the cases differently.
+                if (parentId){
+                    cloudCare.dispatch.trigger("form:selected:parent:caselist", form, parentId);
+                } else {
+                    cloudCare.dispatch.trigger("form:selected:caselist", form);
                 }
 
-                cloudCare.dispatch.trigger("form:selected:caselist", form);
+                if (module.get("parent_select").active && !parentId) {
+                    var parent_module_id = module.get("parent_select").module_id;
+                    var parent_module_index = 0;
+                    var parent_module = null;
+
+                    // This is a weird way to get this. I could do it also by referenceing the AppMainView which is globally on the window I think
+                    while (parent_module === null) {
+                        var possible_parent = self.moduleListView.getModuleView(parent_module_index).model;
+                        if (possible_parent.get("unique_id") === parent_module_id) {
+                            parent_module = possible_parent;
+                        } else {
+                            parent_module_index += 1;
+                        }
+                    }
+
+                    module = parent_module;
+                    module_index = parent_module_index;
+                }
+
+                // TODO: What are these used for?
 	            var listDetails = formListView.model.get("case_details").short;
 	            var summaryDetails = formListView.model.get("case_details").long;
 	            formListView.caseView = new cloudCare.CaseMainView({
 	                el: $("#cases"),
 	                listDetails: listDetails,
 	                summaryDetails: summaryDetails,
+                    parentId: parentId,
 	                appConfig: {
                         app_id: form.get("app_id"),
 	                    module_index: form.get("module_index"), // I think this is only used to update the window url, so we want this to be the old value.
                         form_index: form.get("index"),
-                        module: top_parent
+                        module: module
                     },
 	                language: formListView.options.language,
-                    // TODO: rewrite getCaseFilterUrl to take a parent id. Then write a new api endpoint. Then we can get child cases of the parent.
 	                caseUrl: getCaseFilterUrl(
                         self.options.caseUrlRoot,
                         form.get("app_id"),
-                        top_parent_index,
+                        module_index,
                         // index is passed in so that if it's equal to 'task-list' that'll be taken into account
                         // otherwise it's ignored
-                        form.get('index')
+                        form.get('index'),
+                        parentId
                     )
 	            });
 
@@ -788,6 +816,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         if (self.options.initialParent) {
             self.initialParent = new cloudCare.Case(self.options.initialParent);
         }
+
         self.appListView = new cloudCare.AppListView({
             apps: self.options.apps,
             language: self.options.language
@@ -817,6 +846,7 @@ cloudCare.AppMainView = Backbone.View.extend({
 
 
         }
+
         cloudCare.dispatch.on("app:selected", function (app) {
             self.navigate("view/" + app.model.id);
             self.selectApp(app.model.id);
@@ -826,6 +856,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("");
             self.selectApp(null);
         });
+
         // utilities
         var selectApp = function (appId) {
             self.appListView.getAppView(appId).select();
@@ -927,7 +958,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectCase(caseId, parentId);
         };
         self.router.on("route:app:module:form:case", pauseNav(clearAndSelectCase));
-        self.router.on("route:app:module:form:case:parent", function (appId, moduleIndex, formIndex, parentId, caseId) {
+        self.router.on("route:app:module:form:parent:case", function (appId, moduleIndex, formIndex, parentId, caseId) {
             pauseNav(clearAndSelectCase)(appId, moduleIndex, formIndex, caseId, parentId);
         });
         self.router.on("route:app:module:form:case:enter", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
@@ -964,6 +995,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         cloudCare.dispatch.on("cases:updated", pauseNav(function () {
             // same trick but with cases
             if (self._selectedCase !== null) {
+                // It crashes here when you enter a child detail url because the caseView has the top level cases in it, not the parent's children cases.
                 self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
             }
             self._selectedCase = null;
@@ -991,8 +1023,14 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("form:selected:caselist", function (form) {
             self.navigate("view/" + form.get("app_id") +
+                "/" + form.get("module_index") +
+                "/" + form.get("index"));
+        });
+        cloudCare.dispatch.on("form:selected:parent:caselist", function (form, parentId) {
+            self.navigate("view/" + form.get("app_id") +
                                  "/" + form.get("module_index") +
-                                 "/" + form.get("index"));
+                                 "/" + form.get("index") +
+                                 "/parent/" + parentId);
         });
         cloudCare.dispatch.on("form:deselected", function (form) {
             self.navigate("view/" + form.get("app_id") +
@@ -1012,15 +1050,21 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("case:selected", function (caseModel, parentId) {
             var appConfig = caseModel.get("appConfig");
+            if (parentId){
+                var parentSection = "/parent/" + parentId;
+            } else {
+                var parentSection = "";
+            }
             self.navigate("view/" + appConfig.app_id +
                                  "/" + appConfig.module_index +
                                  "/" + appConfig.form_index +
+                                 parentSection +
                                  "/case/" + caseModel.id);
             // The following has to happen after navigate's done,
             // but navigate is non-blocking, so we have to stick it at the end of the queue
             // (gross)
             setTimeout(function () {
-                self.appView.selectCase(caseModel);
+                self.appView.selectCase(caseModel, parentId);
             }, 0);
         });
         cloudCare.dispatch.on("case:deselected", function (caseModel) {

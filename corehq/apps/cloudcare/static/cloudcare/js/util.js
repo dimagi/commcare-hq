@@ -43,6 +43,13 @@ var getFormUrl = function(urlRoot, appId, moduleId, formId) {
 var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
     return urlRoot + getFormEntryPath(appId, moduleId, formId, caseId);
 }
+var getChildSelectUrl = function(urlRoot, appId, moduleId, formId, parentId){
+    return urlRoot + getChildSelectPath(appId, moduleId, formId, parentId);
+}
+var getChildSelectPath = function(appId, moduleId, formId, parentId){
+    return "view/" + appId + "/" + moduleId + "/" + formId + "/parent/" + parentId;
+}
+
 var getFormEntryPath = function(appId, moduleId, formId, caseId) {
     // TODO: make this cleaner
     var url = "view/" + appId + "/" + moduleId + "/" + formId;
@@ -61,9 +68,12 @@ var getSubmitUrl = function (urlRoot, appId) {
     return urlRoot + "/" + appId + "/";
 };
 
-var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
+var getCaseFilterUrl = function(urlRoot, appId, moduleId, special, parentId) {
     // TODO: make this cleaner
     var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    if (parentId){
+        url += "parent/" + parentId + "/";
+    }
     if (special === 'task-list') {
         url += '?task-list=true';
     }
