@@ -18,7 +18,8 @@ from django.contrib.auth.views import login as django_login, redirect_to_login
 from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
+    HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from couchdbkit import ResourceNotFound
@@ -146,6 +147,16 @@ def not_found(request, template_name='404.html'):
     """
     t = loader.get_template(template_name)
     return HttpResponseNotFound(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL
+        })))
+
+def permission_denied(request, template_name='403.html'):
+    """
+    403 error handler.
+    """
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
          'STATIC_URL': settings.STATIC_URL
         })))
