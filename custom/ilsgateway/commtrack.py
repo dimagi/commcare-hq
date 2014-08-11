@@ -88,14 +88,17 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
         'first_name': first_name,
         'last_name': last_name,
         'is_active': bool(ilsgateway_smsuser.is_active),
-        'email': ilsgateway_smsuser.email
+        'email': ilsgateway_smsuser.email,
+        'user_data': {
+            "role": ilsgateway_smsuser.role
+        }
     }
 
     if ilsgateway_smsuser.phone_numbers:
         user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
-        user_dict['user_data'] = {
-            "backend": ilsgateway_smsuser.backend
-        }
+        user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
+
+
 
     sp = SupplyPointCase.view('hqcase/by_domain_external_id',
                               key=[domain, str(ilsgateway_smsuser.supply_point)],
@@ -112,6 +115,7 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
             user.first_name = first_name
             user.last_name = last_name
             user.is_active = bool(ilsgateway_smsuser.is_active)
+            user.user_data = user_dict["user_data"]
             if "phone_numbers" in user_dict:
                 user.set_default_phone_number(user_dict["phone_numbers"][0])
                 try:
@@ -260,8 +264,8 @@ def bootstrap_domain(ilsgateway_config):
         date = None
     try:
         locations_type_sync(domain)
-        #locations_sync(domain, endpoint, date=date)
-        #products_sync(domain, endpoint, date=date)
+        locations_sync(domain, endpoint, date=date)
+        products_sync(domain, endpoint, date=date)
         webusers_sync(domain, endpoint, date=date)
         smsusers_sync(domain, endpoint, date=date)
         
