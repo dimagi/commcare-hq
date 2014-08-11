@@ -26,6 +26,7 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
 
+from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -35,7 +36,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.users.models import CommCareCase, CouchUser
+from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -418,6 +419,9 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 pass
         return rows
 
+    def get_row_data(self, row):
+        return self.model(row, self)
+
     @property
     def date_range(self):
         start = self.datespan.startdate_utc
@@ -460,53 +464,55 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
 
 class CaseReportMixin(object):
+    default_case_type = "Pregnancy"
+
     def get_rows(self, datespan):
-        block = self.block
-        q = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {},
-                    },
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}}
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        es_filters = q["query"]["filtered"]["filter"]
-        if self.snapshot is None and hasattr(self, 'request'):
-            if self.awcs:
-                awcs_lower = [awc.lower() for awc in self.awcs]
-                awc_term = {
-                    "or":
-                        [{"and": [{"term": {"awc_name.#value": term}} for term in re.split('\s', awc)
-                                    if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
-                        } for awc in awcs_lower]
-                }
-                es_filters["bool"]["must"].append(awc_term)
-            elif self.gp:
-                users = CouchUser.by_domain(self.domain)
-                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == self.gp]
-                es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
-            elif self.block:
-                es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
-            is_open = self.request_params.get('is_open', None)
-            # FIXME This is definitely wrong; it looks at current case status, not report-time
-            if is_open:
-                es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
-        else:
-            es_filters["bool"]["must"].append({"term": {"block_name.#value": block.lower()}})
-        if self.default_case_type:
-            es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        result = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', fields=[])
-        return map(CommCareCase, iter_docs(CommCareCase.get_db(),
-                (res['_id'] for res in result['hits']['hits'])))
+        def get_awc_filter(awcs):
+            # TODO confirm that this places nicely with ES tokenization
+            awc_filters = []
+            def make_filter(term):
+                return es_filters.term("awc_name.#value", term)
+            for awc in awcs:
+                awc_terms = filter(None, awc.lower().split())
+                if len(awc_terms) == 1:
+                    awc_filters.append(make_filter(awc_terms[0]))
+                elif len(awc_terms) > 1:
+                    awc_filters.append(es_filters.AND(
+                        make_filter(term) for term in awc_terms))
+            return es_filters.OR(*awc_filters)
+
+        def get_gp_filter(gp):
+            users = CouchUser.by_domain(self.domain)
+            owner_ids = [user._id for user in users
+                         if getattr(user, 'user_data', {}).get('gp') in self.gp]
+            return es_filters.term("owner_id", owner_ids)
+
+        def get_block_filter(block):
+            return es_filter.term("block_name.#value", block.lower())
+
+        query = case_es.CaseES().domain(self.domain)\
+                .fields([])\
+                .opened_range(lte=self.datespan.enddate_utc)\
+                .term("type.exact", self.default_case_type)
+        query.index = 'report_cases'
+
+        is_open = self.request_params.get('is_open', None)
+        if is_open == "open":
+            query = query.filter(es_filters.OR(
+                case_es.is_closed(False),
+                case_es.closed_range(gte=self.datespan.enddate_utc)
+            ))
+        elif is_open == "closed":
+            query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
+
+        if self.awcs:
+            query = query.filter(get_awc_filter(self.awcs))
+        elif self.gp:
+            query = query.filter(get_gp_filter(self.gp))
+        elif self.block:
+            query = query.filter(get_block_filter(self.block))
+        result = query.run()
+        return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
@@ -514,7 +520,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
-    default_case_type = "Pregnancy"
 
     @property
     def load_snapshot(self):
@@ -523,9 +528,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     @property
     def fields(self):
         return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
-
-    def get_row_data(self, row):
-        return self.model(row, self)
 
     def cases_meeting_bp1(self):
         pass
@@ -789,7 +791,6 @@ class MetReport(CaseReportMixin, BaseReport):
     slug = "met_report"
     model = ConditionsMet
     exportable = False
-    default_case_type = "Pregnancy"
     is_rendered_as_email = False
 
     @property
@@ -867,6 +868,7 @@ class MetReport(CaseReportMixin, BaseReport):
         return rows
 
     def filter(self, fn, filter_fields=None):
+        # TODO test with snapshots.  Move to CaseReportMixin?
         if filter_fields is None:
             filter_fields = self.filter_fields
         for key, field in filter_fields:
@@ -881,9 +883,6 @@ class MetReport(CaseReportMixin, BaseReport):
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
                         raise InvalidRow
-
-    def get_row_data(self, row):
-        return self.model(row, self)
 
     @property
     @request_cache("raw")

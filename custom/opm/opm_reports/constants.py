@@ -13,6 +13,11 @@ CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609
 
 CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]
 
+# TODO Move these to a cached fixtures lookup
+MONTH_AMT = 250
+TWO_YEAR_AMT = 2000
+THREE_YEAR_AMT = 3000
+
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')

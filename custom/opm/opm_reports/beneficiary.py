@@ -6,11 +6,9 @@ import re
 import datetime
 from decimal import Decimal
 
-from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
-from corehq.apps.users.models import CommCareCase
 from corehq.util.translation import localize
 
 from .constants import *
@@ -42,11 +40,6 @@ GRADE_NORMAL_N = 'grade_normal_n.png'
 SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 
-
-# TODO Sravan, aren't these fixtures?
-MONTH_AMT = 250
-TWO_YEAR_AMT = 2000
-THREE_YEAR_AMT = 3000
 
 class OPMCase(object):
 
@@ -232,11 +225,6 @@ class OPMCase(object):
         else:
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
-        # TODO move this to initial query
-        if self.case.closed and self.case.closed_on <= self.datespan.startdate_utc:
-            print "*"*40, 'ESOE: Case closed problem', "*"*40
-            raise InvalidRow
-
         self.set_case_properties()
 
         if report.is_rendered_as_email:
@@ -277,8 +265,6 @@ class OPMCase(object):
         else:
             raise InvalidRow
         if (self.child_age == -1 and self.preg_month == -1):
-            print "?"*40, 'ESOE: InvalidRow', "?"*40
-            print "Is this ever executed?"
             raise InvalidRow
 
         self.status = status
@@ -446,7 +432,7 @@ class Beneficiary(OPMCase):
         ('bank_name', _("Bank Name"), True),
         ('ifs_code', _("IFS Code"), True),
         ('account_number', _("Bank Account Number"), True),
-        ('block', _("Block Name"), True),
+        ('block_name', _("Block Name"), True),
         ('village', _("Village Name"), True),
         ('bp1_cash', _("Birth Preparedness Form 1"), True),
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
