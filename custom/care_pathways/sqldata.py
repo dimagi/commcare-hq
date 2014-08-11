@@ -1,10 +1,11 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
-from corehq.apps.reports.sqlreport import  TableDataFormat, DataFormatter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from custom.care_pathways.utils import get_domain_configuration
+from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains
 from sqlalchemy import select
+import urllib
+from django.utils import html
 
 def _get_grouping(prop_dict):
         group = prop_dict['group']
@@ -92,15 +93,38 @@ class AdoptionBarChartReportSqlData(SqlData):
     table_name = 'fluff_FarmerRecordFluff'
     no_value = {'sort_key': 0, 'html': 0}
 
-    def __init__(self, domain, config):
+    def __init__(self, domain, config, request_params):
         self.domain = domain
         self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
         self.config = config
+        self.request_params = request_params
         super(AdoptionBarChartReportSqlData, self).__init__(config=config)
 
     def percent_fn(self, x, y, z):
         sum_all = (x or 0) + (y or 0) + (z or 0)
         return "%.2f%%" % (100 * int(x or 0) / float(sum_all or 1))
+
+    def group_name_fn(self, group_name):
+        text = None
+        if is_mapping(group_name, self.domain):
+            self.request_params['type_value_chain'] = group_name
+            self.request_params['group_by'] = 'domain'
+            text = next((item for item in get_mapping(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_domain(group_name, self.domain):
+            self.request_params['type_domain'] = group_name
+            self.request_params['group_by'] = 'practice'
+            text = next((item for item in get_domains(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_practice(group_name, self.domain):
+            # TODO practices should probably redirect to other report
+            self.request_params['type_practice'] = group_name
+            text = next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
+
+        from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
+        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
+        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
+
 
     @property
     def columns(self):
@@ -114,7 +138,7 @@ class AdoptionBarChartReportSqlData(SqlData):
             first_columns = 'practices'
 
         return [
-            DatabaseColumn('', SimpleColumn(first_columns)),
+            DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
             AggregateColumn('All', self.percent_fn,
                             [CareCustomColumn('all', filters=[EQ("x.maxmin", 2),]), AliasColumn('some'), AliasColumn('none')]),
             AggregateColumn('Some', self.percent_fn,
@@ -146,9 +170,3 @@ class AdoptionBarChartReportSqlData(SqlData):
     @property
     def group_by(self):
         return _get_grouping(self.config)
-
-
-    @property
-    def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))

@@ -12,7 +12,7 @@ def is_domain(prop, domain):
     return any(d['val'] == prop for d in get_domains(domain))
 
 def is_practice(prop, domain):
-    return any(d['val'] == domain for d in get_pracices(domain))
+    return any(d['val'] == prop for d in get_pracices(domain))
 
 def get_mapping(domain_name):
     value_chains = get_domain_configuration(domain_name)['by_type_hierarchy']
