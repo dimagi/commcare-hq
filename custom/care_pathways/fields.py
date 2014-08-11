@@ -91,23 +91,13 @@ class CBTNameFilter(BaseSingleOptionFilter):
         return [(user._id, user.username) for user in CommCareUser.by_domain(self.domain)]
 
 
-class ScheduleCasteFilter(BaseSingleOptionFilter):
-    slug = "schedule_caste"
-    label = "Schedule Caste"
+class ScheduleFilter(BaseSingleOptionFilter):
+    slug = "farmer_social_category"
+    label = "Farmer Social Category"
 
     @property
     def options(self):
-        return [('yes', 'Yes'), ('no', 'No')]
-
-
-class ScheduleTribeFilter(BaseSingleOptionFilter):
-    slug = "schedule_tribe"
-    label = "Schedule Tribe"
-
-    @property
-    def options(self):
-        return [('yes', 'Yes'), ('no', 'No')]
-
+        return [('sc', 'SC'), ('st', 'ST'), ('obc', 'OBC'), ('other', 'Other')]
 
 class PPTYearFilter(YearFilter):
     label = "PPT Year"

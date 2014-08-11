@@ -4,8 +4,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import MultiBarChart, LineChart, Axis
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
-from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, \
-    ScheduleCasteFilter, ScheduleTribeFilter, GroupByFilter, PPTYearFilter, TypeFilter
+from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 from custom.care_pathways.utils import get_domain_configuration, get_domains, get_mapping, get_pracices, is_domain, is_mapping, is_practice
 
@@ -26,7 +25,7 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
               CBTNameFilter,
               ]
         if self.domain == 'pathways-india-mis':
-            filters.extend([ScheduleCasteFilter, ScheduleTribeFilter])
+            filters.append(ScheduleFilter)
 
         return filters
 

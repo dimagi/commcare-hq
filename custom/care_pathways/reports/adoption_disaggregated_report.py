@@ -1,7 +1,6 @@
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
-from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, \
-    ScheduleCasteFilter, ScheduleTribeFilter, GroupByFilter, PPTYearFilter, TypeFilter
+from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 
 
 class AdoptionDisaggregatedReport(DatespanMixin, GetParamsMixin, GenericTabularReport, CustomProjectReport):
@@ -20,7 +19,7 @@ class AdoptionDisaggregatedReport(DatespanMixin, GetParamsMixin, GenericTabularR
               CBTNameFilter,
               ]
         if self.domain == 'pathways-india-mis':
-            filters.extend([ScheduleCasteFilter, ScheduleTribeFilter])
+            filters.append(ScheduleFilter)
 
         return filters
 
