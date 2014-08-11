@@ -66,36 +66,39 @@ def run_query(url, q):
 
 
 def get_user_type_filters(histo_type, user_type_mobile):
+    def user_doc_type():
+        return "CommCareUser" if user_type_mobile else "WebUser"
+
     def get_user_ids():
-        from corehq.apps.users.models import WebUser, CommCareUser
-        return (
-            {mobile_user._id for mobile_user in CommCareUser.all()
-             if mobile_user.doc_type == "CommCareUser"}
-            if user_type_mobile else
-            {web_user._id for web_user in WebUser.all()
-             if web_user.doc_type == "WebUser"}
-        )
+        from corehq.apps.users.models import CouchUser
+        return {
+            mobile_user._id for mobile_user in CouchUser.all()
+            if mobile_user.doc_type == user_doc_type()
+        }
+
     result = {'terms': {}}
     if histo_type == 'forms':
         result['terms']["form.meta.userID"] = [
             user_id for user_id in get_user_ids()
         ]
     elif histo_type == 'users':
-        from corehq.apps.es.es_query import ESQuery
         existing_users = get_user_ids()
+
+        from corehq.apps.es.es_query import ESQuery
         LARGE_NUMBER = 1000 * 1000 * 10
-        query_results = (
+        form_query_results = (
             ESQuery('forms')
             .fields(['form.meta.userID'])
             .size(LARGE_NUMBER)
             .run()
             .raw_hits()
         )
-        real_users = {
+        real_form_users = {
             x.get('fields', {}).get('form.meta.userID', [''])[0]
-            for x in query_results
+            for x in form_query_results
         }
-        filtered_real_users = existing_users & real_users
+
+        filtered_real_users = existing_users & real_form_users
         result['terms']['_id'] = [
             user_id for user_id in filtered_real_users
         ]
