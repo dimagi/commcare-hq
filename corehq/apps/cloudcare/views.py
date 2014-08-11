@@ -113,8 +113,6 @@ def cloudcare_main(request, domain, urlPath):
         app_id = split[1] if len(split) >= 2 else None
 
         if len(split) >= 5 and split[4] == "parent":
-            print split
-            print len(split)
             parent_id = split[5]
             case_id = split[7] if len(split) >= 7 else None
         else:
@@ -252,7 +250,7 @@ def get_cases(request, domain):
     return json_response(cases)
 
 @cloudcare_api
-def filter_cases(request, domain, app_id, module_id):
+def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     delegation = request.GET.get('task-list') == 'true'
@@ -288,11 +286,23 @@ def filter_cases(request, domain, app_id, module_id):
     else:
         # otherwise just use our built in api with the defaults
         case_ids = [res.id for res in get_filtered_cases(
-            domain, status=CASE_STATUS_OPEN, case_type=case_type,
-            user_id=request.couch_user._id, ids_only=True
+            domain,
+            status=CASE_STATUS_OPEN,
+            case_type=case_type,
+            user_id=request.couch_user._id,
+            ids_only=True
         )]
 
     cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
+
+    # Filtering here for now because it's easy. There is probably a more
+    # "correct" place to do this (like with the get_filtered_cases() filter
+    # param perhaps).
+    if parent_id:
+        # NOTE: c.parent returns only one parent. There could be more... uh oh.
+        cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
+
+
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
@@ -309,7 +319,7 @@ def filter_cases(request, domain, app_id, module_id):
         })
     else:
         return json_response(cases)
-    
+
 @cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
