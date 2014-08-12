@@ -458,8 +458,15 @@ var CaseConfig = (function () {
         }
     };
 
-    var DEFAULT_CONDITION = {
+    var DEFAULT_CONDITION_ALWAYS = {
         type: 'always',
+        question: null,
+        answer: null,
+        operator: null
+    };
+    
+    var DEFAULT_CONDITION_NEVER = {
+        type: 'never',
         question: null,
         answer: null,
         operator: null
@@ -509,7 +516,7 @@ var CaseConfig = (function () {
         normalize: function (o) {
             var self = {};
             self.open_case = {
-                condition: (o.open_case || {}).condition || DEFAULT_CONDITION,
+                condition: (o.open_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
                 name_path: (o.open_case || {}).name_path || ''
             };
             self.update_case = {
@@ -519,7 +526,7 @@ var CaseConfig = (function () {
                 preload: (o.case_preload || {}).preload || {}
             };
             self.close_case = {
-                condition: (o.close_case || {}).condition || DEFAULT_CONDITION
+                condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS
             };
             return self;
         },
@@ -561,9 +568,6 @@ var CaseConfig = (function () {
                     condition: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'open';
                     }),
-                    close_condition: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'update';
-                    }),
                     case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
                     }),
@@ -581,7 +585,7 @@ var CaseConfig = (function () {
             var case_preload = propertyArrayToDict([], o.case_preload, true)[0];
             var open_condition = o.condition;
             var close_condition = o.close_condition;
-            var update_condition = DEFAULT_CONDITION;
+            var update_condition = DEFAULT_CONDITION_ALWAYS;
             var actionType = case_transaction.caseConfig.caseConfigViewModel.actionType();
 
             if (actionType === 'open') {
@@ -626,7 +630,8 @@ var CaseConfig = (function () {
             self.case_name = o.case_name || null;
             self.reference_id = o.reference_id || null;
             self.case_properties = o.case_properties || {};
-            self.condition = o.condition || DEFAULT_CONDITION;
+            self.condition = o.condition || DEFAULT_CONDITION_ALWAYS;
+            self.close_condition = o.close_condition || DEFAULT_CONDITION_NEVER;
             self.repeat_context = o.repeat_context;
             return self;
         },
@@ -644,6 +649,7 @@ var CaseConfig = (function () {
                 reference_id: self.reference_id,
                 case_properties: case_properties,
                 condition: self.condition,
+                close_condition: self.close_condition,
                 suggestedProperties: function () {
                     if (this.case_type() && _(caseConfig.propertiesMap).has(this.case_type())) {
                         var all = caseConfig.propertiesMap[this.case_type()]();
@@ -657,9 +663,6 @@ var CaseConfig = (function () {
                 allow: {
                     condition: function () {
                         return true;
-                    },
-                    close_condition: function () {
-                        return false;
                     },
                     case_preload: function () {
                         return false;
@@ -684,6 +687,7 @@ var CaseConfig = (function () {
                 case_properties: case_properties,
                 reference_id: o.reference_id,
                 condition: cleanCondition(o.condition),
+                close_condition: cleanCondition(o.close_condition),
                 repeat_context: case_transaction.repeat_context()
             };
         }

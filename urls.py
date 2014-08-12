@@ -18,6 +18,7 @@ admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
+handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
@@ -103,6 +104,7 @@ urlpatterns = patterns('',
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^500/$', TemplateView.as_view(template_name='500.html')),
     (r'^404/$', TemplateView.as_view(template_name='404.html')),
+    (r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
     url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
