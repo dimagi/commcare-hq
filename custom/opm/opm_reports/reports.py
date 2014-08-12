@@ -488,7 +488,7 @@ class CaseReportMixin(object):
             return es_filters.term("owner_id", owner_ids)
 
         def get_block_filter(block):
-            return es_filter.term("block_name.#value", block.lower())
+            return es_filters.term("block_name.#value", block.lower())
 
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
