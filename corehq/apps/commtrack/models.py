@@ -115,16 +115,34 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
-        sql_product, _ = SQLProduct.objects.get_or_create(
-            domain=self.domain,
-            name=self.name
-        )
+        properties_to_sync = [
+            ('product_id', '_id'),
+            'domain',
+            'name',
+            'is_archived',
+            ('code', 'code_'),
+            'description',
+            'category',
+            'program_id',
+            'cost',
+            ('units', 'unit'),
+            'product_data',
+        ]
 
         result = super(Product, self).save(*args, **kwargs)
 
-        properties_to_sync = ['domain', 'name', 'is_archived']
+        sql_product, _ = SQLProduct.objects.get_or_create(
+            product_id=self._id
+        )
+
         for prop in properties_to_sync:
-            setattr(sql_product, prop, getattr(self, prop))
+            if isinstance(prop, tuple):
+                sql_prop, couch_prop = prop
+            else:
+                sql_prop = couch_prop = prop
+
+            if hasattr(self, couch_prop):
+                setattr(sql_product, sql_prop, getattr(self, couch_prop))
 
         sql_product.save()
 
