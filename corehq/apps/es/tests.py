@@ -35,6 +35,25 @@ class TestESQuery(TestCase):
         }
         self.checkQuery(HQESQuery('forms'), json_output)
 
+    def test_query_size(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": 0
+        }
+        # use `is not None`; 0 or 1000000 == 1000000
+        self.checkQuery(HQESQuery('forms').size(0), json_output)
+        json_output['size'] = 123
+        self.checkQuery(HQESQuery('forms').size(123), json_output)
+
     def test_form_query(self):
         json_output = {
             "query": {

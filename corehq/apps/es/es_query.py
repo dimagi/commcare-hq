@@ -77,7 +77,7 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None):
-        self.index = index or self.index
+        self.index = index if index is not None else self.index
         if self.index not in ES_URLS:
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_URLS.keys()))
@@ -169,7 +169,7 @@ class ESQuery(object):
             self.es_query['fields'] = self._fields
         if self._start is not None:
             self.es_query['start'] = self._start
-        self.es_query['size'] = self._size or SIZE_LIMIT
+        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
 
     def fields(self, fields):
         """
