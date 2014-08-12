@@ -41,7 +41,7 @@ SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 
 
-class OPMCase(object):
+class OPMCaseRow(object):
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -276,7 +276,6 @@ class OPMCase(object):
         self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
-        self.owner_id = self.case_property('owner_id', EMPTY_FIELD)
         self.case_id = self.case_property('_id', EMPTY_FIELD)
         self.owner_id = self.case_property('owner_id', '')
         self.closed = self.case_property('closed', False)
@@ -340,7 +339,7 @@ class OPMCase(object):
         )
 
 
-class ConditionsMet(OPMCase):
+class ConditionsMet(OPMCaseRow):
     method_map = {
         "atri": [
             ('name', _("List of Beneficiary"), True),
@@ -384,6 +383,7 @@ class ConditionsMet(OPMCase):
     def __init__(self, *args, **kwargs):
         super(ConditionsMet, self).__init__(*args, **kwargs)
         if self.status == 'mother':
+            # TODO Move this to parent class
             self.birth_spacing_prompt = []
             for form in self.forms:
                 if 'birth_spacing_prompt' in form.form:
@@ -420,7 +420,7 @@ class ConditionsMet(OPMCase):
                 self.five = self.img_elem % year_end_condition_img_N
 
 
-class Beneficiary(OPMCase):
+class Beneficiary(OPMCaseRow):
     """
     Constructor object for each row in the Beneficiary Payment Report
     """

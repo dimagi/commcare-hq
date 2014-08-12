@@ -627,7 +627,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
 
         @property
         def datespan(self):
-            return DateSpan.from_month(month, year)
+            return DateSpan.from_month(self.month, self.year)
 
         @property
         def filter_data(self):
