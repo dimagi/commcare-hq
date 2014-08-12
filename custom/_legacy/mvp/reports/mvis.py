@@ -147,6 +147,14 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_fever_rdt_negative_medicated_proportion",
                     "over5_positive_rdt_medicated_proportion",
                 ]
+            },
+            {
+                'category_title': "Household health",
+                'category_slug': 'household_health',
+                'indicator_slugs': [
+                    "functioning_bednet_proportion",
+                    "handwashing_near_latrine_proportion",
+                ]
             }
         ]
 
