@@ -158,9 +158,13 @@ requires imports/proptable.html to be included in the main template
 <div class="alert alert-full alert-block">
     {% blocktrans %}
     This form is archived and will not be included in reports. 
-    To unarchive this form, click the "Restore" button.
+    {% endblocktrans %}
+{% if user.can_edit_data %}
+    {% blocktrans %}
+    To unarchive this form, click the "Restore this form" button.
     This will also restore case data associated with the form.
     {% endblocktrans %}
+{% endif %}
 </div>
 {% endif %}
 <div class="pull-right">
@@ -232,7 +236,7 @@ requires imports/proptable.html to be included in the main template
                 </a>
             </p>
             {% endif %}
-
+            {% if user.can_edit_data %}
             <p>
                 {% if not is_archived %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
@@ -260,6 +264,7 @@ requires imports/proptable.html to be included in the main template
                 </form>
                 {% endif %}
             </p>
+            {% endif %}
         </div>
 
         {% if question_list_not_found %}

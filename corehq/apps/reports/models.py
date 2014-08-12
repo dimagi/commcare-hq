@@ -9,6 +9,7 @@ from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
@@ -161,7 +162,7 @@ class TempCommCareUser(CommCareUser):
 DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range']
 
 
-class ReportConfig(Document):
+class ReportConfig(CachedCouchDocumentMixin, Document):
     _extra_json_properties = ['url', 'report_name', 'date_description']
 
     domain = StringProperty()
@@ -431,7 +432,7 @@ class UnsupportedScheduledReportError(Exception):
     pass
 
 
-class ReportNotification(Document):
+class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     owner_id = StringProperty()
 
@@ -751,7 +752,7 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-class HQGroupExportConfiguration(GroupExportConfiguration):
+class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
     """

@@ -142,8 +142,34 @@ class OpmHealthStatusAllInfoFluff(fluff.IndicatorDocument):
     excbreastfed = case_calcs.BreastFed()
     measlesvacc = case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
 
+
+# This calculator is necessary to generate 'date' field which is required in the database
+class Numerator(fluff.Calculator):
+    @fluff.null_emitter
+    def numerator(self, case):
+        yield None
+
+
+class OPMHierarchyFluff(fluff.IndicatorDocument):
+    def user_data(property):
+        """
+        returns a flat field with a callable looking for `property` on the user
+        """
+        return flat_field(lambda user: user.user_data.get(property))
+
+    document_class = CommCareUser
+    domains = ('opm',)
+    group_by = ('domain',)
+
+    save_direct_to_sql = True
+    numerator = Numerator()
+    block = user_data('block')
+    gp = user_data('gp')
+    awc = user_data('awc')
+
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
 OpmHealthStatusAllInfoFluffPillow = OpmHealthStatusAllInfoFluff.pillow()
+OPMHierarchyFluffPillow = OPMHierarchyFluff.pillow()
