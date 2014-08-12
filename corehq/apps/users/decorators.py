@@ -19,7 +19,7 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
                 return view_func(request, domain, *args, **kwargs)
             else:
-                raise PermissionDenied
+                raise PermissionDenied()
 
         if login_decorator:
             return login_decorator(_inner)
