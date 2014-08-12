@@ -60,7 +60,14 @@ class MockCaseRow(OPMCaseRow):
         super(MockCaseRow, self).__init__(case, report)
 
 
-class TestCaseReports(TestCase):
+class OPMCaseReportTestBase(TestCase):
+
+    def setUp(self):
+        self.report = Report(month=06, year=2014, block="Atri")
+
+
+class MockDataTest(OPMCaseReportTestBase):
+
     def test_mock_data(self):
         report = Report(month=06, year=2014, block="Atri")
         form = Form(form={'foo': 'bar'}, received_on=datetime(2014, 06, 15))
@@ -72,10 +79,7 @@ class TestCaseReports(TestCase):
         row = MockCaseRow(case, report)
 
 
-class TestPregnancyStatus(TestCase):
-
-    def setUp(self):
-        self.report = Report(month=06, year=2014, block="Atri")
+class TestPregnancyStatus(OPMCaseReportTestBase):
 
     def test_not_yet_delivered(self):
         case = OPMCase(
