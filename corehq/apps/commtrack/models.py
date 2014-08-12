@@ -197,7 +197,7 @@ class Product(Document):
                 row["doc"] for row in Product.view(
                     wrap_doc=False,
                     **kwargs
-                ) if row["doc"]["is_archived"] == is_archived
+                ) if row["doc"].get('is_archived', False) == is_archived
             ]
 
     @classmethod
