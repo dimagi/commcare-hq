@@ -19,6 +19,27 @@ DELIVERY_PARTIAL_CONFIRM = _("To record a delivery, respond with \"delivered pro
 SUBMITTED_NOTIFICATION_MSD = _("%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for Group A, %(group_b)s for Group B, %(group_c)s for Group C")
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
 
+ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")
+ARRIVED_DEFAULT = _("Thank you for confirming your arrival at the health facility.")
+ARRIVED_KNOWN = _("Thank you for confirming your arrival at %(facility)s.")
+
+REGISTER_HELP = _("To register send reg <name> <msd code> or reg <name> at <district name>. Example:reg john patel d34002 or reg john patel : tandahimba")
+
+HELP_REGISTERED = _('Welcome to ILSGateway. Available commands are soh, delivered, not delivered, submitted, not submitted, language, sw, en, stop, supervision, la')
+HELP_UNREGISTERED = REGISTER_HELP
+
+
+# language keyword
+LANGUAGE_HELP = "To set your language, send LANGUAGE <CODE>"
+LANGUAGE_CONTACT_REQUIRED = "You must JOIN or IDENTIFY yourself before you can set your language preference"
+LANGUAGE_CONFIRM = "I will speak to you in %(language)s."
+LANGUAGE_UNKNOWN = 'Sorry, I don\'t speak "%(language)s".'
+
+STOP_CONFIRM = _("You have requested to stop reminders to this number.  Send 'help' to this number for instructions on how to reactivate.")
+
+YES_HELP = _('If you have submitted your R&R, respond \"submitted\".  If you have received your delivery, respond \"delivered\"')
+
+
 
 def update_statuses(supply_point_ids, type, value):
     for supply_point_id in supply_point_ids:

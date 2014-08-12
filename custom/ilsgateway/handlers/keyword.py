@@ -17,4 +17,5 @@ class KeywordHandler(object):
         raise NotImplementedError("Not implemented yet")
 
     def respond(self, message, **kwargs):
-        send_sms_to_verified_number(self.verified_contact, message % kwargs)
+        print message % kwargs
+        #send_sms_to_verified_number(self.verified_contact, message % kwargs)

@@ -32,6 +32,8 @@ class SMSError(RuntimeError):
 def handle(verified_contact, text, msg=None):
     """top-level handler for incoming stock report messages"""
     domain = Domain.get_by_name(verified_contact.domain)
+    signal.send(verified_contact=verified_contact, sender="commtrack_sms", domain=domain.name, text=text, msg=msg)
+
     if not domain.commtrack_enabled:
         return False
 
@@ -50,7 +52,6 @@ def handle(verified_contact, text, msg=None):
     process(domain.name, data)
     send_confirmation(verified_contact, data)
     #TODO check if domain has ils enabled
-    signal.send(verified_contact=verified_contact, sender="commtrack_sms", domain=domain.name, text=text, msg=msg)
     return True
 
 
