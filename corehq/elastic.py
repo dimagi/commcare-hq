@@ -91,7 +91,7 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .fields(['form.meta.userID'])
             .size(LARGE_NUMBER)
             .run()
-            .raw_hits()
+            .raw_hits
         )
         real_form_users = {
             query_result.get('fields', {}).get('form.meta.userID', [''])[0]
@@ -106,7 +106,7 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .term('direction', INCOMING)
             .size(LARGE_NUMBER)
             .run()
-            .raw_hits()
+            .raw_hits
         )
         real_sms_users = {
             query_result.get('fields', {}).get('couch_recipient', [''])[0]
