@@ -115,6 +115,11 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
+        """
+        Saving a couch version of Product will trigger
+        one way syncing to the SQLProduct version of this
+        product.
+        """
         properties_to_sync = [
             ('product_id', '_id'),
             'domain',
@@ -256,13 +261,18 @@ class Product(Document):
         return property_dict
 
     def archive(self):
-        # TODO doc
+        """
+        Mark a product as archived. This will cause it (and its data)
+        to not show up in default Couch and SQL views.
+        """
         self.is_archived = True
         self.save()
-        # TODO achive forms
 
     def unarchive(self):
-        # TODO doc
+        """
+        Unarchive a product, causing it (and its data) to show
+        up in Couch and SQL views again.
+        """
         self.is_archived = False
         self.save()
 
@@ -1384,6 +1394,12 @@ class CommTrackUser(CommCareUser):
 
 
 class SQLProduct(models.Model):
+    """
+    A SQL based clone of couch Products.
+
+    This is used to efficiently filter StockState and other
+    SQL based queries to exclude data for archived products.
+    """
     domain = models.CharField(max_length=100, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
     name = models.CharField(max_length=100, null=True)
@@ -1406,8 +1422,14 @@ class SQLProduct(models.Model):
 
 
 class ActiveManager(models.Manager):
+    """
+    Filter any object that is associated to an archived product.
+    """
+
     def get_query_set(self):
-        return super(ActiveManager, self).get_query_set().exclude(sql_product__is_archived=True)
+        return super(ActiveManager, self).get_query_set().exclude(
+            sql_product__is_archived=True
+        )
 
 
 class StockState(models.Model):
