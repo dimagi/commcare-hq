@@ -1,0 +1,76 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="303" name="Visit" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B">
+	<member_available>yes</member_available>
+	<prev_counsel_topics />
+	<cur_counsel_topics>sanitation</cur_counsel_topics>
+	<gps_location />
+	<prev_location_code />
+	<num_ec>1</num_ec>
+	<num_using_fp>1</num_using_fp>
+	<modern_fp>
+		<fp_type>iud</fp_type>
+	</modern_fp>
+	<cur_num_fp>1</cur_num_fp>
+	<birth_control_pills_distributed>0</birth_control_pills_distributed>
+	<injectables_distributed>1</injectables_distributed>
+	<any_other_sick>no</any_other_sick>
+	<do_malaria_assessment>yes</do_malaria_assessment>
+	<malaria_assessment>
+		<num_sleeping_sites>3</num_sleeping_sites>
+		<num_bednets_observerd>3</num_bednets_observerd>
+		<num_bednets_no>0</num_bednets_no>
+		<num_bednets_nonfunction>0</num_bednets_nonfunction>
+		<num_u5_slept_hh_last_night>1</num_u5_slept_hh_last_night>
+		<num_u5_slept_hh_bednet_last_night>1
+		</num_u5_slept_hh_bednet_last_night>
+		<num_preg_slept_hh_last_night>0</num_preg_slept_hh_last_night>
+		<num_preg_slept_hh_last_night_bednet>0
+		</num_preg_slept_hh_last_night_bednet>
+	</malaria_assessment>
+	<do_toilet_assessment>yes</do_toilet_assessment>
+	<toilet_assessment>
+		<toilet_type>pit_latrine_without_slab</toilet_type>
+		<toilet_shared>no</toilet_shared>
+		<water_source>rainwater</water_source>
+		<water_treatment>yes</water_treatment>
+		<water_treatment_type>boil_water</water_treatment_type>
+		<handwashing>latrine kitchen not_designated</handwashing>
+		<soap>water_soap</soap>
+		<handwashing_knowledge>before_eating after_eating before_cooking after_defecation after_cleaning_stools after_cleaning_latrine</handwashing_knowledge>
+		<stool_disposal>toilet put_toilet</stool_disposal>
+		<trash_disposal>dump_yard</trash_disposal>
+	</toilet_assessment>
+	<counseling>
+		<counsel_type_ec>sanitation</counsel_type_ec>
+		<counsel_sanitation_group>
+			<counsel_sanitation />
+		</counsel_sanitation_group>
+	</counseling>
+	<last_visit>2013-03-09</last_visit>
+	<health_id />
+	<prev_toilet_assessment_date />
+	<cur_toilet_assessment_date>2013-03-09</cur_toilet_assessment_date>
+	<cur_malaria_assessment_date>2013-03-09</cur_malaria_assessment_date>
+	<prev_malaria_assessment_date />
+	<n0:case case_id="{case_id}"
+		user_id="test" date_modified="2013-03-09T06:30:09.007+03"
+		xmlns:n0="http://commcarehq.org/case/transaction/v2">
+		<n0:update>
+			<n0:gps_location />
+			<n0:last_visit>2013-03-09</n0:last_visit>
+			<n0:last_visit_counsel_topics>sanitation</n0:last_visit_counsel_topics>
+			<n0:toilet_assessment_date>2013-03-09</n0:toilet_assessment_date>
+			<n0:malaria_assessment_date>2013-03-09</n0:malaria_assessment_date>
+			<n0:num_ec>1</n0:num_ec>
+		</n0:update>
+	</n0:case>
+	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+		<n1:deviceID>358510043913306</n1:deviceID>
+		<n1:timeStart>2013-03-09T06:26:56.240+03</n1:timeStart>
+		<n1:timeEnd>2013-03-09T06:30:09.007+03</n1:timeEnd>
+		<n1:username>test</n1:username>
+		<n1:userID>test</n1:userID>
+		<n1:instanceID>{instance_id}</n1:instanceID>
+		<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare ODK, version "2.2.0"(6121). App v303. CommCare Version 2.2. Build 6121, built on: November-06-2012</n2:appVersion>
+	</n1:meta>
+</data>

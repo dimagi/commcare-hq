@@ -12,13 +12,29 @@ function(doc) {
             return preg_start;
         }
 
+        function get_danger_signs(danger_sign_value) {
+            var signs = danger_sign_value.trim().toLowerCase();
+            if (signs) {
+                signs = signs.split(' ');
+                return signs;
+            }
+            return [];
+        }
+
         var indicators = get_indicators(doc),
             meta = doc.form.meta,
-            case_id = get_case_id(doc);
+            case_id = get_case_id(doc),
+            emergency_signs = [];
 
         var visit_date = new Date(meta.timeEnd);
 
         var indicator_entries = {};
+
+        try {
+            emergency_signs = get_danger_signs(indicators.emergency_danger_sign.value);
+        } catch (err) {
+            // pass
+        }
 
         if (isChildWelfareForm(doc) && indicators.vaccination_status && indicators.vaccination_status.value === 'yes') {
             // special case for Bonsaaso
@@ -57,13 +73,13 @@ function(doc) {
                         }
                     }
 
-                    if (!indicators.emergency_danger_sign) {
+                    if (emergency_signs.length < 1) {
                         var not_immunized = false;
-                        if (age > 45 * MS_IN_DAY && (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no')) {
-                            not_immunized = true;
-                        }
-                        if(indicators.prev_vaccination_birth_2.value || indicators.vaccination_birth_2.value){
-                            if (age > 45 * MS_IN_DAY && (indicators.prev_vaccination_birth_2.value === 'no' || indicators.vaccination_birth_2.value === 'no')) {
+                        if (age > 45 * MS_IN_DAY){
+                            if (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no') {
+                                not_immunized = true;
+                            }
+                            if (indicators.prev_vaccination_birth_2.value === 'no' || indicators.vaccination_birth_2.value === 'no') {
                                 not_immunized = true;
                             }
                         }
@@ -130,6 +146,19 @@ function(doc) {
 
         if (isHomeVisitForm(doc)) {
             indicator_entries['household'] = case_id;
+            if (indicators.num_bednets_observed && indicators.num_bednets_observed.value) {
+                indicator_entries['household bednet'] = case_id;
+                if (indicators.num_bednets_observerd.value > 0) {
+                    indicator_entries['household atleastonebednet'] = case_id;
+                }
+            }
+            if (indicators.handwashing && indicators.handwashing.value) {
+                indicator_entries['household handwashing'] = case_id;
+                var handwashing_area = indicators.handwashing.value;
+                if (handwashing_area.indexOf("latrine") >= 0) {
+                    indicator_entries['household handwashing10metres'] = case_id;
+                }
+            }
         }
 
         emit_special(doc, visit_date, indicator_entries, [doc._id]);

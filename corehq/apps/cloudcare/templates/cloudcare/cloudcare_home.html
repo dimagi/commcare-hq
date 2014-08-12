@@ -41,6 +41,14 @@
 
     GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
+    var translatedStrings = {
+        saved : "{% trans "Form successfully saved" %}",
+        loading : "{% trans "Loading..." %}",
+        saving : "{% trans "Saving..." %}",
+        errSaving : "{% trans "Error saving!" %}",
+        saveAll : "{% trans "All changes saved!" %}"
+    }
+
     $(function () {
         var urlRoot = "{% url "cloudcare_main" domain '' %}";
         var appUrlRoot = "{% url "cloudcare_get_apps" domain %}";
