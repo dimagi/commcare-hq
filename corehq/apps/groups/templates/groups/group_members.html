@@ -65,33 +65,36 @@
                 return;
             });
 
-            function success(name) {
+            function success(name, id) {
                 return function() {
                     unsavedChanges[name] = false;
                     $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
                     $('.alert')[0].innerHTML = name + " was successfully saved";
                     $('.alert').show();
+                    $(id).find(':button').removeAttr('disabled');
                 }
             }
 
-            var edit_membership_succ = success("Group membership");
-            var edit_settings_succ = success("Group settings");
-            var edit_data_succ = success("Group data");
+            var edit_membership_succ = success("Group membership", "#edit_membership");
+            var edit_settings_succ = success("Group settings", "#edit-group-settings");
+            var edit_data_succ = success("Group data", "#group-data-form");
 
-            function failure(name) {
+            function failure(name, id) {
                 return function() {
                     $('.alert').removeClass('alert-success alert-info').addClass('alert-error');
                     $('.alert')[0].innerHTML = name + " was not successfully saved";
                     $('.alert').show();
+                    $(id).find(':button').removeAttr('disabled');
                 }
             }
 
-            var edit_membership_fail = failure("Group membership");
-            var edit_settings_fail = failure("Group settings");
-            var edit_data_fail = failure("Group data");
+            var edit_membership_fail = failure("Group membership", "#edit_membership");
+            var edit_settings_fail = failure("Group settings", "#edit-group-settings");
+            var edit_data_fail = failure("Group data", "#group-data-form");
 
             $(document).ready(function() {
                 $('#edit_membership').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
                         success: edit_membership_succ,
                         error: edit_membership_fail
@@ -99,6 +102,7 @@
                     return false;
                 });
                 $('#edit-group-settings').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
                         success: edit_settings_succ,
                         error: edit_settings_fail
@@ -106,6 +110,7 @@
                     return false;
                 });
                 $('#group-data-form').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
                         success: edit_data_succ,
                         error: edit_data_fail
