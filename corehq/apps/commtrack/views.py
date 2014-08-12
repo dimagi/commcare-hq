@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
@@ -172,7 +173,8 @@ class DefaultConsumptionView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
-# TODO permissions scoping
+@require_POST
+@domain_admin_required
 def archive_product(request, domain, prod_id, archive=True):
     """
     Archive product
@@ -188,7 +190,8 @@ def archive_product(request, domain, prod_id, archive=True):
     )))
 
 
-# TODO permissions scoping
+@require_POST
+@domain_admin_required
 def unarchive_product(request, domain, prod_id, archive=True):
     """
     Unarchive product
