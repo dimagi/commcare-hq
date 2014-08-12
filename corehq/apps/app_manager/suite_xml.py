@@ -839,11 +839,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 valid_not_expired = XPath.and_(
                     XPath(SCHEDULE_PHASE).eq(form.id + 1),
                     XPath(anchor).neq(XPath.string('')),
-                    XPath.group(
-                        XPath.or_(
-                            XPath(expires).eq(XPath.string('')),
-                            "today() < ({} + {})".format(XPath.date(anchor), expires)
-                        )))
+                    XPath.or_(
+                        XPath(expires).eq(XPath.string('')),
+                        "today() < ({} + {})".format(XPath.date(anchor), expires)
+                    ))
 
                 visit_num_valid = XPath('@id > {}'.format(
                     SCHEDULE_LAST_VISIT.format(form.schedule_form_id)

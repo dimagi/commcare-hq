@@ -17,6 +17,16 @@ def session_var(var, subref=None):
 
 
 class XPath(unicode):
+
+    def __new__(cls, string=u'', compound=False):
+        return super(XPath, cls).__new__(cls, string)
+
+    def __init__(self, string=u'', compound=False):
+        self.compound = compound
+
+    def paren(self, force=False):
+        return unicode(self) if not (force or self.compound) else u'({})'.format(self)
+
     def slash(self, xpath):
         if self:
             return XPath(u'%s/%s' % (self, xpath))
@@ -46,6 +56,18 @@ class XPath(unicode):
         return XPath(u'{} != {}'.format(self, b))
 
     @staticmethod
+    def expr(template, args, partial=False):
+        if partial:
+            template = template.join(['{}'] * len(args))
+
+        def check_type(arg):
+            return arg if isinstance(arg, XPath) else XPath(arg)
+
+        args = [check_type(arg) for arg in args]
+
+        return XPath(template.format(*[x.paren() for x in args]), compound=True)
+
+    @staticmethod
     def if_(a, b, c):
         return XPath(u"if({}, {}, {})".format(a, b, c))
 
@@ -56,15 +78,15 @@ class XPath(unicode):
 
     @staticmethod
     def and_(*args):
-        return XPath(u' and '.join(args))
+        return XPath.expr(u' and ', args, partial=True)
 
     @staticmethod
     def or_(*args):
-        return XPath(u' or '.join(args))
+        return XPath.expr(u' or ', args, partial=True)
 
     @staticmethod
     def not_(a):
-        return XPath(u"not ({})".format(a))
+        return XPath.expr(u"not {}", [a])
 
     @staticmethod
     def date(a):
@@ -73,10 +95,6 @@ class XPath(unicode):
     @staticmethod
     def int(a):
         return XPath(u'int({})'.format(a))
-
-    @staticmethod
-    def group(a):
-        return XPath(u'({})'.format(a))
 
 
 class CaseSelectionXPath(XPath):
