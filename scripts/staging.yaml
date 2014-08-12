@@ -5,7 +5,6 @@ branches:
   - auto-gps+schedule
   - auto-gps
   - schedule # SK 7/17
-  - app-buttons # Emord 7/30
   - es_none_type # Emord 8/4
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -14,7 +13,6 @@ branches:
   - vellum-requirejs # Daniel 6/12
   - emwf-refactor  # Ethan 8/06
   - real-project-spaces # Nick P 7/27
-  - closecase  # SK 7/28
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
