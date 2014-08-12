@@ -240,6 +240,12 @@ class ProductListView(BaseCommTrackManageView):
                 'limit': self.limit,
                 'total': self.total
             },
+            'archive_help_text': _(
+                "Archive a product to stop showing data for it in \
+                reports and on mobile applications. Archiving is \
+                completely reversible, so you can always reactivate \
+                it later."
+            ),
             'show_inactive': self.show_inactive,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
         }

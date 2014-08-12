@@ -12,7 +12,7 @@
     <script type="text/javascript">
         $(function(){
             var help_text = {
-                "Archive Product": "",
+                "Archive Product": "{{ archive_help_text }}",
             };
 
             $('.help_popover').popover({
@@ -119,7 +119,9 @@
                             <th>{% trans "Program" %}</th>
                             <th>{% trans "Description" %}</th>
                             <th>{% trans "Units" %}</th>
-                            <th>{% trans "Archive" %}</th>
+                            <th class="help_popover" data-help-key="Archive Product">
+                                <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
+                            </th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: data_list">
