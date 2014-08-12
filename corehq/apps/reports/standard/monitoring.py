@@ -561,7 +561,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
     def get_user_link(self, user):
 
         params = {
-            'select_mw': user.user_id,
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
             "form_status": self.request.GET.get("form_status", ''),
@@ -571,6 +570,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "startdate": self.request.GET.get("startdate", ''),
             "enddate": self.request.GET.get("enddate", '')
         }
+
+        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
