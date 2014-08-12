@@ -453,6 +453,9 @@ class Beneficiary(OPMCaseRow):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.delivery_cash + self.child_cash
         )
+        # Show only cases that require payment
+        if self.total == 0:
+            raise InvalidRow
 
     @property
     def bp1(self):
