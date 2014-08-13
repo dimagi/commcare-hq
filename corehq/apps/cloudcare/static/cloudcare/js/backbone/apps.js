@@ -444,7 +444,7 @@ cloudCare.FormListView = Backbone.View.extend({
                     loop (I think). More research is needed to determine the
                     exact nature of the error.
                  */
-                self.selectedFormView.toggle();
+                self.selectedFormView.deselect();
             }
             if (self.selectedFormView !== this) {
                 self.selectedFormView = this;
@@ -484,6 +484,9 @@ cloudCare.AppView = Backbone.View.extend({
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {
+            if (self.selectedForm !== form){
+                self.selectParent(null);
+            }
             self.selectForm(form);
         });
         cloudCare.dispatch.on("parent:selected", function (parent) {
@@ -495,6 +498,7 @@ cloudCare.AppView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("form:deselected", function (form) {
             self.selectForm(null);
+            self.selectParent(null);
             // self.trigger("form:deselected", form);
             // Should the selected parent be cleared here too?
         });
@@ -1037,7 +1041,6 @@ cloudCare.AppMainView = Backbone.View.extend({
                 // If self._selectedCase is in the caseMap, that means that this is the second time cases:updated has been triggered, and therefore the case list is showing the child cases of the parent case.
                 var caseView = self.appView.formListView.caseView.listView.caseMap[self._selectedCase];
                 if (caseView){
-                    console.log("Found a caseView");
                     self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
                     // We only want to clear self._selectedCase if the caseView was actually selected.
                     self._selectedCase = null;
@@ -1200,6 +1203,7 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
     clearForms: function () {
         this.clearCases();
+        this._selectedParent = null;
         this._selectedForm = null;
         this.appView.formListView.clearSelectionState();
         this.appView.selectForm(null);
