@@ -39,6 +39,7 @@ GRADE_NORMAL_Y = 'grade_normal_y.png'
 GRADE_NORMAL_N = 'grade_normal_n.png'
 SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
+VHND_NO = 'VHND_no.png'
 
 
 class OPMCase(object):
@@ -289,6 +290,10 @@ class OPMCase(object):
         if re.match(r'^111', self.account_number):
             raise InvalidRow
 
+        if self.owner_id not in self.report.vhnd_availability:
+            raise InvalidRow
+        self.vhnd_availability = self.report.vhnd_availability[self.owner_id]
+
     @property
     @memoized
     def forms(self):
@@ -297,6 +302,9 @@ class OPMCase(object):
     @property
     def all_conditions_met(self):
         # TODO Sravan, please confirm this logic
+        if not self.vhnd_availability:
+            return True
+
         if self.status == 'mother':
             relevant_conditions = [
                 self.child_attended_vhnd,
@@ -418,6 +426,11 @@ class ConditionsMet(OPMCase):
                 self.five = self.img_elem % year_end_condition_img_Y
             else:
                 self.five = self.img_elem % year_end_condition_img_N
+
+        if not self.vhnd_availability:
+            met_or_not = True
+            self.one = self.img_elem % VHND_NO
+            self.two, self.three, self.four, self.five = '','','',''
 
 
 class Beneficiary(OPMCase):

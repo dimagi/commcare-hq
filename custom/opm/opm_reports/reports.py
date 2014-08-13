@@ -27,6 +27,7 @@ from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
+from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -463,6 +464,19 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def users(self):
         return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
 
+    @property
+    @memoized
+    def vhnd_availability(self):
+        # need to implement this off of Fluff
+        vhnd_cases = get_cases_in_domain(DOMAIN, type="vhnd")
+        vhnd_service = {}
+        for case in vhnd_cases:
+            owner_id = case.owner_id
+            dates = [form.form["date_vhnd_held"] for form in case.get_forms() if "date_vhnd_held" in form.form]
+            vhnd_date = [date for date in dates if type(date) == datetime.date and self.datespan.startdate_utc.date() <= date <= self.datespan.enddate_utc.date()]
+            vhnd_service[owner_id] = len(vhnd_date) > 0
+        return vhnd_service
+        
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
 
