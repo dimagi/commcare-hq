@@ -10,8 +10,6 @@ cloudCare.AppNavigation = Backbone.Router.extend({
     initialize: function() {
         _.bindAll(this, 'setView');
     },
-    //TODO: DETERMINE IF THIS NEW SCHEME BREAKS OLD URLS
-    // It does a little because "view/:app/:module/:form" will show the parent cases, not the children. But that's what we want anyways
     routes: {
         // NOTE: if you edit these, you should also look at the views.py file
         "view/:app":                                        "app",
@@ -381,7 +379,6 @@ cloudCare.ModuleListView = Backbone.View.extend({
 
         moduleView.on("selected", function () {
             if (self.selectedModuleView) {
-                console.log("THERE WAS A SELECTED MODULE VIEW");
                 self.selectedModuleView.deselect();
             }
             if (self.selectedModuleView !== this) {
@@ -389,10 +386,8 @@ cloudCare.ModuleListView = Backbone.View.extend({
                 cloudCare.dispatch.trigger("module:selected", this.model);
             }
         });
-        console.log("BINDING deselected TO moduleView");
         moduleView.on("deselected", function () {
             self.selectedModuleView = null;
-            console.log("TRIGGERED module:deselected");
             cloudCare.dispatch.trigger("module:deselected", this.model);
         });
 
@@ -439,7 +434,6 @@ cloudCare.FormListView = Backbone.View.extend({
         self._formViews[form.get("index")] = formView;
         formView.on("selected", function () {
             if (self.selectedFormView) {
-                console.log("THERE WAS A SELECTED FORM!");
                 /*
                     There is an issue with Selectable.deselect().
                     It doesn't trigger the "deselected" event. Was this on
@@ -490,7 +484,6 @@ cloudCare.AppView = Backbone.View.extend({
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {
-            console.log("-- in form:selected handler");
             self.selectForm(form);
         });
         cloudCare.dispatch.on("parent:selected", function (parent) {
@@ -709,8 +702,6 @@ cloudCare.AppView = Backbone.View.extend({
     },
     selectForm: function (form) {
 
-        console.log("Doing the selectForm function");
-
         var self = this;
         var formListView = self.formListView;
         self.selectedForm = form;
@@ -730,7 +721,6 @@ cloudCare.AppView = Backbone.View.extend({
 
                 // If a parent is selected, we want to filter the cases differently.
                 if (self.selectedParent){
-                    console.log("THERE IS A SELECTED PARENT");
                     cloudCare.dispatch.trigger("form:selected:parent:caselist", form, self.selectedParent.id);
                 } else {
                     cloudCare.dispatch.trigger("form:selected:caselist", form);
@@ -760,8 +750,6 @@ cloudCare.AppView = Backbone.View.extend({
                 // TODO: What are these used for?
 	            var listDetails = formListView.model.get("case_details").short;
 	            var summaryDetails = formListView.model.get("case_details").long;
-
-                console.log("But we are here?");
 
 	            formListView.caseView = new cloudCare.CaseMainView({
 	                el: $("#cases"),
@@ -910,7 +898,6 @@ cloudCare.AppMainView = Backbone.View.extend({
         };
 
         var selectForm = function (formIndex) {
-            console.log("- in selectForm");
             var formView = self.appView.formListView.getFormView(formIndex);
             if (formView) {
                 formView.select();
@@ -920,13 +907,10 @@ cloudCare.AppMainView = Backbone.View.extend({
 
         var selectParent = function (parentId){
 
-            console.log("In selectParent");
             var caseMainView = self.appView.formListView.caseView;
             if (caseMainView) {
                 var caseView = caseMainView.listView.caseMap[parentId];
                 if (caseView) {
-                    //console.log("BOOM SHAKA LAKA");
-                    console.log("About to trigger parent:selected");
                     cloudCare.dispatch.trigger("parent:selected", caseView.model);
                 }
             }
@@ -1018,7 +1002,6 @@ cloudCare.AppMainView = Backbone.View.extend({
         self.router.on("route:app:module:form:case", pauseNav(clearAndSelectCase));
         self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCaseWithParent));
         self.router.on("route:app:module:form:case:enter", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
-            console.log("Boom got that route");
             self.clearCases();
             selectApp(appId);
             selectModule(moduleIndex);
@@ -1063,7 +1046,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             if (self._selectedParent !== null) {
                 var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
                 cloudCare.dispatch.trigger("parent:selected", parentModel);
-                console.log("LEEEEROY JENKINS!");
             }
             self._selectedParetn = null;
         }));
@@ -1090,7 +1072,6 @@ cloudCare.AppMainView = Backbone.View.extend({
 
         cloudCare.dispatch.on("module:deselected", function (module) {
             self.navigate("view/" + module.get("app_id"));
-            console.log("HANDLING module:deselected");
             self.clearModules();
         });
         cloudCare.dispatch.on("form:selected:caselist", function (form) {
@@ -1201,7 +1182,6 @@ cloudCare.AppMainView = Backbone.View.extend({
     clearCases: function () {
         this._selectedCase = null;
         this._selectedParent = null;
-        console.log("SELECTEDPARENT CLEARED!");
         this.appView.selectParent(null); //TODO: Where on earth is the right place for this?
 
     },
