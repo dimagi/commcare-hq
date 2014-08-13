@@ -10,6 +10,7 @@ from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from settings import ES_QUERY_CHUNKSIZE
 
 
 def get_es(timeout=30):
@@ -93,7 +94,10 @@ def get_user_type_filters(histo_type, user_type_mobile):
         )
         real_form_users = {
             query_result.get('fields', {}).get('form.meta.userID', [''])[0]
-            for query_result in stream_esquery(form_query)
+            for query_result in stream_esquery(
+                form_query,
+                chunksize=ES_QUERY_CHUNKSIZE['forms']
+            )
         }
 
         from corehq.apps.sms.models import INCOMING
@@ -106,7 +110,10 @@ def get_user_type_filters(histo_type, user_type_mobile):
         )
         real_sms_users = {
             query_result.get('fields', {}).get('couch_recipient', [''])[0]
-            for query_result in stream_esquery(sms_query)
+            for query_result in stream_esquery(
+                sms_query,
+                chunksize=ES_QUERY_CHUNKSIZE['sms']
+            )
         }
 
         filtered_real_users = (
