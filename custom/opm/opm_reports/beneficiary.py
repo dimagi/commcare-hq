@@ -6,6 +6,7 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
+from dimagi.utils.dates import months_between
 
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
@@ -261,12 +262,12 @@ class OPMCaseRow(object):
                 self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
             elif dod_date < reporting_date:
                 status = 'mother'
-                self.child_age = 1 + (reporting_date - dod_date).days / 30
+                self.child_age = len(months_between(dod_date, datetime.date(self.report.year, self.report.month, 1)))
         elif edd_date and edd_date != EMPTY_FIELD:
             if edd_date >= reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (edd_date - reporting_date).days / 30
-            elif edd_date < reporting_date: # edge case
+            elif edd_date < reporting_date:  # edge case
                 raise InvalidRow
         if status == 'pregnant' and (self.preg_month > 3 and self.preg_month < 10):
             self.window = (self.preg_month - 1) / 3
