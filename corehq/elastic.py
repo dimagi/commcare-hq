@@ -357,8 +357,12 @@ def stream_esquery(esquery, chunksize=SIZE_LIMIT):
     size = esquery._size if esquery._size is not None else SIZE_LIMIT
     start = esquery._start if esquery._start is not None else 0
     for chunk_start in range(start, start + size, chunksize):
-        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
-            yield hit
+        es_query_set = esquery.size(chunksize).start(chunk_start).run()
+        if not es_query_set.raw_hits:
+            break
+        else:
+            for hit in es_query_set.raw_hits:
+                yield hit
 
 
 def parse_args_for_es(request, prefix=None):
