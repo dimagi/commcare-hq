@@ -996,15 +996,6 @@ cloudCare.AppMainView = Backbone.View.extend({
         var clearAndSelectCaseWithParent = function (appId, moduleIndex, formIndex, parentId, caseId) {
             clearAndSelectFormWithParent(appId, moduleIndex, formIndex, parentId);
             selectCase(_stripParams(caseId));
-            /*
-                Here's what needs to happen next:
-                We need to essentially do a selectCase. BUT, if we do it
-                immediately, I think that it will try to select a case from the
-                first case list (because it will occur on the first
-                "cases:updated" event. Therefore, we might want to implement
-                some sort of parent:updated event so that it doesn't try to
-                select the case until that time.
-             */
         };
 
         self.router.on("route:app:module:form:case", pauseNav(clearAndSelectCase));
