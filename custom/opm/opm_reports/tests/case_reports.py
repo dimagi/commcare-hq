@@ -1,11 +1,11 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from unittest import TestCase
 
 from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty, DateProperty)
 
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import DateSpan, add_months
 from dimagi.utils.decorators.memoized import memoized
 
 from ..constants import *
@@ -52,17 +52,23 @@ class MockCaseRow(OPMCaseRow):
     """
     forms = None
 
-    def __init__(self, case, report):
+    def __init__(self, case, report, vhnd_availability=True):
         self.case = case
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
+        self._vhnd_availability = vhnd_availability
         super(MockCaseRow, self).__init__(case, report)
+
+    @property
+    def vhnd_availability(self):
+        return self._vhnd_availability
 
 
 class OPMCaseReportTestBase(TestCase):
 
     def setUp(self):
+        self.report_date = date(2014, 6, 1)
         self.report = Report(month=06, year=2014, block="Atri")
 
 
