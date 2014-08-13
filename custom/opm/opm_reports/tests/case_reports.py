@@ -60,7 +60,14 @@ class MockCaseRow(OPMCaseRow):
         super(MockCaseRow, self).__init__(case, report)
 
 
-class TestCaseReports(TestCase):
+class OPMCaseReportTestBase(TestCase):
+
+    def setUp(self):
+        self.report = Report(month=06, year=2014, block="Atri")
+
+
+class MockDataTest(OPMCaseReportTestBase):
+
     def test_mock_data(self):
         report = Report(month=06, year=2014, block="Atri")
         form = Form(form={'foo': 'bar'}, received_on=datetime(2014, 06, 15))
@@ -70,3 +77,38 @@ class TestCaseReports(TestCase):
             edd=date(2014, 12, 10),
         )
         row = MockCaseRow(case, report)
+
+
+class TestPregnancyStatus(OPMCaseReportTestBase):
+
+    def test_not_yet_delivered(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 12, 10),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual('pregnant', row.status)
+
+    def test_delivered_before_period(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 3, 10),
+            dod=date(2014, 3, 10),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual('mother', row.status)
+
+    def test_delivered_after_period(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 9, 10),
+            dod=date(2014, 9, 10),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual('pregnant', row.status)
+
+    def test_no_valid_status(self):
+        case = OPMCase(
+            forms=[],
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)

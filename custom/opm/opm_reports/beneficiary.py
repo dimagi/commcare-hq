@@ -240,7 +240,6 @@ class OPMCaseRow(object):
         status = "unknown"
         self.preg_month = -1
         self.child_age = -1
-        window = -1
         dod_date = self.case_property('dod', EMPTY_FIELD)
         edd_date = self.case_property('edd', EMPTY_FIELD)
         if dod_date == EMPTY_FIELD and edd_date == EMPTY_FIELD:
@@ -248,7 +247,7 @@ class OPMCaseRow(object):
         if dod_date and dod_date != EMPTY_FIELD:
             if dod_date >= reporting_date:
                 status = 'pregnant'
-                self.preg_month = 9 - (dod_date - reporting_date).days / 30 # edge case
+                self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
             elif dod_date < reporting_date:
                 status = 'mother'
                 self.child_age = 1 + (reporting_date - dod_date).days / 30
