@@ -237,7 +237,12 @@
 
     {% if edit %}
     <div class="btn-group">
-        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+        <a id="edit_label" href="{% if is_user_registration %}
+                                    {% url "user_registration_source" domain app.id %}
+                                 {% else %}
+                                    {% url "form_source" domain app.id module.id form.id %}
+                                 {% endif %}
+                                 " class="btn btn-primary">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>

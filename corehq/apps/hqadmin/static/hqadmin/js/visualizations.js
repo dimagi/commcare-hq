@@ -32,7 +32,7 @@ var HQVisualizations = function (options) {
     self.histogram_type = options.histogram_type;
     self.ajax_url = options.ajax_url;
     self.data = options.data || {};
-    self.should_update_url = options.should_update_url === undefined ? true : options.should_update_url;
+    self.should_update_url = options.should_update_url === undefined ? false : options.should_update_url;
     self.interval = options.interval || "day";
     self.datefield = options.datefield;
 

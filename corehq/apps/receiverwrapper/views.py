@@ -1,21 +1,19 @@
 import logging
 from couchdbkit.ext.django.loading import get_db
-from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseRedirect,
 )
 from casexml.apps.case import get_case_updates
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import is_device_report
-from corehq.apps.domain.decorators import login_or_digest_ex
+from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.util import get_app_and_build_ids
+from corehq.apps.receiverwrapper.util import get_app_and_build_ids, J2ME, ANDROID, guess_phone_type_from_user_agent
 from couchforms import convert_xform_to_json
 import couchforms
 from django.views.decorators.http import require_POST
@@ -144,21 +142,44 @@ def _secure_post_digest(request, domain, app_id=None):
     )
 
 
+@login_or_basic_ex(allow_cc_users=True)
+def _secure_post_basic(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @csrf_exempt
 @require_POST
 def secure_post(request, domain, app_id=None):
-    authtype = request.GET.get('authtype', 'digest')
-
     authtype_map = {
         'digest': _secure_post_digest,
+        'basic': _secure_post_basic,
         'noauth': _noauth_post,
     }
 
     try:
-        decorated_view = authtype_map[authtype]
+        decorated_view = authtype_map[_determine_authtype(request)]
     except KeyError:
         return HttpResponseBadRequest(
             'authtype must be one of: {0}'.format(','.join(authtype_map.keys()))
         )
 
     return decorated_view(request, domain, app_id=app_id)
+
+
+def _determine_authtype(request):
+    if request.GET.get('authtype'):
+        return request.GET['authtype']
+
+    user_agent = request.META.get('HTTP_USER_AGENT')
+    type_to_auth_map = {
+        J2ME: 'digest',
+        ANDROID: 'basic',
+    }
+    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]

@@ -59,7 +59,8 @@ from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -169,6 +170,8 @@ class FormActionCondition(DocumentSchema):
     answer = StringProperty()
     operator = StringProperty(choices=['=', 'selected'], default='=')
 
+    def is_active(self):
+        return self.type in ('if', 'always')
 
 class FormAction(DocumentSchema):
     """
@@ -178,7 +181,7 @@ class FormAction(DocumentSchema):
     condition = SchemaProperty(FormActionCondition)
 
     def is_active(self):
-        return self.condition.type in ('if', 'always')
+        return self.condition.is_active()
 
     @classmethod
     def get_action_paths(cls, action):
@@ -246,6 +249,7 @@ class OpenSubCaseAction(FormAction):
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
+    close_condition = SchemaProperty(FormActionCondition)
 
 class FormActions(DocumentSchema):
 
@@ -561,7 +565,8 @@ class FormBase(DocumentSchema):
         vc = self.validation_cache
         if vc is None:
             try:
-                XForm(self.source).validate(version=self.get_app().application_version)
+                validate_xform(self.source,
+                               version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -659,6 +664,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    @memoized
     def get_case_property_name_formatter(self):
         """Get a function that formats case property names
 
@@ -819,7 +825,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             if self.requires == 'none':
                 action_types = (
-                    'open_case', 'update_case', 'subcases',
+                    'open_case', 'update_case', 'close_case', 'subcases',
                 )
             elif self.requires == 'case':
                 action_types = (

@@ -18,7 +18,8 @@ from django.contrib.auth.views import login as django_login, redirect_to_login
 from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
+    HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from couchdbkit import ResourceNotFound
@@ -270,13 +271,16 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
-def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
-    next = redirect_to or request.GET.get('next', None)
-    if request.GET.get('switch', None) == 'true':
-        logout(request)
-        return redirect_to_login(next or request.path)
+def no_permissions(request, redirect_to=None, template_name="403.html"):
+    """
+    403 error handler.
+    """
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL
+        })))
 
-    return render(request, template_name, {'next': next})
 
 
 def _login(req, domain, template_name):

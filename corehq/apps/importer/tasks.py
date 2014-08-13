@@ -37,6 +37,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     blank_external_ids = []
     invalid_dates = []
     owner_id_errors = []
+    owner_name_errors = []
     prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
@@ -45,6 +46,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
 
     # keep a cache of id lookup successes to help performance
     id_cache = {}
+    name_cache = {}
     caseblocks = []
     ids_seen = set()
 
@@ -127,7 +129,16 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             too_many_matches += 1
             continue
 
+        uploaded_owner_name = fields_to_update.pop('owner_name', None)
         uploaded_owner_id = fields_to_update.pop('owner_id', None)
+
+        if uploaded_owner_name:
+            # If an owner name was provided, replace the provided
+            # uploaded_owner_id with the id of the provided group or owner
+            uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
+            if not uploaded_owner_id:
+                owner_name_errors.append(i + 1)
+                continue
         if uploaded_owner_id:
             # If an owner_id mapping exists, verify it is a valid user
             # or case sharing group
@@ -228,6 +239,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         'blank_externals': blank_external_ids,
         'invalid_dates': invalid_dates,
         'owner_id_errors': owner_id_errors,
+        'owner_name_errors': owner_name_errors,
         'errors': errors,
         'num_chunks': num_chunks,
     }

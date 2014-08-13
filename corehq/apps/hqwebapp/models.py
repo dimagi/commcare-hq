@@ -1242,6 +1242,14 @@ class AccountingTab(UITab):
     def sidebar_items(self):
         items = super(AccountingTab, self).sidebar_items
 
+        from corehq.apps.accounting.views import ManageAccountingAdminsView
+        items.append(('Permissions', (
+            {
+                'title': ManageAccountingAdminsView.page_title,
+                'url': reverse(ManageAccountingAdminsView.urlname),
+            },
+        )))
+
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
             from corehq.apps.accounting.views import (
                 TriggerInvoiceView, TriggerBookkeeperEmailView,

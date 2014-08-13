@@ -132,6 +132,26 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# Under-6-Month Visits",
                 indicator_key="child under6mo",
             ),
+            household_num_func_bednets=dict(
+                description="No. of households ASSESSED with at least one functioning bednet per sleeping site",
+                title="# of households with at least one functioning bednet per sleeping site",
+                indicator_key="household atleastonebednet",
+            ),
+            household_num_bednets=dict(
+                description="No. of households ASSESSED for functioning bednet",
+                title="# of households ASSESSED  for functioning bednet",
+                indicator_key="household bednet",
+            ),
+            num_handwashing_latrine=dict(
+                description="No. of households ASSESSED with handwashing station within 10m of the latrine",
+                title="# of households with handwashing station within 10m of the latrine",
+                indicator_key="household handwashing10metres",
+            ),
+            num_handwashing=dict(
+                description="No. of households ASSESSED with handwashing station",
+                title="# of households with handwashing station",
+                indicator_key="household handwashing",
+            ),
         )
     )
 )

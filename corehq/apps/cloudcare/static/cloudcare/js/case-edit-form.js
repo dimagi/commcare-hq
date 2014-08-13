@@ -195,7 +195,7 @@ var CaseEditForm = (function () {
                     setLoading = function ($td) {
                         setTimeout(function () {
                             if (!$td.is(':parent')) {
-                                $td.text('Loading...');
+                                $td.text(translatedStrings.loading);
                             }
                         }, 200);
                     },
