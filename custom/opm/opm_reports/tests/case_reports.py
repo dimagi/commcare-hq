@@ -117,6 +117,24 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
+    def test_due_before_period_not_delivered(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 3, 10),
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
+    def test_due_in_period_not_delivered(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 6, 10),
+        )
+        # todo: is this really right? this person won't count to either status in the month
+        # is that valid given that people deliver late? (maybe yes since they have already had 6 months counting
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
+
+
 
 class TestMotherWeightMonitored(TestCase):
     def setUp(self):
@@ -188,3 +206,59 @@ class TestChildGrowthMonitored(TestCase):
         row = MockCaseRow(case, report)
         self.assertEqual(row.child_age, 6)
         self.assertEqual(False, row.child_growth_calculated)
+
+
+class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
+
+    def _offset_date(self, offset):
+        """
+        For a given offset, return a date that many months offset from the report date
+        """
+        new_year, new_month = add_months(self.report_date.year, self.report_date.month, offset)
+        return date(new_year, new_month, 1)
+
+    def test_valid_window_not_yet_delivered(self):
+        # maps number of months in the future your due date is to window
+        window_mapping = {
+            1: 2,
+            2: 2,
+            3: 2,
+            4: 1,
+            5: 1,
+            6: 1,
+        }
+        for i, window in window_mapping.items():
+            case = OPMCase(
+                forms=[],
+                edd=self._offset_date(i),
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual('pregnant', row.status)
+            self.assertEqual(window, row.window)
+
+    def test_valid_month_not_yet_delivered(self):
+        # maps number of months in the future your due date is to month of pregnancy
+        month_mapping = {
+            1: 9,
+            2: 8,
+            3: 7,
+            4: 6,
+            5: 5,
+            6: 4,
+        }
+        for i, month in month_mapping.items():
+            case = OPMCase(
+                forms=[],
+                edd=self._offset_date(i),
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual('pregnant', row.status)
+            self.assertEqual(month, row.preg_month)
+
+    def test_not_yet_in_range(self):
+        # 7 or more months in the future you don't count
+        case = OPMCase(
+            forms=[],
+            edd=self._offset_date(7),
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
