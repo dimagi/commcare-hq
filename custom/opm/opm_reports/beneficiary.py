@@ -193,7 +193,7 @@ class OPMCaseRow(object):
                 ]
             elif self.child_age == 12:
                 return 'received' in [
-                    self.form_properties[indexed_child('child1_meas`les_calc', self.child_index)],
+                    self.form_properties[indexed_child('child1_measles_calc', self.child_index)],
                     self.form_properties[indexed_child('prev_child1_measles_calc', self.child_index)]
                 ]
 
