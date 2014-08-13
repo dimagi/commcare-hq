@@ -262,3 +262,87 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             edd=self._offset_date(7),
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
+    def test_past_range(self):
+        # anytime in the period or after you don't count
+        case = OPMCase(
+            forms=[],
+            edd=self.report_date,
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
+    def test_valid_child_window(self):
+        # maps number of months in the past your delivery date was to window of child calc
+        # todo: this seems really funny. Should 0-2 map to 3, 3-5 map to 4, etc.?
+        window_mapping = {
+            0: 1,
+            1: 1,
+            2: 2,
+            3: 2,
+            4: 2,
+            5: 3,
+            6: 3,
+            7: 3,
+            8: 4,
+            9: 4,
+            10: 4,
+            11: 5,
+            12: 5,
+            13: 5,
+            14: 6,
+            15: 6,
+            16: 6,
+        }
+        for i, window in window_mapping.items():
+            case = OPMCase(
+                forms=[],
+                dod=self._offset_date(-i),
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual('mother', row.status)
+            self.assertEqual(window, row.window)
+
+    def test_valid_child_window(self):
+        # maps number of months in the past your delivery date was to window of child calc
+        # todo: this seems really funny. Should 0-2 map to 3, 3-5 map to 4, etc.?
+        window_mapping = {
+            0: 1,
+            1: 1,
+            2: 1,
+            3: 2,
+            4: 2,
+            5: 2,
+            6: 3,
+            7: 3,
+            8: 3,
+            9: 4,
+            10: 4,
+            11: 4,
+            12: 5,
+            13: 5,
+            14: 5,
+            15: 6,
+            16: 6,
+            17: 6,
+        }
+        for i, window in window_mapping.items():
+            case = OPMCase(
+                forms=[],
+                dod=self._offset_date(-i),
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual('mother', row.status)
+            self.assertEqual(window, row.window, 'value {} expected window {} but was {}'.format(
+                i, window, row.window
+            ))
+
+
+    def test_valid_child_month(self):
+        for i in range(18):
+            case = OPMCase(
+                forms=[],
+                dod=self._offset_date(-i),
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual('mother', row.status)
+            self.assertEqual(i + 1, row.child_age)
