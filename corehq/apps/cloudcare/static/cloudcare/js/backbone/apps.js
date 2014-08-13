@@ -905,6 +905,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedForm = formIndex;
         };
 
+        /*
         var selectParent = function (parentId){
 
             var caseMainView = self.appView.formListView.caseView;
@@ -916,6 +917,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             }
             self._selectedParent = parentId;
         };
+        */
 
         var selectCase = function (caseId) {
             var caseMainView = self.appView.formListView.caseView;
@@ -970,6 +972,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectModule(moduleIndex);
             selectForm(_stripParams(formIndex));
         };
+
+        /*
         var clearAndSelectFormWithParent = function (appId, moduleIndex, formIndex, parentId) { //TODO complete this
             self.clearCases();
             selectApp(appId);
@@ -981,9 +985,11 @@ cloudCare.AppMainView = Backbone.View.extend({
                 window.appView.selectForm(window.appView.selectedForm); //Ok.. there is no selectedParent when this runs
             }, 1000);
         };
+        */
 
         self.router.on("route:app:module:form", pauseNav(clearAndSelectForm));
-        self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectFormWithParent));
+        //self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectFormWithParent));
+        self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectForm));
         self.router.on("route:app:module:form:enter", pauseNav(clearAndSelectForm));
 
         var clearAndSelectCase = function (appId, moduleIndex, formIndex, caseId) {
@@ -994,13 +1000,16 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectCase(_stripParams(caseId));
         };
 
+        /*
         var clearAndSelectCaseWithParent = function (appId, moduleIndex, formIndex, parentId, caseId) {
             clearAndSelectFormWithParent(appId, moduleIndex, formIndex, parentId);
             selectCase(_stripParams(caseId));
         };
+        */
 
         self.router.on("route:app:module:form:case", pauseNav(clearAndSelectCase));
-        self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCaseWithParent));
+        //self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCaseWithParent));
+        self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCase));
         self.router.on("route:app:module:form:case:enter", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
             self.clearCases();
             selectApp(appId);
@@ -1040,15 +1049,17 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedCase = null;
         }));
 
-
+        /*
+        // No idea what this does, just blindly copying the above out of desperation :)
         cloudCare.dispatch.on("cases:updated", pauseNav(function () {
-            //Blindly copying the above
+
             if (self._selectedParent !== null) {
                 var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
                 cloudCare.dispatch.trigger("parent:selected", parentModel);
             }
             self._selectedParetn = null;
         }));
+        */
 
         // setting routes
         cloudCare.dispatch.on("module:selected", function (module) {
@@ -1064,11 +1075,14 @@ cloudCare.AppMainView = Backbone.View.extend({
             }
             self._selectedForm = null;
         });
+        /*
+        // Not totally sure what this does either. Attempting to make things work by replicating the above
         self.on("module:select", function () {
             if (self._selectedParent !== null) {
                 self.appView.formListView.getFormView()
             }
         });
+        */
 
         cloudCare.dispatch.on("module:deselected", function (module) {
             self.navigate("view/" + module.get("app_id"));
@@ -1118,7 +1132,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             // (gross)
             setTimeout(function () {
                 self.appView.selectCase(caseModel);
-                cloudCare.dispatch.trigger("case:selected:finished");
             }, 0);
         });
         cloudCare.dispatch.on("case:deselected", function (caseModel) {
