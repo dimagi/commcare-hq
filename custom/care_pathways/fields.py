@@ -67,7 +67,7 @@ class GenderFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [('all_woman', 'All Women'), ('some_women', 'Some Women'), ('no_women', 'No Women')]
+        return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
 
 
 class GroupLeadershipFilter(BaseSingleOptionFilter):
@@ -77,7 +77,7 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [('all_woman', 'All Women'), ('some_women', 'Some Women'), ('no_women', 'No Women')]
+        return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
 
 
 class CBTNameFilter(BaseSingleOptionFilter):

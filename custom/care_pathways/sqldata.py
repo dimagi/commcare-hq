@@ -35,7 +35,7 @@ class CareQueryMeta(QueryMeta):
         filter_cols = []
         external_cols = _get_grouping(filter_values)
         for k, v in filter_values.iteritems():
-            if v and k != 'group':
+            if v and k not in ['group', 'gender', 'group_leadership']:
                 if isinstance(v, tuple):
                     if len(v) == 1:
                         having.append("%s = \'%s\'" % (k, v[0]))
@@ -45,14 +45,25 @@ class CareQueryMeta(QueryMeta):
                     having.append("%s = \'%s\'" % (k, v))
                 if k not in external_cols:
                     filter_cols.append(k)
+        group_having = ''
+        having_group_by = []
+        if 'group_leadership' in filter_values and filter_values['group_leadership']:
+            group_having = "MAX(CAST(gender as int4)) + MIN(CAST(gender as int4)) = %s and group_leadership=\'Y\'" % filter_values['group_leadership']
+            having_group_by.append('group_leadership')
+            external_cols.append('group_leadership')
+        elif 'gender' in filter_values and filter_values['gender']:
+            group_having = "MAX(CAST(gender as int4)) + MIN(CAST(gender as int4)) = %s" % filter_values['gender']
+
+        if group_having:
+            having.append('x.group_id IN (%s)' % select(['group_id'], from_obj='"fluff_FarmerRecordFluff"', group_by=['group_id'] + having_group_by, having=group_having))
 
         for fil in self.filters:
             having.append("%s %s %s" % (fil.column_name, fil.operator, fil.parameter))
-        return select(['COUNT(x.doc_id) as %s' % self.key] + filter_cols + external_cols,
-               group_by=['maxmin'] + filter_cols + external_cols,
+        return select(['COUNT(x.doc_id) as %s' % self.key, 'x.group_id'] + filter_cols + external_cols,
+               group_by=['maxmin', 'group_id'] + filter_cols + external_cols,
                having=" and ".join(having),
-               from_obj=select(['doc_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
-                               from_obj='"fluff_FarmerRecordFluff"', group_by=['doc_id'] + filter_cols + external_cols).alias('x'))
+               from_obj=select(['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
+                               from_obj='"fluff_FarmerRecordFluff"', group_by=['doc_id', 'group_id'] + filter_cols + external_cols).alias('x'))
 
 
 class CareCustomColumn(CustomQueryColumn):
@@ -159,8 +170,6 @@ class AdoptionBarChartReportSqlData(SqlData):
             filters.append(IN("domains", "domains"))
         if 'practices' in self.config and self.config['practices']:
             filters.append(IN("practices", "practices"))
-        if 'gender' in self.config and self.config['gender']:
-            filters.append(EQ["gender", "gender"])
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:

@@ -37,9 +37,10 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
             domains=tuple(self.request.GET.getlist('type_domain', [])),
             practices=tuple(self.request.GET.getlist('type_practice', [])),
             group=self.request.GET.get('group_by', ''),
-            owner_id=self.request.GET.get('owner_id', ''),
-
-
+            owner_id=self.request.GET.get('cbt_name', ''),
+            gender=self.request.GET.get('gender', ''),
+            group_leadership=self.request.GET.get('group_leadership', ''),
+            schedule=self.request.GET.get('farmer_social_category', ''),
         )
         hierarchy_config = get_domain_configuration(self.domain)['geography_hierarchy']
         for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
@@ -89,6 +90,7 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
     def data_provider(self):
         return AdoptionBarChartReportSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
 
+
     @property
     def headers(self):
         columns = [c.data_tables_column for c in self.data_provider.columns]
@@ -99,4 +101,5 @@ class AdoptionBarChartReport(DatespanMixin, GenericTabularReport, CustomProjectR
     def rows(self):
         formatter = DataFormatter(TableDataFormat(self.data_provider.columns, no_value=self.data_provider.no_value))
         return formatter.format(self.data_provider.data, keys=self.data_provider.keys, group_by=self.data_provider.group_by)
+
 
