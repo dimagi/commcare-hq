@@ -353,7 +353,7 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
-def stream_esquery(esquery, chunksize=100):
+def stream_esquery(esquery, chunksize=SIZE_LIMIT):
     size = esquery._size if esquery._size is not None else SIZE_LIMIT
     start = esquery._start if esquery._start is not None else 0
     for chunk_start in range(start, start + size, chunksize):
