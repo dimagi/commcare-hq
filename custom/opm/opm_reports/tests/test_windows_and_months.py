@@ -73,37 +73,6 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         window_mapping = {
             0: 1,
             1: 1,
-            2: 2,
-            3: 2,
-            4: 2,
-            5: 3,
-            6: 3,
-            7: 3,
-            8: 4,
-            9: 4,
-            10: 4,
-            11: 5,
-            12: 5,
-            13: 5,
-            14: 6,
-            15: 6,
-            16: 6,
-        }
-        for i, window in window_mapping.items():
-            case = OPMCase(
-                forms=[],
-                dod=self._offset_date(-i),
-            )
-            row = MockCaseRow(case, self.report)
-            self.assertEqual('mother', row.status)
-            self.assertEqual(window, row.window)
-
-    def test_valid_child_window(self):
-        # maps number of months in the past your delivery date was to window of child calc
-        # todo: this seems really funny. Should 0-2 map to 3, 3-5 map to 4, etc.?
-        window_mapping = {
-            0: 1,
-            1: 1,
             2: 1,
             3: 2,
             4: 2,
