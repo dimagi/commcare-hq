@@ -65,10 +65,11 @@ def months_between(start, end):
     """
     assert(start <= end)
     months = []
+    date_type = type(start)
     while start <= end:
         months.append((start.year, start.month))
         (yearnext, monthnext) = add_months(start.year, start.month, 1)
-        start = datetime.datetime(yearnext, monthnext, 1)
+        start = date_type(yearnext, monthnext, 1)
     return months        
 
 
