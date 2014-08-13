@@ -5,7 +5,6 @@ branches:
   - auto-gps+schedule
   - auto-gps
   - schedule # SK 7/17
-  - app-buttons # Emord 7/30
   - es_none_type # Emord 8/4
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -14,12 +13,12 @@ branches:
   - vellum-requirejs # Daniel 6/12
   - emwf-refactor  # Ethan 8/06
   - real-project-spaces # Nick P 7/27
-  - closecase  # SK 7/28
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
+  - archive-products # tw 8/13
 submodules:
   submodules/couchlog-src:
     branches:
@@ -34,6 +33,8 @@ submodules:
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
+      # Danny 8/12. If form validation seems wonky on staging, just remove this
+      - clean-up-api
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
@@ -46,3 +47,8 @@ submodules:
 #  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
 #    branches:
 #      - 124289-fix-mm-uploads-in-ff # Daniel 8/7
+  submodules/dimagi-utils-src:
+    branches:
+      # Danny 8/12. If there's weird errors or issues in saving forms
+      # or saving apps, just remove this
+      - faster-lazy-attachments

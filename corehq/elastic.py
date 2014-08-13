@@ -287,6 +287,14 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
+def stream_esquery(esquery, chunksize=100):
+    size = esquery._size if esquery._size is not None else SIZE_LIMIT
+    start = esquery._start if esquery._start is not None else 0
+    for chunk_start in range(start, start + size, chunksize):
+        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
+            yield hit
+
+
 def parse_args_for_es(request, prefix=None):
     """
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term

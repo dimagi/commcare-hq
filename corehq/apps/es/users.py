@@ -5,7 +5,6 @@ from . import filters
 class UserES(HQESQuery):
     index = 'users'
     default_filters = {
-        'mobile_worker': {"term": {"doc_type": "CommCareUser"}},
         'not_deleted': {"term": {"base_doc": "couchuser"}},
         'active': {"term": {"is_active": True}},
     }
@@ -19,8 +18,26 @@ class UserES(HQESQuery):
         return self.remove_default_filter('active')
 
 
-def domain(self, domain):
-    filters.OR(
+def domain(domain):
+    return filters.OR(
         filters.term("domain.exact", domain),
         filters.term("domain_memberships.domain.exact", domain)
     )
+
+def username(self, username):
+    return filters.term("username.exact", username)
+
+def web_users():
+    return filters.doc_type("WebUser")
+
+def mobile_users():
+    return filters.doc_type("CommCareUser")
+
+def unknown_users():
+    return filters.doc_type("UnknownUser")
+
+def admin_users():
+    return filters.doc_type("AdminUser")
+
+def demo_users():
+    return username("demo_user")
