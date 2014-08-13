@@ -298,7 +298,6 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
-    'custom.ilsgateway',
 )
 
 TEST_APPS = ()
