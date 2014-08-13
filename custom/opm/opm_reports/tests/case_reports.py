@@ -67,6 +67,7 @@ class OPMCaseReportTestBase(TestCase):
 
     def setUp(self):
         self.report_date = date(2014, 6, 1)
+        self.report_datetime = datetime(2014, 6, 1)
         self.report = Report(month=6, year=2014, block="Atri")
 
 
