@@ -77,6 +77,7 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.es.es_query import ESQuery
 from .multimech import GlobalConfig
 
 
@@ -868,6 +869,62 @@ class FlagBrokenBuilds(FormView):
         db.bulk_save(docs)
         return HttpResponse("posted!")
 
+def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
+    form_query_results = (
+        ESQuery('forms')
+        .fields(['domain', datefield])
+        .filter({
+            "range": {
+                datefield: {
+                    "from": datespan.startdate_display,
+                    "to": datespan.enddate_display,
+                    }
+                }
+            }
+        )
+        .size(9999999)
+        .run()
+        .raw_hits
+    )
+
+    real_domain_query_results = (
+            ESQuery('domains')
+            .fields(['name'])
+            .filter({"term": {"is_test": True}})
+            .size(99999999)
+            .run()
+            .raw_hits 
+    )
+
+    real_domains = {x['fields']['name'] for x in real_domain_query_results}
+
+    domain_day = set()
+    for result in form_query_results:
+        domain = result['fields']['domain']
+        if domain in real_domains:
+            date = time.strptime(result['fields']['received_on'], "%Y-%m-%dT%H:%M:%SZ")
+            domain_day.add((domain, time.strftime("%Y-%m", date)))
+    
+    histo = dict()
+    for i in domain_day:
+        day = i[1]
+        if day in histo.keys():
+            histo[day] += 1
+        else:
+            histo[day] = 1
+    
+    histo_data = []
+    for i in histo.keys():
+        histo_data.append({"count":histo[i], "time":
+            1000*time.mktime(time.strptime(i, "%Y-%m"))})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
 
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
@@ -922,6 +979,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "active_domains":
+        params.update(params_es)
+        return json_response(get_active_domain_stats_data(params, request.datespan))
 
     if histo_type == "domains":
         params.update(params_es)
