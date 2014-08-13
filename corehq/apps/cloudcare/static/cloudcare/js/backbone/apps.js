@@ -993,16 +993,22 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectCase(_stripParams(caseId));
         };
 
-        /*
         var clearAndSelectCaseWithParent = function (appId, moduleIndex, formIndex, parentId, caseId) {
             clearAndSelectFormWithParent(appId, moduleIndex, formIndex, parentId);
             selectCase(_stripParams(caseId));
+            /*
+                Here's what needs to happen next:
+                We need to essentially do a selectCase. BUT, if we do it
+                immediately, I think that it will try to select a case from the
+                first case list (because it will occur on the first
+                "cases:updated" event. Therefore, we might want to implement
+                some sort of parent:updated event so that it doesn't try to
+                select the case until that time.
+             */
         };
-        */
 
         self.router.on("route:app:module:form:case", pauseNav(clearAndSelectCase));
-        //self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCaseWithParent));
-        self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCase));
+        self.router.on("route:app:module:form:parent:case", pauseNav(clearAndSelectCaseWithParent));
         self.router.on("route:app:module:form:case:enter", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
             self.clearCases();
             selectApp(appId);
@@ -1036,10 +1042,16 @@ cloudCare.AppMainView = Backbone.View.extend({
         cloudCare.dispatch.on("cases:updated", pauseNav(function () {
             // same trick but with cases
             if (self._selectedCase !== null) {
-                // It crashes here when you enter a child detail url because the caseView has the top level cases in it, not the parent's children cases.
-                self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
+                // If self._selectedCase is not in the caseMap, that means this is the first time cases:updated has been triggered, and therefore the case list is showing the possible parent cases.
+                // If self._selectedCase is in the caseMap, that means that this is the second time cases:updated has been triggered, and therefore the case list is showing the child cases of the parent case.
+                var caseView = self.appView.formListView.caseView.listView.caseMap[self._selectedCase];
+                if (caseView){
+                    console.log("Found a caseView");
+                    self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
+                    // We only want to clear self._selectedCase if the caseView was actually selected.
+                    self._selectedCase = null;
+                }
             }
-            self._selectedCase = null;
 
             if (self._selectedParent !== null) {
                 var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
