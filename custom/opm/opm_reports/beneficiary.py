@@ -266,7 +266,7 @@ class OPMCaseRow(object):
             if edd_date >= reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (edd_date - reporting_date).days / 30
-            elif edd_date < reporting_date: # edge case
+            elif edd_date < reporting_date:  # edge case
                 raise InvalidRow
         if status == 'pregnant' and (self.preg_month > 3 and self.preg_month < 10):
             self.window = (self.preg_month - 1) / 3
