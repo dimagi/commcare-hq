@@ -434,16 +434,6 @@ cloudCare.FormListView = Backbone.View.extend({
         self._formViews[form.get("index")] = formView;
         formView.on("selected", function () {
             if (self.selectedFormView) {
-                /*
-                    There is an issue with Selectable.deselect().
-                    It doesn't trigger the "deselected" event. Was this on
-                    purpose? The toggle event does though. We need that event
-                    so that we know when to clear the selectedParent.
-
-                    Adding trigger("deselected") to deselect() causes an infinite
-                    loop (I think). More research is needed to determine the
-                    exact nature of the error.
-                 */
                 self.selectedFormView.deselect();
             }
             if (self.selectedFormView !== this) {
@@ -646,10 +636,10 @@ cloudCare.AppView = Backbone.View.extend({
         var submitUrl = self.model.getSubmitUrl();
         var selectedModule = self.formListView.model;
 
-
         // Insert the headings here.
         // It is weird though to be controlling rendering outside of the render method.
         // But this class seems to do very little in the render method
+        self._renderParentCasePane(self.selectedParent, self.options.language);
         if (caseModel) {
             // Not all forms have a case associated with them.
             var case_label = selectedModule.attributes.case_label[self.options.language];
@@ -722,7 +712,7 @@ cloudCare.AppView = Backbone.View.extend({
 	            self.playForm(module, form);
 
             } else if (form.get("requires") === "case") {
-
+                self._renderParentCasePane(self.selectedParent, self.options.language);
                 // If a parent is selected, we want to filter the cases differently.
                 if (self.selectedParent){
                     cloudCare.dispatch.trigger("form:selected:parent:caselist", form, self.selectedParent.id);
@@ -751,6 +741,8 @@ cloudCare.AppView = Backbone.View.extend({
 
                 parentId = self.selectedParent ? self.selectedParent.id : null
 
+
+
                 // TODO: What are these used for?
 	            var listDetails = formListView.model.get("case_details").short;
 	            var summaryDetails = formListView.model.get("case_details").long;
@@ -775,7 +767,8 @@ cloudCare.AppView = Backbone.View.extend({
                         // otherwise it's ignored
                         form.get('index'),
                         parentId
-                    )
+                    ),
+                    parent: self.selectedParent
 	            });
 
 	            formListView.caseView.listView.caseList.on("reset", function () {
@@ -797,6 +790,13 @@ cloudCare.AppView = Backbone.View.extend({
         }
         return this;
     },
+    _renderParentCasePane: function (parent, language) {
+        if (parent) {
+            var case_label = parent.get("appConfig").module.get("case_label")[language];
+            var case_name = parent.get("properties").case_name;
+            $('#current-parent').html('<h2>' + case_label + ': ' + case_name + '</h2>');
+        }
+    },
     _clearMainPane: function () {
         this._clearCaseView();
         this._clearFormPlayer();
@@ -811,8 +811,12 @@ cloudCare.AppView = Backbone.View.extend({
     _clearFormPlayer: function () {
         // TODO: clean hack/hard coded id
         //       One posibility would be to set an `el` for this View. Then the id is only in one place.
+        this._clearParentCasePane();
         $('#current-case').html("");
         $('#webforms').html("");
+    },
+    _clearParentCasePane: function () {
+        $('#current-parent').empty();
     }
 });
 

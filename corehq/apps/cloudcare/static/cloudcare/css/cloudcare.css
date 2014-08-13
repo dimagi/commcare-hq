@@ -11,10 +11,16 @@ nav#sessions > ul > li.nav-header {
     color: #6c6c6c;
 }
 
-#current-case > h2 {
+#current-case > h2, #current-parent > h2 {
     display: inline-block;
     padding: 8px;
     color: #ffffff;
     background-color: #1557a2;
     border: 3px solid #286A80;
+}
+#current-parent > h2 {
+    margin-bottom: 0px;
+}
+#current-case > h2 {
+    margin-top: 0px;
 }
