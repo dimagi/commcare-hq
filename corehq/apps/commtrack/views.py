@@ -267,12 +267,19 @@ class FetchProductListView(ProductListView):
     @property
     def product_data(self):
         data = []
-        products = Product.by_domain(
-            domain=self.domain,
-            limit=self.limit,
-            skip=self.skip(),
-            is_archived=self.show_inactive
-        )
+        if self.show_inactive:
+            products = Product.archived_by_domain(
+                domain=self.domain,
+                limit=self.limit,
+                skip=self.skip(),
+            )
+        else:
+            products = Product.by_domain(
+                domain=self.domain,
+                limit=self.limit,
+                skip=self.skip(),
+            )
+
         for p in products:
             if p.program_id:
                 program = Program.get(p.program_id)

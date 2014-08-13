@@ -16,8 +16,18 @@ class ProductsTest(CommTrackTest):
         )
 
         self.assertEqual(
-            len(original_list) - 1,
-            len(new_list)
+            len(new_list),
+            len(original_list) - 1
+        )
+
+        self.assertEqual(
+            len(Product.by_domain(self.domain.name, wrap=False, include_archived=True)),
+            len(original_list)
+        )
+
+        self.assertEqual(
+            len(Product.archived_by_domain(self.domain.name, wrap=False, include_archived=True)),
+            1
         )
 
         self.products[0].unarchive()

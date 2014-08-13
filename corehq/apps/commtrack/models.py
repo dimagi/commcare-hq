@@ -184,9 +184,11 @@ class Product(Document):
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
     @classmethod
-    def by_domain(cls, domain, wrap=True, is_archived=False, **kwargs):
+    def by_domain(cls, domain, wrap=True, include_archived=False, **kwargs):
         """
         Gets all products in a domain.
+
+        By default this filters out any archived products.
         """
         kwargs.update(dict(
             view_name='commtrack/products',
@@ -196,14 +198,33 @@ class Product(Document):
         ))
         if wrap:
             products = Product.view(**kwargs)
-            return filter(lambda x: x.is_archived == is_archived, products)
+            if not include_archived:
+                return filter(lambda p: not p.is_archived, products)
+            else:
+                return products
         else:
-            return [
-                row["doc"] for row in Product.view(
-                    wrap_doc=False,
-                    **kwargs
-                ) if row["doc"].get('is_archived', False) == is_archived
-            ]
+            if not include_archived:
+                return [
+                    row["doc"] for row in Product.view(
+                        wrap_doc=False,
+                        **kwargs
+                    ) if not row["doc"].get('is_archived', False)
+                ]
+            else:
+                return [
+                    row["doc"] for row in Product.view(
+                        wrap_doc=False,
+                        **kwargs
+                    )
+                ]
+
+    @classmethod
+    def archived_by_domain(cls, domain, wrap=True, **kwargs):
+        products = cls.by_domain(domain, wrap, kwargs)
+        if wrap:
+            return filter(lambda p: p.is_archived, products)
+        else:
+            return [p for p in products if p.get('is_archived', False)]
 
     @classmethod
     def ids_by_domain(cls, domain):
