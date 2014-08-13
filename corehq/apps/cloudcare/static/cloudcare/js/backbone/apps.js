@@ -905,19 +905,19 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedForm = formIndex;
         };
 
-        /*
-        var selectParent = function (parentId){
 
+        var selectParent = function (parentId){
+            console.log("In selectParetn");
             var caseMainView = self.appView.formListView.caseView;
             if (caseMainView) {
                 var caseView = caseMainView.listView.caseMap[parentId];
                 if (caseView) {
+                    console.log("triggering paren:selected from within selectParent");
                     cloudCare.dispatch.trigger("parent:selected", caseView.model);
                 }
             }
             self._selectedParent = parentId;
         };
-        */
 
         var selectCase = function (caseId) {
             var caseMainView = self.appView.formListView.caseView;
@@ -973,23 +973,20 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectForm(_stripParams(formIndex));
         };
 
-        /*
-        var clearAndSelectFormWithParent = function (appId, moduleIndex, formIndex, parentId) { //TODO complete this
+
+        var clearAndSelectFormWithParent = function (appId, moduleIndex, formIndex, parentId) {
             self.clearCases();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
-            selectCase(_stripParams(parentId));
+
             selectParent(_stripParams(parentId));
-            setTimeout(function () {
-                window.appView.selectForm(window.appView.selectedForm); //Ok.. there is no selectedParent when this runs
-            }, 1000);
         };
-        */
+
 
         self.router.on("route:app:module:form", pauseNav(clearAndSelectForm));
-        //self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectFormWithParent));
-        self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectForm));
+        self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectFormWithParent));
+        //self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectForm));
         self.router.on("route:app:module:form:enter", pauseNav(clearAndSelectForm));
 
         var clearAndSelectCase = function (appId, moduleIndex, formIndex, caseId) {
@@ -1047,6 +1044,17 @@ cloudCare.AppMainView = Backbone.View.extend({
                 self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
             }
             self._selectedCase = null;
+
+            console.log("Inside the cases:updated callback");
+            if (self._selectedParent !== null) {
+                console.log("Found a parent in the cases:updated callback");
+                var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
+                cloudCare.dispatch.trigger("parent:selected", parentModel);
+                // ok this is really solid. The parent is selected successfully. The next thing that need to happen though is
+                // for the AppView.selectForm(form) to be called.
+            }
+            // Perhaps this should be inside the above if block.
+            self._selectedParent = null;
         }));
 
         /*
