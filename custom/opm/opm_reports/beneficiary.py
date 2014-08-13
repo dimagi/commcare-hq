@@ -304,7 +304,7 @@ class OPMCase(object):
             num_childs = int(self.case_property("live_birth_amount", 1))
             if num_childs > 3:
                 num_childs = 3 # app supports upto three children only
-            extra_child_objects = [(ConditionsMet(case, report, child_index=num)) for num in range(2, num_childs + 1)]
+            extra_child_objects = [(ConditionsMet(self.case, self.report, child_index=num)) for num in range(2, num_childs + 1)]
             self.report.set_extra_row_objects(extra_child_objects)
 
     @property
@@ -404,8 +404,8 @@ class ConditionsMet(OPMCase):
         ]
     }
 
-    def __init__(self, child_index=1, *args, **kwargs):
-        super(ConditionsMet, self).__init__(child_index=child_index, *args, **kwargs)
+    def __init__(self, case, report, child_index=1):
+        super(ConditionsMet, self).__init__(case, report, child_index=child_index)
         if self.status == 'mother':
             self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
             self.birth_spacing_prompt = []
@@ -473,8 +473,8 @@ class Beneficiary(OPMCase):
         ('owner_id', _("Owner ID"), False)
     ]
 
-    def __init__(self, *args, **kwargs):
-        super(Beneficiary, self).__init__(*args, **kwargs)
+    def __init__(self, case, report):
+        super(Beneficiary, self).__init__(case, report)
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
         self.delivery_cash = MONTH_AMT if self.delivery else 0
