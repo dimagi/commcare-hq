@@ -18,7 +18,6 @@ branches:
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
-  - fix-esquery-start # Nick P 8/13
 submodules:
   submodules/couchlog-src:
     branches:
