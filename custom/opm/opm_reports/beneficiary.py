@@ -146,10 +146,13 @@ class OPMCaseRow(object):
     @property
     def child_growth_calculated(self):
         if self.child_age % 3 == 0:
-            return 'received' in [
-                self.form_properties[indexed_child('child1_growthmon_calc', self.child_index)],
-                self.form_properties[indexed_child('prev_child1_growthmon_calc', self.child_index)]
-            ]
+            for form in self.forms:
+                if form.xmlns in CHILDREN_FORMS:
+                    if self.form_in_range(form, -90):
+                        prop = indexed_child('child1_growthmon_calc', self.child_index)
+                        if form.form.get(prop) == 'received':
+                            return True
+            return False
 
     @property
     def preg_received_ifa(self):
