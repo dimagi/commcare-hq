@@ -1181,9 +1181,6 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
     clearCases: function () {
         this._selectedCase = null;
-        this._selectedParent = null;
-        this.appView.selectParent(null); //TODO: Where on earth is the right place for this?
-
     },
     clearForms: function () {
         this.clearCases();
