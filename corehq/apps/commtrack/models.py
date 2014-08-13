@@ -1607,10 +1607,7 @@ def update_stock_state_for_transaction(instance):
         CommCareCase.get(instance.case_id).domain
     )
 
-    sql_product = SQLProduct.objects.get(
-        domain=domain.name,
-        name=Product.get(instance.product_id).name
-    )
+    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
     try:
         state = StockState.objects.get(
