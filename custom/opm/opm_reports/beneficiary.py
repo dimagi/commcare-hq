@@ -296,9 +296,13 @@ class OPMCaseRow(object):
         if re.match(r'^111', self.account_number):
             raise InvalidRow
 
+    @property
+    @memoized
+    def vhnd_availability(self):
+        # todo: cleanup to not be dependent on the report object
         if self.owner_id not in self.report.vhnd_availability:
             raise InvalidRow
-        self.vhnd_availability = self.report.vhnd_availability[self.owner_id]
+        return self.report.vhnd_availability[self.owner_id]
 
     def add_extra_children(self):
         if self.child_index == 1:
