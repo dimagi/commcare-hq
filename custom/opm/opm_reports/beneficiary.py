@@ -102,8 +102,9 @@ class OPMCase(object):
             if self.form_in_range(form):
                 for prop in properties:
                     if prop == indexed_child('child1_suffer_diarrhea', self.child_index):
-                        if 'child_1' in form.form and prop in form.form['child_1']:
-                            properties[prop] = form.form['child_1'][prop]
+                        child_group = "child_" + str(self.child_index)
+                        if child_group in form.form and prop in form.form[child_group]:
+                            properties[prop] = form.form[child_group][prop]
                     else:
                         # TODO is this right?  Multiple matching forms will overwrite
                         if prop in form.form:
