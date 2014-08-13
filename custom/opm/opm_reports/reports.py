@@ -24,7 +24,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn, SumColumn, CountColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -159,6 +159,37 @@ class OpmFormSqlData(SqlData):
             return super(OpmFormSqlData, self).data[self.case_id]
         else:
             return None
+
+
+class VhndAvailabilitySqlData(SqlData):
+
+    table_name = "fluff_VhndAvailabilityFluff"
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    @property
+    def filter_values(self):
+        return dict(
+            domain=self.domain,
+        )
+
+    @property
+    def group_by(self):
+        return ['owner_id', 'received_on']
+
+    @property
+    def filters(self):
+        filters = [
+            "domain = :domain"
+        ]
+        return filters
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("", SumColumn("vhnd_availability")),
+        ]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -462,6 +493,18 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @memoized
     def users(self):
         return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
+
+    @property
+    @memoized
+    def vhnd_availability(self):
+        vhnd = {}
+        for k, v in VhndAvailabilitySqlData(DOMAIN).data.iteritems():
+            if v['received_on'] and self.datespan.startdate_utc.date() <= datetime.datetime.strptime(v['received_on'], "%Y-%m-%d %H:%M:%S").date() <= self.datespan.enddate_utc.date():
+                vhnd.update({v['owner_id']: v['vhnd_availability'] > 0})
+            else:
+                vhnd.update({v['owner_id']: False})
+        return vhnd
+
 
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
