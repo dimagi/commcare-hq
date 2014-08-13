@@ -317,7 +317,6 @@ cloudCare.CaseMainView = Backbone.View.extend({
             appConfig: self.options.appConfig,
             delegation: self.delegation
         });
-        console.log("Boom goes the dynamite");
         $(self.listView.render().el).appendTo($(self.section));
         self.detailsView = new cloudCare.CaseDetailsView({
             details: self.options.summaryDetails,
