@@ -43,8 +43,7 @@ var Selectable = Backbone.View.extend({
             this.selected = true;
             this.$el.addClass("active");
             if (typeof options === 'undefined' || !options.noEvents) {
-                this.trigger("selected", options);
-                // TODO: Make sure this didn't bork other childs of Selectable
+                this.trigger("selected");
             }
         }
     }, 

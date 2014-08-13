@@ -897,10 +897,10 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedModule = moduleIndex;
         };
 
-        var selectForm = function (formIndex) {
+        var selectForm = function (formIndex, options) {
             var formView = self.appView.formListView.getFormView(formIndex);
             if (formView) {
-                formView.select();
+                formView.select(options);
             }
             self._selectedForm = formIndex;
         };
@@ -1101,7 +1101,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                                         caseId);
             self.navigate(path, {replace: true});
         });
-        cloudCare.dispatch.on("case:selected", function (caseModel, parentId) {
+        cloudCare.dispatch.on("case:selected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");
             if (appConfig.parentId){
                 var parentSection = "/parent/" + appConfig.parentId;
@@ -1117,7 +1117,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             // but navigate is non-blocking, so we have to stick it at the end of the queue
             // (gross)
             setTimeout(function () {
-                self.appView.selectCase(caseModel, parentId);
+                self.appView.selectCase(caseModel);
                 cloudCare.dispatch.trigger("case:selected:finished");
             }, 0);
         });
