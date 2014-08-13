@@ -488,6 +488,7 @@ cloudCare.AppView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("parent:selected", function (parent) {
             self.selectParent(parent);
+            self.selectForm(self.selectedForm);
         });
         cloudCare.dispatch.on("session:deselected", function (session) {
             self._clearFormPlayer();
@@ -545,7 +546,6 @@ cloudCare.AppView = Backbone.View.extend({
                                                         caseModel.id);
                 var buttonOnClick = function () {
                     cloudCare.dispatch.trigger("parent:selected", caseModel);
-                    self.selectForm(form);
                 }
             }
 
@@ -1050,8 +1050,6 @@ cloudCare.AppMainView = Backbone.View.extend({
                 console.log("Found a parent in the cases:updated callback");
                 var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
                 cloudCare.dispatch.trigger("parent:selected", parentModel);
-                // ok this is really solid. The parent is selected successfully. The next thing that need to happen though is
-                // for the AppView.selectForm(form) to be called.
             }
             // Perhaps this should be inside the above if block.
             self._selectedParent = null;
