@@ -130,11 +130,11 @@ class OPMCaseRow(object):
     @property
     def child_attended_vhnd(self):
         if self.child_age != 1:
-            return 'received' in [
-                self.form_properties[indexed_child('child1_vhndattend_calc', self.child_index)],
-                self.form_properties[indexed_child('prev_child1_vhndattend_calc', self.child_index)],
-                self.form_properties[indexed_child('child1_attendance_vhnd', self.child_index)]
-            ]
+            return any(
+                form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
+                for form in self.forms
+                if form.xmlns in CHILDREN_FORMS and self.form_in_range(form)
+            )
 
     @property
     def preg_weighed(self):
