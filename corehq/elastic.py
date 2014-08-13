@@ -86,31 +86,27 @@ def get_user_type_filters(histo_type, user_type_mobile):
 
         from corehq.apps.es.es_query import ESQuery
         LARGE_NUMBER = 1000 * 1000 * 10
-        form_query_results = (
+        form_query = (
             ESQuery('forms')
             .fields(['form.meta.userID'])
             .size(LARGE_NUMBER)
-            .run()
-            .raw_hits
         )
         real_form_users = {
             query_result.get('fields', {}).get('form.meta.userID', [''])[0]
-            for query_result in form_query_results
+            for query_result in stream_esquery(form_query)
         }
 
         from corehq.apps.sms.models import INCOMING
-        sms_query_results = (
+        sms_query = (
             ESQuery('sms')
             .fields(['couch_recipient'])
             .term('couch_recipient_doc_type', user_doc_type())
             .term('direction', INCOMING)
             .size(LARGE_NUMBER)
-            .run()
-            .raw_hits
         )
         real_sms_users = {
             query_result.get('fields', {}).get('couch_recipient', [''])[0]
-            for query_result in sms_query_results
+            for query_result in stream_esquery(sms_query)
         }
 
         filtered_real_users = (
