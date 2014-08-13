@@ -137,11 +137,11 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
-        if self.preg_month in [6, 9]:
-            return 'received' in [
-                self.case_property('weight_tri_1', 0),
-                self.case_property('prev_weight_tri_1', 0)
-            ]
+        if self.preg_month == 6:
+            return self.case_property('weight_tri_1') == 'received'
+        elif self.preg_month == 9:
+            return self.case_property('weight_tri_2') == 'received'
+
 
     @property
     def child_growth_calculated(self):

@@ -30,7 +30,7 @@ class Form(JsonObject):
 
 
 class OPMCase(CommCareCase):
-    opened_on = DateTimeProperty(datetime(2010, 01, 01))
+    opened_on = DateTimeProperty(datetime(2010, 1, 1))
     block_name = StringProperty("Sahora")
     type = StringProperty("pregnancy")
     closed = BooleanProperty(default=False)
@@ -69,14 +69,14 @@ class OPMCaseReportTestBase(TestCase):
 
     def setUp(self):
         self.report_date = date(2014, 6, 1)
-        self.report = Report(month=06, year=2014, block="Atri")
+        self.report = Report(month=6, year=2014, block="Atri")
 
 
 class MockDataTest(OPMCaseReportTestBase):
 
     def test_mock_data(self):
-        report = Report(month=06, year=2014, block="Atri")
-        form = Form(form={'foo': 'bar'}, received_on=datetime(2014, 06, 15))
+        report = Report(month=6, year=2014, block="Atri")
+        form = Form(form={'foo': 'bar'}, received_on=datetime(2014, 6, 15))
         case = OPMCase(
             forms=[form],
             # add/override any desired case properties here
@@ -118,3 +118,31 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
             forms=[],
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
+
+class TestMotherWeightMonitored(TestCase):
+    def setUp(self):
+        self.case = OPMCase(
+            forms=[],
+            edd=date(2014, 10, 15),
+            weight_tri_1="received",
+            weight_tri_2="not_taken",
+       )
+
+    def test_inapplicable_month(self):
+        report = Report(month=7, year=2014, block="Atri")
+        row = MockCaseRow(self.case, report)
+        self.assertEqual(row.preg_month, 7)
+        self.assertEqual(None, row.preg_weighed)
+
+    def test_condition_met(self):
+        report = Report(month=6, year=2014, block="Atri")
+        row = MockCaseRow(self.case, report)
+        self.assertEqual(row.preg_month, 6)
+        self.assertEqual(True, row.preg_weighed)
+
+    def test_condition_not_met(self):
+        report = Report(month=9, year=2014, block="Atri")
+        row = MockCaseRow(self.case, report)
+        self.assertEqual(row.preg_month, 9)
+        self.assertEqual(False, row.preg_weighed)
