@@ -5,6 +5,7 @@ These are used in the Beneficiary Payment Report and Conditions Met Report
 import re
 import datetime
 from decimal import Decimal
+from django.core.urlresolvers import reverse
 
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
@@ -96,7 +97,7 @@ class OPMCaseRow(object):
         for form in self.forms:
             if self.datespan.startdate <= form.received_on <= self.datespan.enddate:
                 for prop in properties:
-                    if prop in ['child1_suffer_diarrhea', 'child1_growthmon_calc', 'prev_child1_growthmon_calc']:
+                    if prop == 'child1_suffer_diarrhea':
                         if 'child_1' in form.form and prop in form.form['child_1']:
                             properties[prop] = form.form['child_1'][prop]
                     else:
@@ -190,16 +191,12 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            # TODO reformat this whole thing
-            prev_forms = [form for form in self.forms
-                    if (self.datespan.startdate - datetime.timedelta(180))
-                        <= form.received_on <= self.datespan.enddate]
-            excl_key = "child1_child_excbreastfed"
-            child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
-            exclusive_breastfed = [child[excl_key] for child in child_forms if excl_key in child]
-            # FIXME This can't possibly be right
-            child_excusive_breastfed = exclusive_breastfed == ['1', '1', '1', '1', '1', '1']
-            return child_excusive_breastfed
+            min_date = self.datespan.startdate - datetime.timedelta(180)
+            prev_forms = [form for form in self.forms if min_date <= form.received_on <= self.datespan.enddate]
+            excl_key = "child1_excl_breastfeed_calc"
+            exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
+            child_exclusive_breastfed = all(x == 'received' for x in exclusive_breastfed)
+            return child_exclusive_breastfed
 
     @property
     def year_end_condition(self):
@@ -268,7 +265,8 @@ class OPMCaseRow(object):
 
         self.status = status
 
-        self.name = self.case_property('name', EMPTY_FIELD)
+        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
         self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
