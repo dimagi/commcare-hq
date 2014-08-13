@@ -26,11 +26,10 @@ class Property(fluff.Calculator):
             if chain['val'] == case['crop_id'].lower():
                 for domain in chain['next']:
                     for practice in domain['next']:
-                        ppt1_prop = case.get_case_property('ppt1_%s' % practice['val'])
-                        ppt2_prop = case.get_case_property('ppt2_%s' % practice['val'])
+                        ppt_prop = case.get_case_property(practice['val'])
                         yield {
                             'date': case.opened_on,
-                            'value': 1 if ppt1_prop == 'Y' or ppt2_prop == 'Y' else 0,
+                            'value': 1 if ppt_prop == 'Y' else 0,
                             'group_by': [case.domain, chain['val'], domain['val'], practice['val']]
                         }
 

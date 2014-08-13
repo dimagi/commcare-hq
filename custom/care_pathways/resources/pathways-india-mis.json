@@ -27,15 +27,15 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_deep_ploughing",
+                            "val": "ppt1_swm_deep_ploughing",
                             "text": "Which farmers applied deep ploughing once this year?"
                         },
                         {
-                            "val": "swm_bund_repairing",
+                            "val": "ppt1_swm_bund_repairing",
                             "text": "Which farmers repaired field bunds?"
                         },
                         {
-                            "val": "swm_manuer",
+                            "val": "ppt1_swm_manuer",
                             "text": "Which farmers applied farm yard manure?"
                         }
                     ]
@@ -45,15 +45,15 @@
                     "text": "Input and Land Selection",
                     "next": [
                         {
-                            "val": "ils_broadcasting_seeds",
+                            "val": "ppt1_ils_broadcasting_seeds",
                             "text": "Which farmers broadcast Dhaincha seeds?"
                         },
                         {
-                            "val": "ils_variety",
+                            "val": "ppt1_ils_variety",
                             "text": "Which farmers selected the right variety of seed for the season?"
                         },
                         {
-                            "val": "ils_germination_test",
+                            "val": "ppt1_ils_germination_test",
                             "text": "Which farmers conducted germination tests?"
                         }
                     ]
@@ -63,7 +63,7 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_leveling",
+                            "val": "ppt1_swm_leveling",
                             "text": "Which farmers ploughed and leveled their land?"
                         }
                     ]
@@ -73,23 +73,23 @@
                     "text": "Use of Inputs",
                     "next": [
                         {
-                            "val": "uoi_chemfertilizer",
+                            "val": "ppt1_uoi_chemfertilizer",
                             "text": "Which farmers added the right amount of chemical fertilizer in three phases?"
                         },
                         {
-                            "val": "uoi_biofertilizer",
+                            "val": "ppt1_uoi_biofertilizer",
                             "text": "Which farmers used bio-fertilizers to enhance plant growth?"
                         },
                         {
-                            "val": "uoi_treatment",
+                            "val": "ppt1_uoi_treatment",
                             "text": "Which farmers treated seeds with fungicides? "
                         },
                         {
-                            "val": "uoi_fertilizer_miz",
+                            "val": "ppt1_uoi_fertilizer_miz",
                             "text": "Which farmers mixed organic manure and chemical fertilizer for their nursery bed?"
                         },
                         {
-                            "val": "uoi_adding_themet",
+                            "val": "ppt1_uoi_adding_themet",
                             "text": "Which farmers added themet before uprooting seedlings from nursery?"
                         }
                     ]
@@ -99,15 +99,15 @@
                     "text": "Planting",
                     "next": [
                         {
-                            "val": "p_priming",
+                            "val": "ppt1_p_priming",
                             "text": "Which farmers practiced priming?"
                         },
                         {
-                            "val": "p_line_sowing",
+                            "val": "ppt1_p_line_sowing",
                             "text": "Which farmers practiced line sowing?"
                         },
                         {
-                            "val": "p_broadcasting_seeds",
+                            "val": "ppt1_p_broadcasting_seeds",
                             "text": "Which farmers broadcast seeds behind the plough?"
                         }
                     ]
@@ -117,15 +117,15 @@
                     "text": "Pest and Disease Management",
                     "next": [
                         {
-                            "val": "pdm_weeding",
+                            "val": "ppt1_pdm_weeding",
                             "text": "Which farmers weeded at least twice at an interval of 25 to 30 days?"
                         },
                         {
-                            "val": "pdm_organic_pesticide",
+                            "val": "ppt1_pdm_organic_pesticide",
                             "text": "Which farmers sprayed organic pesticides?"
                         },
                         {
-                            "val": "pdm_bird_perches",
+                            "val": "ppt1_pdm_bird_perches",
                             "text": "Which farmers erected bird perches or phermone traps?"
                         }
                     ]
@@ -135,7 +135,7 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_adoption",
+                            "val": "ppt1_swm_adoption",
                             "text": "Which farmers adopted boarder, furrow, drip, sprinkler and/or strip irrigation methods?"
                         }
                     ]
@@ -145,7 +145,7 @@
                     "text": "Record Keeping and Finance",
                     "next": [
                         {
-                            "val": "rkf_expenses",
+                            "val": "ppt1_rkf_expenses",
                             "text": "Which farmers kept records of their farm expenses?"
                         }
                     ]
@@ -155,15 +155,15 @@
                     "text": "Gender",
                     "next": [
                         {
-                            "val": "g_workload",
+                            "val": "ppt1_g_workload",
                             "text": "Which farmers report that their spouse or other men in their HH support them with HH work and childcare?"
                         },
                         {
-                            "val": "g_dm_selecting",
+                            "val": "ppt1_g_dm_selecting",
                             "text": "Which farmers reported discussing which crops to grow with their spouse?"
                         },
                         {
-                            "val": "g_dm_spending",
+                            "val": "ppt1_g_dm_spending",
                             "text": "Which farmers reported discussing how to spend HH income with their spouse?"
                         }
                     ]
@@ -173,11 +173,11 @@
                     "text": "Savings and Loans",
                     "next": [
                         {
-                            "val": "sav_sav",
+                            "val": "ppt1_sav_sav",
                             "text": "Which farmers reported that they are saving?"
                         },
                         {
-                            "val": "sav_loans",
+                            "val": "ppt1_sav_loans",
                             "text": "Which farmers reported taking a loan?"
                         }
                     ]
@@ -187,15 +187,15 @@
                     "text": "Harvest",
                     "next": [
                         {
-                            "val": "h_timing",
+                            "val": "ppt2_h_timing",
                             "text": "Which farmers harvested crops when 80% of seeds were mature?"
                         },
                         {
-                            "val": "h_theshing",
+                            "val": "ppt2_h_theshing",
                             "text": "Which farmers threshed paddy in the field?"
                         },
                         {
-                            "val": "h_drying",
+                            "val": "ppt2_h_drying",
                             "text": "Which farmers dried paddy until moisture was down to 13% or lower?"
                         }
                     ]
@@ -205,19 +205,19 @@
                     "text": "Post Harvest Management",
                     "next": [
                         {
-                            "val": "phm_seed_select",
+                            "val": "ppt2_phm_seed_select",
                             "text": "Which farmers selected intact grains for seeds?"
                         },
                         {
-                            "val": "phm_clean_dry",
+                            "val": "ppt2_phm_clean_dry",
                             "text": "Which farmers cleaned and dried produce for FAQ standard?"
                         },
                         {
-                            "val": "phm_grade_pack",
+                            "val": "ppt2_phm_grade_pack",
                             "text": "Which farmers did grading and standard packing?"
                         },
                         {
-                            "val": "phm_storage",
+                            "val": "ppt2_phm_storage",
                             "text": "Which farmers packaged and stored seeds to avoid moisture?"
                         }
                     ]
@@ -227,23 +227,23 @@
                     "text": "Marketing",
                     "next": [
                         {
-                            "val": "m_processing",
+                            "val": "ppt2_m_processing",
                             "text": "Which farmers processed paddy for commercial purposes?"
                         },
                         {
-                            "val": "m_information",
+                            "val": "ppt2_m_information",
                             "text": "Which farmers used marketing information for decision making?"
                         },
                         {
-                            "val": "m_msp_faq",
+                            "val": "ppt2_m_msp_faq",
                             "text": "Which farmers accessed information on MSP and FAQ?"
                         },
                         {
-                            "val": "m_token",
+                            "val": "ppt2_m_token",
                             "text": "Which farmers collected tokens from RI for selling surplus?"
                         },
                         {
-                            "val": "m_engagement",
+                            "val": "ppt2_m_engagement",
                             "text": "Which farmers engaged in selling the produce?"
                         }
                     ]
@@ -253,15 +253,15 @@
                     "text": "Record Keeping and Finance",
                     "next": [
                         {
-                            "val": "rkf_ppt2_expenses",
+                            "val": "ppt2_rkf_expenses",
                             "text": "Which farmers kept records of their farm expenses?"
                         },
                         {
-                            "val": "rkf_ppt2_production",
+                            "val": "ppt2_rkf_production",
                             "text": "Which farmers kept records of their production?"
                         },
                         {
-                            "val": "rkf_ppt2_profit_loss",
+                            "val": "ppt2_rkf_profit_loss",
                             "text": "Which farmers calculated their profits and losses?"
                         }
                     ]
@@ -271,15 +271,15 @@
                     "text": "Gender",
                     "next": [
                         {
-                            "val": "g_ppt2_fs_workload",
+                            "val": "ppt2_g_fs_workload",
                             "text": "Which farmers report that their spouse or other men in their HH support them with HH work and childcare?"
                         },
                         {
-                            "val": "g_ppt2_dm_selecting",
+                            "val": "ppt2_g_dm_selecting",
                             "text": "Which farmers reported discussing which crops to grow with their spouse?"
                         },
                         {
-                            "val": "g_ppt2_dm_spending",
+                            "val": "ppt2_g_dm_spending",
                             "text": "Which farmers reported discussing how to spend HH income with their spouse?"
                         }
                     ]
@@ -289,11 +289,11 @@
                     "text": "Savings and Loans",
                     "next": [
                         {
-                            "val": "sav_ppt2_sav",
+                            "val": "ppt2_sav_sav",
                             "text": "Which farmers reported that they are saving?"
                         },
                         {
-                            "val": "sav_ppt2_loans",
+                            "val": "ppt2_sav_loans",
                             "text": "Which farmers reported taking a loan?"
                         }
                     ]
@@ -309,15 +309,15 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_deep_ploughing",
+                            "val": "ppt1_swm_deep_ploughing",
                             "text": "Which farmers applied deep ploughing once this year?"
                         },
                         {
-                            "val": "swm_bund_repairing",
+                            "val": "ppt1_swm_bund_repairing",
                             "text": "Which farmers repaired field bunds?"
                         },
                         {
-                            "val": "swm_manuer",
+                            "val": "ppt1_swm_manuer",
                             "text": "Which farmers applied farm yard manure?"
                         }
                     ]
@@ -327,11 +327,11 @@
                     "text": "Input and Land Selection",
                     "next": [
                         {
-                            "val": "ils_variety",
+                            "val": "ppt1_ils_variety",
                             "text": "Which farmers selected the right variety of seed for the season?"
                         },
                         {
-                            "val": "ils_germination_test",
+                            "val": "ppt1_ils_germination_test",
                             "text": "Which farmers conducted germination tests?"
                         }
                     ]
@@ -341,7 +341,7 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_leveling",
+                            "val": "ppt1_swm_leveling",
                             "text": "Which farmers ploughed and leveled their land?"
                         }
                     ]
@@ -351,11 +351,11 @@
                     "text": "Use of Inputs",
                     "next": [
                         {
-                            "val": "uoi_treatment",
+                            "val": "ppt1_uoi_treatment",
                             "text": "Which farmers treated seeds?"
                         },
                         {
-                            "val": "uoi_chemfertilizer",
+                            "val": "ppt1_uoi_chemfertilizer",
                             "text": "Which farmers added the right amount of chemical fertilizer in three phases?"
                         }
                     ]
@@ -365,7 +365,7 @@
                     "text": "Planting",
                     "next": [
                         {
-                            "val": "p_line_sowing",
+                            "val": "ppt1_p_line_sowing",
                             "text": "Which farmers practiced line sowing?"
                         }
                     ]
@@ -375,15 +375,15 @@
                     "text": "Pest and Disease Management",
                     "next": [
                         {
-                            "val": "pdm_weeding",
+                            "val": "ppt1_pdm_weeding",
                             "text": "Which farmers weeded at least twice at an interval of 25 to 30 days?"
                         },
                         {
-                            "val": "pdm_organic_pesticide",
+                            "val": "ppt1_pdm_organic_pesticide",
                             "text": "Which farmers sprayed organic pesticides?"
                         },
                         {
-                            "val": "pdm_bird_perches",
+                            "val": "ppt1_pdm_bird_perches",
                             "text": "Which farmers erected bird perches or phermone traps?"
                         }
                     ]
@@ -393,7 +393,7 @@
                     "text": "Soil and Water Management",
                     "next": [
                         {
-                            "val": "swm_adoption",
+                            "val": "ppt1_swm_adoption",
                             "text": "Which farmers adopted boarder and or furrow irrigation methods?"
                         }
                     ]
@@ -403,7 +403,7 @@
                     "text": "Record Keeping and Finance",
                     "next": [
                         {
-                            "val": "rkf_expenses",
+                            "val": "ppt1_rkf_expenses",
                             "text": "Which farmers kept records of their farm expenses?"
                         }
                     ]
@@ -413,15 +413,15 @@
                     "text": "Gender",
                     "next": [
                         {
-                            "val": "g_workload",
+                            "val": "ppt1_g_workload",
                             "text": "Which farmers report that their spouse or other men in their HH support them with HH work and childcare? "
                         },
                         {
-                            "val": "g_dm_selecting",
+                            "val": "ppt1_g_dm_selecting",
                             "text": "Which farmers reported discussing which crops to grow with their spouse?"
                         },
                         {
-                            "val": "g_dm_spending",
+                            "val": "ppt1_g_dm_spending",
                             "text": "Which farmers reported discussing how to spend HH income with their spouse?"
                         }
                     ]
@@ -431,11 +431,11 @@
                     "text": "Savings and Loans",
                     "next": [
                         {
-                            "val": "sav_sav",
+                            "val": "ppt1_sav_sav",
                             "text": "Which farmers reported that they are saving?"
                         },
                         {
-                            "val": "sav_loans",
+                            "val": "ppt1_sav_loans",
                             "text": "Which farmers reported taking a loan?"
                         }
                     ]
@@ -445,11 +445,11 @@
                     "text": "Harvest",
                     "next": [
                         {
-                            "val": "h_timing",
+                            "val": "ppt2_h_timing",
                             "text": "Which farmers harvested crops when 80% of seeds were mature?"
                         },
                         {
-                            "val": "h_drying",
+                            "val": "ppt2_h_drying",
                             "text": "Which farmers dried maize until moisture was down to 13% or lower?"
                         }
                     ]
@@ -459,23 +459,23 @@
                     "text": "Post Harvest Management",
                     "next": [
                         {
-                            "val": "phm_seed_select",
+                            "val": "ppt2_phm_seed_select",
                             "text": "Which farmers selected intact grains for seeds?"
                         },
                         {
-                            "val": "phm_clean_dry",
+                            "val": "ppt2_phm_clean_dry",
                             "text": "Which farmers cleaned and dried produce for FAQ standard?"
                         },
                         {
-                            "val": "phm_shell_use_mechanical_device",
+                            "val": "ppt2_phm_shell_use_mechanical_device",
                             "text": "Which farmers did shelling using mechanical device?"
                         },
                         {
-                            "val": "phm_grade_pack",
+                            "val": "ppt2_phm_grade_pack",
                             "text": "Which farmers did grading and standard packing?"
                         },
                         {
-                            "val": "phm_storage",
+                            "val": "ppt2_phm_storage",
                             "text": "Which farmers packaged and stored seeds to avoid moisture?"
                         }
                     ]
@@ -485,19 +485,19 @@
                     "text": "Marketing",
                     "next": [
                         {
-                            "val": "m_information",
+                            "val": "ppt2_m_information",
                             "text": "Which farmers used marketing information for decision making?"
                         },
                         {
-                            "val": "m_negotiation",
+                            "val": "ppt2_m_negotiation",
                             "text": "Which farmers negotiated with trader for selling?"
                         },
                         {
-                            "val": "m_use_balance_for_weighing",
+                            "val": "ppt2_m_use_balance_for_weighing",
                             "text": "Which farmers ensured use of balance at the time of selling?"
                         },
                         {
-                            "val": "m_group_selling",
+                            "val": "ppt2_m_group_selling",
                             "text": "Which farmers participated in group-based selling?"
                         }
                     ]
@@ -507,15 +507,15 @@
                     "text": "Record Keeping and Finance",
                     "next": [
                         {
-                            "val": "rkf_ppt2_expenses",
+                            "val": "ppt2_rkf_expenses",
                             "text": "Which farmers maintained record on farm expenses?"
                         },
                         {
-                            "val": "rkf_ppt2_production",
+                            "val": "ppt2_rkf_production",
                             "text": "Which farmers kept records of their production?"
                         },
                         {
-                            "val": "rkf_ppt2_profit_loss",
+                            "val": "ppt2_rkf_profit_loss",
                             "text": "Which farmers calculated their profits and losses?"
                         }
                     ]
@@ -525,15 +525,15 @@
                     "text": "Gender",
                     "next": [
                         {
-                            "val": "g_ppt2_fs_workload",
+                            "val": "ppt2_g_fs_workload",
                             "text": "Which farmers report that their spouse or other men in their HH support them with HH work and childcare?"
                         },
                         {
-                            "val": "g_ppt2_dm_selecting",
+                            "val": "ppt2_g_dm_selecting",
                             "text": "Which farmers reported discussing which crops to grow with their spouse?"
                         },
                         {
-                            "val": "g_ppt2_dm_spending",
+                            "val": "ppt2_g_dm_spending",
                             "text": "Which farmers reported discussing how to spend HH income with their spouse?"
                         }
                     ]
@@ -543,11 +543,11 @@
                     "text": "Savings and Loans",
                     "next": [
                         {
-                            "val": "sav_ppt2_sav",
+                            "val": "ppt2_sav_sav",
                             "text": "Which farmers reported that they are saving?"
                         },
                         {
-                            "val": "sav_ppt2_loans",
+                            "val": "ppt2_sav_loans",
                             "text": "Which farmers reported taking a loan?"
                         }
                     ]
