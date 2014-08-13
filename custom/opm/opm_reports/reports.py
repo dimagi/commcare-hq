@@ -476,7 +476,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             vhnd_date = [date for date in dates if type(date) == datetime.date and self.datespan.startdate_utc.date() <= date <= self.datespan.enddate_utc.date()]
             vhnd_service[owner_id] = len(vhnd_date) > 0
         return vhnd_service
-        
+
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
 
@@ -806,7 +806,11 @@ class MetReport(CaseReportMixin, BaseReport):
     model = ConditionsMet
     exportable = False
     is_rendered_as_email = False
+    extra_row_objects = []
 
+    def set_extra_row_objects(self, row_objects):
+        self.extra_row_objects = self.extra_row_objects + row_objects
+        
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
@@ -876,7 +880,7 @@ class MetReport(CaseReportMixin, BaseReport):
             except ValueError:
                 return []
         rows = []
-        for row in self.row_objects:
+        for row in self.row_objects + self.extra_row_objects:
             rows.append([getattr(row, method) for
                 method, header, visible in self.model.method_map[self.block.lower()]])
         return rows

@@ -42,6 +42,9 @@ SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
 
+# This is just a string processing function, not moving to class
+indexed_child = lambda prop, num: prop.replace("child1", "child" + str(num))
+
 class OPMCase(object):
 
     def condition_image(self, image_y, image_n, condition):
@@ -72,32 +75,32 @@ class OPMCase(object):
             'soft_window_2_3': None,
             'attendance_vhnd_3': None,
             'attendance_vhnd_6': None,
-            'child1_vhndattend_calc': None,
-            'prev_child1_vhndattend_calc': None,
-            'child1_attendance_vhnd': None,
+            indexed_child('child1_vhndattend_calc', self.child_index): None,
+            indexed_child('prev_child1_vhndattend_calc', self.child_index): None,
+            indexed_child('child1_attendance_vhnd', self.child_index): None,
             'weight_tri_1': None,
             'prev_weight_tri_1': None,
             'weight_tri_2': None,
             'prev_weight_tri_2': None,
-            'child1_growthmon_calc': None,
-            'prev_child1_growthmon_calc': None,
-            'child1_excl_breastfeed_calc': None,
-            'prev_child1_excl_breastfeed_calc': None,
-            'child1_ors_calc': None,
-            'prev_child1_ors_calc': None,
-            'child1_weight_calc': None,
-            'child1_register_calc': None,
-            'child1_measles_calc': None,
-            'prev_child1_weight_calc': None,
-            'prev_child1_register_calc': None,
-            'prev_child1_measles_calc': None,
-            'child1_suffer_diarrhea': None,
+            indexed_child('child1_growthmon_calc', self.child_index): None,
+            indexed_child('prev_child1_growthmon_calc', self.child_index): None,
+            indexed_child('child1_excl_breastfeed_calc', self.child_index): None,
+            indexed_child('prev_child1_excl_breastfeed_calc', self.child_index): None,
+            indexed_child('child1_ors_calc', self.child_index): None,
+            indexed_child('prev_child1_ors_calc', self.child_index): None,
+            indexed_child('child1_weight_calc', self.child_index): None,
+            indexed_child('child1_register_calc', self.child_index): None,
+            indexed_child('child1_measles_calc', self.child_index): None,
+            indexed_child('prev_child1_weight_calc', self.child_index): None,
+            indexed_child('prev_child1_register_calc', self.child_index): None,
+            indexed_child('prev_child1_measles_calc', self.child_index): None,
+            indexed_child('child1_suffer_diarrhea', self.child_index): None,
             'interpret_grade_1': None,
         }
         for form in self.forms:
             if self.datespan.startdate <= form.received_on <= self.datespan.enddate:
                 for prop in properties:
-                    if prop in ['child1_suffer_diarrhea', 'child1_growthmon_calc', 'prev_child1_growthmon_calc']:
+                    if prop in [indexed_child('child1_suffer_diarrhea', self.child_index), indexed_child('child1_growthmon_calc', self.child_index), indexed_child('prev_child1_growthmon_calc', self.child_index)]:
                         if 'child_1' in form.form and prop in form.form['child_1']:
                             properties[prop] = form.form['child_1'][prop]
                     else:
@@ -125,9 +128,9 @@ class OPMCase(object):
     def child_attended_vhnd(self):
         if self.child_age != 1:
             return 'received' in [
-                self.form_properties['child1_vhndattend_calc'],
-                self.form_properties['prev_child1_vhndattend_calc'],
-                self.form_properties['child1_attendance_vhnd']
+                self.form_properties[indexed_child('child1_vhndattend_calc', self.child_index)],
+                self.form_properties[indexed_child('prev_child1_vhndattend_calc', self.child_index)],
+                self.form_properties[indexed_child('child1_attendance_vhnd', self.child_index)]
             ]
 
     @property
@@ -142,8 +145,8 @@ class OPMCase(object):
     def child_growth_calculated(self):
         if self.child_age % 3 == 0:
             return 'received' in [
-                self.form_properties['child1_growthmon_calc'],
-                self.form_properties['prev_child1_growthmon_calc']
+                self.form_properties[indexed_child('child1_growthmon_calc', self.child_index)],
+                self.form_properties[indexed_child('prev_child1_growthmon_calc', self.child_index)]
             ]
 
     @property
@@ -155,10 +158,10 @@ class OPMCase(object):
     @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
-            if self.form_properties['child1_suffer_diarrhea'] == '1':
+            if self.form_properties[indexed_child('child1_suffer_diarrhea', self.child_index)] == '1':
                 return 'received' in [
-                    self.form_properties['child1_ors_calc'],
-                    self.form_properties['prev_child1_ors_calc']
+                    self.form_properties[indexed_child('child1_ors_calc', self.child_index)],
+                    self.form_properties[indexed_child('prev_child1_ors_calc', self.child_index)]
                 ]
 
     @property
@@ -171,7 +174,7 @@ class OPMCase(object):
                 prev_forms = [form for form in self.forms
                         if (self.datespan.startdate - datetime.timedelta(90))
                             <= form.received_on <= self.datespan.enddate]
-                weight_key = "child1_child_weight"
+                weight_key = indexed_child("child1_child_weight", self.child_index)
                 child_forms = [form.form["child_1"] for form in prev_forms
                         if "child_1" in form.form]
                 birth_weight = [child[weight_key] for child in child_forms if weight_key in child]
@@ -179,13 +182,13 @@ class OPMCase(object):
                 return child_birth_weight_taken
             elif self.child_age == 6:
                 return 'received' in [
-                    self.form_properties['child1_register_calc'],
-                    self.form_properties['prev_child1_register_calc']
+                    self.form_properties[indexed_child('child1_register_calc', self.child_index)],
+                    self.form_properties[indexed_child('prev_child1_register_calc', self.child_index)]
                 ]
             elif self.child_age == 12:
                 return 'received' in [
-                    self.form_properties['child1_measles_calc'],
-                    self.form_properties['prev_child1_measles_calc']
+                    self.form_properties[indexed_child('child1_measles_calc', self.child_index)],
+                    self.form_properties[indexed_child('prev_child1_measles_calc', self.child_index)]
                 ]
 
     @property
@@ -195,7 +198,7 @@ class OPMCase(object):
             prev_forms = [form for form in self.forms
                     if (self.datespan.startdate - datetime.timedelta(180))
                         <= form.received_on <= self.datespan.enddate]
-            excl_key = "child1_child_excbreastfed"
+            excl_key = indexed_child("child1_child_excbreastfed", self.child_index)
             child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
             exclusive_breastfed = [child[excl_key] for child in child_forms if excl_key in child]
             # FIXME This can't possibly be right
@@ -209,7 +212,8 @@ class OPMCase(object):
         else:
             return self.form_properties['interpret_grade_1'] is 'normal'
 
-    def __init__(self, case, report):
+    def __init__(self, case, report, child_index=1):
+        self.child_index = child_index
         self.case = case
         self.report = report
         self.block = report.block.lower()
@@ -227,6 +231,7 @@ class OPMCase(object):
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
         self.set_case_properties()
+        self.add_extra_children()
 
         if report.is_rendered_as_email:
             with localize('hin'):
@@ -294,6 +299,14 @@ class OPMCase(object):
             raise InvalidRow
         self.vhnd_availability = self.report.vhnd_availability[self.owner_id]
 
+    def add_extra_children(self):
+        if self.child_index == 1:
+            num_childs = int(self.case_property("live_birth_amount", 1))
+            if num_childs > 3:
+                num_childs = 3 # app supports upto three children only
+            extra_child_objects = [(ConditionsMet(case, report, child_index=num)) for num in range(2, num_childs + 1)]
+            self.report.set_extra_row_objects(extra_child_objects)
+
     @property
     @memoized
     def forms(self):
@@ -357,6 +370,7 @@ class ConditionsMet(OPMCase):
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
             ('preg_month', _('Pregnancy Month'), True),
+            ('child_name', _("Child Name"), True),
             ('child_age', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
@@ -376,6 +390,7 @@ class ConditionsMet(OPMCase):
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
             ('preg_month', _('Pregnancy Month'), True),
+            ('child_name', _("Child Name"), True),
             ('child_age', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
@@ -389,9 +404,10 @@ class ConditionsMet(OPMCase):
         ]
     }
 
-    def __init__(self, *args, **kwargs):
-        super(ConditionsMet, self).__init__(*args, **kwargs)
+    def __init__(self, child_index=1, *args, **kwargs):
+        super(ConditionsMet, self).__init__(child_index=child_index, *args, **kwargs)
         if self.status == 'mother':
+            self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
             self.birth_spacing_prompt = []
             for form in self.forms:
                 if 'birth_spacing_prompt' in form.form:
@@ -403,6 +419,7 @@ class ConditionsMet(OPMCase):
             self.four = self.condition_image(MEASLEVACC_Y, MEASLEVACC_N, self.child_condition_four)
             self.five = self.condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, self.child_breastfed)
         elif self.status == 'pregnant':
+            self.child_name = EMPTY_FIELD
             self.one = self.condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, self.preg_attended_vhnd)
             self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
