@@ -494,8 +494,8 @@ cloudCare.AppView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("form:deselected", function (form) {
             self.selectForm(null);
-            // SHOULD THIS CLEAR THE PARENT HERE WHAT?
             // self.trigger("form:deselected", form);
+            // Should the selected parent be cleared here too?
         });
         cloudCare.dispatch.on("module:selected", function (module) {
             self.showModule(module);
