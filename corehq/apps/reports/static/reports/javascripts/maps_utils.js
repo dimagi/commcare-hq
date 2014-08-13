@@ -419,30 +419,40 @@ function makeDisplayContext(metric, setActiveFeature) {
                 maxWidth: 600,
                 autoPanPadding: [200, 100]
             });
-            // open popup on table row click / highlight table row on popup open
-            var selectRow = function($tr) {
-                $('#tabular tr').removeClass('selected-row');
-                if ($tr != null) {
-                    $tr.addClass('selected-row');
-                }
-            };
-            feature.$tr.click(function() {
-                var popupAnchor = null;
-                $(".selected-row").removeClass('selected-row');
-                if (layer.getBounds) { // polygon layer
-                    popupAnchor = layer.getBounds().getCenter();
-                    // TODO would be better to compute polygon centroid
-                }
-                layer.openPopup(popupAnchor);
-                // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
-                selectRow(feature.$tr);
-            });
-            layer.on('popupopen', function() {
-                selectRow(feature.$tr);
-            });
-            layer.on('popupclose', function() {
-                selectRow(null);
-            });
+            var tableEnabled = feature.$tr;  // todo: might want to make this more explicit
+
+            var handlePopups = function () {
+                // open popup on table row click / highlight table row on popup open
+                var selectRow = function($tr) {
+                    $('#tabular tr').removeClass('selected-row');
+                    if ($tr != null) {
+                        $tr.addClass('selected-row');
+                    }
+                };
+
+                feature.$tr.click(function() {
+                    var popupAnchor = null;
+                    $(".selected-row").removeClass('selected-row');
+                    if (layer.getBounds) { // polygon layer
+                        popupAnchor = layer.getBounds().getCenter();
+                        // TODO would be better to compute polygon centroid
+                    }
+                    layer.openPopup(popupAnchor);
+                    // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
+                    selectRow(feature.$tr);
+                });
+                layer.on('popupopen', function() {
+                    selectRow(feature.$tr);
+                });
+                layer.on('popupclose', function() {
+                    selectRow(null);
+                });
+            }
+
+
+            if (tableEnabled) {
+                handlePopups();
+            }
 
             // highlight layer / table row on hover-over
             if (feature.geometry.type != 'Point') {
@@ -461,21 +471,28 @@ function makeDisplayContext(metric, setActiveFeature) {
                         layer.bringToFront();
                     }
                 }
-                feature.$tr.addClass('hover-row');
+                if (tableEnabled) {
+                    feature.$tr.addClass('hover-row');
+                }
                 setActiveFeature(feature);
             };
             var hoverOff = function() {
                 if (layer._deactivate) {
                     layer._deactivate();
                 }
-                feature.$tr.removeClass('hover-row');
+                if (tableEnabled) {
+                    feature.$tr.removeClass('hover-row');
+                }
                 setActiveFeature(null);
             };
             layer.on({
                 mouseover: hoverOn,
-                mouseout: hoverOff,
+                mouseout: hoverOff
             });
-            feature.$tr.hover(hoverOn, hoverOff);
+            if (tableEnabled) {
+                feature.$tr.hover(hoverOn, hoverOff);
+            }
+
         }
     }
 }
@@ -1081,7 +1098,7 @@ function renderLegend($e, metric, config) {
         ({
             size: sizeLegend,
             color: colorLegend,
-            icon: iconLegend,
+            icon: iconLegend
         })[type]($div, meta);
         $e.append($div);
     });

@@ -1,16 +1,17 @@
 import datetime
-from dimagi.utils.dates import months_between
-from django.utils.translation import ugettext_lazy as _
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareCase
 from custom.opm.opm_reports.constants import InvalidRow
+from django.utils.translation import ugettext as _
+from corehq.util.translation import localize
 
 EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
 M_ATTENDANCE_N = 'attendance_vhnd_n.png'
 C_ATTENDANCE_Y = 'child_attendance_vhnd_y.png'
 C_ATTENDANCE_N = 'child_attendance_vhnd_n.png'
-M_WEIGHT_Y = 'mother_weight_y.png'
-M_WEIGHT_N = 'mother_weight_n.png'
+M_WEIGHT_Y = 'woman_checking_weight_yes.png'
+M_WEIGHT_N = 'woman_checking_weight_no.png'
 C_WEIGHT_Y = 'child_weight_y.png'
 C_WEIGHT_N = 'child_weight_n.png'
 MEASLEVACC_Y = 'child_child_measlesvacc_y.png'
@@ -80,7 +81,10 @@ class ConditionsMet(object):
                 # case.awc_name, case.block_name
                 [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
             )
-        img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        if not report.is_rendered_as_email:
+            img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        else:
+            img_elem = '<div><img src="/static/opm/img/%s"></div>'
         def condition_image(image_y, image_n, condition):
             if condition is None:
                 return ''
@@ -138,7 +142,10 @@ class ConditionsMet(object):
                             met_properties[k] = form.form[k]
             return met_properties
 
-        case_obj = CommCareCase.get(case['_source']['_id'])
+        try:
+            case_obj = CommCareCase.get(case['_source']['_id'])
+        except ResourceNotFound:
+            raise InvalidRow
         case_property = lambda _property, default: get_property(case_obj, _property, default=default)
 
         self.case_id = case_property('_id', '')
@@ -309,3 +316,7 @@ class ConditionsMet(object):
             self.cash = '<span style="color: green;">Rs. 250</span>'
         else:
             self.cash = '<span style="color: red;">Rs. 0</span>'
+
+        if report.is_rendered_as_email:
+            with localize('hin'):
+                self.status = _(self.status)

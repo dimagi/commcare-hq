@@ -1,0 +1,21 @@
+<?xml version='1.0' ?>
+<system version="1" uiVersion="1" xmlns="http://commcarehq.org/case">
+    <case>
+		<case_id>{case_id}</case_id>
+		<date_modified>2011-11-16T10:08:46.085-05</date_modified>
+		<update>
+            <age>EXT2</age>
+            <user_id>{user_id}</user_id>
+            <case_name>{case_name}</case_name>
+            <type>{case_type}</type>
+        </update>
+	</case>
+	<meta>
+		<deviceID>5463YB9DV8CPCJHRJ6RO9PGJU</deviceID>
+		<timeStart>2011-11-16T10:06:54.055-05</timeStart>
+		<timeEnd>2011-11-16T10:08:46.093-05</timeEnd>
+		<username>admin</username>
+		<userID>5463YB9DV8CPCJHRJ6RO9PGJU</userID>
+		<instanceID>{form_id}</instanceID>
+	</meta>
+</system>

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
@@ -8,14 +9,14 @@ import os
 from couchforms.models import XFormInstance
 
 
+# bit of a hack, but the tests optimize around this flag to run faster
+# so when we actually want to test this functionality we need to set
+# the flag to False explicitly
+@override_settings(UNIT_TESTING=False)
 class SubmissionTest(TestCase):
     maxDiff = None
 
     def setUp(self):
-        # bit of a hack, but the tests optimize around this flag to run faster
-        # so when we actually want to test this functionality we need to set
-        # the flag to False explicitly
-        settings.UNIT_TESTING = False
         self.domain = create_domain("submit")
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain.name, is_admin=True)

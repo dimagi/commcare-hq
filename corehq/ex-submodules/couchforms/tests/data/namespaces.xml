@@ -1,0 +1,14 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/ns">
+    <empty>no namespace here</empty>
+    <flat xmlns="http://commcarehq.org/test/flatns">flat namespace</flat>
+    <parent xmlns="http://commcarehq.org/test/parent">
+        <childwithout>cwo</childwithout>
+        <childwith xmlns="http://commcarehq.org/test/child1">cw</childwith>
+        <childwithelement xmlns="http://commcarehq.org/test/child2">
+            <grandchild>gc</grandchild>
+        </childwithelement>
+        <lastchildwithout>lcwo</lastchildwithout>
+    </parent>
+    <lastempty>nothing here either</lastempty>
+</form>

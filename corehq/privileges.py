@@ -52,6 +52,7 @@ MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 
 # Other privileges related specifically to accounting processes
 ACCOUNTING_ADMIN = 'accounting_admin'
+OPERATIONS_TEAM = 'dimagi_ops'
 
 
 class Titles(object):

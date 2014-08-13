@@ -1,6 +1,7 @@
 """
 Celery tasks to save a snapshot of the reports each month
 """
+import datetime
 import logging
 import traceback
 
@@ -14,7 +15,7 @@ from corehq.apps.users.models import WebUser
 from custom.opm.opm_tasks import DEVELOPERS_EMAILS
 
 from ..opm_reports.reports import (BeneficiaryPaymentReport,
-                                   IncentivePaymentReport, MetReport, get_report, last_if_none)
+                                   IncentivePaymentReport, MetReport, get_report, this_month_if_none)
 from ..opm_reports.constants import DOMAIN
 from .models import OpmReportSnapshot
 from dimagi.utils.django.email import send_HTML_email
@@ -46,7 +47,7 @@ def save_report(ReportClass, month=None, year=None):
     Save a snapshot of the report.
     Pass a month and year to save an arbitrary month.
     """
-    month, year = last_if_none(month, year)
+    month, year = this_month_if_none(month, year)
     if ReportClass.__name__ == "MetReport":
         for block in ['atri', 'wazirganj']:
             snapshot = prepare_snapshot(month, year, ReportClass, block, 'en')
@@ -56,18 +57,27 @@ def save_report(ReportClass, month=None, year=None):
 
 
 @periodic_task(
-    run_every=crontab(hour=10, minute=1, day_of_month=1),
+    run_every=crontab(hour=23, minute=55, day_of_month="28-31"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def snapshot():
-    save_ip_report.delay(IncentivePaymentReport)
-    save_bp_report.delay(BeneficiaryPaymentReport)
-    save_met_report.delay(MetReport)
+    now = datetime.datetime.now()
+    tomorrow_date = now + datetime.timedelta(days=1)
+    if tomorrow_date.month > now.month:
+        save_ip_report.delay(IncentivePaymentReport, now.month, now.year)
+        save_bp_report.delay(BeneficiaryPaymentReport, now.month, now.year)
+        save_met_report.delay(MetReport, now.month, now.year)
 
 
 def get_admins_emails():
+    def get_role_or_none(user):
+        role = user.get_role(DOMAIN, False, False)
+        if role:
+            return role.name
+        return None
+
     return map(lambda user: user.get_email(),
-               filter(lambda user: user.get_role(DOMAIN, False, False).name == 'Succeed Admin',
+               filter(lambda user: get_role_or_none(user) == 'Succeed Admin',
                WebUser.by_domain(DOMAIN)))
 
 def send_emails(title, msg):
@@ -77,9 +87,9 @@ def send_emails(title, msg):
                         email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-def save(report, f):
+def save(report, f, month, year):
     try:
-        snapshot = save_report(report)
+        snapshot = save_report(report, month, year)
         title = "[commcarehq] {0} saving success.".format(report.__name__)
         msg = "Saving {0} to doc {1} was finished successfully".format(report.__name__, snapshot._id)
         send_emails(title, msg)
@@ -96,15 +106,15 @@ def save(report, f):
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_ip_report(report):
-    save(report, save_ip_report)
+def save_ip_report(report, month, year):
+    save(report, save_ip_report, month, year)
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_bp_report(report):
-    save(report, save_bp_report)
+def save_bp_report(report, month, year):
+    save(report, save_bp_report, month, year)
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_met_report(report):
-    save(report, save_met_report)
+def save_met_report(report, month, year):
+    save(report, save_met_report, month, year)

@@ -2,7 +2,7 @@
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/39B70C6D-F3E7-496B-9920-8753594EFCB8" uiVersion="1" version="22" name="File Uploader">
   <n0:case xmlns:n0="http://commcarehq.org/case/transaction/v2" case_id="%(case_id)s" date_modified="%(modified_date)s" user_id="%(user_id)s">
     <n0:update>
-      <n0:scan_status>complete</n0:scan_status>
+      <n0:scan_status>scan_complete</n0:scan_status>
     </n0:update>
     <n0:attachment>
         %(case_attachments)s

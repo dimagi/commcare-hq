@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from corehq.elastic import ESError
+from corehq.elastic import ESError, SIZE_LIMIT
 from .es_query import HQESQuery, ESQuerySet
 from . import filters
 from . import forms, users
@@ -12,8 +12,8 @@ class TestESQuery(TestCase):
 
     def checkQuery(self, query, json_output):
         msg = "Expected Query:\n{}\nGenerated Query:\n{}".format(
-                query.dumps(pretty=True),
                 json.dumps(json_output, indent=4),
+                query.dumps(pretty=True),
             )
         # NOTE: This method thinks [a, b, c] != [b, c, a], which it is
         # in elasticsearch; order doesn't matter
@@ -30,9 +30,29 @@ class TestESQuery(TestCase):
                     },
                     "query": {"match_all": {}}
                 }
-            }
+            },
+            "size": SIZE_LIMIT
         }
         self.checkQuery(HQESQuery('forms'), json_output)
+
+    def test_query_size(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": 0
+        }
+        # use `is not None`; 0 or 1000000 == 1000000
+        self.checkQuery(HQESQuery('forms').size(0), json_output)
+        json_output['size'] = 123
+        self.checkQuery(HQESQuery('forms').size(123), json_output)
 
     def test_form_query(self):
         json_output = {
@@ -49,7 +69,8 @@ class TestESQuery(TestCase):
                     },
                     "query": {"match_all": {}}
                 }
-            }
+            },
+            "size": SIZE_LIMIT
         }
         query = forms.FormES()
         self.checkQuery(query, json_output)
@@ -61,13 +82,13 @@ class TestESQuery(TestCase):
                     "filter": {
                         "and": [
                             {"term": {"is_active": True}},
-                            {"term": {"doc_type": "CommCareUser"}},
                             {"term": {"base_doc": "couchuser"}},
                         ]
                     },
                     "query": {"match_all": {}}
                 }
-            }
+            },
+            "size": SIZE_LIMIT
         }
         query = users.UserES()
         self.checkQuery(query, json_output)
@@ -89,7 +110,8 @@ class TestESQuery(TestCase):
                     },
                     "query": {"match_all": {}}
                 }
-            }
+            },
+            "size": SIZE_LIMIT
         }
         query = forms.FormES()\
                 .filter(filters.domain("zombocom"))\
