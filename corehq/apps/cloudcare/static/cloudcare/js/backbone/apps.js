@@ -979,7 +979,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
-
             selectParent(_stripParams(parentId));
         };
 
