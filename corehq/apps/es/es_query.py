@@ -232,7 +232,8 @@ class ESQuery(object):
 
     def remove_default_filter(self, default):
         query = deepcopy(self)
-        query._default_filters.pop(default)
+        if default in query._default_filters:
+            query._default_filters.pop(default)
         return query
 
 
