@@ -985,7 +985,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         };
 
         var clearAndSelectFormWithParent = function (appId, moduleIndex, formIndex, parentId) {
-            self.clearCases();
+            self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
