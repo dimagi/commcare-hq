@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
-from custom.opm.opm_reports.constants import InvalidRow, CFU2_XMLNS, CHILDREN_FORMS
-from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, Form
+from custom.opm.opm_reports.constants import InvalidRow, CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
+from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, Form, \
+    get_relative_edd_from_preg_month
 
 
 class TestChildVHND(OPMCaseReportTestBase):
@@ -60,3 +61,55 @@ class TestChildVHND(OPMCaseReportTestBase):
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(True, row.child_attended_vhnd)
+
+
+class TestPregnancyVHND(OPMCaseReportTestBase):
+    # mapping month of pregnancy to case properties that trigger vhnd attendance
+    month_to_property_map = (
+        (4, 'attendance_vhnd_1'),
+        (5, 'attendance_vhnd_2'),
+        (6, 'attendance_vhnd_3'),
+        (7, 'month_7_attended'),
+        (8, 'month_8_attended'),
+    )
+
+    def test_no_data_not_match(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 12, 10),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(False, row.preg_attended_vhnd)
+
+    def test_positive_match_in_all_windows(self):
+        for month, case_prop in self.month_to_property_map:
+            edd = get_relative_edd_from_preg_month(self.report_date, month)
+            case = OPMCase(
+                forms=[],
+                edd=edd,
+                **{case_prop: '1'}
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual(True, row.preg_attended_vhnd)
+
+    def test_negative_match_in_all_windows(self):
+        for valid_month, case_prop in self.month_to_property_map:
+            for test_month in range(4, 9):
+                if test_month != valid_month:
+                    edd = get_relative_edd_from_preg_month(self.report_date, test_month)
+                    case = OPMCase(
+                        forms=[],
+                        edd=edd,
+                        **{case_prop: '1'}
+                    )
+                    row = MockCaseRow(case, self.report)
+                    self.assertEqual(False, row.preg_attended_vhnd)
+
+    def test_always_valid_in_ninth_month(self):
+        edd = get_relative_edd_from_preg_month(self.report_date, 9)
+        case = OPMCase(
+            forms=[],
+            edd=edd,
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(True, row.preg_attended_vhnd)
