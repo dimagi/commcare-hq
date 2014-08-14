@@ -347,3 +347,17 @@ class ChildSpacing(fluff.Calculator):
                         account_number_from_form(form),
                     ]
                 }
+
+class VhndAvailabilityCalc(fluff.Calculator):
+
+    @fluff.date_emitter
+    def availability(self, case):
+        has_vhnd = False
+        for form in case.get_forms():
+            vhnd_date = form.form.get("date_vhnd_held")
+            if isinstance(vhnd_date, (datetime.datetime, datetime.date)):
+                has_vhnd = True
+                yield vhnd_date
+
+        if not has_vhnd:
+            yield [datetime.date.min, 0]

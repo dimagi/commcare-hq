@@ -20,11 +20,12 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
+from sqlagg.filters import ANDFilter, BETWEEN
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn, SumColumn, CountColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.hqcase.utils import get_cases_in_domain
@@ -160,6 +161,30 @@ class OpmFormSqlData(SqlData):
             return super(OpmFormSqlData, self).data[self.case_id]
         else:
             return None
+
+
+class VhndAvailabilitySqlData(SqlData):
+
+    table_name = "fluff_VhndAvailabilityFluff"
+
+    @property
+    def filter_values(self):
+        return dict(
+            startdate=self.config['startdate'],
+            enddate=self.config['enddate'],
+        )
+
+    @property
+    def group_by(self):
+        return ['owner_id']
+
+    @property
+    def filters(self):
+        return [BETWEEN('date', 'startdate', 'enddate')]
+
+    @property
+    def columns(self):
+        return [DatabaseColumn("", SumColumn("vhnd_availability"))]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -467,15 +492,12 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     @memoized
     def vhnd_availability(self):
-        # need to implement this off of Fluff
-        vhnd_cases = get_cases_in_domain(DOMAIN, type="vhnd")
-        vhnd_service = {}
-        for case in vhnd_cases:
-            owner_id = case.owner_id
-            dates = [form.form["date_vhnd_held"] for form in case.get_forms() if "date_vhnd_held" in form.form]
-            vhnd_date = [date for date in dates if type(date) == datetime.date and self.datespan.startdate_utc.date() <= date <= self.datespan.enddate_utc.date()]
-            vhnd_service[owner_id] = len(vhnd_date) > 0
-        return vhnd_service
+        data = VhndAvailabilitySqlData({
+            'startdate': self.datespan.startdate_utc.date(),
+            'enddate': self.datespan.enddate_utc.date()
+        }).data
+        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
+
 
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
