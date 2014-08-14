@@ -997,9 +997,14 @@ cloudCare.AppMainView = Backbone.View.extend({
         self.router.on("route:app:module:form:enter", pauseNav(clearAndSelectForm));
 
         var clearAndSelectCase = function (appId, moduleIndex, formIndex, caseId) {
-            self.clearCases();
+            self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
+            // When you hit the back button,
+            // I think this doesnt trigger the "selected" event on the FormView because
+            // the form is already selected.
+            // We would also have to clearForms(). Is there any downside to this?
+            //      Might result in slower reloading of that page.
             selectForm(formIndex);
             selectCase(_stripParams(caseId));
         };
@@ -1199,7 +1204,7 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
     playSession: function (session) {
         var self = this;
-        self.clearForms()
+        self.clearForms();
         self.selectApp(session.get('app_id'), {async: false});
         self.appView.playSession(session);
     },
