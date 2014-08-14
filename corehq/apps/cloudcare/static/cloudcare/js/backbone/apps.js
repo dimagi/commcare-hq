@@ -902,6 +902,25 @@ cloudCare.AppMainView = Backbone.View.extend({
             if (caseMainView) {
                 var caseView = caseMainView.listView.caseMap[parentId];
                 if (caseView) {
+                    /*
+                        If selectParent is called immediately after selectForm
+                        (like in clearAndSelectFormWithParent), then this block
+                        almost certainly will not be entered. When selectForm
+                        is called, the caseMainView.listView is populated by
+                        making an ajax call to the server. Thus, the caseMap
+                        will be empty until that request finishes.
+
+                        Therefore, setting self._selectedParent is very
+                        important. When the caseMainView is finished updating
+                        it will trigger a "cases:updated" event. The
+                        "cases:updated" handler defined below will check if
+                        self._selectedParent is set. If it is, the
+                        "parent:selected" event will be triggered. and
+                        self._selectedParent will be cleared.
+
+                        An analogous process happens if selectCase is called
+                        immediately following selectForm
+                     */
                     cloudCare.dispatch.trigger("parent:selected", caseView.model);
                 }
             }
@@ -913,6 +932,9 @@ cloudCare.AppMainView = Backbone.View.extend({
             if (caseMainView) {
                 var caseView = caseMainView.listView.caseMap[caseId];
                 if (caseView) {
+                    // see the note in selectParent for an explanation
+                    // of the control flow that happens when selectCase
+                    // is called.
                     caseView.select();
                 }
             }
@@ -1040,6 +1062,9 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("cases:updated", pauseNav(function () {
             // same trick but with cases
+
+            // See the note in selectCase for an explanation of how this
+            // event handler fits in to the control flow of this page.
             if (self._selectedCase !== null) {
                 // If self._selectedCase is not in the caseMap, that means this is the first time cases:updated has been triggered, and therefore the case list is showing the possible parent cases.
                 // If self._selectedCase is in the caseMap, that means that this is the second time cases:updated has been triggered, and therefore the case list is showing the child cases of the parent case.
