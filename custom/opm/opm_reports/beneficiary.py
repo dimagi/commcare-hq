@@ -180,9 +180,10 @@ class OPMCaseRow(object):
                 prev_forms = [form for form in self.forms
                         if (self.datespan.startdate - datetime.timedelta(90))
                             <= form.received_on <= self.datespan.enddate]
-                weight_key = "child1_child_weight"
+                weight_key = indexed_child("child1_child_weight", self.child_index)
                 prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-90)]
-                child_forms = [form.form["child_1"] for form in prev_forms if "child_1" in form.form]
+                child_group = "child_" + str(self.child_index)
+                child_forms = [form.form[child_group] for form in prev_forms if child_group in form.form]
                 birth_weight = {child[weight_key] for child in child_forms if weight_key in child}
                 child_birth_weight_taken = '1' in birth_weight
                 return child_birth_weight_taken
@@ -201,7 +202,7 @@ class OPMCaseRow(object):
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
             prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-180)]
-            excl_key = "child1_excl_breastfeed_calc"
+            excl_key = indexed_child("child1_excl_breastfeed_calc", self.child_index)
             exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
             child_exclusive_breastfed = all(x == 'received' for x in exclusive_breastfed)
             return child_exclusive_breastfed
