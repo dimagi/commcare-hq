@@ -18,7 +18,7 @@ from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser, Program
+from corehq.apps.commtrack.models import CommTrackUser, Program, SupplyPointCase
 import re
 import settings
 
@@ -348,8 +348,14 @@ class CommtrackUserForm(forms.Form):
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
+
             commtrack_user.clear_locations()
             commtrack_user.add_location(loc, create_sp_if_missing=True)
+
+            # add the supply point case id to user data fields
+            # so that the phone can auto select
+            supply_point = SupplyPointCase.get_by_location(loc)
+            user.user_data['commtrack-supply-point'] = supply_point._id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
