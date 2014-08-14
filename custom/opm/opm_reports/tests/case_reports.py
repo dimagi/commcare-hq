@@ -1,14 +1,12 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from unittest import TestCase
 
 from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
-    StringProperty, IntegerProperty, BooleanProperty, DateProperty)
+    StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.dates import DateSpan, add_months
-from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.dates import DateSpan
 
-from ..constants import *
 from ..beneficiary import OPMCaseRow
 
 
@@ -18,9 +16,8 @@ class Report(JsonObject):
     block = StringProperty(required=True)
 
     @property
-    @memoized
     def datespan(self):
-        return DateSpan.from_month(self.month, self.year)
+        return DateSpan.from_month(self.month, self.year, inclusive=True)
 
 
 class Form(JsonObject):
@@ -50,17 +47,17 @@ class MockCaseRow(OPMCaseRow):
     """
     Spoof the following fields to create example cases
     """
-    def __init__(self, case, report, vhnd_availability=True):
+    def __init__(self, case, report, vhnd_available=True):
         self.case = case
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
-        self._vhnd_availability = vhnd_availability
+        self._vhnd_available = vhnd_available
         super(MockCaseRow, self).__init__(case, report)
 
     @property
-    def vhnd_availability(self):
-        return self._vhnd_availability
+    def vhnd_available(self):
+        return self._vhnd_available
 
 
 class OPMCaseReportTestBase(TestCase):
@@ -82,75 +79,3 @@ class MockDataTest(OPMCaseReportTestBase):
             edd=date(2014, 12, 10),
         )
         row = MockCaseRow(case, report)
-
-
-class TestMotherWeightMonitored(TestCase):
-    def setUp(self):
-        self.case = OPMCase(
-            forms=[],
-            edd=date(2014, 10, 15),
-            weight_tri_1="received",
-            weight_tri_2="not_taken",
-       )
-
-    def test_inapplicable_month(self):
-        report = Report(month=7, year=2014, block="Atri")
-        row = MockCaseRow(self.case, report)
-        self.assertEqual(row.preg_month, 7)
-        self.assertEqual(None, row.preg_weighed)
-
-    def test_condition_met(self):
-        report = Report(month=6, year=2014, block="Atri")
-        row = MockCaseRow(self.case, report)
-        self.assertEqual(row.preg_month, 6)
-        self.assertEqual(True, row.preg_weighed)
-
-    def test_condition_not_met(self):
-        report = Report(month=9, year=2014, block="Atri")
-        row = MockCaseRow(self.case, report)
-        self.assertEqual(row.preg_month, 9)
-        self.assertEqual(False, row.preg_weighed)
-
-
-class TestChildGrowthMonitored(TestCase):
-    def form_with_condition(self, y, m, d):
-        return Form(
-            form={'child1_growthmon_calc': 'received'},
-            received_on=datetime(y, m, d),
-            xmlns=CFU2_XMLNS,
-        )
-
-    def form_without_condition(self, y, m, d):
-        return Form(
-            form={'child1_growthmon_calc': 'not_taken'},
-            received_on=datetime(y, m, d),
-            xmlns=CFU2_XMLNS,
-        )
-
-    def test_condition_met(self):
-        case = OPMCase(
-            forms=[
-                self.form_without_condition(2014, 4, 15),
-                self.form_with_condition(2014, 5, 15),
-                self.form_without_condition(2014, 6, 15),
-            ],
-            dod=date(2014, 1, 10),
-        )
-        report = Report(month=6, year=2014, block="Atri")
-        row = MockCaseRow(case, report)
-        self.assertEqual(row.child_age, 6)
-        self.assertEqual(True, row.child_growth_calculated)
-
-    def test_condition_not_met(self):
-        case = OPMCase(
-            forms=[
-                self.form_with_condition(2014, 2, 15),
-                self.form_without_condition(2014, 5, 15),
-                self.form_with_condition(2014, 7, 15),
-            ],
-            dod=date(2014, 1, 10),
-        )
-        report = Report(month=6, year=2014, block="Atri")
-        row = MockCaseRow(case, report)
-        self.assertEqual(row.child_age, 6)
-        self.assertEqual(False, row.child_growth_calculated)
