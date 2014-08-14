@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, date
 from unittest import TestCase
 
@@ -5,15 +6,39 @@ from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
+from custom.opm.opm_reports.reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
+
+
+class AggressiveDefaultDict(defaultdict):
+
+    def __contains__(self, item):
+        return True
+
+class MockDataProvider(SharedDataProvider):
+    """
+    Mock data provider to manually specify vhnd availability per user
+    """
+    def __init__(self, datespan, vhnd_map=None):
+        super(MockDataProvider, self).__init__(datespan)
+        self.vhnd_map = vhnd_map or AggressiveDefaultDict(lambda: True)
+
+    @property
+    def vhnd_availability(self):
+        return self.vhnd_map
 
 
 class Report(JsonObject):
     month = IntegerProperty(required=True)
     year = IntegerProperty(required=True)
     block = StringProperty(required=True)
+
+    _data_provider = None
+    @property
+    def data_provider(self):
+        return self._data_provider
 
     @property
     def datespan(self):
@@ -47,17 +72,13 @@ class MockCaseRow(OPMCaseRow):
     """
     Spoof the following fields to create example cases
     """
-    def __init__(self, case, report, vhnd_available=True):
+    def __init__(self, case, report, data_provider=None):
         self.case = case
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
-        self._vhnd_available = vhnd_available
+        self.report._data_provider = data_provider or MockDataProvider(self.report.datespan)
         super(MockCaseRow, self).__init__(case, report)
-
-    @property
-    def vhnd_available(self):
-        return self._vhnd_available
 
 
 class OPMCaseReportTestBase(TestCase):

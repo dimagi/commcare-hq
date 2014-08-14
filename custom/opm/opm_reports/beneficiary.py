@@ -48,7 +48,34 @@ VHND_NO = 'VHND_no.png'
 # This is just a string processing function, not moving to class
 indexed_child = lambda prop, num: prop.replace("child1", "child" + str(num))
 
+
 class OPMCaseRow(object):
+
+    def __init__(self, case, report, child_index=1):
+        self.child_index = child_index
+        self.case = case
+        self.report = report
+        self.data_provider = report.data_provider
+        self.block = report.block.lower()
+        self.datespan = self.report.datespan
+
+        if report.snapshot is not None:
+            report.filter(
+                lambda key: self.case[key],
+                # case.awc_name, case.block_name
+                [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
+            )
+        if not report.is_rendered_as_email:
+            self.img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+        else:
+            self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
+
+        self.set_case_properties()
+        self.add_extra_children()
+
+        if report.is_rendered_as_email:
+            with localize('hin'):
+                self.status = _(self.status)
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -242,31 +269,6 @@ class OPMCaseRow(object):
         else:
             return self.form_properties['interpret_grade_1'] is 'normal'
 
-    def __init__(self, case, report, child_index=1):
-        self.child_index = child_index
-        self.case = case
-        self.report = report
-        self.block = report.block.lower()
-        self.datespan = self.report.datespan
-
-        if report.snapshot is not None:
-            report.filter(
-                lambda key: self.case[key],
-                # case.awc_name, case.block_name
-                [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
-            )
-        if not report.is_rendered_as_email:
-            self.img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
-        else:
-            self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
-
-        self.set_case_properties()
-        self.add_extra_children()
-
-        if report.is_rendered_as_email:
-            with localize('hin'):
-                self.status = _(self.status)
-
     def case_property(self, name, default=None):
         return getattr(self.case, name, default)
 
@@ -332,10 +334,9 @@ class OPMCaseRow(object):
     @property
     @memoized
     def vhnd_available(self):
-        # todo: cleanup to not be dependent on the report object
-        if self.owner_id not in self.report.vhnd_availability:
+        if self.owner_id not in self.data_provider.vhnd_availability:
             raise InvalidRow
-        return self.report.vhnd_availability[self.owner_id]
+        return self.data_provider.vhnd_availability[self.owner_id]
 
     def add_extra_children(self):
         if self.child_index == 1:
