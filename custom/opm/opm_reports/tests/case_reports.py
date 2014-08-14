@@ -5,7 +5,7 @@ from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
 

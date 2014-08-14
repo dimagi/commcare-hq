@@ -1,6 +1,7 @@
-from datetime import date
+from unittest import TestCase
+from datetime import date, datetime
 from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import OPMCaseReportTestBase, OPMCase, MockCaseRow
+from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, Form)
 from dimagi.utils.dates import add_months
 
 
@@ -111,3 +112,26 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             row = MockCaseRow(case, self.report)
             self.assertEqual('mother', row.status)
             self.assertEqual(i + 1, row.child_age)
+
+
+class TestFormFiltering(TestCase):
+    def check_form(self, received=None, num_months=None, xmlns=None):
+        form = Form(received_on=received or datetime(2014, 6, 15),
+                    form={'foo': 'bar'},
+                    xmlns=xmlns or 'moodys://falafel.palace')
+        case = OPMCase([form], dod=date(2014, 1, 10))
+        row = MockCaseRow(case, Report(month=6, year=2014, block="Atri"))
+        return len(row.filtered_forms(xmlns, num_months)) == 1
+
+    def test_forms_in_range(self):
+        self.assertTrue(self.check_form(datetime(2014, 6, 15), 1))
+        self.assertTrue(self.check_form(datetime(2014, 3, 15), 5))
+
+    def test_form_higher(self):
+        self.assertFalse(self.check_form(datetime(2014, 7, 15), 3))
+
+    def test_form_lower(self):
+        self.assertFalse(self.check_form(datetime(2014, 3, 15), 3))
+
+    def test_xmlns_list(self):
+        self.assertTrue(self.check_form(xmlns='alligator'))
