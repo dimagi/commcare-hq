@@ -116,7 +116,7 @@ var showLoading = function (selector) {
 
 var tfLoading = function (selector) {
     showLoading();
-    $('#save-indicator').text('Saving...').removeClass('alert-success alert-error').addClass('alert-warning').show();
+    $('#save-indicator').text(translatedStrings.saving).removeClass('alert-success alert-error').addClass('alert-warning').show();
 }
 
 var hideLoading = function (selector) {
@@ -127,9 +127,9 @@ var hideLoading = function (selector) {
 var tfLoadingComplete = function (isError) {
     hideLoading();
     if (isError) {
-        $('#save-indicator').text('Error saving!').removeClass('alert-warning alert-success').addClass('alert-error').show();
+        $('#save-indicator').text(translatedStrings.errSaving).removeClass('alert-warning alert-success').addClass('alert-error').show();
     } else {
-        $('#save-indicator').text('All Changes Saved!').removeClass('alert-warning alert-error').addClass('alert-success').show();
+        $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-error').addClass('alert-success').show();
     }
 
 }

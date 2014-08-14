@@ -17,13 +17,16 @@ function (doc) {
                 var visit_diff = visit_date.getTime() - last_muac_date.getTime();
             }
 
-            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY) {
+            if (age >= 180*MS_IN_DAY && age < 1825*MS_IN_DAY && visit_diff < 30*MS_IN_DAY) {
                 if (indicators.cur_muac && indicators.cur_muac.value) {
                     try {
                         var cur_muac = parseFloat(indicators.cur_muac.value);
                         last_muac_indicators["muac_reading"] = case_id;
-                        if ((cur_muac < 125.0 && cur_muac > 49) || (cur_muac < 12.5)) {
-                            last_muac_indicators["muac_wasting"] = case_id;
+                        if ((cur_muac < 125.0 && cur_muac >= 115.0) || (cur_muac >= 11.5 && cur_muac < 12.5)) {
+                            last_muac_indicators["moderate_muac_wasting"] = case_id;
+                        }
+                        if (cur_muac < 11.5) {
+                            last_muac_indicators["severe_muac_wasting"] = case_id;
                         }
                     } catch (e) {
                         // do nothing
@@ -41,7 +44,7 @@ function (doc) {
                         // do nothing
                     }
                 }
-                if (indicators.muac && indicators.muac.value && visit_diff < 30*MS_IN_DAY) {
+                if (indicators.muac && indicators.muac.value) {
                     visit_indicators["routine_muac"] = case_id;
                 }
             }

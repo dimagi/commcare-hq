@@ -333,9 +333,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
@@ -462,6 +459,11 @@ CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 
+# This is the celery queue to use for running reminder case updates.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
+
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -536,6 +538,32 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Reminders Queue Settings #######
+
+# Setting this to False will make the system fire reminders every
+# minute on the periodic queue. Setting to True will queue up reminders
+# on the reminders queue.
+REMINDERS_QUEUE_ENABLED = False
+
+# If a reminder still has not been processed in this number of minutes, enqueue it
+# again.
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single reminder
+REMINDERS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the reminder
+REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The number of hours to wait before counting a reminder as stale. Stale
+# reminders will not be processed.
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
@@ -1073,6 +1101,7 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',

@@ -1,0 +1,144 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% include 'cloudcare/includes/touchforms-inline.html' %}
+
+<script src="{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
+
+<style>
+    .touchforms-inline.webforms #form {
+        padding: .2em 0 .2em 1.5em;
+    }
+
+    .touchforms-inline.webforms #title {
+        display: none;
+    }
+
+    .touchforms-inline {
+        margin: 10px 0;
+    }
+
+    .webforms {
+        max-width: 750px;
+    }
+
+    .webforms .q {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .case-tree-spacer {
+        width: 10px;
+    }
+
+    .case-tree-description {
+        max-width: 750px;
+    }
+</style>
+
+<script>
+    $(function () {
+        var tree = $("#related_cases").treetable({
+            expandable: true,
+            initialState: "expanded"
+        });
+
+        $(".case-closed").each(function () {
+            tree.treetable('collapseNode', ($(this).data('tt-id')));
+        });
+    });
+</script>
+
+<table id="related_cases" class="table table-striped case_history">
+    <thead>
+        <tr>
+            <th>{% trans "Name" %}</th>
+            {% for column in columns %}
+            <th>{{ column.name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for case in case_list %}
+        <tr data-tt-id="{{ case.case_id }}"
+            class="{% if case.closed %}case-closed{% endif %}"
+            {% if case.treetable_parent_node_id %}
+            data-tt-parent-id="{{ case.treetable_parent_node_id }}"
+            {% endif %}>
+            <td>
+                {% if case.case_id == current_case.case_id %}
+                <strong>{{ case.name }}</strong>
+                {% else %}
+                {{ case.name }}
+                {% endif %}
+                <span class="case-tree-spacer"></span>
+
+                {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
+                {% with case.add_child_data as data %}
+                <a href="#" class="btn btn-small touchforms-link"
+                    data-target="#edit_{{ case.get_id }}"
+                    data-app-id="{{ data.app_id }}"
+                    data-module-id="{{ data.create_module_id }}"
+                    data-form-id="{{ data.create_form_id }}"
+                    data-session-data='{{ data.session_data|JSON }}'
+                    data-submit-url-root='{{ data.submit_url_root }}'
+                    data-form-url-root='{{ data.form_url_root }}'>
+                    <i class="icon-edit"></i> {{ data.link_text }}
+                </a>
+                {% endwith %}
+                {% endif %}
+                
+                <div class="pull-right btn-group">
+                    {% if case.edit_data.edit_form_id != None and not case.closed %}
+                    {% with case.edit_data as data %}
+                    <a href="#" class="btn btn-small touchforms-link"
+                        data-target="#edit_{{ case.get_id }}"
+                        data-app-id="{{ data.app_id }}"
+                        data-module-id="{{ data.edit_module_id }}"
+                        data-form-id="{{ data.edit_form_id }}"
+                        data-session-data='{{ data.session_data|JSON }}'
+                        data-submit-url-root='{{ data.submit_url_root }}'
+                        data-form-url-root='{{ data.form_url_root }}'>
+                        <i class="icon-edit"></i> {% trans "Edit" %}
+                    </a>
+                    {% endwith %}
+                    {% endif %}
+                    
+                    {% if show_view_buttons and case.case_id != current_case.case_id %}
+                    <a class="btn btn-small" href="{{ case.edit_data.view_url }}">
+                        <i class="icon-eye-open"></i> {% trans "View" %}
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if case.edit_data.description %}
+                <br>
+                <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
+                <div style="display:inline-block" class="case-tree-description muted">
+                    <span class="muted">{{ case.edit_data.description }}</span>
+                </div>
+                {% endif %}
+
+                {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
+                <br style="line-height:0">
+                <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
+                <div class="touchforms-inline" id="edit_{{ case.get_id }}"></div>
+                {% endif %}
+            </div>
+            </td>
+
+            {% for column in case.columns %}
+            <td>{{ column.value|safe }}</td>
+            {% endfor %}
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="4" class="no_data">{% trans "No related cases" %}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+</table>

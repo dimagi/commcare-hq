@@ -1,0 +1,22 @@
+<?xml version='1.0' ?>
+<pregnancy uiVersion="1" version="1909"
+           name="&#2327;&#2352;&#2381;&#2349;&#2366;&#2357;&#2360;&#2381;&#2341;&#2366; &#2325;&#2368; &#2332;&#2366;&#2344;&#2325;&#2366;&#2352;&#2368;"
+           xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+           xmlns="http://openrosa.org/formdesigner/6008a29d70f971096ce7a21728cc32be65c9fce">
+    <n0:case case_id="30bc51f6-3247-4966-b4ae-994f572e85fe" date_modified="2013-10-07T11:10:11.163Z"
+             user_id="60633386bf26b1f622d3adc5a39acf82" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:update>
+            <n0:pupdate>from the update form</n0:pupdate>
+            <n0:pboth>overridden by the update form</n0:pboth>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>352384058223423</n1:deviceID>
+        <n1:timeStart>2013-10-07T10:53:56.003Z</n1:timeStart>
+        <n1:timeEnd>2013-10-07T11:10:11.163Z</n1:timeEnd>
+        <n1:username>mixy</n1:username>
+        <n1:userID>60633386bf26b1f622d3adc5a39acf82</n1:userID>
+        <n1:instanceID>0effe64d-7cd7-4346-ae45-5fe3f11022ab</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CCODK:"2.8.2"(15220). v1909 CC2.8b[15220] on September-03-2013</n2:appVersion>
+    </n1:meta>
+</pregnancy>

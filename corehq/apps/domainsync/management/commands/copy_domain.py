@@ -1,7 +1,9 @@
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Queue
 import sys
 import os
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
@@ -53,7 +55,20 @@ class Command(BaseCommand):
                     action='store',
                     dest='id_file',
                     default='',
-                    help="File containing one document ID per line. Only docs with these ID's will be copied")
+                    help="File containing one document ID per line. Only docs with these ID's will be copied"),
+        make_option('--postgres-db',
+                    action='store',
+                    dest='postgres_db',
+                    default='',
+                    help="Name of postgres database to pull additional data from. This should map to a "
+                         "key in settings.DATABASES. If not specified no additional postgres data will be "
+                         "copied. This is currently used to pull CommTrack models."),
+        make_option('--postgres-password',
+                    action='store',
+                    dest='postgres_password',
+                    default='',
+                    help="Password for postgres database to pull additional data from. If not specified will "
+                         "default to the value in settings.DATABASES")
     )
 
     def handle(self, *args, **options):
@@ -73,7 +88,11 @@ class Command(BaseCommand):
         if simulate:
             print "\nSimulated run, no data will be copied.\n"
 
+        if options['postgres_db'] and options['postgres_password']:
+            settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
+
         self.targetdb = get_db()
+
 
         domain_doc = Domain.get_by_name(domain)
         if domain_doc is None:
@@ -84,7 +103,8 @@ class Command(BaseCommand):
             for type in doc_types:
                 startkey = [x for x in [domain, type, since] if x is not None]
                 endkey = [x for x in [domain, type, {}] if x is not None]
-                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since)
+                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since,
+                               postgres_db=options['postgres_db'])
         elif options['id_file']:
             path = options['id_file']
             if not os.path.isfile(path):
@@ -98,12 +118,13 @@ class Command(BaseCommand):
                 print "Path '%s' does not contain any document ID's" % path
                 sys.exit(1)
 
-            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids)
+            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'])
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
-            self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types)
+            self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
+                           postgres_db=options['postgres_db'])
 
     def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -121,7 +142,7 @@ class Command(BaseCommand):
                 print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
-                  type=None, since=None, exclude_types=None):
+                  type=None, since=None, exclude_types=None, postgres_db=None):
 
         if not doc_ids:
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
@@ -153,6 +174,9 @@ class Command(BaseCommand):
         else:
             print 'Failed document IDs written to %s' % err_log.name
 
+        if postgres_db:
+            self.copy_postgres_data(sourcedb, domain, postgres_db, doc_ids=doc_ids, simulate=simulate)
+
     def copy_domain(self, sourcedb, domain):
         print "Copying domain doc"
         result = sourcedb.view(
@@ -168,6 +192,30 @@ class Command(BaseCommand):
             save(dt, self.targetdb)
         else:
             print "Domain doc not found for domain %s." % domain
+
+    def copy_postgres_data(self, sourcedb, domain, postgres_slug, simulate, doc_ids):
+
+        # can make this more configurable or less hard coded eventually
+        # also note that ordering here is important for foreign key dependencies
+        postgres_models = [
+            (StockReport, 'form_id'),
+            (StockTransaction, 'case_id'),
+            (DocDomainMapping, 'doc_id'),
+            # StockState objects are "derived" and get created by StockTransaction post_save signal.
+            # We may want to directly port these over in the future.
+            # (StockState, 'case_id'),
+        ]
+        for model, doc_field in postgres_models:
+            query_set = model.objects.using(postgres_slug).filter(
+                **{'{}__in'.format(doc_field): doc_ids}
+            )
+            count = query_set.count()
+            print "Copying {} models ({})".format(model.__name__, count)
+            if not simulate:
+                for i, item in enumerate(query_set):
+                    # this can cause primary key conflicts to overwrite local data I think. Oh well?
+                    item.save(using='default')
+                    print 'Synced {}/{} {}'.format(i, count, model.__name__)
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'

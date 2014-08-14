@@ -35,11 +35,6 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             raise RuntimeError('unknown adapter [%s]' % adapter)
         data = loader(self.data_source, dict(self.request.GET.iteritems()))
 
-        # debug
-        #import pprint
-        #data = list(data)
-        #pprint.pprint(data)
-
         return self._to_geojson(data, geo_col)
 
     def _to_geojson(self, data, geo_col):
