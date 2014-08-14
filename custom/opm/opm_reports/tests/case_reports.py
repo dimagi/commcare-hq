@@ -71,6 +71,12 @@ class OPMCaseReportTestBase(TestCase):
         self.report = Report(month=6, year=2014, block="Atri")
 
 
+def get_relative_edd_from_preg_month(report_date, month):
+    months_until_edd = 10 - month
+    new_year, new_month = add_months(report_date.year, report_date.month, months_until_edd)
+    return type(report_date)(new_year, new_month, 1)
+
+
 class MockDataTest(OPMCaseReportTestBase):
 
     def test_mock_data(self):

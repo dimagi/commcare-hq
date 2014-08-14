@@ -114,7 +114,10 @@ class OPMCaseRow(object):
 
     @property
     def preg_attended_vhnd(self):
-        if self.preg_month != 9:
+        # in month 9 they always meet this condition
+        if self.preg_month == 9:
+            return True
+        elif 9 > self.preg_month > 3:
             vhnd_attendance = {
                 4: self.case_property('attendance_vhnd_1', 0),
                 5: self.case_property('attendance_vhnd_2', 0),
@@ -122,14 +125,16 @@ class OPMCaseRow(object):
                 7: self.case_property('month_7_attended', 0),
                 8: self.case_property('month_8_attended', 0)
             }
-            # TODO don't 500 on bad key
             return vhnd_attendance[self.preg_month] == '1'
+        else:
+            return False
 
     # TODO abstract this pattern of looking for received in form_property s
     # and in case_property s
     @property
     def child_attended_vhnd(self):
         if self.child_age != 1:
+            # todo: incorporate vhnd chnages to this
             return any(
                 form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
                 for form in self.forms
