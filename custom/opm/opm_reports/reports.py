@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
+from sqlagg.filters import ANDFilter, BETWEEN
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -166,31 +167,24 @@ class VhndAvailabilitySqlData(SqlData):
 
     table_name = "fluff_VhndAvailabilityFluff"
 
-    def __init__(self, domain):
-        self.domain = domain
-
     @property
     def filter_values(self):
         return dict(
-            domain=self.domain,
+            startdate=self.config['startdate'],
+            enddate=self.config['enddate'],
         )
 
     @property
     def group_by(self):
-        return ['owner_id', 'received_on']
+        return ['owner_id']
 
     @property
     def filters(self):
-        filters = [
-            "domain = :domain"
-        ]
-        return filters
+        return [BETWEEN('date', 'startdate', 'enddate')]
 
     @property
     def columns(self):
-        return [
-            DatabaseColumn("", SumColumn("vhnd_availability")),
-        ]
+        return [DatabaseColumn("", SumColumn("vhnd_availability"))]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -498,27 +492,12 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     @memoized
     def vhnd_availability(self):
-        vhnd = {}
-        for k, v in VhndAvailabilitySqlData(DOMAIN).data.iteritems():
-            if v['received_on'] and self.datespan.startdate_utc.date() <= datetime.datetime.strptime(v['received_on'], "%Y-%m-%d %H:%M:%S").date() <= self.datespan.enddate_utc.date():
-                vhnd.update({v['owner_id']: v['vhnd_availability'] > 0})
-            else:
-                vhnd.update({v['owner_id']: False})
-        return vhnd
+        data = VhndAvailabilitySqlData({
+            'startdate': self.datespan.startdate_utc.date(),
+            'enddate': self.datespan.enddate_utc.date()
+        }).data
+        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
 
-
-    @property
-    @memoized
-    def vhnd_availability(self):
-        # need to implement this off of Fluff
-        vhnd_cases = get_cases_in_domain(DOMAIN, type="vhnd")
-        vhnd_service = {}
-        for case in vhnd_cases:
-            owner_id = case.owner_id
-            dates = [form.form["date_vhnd_held"] for form in case.get_forms() if "date_vhnd_held" in form.form]
-            vhnd_date = [date for date in dates if type(date) == datetime.date and self.datespan.startdate_utc.date() <= date <= self.datespan.enddate_utc.date()]
-            vhnd_service[owner_id] = len(vhnd_date) > 0
-        return vhnd_service
 
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"

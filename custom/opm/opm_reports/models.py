@@ -1,6 +1,7 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
+from corehq.fluff.calculators.case import CasePropertyFilter
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
@@ -169,24 +170,15 @@ class OPMHierarchyFluff(fluff.IndicatorDocument):
     gp = user_data('gp')
     awc = user_data('awc')
 
-def get_dates(case):
-    dates = []
-    for form in case.get_forms():
-        if form.xmlns == VHND_XMLNS:
-            dates.append(form.received_on)
-    if not dates:
-        dates.append('')
-    return dates
 
 class VhndAvailabilityFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
     domains = ('opm',)
-    group_by = ('domain', fluff.AttributeGetter('received_on', lambda c: get_dates(c)))
+    group_by = ('owner_id',)
     save_direct_to_sql = True
-    document_filter = CustomFilter(lambda c: c.type == 'vhnd')
+    document_filter = CasePropertyFilter(type='vhnd')
 
-    owner_id = flat_field(lambda c: c.owner_id)
     vhnd = VhndAvailabilityCalc()
 
 
