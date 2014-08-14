@@ -268,11 +268,17 @@ class OPMCaseRow(object):
             return child_exclusive_breastfed
 
     @property
-    def year_end_condition(self):
-        if self.block == 'wazirganj':
-            return '1' in self.birth_spacing_prompt
-        else:
-            return self.form_properties['interpret_grade_1'] is 'normal'
+    def birth_spacing_years(self):
+        """
+        returns None if inapplicable, False if not met, or
+        2 for 2 years, or 3 for 3 years.
+        """
+        # TODO should this actually be [25, 37] ?
+        if self.child_age in [24, 36]:
+            for form in self.filtered_forms(CHILDREN_FORMS):
+                if form.form.get('birth_spacing_prompt') == '1':
+                    return False
+            return self.child_age/12
 
     def case_property(self, name, default=None):
         return getattr(self.case, name, default)
@@ -382,13 +388,10 @@ class OPMCaseRow(object):
 
     @property
     def spacing_cash(self):
-        # TODO Sravan, please confirm this logic
-        if self.block == 'atri' and self.year_end_condition:
-            if self.child_age == 24:
-                return TWO_YEAR_AMT
-            elif self.child_age == 36:
-                return THREE_YEAR_AMT
-        return 0
+        return {
+            2: TWO_YEAR_AMT,
+            3: THREE_YEAR_AMT,
+        }.get(self.birth_spacing_years, 0)
 
     @property
     def cash_amt(self):
@@ -450,11 +453,6 @@ class ConditionsMet(OPMCaseRow):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index)
         if self.status == 'mother':
             self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
-            # TODO Move this to parent class
-            self.birth_spacing_prompt = []
-            for form in self.forms:
-                if 'birth_spacing_prompt' in form.form:
-                    self.birth_spacing_prompt.append(form.form['birth_spacing_prompt'])
             self.preg_month = EMPTY_FIELD
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
@@ -467,25 +465,16 @@ class ConditionsMet(OPMCaseRow):
             self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
             self.four = ''
-            if self.block == 'wazirganj':
-                # TODO This can't ever evaluate to True, as
-                # birth_spacing_prompt is populated only for mothers
-                if self.child_age > 23 and '1' in self.birth_spacing_prompt:
-                    self.five = self.img_elem % SPACING_PROMPT_Y
-                else:
-                    self.five = self.img_elem % SPACING_PROMPT_N
-            else:
-                self.five = ''
 
         # This is what I think is meant by this stuff
         # https://github.com/dimagi/commcare-hq/blob/cacf077042edb23c1167563c5127b810dbcd555a/custom/opm/opm_reports/conditions_met.py#L297-L314
         if self.child_age in (24, 36):
-            year_end_condition_img_Y = (SPACING_PROMPT_Y if self.block is 'wazirganj' else GRADE_NORMAL_Y)
-            year_end_condition_img_N = (SPACING_PROMPT_N if self.block is 'wazirganj' else GRADE_NORMAL_N)
-            if self.year_end_condition:
-                self.five = self.img_elem % year_end_condition_img_Y
+            if self.birth_spacing_years:
+                self.five = self.img_elem % SPACING_PROMPT_Y
+            elif self.birth_spacing_years is False:
+                self.five = self.img_elem % SPACING_PROMPT_N
             else:
-                self.five = self.img_elem % year_end_condition_img_N
+                self.five = ''
 
         if not self.vhnd_available:
             met_or_not = True
