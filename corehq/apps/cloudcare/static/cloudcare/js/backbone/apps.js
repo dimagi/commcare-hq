@@ -527,11 +527,11 @@ cloudCare.AppView = Backbone.View.extend({
                 var buttonOnClick = function () {
                     self.playForm(module, form, caseModel);
                 }
-
             } else {
                 // Construct a button which will take the user to the next list of cases
-
-                //TODO: I think we want to force this to be plural. How do we do that?
+                // Note: The case_label should be plural for this button e.g. "View Mothers"
+                //       But, in the currently selected case heading we want a singular version
+                //       e.g. "Mother: Mary"
                 var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
                 var buttonUrl = getChildSelectUrl(self.options.urlRoot,
                                                         form.get("app_id"),
@@ -542,8 +542,6 @@ cloudCare.AppView = Backbone.View.extend({
                     cloudCare.dispatch.trigger("parent:selected", caseModel);
                 }
             }
-
-
             //formListView.enterForm is now a misnomer because sometimes this element is about viewing more cases.
             self.formListView.enterForm = $("<a />").text(
                 buttonText
@@ -554,7 +552,6 @@ cloudCare.AppView = Backbone.View.extend({
                 self.formListView.caseView.detailsView.el
             ).css("padding-left", "2em");
             self.formListView.enterForm.click(buttonOnClick);
-
         } else {
             if (self.formListView.enterForm) {
                 self.formListView.enterForm.detach();
@@ -744,8 +741,8 @@ cloudCare.AppView = Backbone.View.extend({
 
 
                 // TODO: What are these used for?
-	            var listDetails = formListView.model.get("case_details").short;
-	            var summaryDetails = formListView.model.get("case_details").long;
+	            var listDetails = module.get("case_details").short;
+	            var summaryDetails = module.get("case_details").long;
 
 	            formListView.caseView = new cloudCare.CaseMainView({
 	                el: $("#cases"),
