@@ -93,7 +93,7 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .size(LARGE_NUMBER)
         )
         real_form_users = {
-            query_result.get('fields', {}).get('form.meta.userID', [''])[0]
+            query_result.get('fields', {}).get('form.meta.userID', '')
             for query_result in stream_esquery(
                 form_query,
                 chunksize=ES_QUERY_CHUNKSIZE['forms']
@@ -109,7 +109,7 @@ def get_user_type_filters(histo_type, user_type_mobile):
             .size(LARGE_NUMBER)
         )
         real_sms_users = {
-            query_result.get('fields', {}).get('couch_recipient', [''])[0]
+            query_result.get('fields', {}).get('couch_recipient', '')
             for query_result in stream_esquery(
                 sms_query,
                 chunksize=ES_QUERY_CHUNKSIZE['sms']
