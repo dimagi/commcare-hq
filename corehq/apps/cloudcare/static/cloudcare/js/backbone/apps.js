@@ -712,10 +712,10 @@ cloudCare.AppView = Backbone.View.extend({
 	            self.playForm(module, form);
 
             } else if (form.get("requires") === "case") {
-                self._renderParentCasePane(self.selectedParent, self.options.language);
                 // If a parent is selected, we want to filter the cases differently.
                 if (self.selectedParent){
                     cloudCare.dispatch.trigger("form:selected:parent:caselist", form, self.selectedParent.id);
+                    self._renderParentCasePane(self.selectedParent, self.options.language);
                 } else {
                     cloudCare.dispatch.trigger("form:selected:caselist", form);
                 }
@@ -846,7 +846,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.initialCase = new cloudCare.Case(self.options.initialCase);
         }
         if (self.options.initialParent) {
-            //TODO: This is never used. Should it be? Should it be used in the same way as initialCase?
             self.initialParent = new cloudCare.Case(self.options.initialParent);
         }
 
@@ -1013,6 +1012,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex, {noEvents: true});
+
             if (self.initialApp && self.initialApp.id === appId &&
                 self.initialCase && self.initialCase.id === caseId) {
                 var app = new cloudCare.App(self.initialApp);
@@ -1020,7 +1020,26 @@ cloudCare.AppMainView = Backbone.View.extend({
                 var form = module.forms[formIndex];
                 // Why make a new instance of this object?
                 var caseModel = new cloudCare.Case(self.initialCase);
-                self.appView.playForm(module, form, caseModel);
+
+                if (module.get("parent_select").module_id) {
+                    if (self.initialParent){
+
+                        self.initialParent.set('appConfig', {
+                            app_id: appId,
+                            module_index: moduleIndex,
+                            form_index: formIndex,
+                            module: module,
+                            parentId: self.initialParent.id
+                        });
+                        self.appView.selectParent(self.initialParent);
+
+                    } else {
+                        // We could only get here if a user enters an incorrect url
+                        throw 'Bad initial state';
+                    }
+                }
+            self.appView.playForm(module, form, caseModel);
+
             } else {
                 // we never expect to get here
                 throw 'Bad initial state';
@@ -1127,11 +1146,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
         cloudCare.dispatch.on("case:selected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");
-            if (appConfig.parentId){
-                var parentSection = "/parent/" + appConfig.parentId;
-            } else {
-                var parentSection = "";
-            }
+            var parentSection = appConfig.parentId ? "/parent/" + appConfig.parentId : "";
             self.navigate("view/" + appConfig.app_id +
                                  "/" + appConfig.module_index +
                                  "/" + appConfig.form_index +
@@ -1145,13 +1160,13 @@ cloudCare.AppMainView = Backbone.View.extend({
             }, 0);
         });
         cloudCare.dispatch.on("case:deselected", function (caseModel) {
-            //TODO: Add parent to path here?
             var appConfig = caseModel.get("appConfig");
+            var parentSection = appConfig.parentId ? "/parent/" + appConfig.parentId : "";
             self.navigate("view/" + appConfig.app_id +
                                  "/" + appConfig.module_index +
-                                 "/" + appConfig.form_index);
+                                 "/" + appConfig.form_index +
+                                 parentSection);
             self.appView.selectCase(null);
-
         });
         cloudCare.dispatch.on("session:selected", function (session) {
             self.playSession(session);

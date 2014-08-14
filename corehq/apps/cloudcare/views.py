@@ -133,8 +133,11 @@ def cloudcare_main(request, domain, urlPath):
             case = CommCareCase.get(case_id)
             assert case.domain == domain, "case %s not in %s" % (case_id, domain)
             return case.get_json()
-        
+
         case = _get_case(domain, case_id) if case_id else None
+        if parent_id is None and case is not None:
+            if 'indices' in case and 'parent' in case['indices']:
+                parent_id = case['indices']['parent']['case_id']
         parent = _get_case(domain, parent_id) if parent_id else None
 
         return {
