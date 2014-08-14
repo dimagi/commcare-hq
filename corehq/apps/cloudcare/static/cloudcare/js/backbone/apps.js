@@ -1000,11 +1000,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
-            // When you hit the back button,
-            // I think this doesnt trigger the "selected" event on the FormView because
-            // the form is already selected.
-            // We would also have to clearForms(). Is there any downside to this?
-            //      Might result in slower reloading of that page.
             selectForm(formIndex);
             selectCase(_stripParams(caseId));
         };
