@@ -282,6 +282,25 @@ class OpmHealthStatusSqlData(SqlData):
         ]
 
 
+class SharedDataProvider(object):
+    """
+    Data provider for report data that can be shared across rows in an instance
+    of a report.
+    """
+
+    def __init__(self, datespan):
+        self.datespan = datespan
+
+    @property
+    @memoized
+    def vhnd_availability(self):
+        data = VhndAvailabilitySqlData({
+            'startdate': self.datespan.startdate_utc.date(),
+            'enddate': self.datespan.enddate_utc.date()
+        }).data
+        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
+
+
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     """
     Report parent class.  Children must provide a get_rows() method that
@@ -491,12 +510,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     @property
     @memoized
-    def vhnd_availability(self):
-        data = VhndAvailabilitySqlData({
-            'startdate': self.datespan.startdate_utc.date(),
-            'enddate': self.datespan.enddate_utc.date()
-        }).data
-        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
+    def data_provider(self):
+        return SharedDataProvider(self.datespan)
 
 
 class CaseReportMixin(object):
