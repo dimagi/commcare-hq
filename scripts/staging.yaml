@@ -12,13 +12,14 @@ branches:
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
   - emwf-refactor  # Ethan 8/06
-  - real-project-spaces # Nick P 7/27
+  - admin-reports # Nick P 8/13
   - archive-to-deactivate  # cz 7/30
   - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
   - archive-products # tw 8/13
+  - parent-child-select-revised # Noah 8/14
 submodules:
   submodules/couchlog-src:
     branches:
