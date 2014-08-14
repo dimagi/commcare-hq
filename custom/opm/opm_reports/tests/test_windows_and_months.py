@@ -102,7 +102,6 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
                 i, window, row.window
             ))
 
-
     def test_valid_child_month(self):
         for i in range(18):
             case = OPMCase(

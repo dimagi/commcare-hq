@@ -62,6 +62,34 @@ class TestChildVHND(OPMCaseReportTestBase):
         row = MockCaseRow(case, self.report)
         self.assertEqual(True, row.child_attended_vhnd)
 
+    def test_always_positive_in_first_month(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 6, 10),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(True, row.child_attended_vhnd)
+
+    def test_positive_when_no_vhnd(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 3, 10),
+        )
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map={
+            'Sahora': False,
+        })
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(True, row.child_attended_vhnd)
+
+    def test_no_vhnd_specified(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 3, 10),
+        )
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertRaises(InvalidRow, lambda: row.child_attended_vhnd)
+
 
 class TestPregnancyVHND(OPMCaseReportTestBase):
     # mapping month of pregnancy to case properties that trigger vhnd attendance
