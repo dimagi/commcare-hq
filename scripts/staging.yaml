@@ -1,7 +1,6 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products # tw 8/13
   - explicit_case_processing
   - auto-gps+schedule
   - auto-gps
