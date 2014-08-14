@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - archive-products # tw 8/13
   - explicit_case_processing
   - auto-gps+schedule
   - auto-gps
@@ -18,7 +19,6 @@ branches:
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
-  - archive-products # tw 8/13
   - parent-child-select-revised # Noah 8/14
 submodules:
   submodules/couchlog-src:
