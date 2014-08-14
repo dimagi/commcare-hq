@@ -261,11 +261,11 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-180)]
-            excl_key = indexed_child("child1_excl_breastfeed_calc", self.child_index)
-            exclusive_breastfed = [form.form[excl_key] for form in prev_forms if excl_key in form.form]
-            child_exclusive_breastfed = all(x == 'received' for x in exclusive_breastfed)
-            return child_exclusive_breastfed
+            excl_key = indexed_child("child1_child_excbreastfed", self.child_index)
+            for form in self.filtered_forms(CHILDREN_FORMS):
+                if form.form.get(excl_key) == '0':
+                    return False
+            return True
 
     @property
     def birth_spacing_years(self):
