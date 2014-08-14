@@ -8,6 +8,7 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from dimagi.utils.dates import months_between
 
+from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -148,16 +149,38 @@ class OPMCaseRow(object):
         elif self.preg_month == 9:
             return self.case_property('weight_tri_2') == 'received'
 
+    def filtered_forms(self, xmlns_or_list=None, num_months=None):
+        """
+        Returns a list of forms filtered by xmlns if specified
+        and from the previous number of calendar months if specified
+        """
+        if not isinstance(xmlns_or_list, list):
+            xmlns_list = [xmlns_or_list]
+        else:
+            xmlns_list = xmlns_or_list
+        end = self.datespan.enddate
+        if num_months is not None:
+            new_year, new_month = add_months(end.year, end.month, -num_months)
+            start = end.replace(month=new_month, year=new_year)
+        else:
+            start = None
+        def check_form(form):
+            if xmlns_or_list and form.xmlns not in xmlns_list:
+                return False
+            if start and form.received_on <= start:
+                return False
+            if end and form.received_on > end:
+                return False
+            return True
+        return filter(check_form, self.forms)
 
     @property
     def child_growth_calculated(self):
         if self.child_age % 3 == 0:
-            for form in self.forms:
-                if form.xmlns in CHILDREN_FORMS:
-                    if self.form_in_range(form, -90):
-                        prop = indexed_child('child1_growthmon_calc', self.child_index)
-                        if form.form.get(prop) == 'received':
-                            return True
+            for form in self.filtered_forms(CHILDREN_FORMS, 3):
+                prop = indexed_child('child1_growthmon_calc', self.child_index)
+                if form.form.get(prop) == 'received':
+                    return True
             return False
 
     @property
@@ -253,35 +276,35 @@ class OPMCaseRow(object):
         return lower <= form.received_on <= upper
 
     def set_case_properties(self):
-        # TODO clean up this block
-        reporting_date = datetime.date(self.report.year, self.report.month + 1, 1) - datetime.timedelta(1)
+        reporting_date = self.datespan.enddate.date()  # last day of the month
         status = "unknown"
-        self.preg_month = -1
-        self.child_age = -1
-        dod_date = self.case_property('dod', EMPTY_FIELD)
-        edd_date = self.case_property('edd', EMPTY_FIELD)
-        if dod_date == EMPTY_FIELD and edd_date == EMPTY_FIELD:
-            raise InvalidRow
-        if dod_date and dod_date != EMPTY_FIELD:
-            if dod_date >= reporting_date:
+        self.preg_month = None
+        self.child_age = None
+        window = None
+        dod_date = self.case_property('dod')
+        edd_date = self.case_property('edd')
+        if dod_date is not None:
+            if dod_date > reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
             elif dod_date < reporting_date:
                 status = 'mother'
                 self.child_age = len(months_between(dod_date, datetime.date(self.report.year, self.report.month, 1)))
-        elif edd_date and edd_date != EMPTY_FIELD:
+        elif edd_date is not None:
             if edd_date >= reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (edd_date - reporting_date).days / 30
             elif edd_date < reporting_date:  # edge case
                 raise InvalidRow
+        else: #if dod_date is None and edd_date is None:
+            raise InvalidRow
         if status == 'pregnant' and (self.preg_month > 3 and self.preg_month < 10):
             self.window = (self.preg_month - 1) / 3
         elif status == 'mother' and (self.child_age > 0 and self.child_age < 37):
             self.window = (self.child_age - 1) / 3 + 1
         else:
             raise InvalidRow
-        if (self.child_age == -1 and self.preg_month == -1):
+        if (self.child_age is None and self.preg_month is None):
             raise InvalidRow
 
         self.status = status
@@ -308,7 +331,7 @@ class OPMCaseRow(object):
 
     @property
     @memoized
-    def vhnd_availability(self):
+    def vhnd_available(self):
         # todo: cleanup to not be dependent on the report object
         if self.owner_id not in self.report.vhnd_availability:
             raise InvalidRow
@@ -329,10 +352,8 @@ class OPMCaseRow(object):
 
     @property
     def all_conditions_met(self):
-        # TODO Sravan, please confirm this logic
-        if not self.vhnd_availability:
+        if not self.vhnd_available:
             return True
-
         if self.status == 'mother':
             relevant_conditions = [
                 self.child_attended_vhnd,
@@ -460,7 +481,7 @@ class ConditionsMet(OPMCaseRow):
             else:
                 self.five = self.img_elem % year_end_condition_img_N
 
-        if not self.vhnd_availability:
+        if not self.vhnd_available:
             met_or_not = True
             self.one = self.img_elem % VHND_NO
             self.two, self.three, self.four, self.five = '','','',''
