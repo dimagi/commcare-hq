@@ -490,7 +490,6 @@ cloudCare.AppView = Backbone.View.extend({
             self.selectForm(null);
             self.selectParent(null);
             // self.trigger("form:deselected", form);
-            // Should the selected parent be cleared here too?
         });
         cloudCare.dispatch.on("module:selected", function (module) {
             self.showModule(module);
@@ -632,10 +631,6 @@ cloudCare.AppView = Backbone.View.extend({
         var caseModel = options.caseModel;
         var submitUrl = self.model.getSubmitUrl();
         var selectedModule = self.formListView.model;
-
-        // Insert the headings here.
-        // It is weird though to be controlling rendering outside of the render method.
-        // But this class seems to do very little in the render method
         self._renderParentCasePane(self.selectedParent, self.options.language);
         if (caseModel) {
             // Not all forms have a case associated with them.
@@ -692,7 +687,6 @@ cloudCare.AppView = Backbone.View.extend({
         touchformsInit(data.xform_url, loadSession, promptForOffline);
     },
     selectForm: function (form) {
-
         var self = this;
         var formListView = self.formListView;
         self.selectedForm = form;
@@ -735,22 +729,16 @@ cloudCare.AppView = Backbone.View.extend({
                     module = parent_module;
                     module_index = parent_module_index;
                 }
-
                 parentId = self.selectedParent ? self.selectedParent.id : null
-
-
-
-                // TODO: What are these used for?
 	            var listDetails = module.get("case_details").short;
 	            var summaryDetails = module.get("case_details").long;
-
 	            formListView.caseView = new cloudCare.CaseMainView({
 	                el: $("#cases"),
 	                listDetails: listDetails,
 	                summaryDetails: summaryDetails,
 	                appConfig: {
                         app_id: form.get("app_id"),
-	                    module_index: form.get("module_index"), // I think this is only used to update the window url, so we want this to be the old value.
+	                    module_index: form.get("module_index"),
                         form_index: form.get("index"),
                         module: module,
                         parentId: parentId
@@ -909,7 +897,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedForm = formIndex;
         };
 
-
         var selectParent = function (parentId){
             var caseMainView = self.appView.formListView.caseView;
             if (caseMainView) {
@@ -975,7 +962,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectForm(_stripParams(formIndex));
         };
 
-
         var clearAndSelectFormWithParent = function (appId, moduleIndex, formIndex, parentId) {
             self.clearCases();
             selectApp(appId);
@@ -983,7 +969,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             selectForm(formIndex);
             selectParent(_stripParams(parentId));
         };
-
 
         self.router.on("route:app:module:form", pauseNav(clearAndSelectForm));
         self.router.on("route:app:module:form:parent", pauseNav(clearAndSelectFormWithParent));
@@ -1035,8 +1020,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                         throw 'Bad initial state';
                     }
                 }
-            self.appView.playForm(module, form, caseModel);
-
+                self.appView.playForm(module, form, caseModel);
             } else {
                 // we never expect to get here
                 throw 'Bad initial state';
@@ -1075,18 +1059,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._selectedParent = null;
         }));
 
-        /*
-        // No idea what this does, just blindly copying the above out of desperation :)
-        cloudCare.dispatch.on("cases:updated", pauseNav(function () {
-
-            if (self._selectedParent !== null) {
-                var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
-                cloudCare.dispatch.trigger("parent:selected", parentModel);
-            }
-            self._selectedParetn = null;
-        }));
-        */
-
         // setting routes
         cloudCare.dispatch.on("module:selected", function (module) {
             self.navigate("view/" + module.get("app_id") +
@@ -1101,14 +1073,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             }
             self._selectedForm = null;
         });
-        /*
-        // Not totally sure what this does either. Attempting to make things work by replicating the above
-        self.on("module:select", function () {
-            if (self._selectedParent !== null) {
-                self.appView.formListView.getFormView()
-            }
-        });
-        */
 
         cloudCare.dispatch.on("module:deselected", function (module) {
             self.navigate("view/" + module.get("app_id"));
