@@ -1,11 +1,12 @@
 import HTMLParser
-from datetime import timedelta, datetime
 import time
 import json
 import logging
 import socket
 import time
-from datetime import timedelta, datetime
+import bisect
+from datetime import timedelta, datetime, date
+from dateutil.relativedelta import relativedelta
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
@@ -80,6 +81,7 @@ from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.es.es_query import ESQuery
 from .multimech import GlobalConfig
 
+SEC_IN_30_DAYS = 1000 * 60 * 60 * 24 * 30
 
 @require_superuser
 def default(request):
@@ -869,33 +871,56 @@ class FlagBrokenBuilds(FormView):
         db.bulk_save(docs)
         return HttpResponse("posted!")
 
+def daterange(interval, start_date, end_date):
+    cur_date = start_date
+    if interval == 'day':
+        step = relativedelta(days=1)
+    elif interval == 'week':
+        step = relativedelta(weeks=1)
+    elif interval == 'month':
+        step = relativedelta(months=1)
+    elif interval == 'year':
+        step = relativedelta(years=1)
+
+    while cur_date < end_date:
+        cur_date += step
+        yield cur_date
+
+def make_buckets(interval, start_date, end_date):
+    buckets_list = list()
+    buckets_dict = dict()
+    for single_date in daterange(interval, start_date, end_date):
+        t =int(1000*time.mktime(single_date.timetuple()))
+        buckets_list.append(t)
+        buckets_dict[t] = set()
+
+    return buckets_list, buckets_dict
+
 def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
-    form_query_results = (
-        ESQuery('forms')
-        .fields(['domain', datefield])
-        .filter({
-            "range": {
-                datefield: {
-                    "from": datespan.startdate_display,
-                    "to": datespan.enddate_display,
+    form_query = (
+            ESQuery('forms')
+            .fields(['domain', datefield])
+            .filter({
+                "range": {
+                    datefield: {
+                        "from": datespan.startdate_display, 
+                        "to": datespan.enddate_display
+                        }
                     }
                 }
-            }
-        )
-        .size(9999999)
-        .run()
-        .raw_hits
+            )
     )
 
-    real_domain_query_results = (
+    real_domain_query = (
             ESQuery('domains')
             .fields(['name'])
-            .filter({"term": {"is_test": True}})
-            .size(99999999)
-            .run()
-            .raw_hits 
+            .filter({"terms": params})
     )
 
+     
+    form_query_results = form_query.run().raw_hits
+    real_domain_query_results = real_domain_query.run().raw_hits
+    
     real_domains = {x['fields']['name'] for x in real_domain_query_results}
 
     domain_day = set()
@@ -903,20 +928,24 @@ def get_active_domain_stats_data(params, datespan, interval='month', datefield='
         domain = result['fields']['domain']
         if domain in real_domains:
             date = time.strptime(result['fields']['received_on'], "%Y-%m-%dT%H:%M:%SZ")
-            domain_day.add((domain, time.strftime("%Y-%m", date)))
-    
-    histo = dict()
+            domain_day.add((domain, time.mktime(date)*1000))
+
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys, histo = make_buckets(interval, begin, end)
+
     for i in domain_day:
-        day = i[1]
-        if day in histo.keys():
-            histo[day] += 1
-        else:
-            histo[day] = 1
+        domain = i[0]
+        date_received = i[1]
+        left = bisect.bisect_left(keys, date_received)
+        right = bisect.bisect_right(keys, date_received + SECS_IN_30_DAYS)
+        for j in keys[left:right+1]:
+            histo[j].add(domain)
     
     histo_data = []
-    for i in histo.keys():
-        histo_data.append({"count":histo[i], "time":
-            1000*time.mktime(time.strptime(i, "%Y-%m"))})
+    for i in keys:
+        if len(histo[i]) > 0:
+            histo_data.append({"count":len(histo[i]), "time": i})
 
     return {
         'histo_data': {"All Domains": histo_data},
@@ -982,7 +1011,7 @@ def stats_data(request):
 
     if histo_type == "active_domains":
         params.update(params_es)
-        return json_response(get_active_domain_stats_data(params, request.datespan))
+        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "domains":
         params.update(params_es)

@@ -24,14 +24,21 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domains",
         "chart_title": "Active Project Spaces",
-        "date_field_opts": [
-            {
-                "name": "Submissions received within past time period",
-                "value": "received_on",
-            },
-        ],
+        "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "month",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_self_started_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_self_started_domains",
+        "chart_title": "Active Self Started Project Spaces",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "self_started": ["T"],
+        },
+        "histogram_type": "active_domains",
+        "interval": "week",
         "xaxis_label": "# domains",
     },
     "domain_count": {
@@ -394,9 +401,10 @@ class RealProjectSpacesReport(GlobalAdminReports):
 
 class ActiveRealProjectSpacesReport(GlobalAdminReports):
     slug = 'active_real_project_spaces'
-    name = ugettext_noop('Active Real Project Spaces')
+    name = ugettext_noop('Active Project Spaces')
     indicators = [
         'active_domain_count',
+        'active_self_started_domain_count',
     ]
 
 class RealProjectSpacesPlansReport(GlobalAdminReports):
