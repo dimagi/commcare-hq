@@ -56,6 +56,7 @@ BaseListViewModel = function (o) {
         $(button).button('loading');
         data_index = ko.utils.unwrapObservable(data_index);
         $.ajax({
+            type: 'POST',
             url: action_url,
             dataType: 'json',
             error: unsuccessful_archive_action(button, data_index),
