@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 import logging
+from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
 from dimagi.utils.couch import CriticalSection
+import sys
+import traceback
 
 try:
     # Python 2.x
@@ -39,7 +42,8 @@ def worker_thread(q, err, function, use_critical_section, *args, **kwargs):
             logging.exception("Error in %s" % function.__name__)
 
 def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
-    args=None, kwargs=None, use_critical_section=False):
+    args=None, kwargs=None, use_critical_section=False,
+    print_stack_interval=None):
     """
     Spawns a number of threads which will process the given items.
     items - the list of items to process
@@ -50,6 +54,8 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
       thread should process about this many items
     max_threads - used as a limit to the number of threads if item_goal is
       specified
+    print_stack_interval - if specified, the stack for all threads will be
+      printed on this interval, specified in minutes
 
     This function does not return until all items are processed.
     Raises RuntimeError if at least one thread raised an exception. Thread
@@ -76,7 +82,13 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
     # this thread lingering if something goes wrong and the queue's tasks aren't
     # marked as done.
     threads_alive = 50
+    last_print_timestamp = datetime.utcnow()
     while threads_alive > 0:
+        if print_stack_interval:
+            utcnow = datetime.utcnow()
+            if last_print_timestamp < (utcnow - timedelta(minutes=print_stack_interval)):
+                print_all_stacks()
+                last_print_timestamp = utcnow
         sleep(1)
         count = 0
         for thread in threads:
@@ -87,4 +99,16 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
     if err.error_occurred:
         raise RuntimeError("Error occurred calling process_fast. Check "
             "couchlog for details.")
+
+
+def print_all_stacks():
+    """
+    Prints the stack for all threads. Useful for debugging when threads
+    get stuck or deadlocked.
+    """
+    print "Printing all threads at %s" % datetime.utcnow()
+    for thread_id, top_frame in sys._current_frames().items():
+        print "-" * 20, thread_id, "-" * 20
+        traceback.print_stack(f=top_frame)
+
 
