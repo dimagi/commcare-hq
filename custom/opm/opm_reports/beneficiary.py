@@ -163,8 +163,11 @@ class OPMCaseRow(object):
     # and in case_property s
     @property
     def child_attended_vhnd(self):
+        if self.child_age == 1:
+            return True
+        elif not self.vhnd_available:
+            return True
         if self.child_age != 1:
-            # todo: incorporate vhnd chnages to this
             return any(
                 form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
                 for form in self.forms
@@ -293,7 +296,7 @@ class OPMCaseRow(object):
                 self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
             elif dod_date < reporting_date:
                 status = 'mother'
-                self.child_age = len(months_between(dod_date, datetime.date(self.report.year, self.report.month, 1)))
+                self.child_age = len(months_between(dod_date, reporting_date))
         elif edd_date is not None:
             if edd_date >= reporting_date:
                 status = 'pregnant'
