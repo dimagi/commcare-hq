@@ -23,7 +23,7 @@ class MockDataProvider(SharedDataProvider):
     """
     def __init__(self, datespan, vhnd_map=None):
         super(MockDataProvider, self).__init__(datespan)
-        self.vhnd_map = vhnd_map or AggressiveDefaultDict(lambda: True)
+        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: True)
 
     @property
     def vhnd_availability(self):

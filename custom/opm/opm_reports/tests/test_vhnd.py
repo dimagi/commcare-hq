@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from custom.opm.opm_reports.constants import InvalidRow, CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, Form, \
-    get_relative_edd_from_preg_month
+    get_relative_edd_from_preg_month, MockDataProvider
 
 
 class TestChildVHND(OPMCaseReportTestBase):
@@ -113,3 +113,23 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(True, row.preg_attended_vhnd)
+
+    def test_positive_when_no_vhnd(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 12, 10),
+        )
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map={
+            'Sahora': False,
+        })
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(True, row.preg_attended_vhnd)
+
+    def test_no_vhnd_specified(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 12, 10),
+        )
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertRaises(InvalidRow, lambda: row.preg_attended_vhnd)

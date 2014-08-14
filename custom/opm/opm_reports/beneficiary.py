@@ -145,6 +145,8 @@ class OPMCaseRow(object):
         # in month 9 they always meet this condition
         if self.preg_month == 9:
             return True
+        elif not self.vhnd_available:
+            return True
         elif 9 > self.preg_month > 3:
             vhnd_attendance = {
                 4: self.case_property('attendance_vhnd_1', 0),
