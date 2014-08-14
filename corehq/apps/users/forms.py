@@ -355,7 +355,7 @@ class CommtrackUserForm(forms.Form):
             # add the supply point case id to user data fields
             # so that the phone can auto select
             supply_point = SupplyPointCase.get_by_location(loc)
-            user['user_data']['commtrack-supply-point'] = supply_point._id
+            user.user_data['commtrack-supply-point'] = supply_point._id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
