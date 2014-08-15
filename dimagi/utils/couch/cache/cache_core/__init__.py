@@ -8,6 +8,11 @@ log = logging.getLogger(__name__)
 COUCH_CACHE_TIMEOUT = 60 * 60 * 12
 MOCK_REDIS_CACHE = None
 
+try:
+    REDIS_CACHE = cache.get_cache('redis')
+except:
+    REDIS_CACHE = None
+
 DEBUG_TRACE = False
 
 CACHE_DOCS = getattr(settings, 'COUCH_CACHE_DOCS', False)
@@ -37,9 +42,8 @@ def get_redis_default_cache():
         return cache.cache
 
 def get_redis_client():
-    rcache = cache.get_cache('redis')
     try:
-        client = rcache.raw_client
+        client = REDIS_CACHE.raw_client
     except Exception:
         log.error("Could not get redis connection.", exc_info=True)
         raise RedisClientError("Could not get redis connection.")
