@@ -831,6 +831,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.initialCase = new cloudCare.Case(self.options.initialCase);
         }
         if (self.options.initialParent) {
+            console.log("setting initial parent");
+            console.log(self.options.initialParent);
             self.initialParent = new cloudCare.Case(self.options.initialParent);
         }
 
@@ -1028,11 +1030,22 @@ cloudCare.AppMainView = Backbone.View.extend({
                 if (module.get("parent_select").module_id) {
                     if (self.initialParent){
 
+                        var parentModuleId = module.get("parent_select").module_id;
+                        var parentModule = null;
+                        var parentModuleIndex = null;
+                        var modules = self.appView.moduleListView.moduleList.models;
+                        for(var i = 0; i < modules.length; i++){
+                            if (modules[i].get("unique_id") === parentModuleId){
+                                parentModule = modules[i];
+                                parentModuleIndex = i;
+                                break;
+                            }
+                        }
                         self.initialParent.set('appConfig', {
                             app_id: appId,
-                            module_index: moduleIndex,
+                            module_index: parentModuleIndex,
                             form_index: formIndex,
-                            module: module,
+                            module: parentModule,
                             parentId: self.initialParent.id
                         });
                         self.appView.selectParent(self.initialParent);
