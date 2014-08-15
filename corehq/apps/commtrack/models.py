@@ -1610,7 +1610,7 @@ def update_stock_state_for_transaction(instance):
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
     try:
-        state = StockState.objects.get(
+        state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
