@@ -226,7 +226,7 @@ class OPMCaseRow(object):
     @property
     def preg_received_ifa(self):
         if self.preg_month == 6:
-            if self.block== "atri":
+            if self.block == "atri":
                 return self.case_property('ifa_tri_1', 0) == 'received'
 
     @property
