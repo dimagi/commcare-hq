@@ -200,7 +200,7 @@ class OPMCaseRow(object):
 
         if months_after is not None:
             new_year, new_month = add_months(reference_date.year, reference_date.month, months_after)
-            end = datetime.datetime(new_year, new_month, 1)
+            end = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
             end = first_of_next_month(reference_date)
 

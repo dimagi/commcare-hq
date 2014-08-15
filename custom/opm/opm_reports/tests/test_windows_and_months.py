@@ -117,19 +117,19 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
 
 
 class TestFormFiltering(TestCase):
-    def check_form(self, received=None, num_months=None, xmlns=None):
+    def check_form(self, received=None, months_before=None, months_after=None, xmlns=None):
         form = XFormInstance(received_on=received or datetime(2014, 6, 15),
                     form={'foo': 'bar'},
                     xmlns=xmlns or 'moodys://falafel.palace')
         case = OPMCase([form], dod=date(2014, 1, 10))
         row = MockCaseRow(case, Report(month=6, year=2014, block="Atri"))
-        return len(row.filtered_forms(xmlns, num_months)) == 1
+        return len(row.filtered_forms(xmlns, months_before, months_after)) == 1
 
-    def assertInRange(self, y, m, d, num_months=None):
-        self.assertTrue(self.check_form(datetime(y, m, d, 10), num_months))
+    def assertInRange(self, y, m, d, months_before=None, months_after=None):
+        self.assertTrue(self.check_form(datetime(y, m, d, 10), months_before, months_after))
 
-    def assertNotInRange(self, y, m, d, num_months=None):
-        self.assertFalse(self.check_form(datetime(y, m, d, 10), num_months))
+    def assertNotInRange(self, y, m, d, months_before=None, months_after=None):
+        self.assertFalse(self.check_form(datetime(y, m, d, 10), months_before, months_after))
 
     def test_forms_in_range(self):
         self.assertInRange(2014, 6, 15, 1)
@@ -151,9 +151,15 @@ class TestFormFiltering(TestCase):
         self.assertNotInRange(2014, 7, 1)
 
     def test_first_day(self):
-        self.assertInRange(2014, 6, 1, num_months=1)
-        self.assertInRange(2014, 4, 1, num_months=3)
+        self.assertInRange(2014, 6, 1, months_before=1)
+        self.assertInRange(2014, 4, 1, months_before=3)
 
     def test_one_day_early(self):
-        self.assertNotInRange(2014, 5, 31, num_months=1)
-        self.assertNotInRange(2014, 3, 31, num_months=3)
+        self.assertNotInRange(2014, 5, 31, months_before=1)
+        self.assertNotInRange(2014, 3, 31, months_before=3)
+
+    def test_months_after(self):
+        self.assertInRange(2014, 7, 4, months_after=1)
+
+    def test_months_after_doesnt_affect_before(self):
+        self.assertNotInRange(2014, 5, 4, months_before=1, months_after=1)
