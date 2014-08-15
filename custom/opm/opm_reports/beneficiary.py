@@ -181,27 +181,35 @@ class OPMCaseRow(object):
         elif self.preg_month == 9:
             return self.case_property('weight_tri_2') == 'received'
 
-    def filtered_forms(self, xmlns_or_list=None, num_months=None):
+    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None):
         """
         Returns a list of forms filtered by xmlns if specified
         and from the previous number of calendar months if specified
         """
-        if not isinstance(xmlns_or_list, list):
+        if isinstance(xmlns_or_list, basestring):
             xmlns_list = [xmlns_or_list]
         else:
-            xmlns_list = xmlns_or_list
-        end = self.datespan.enddate
-        if num_months is not None:
-            new_year, new_month = add_months(end.year, end.month, -num_months)
+            xmlns_list = xmlns_or_list or []
+
+        reference_date = self.datespan.enddate
+        if months_before is not None:
+            new_year, new_month = add_months(reference_date.year, reference_date.month, -months_before)
             start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
             start = None
+
+        if months_after is not None:
+            new_year, new_month = add_months(reference_date.year, reference_date.month, months_after)
+            end = datetime.datetime(new_year, new_month, 1)
+        else:
+            end = first_of_next_month(reference_date)
+
         def check_form(form):
-            if xmlns_or_list and form.xmlns not in xmlns_list:
+            if xmlns_list and form.xmlns not in xmlns_list:
                 return False
-            if start and form.received_on <= start:
+            if start and form.received_on < start:
                 return False
-            if end and form.received_on > end:
+            if end and form.received_on >= end:
                 return False
             return True
         return filter(check_form, self.forms)
