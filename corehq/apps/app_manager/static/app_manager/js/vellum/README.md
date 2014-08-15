@@ -29,6 +29,9 @@ an existing jQuery instance:
 
 ```html
 <link rel="stylesheet" href="path/to/bootstrap.css"></link>
+<link rel="stylesheet" href="path/to/vellum/style.css"></link>
+<!-- optional, if using bundled jquery et al -->
+<link rel="stylesheet" href="path/to/vellum/global-deps.css"></link>
 
 <!-- 
 Optionally reuse existing jQuery instance with jQuery UI and Bootstrap.  
@@ -45,14 +48,13 @@ multiple Bootstrap versions due to the way the bundled version is loaded. -->
         packages: [
             {
                 name: 'jquery.vellum',
-                location: "/path/to/vellum/src",
-                main: 'main.js'
+                location: "/path/to/vellum/src"
             }
         ]
     });
 
-    require(["jquery.vellum/require-config"], function () {
-        require(["jquery", "jquery.vellum"], function ($) {
+    require(["jquery.vellum"], function () {
+        require(["jquery"], function ($) {
             $(function () {
                 $('#some_div').vellum(VELLUM_OPTIONS);
             });

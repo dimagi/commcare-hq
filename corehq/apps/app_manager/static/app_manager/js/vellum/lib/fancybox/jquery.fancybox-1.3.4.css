@@ -1,19 +1,3 @@
-/*
- * FancyBox - jQuery Plugin
- * Simple and fancy lightbox alternative
- *
- * Examples and documentation at: http://fancybox.net
- * 
- * Copyright (c) 2008 - 2010 Janis Skarnelis
- * That said, it is hardly a one-person project. Many people have submitted bugs, code, and offered their advice freely. Their support is greatly appreciated.
- * 
- * Version: 1.3.4 (11/11/2010)
- * Requires: jQuery v1.3+
- *
- * Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
- */
 
 #fancybox-loading {
 	position: fixed;
@@ -28,7 +12,6 @@
 	z-index: 1104;
 	display: none;
 }
-
 #fancybox-loading div {
 	position: absolute;
 	top: 0;
@@ -37,7 +20,6 @@
 	height: 480px;
 	background-image: url('img/fancybox.png');
 }
-
 #fancybox-overlay {
 	position: absolute;
 	top: 0;
@@ -46,7 +28,6 @@
 	z-index: 1100;
 	display: none;
 }
-
 #fancybox-tmp {
 	padding: 0;
 	margin: 0;
@@ -54,7 +35,6 @@
 	overflow: auto;
 	display: none;
 }
-
 #fancybox-wrap {
 	position: absolute;
 	top: 0;
@@ -64,14 +44,12 @@
 	outline: none;
 	display: none;
 }
-
 #fancybox-outer {
 	position: relative;
 	width: 100%;
 	height: 100%;
 	background: #fff;
 }
-
 #fancybox-content {
 	width: 0;
 	height: 0;
@@ -82,7 +60,6 @@
 	z-index: 1102;
 	border: 0px solid #fff;
 }
-
 #fancybox-hide-sel-frame {
 	position: absolute;
 	top: 0;
@@ -92,7 +69,6 @@
 	background: transparent;
 	z-index: 1101;
 }
-
 #fancybox-close {
 	position: absolute;
 	top: -15px;
@@ -104,14 +80,12 @@
 	z-index: 1103;
 	display: none;
 }
-
 #fancybox-error {
 	color: #444;
 	font: normal 12px/20px Arial;
 	padding: 14px;
 	margin: 0;
 }
-
 #fancybox-img {
 	width: 100%;
 	height: 100%;
@@ -122,14 +96,12 @@
 	line-height: 0;
 	vertical-align: top;
 }
-
 #fancybox-frame {
 	width: 100%;
 	height: 100%;
 	border: none;
 	display: block;
 }
-
 #fancybox-left, #fancybox-right {
 	position: absolute;
 	bottom: 0px;
@@ -141,15 +113,12 @@
 	z-index: 1102;
 	display: none;
 }
-
 #fancybox-left {
 	left: 0px;
 }
-
 #fancybox-right {
 	right: 0px;
 }
-
 #fancybox-left-ico, #fancybox-right-ico {
 	position: absolute;
 	top: 50%;
@@ -161,30 +130,24 @@
 	z-index: 1102;
 	display: block;
 }
-
 #fancybox-left-ico {
 	background-image: url('img/fancybox.png');
 	background-position: -40px -30px;
 }
-
 #fancybox-right-ico {
 	background-image: url('img/fancybox.png');
 	background-position: -40px -60px;
 }
-
 #fancybox-left:hover, #fancybox-right:hover {
-	visibility: visible; /* IE6 */
+	visibility: visible; 
 }
-
 #fancybox-left:hover span {
 	left: 20px;
 }
-
 #fancybox-right:hover span {
 	left: auto;
 	right: 20px;
 }
-
 .fancybox-bg {
 	position: absolute;
 	padding: 0;
@@ -194,21 +157,18 @@
 	height: 20px;
 	z-index: 1001;
 }
-
 #fancybox-bg-n {
 	top: -20px;
 	left: 0;
 	width: 100%;
 	background-image: url('img/fancybox-x.png');
 }
-
 #fancybox-bg-ne {
 	top: -20px;
 	right: -20px;
 	background-image: url('img/fancybox.png');
 	background-position: -40px -162px;
 }
-
 #fancybox-bg-e {
 	top: 0;
 	right: -20px;
@@ -216,14 +176,12 @@
 	background-image: url('img/fancybox-y.png');
 	background-position: -20px 0px;
 }
-
 #fancybox-bg-se {
 	bottom: -20px;
 	right: -20px;
 	background-image: url('img/fancybox.png');
 	background-position: -40px -182px; 
 }
-
 #fancybox-bg-s {
 	bottom: -20px;
 	left: 0;
@@ -231,34 +189,29 @@
 	background-image: url('img/fancybox-x.png');
 	background-position: 0px -20px;
 }
-
 #fancybox-bg-sw {
 	bottom: -20px;
 	left: -20px;
 	background-image: url('img/fancybox.png');
 	background-position: -40px -142px;
 }
-
 #fancybox-bg-w {
 	top: 0;
 	left: -20px;
 	height: 100%;
 	background-image: url('img/fancybox-y.png');
 }
-
 #fancybox-bg-nw {
 	top: -20px;
 	left: -20px;
 	background-image: url('img/fancybox.png');
 	background-position: -40px -122px;
 }
-
 #fancybox-title {
 	font-family: Helvetica;
 	font-size: 12px;
 	z-index: 1102;
 }
-
 .fancybox-title-inside {
 	padding-bottom: 10px;
 	text-align: center;
@@ -266,12 +219,10 @@
 	background: #fff;
 	position: relative;
 }
-
 .fancybox-title-outside {
 	padding-top: 10px;
 	color: #fff;
 }
-
 .fancybox-title-over {
 	position: absolute;
 	bottom: 0;
@@ -279,36 +230,30 @@
 	color: #FFF;
 	text-align: left;
 }
-
 #fancybox-title-over {
 	padding: 10px;
 	background-image: url('img/fancy_title_over.png');
 	display: block;
 }
-
 .fancybox-title-float {
 	position: absolute;
 	left: 0;
 	bottom: -20px;
 	height: 32px;
 }
-
 #fancybox-title-float-wrap {
 	border: none;
 	border-collapse: collapse;
 	width: auto;
 }
-
 #fancybox-title-float-wrap td {
 	border: none;
 	white-space: nowrap;
 }
-
 #fancybox-title-float-left {
 	padding: 0 0 0 15px;
 	background: url('img/fancybox.png') -40px -90px no-repeat;
 }
-
 #fancybox-title-float-main {
 	color: #FFF;
 	line-height: 29px;
@@ -316,7 +261,6 @@
 	padding: 0 0 3px 0;
 	background: url('img/fancybox-x.png') 0px -40px;
 }
-
 #fancybox-title-float-right {
 	padding: 0 0 0 15px;
 	background: url('img/fancybox.png') -55px -90px no-repeat;
