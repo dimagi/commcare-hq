@@ -2,19 +2,20 @@ from datetime import datetime, date
 from unittest import TestCase
 
 from ..constants import *
-from .case_reports import Report, Form, OPMCase, MockCaseRow
+from .case_reports import Report, OPMCase, MockCaseRow
+from couchforms.models import XFormInstance
 
 
 class TestChildGrowthMonitored(TestCase):
     def form_with_condition(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'child1_growthmon_calc': 'received'},
             received_on=datetime(y, m, d),
             xmlns=CFU2_XMLNS,
         )
 
     def form_without_condition(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'child1_growthmon_calc': 'not_taken'},
             received_on=datetime(y, m, d),
             xmlns=CFU2_XMLNS,
@@ -51,14 +52,14 @@ class TestChildGrowthMonitored(TestCase):
 
 class TestChildExclusivelyBreastfed(TestCase):
     def breastfed_form(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'child1_child_excbreastfed': '1'},
             received_on=datetime(y, m, d),
             xmlns=CFU1_XMLNS,
         )
 
     def not_breastfed_form(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'child1_child_excbreastfed': '0'},
             received_on=datetime(y, m, d),
             xmlns=CFU1_XMLNS,

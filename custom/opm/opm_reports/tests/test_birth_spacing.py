@@ -2,19 +2,20 @@ from datetime import datetime, date
 from unittest import TestCase
 
 from ..constants import *
-from .case_reports import Report, Form, OPMCase, MockCaseRow
+from .case_reports import Report, OPMCase, MockCaseRow
+from couchforms.models import XFormInstance
 
 
 class TestBirthSpacing(TestCase):
     def pregnant_form(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'birth_spacing_prompt': '1'},
             received_on=datetime(y, m, d),
             xmlns=CFU3_XMLNS,
         )
 
     def not_pregnant_form(self, y, m, d):
-        return Form(
+        return XFormInstance(
             form={'birth_spacing_prompt': '2'},
             received_on=datetime(y, m, d),
             xmlns=CFU3_XMLNS,
