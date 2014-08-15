@@ -95,6 +95,11 @@ def get_relative_edd_from_preg_month(report_date, month):
     return type(report_date)(new_year, new_month, 1)
 
 
+def offset_date(reference_date, offset):
+    new_year, new_month = add_months(reference_date.year, reference_date.month, offset)
+    return date(new_year, new_month, 1)
+
+
 class MockDataTest(OPMCaseReportTestBase):
 
     def test_mock_data(self):
