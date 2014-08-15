@@ -85,11 +85,32 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
         self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
+class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
+    expected_window = 6
+
+    def setUp(self):
+        super(TestChildBirthRegistration, self).setUp()
+        self.valid_form_function = _valid_birth_registration_form
+        self.condition_getter = lambda row: row.child_birth_registered
+
+
 def _valid_measles_form(received_on):
     return XFormInstance(
         form={
             'child1': {
                 'child1_child_measlesvacc': '1',
+            }
+        },
+        received_on=received_on,
+        xmlns=CFU1_XMLNS,
+    )
+
+
+def _valid_birth_registration_form(received_on):
+    return XFormInstance(
+        form={
+            'child1': {
+                'child1_child_register': '1',
             }
         },
         received_on=received_on,
