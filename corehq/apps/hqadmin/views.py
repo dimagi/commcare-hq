@@ -872,7 +872,7 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 def daterange(interval, start_date, end_date):
-    cur_date = start_date
+    cur_date = end_date
     if interval == 'day':
         step = relativedelta(days=1)
     elif interval == 'week':
@@ -882,9 +882,9 @@ def daterange(interval, start_date, end_date):
     elif interval == 'year':
         step = relativedelta(years=1)
 
-    while cur_date < end_date:
-        cur_date += step
+    while cur_date > start_date:
         yield cur_date
+        cur_date -= step
 
 def make_buckets(interval, start_date, end_date):
     buckets_list = list()
@@ -896,56 +896,44 @@ def make_buckets(interval, start_date, end_date):
 
     return buckets_list, buckets_dict
 
-def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
-    form_query = (
-            ESQuery('forms')
+def get_form_query(datefield, begin, end, facet_name, facet_terms):
+    return (ESQuery('forms')
             .fields(['domain', datefield])
             .filter({
                 "range": {
                     datefield: {
-                        "from": datespan.startdate_display, 
-                        "to": datespan.enddate_display
+                        "from": begin, 
+                        "to": end
                         }
                     }
                 }
             )
-    )
+            .facet(facet_name, facet_terms)
+            .size(0))
+
+def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys, histo = make_buckets(interval, begin, end)
 
     real_domain_query = (
             ESQuery('domains')
             .fields(['name'])
             .filter({"terms": params})
     )
-
-     
-    form_query_results = form_query.run().raw_hits
     real_domain_query_results = real_domain_query.run().raw_hits
-    
     real_domains = {x['fields']['name'] for x in real_domain_query_results}
 
-    domain_day = set()
-    for result in form_query_results:
-        domain = result['fields']['domain']
-        if domain in real_domains:
-            date = time.strptime(result['fields']['received_on'], "%Y-%m-%dT%H:%M:%SZ")
-            domain_day.add((domain, time.mktime(date)*1000))
-
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys, histo = make_buckets(interval, begin, end)
-
-    for i in domain_day:
-        domain = i[0]
-        date_received = i[1]
-        left = bisect.bisect_left(keys, date_received)
-        right = bisect.bisect_right(keys, date_received + SECS_IN_30_DAYS)
-        for j in keys[left:right+1]:
-            histo[j].add(domain)
-    
     histo_data = []
-    for i in keys:
-        if len(histo[i]) > 0:
-            histo_data.append({"count":len(histo[i]), "time": i})
+    for timestamp in reversed(keys):
+        t = timestamp
+        f = timestamp - SEC_IN_30_DAYS
+        form_query = get_form_query(datefield, f, t, 'domains', {"field": "domain"})
+        domains = form_query.run().facet('domains')
+        domains = [d['term'] for d in domains if d['term'] in real_domains]
+        c = len(domains)
+        if c > 0:
+            histo_data.append({"count": c, "time": timestamp})
 
     return {
         'histo_data': {"All Domains": histo_data},
