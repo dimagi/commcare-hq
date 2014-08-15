@@ -887,14 +887,16 @@ def daterange(interval, start_date, end_date):
         cur_date -= step
 
 def make_buckets(interval, start_date, end_date):
+    """
+    Returns a descending sorted list of timestamps to use from end_date to 
+    start_date
+    """
     buckets_list = list()
-    buckets_dict = dict()
     for single_date in daterange(interval, start_date, end_date):
         t =int(1000*time.mktime(single_date.timetuple()))
         buckets_list.append(t)
-        buckets_dict[t] = set()
 
-    return buckets_list, buckets_dict
+    return buckets_list
 
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
     return (ESQuery('forms')
@@ -914,7 +916,7 @@ def get_form_query(datefield, begin, end, facet_name, facet_terms):
 def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
     begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
     end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys, histo = make_buckets(interval, begin, end)
+    keys = make_buckets(interval, begin, end)
 
     real_domain_query = (
             ESQuery('domains')

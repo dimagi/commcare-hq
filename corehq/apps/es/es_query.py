@@ -13,7 +13,8 @@ SQLAlchemy. Here's an example usage:
         .fields(['xmlns', 'domain', 'app_id'])\
         .sort('received_on', desc=False)\
         .size(self.pagination.count)\
-        .start(self.pagination.start)
+        .start(self.pagination.start)\
+        .facet("domains", {"field": "domains"})
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -156,8 +157,7 @@ class ESQuery(object):
 
     def facet(self, name, terms):
         """
-        Add the passed-in filter to the query.  All filtering goes through
-        this class.
+        Add a facet to the query.
         """
         query = deepcopy(self)
         query._facets[name] = {'terms': terms}
@@ -166,8 +166,7 @@ class ESQuery(object):
     @property
     def facets(self):
         """
-        Return a list of the filters used in this query, suitable if you
-        want to reproduce a query with additional filtering.
+        Return a dictionary of the facets used in this query.
         """
         return self._facets
 
