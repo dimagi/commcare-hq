@@ -296,14 +296,14 @@ class OPMCaseRow(object):
         window = None
         dod_date = self.case_property('dod')
         edd_date = self.case_property('edd')
-        if dod_date is not None:
+        if dod_date:
             if dod_date > reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
             elif dod_date < reporting_date:
                 status = 'mother'
                 self.child_age = len(months_between(dod_date, reporting_date))
-        elif edd_date is not None:
+        elif edd_date:
             if edd_date >= reporting_date:
                 status = 'pregnant'
                 self.preg_month = 9 - (edd_date - reporting_date).days / 30
@@ -465,6 +465,7 @@ class ConditionsMet(OPMCaseRow):
             self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
             self.four = ''
+            self.five = ''
 
         # This is what I think is meant by this stuff
         # https://github.com/dimagi/commcare-hq/blob/cacf077042edb23c1167563c5127b810dbcd555a/custom/opm/opm_reports/conditions_met.py#L297-L314
