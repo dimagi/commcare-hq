@@ -231,32 +231,45 @@ class OPMCaseRow(object):
                 ]
 
     @property
+    def child_weighed_once(self):
+        if self.child_age == 3:
+            # TODO reformat
+            prev_forms = [form for form in self.forms
+                    if (self.datespan.startdate - datetime.timedelta(90))
+                        <= form.received_on <= self.datespan.enddate]
+            weight_key = indexed_child("child1_child_weight", self.child_index)
+            prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-90)]
+            child_group = "child_" + str(self.child_index)
+            child_forms = [form.form[child_group] for form in prev_forms if child_group in form.form]
+            birth_weight = {child[weight_key] for child in child_forms if weight_key in child}
+            child_birth_weight_taken = '1' in birth_weight
+            return child_birth_weight_taken
+
+    @property
+    def child_birth_registered(self):
+        if self.child_age == 6:
+            return 'received' in [
+                self.form_properties[indexed_child('child1_register_calc', self.child_index)],
+                self.form_properties[indexed_child('prev_child1_register_calc', self.child_index)]
+            ]
+
+    @property
+    def child_received_measles_vaccine(self):
+        if self.child_age == 12:
+            return 'received' in [
+                self.form_properties[indexed_child('child1_measles_calc', self.child_index)],
+                self.form_properties[indexed_child('prev_child1_measles_calc', self.child_index)]
+            ]
+
+    @property
     def child_condition_four(self):
-        # TODO This appears to be one of several unrelated conditions
-        # depending on the child's age, I think it's wrong
         if self.block == 'atri':
             if self.child_age == 3:
-                # TODO reformat
-                prev_forms = [form for form in self.forms
-                        if (self.datespan.startdate - datetime.timedelta(90))
-                            <= form.received_on <= self.datespan.enddate]
-                weight_key = indexed_child("child1_child_weight", self.child_index)
-                prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-90)]
-                child_group = "child_" + str(self.child_index)
-                child_forms = [form.form[child_group] for form in prev_forms if child_group in form.form]
-                birth_weight = {child[weight_key] for child in child_forms if weight_key in child}
-                child_birth_weight_taken = '1' in birth_weight
-                return child_birth_weight_taken
+                return self.child_weighed_once
             elif self.child_age == 6:
-                return 'received' in [
-                    self.form_properties[indexed_child('child1_register_calc', self.child_index)],
-                    self.form_properties[indexed_child('prev_child1_register_calc', self.child_index)]
-                ]
+                return self.child_birth_registered
             elif self.child_age == 12:
-                return 'received' in [
-                    self.form_properties[indexed_child('child1_measles_calc', self.child_index)],
-                    self.form_properties[indexed_child('prev_child1_measles_calc', self.child_index)]
-                ]
+                return self.child_received_measles_vaccine
 
     @property
     def child_breastfed(self):
