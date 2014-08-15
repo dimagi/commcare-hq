@@ -167,7 +167,7 @@ class OPMCaseRow(object):
             return True
         elif not self.vhnd_available:
             return True
-        if self.child_age != 1:
+        else:
             return any(
                 form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
                 for form in self.forms
