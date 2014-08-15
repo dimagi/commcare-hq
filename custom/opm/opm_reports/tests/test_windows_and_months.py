@@ -1,7 +1,8 @@
 from unittest import TestCase
 from datetime import date, datetime
+from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, Form, offset_date)
+from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date)
 from dimagi.utils.dates import add_months
 
 
@@ -117,7 +118,7 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
 
 class TestFormFiltering(TestCase):
     def check_form(self, received=None, num_months=None, xmlns=None):
-        form = Form(received_on=received or datetime(2014, 6, 15),
+        form = XFormInstance(received_on=received or datetime(2014, 6, 15),
                     form={'foo': 'bar'},
                     xmlns=xmlns or 'moodys://falafel.palace')
         case = OPMCase([form], dod=date(2014, 1, 10))

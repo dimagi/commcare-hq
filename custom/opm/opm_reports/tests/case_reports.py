@@ -6,6 +6,7 @@ from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 from custom.opm.opm_reports.reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
@@ -43,12 +44,6 @@ class Report(JsonObject):
     @property
     def datespan(self):
         return DateSpan.from_month(self.month, self.year, inclusive=True)
-
-
-class Form(JsonObject):
-    xmlns = StringProperty('something')
-    form = DictProperty(required=True)
-    received_on = DateTimeProperty(required=True)
 
 
 class OPMCase(CommCareCase):
@@ -104,7 +99,7 @@ class MockDataTest(OPMCaseReportTestBase):
 
     def test_mock_data(self):
         report = Report(month=6, year=2014, block="Atri")
-        form = Form(form={'foo': 'bar'}, received_on=datetime(2014, 6, 15))
+        form = XFormInstance(form={'foo': 'bar'}, received_on=datetime(2014, 6, 15))
         case = OPMCase(
             forms=[form],
             # add/override any desired case properties here

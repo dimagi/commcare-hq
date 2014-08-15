@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
+from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow, CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
-from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, Form, \
+from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     get_relative_edd_from_preg_month, MockDataProvider
 
 
@@ -16,7 +17,7 @@ class TestChildVHND(OPMCaseReportTestBase):
 
     def test_single_match_in_all_forms(self):
         for xmlns in CHILDREN_FORMS:
-            form = Form(
+            form = XFormInstance(
                 form={'child1_vhndattend_calc': 'received'},
                 received_on=self.report_datetime,
                 xmlns=xmlns,
@@ -32,7 +33,7 @@ class TestChildVHND(OPMCaseReportTestBase):
         for received_on in (self.report_datetime - timedelta(days=32),
                             self.report_datetime + timedelta(days=32)):
             for xmlns in CHILDREN_FORMS:
-                form = Form(
+                form = XFormInstance(
                     form={'child1_vhndattend_calc': 'received'},
                     received_on=received_on,
                     xmlns=xmlns,
@@ -45,12 +46,12 @@ class TestChildVHND(OPMCaseReportTestBase):
                 self.assertEqual(False, row.child_attended_vhnd)
 
     def test_multiple_forms_in_window(self):
-        form1 = Form(
+        form1 = XFormInstance(
             form={'child1_vhndattend_calc': 'received'},
             received_on=self.report_datetime,
             xmlns=CFU2_XMLNS,
         )
-        form2 = Form(
+        form2 = XFormInstance(
             form={'child1_vhndattend_calc': 'not_taken'},
             received_on=self.report_datetime + timedelta(days=1),
             xmlns=CFU2_XMLNS,

@@ -1,7 +1,7 @@
 from datetime import date
 from unittest import TestCase
 
-from .case_reports import Report, Form, OPMCase, MockCaseRow
+from .case_reports import Report, OPMCase, MockCaseRow
 
 
 class TestMotherWeightMonitored(TestCase):
