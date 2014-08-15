@@ -1,6 +1,7 @@
 from .case_reports import *
 from .test_birth_spacing import *
 from .test_child_conditions import *
+from .test_measles import *
 from .test_preg_conditions import *
 from .test_status import *
 from .test_vhnd import *
