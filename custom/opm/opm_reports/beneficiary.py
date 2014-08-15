@@ -302,7 +302,10 @@ class OPMCaseRow(object):
             return self.child_age/12
 
     def case_property(self, name, default=None):
-        return getattr(self.case, name, default)
+        prop = getattr(self.case, name, default)
+        if isinstance(prop, basestring) and prop.strip() == "":
+            return default
+        return prop
 
     def form_in_range(self, form, adjust_lower=0):
         lower = self.datespan.startdate + datetime.timedelta(days=adjust_lower)
@@ -486,6 +489,7 @@ class ConditionsMet(OPMCaseRow):
             self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, self.preg_weighed)
             self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
             self.four = ''
+            self.five = ''
 
         # This is what I think is meant by this stuff
         # https://github.com/dimagi/commcare-hq/blob/cacf077042edb23c1167563c5127b810dbcd555a/custom/opm/opm_reports/conditions_met.py#L297-L314

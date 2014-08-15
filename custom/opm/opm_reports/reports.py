@@ -516,6 +516,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
+    extra_row_objects = []
 
     def get_rows(self, datespan):
         def get_awc_filter(awcs):
@@ -564,6 +565,9 @@ class CaseReportMixin(object):
             query = query.filter(get_block_filter(self.block))
         result = query.run()
         return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
+
+    def set_extra_row_objects(self, row_objects):
+        self.extra_row_objects = self.extra_row_objects + row_objects
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
@@ -843,11 +847,7 @@ class MetReport(CaseReportMixin, BaseReport):
     model = ConditionsMet
     exportable = False
     is_rendered_as_email = False
-    extra_row_objects = []
 
-    def set_extra_row_objects(self, row_objects):
-        self.extra_row_objects = self.extra_row_objects + row_objects
-        
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
