@@ -6,7 +6,7 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
-from dimagi.utils.dates import months_between
+from dimagi.utils.dates import months_between, first_of_next_month
 
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
@@ -193,7 +193,7 @@ class OPMCaseRow(object):
         end = self.datespan.enddate
         if num_months is not None:
             new_year, new_month = add_months(end.year, end.month, -num_months)
-            start = end.replace(month=new_month, year=new_year)
+            start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
             start = None
         def check_form(form):

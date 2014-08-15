@@ -1,8 +1,11 @@
 from unittest import TestCase
 from datetime import date, datetime
 from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, Form)
+from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, Form, offset_date)
 from dimagi.utils.dates import add_months
+
+
+
 
 
 class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
@@ -11,8 +14,7 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         """
         For a given offset, return a date that many months offset from the report date
         """
-        new_year, new_month = add_months(self.report_date.year, self.report_date.month, offset)
-        return date(new_year, new_month, 1)
+        return offset_date(self.report_date, offset)
 
     def test_valid_window_not_yet_delivered(self):
         # maps number of months in the future your due date is to window
