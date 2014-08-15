@@ -5,7 +5,11 @@
 
 {% block js %}{{ block.super }}
 <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
-
+{% if not vellum_debug %}
+<link href="{% static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% elif vellum_debug == "dev-min" %}
+<link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -61,47 +65,37 @@
             }
         };
 
+        define("jquery", [], function () { return window.jQuery; });
+        define("jquery-ui", ["jquery"], function () {});
+        define("jquery.bootstrap", ["jquery"], function () {});
+
         require.config({
+            {% comment %} 
+            to use non-built files in HQ:
+                * clone Vellum into submodules/formdesigner
+                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+            {% endcomment %}
+            {% if not vellum_debug %}
+            baseUrl: "{% static 'app_manager/js/vellum/src' %}",
+            {% elif vellum_debug == "dev-min" %}
+            baseUrl: "{% static 'formdesigner/_build/src' %}",
+            {% else %}
+            baseUrl: "{% static 'formdesigner/src' %}",
+            {% endif %}
             // handle very bad connections
             waitSeconds: 60,
             urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
-            packages: [
-                {
-                    name: 'jquery.vellum',
-                    {% comment %} 
-                    to use non-built files in HQ:
-                        * clone Vellum into submodules/formdesigner
-                        * set settings.VELLUM_DEBUG to "dev" or "dev-min"
-                    {% endcomment %}
-                    {% if not vellum_debug %}
-                    location: "{% static 'app_manager/js/vellum/src' %}",
-                    {% elif vellum_debug == "dev-min" %}
-                    location: "{% static 'formdesigner/_build/src' %}",
-                    {% else %}
-                    location: "{% static 'formdesigner/src' %}",
-                    {% endif %}
-                    main: 'main.js'
-                }
-            ],
-            config: {
-                'jquery.vellum/require-config': {
-                    {% if not vellum_debug or vellum_debug == "dev-min" %}
-                    'env': 'production'
-                    {% else %}
-                    'env': 'development'
-                    {% endif %}
-                }
+            paths: {
+                'jquery.vellum': 'main'
             }
         });
 
-        require(["jquery.vellum/require-config"], function () {
-            require(["jquery", "jquery.vellum"], function ($) {
-                $(function () {
-                    $("#edit").hide();
-                    $('footer').addClass('fixed-footer');
+        require(["jquery", "jquery.vellum"], function ($) {
+            $(function () {
+                $("#edit").hide();
+                $('footer').addClass('fixed-footer');
 
-                    $('#formdesigner').vellum(VELLUM_OPTIONS);
-                });
+                $('#formdesigner').vellum(VELLUM_OPTIONS);
             });
         });
 
