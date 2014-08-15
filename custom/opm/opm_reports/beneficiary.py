@@ -232,11 +232,11 @@ class OPMCaseRow(object):
     @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
-            if self.form_properties[indexed_child('child1_suffer_diarrhea', self.child_index)] == '1':
-                return 'received' in [
-                    self.form_properties[indexed_child('child1_ors_calc', self.child_index)],
-                    self.form_properties[indexed_child('prev_child1_ors_calc', self.child_index)]
-                ]
+            for form in self.filtered_forms(CHILDREN_FORMS, 3):
+                prop = indexed_child('child1_child_orszntreat', self.child_index)
+                if form.form.get(prop) == '0':
+                    return False
+            return True
 
     @property
     def child_weighed_once(self):
