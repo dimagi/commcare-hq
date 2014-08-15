@@ -124,15 +124,35 @@ class TestFormFiltering(TestCase):
         row = MockCaseRow(case, Report(month=6, year=2014, block="Atri"))
         return len(row.filtered_forms(xmlns, num_months)) == 1
 
+    def assertInRange(self, y, m, d, num_months=None):
+        self.assertTrue(self.check_form(datetime(y, m, d, 10), num_months))
+
+    def assertNotInRange(self, y, m, d, num_months=None):
+        self.assertFalse(self.check_form(datetime(y, m, d, 10), num_months))
+
     def test_forms_in_range(self):
-        self.assertTrue(self.check_form(datetime(2014, 6, 15), 1))
-        self.assertTrue(self.check_form(datetime(2014, 3, 15), 5))
+        self.assertInRange(2014, 6, 15, 1)
+        self.assertInRange(2014, 3, 15, 5)
 
     def test_form_higher(self):
-        self.assertFalse(self.check_form(datetime(2014, 7, 15), 3))
+        self.assertNotInRange(2014, 7, 15, 3)
 
     def test_form_lower(self):
-        self.assertFalse(self.check_form(datetime(2014, 3, 15), 3))
+        self.assertNotInRange(2014, 3, 15, 3)
 
     def test_xmlns_list(self):
         self.assertTrue(self.check_form(xmlns='alligator'))
+
+    def test_last_day(self):
+        self.assertInRange(2014, 6, 30)
+
+    def test_one_day_late(self):
+        self.assertNotInRange(2014, 7, 1)
+
+    def test_first_day(self):
+        self.assertInRange(2014, 6, 1, num_months=1)
+        self.assertInRange(2014, 4, 1, num_months=3)
+
+    def test_one_day_early(self):
+        self.assertNotInRange(2014, 5, 31, num_months=1)
+        self.assertNotInRange(2014, 3, 31, num_months=3)
