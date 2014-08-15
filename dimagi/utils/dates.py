@@ -91,7 +91,7 @@ def first_of_next_month(ref_date):
     month.
     """
     year, month = add_months(ref_date.year, ref_date.month, 1)
-    return datetime.datetime(year, month, 1)
+    return type(ref_date)(year, month, 1)
 
 
 def delta_secs(td):
