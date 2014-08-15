@@ -18,6 +18,9 @@ class ConditionFourTestMixin(object):
     def valid_form(self, received_on):
         return self.valid_form_function(received_on)
 
+    def get_condition(self, row):
+        return self.condition_getter(row)
+
 
 class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
     expected_window = 12
@@ -25,9 +28,10 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
     def setUp(self):
         super(TestChildMeasles, self).setUp()
         self.valid_form_function = _valid_measles_form
+        self.condition_getter = lambda row: row.child_received_measles_vaccine
 
     def test_not_in_window(self):
-        for dod in (date(2014, 3, 10), date(2013, 3, 10)):
+        for dod in (self.valid_dod - timedelta(days=1), self.valid_dod + timedelta(days=32)):
             case = OPMCase(
                 forms=[],
                 dod=dod,
@@ -41,17 +45,17 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
             dod=self.valid_dod
         )
         row = MockCaseRow(case, self.report)
-        self.assertEqual(False, row.child_received_measles_vaccine)
+        self.assertEqual(False, self.get_condition(row))
 
     def test_in_window_with_data(self):
-        for month in (10, 11, 12):
+        for month in range(self.expected_window - 2, self.expected_window + 1):
             form_date = datetime.combine(offset_date(self.valid_dod, month), time())
             case = OPMCase(
                 forms=[self.valid_form(form_date)],
                 dod=self.valid_dod,
             )
             row = MockCaseRow(case, self.report)
-            self.assertEqual(True, row.child_received_measles_vaccine)
+            self.assertEqual(True, self.get_condition(row))
 
     def test_one_month_extension_valid(self):
         form_date = offset_date(self.report_datetime, 1)
@@ -60,7 +64,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
             dod=self.valid_dod,
         )
         row = MockCaseRow(case, self.report)
-        self.assertEqual(True, row.child_received_measles_vaccine)
+        self.assertEqual(True, self.get_condition(row))
 
     def test_two_month_extension_not_valid(self):
         form_date = offset_date(self.report_datetime, 2)
@@ -69,7 +73,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
             dod=self.valid_dod,
         )
         row = MockCaseRow(case, self.report)
-        self.assertEqual(False, row.child_received_measles_vaccine)
+        self.assertEqual(False, self.get_condition(row))
 
     def test_before_window_not_valid(self):
         form_date = datetime.combine(offset_date(self.valid_dod, 9), time())
@@ -78,7 +82,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
             dod=self.valid_dod,
         )
         row = MockCaseRow(case, self.report)
-        self.assertEqual(False, row.child_received_measles_vaccine)
+        self.assertEqual(False, self.get_condition(row))
 
 
 def _valid_measles_form(received_on):
