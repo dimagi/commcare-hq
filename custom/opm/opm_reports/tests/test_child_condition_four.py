@@ -21,15 +21,6 @@ class ConditionFourTestMixin(object):
     def get_condition(self, row):
         return self.condition_getter(row)
 
-
-class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
-    expected_window = 12
-
-    def setUp(self):
-        super(TestChildMeasles, self).setUp()
-        self.valid_form_function = _valid_measles_form
-        self.condition_getter = lambda row: row.child_received_measles_vaccine
-
     def test_not_in_window(self):
         for dod in (self.valid_dod - timedelta(days=1), self.valid_dod + timedelta(days=32)):
             case = OPMCase(
@@ -83,6 +74,15 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(False, self.get_condition(row))
+
+
+class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
+    expected_window = 12
+
+    def setUp(self):
+        super(TestChildMeasles, self).setUp()
+        self.valid_form_function = _valid_measles_form
+        self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
 def _valid_measles_form(received_on):
