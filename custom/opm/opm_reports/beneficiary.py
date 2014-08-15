@@ -264,10 +264,13 @@ class OPMCaseRow(object):
     @property
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
-            return 'received' in [
-                self.form_properties[indexed_child('child1_measles_calc', self.child_index)],
-                self.form_properties[indexed_child('prev_child1_measles_calc', self.child_index)]
-            ]
+            def _test(form):
+                return form.xpath(indexed_child('form/child1/child1_child_measlesvacc', self.child_index)) == '1'
+
+            return any(
+                _test(form)
+                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS], 2, 1)
+            )
 
     @property
     def child_condition_four(self):
