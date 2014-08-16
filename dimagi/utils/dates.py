@@ -85,6 +85,18 @@ def add_months(year, months, offset):
     return (year + years_offset, months_offset)
 
 
+def add_months_to_date(date_or_datetime, offset):
+    """
+    Adds an offset of months to a date or datetime object.
+    """
+    newyear, newmonth = add_months(date_or_datetime.year, date_or_datetime.month, offset)
+    try:
+        return date_or_datetime.replace(year=newyear, month=newmonth)
+    except ValueError:
+        ret = date_or_datetime.replace(year=newyear, month=newmonth, day=1)
+        return ret.replace(day=(first_of_next_month(ret) - datetime.timedelta(days=1)).day)
+
+
 def first_of_next_month(ref_date):
     """
     Given a datetime, return a datetime that is the first of the following
