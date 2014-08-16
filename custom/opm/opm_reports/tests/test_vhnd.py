@@ -66,7 +66,7 @@ class TestChildVHND(OPMCaseReportTestBase):
     def test_always_positive_in_first_month(self):
         case = OPMCase(
             forms=[],
-            dod=date(2014, 6, 10),
+            dod=date(2014, 5, 10),
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(True, row.child_attended_vhnd)
@@ -105,7 +105,7 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
     def test_no_data_not_match(self):
         case = OPMCase(
             forms=[],
-            edd=date(2014, 12, 10),
+            edd=date(2014, 11, 10),
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(False, row.preg_attended_vhnd)
@@ -146,7 +146,7 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
     def test_positive_when_no_vhnd(self):
         case = OPMCase(
             forms=[],
-            edd=date(2014, 12, 10),
+            edd=date(2014, 11, 10),
         )
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={
             'Sahora': False,
@@ -157,7 +157,7 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
     def test_no_vhnd_specified(self):
         case = OPMCase(
             forms=[],
-            edd=date(2014, 12, 10),
+            edd=date(2014, 11, 10),
         )
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
         row = MockCaseRow(case, self.report, data_provider=data_provider)
