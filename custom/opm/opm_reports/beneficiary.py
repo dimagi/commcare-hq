@@ -217,18 +217,17 @@ class OPMCaseRow(object):
         else:
             xmlns_list = xmlns_or_list or []
 
-        reference_date = self.datespan.enddate
         if months_before is not None:
-            new_year, new_month = add_months(reference_date.year, reference_date.month, -months_before)
+            new_year, new_month = add_months(self.year, self.month, -months_before)
             start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
             start = None
 
         if months_after is not None:
-            new_year, new_month = add_months(reference_date.year, reference_date.month, months_after)
+            new_year, new_month = add_months(self.year, self.month, months_after)
             end = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
-            end = first_of_next_month(reference_date)
+            end = datetime.datetime.combine(self.reporting_window_end, datetime.time())
 
         def check_form(form):
             if xmlns_list and form.xmlns not in xmlns_list:
