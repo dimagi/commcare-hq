@@ -13,7 +13,7 @@ class ConditionFourTestMixin(object):
 
     @property
     def valid_dod(self):
-        return offset_date(self.report_date, -(self.expected_window - 1))
+        return offset_date(self.report_date, -self.expected_window)
 
     def valid_form(self, received_on):
         return self.valid_form_function(received_on)
@@ -48,17 +48,8 @@ class ConditionFourTestMixin(object):
             row = MockCaseRow(case, self.report)
             self.assertEqual(True, self.get_condition(row))
 
-    def test_one_month_extension_valid(self):
+    def test_one_month_extension_not_valid(self):
         form_date = offset_date(self.report_datetime, 1)
-        case = OPMCase(
-            forms=[self.valid_form(form_date)],
-            dod=self.valid_dod,
-        )
-        row = MockCaseRow(case, self.report)
-        self.assertEqual(True, self.get_condition(row))
-
-    def test_two_month_extension_not_valid(self):
-        form_date = offset_date(self.report_datetime, 2)
         case = OPMCase(
             forms=[self.valid_form(form_date)],
             dod=self.valid_dod,

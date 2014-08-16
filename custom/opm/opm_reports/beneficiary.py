@@ -271,7 +271,7 @@ class OPMCaseRow(object):
 
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 2, 1)
+                for form in self.filtered_forms(CFU1_XMLNS, 3)
             )
 
     @property
@@ -282,7 +282,7 @@ class OPMCaseRow(object):
 
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 2, 1)
+                for form in self.filtered_forms(CFU1_XMLNS, 3)
             )
 
     @property
@@ -293,7 +293,7 @@ class OPMCaseRow(object):
 
             return any(
                 _test(form)
-                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS], 2, 1)
+                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS],3)
             )
 
     @property
