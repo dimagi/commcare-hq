@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import pytz
 from dimagi.utils.dates import DateSpan
-from django.test import TestCase
+from django.test import SimpleTestCase
 
-class DateSpanSinceTest(TestCase):
+class DateSpanSinceTest(SimpleTestCase):
     def test_since(self):
         enddate = datetime(2013, 7, 21, 12, 30, 45)
         datespan_inclusive = DateSpan.since(7, enddate)
@@ -15,7 +15,7 @@ class DateSpanSinceTest(TestCase):
         self.assertEqual(datespan_non_inclusive.startdate, datetime(2013, 7, 14, 0, 0, 0))
 
 
-class DateSpanTimezoneTest(TestCase):
+class DateSpanTimezoneTest(SimpleTestCase):
 
     def test_defaults(self):
         end = datetime.utcnow()
