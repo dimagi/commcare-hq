@@ -6,9 +6,10 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
-from dimagi.utils.dates import months_between, first_of_next_month
+from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
+from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -45,7 +46,7 @@ SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
 
-# This is just a string processing function, not moving to class
+# replace all instances of 'child1' in a string with 'child{N}'
 indexed_child = lambda prop, num: prop.replace("child1", "child" + str(num))
 
 
@@ -57,7 +58,8 @@ class OPMCaseRow(object):
         self.report = report
         self.data_provider = report.data_provider
         self.block = report.block.lower()
-        self.datespan = self.report.datespan
+        self.month = report.month
+        self.year = report.year
 
         if report.snapshot is not None:
             report.filter(
@@ -76,6 +78,85 @@ class OPMCaseRow(object):
         if report.is_rendered_as_email:
             with localize('hin'):
                 self.status = _(self.status)
+
+    @property
+    def datespan(self):
+        return datespan.from_month(self.month, self.year)
+
+    @property
+    def reporting_window_end(self):
+        return first_of_next_month(datetime.date(self.year, self.month, 1))
+
+    @property
+    def reporting_window_start(self):
+        return datetime.date(self.year, self.month, 1)
+
+    @property
+    @memoized
+    def dod(self):
+        return self.case_property('dod')
+
+    @property
+    @memoized
+    def edd(self):
+        return self.case_property('edd')
+
+    @property
+    @memoized
+    def status(self):
+        if self.dod is not None:
+            # if they delivered within the reporting month, or afterwards they are treated as pregnant
+            if self.dod > self.reporting_window_start:
+                return 'pregnant'
+            else:
+                return 'mother'
+        elif self.edd is not None:
+            # they haven't delivered, so they're pregnant
+            return 'pregnant'
+        else:
+            # no dates, not valid
+            raise InvalidRow()
+
+    @property
+    @memoized
+    def preg_month(self):
+        if self.status == 'pregnant':
+            # todo: this might change based on VHND
+            base_window_start = add_months_to_date(self.edd, -9)
+            month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            if month < 4 or month > 9:
+                raise InvalidRow('pregnancy month %s not valid' % month)
+            return month
+
+    @property
+    @memoized
+    def child_age(self):
+        if self.status == 'mother':
+            return len(months_between(self.dod, self.reporting_window_start)) - 1
+
+    def set_case_properties(self):
+        if self.child_age is None and self.preg_month is None:
+            raise InvalidRow
+
+        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
+        self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
+        self.block_name = self.case_property('block_name', EMPTY_FIELD)
+        self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
+        self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
+        self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
+        self.village = self.case_property('village_name', EMPTY_FIELD)
+        self.case_id = self.case_property('_id', EMPTY_FIELD)
+        self.owner_id = self.case_property('owner_id', '')
+        self.closed = self.case_property('closed', False)
+
+        account = self.case_property('bank_account_number', None)
+        if isinstance(account, Decimal):
+            account = int(account)
+        self.account_number = unicode(account) if account else ''
+        # fake cases will have accounts beginning with 111
+        if re.match(r'^111', self.account_number):
+            raise InvalidRow
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -256,7 +337,6 @@ class OPMCaseRow(object):
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        # TODO should this actually be [25, 37] ?
         if self.child_age in [24, 36]:
             for form in self.filtered_forms(CHILDREN_FORMS):
                 if form.form.get('birth_spacing_prompt') == '1':
@@ -269,64 +349,9 @@ class OPMCaseRow(object):
             return default
         return prop
 
-    def form_in_range(self, form, adjust_lower=0):
-        lower = self.datespan.startdate + datetime.timedelta(days=adjust_lower)
-        upper = self.datespan.enddate
-        return lower <= form.received_on <= upper
-
-    def set_case_properties(self):
-        reporting_date = self.datespan.enddate.date()  # last day of the month
-        status = "unknown"
-        self.preg_month = None
-        self.child_age = None
-        window = None
-        dod_date = self.case_property('dod')
-        edd_date = self.case_property('edd')
-        if dod_date is not None:
-            if dod_date > reporting_date:
-                status = 'pregnant'
-                self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
-            elif dod_date < reporting_date:
-                status = 'mother'
-                self.child_age = len(months_between(dod_date, reporting_date))
-        elif edd_date is not None:
-            if edd_date >= reporting_date:
-                status = 'pregnant'
-                self.preg_month = 9 - (edd_date - reporting_date).days / 30
-            elif edd_date < reporting_date:  # edge case
-                raise InvalidRow
-        else: #if dod_date is None and edd_date is None:
-            raise InvalidRow
-        if status == 'pregnant' and (self.preg_month > 3 and self.preg_month < 10):
-            self.window = (self.preg_month - 1) / 3
-        elif status == 'mother' and (self.child_age > 0 and self.child_age < 37):
-            self.window = (self.child_age - 1) / 3 + 1
-        else:
-            raise InvalidRow
-        if (self.child_age is None and self.preg_month is None):
-            raise InvalidRow
-
-        self.status = status
-
-        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
-        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
-        self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
-        self.block_name = self.case_property('block_name', EMPTY_FIELD)
-        self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
-        self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
-        self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
-        self.village = self.case_property('village_name', EMPTY_FIELD)
-        self.case_id = self.case_property('_id', EMPTY_FIELD)
-        self.owner_id = self.case_property('owner_id', '')
-        self.closed = self.case_property('closed', False)
-
-        account = self.case_property('bank_account_number', None)
-        if isinstance(account, Decimal):
-            account = int(account)
-        self.account_number = unicode(account) if account else ''
-        # fake cases will have accounts beginning with 111
-        if re.match(r'^111', self.account_number):
-            raise InvalidRow
+    def form_in_range(self, form):
+        # todo: the reporting window might be different than that data window
+        return self.reporting_window_start <= form.received_on.date() < self.reporting_window_end
 
     @property
     @memoized
@@ -507,12 +532,12 @@ class Beneficiary(OPMCaseRow):
 
     @property
     def bp1(self):
-        if self.window == 1:
+        if 3 < self.preg_month < 7:
             return self.bp_conditions
 
     @property
     def bp2(self):
-        if self.window == 2:
+        if 6 < self.preg_month < 10:
             return self.bp_conditions
 
     @property

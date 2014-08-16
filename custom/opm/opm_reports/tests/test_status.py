@@ -8,7 +8,7 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
     def test_not_yet_delivered(self):
         case = OPMCase(
             forms=[],
-            edd=date(2014, 12, 10),
+            edd=date(2014, 11, 10),
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual('pregnant', row.status)
@@ -49,6 +49,12 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 6, 10),
         )
-        # todo: is this really right? this person won't count to either status in the month
-        # is that valid given that people deliver late? (maybe yes since they have already had 6 months counting
+        row = MockCaseRow(case, self.report)
+        self.assertEqual('pregnant', row.status)
+
+    def test_due_after_period_not_delivered(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 5, 10),
+        )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
