@@ -86,61 +86,6 @@ class OPMCaseRow(object):
             return self.img_elem % image_n
 
     @property
-    @memoized
-    def form_properties(self):
-        # TODO this isn't the best way to do this - these properties come
-        # from a number of different forms, and how do we know which value
-        # to store for each property if there are multiple forms?
-        # The names are diverse enough that I don't think we have to worry
-        # about name clashes, but a better way would be to store a set of
-        # all values for each property and/or split these up by form xmlns
-        properties = {
-            'window_1_1': None,
-            'window_1_2': None,
-            'window_1_3': None,
-            'soft_window_1_3': None,
-            'window_2_1': None,
-            'window_2_2': None,
-            'window_2_3': None,
-            'soft_window_2_3': None,
-            'attendance_vhnd_3': None,
-            'attendance_vhnd_6': None,
-            indexed_child('child1_vhndattend_calc', self.child_index): None,
-            indexed_child('prev_child1_vhndattend_calc', self.child_index): None,
-            indexed_child('child1_attendance_vhnd', self.child_index): None,
-            'weight_tri_1': None,
-            'prev_weight_tri_1': None,
-            'weight_tri_2': None,
-            'prev_weight_tri_2': None,
-            indexed_child('child1_growthmon_calc', self.child_index): None,
-            indexed_child('prev_child1_growthmon_calc', self.child_index): None,
-            indexed_child('child1_excl_breastfeed_calc', self.child_index): None,
-            indexed_child('prev_child1_excl_breastfeed_calc', self.child_index): None,
-            indexed_child('child1_ors_calc', self.child_index): None,
-            indexed_child('prev_child1_ors_calc', self.child_index): None,
-            indexed_child('child1_weight_calc', self.child_index): None,
-            indexed_child('child1_register_calc', self.child_index): None,
-            indexed_child('child1_measles_calc', self.child_index): None,
-            indexed_child('prev_child1_weight_calc', self.child_index): None,
-            indexed_child('prev_child1_register_calc', self.child_index): None,
-            indexed_child('prev_child1_measles_calc', self.child_index): None,
-            indexed_child('child1_suffer_diarrhea', self.child_index): None,
-            'interpret_grade_1': None,
-        }
-        for form in self.forms:
-            if self.form_in_range(form):
-                for prop in properties:
-                    if prop == indexed_child('child1_suffer_diarrhea', self.child_index):
-                        child_group = "child_" + str(self.child_index)
-                        if child_group in form.form and prop in form.form[child_group]:
-                            properties[prop] = form.form[child_group][prop]
-                    else:
-                        # TODO is this right?  Multiple matching forms will overwrite
-                        if prop in form.form:
-                            properties[prop] = form.form[prop]
-        return properties
-
-    @property
     def preg_attended_vhnd(self):
         # in month 9 they always meet this condition
         if self.preg_month == 9:
@@ -159,8 +104,6 @@ class OPMCaseRow(object):
         else:
             return False
 
-    # TODO abstract this pattern of looking for received in form_property s
-    # and in case_property s
     @property
     def child_attended_vhnd(self):
         if self.child_age == 1:
@@ -293,6 +236,23 @@ class OPMCaseRow(object):
                 if form.form.get(excl_key) == '0':
                     return False
             return True
+
+    @property
+    def live_delivery(self):
+        # TODO czue, please verify the dates here, it should only be looking at
+        # delivery forms submitted in the last month, but I'm seeing some cases
+        # with child_age as 2 or 3, which is inconsistent.  Uncomment the print
+        # lines below and run the report to replicate. (block: Atri, gp: Sahora
+        # are the filters I'm using)
+        for form in self.filtered_forms(DELIVERY_XMLNS, months_before=1):
+            outcome = form.form.get('mother_preg_outcome')
+            if outcome == '1':
+                # print "*"*40, 'live_delivery', "*"*40
+                # print self.child_age
+                # print form.received_on
+                return True
+            elif outcome in ['2', '3']:
+                return False
 
     @property
     def birth_spacing_years(self):
@@ -497,8 +457,6 @@ class ConditionsMet(OPMCaseRow):
             self.four = ''
             self.five = ''
 
-        # This is what I think is meant by this stuff
-        # https://github.com/dimagi/commcare-hq/blob/cacf077042edb23c1167563c5127b810dbcd555a/custom/opm/opm_reports/conditions_met.py#L297-L314
         if self.child_age in (24, 36):
             if self.birth_spacing_years:
                 self.five = self.img_elem % SPACING_PROMPT_Y
@@ -508,6 +466,7 @@ class ConditionsMet(OPMCaseRow):
                 self.five = ''
 
         if not self.vhnd_available:
+            # TODO what if they don't meet the other conditions?
             met_or_not = True
             self.one = self.img_elem % VHND_NO
             self.two, self.three, self.four, self.five = '','','',''
@@ -540,7 +499,7 @@ class Beneficiary(OPMCaseRow):
         super(Beneficiary, self).__init__(case, report)
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
-        self.delivery_cash = MONTH_AMT if self.delivery else 0
+        self.delivery_cash = MONTH_AMT if self.live_delivery else 0
         self.child_cash = MONTH_AMT if self.child_followup else 0
         self.total = min(
             MONTH_AMT,
@@ -552,51 +511,35 @@ class Beneficiary(OPMCaseRow):
 
     @property
     def bp1(self):
-        if self.block == 'atri':
-            properties = ['window_1_1', 'window_1_2', 'window_1_3']
-        else:
-            properties = ['window_1_1', 'window_1_2', 'soft_window_1_3']
-        for prop in properties:
-            if self.form_properties[prop] == '1':
-                return True
-        return False
+        if self.window == 1:
+            return self.bp_conditions
 
     @property
     def bp2(self):
-        if self.block == 'atri':
-            properties = ['window_2_1', 'window_2_2', 'window_2_3']
-        else:
-            properties = ['window_2_1', 'window_2_2', 'soft_window_2_3']
-        for prop in properties:
-            if self.form_properties[prop] == '1':
-                return True
-        return False
+        if self.window == 2:
+            return self.bp_conditions
 
     @property
-    def delivery(self):
-        for form in self.forms:
-            if form.xmlns == DELIVERY_XMLNS:
-                if form.form.get('mother_preg_outcome') in ['2', '3']:
-                    return True
-        return False
+    def bp_conditions(self):
+        if self.status == "pregnant":
+            return False not in [
+                self.preg_attended_vhnd,
+                self.preg_weighed,
+                self.preg_received_ifa,
+            ]
 
     @property
     def child_followup(self):
         """
         wazirganj - total_soft_conditions = 1
         """
-        xmlns_list = CHILDREN_FORMS + [CHILD_FOLLOWUP_XMLNS]
-        for form in self.forms:
-            if form.xmlns in CHILDREN_FORMS:
-                if self.block == "wazirganj":
-                    if form.form.get("total_soft_conditions", 0) == 1:
-                        return True
-                else:
-                    # TODO Sravan, is there an aggregated calc in the app?
-                    for prop in [
-                        'window%d_child%d' % (window, child)
-                        for window in range(3, 15) for child in range(1, 4)
-                    ]:
-                        if form.form.get(prop) == 1:
-                            return True
-        return False
+        if self.status == 'mother':
+            return False not in [
+                self.child_attended_vhnd,
+                self.child_received_ors,
+                self.child_growth_calculated,
+                self.child_weighed_once,
+                self.child_birth_registered,
+                self.child_received_measles_vaccine,
+                self.child_breastfed,
+            ]
