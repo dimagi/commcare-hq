@@ -33,7 +33,7 @@ class ChildConditionMixin(object):
     def check_condition(self, forms=None, child_age=None):
         child_age = child_age or 5
         report_year, report_month = 2014, 6
-        dod_year, dod_month = add_months(report_year, report_month, 1-child_age)
+        dod_year, dod_month = add_months(report_year, report_month, -child_age)
         report = Report(month=report_month, year=report_year, block="Atri")
         case = OPMCase(
             forms=forms or [],

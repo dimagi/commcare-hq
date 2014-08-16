@@ -8,7 +8,7 @@ class TestMotherWeightMonitored(TestCase):
     def setUp(self):
         self.case = OPMCase(
             forms=[],
-            edd=date(2014, 10, 15),
+            edd=date(2014, 9, 15),
             weight_tri_1="received",
             weight_tri_2="not_taken",
        )
@@ -36,7 +36,7 @@ class TestMotherReceivedIFA(OPMCaseReportTestBase):
     def case(self, met=True):
         return OPMCase(
             forms=[],
-            edd=date(2014, 10, 15),
+            edd=date(2014, 9, 15),
             ifa_tri_1='received' if met else 'not_taken',
        )
 
