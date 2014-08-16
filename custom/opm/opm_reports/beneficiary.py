@@ -184,17 +184,13 @@ class OPMCaseRow(object):
     @property
     def child_weighed_once(self):
         if self.child_age == 3:
-            # TODO reformat
-            prev_forms = [form for form in self.forms
-                    if (self.datespan.startdate - datetime.timedelta(90))
-                        <= form.received_on <= self.datespan.enddate]
-            weight_key = indexed_child("child1_child_weight", self.child_index)
-            prev_forms = [form for form in self.forms if self.form_in_range(form, adjust_lower=-90)]
-            child_group = "child_" + str(self.child_index)
-            child_forms = [form.form[child_group] for form in prev_forms if child_group in form.form]
-            birth_weight = {child[weight_key] for child in child_forms if weight_key in child}
-            child_birth_weight_taken = '1' in birth_weight
-            return child_birth_weight_taken
+            def _test(form):
+                return form.xpath(indexed_child('form/child1/child1_child_weight', self.child_index)) == '1'
+
+            return any(
+                _test(form)
+                for form in self.filtered_forms(CFU1_XMLNS, 2, 1)
+            )
 
     @property
     def child_birth_registered(self):

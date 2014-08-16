@@ -94,6 +94,15 @@ class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
         self.condition_getter = lambda row: row.child_birth_registered
 
 
+class TestChildWeighedOnce(OPMCaseReportTestBase, ConditionFourTestMixin):
+    expected_window = 3
+
+    def setUp(self):
+        super(TestChildWeighedOnce, self).setUp()
+        self.valid_form_function = _valid_child_weight_registration_form
+        self.condition_getter = lambda row: row.child_weighed_once
+
+
 def _valid_measles_form(received_on):
     return XFormInstance(
         form={
@@ -117,3 +126,14 @@ def _valid_birth_registration_form(received_on):
         xmlns=CFU1_XMLNS,
     )
 
+
+def _valid_child_weight_registration_form(received_on):
+    return XFormInstance(
+        form={
+            'child1': {
+                'child1_child_weight': '1',
+            }
+        },
+        received_on=received_on,
+        xmlns=CFU1_XMLNS,
+    )
