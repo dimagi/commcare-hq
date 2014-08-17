@@ -1015,13 +1015,14 @@ class CaseReminderHandler(Document):
                 self.set_rule_checkpoint(3)
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True)
+                    use_critical_section=True, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True)
+                max_threads=5, use_critical_section=True,
+                print_stack_interval=60)
 
     @classmethod
     def get_handlers(cls, domain, case_type=None, ids_only=False):

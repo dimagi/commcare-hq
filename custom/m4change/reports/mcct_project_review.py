@@ -91,7 +91,7 @@ def calculate_form_data(self, form):
         location_name = location.name
         location_parent = location.parent
         if location_parent is not None and location_parent.location_type != 'state':
-            while location_parent is not None and location_parent.location_type != 'district':
+            while location_parent is not None and location_parent.location_type not in ('district', 'lga'):
                 location_parent = location_parent.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 

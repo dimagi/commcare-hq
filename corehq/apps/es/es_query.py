@@ -168,7 +168,7 @@ class ESQuery(object):
         if self._fields is not None:
             self.es_query['fields'] = self._fields
         if self._start is not None:
-            self.es_query['start'] = self._start
+            self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
 
     def fields(self, fields):
@@ -232,7 +232,8 @@ class ESQuery(object):
 
     def remove_default_filter(self, default):
         query = deepcopy(self)
-        query._default_filters.pop(default)
+        if default in query._default_filters:
+            query._default_filters.pop(default)
         return query
 
 
