@@ -1,3 +1,4 @@
+import json
 import logging
 from psycopg2._psycopg import InterfaceError
 import pytz
@@ -10,6 +11,7 @@ import time
 
 from django.core.mail import send_mail
 from requests import ConnectionError
+import requests
 import simplejson
 import rawes
 from django.conf import settings
@@ -23,12 +25,14 @@ from .utils import import_settings
 
 from couchdbkit.changes import ChangesStream
 from django import db
+from dateutil import parser
 
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
 
 CHECKPOINT_FREQUENCY = 100
+CHECKPOINT_MIN_WAIT = 300
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
@@ -89,6 +93,10 @@ class PillowtopNetworkError(Exception):
     pass
 
 
+class PillowtopCheckpointReset(Exception):
+    pass
+
+
 def ms_from_timedelta(td):
     """
     Given a timedelta object, returns a float representing milliseconds
@@ -111,6 +119,7 @@ class BasicPillow(object):
     couch_db = None
     include_docs = True
     use_locking = False
+    _current_checkpoint = None
 
     def __init__(self, couch_db=None, document_class=None):
         if document_class:
@@ -131,10 +140,41 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter, include_docs=self.include_docs, **self.extra_args) as st:
-            for c in st:
-                self.processor(c)
+        uri = '{}/_changes'.format(self.couch_db.uri)
+        query_params = {
+            'feed': 'continuous',
+            'heartbeat': 'true',  # default of one minute
+        }
+        while True:
+            query_params.update({
+                'since': self.since,
+                'filter': self.couch_filter,
+                'include_docs': self.include_docs,
+            })
+            query_params.update(self.extra_args)
+            try:
+                r = requests.get(uri, params=query_params, stream=True)
+                for line in r.iter_lines():
+                    change = self._parse_change(line)
+                    if change:
+                        self.processor(change)
+                    else:
+                        self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
+            except PillowtopCheckpointReset:
+                self.changes_seen = 0
+
+    def _parse_change(self, line):
+        """
+        Copied from CouchDBKit ChangesStream class
+        """
+        if line.startswith('{"results":') or line.startswith('"last_seq'):
+            return None
+        else:
+            try:
+                obj = json.loads(line)
+                return obj
+            except ValueError:
+                return None
 
     def run(self):
         """
@@ -160,7 +200,7 @@ class BasicPillow(object):
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
 
-    def get_checkpoint(self):
+    def get_checkpoint(self, verify_unchanged=False):
         doc_name = self.get_checkpoint_doc_name()
 
         if self.couch_db.doc_exist(doc_name):
@@ -183,6 +223,12 @@ class BasicPillow(object):
                 "seq": starting_seq
             }
             self.couch_db.save_doc(checkpoint_doc)
+
+        if verify_unchanged and self._current_checkpoint and checkpoint_doc['seq'] != self._current_checkpoint['seq']:
+            raise PillowtopCheckpointReset()
+
+        self._current_checkpoint = checkpoint_doc
+
         return checkpoint_doc
 
     def reset_checkpoint(self):
@@ -198,13 +244,35 @@ class BasicPillow(object):
         return checkpoint['seq']
 
     def set_checkpoint(self, change):
-        checkpoint = self.get_checkpoint()
+        checkpoint = self.get_checkpoint(verify_unchanged=True)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
         )
         checkpoint['seq'] = change['seq']
         checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
+
+    def touch_checkpoint(self, min_interval=0):
+        """
+        Update the checkpoint timestamp without altering the sequence.
+        :param min_interval: minimum interval between timestamp updates
+        """
+        checkpoint = self.get_checkpoint(verify_unchanged=True)
+
+        now = datetime.now(tz=pytz.UTC)
+        previous = self._current_checkpoint.get('timestamp')
+        do_update = True
+        if previous:
+            diff = now - parser.parse(previous).replace(tzinfo=pytz.UTC)
+            do_update = diff.total_seconds() >= min_interval
+
+        if do_update:
+            pillow_logging.info(
+                "(%s) touching checkpoint" % checkpoint['_id']
+            )
+            checkpoint['timestamp'] = now.isoformat()
+            self.couch_db.save_doc(checkpoint)
 
     def get_db_seq(self):
         return self.couch_db.info()['update_seq']
@@ -528,17 +596,6 @@ class ElasticPillow(BulkPillow):
         doc_path = self.get_doc_path(doc_id)
         head_result = es.head(doc_path)
         return head_result
-
-    def processor(self, change, do_set_checkpoint=True):
-        """
-        Parent processor for a pillow class - this should not be overridden.
-        This workflow is made for the situation where 1 change yields 1 transport/transaction
-        """
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            self.set_checkpoint(change)
-
-        self.process_change(change)
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
