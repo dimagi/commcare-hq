@@ -256,9 +256,8 @@ class OPMCaseRow(object):
                 return True
             else:
                 return any(
-                    form.xpath('form/child1/child1_attendance_vhnd') == '1'
-                    for form in self.forms
-                    if form.xmlns in CHILDREN_FORMS and self.form_in_range(form)
+                    form.xpath('form/child_1/child1_attendance_vhnd') == '1'
+                    for form in self.filtered_forms(CHILDREN_FORMS, 1)
                 )
 
     @property
@@ -328,7 +327,7 @@ class OPMCaseRow(object):
     def child_weighed_once(self):
         if self.child_age == 3:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_weight', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_weight', self.child_index)) == '1'
 
             return any(
                 _test(form)
@@ -339,7 +338,7 @@ class OPMCaseRow(object):
     def child_birth_registered(self):
         if self.child_age == 6:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_register', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_register', self.child_index)) == '1'
 
             return any(
                 _test(form)
@@ -350,7 +349,7 @@ class OPMCaseRow(object):
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_measlesvacc', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_measlesvacc', self.child_index)) == '1'
 
             return any(
                 _test(form)

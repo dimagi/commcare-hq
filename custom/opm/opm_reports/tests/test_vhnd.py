@@ -154,7 +154,7 @@ def _child_form_with_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
         received_on=received_on,
         xmlns=xmlns,
         form={
-            'child1': {
+            'child_1': {
                 'child1_attendance_vhnd': '1'
             }
         }
@@ -165,7 +165,7 @@ def _child_form_without_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
         received_on=received_on,
         xmlns=xmlns,
         form={
-            'child1': {
+            'child_1': {
                 'child1_attendance_vhnd': '0'
             }
         },

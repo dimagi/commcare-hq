@@ -97,7 +97,7 @@ class TestChildWeighedOnce(OPMCaseReportTestBase, ConditionFourTestMixin):
 def _valid_measles_form(received_on):
     return XFormInstance(
         form={
-            'child1': {
+            'child_1': {
                 'child1_child_measlesvacc': '1',
             }
         },
@@ -109,7 +109,7 @@ def _valid_measles_form(received_on):
 def _valid_birth_registration_form(received_on):
     return XFormInstance(
         form={
-            'child1': {
+            'child_1': {
                 'child1_child_register': '1',
             }
         },
@@ -121,7 +121,7 @@ def _valid_birth_registration_form(received_on):
 def _valid_child_weight_registration_form(received_on):
     return XFormInstance(
         form={
-            'child1': {
+            'child_1': {
                 'child1_child_weight': '1',
             }
         },
