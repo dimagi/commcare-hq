@@ -175,14 +175,22 @@ class OPMCaseRow(object):
             if not self.vhnd_available:
                 return True
             elif 9 > self.preg_month > 3:
-                vhnd_attendance = {
-                    4: self.case_property('attendance_vhnd_1', 0),
-                    5: self.case_property('attendance_vhnd_2', 0),
-                    6: self.case_property('attendance_vhnd_3', 0),
-                    7: self.case_property('month_7_attended', 0),
-                    8: self.case_property('month_8_attended', 0)
-                }
-                return vhnd_attendance[self.preg_month] == '1'
+                def _legacy_method():
+                    vhnd_attendance = {
+                        4: self.case_property('attendance_vhnd_1', 0),
+                        5: self.case_property('attendance_vhnd_2', 0),
+                        6: self.case_property('attendance_vhnd_3', 0),
+                        7: self.case_property('month_7_attended', 0),
+                        8: self.case_property('month_8_attended', 0)
+                    }
+                    return vhnd_attendance[self.preg_month] == '1'
+
+                def _new_method():
+                    return any(
+                        form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
+                        for form in self.filtered_forms(BIRTH_PREP_XMLNS, 1)
+                    )
+                return _legacy_method() or _new_method()
             else:
                 return False
 

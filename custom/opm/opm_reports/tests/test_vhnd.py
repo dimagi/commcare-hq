@@ -92,15 +92,7 @@ class TestChildVHND(OPMCaseReportTestBase):
         self.assertRaises(InvalidRow, lambda: row.child_attended_vhnd)
 
 
-class TestPregnancyVHND(OPMCaseReportTestBase):
-    # mapping month of pregnancy to case properties that trigger vhnd attendance
-    month_to_property_map = (
-        (4, 'attendance_vhnd_1'),
-        (5, 'attendance_vhnd_2'),
-        (6, 'attendance_vhnd_3'),
-        (7, 'month_7_attended'),
-        (8, 'month_8_attended'),
-    )
+class TestPregnancyVHNDNew(OPMCaseReportTestBase):
 
     def test_no_data_not_match(self):
         case = OPMCase(
@@ -111,28 +103,24 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
         self.assertEqual(False, row.preg_attended_vhnd)
 
     def test_positive_match_in_all_windows(self):
-        for month, case_prop in self.month_to_property_map:
+        for month in range(4, 9):
             edd = get_relative_edd_from_preg_month(self.report_date, month)
             case = OPMCase(
-                forms=[],
+                forms=[_form_with_vhnd_attendance(self.report_datetime)],
                 edd=edd,
-                **{case_prop: '1'}
             )
             row = MockCaseRow(case, self.report)
             self.assertEqual(True, row.preg_attended_vhnd)
 
     def test_negative_match_in_all_windows(self):
-        for valid_month, case_prop in self.month_to_property_map:
-            for test_month in range(4, 9):
-                if test_month != valid_month:
-                    edd = get_relative_edd_from_preg_month(self.report_date, test_month)
-                    case = OPMCase(
-                        forms=[],
-                        edd=edd,
-                        **{case_prop: '1'}
-                    )
-                    row = MockCaseRow(case, self.report)
-                    self.assertEqual(False, row.preg_attended_vhnd)
+        for month in range(4, 8):
+            edd = get_relative_edd_from_preg_month(self.report_date, month)
+            case = OPMCase(
+                forms=[_form_without_vhnd_attendance(self.report_datetime)],
+                edd=edd,
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual(False, row.preg_attended_vhnd)
 
     def test_always_valid_in_ninth_month(self):
         edd = get_relative_edd_from_preg_month(self.report_date, 9)
@@ -162,3 +150,61 @@ class TestPregnancyVHND(OPMCaseReportTestBase):
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertRaises(InvalidRow, lambda: row.preg_attended_vhnd)
+
+
+class TestPregnancyVHNDLegacy(OPMCaseReportTestBase):
+    # mapping month of pregnancy to case properties that trigger vhnd attendance
+    month_to_property_map = (
+        (4, 'attendance_vhnd_1'),
+        (5, 'attendance_vhnd_2'),
+        (6, 'attendance_vhnd_3'),
+        (7, 'month_7_attended'),
+        (8, 'month_8_attended'),
+    )
+
+    def test_positive_match_in_all_windows(self):
+        for month, case_prop in self.month_to_property_map:
+            edd = get_relative_edd_from_preg_month(self.report_date, month)
+            case = OPMCase(
+                forms=[],
+                edd=edd,
+                **{case_prop: '1'}
+            )
+            row = MockCaseRow(case, self.report)
+            self.assertEqual(True, row.preg_attended_vhnd)
+
+    def test_negative_match_in_all_windows(self):
+        for valid_month, case_prop in self.month_to_property_map:
+            for test_month in range(4, 9):
+                if test_month != valid_month:
+                    edd = get_relative_edd_from_preg_month(self.report_date, test_month)
+                    case = OPMCase(
+                        forms=[],
+                        edd=edd,
+                        **{case_prop: '1'}
+                    )
+                    row = MockCaseRow(case, self.report)
+                    self.assertEqual(False, row.preg_attended_vhnd)
+
+
+def _form_with_vhnd_attendance(received_on):
+    return XFormInstance(
+        received_on=received_on,
+        xmlns=BIRTH_PREP_XMLNS,
+        form={
+            'pregnancy_questions': {
+                'attendance_vhnd': '1'
+            }
+        }
+    )
+
+def _form_without_vhnd_attendance(received_on):
+    return XFormInstance(
+        received_on=received_on,
+        xmlns=BIRTH_PREP_XMLNS,
+        form={
+            'pregnancy_questions': {
+                'attendance_vhnd': '0'
+            }
+        },
+    )
