@@ -146,8 +146,15 @@ class OPMCaseRow(object):
     @memoized
     def child_age(self):
         if self.status == 'mother':
-            return len(months_between(self.dod, self.reporting_window_start)) - 1
+            non_adjusted_month = len(months_between(self.dod, self.reporting_window_start)) - 1
+            # anchor date should be their one month birthday
+            anchor_date = add_months_to_date(self.dod, 1)
 
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
+            if month < 1:
+                raise InvalidRow('child month %s not valid' % month)
+
+            return month
 
     @property
     def child_age_display(self):

@@ -49,8 +49,15 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
+    def test_child_first_month_not_valid(self):
+        case = OPMCase(
+            forms=[],
+            dod=self.report_date,
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
     def test_valid_child_month(self):
-        for i in range(18):
+        for i in range(1, 18):
             case = OPMCase(
                 forms=[],
                 dod=self._offset_date(-i),
@@ -79,8 +86,7 @@ class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
         self.assertEqual(4, row.preg_month)
 
     def test_vhnd_after_checkpoint_pregnancy(self):
-        # when a VHND occurs before the window checkpoint the pregnant mother
-        # doesn't count for that period
+        # when a VHND occurs before the window checkpoint the pregnant mother still counts for that period
         case = OPMCase(
             forms=[],
             edd=date(2014, 11, 15),
@@ -104,6 +110,56 @@ class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
         # the next month should actually start window 4
         row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
         self.assertEqual(4, row.preg_month)
+        # and so on
+        row = MockCaseRow(case, Report(month=9, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(6, row.preg_month)
+
+
+class TestChildFirstMonthWindow(OPMCaseReportTestBase):
+
+    def test_first_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 1),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(1, row.child_age)
+
+    def test_last_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 31),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(1, row.child_age)
+
+    def test_vhnd_after_checkpoint_child(self):
+        # when a VHND occurs after the window checkpoint the child still counts
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(1, row.child_age)
+
+    def test_vhnd_before_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the child doesn't count
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+
+        # the next month should actually start window 1
+        row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(1, row.child_age)
+        # and so on
+        row = MockCaseRow(case, Report(month=9, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(3, row.child_age)
 
 
 class TestFormFiltering(TestCase):
