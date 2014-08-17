@@ -129,23 +129,11 @@ class OPMCaseRow(object):
             base_window_start = add_months_to_date(self.edd, -9)
             non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
 
-            # need to check the base window month for a VHND after the anchor date
-            # if no VHND occurs then the month is bumped back a month
-
             # the date to check is minus 5 months from their EDD, aka the end of their fourth
             # month of pregnancy
             vhnd_date_to_check = add_months_to_date(self.edd, -5)
-            vhnds_to_check = filter(
-                lambda vhnd: vhnd.year == vhnd_date_to_check.year and vhnd.month == vhnd_date_to_check.month,
-                self.data_provider.vhnd_dates.get(self.owner_id, set()),
-            )
 
-            # if any vhnd in the month occurred after the anchor date
-            # or it didn't occur at all, no need to adjust.
-            # if it occurred before the anchor date adjust, by subtracting one from the pregnancy month
-            adjust = max(vhnds_to_check) < vhnd_date_to_check if vhnds_to_check else False
-            month = non_adjusted_month - 1 if adjust else non_adjusted_month
-
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
                 raise InvalidRow('pregnancy month %s not valid' % month)
             return month
@@ -164,6 +152,22 @@ class OPMCaseRow(object):
     @property
     def child_age_display(self):
         return self.child_age if self.child_age is not None else EMPTY_FIELD
+
+    def _adjust_for_vhnd_presence(self, non_adjusted_month, anchor_date_to_check):
+        """
+        check the base window month for a VHND after the anchor date.
+        if no VHND occurs then the month is bumped back a month
+        """
+        # look at vhnds in the same month as the anchor date
+        vhnds_to_check = filter(
+            lambda vhnd: vhnd.year == anchor_date_to_check.year and vhnd.month == anchor_date_to_check.month,
+            self.data_provider.vhnd_dates.get(self.owner_id, set()),
+        )
+
+        # if any vhnd in the month occurred after the anchor date or it didn't occur at all, no need to adjust.
+        # if it occurred before the anchor date, adjust, by subtracting one from the non-adjusted month
+        adjust = max(vhnds_to_check) < anchor_date_to_check if vhnds_to_check else False
+        return non_adjusted_month - 1 if adjust else non_adjusted_month
 
     @property
     @memoized
