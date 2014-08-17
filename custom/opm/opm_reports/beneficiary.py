@@ -192,13 +192,21 @@ class OPMCaseRow(object):
             return ((self.child_age - 1) / 3) + 3
 
     @property
-    @memoized
     def preg_first_eligible_date(self):
         """
         The date we first start looking for mother data. This is the beginning of the 4th month of pregnancy.
         """
         if self.status == 'pregnant':
             return add_months_to_date(self.edd, -6)
+
+    @property
+    def preg_first_eligible_datetime(self):
+        """
+        The date we first start looking for mother data. This is the beginning of the 4th month of pregnancy.
+        """
+        date = self.preg_first_eligible_date
+        if date:
+            return datetime.datetime.combine(date, datetime.time())
 
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
@@ -252,8 +260,7 @@ class OPMCaseRow(object):
                 def _new_method():
                     if self.preg_month == 4:
                         kwargs = {
-                            'explicit_start': datetime.datetime.combine(self.preg_first_eligible_date,
-                                                                        datetime.time())
+                            'explicit_start': self.preg_first_eligible_datetime
                         }
                     else:
                         kwargs = {'months_before': 1}
@@ -330,7 +337,15 @@ class OPMCaseRow(object):
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
-                return self.case_property('ifa_tri_1', 0) == 'received'
+                def _from_case():
+                    return self.case_property('ifa_tri_1', 0) == 'received'
+                def _from_forms():
+                    return any(
+                        form.xpath('form/pregnancy_questions/ifa_receive') == '1'
+                        for form in self.filtered_forms(BIRTH_PREP_XMLNS,
+                                                        explicit_start=self.preg_first_eligible_datetime)
+                    )
+                return _from_case() or _from_forms()
 
     @property
     def child_received_ors(self):
