@@ -386,9 +386,7 @@ class OPMCaseRow(object):
     @property
     @memoized
     def vhnd_available(self):
-        if self.owner_id not in self.data_provider.vhnd_availability:
-            raise InvalidRow
-        return self.data_provider.vhnd_availability[self.owner_id]
+        return self.owner_id in self.data_provider.vhnd_dates
 
     def add_extra_children(self):
         if self.child_index == 1:

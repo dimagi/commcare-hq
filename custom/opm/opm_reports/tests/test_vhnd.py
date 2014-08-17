@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import InvalidRow, CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
+from custom.opm.opm_reports.constants import CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     get_relative_edd_from_preg_month, MockDataProvider
 
@@ -76,20 +76,9 @@ class TestChildVHND(OPMCaseReportTestBase):
             forms=[],
             dod=date(2014, 3, 10),
         )
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map={
-            'Sahora': False,
-        })
-        row = MockCaseRow(case, self.report, data_provider=data_provider)
-        self.assertEqual(True, row.child_attended_vhnd)
-
-    def test_no_vhnd_specified(self):
-        case = OPMCase(
-            forms=[],
-            dod=date(2014, 3, 10),
-        )
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
         row = MockCaseRow(case, self.report, data_provider=data_provider)
-        self.assertRaises(InvalidRow, lambda: row.child_attended_vhnd)
+        self.assertEqual(True, row.child_attended_vhnd)
 
 
 class TestPregnancyVHNDNew(OPMCaseReportTestBase):
@@ -136,20 +125,9 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 11, 10),
         )
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map={
-            'Sahora': False,
-        })
-        row = MockCaseRow(case, self.report, data_provider=data_provider)
-        self.assertEqual(True, row.preg_attended_vhnd)
-
-    def test_no_vhnd_specified(self):
-        case = OPMCase(
-            forms=[],
-            edd=date(2014, 11, 10),
-        )
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
         row = MockCaseRow(case, self.report, data_provider=data_provider)
-        self.assertRaises(InvalidRow, lambda: row.preg_attended_vhnd)
+        self.assertEqual(True, row.preg_attended_vhnd)
 
 
 class TestPregnancyVHNDLegacy(OPMCaseReportTestBase):

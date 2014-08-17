@@ -6,6 +6,7 @@ currently specific to monthly reports.  It would be pretty simple to make
 this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
+from collections import defaultdict
 import datetime
 import logging
 import simplejson
@@ -176,7 +177,7 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['owner_id']
+        return ['owner_id', 'date']
 
     @property
     def filters(self):
@@ -184,7 +185,10 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def columns(self):
-        return [DatabaseColumn("", SumColumn("vhnd_availability"))]
+        return [
+            DatabaseColumn('date', SimpleColumn("date")),
+            DatabaseColumn("", SumColumn("vhnd_availability"))
+        ]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -293,12 +297,18 @@ class SharedDataProvider(object):
 
     @property
     @memoized
-    def vhnd_availability(self):
+    def vhnd_dates(self):
         data = VhndAvailabilitySqlData({
             'startdate': self.datespan.startdate_utc.date(),
-            'enddate': self.datespan.enddate_utc.date()
+            'enddate': self.datespan.enddate_utc.date(),
         }).data
-        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
+
+        results = defaultdict(lambda: set())
+        for (owner_id, date), row in data.iteritems():
+            if row['vhnd_availability'] > 0:
+                results[owner_id].add(date)
+
+        return results
 
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
