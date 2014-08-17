@@ -256,7 +256,7 @@ class OPMCaseRow(object):
                 return True
             else:
                 return any(
-                    form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
+                    form.xpath('form/child1/child1_attendance_vhnd') == '1'
                     for form in self.forms
                     if form.xmlns in CHILDREN_FORMS and self.form_in_range(form)
                 )

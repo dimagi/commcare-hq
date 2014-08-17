@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS
+from custom.opm.opm_reports.constants import CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS, CFU1_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     get_relative_edd_from_preg_month, MockDataProvider
 
@@ -17,11 +17,7 @@ class TestChildVHND(OPMCaseReportTestBase):
 
     def test_single_match_in_all_forms(self):
         for xmlns in CHILDREN_FORMS:
-            form = XFormInstance(
-                form={'child1_vhndattend_calc': 'received'},
-                received_on=self.report_datetime,
-                xmlns=xmlns,
-            )
+            form = _child_form_with_vhnd_attendance(self.report_datetime, xmlns)
             case = OPMCase(
                 forms=[form],
                 dod=date(2014, 3, 10),
@@ -33,11 +29,7 @@ class TestChildVHND(OPMCaseReportTestBase):
         for received_on in (self.report_datetime - timedelta(days=32),
                             self.report_datetime + timedelta(days=32)):
             for xmlns in CHILDREN_FORMS:
-                form = XFormInstance(
-                    form={'child1_vhndattend_calc': 'received'},
-                    received_on=received_on,
-                    xmlns=xmlns,
-                )
+                form = _child_form_with_vhnd_attendance(received_on, xmlns)
                 case = OPMCase(
                     forms=[form],
                     dod=date(2014, 3, 10),
@@ -46,16 +38,8 @@ class TestChildVHND(OPMCaseReportTestBase):
                 self.assertEqual(False, row.child_attended_vhnd)
 
     def test_multiple_forms_in_window(self):
-        form1 = XFormInstance(
-            form={'child1_vhndattend_calc': 'received'},
-            received_on=self.report_datetime,
-            xmlns=CFU2_XMLNS,
-        )
-        form2 = XFormInstance(
-            form={'child1_vhndattend_calc': 'not_taken'},
-            received_on=self.report_datetime + timedelta(days=1),
-            xmlns=CFU2_XMLNS,
-        )
+        form1 = _child_form_with_vhnd_attendance(self.report_datetime)
+        form2 = _child_form_without_vhnd_attendance(self.report_datetime + timedelta(days=1))
         case = OPMCase(
             forms=[form1, form2],
             dod=date(2014, 3, 10),
@@ -95,7 +79,7 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
         for month in range(4, 9):
             edd = get_relative_edd_from_preg_month(self.report_date, month)
             case = OPMCase(
-                forms=[_form_with_vhnd_attendance(self.report_datetime)],
+                forms=[_preg_form_with_vhnd_attendance(self.report_datetime)],
                 edd=edd,
             )
             row = MockCaseRow(case, self.report)
@@ -105,7 +89,7 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
         for month in range(4, 8):
             edd = get_relative_edd_from_preg_month(self.report_date, month)
             case = OPMCase(
-                forms=[_form_without_vhnd_attendance(self.report_datetime)],
+                forms=[_preg_form_without_vhnd_attendance(self.report_datetime)],
                 edd=edd,
             )
             row = MockCaseRow(case, self.report)
@@ -165,7 +149,29 @@ class TestPregnancyVHNDLegacy(OPMCaseReportTestBase):
                     self.assertEqual(False, row.preg_attended_vhnd)
 
 
-def _form_with_vhnd_attendance(received_on):
+def _child_form_with_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
+    return XFormInstance(
+        received_on=received_on,
+        xmlns=xmlns,
+        form={
+            'child1': {
+                'child1_attendance_vhnd': '1'
+            }
+        }
+    )
+
+def _child_form_without_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
+    return XFormInstance(
+        received_on=received_on,
+        xmlns=xmlns,
+        form={
+            'child1': {
+                'child1_attendance_vhnd': '0'
+            }
+        },
+    )
+
+def _preg_form_with_vhnd_attendance(received_on):
     return XFormInstance(
         received_on=received_on,
         xmlns=BIRTH_PREP_XMLNS,
@@ -176,7 +182,7 @@ def _form_with_vhnd_attendance(received_on):
         }
     )
 
-def _form_without_vhnd_attendance(received_on):
+def _preg_form_without_vhnd_attendance(received_on):
     return XFormInstance(
         received_on=received_on,
         xmlns=BIRTH_PREP_XMLNS,
