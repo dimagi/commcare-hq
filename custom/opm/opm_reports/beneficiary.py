@@ -134,6 +134,18 @@ class OPMCaseRow(object):
         if self.status == 'mother':
             return len(months_between(self.dod, self.reporting_window_start)) - 1
 
+    @property
+    @memoized
+    def window(self):
+        if self.status == 'pregnant':
+            # 4, 5, 6 --> 1,
+            # 7, 8, 9 --> 2
+            return (self.preg_month - 1) / 3
+        else:
+            # 1, 2, 3 --> 3
+            # 4, 5, 6 --> 4...
+            return ((self.child_age - 1) / 3) + 3
+
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
@@ -473,7 +485,6 @@ class ConditionsMet(OPMCaseRow):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index)
         if self.status == 'mother':
             self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
-            self.preg_month = EMPTY_FIELD
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
             self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)
