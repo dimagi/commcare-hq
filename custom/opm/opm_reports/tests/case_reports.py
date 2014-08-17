@@ -18,13 +18,21 @@ class AggressiveDefaultDict(defaultdict):
     def __contains__(self, item):
         return True
 
+    def get(self, key, default=None):
+        key_miss = object()
+        result = super(AggressiveDefaultDict, self).get(key, key_miss)
+        if result == key_miss:
+            return self[key]
+        return result
+
+
 class MockDataProvider(SharedDataProvider):
     """
     Mock data provider to manually specify vhnd availability per user
     """
     def __init__(self, datespan, vhnd_map=None):
         super(MockDataProvider, self).__init__(datespan)
-        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: set(datespan.startdate))
+        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: set([datespan.enddate.date()]))
 
     @property
     def vhnd_dates(self):

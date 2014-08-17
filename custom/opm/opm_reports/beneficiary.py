@@ -103,6 +103,11 @@ class OPMCaseRow(object):
 
     @property
     @memoized
+    def owner_id(self):
+        return self.case_property('owner_id')
+
+    @property
+    @memoized
     def status(self):
         if self.dod is not None:
             # if they delivered within the reporting month, or afterwards they are treated as pregnant
@@ -121,9 +126,26 @@ class OPMCaseRow(object):
     @memoized
     def preg_month(self):
         if self.status == 'pregnant':
-            # todo: this might change based on VHND
             base_window_start = add_months_to_date(self.edd, -9)
-            month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+
+            # need to check the base window month for a VHND after the anchor date
+            # if no VHND occurs then the month is bumped back a month
+
+            # the date to check is minus 5 months from their EDD, aka the end of their fourth
+            # month of pregnancy
+            vhnd_date_to_check = add_months_to_date(self.edd, -5)
+            vhnds_to_check = filter(
+                lambda vhnd: vhnd.year == vhnd_date_to_check.year and vhnd.month == vhnd_date_to_check.month,
+                self.data_provider.vhnd_dates.get(self.owner_id, set()),
+            )
+
+            # if any vhnd in the month occurred after the anchor date
+            # or it didn't occur at all, no need to adjust.
+            # if it occurred before the anchor date adjust, by subtracting one from the pregnancy month
+            adjust = max(vhnds_to_check) < vhnd_date_to_check if vhnds_to_check else False
+            month = non_adjusted_month - 1 if adjust else non_adjusted_month
+
             if month < 4 or month > 9:
                 raise InvalidRow('pregnancy month %s not valid' % month)
             return month
@@ -168,7 +190,6 @@ class OPMCaseRow(object):
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.case_id = self.case_property('_id', EMPTY_FIELD)
-        self.owner_id = self.case_property('owner_id', '')
         self.closed = self.case_property('closed', False)
 
         account = self.case_property('bank_account_number', None)

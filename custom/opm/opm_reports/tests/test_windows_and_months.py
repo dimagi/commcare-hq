@@ -2,7 +2,8 @@ from unittest import TestCase
 from datetime import date, datetime
 from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date)
+from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date,
+                                          MockDataProvider, AggressiveDefaultDict)
 
 
 class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
@@ -57,6 +58,52 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             row = MockCaseRow(case, self.report)
             self.assertEqual('mother', row.status)
             self.assertEqual(i, row.child_age)
+
+
+class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
+
+    def test_first_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 1),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(4, row.preg_month)
+
+    def test_last_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 30),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(4, row.preg_month)
+
+    def test_vhnd_after_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the pregnant mother
+        # doesn't count for that period
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(4, row.preg_month)
+
+    def test_vhnd_before_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the pregnant mother
+        # doesn't count for that period
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+
+        # the next month should actually start window 4
+        row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(4, row.preg_month)
 
 
 class TestFormFiltering(TestCase):
