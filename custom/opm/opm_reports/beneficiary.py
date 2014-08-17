@@ -287,10 +287,20 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
+
+        def _from_case(property):
+            return self.case_property(property, 0) == 'received'
+
+        def _from_forms(filter_kwargs):
+            return any(
+                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
+            )
+
         if self.preg_month == 6:
-            return self.case_property('weight_tri_1') == 'received'
+            return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
         elif self.preg_month == 9:
-            return self.case_property('weight_tri_2') == 'received'
+            return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
 
     def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
         """
