@@ -133,9 +133,9 @@ class OPMCaseRow(object):
             base_window_start = add_months_to_date(self.edd, -9)
             non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
 
-            # the date to check is minus 5 months from their EDD, aka the end of their fourth
-            # month of pregnancy
-            vhnd_date_to_check = add_months_to_date(self.edd, -5)
+            # the date to check one month after they first become eligible,
+            # aka the end of their fourth month of pregnancy
+            vhnd_date_to_check = add_months_to_date(self.preg_first_eligible_date, 1)
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
@@ -191,6 +191,15 @@ class OPMCaseRow(object):
             # 4, 5, 6 --> 4...
             return ((self.child_age - 1) / 3) + 3
 
+    @property
+    @memoized
+    def preg_first_eligible_date(self):
+        """
+        The date we first start looking for mother data. This is the beginning of the 4th month of pregnancy.
+        """
+        if self.status == 'pregnant':
+            return add_months_to_date(self.edd, -6)
+
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
@@ -241,9 +250,16 @@ class OPMCaseRow(object):
                     return vhnd_attendance[self.preg_month] == '1'
 
                 def _new_method():
+                    if self.preg_month == 4:
+                        kwargs = {
+                            'explicit_start': datetime.datetime.combine(self.preg_first_eligible_date,
+                                                                        datetime.time())
+                        }
+                    else:
+                        kwargs = {'months_before': 1}
                     return any(
                         form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
-                        for form in self.filtered_forms(BIRTH_PREP_XMLNS, 1)
+                        for form in self.filtered_forms(BIRTH_PREP_XMLNS, **kwargs)
                     )
                 return _legacy_method() or _new_method()
             else:
@@ -269,7 +285,7 @@ class OPMCaseRow(object):
         elif self.preg_month == 9:
             return self.case_property('weight_tri_2') == 'received'
 
-    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None):
+    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
         """
         Returns a list of forms filtered by xmlns if specified
         and from the previous number of calendar months if specified
@@ -283,7 +299,7 @@ class OPMCaseRow(object):
             new_year, new_month = add_months(self.year, self.month, -months_before)
             start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
-            start = None
+            start = explicit_start
 
         if months_after is not None:
             new_year, new_month = add_months(self.year, self.month, months_after)

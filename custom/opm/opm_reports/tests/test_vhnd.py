@@ -113,6 +113,15 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertEqual(True, row.preg_attended_vhnd)
 
+    def test_first_window_looks_back(self):
+        form = _preg_form_with_vhnd_attendance(datetime(2014, 5, 25))
+        edd = get_relative_edd_from_preg_month(self.report_date, 4)
+        case = OPMCase(
+            forms=[form],
+            edd=edd,
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(True, row.preg_attended_vhnd)
 
 class TestPregnancyVHNDLegacy(OPMCaseReportTestBase):
     # mapping month of pregnancy to case properties that trigger vhnd attendance
