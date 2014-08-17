@@ -31,11 +31,11 @@ class MockDataProvider(SharedDataProvider):
     Mock data provider to manually specify vhnd availability per user
     """
     def __init__(self, datespan, vhnd_map=None):
-        super(MockDataProvider, self).__init__(datespan)
+        super(MockDataProvider, self).__init__()
         self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: set([datespan.enddate.date()]))
 
     @property
-    def vhnd_dates(self):
+    def _vhnd_dates(self):
         return self.vhnd_map
 
 
@@ -80,7 +80,7 @@ class MockCaseRow(OPMCaseRow):
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
-        self.report._data_provider = data_provider or MockDataProvider(self.report.datespan)
+        self.report._data_provider = data_provider or MockDataProvider(report.datespan)
         super(MockCaseRow, self).__init__(case, report)
 
 

@@ -74,7 +74,6 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
-
         if report.is_rendered_as_email:
             with localize('hin'):
                 self.status = _(self.status)
@@ -90,6 +89,11 @@ class OPMCaseRow(object):
     @property
     def reporting_window_start(self):
         return datetime.date(self.year, self.month, 1)
+
+    @property
+    @memoized
+    def case_id(self):
+        return self.case._id
 
     @property
     @memoized
@@ -166,10 +170,9 @@ class OPMCaseRow(object):
         if no VHND occurs then the month is bumped back a month
         """
         # look at vhnds in the same month as the anchor date
-        vhnds_to_check = filter(
-            lambda vhnd: vhnd.year == anchor_date_to_check.year and vhnd.month == anchor_date_to_check.month,
-            self.data_provider.vhnd_dates.get(self.owner_id, set()),
-        )
+        startdate = datetime.date(anchor_date_to_check.year, anchor_date_to_check.month, 1)
+        enddate = first_of_next_month(startdate)
+        vhnds_to_check = self.data_provider.get_dates_in_range(self.owner_id, startdate, enddate)
 
         # if any vhnd in the month occurred after the anchor date or it didn't occur at all, no need to adjust.
         # if it occurred before the anchor date, adjust, by subtracting one from the non-adjusted month
@@ -200,7 +203,6 @@ class OPMCaseRow(object):
         self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
-        self.case_id = self.case_property('_id', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
 
         account = self.case_property('bank_account_number', None)
@@ -417,7 +419,9 @@ class OPMCaseRow(object):
     @property
     @memoized
     def vhnd_available(self):
-        return self.owner_id in self.data_provider.vhnd_dates
+        return bool(self.data_provider.get_dates_in_range(self.owner_id,
+                                                          self.reporting_window_start,
+                                                          self.reporting_window_end))
 
     def add_extra_children(self):
         if self.child_index == 1:

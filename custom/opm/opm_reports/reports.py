@@ -170,6 +170,7 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def filter_values(self):
+        return {}
         return dict(
             startdate=self.config['startdate'],
             enddate=self.config['enddate'],
@@ -181,7 +182,7 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def filters(self):
-        return [BETWEEN('date', 'startdate', 'enddate')]
+        return []
 
     @property
     def columns(self):
@@ -292,23 +293,27 @@ class SharedDataProvider(object):
     of a report.
     """
 
-    def __init__(self, datespan):
-        self.datespan = datespan
-
     @property
     @memoized
-    def vhnd_dates(self):
-        data = VhndAvailabilitySqlData({
-            'startdate': self.datespan.startdate_utc.date(),
-            'enddate': self.datespan.enddate_utc.date(),
-        }).data
-
+    def _vhnd_dates(self):
+        # todo: this will load one row per every VHND in history.
+        # if this gets too big we'll have to make the queries more targeted (which would be
+        # easy to do in the get_dates_in_range function) but if the dataset is small this will
+        # avoid significantly fewer DB trips.
+        # If things start getting slow or memory intensive this would be a good place to look.
+        data = VhndAvailabilitySqlData().data
         results = defaultdict(lambda: set())
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_availability'] > 0:
                 results[owner_id].add(date)
 
         return results
+
+    def get_dates_in_range(self, owner_id, stardate, enddate):
+        return filter(
+            lambda vhnd_date: vhnd_date >= stardate and vhnd_date < enddate,
+            [date for date in self._vhnd_dates.get(owner_id, set())],
+        )
 
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
@@ -521,7 +526,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     @memoized
     def data_provider(self):
-        return SharedDataProvider(self.datespan)
+        return SharedDataProvider()
 
 
 class CaseReportMixin(object):
