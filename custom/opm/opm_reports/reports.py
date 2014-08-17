@@ -297,7 +297,7 @@ class SharedDataProvider(object):
     @memoized
     def _vhnd_dates(self):
         # todo: this will load one row per every VHND in history.
-        # if this gets too big we'll have to make the queries more targeted (which would be
+        # If this gets too big we'll have to make the queries more targeted (which would be
         # easy to do in the get_dates_in_range function) but if the dataset is small this will
         # avoid significantly fewer DB trips.
         # If things start getting slow or memory intensive this would be a good place to look.
