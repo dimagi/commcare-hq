@@ -129,10 +129,19 @@ class OPMCaseRow(object):
             return month
 
     @property
+    def preg_month_display(self):
+        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+
+    @property
     @memoized
     def child_age(self):
         if self.status == 'mother':
             return len(months_between(self.dod, self.reporting_window_start)) - 1
+
+
+    @property
+    def child_age_display(self):
+        return self.child_age if self.child_age is not None else EMPTY_FIELD
 
     @property
     @memoized
@@ -446,9 +455,9 @@ class ConditionsMet(OPMCaseRow):
             ('block_name', _("Block Name"), True),
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
-            ('preg_month', _('Pregnancy Month'), True),
+            ('preg_month_display', _('Pregnancy Month'), True),
             ('child_name', _("Child Name"), True),
-            ('child_age', _("Child Age"), True),
+            ('child_age_display', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
             ('two', _("2"), True),
@@ -466,9 +475,9 @@ class ConditionsMet(OPMCaseRow):
             ('block_name', _("Block Name"), True),
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
-            ('preg_month', _('Pregnancy Month'), True),
+            ('preg_month_display', _('Pregnancy Month'), True),
             ('child_name', _("Child Name"), True),
-            ('child_age', _("Child Age"), True),
+            ('child_age_display', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
             ('two', _("2"), True),
