@@ -898,6 +898,15 @@ def make_buckets(interval, start_date, end_date):
 
     return buckets_list
 
+def get_real_project_spaces(params):
+    real_domain_query = (
+            ESQuery('domains')
+            .fields(['name'])
+            .filter({"terms": params})
+    )
+    real_domain_query_results = real_domain_query.run().raw_hits
+    return {x['fields']['name'] for x in real_domain_query_results}
+
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
     return (ESQuery('forms')
             .fields(['domain', datefield])
@@ -913,18 +922,48 @@ def get_form_query(datefield, begin, end, facet_name, facet_terms):
             .facet(facet_name, facet_terms)
             .size(0))
 
-def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
+def get_commconnect_domain_stats_data(params, datespan, interval='month',
+        datefield='date'):
     begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
     end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
     keys = make_buckets(interval, begin, end)
 
-    real_domain_query = (
-            ESQuery('domains')
-            .fields(['name'])
-            .filter({"terms": params})
-    )
-    real_domain_query_results = real_domain_query.run().raw_hits
-    real_domains = {x['fields']['name'] for x in real_domain_query_results}
+    histo_data = []
+    for timestamp in reversed(keys):
+        sms = (ESQuery('sms')
+               .fields(['domain'])
+               .filter({
+                   "range": {
+                       datefield: {
+                           "to": timestamp
+                           }
+                       }
+                   }
+               )
+               .facet('domains', {"field": "domain"})
+               .size(0))
+        domains = sms.run().facet('domains')
+        domains = [d['term'] for d in domains if d['term'] in real_domains]
+        c = len(domains)
+        if c > 0:
+            histo_data.append({"count": c, "time": timestamp})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
+
+def get_active_domain_stats_data(params, datespan, interval='month', 
+        datefield='received_on'):
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys = make_buckets(interval, begin, end)
+
+    real_domains = get_real_project_spaces(params)
 
     histo_data = []
     for timestamp in reversed(keys):
@@ -998,6 +1037,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "sms_domains":
+        params.update(params_es)
+        return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
         params.update(params_es)

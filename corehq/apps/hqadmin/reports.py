@@ -132,6 +132,15 @@ INDICATOR_DATA = {
         },
         "xaxis_label": "# users",
     },
+    "sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "sms_domains",
+        "chart_title": "Domains that have received SMS",
+        "hide_cumulative_charts": True,
+        "histogram_type": "sms_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -467,4 +476,11 @@ class UserReport(GlobalAdminReports):
         'users',
         'users_mobile',
         'users_web',
+    ]
+
+class CommConnectProjectSpacesReport(GlobalAdminReports):
+    slug = 'commconnect_project_spaces'
+    name = ugettext_noop('CommConnect Project Spaces')
+    indicators = [
+        'sms_domain_count',
     ]
