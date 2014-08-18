@@ -2,7 +2,8 @@ from datetime import date, datetime, timedelta, time
 from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow, CFU1_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
-    offset_date
+    offset_date, MockDataProvider
+from dimagi.utils.dates import add_months_to_date
 
 
 class ConditionFourTestMixin(object):
@@ -66,6 +67,39 @@ class ConditionFourTestMixin(object):
         row = MockCaseRow(case, self.report)
         self.assertEqual(False, self.get_condition(row))
 
+    def test_service_unavailable_at_all(self):
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        case = OPMCase(
+            forms=[],
+            dod=self.valid_dod,
+        )
+        row = MockCaseRow(case, self.report, data_provider)
+        self.assertEqual(True, self.get_condition(row))
+
+    def test_service_unavailable_partial(self):
+        vhnd_map = {
+            'mock_owner_id': set([add_months_to_date(self.report_date, -2)])
+        }
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map)
+        case = OPMCase(
+            forms=[],
+            dod=self.valid_dod,
+            owner_id='mock_owner_id',
+        )
+        row = MockCaseRow(case, self.report, data_provider)
+        self.assertEqual(False, self.get_condition(row))
+
+    def test_service_unavailable_out_of_range(self):
+        vhnd_map = {
+            'mock_owner_id': set([add_months_to_date(self.report_date, -3)])
+        }
+        data_provider = MockDataProvider(self.report.datespan, vhnd_map)
+        case = OPMCase(
+            forms=[],
+            dod=self.valid_dod,
+        )
+        row = MockCaseRow(case, self.report, data_provider)
+        self.assertEqual(True, self.get_condition(row))
 
 class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
     expected_window = 12
