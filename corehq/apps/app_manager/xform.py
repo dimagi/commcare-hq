@@ -1029,15 +1029,15 @@ class XForm(WrappedNode):
 
     def add_pollsensor(self, event="xforms-ready", ref=None):
         """
-        <pollsensor event="xforms-ready" ref="/data/meta/location" />
+        <orx:pollsensor event="xforms-ready" ref="/data/meta/location" />
         <bind nodeset="/data/meta/location" type="geopoint"/>
         """
         if ref:
-            self.model_node.append(_make_elem('pollsensor',
+            self.model_node.append(_make_elem('{orx}pollsensor',
                                               {'event': event, 'ref': ref}))
             self.add_bind(nodeset=ref, type="geopoint")
         else:
-            self.model_node.append(_make_elem('pollsensor', {'event': event}))
+            self.model_node.append(_make_elem('{orx}pollsensor', {'event': event}))
 
     def action_relevance(self, condition):
         if condition.type == 'always':
