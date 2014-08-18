@@ -13,23 +13,19 @@ import simplejson
 import re
 from dateutil import parser
 from decimal import Decimal
-from numbers import Number
 
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 
-from couchdbkit.exceptions import ResourceNotFound
-from sqlagg.filters import ANDFilter, BETWEEN
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn, CountColumn
+from sqlagg.columns import SimpleColumn, SumColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
-from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -41,7 +37,6 @@ from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 
