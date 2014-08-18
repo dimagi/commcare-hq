@@ -68,7 +68,6 @@ class ConditionFourTestMixin(object):
         row = MockCaseRow(case, self.report)
         self.assertEqual(False, self.get_condition(row))
 
-<<<<<<< HEAD
     def test_multiple_children(self):
         for month in range(self.expected_window - 2, self.expected_window + 1):
             form_date = datetime.combine(offset_date(self.valid_dod, month), time())
@@ -80,7 +79,6 @@ class ConditionFourTestMixin(object):
             row = MockCaseRow(case, self.report, child_index=2)
             self.assertEqual(True, self.get_condition(row))
 
-=======
     def test_service_unavailable_at_all(self):
         data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
         case = OPMCase(
@@ -114,7 +112,7 @@ class ConditionFourTestMixin(object):
         )
         row = MockCaseRow(case, self.report, data_provider)
         self.assertEqual(True, self.get_condition(row))
->>>>>>> origin/vhnd-opm
+
 
 class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
     expected_window = 12
