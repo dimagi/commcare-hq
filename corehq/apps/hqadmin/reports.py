@@ -141,6 +141,24 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "commconnect_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commconnect_domains",
+        "chart_title": "CommConnect Domains",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "commconnect_enabled": ["T"],
+        },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -483,4 +501,5 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommConnect Project Spaces')
     indicators = [
         'sms_domain_count',
+        'commconnect_domain_count',
     ]
