@@ -63,7 +63,7 @@ def months_between(start, end):
     the year and month of the start date, and the last one being
     the year and month of the end date.
     """
-    assert(start <= end)
+    assert datetime.date(start.year, start.month, 1) <= datetime.date(end.year, end.month, 1)
     months = []
     date_type = type(start)
     while start <= end:
@@ -83,6 +83,18 @@ def add_months(year, months, offset):
     months_offset = nextmonths % 12 + 1  # 1 index it going out
     years_offset = nextmonths / 12
     return (year + years_offset, months_offset)
+
+
+def add_months_to_date(date_or_datetime, offset):
+    """
+    Adds an offset of months to a date or datetime object.
+    """
+    newyear, newmonth = add_months(date_or_datetime.year, date_or_datetime.month, offset)
+    try:
+        return date_or_datetime.replace(year=newyear, month=newmonth)
+    except ValueError:
+        ret = date_or_datetime.replace(year=newyear, month=newmonth, day=1)
+        return ret.replace(day=(first_of_next_month(ret) - datetime.timedelta(days=1)).day)
 
 
 def first_of_next_month(ref_date):
