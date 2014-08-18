@@ -24,7 +24,7 @@ class TestBirthSpacing(TestCase):
     def test_not_enough_time(self):
         case = OPMCase(
             forms=[],
-            dod=date(2014, 1, 10),
+            dod=date(2013, 12, 10),
         )
         report = Report(month=6, year=2014, block="Atri")
         row = MockCaseRow(case, report)
@@ -38,7 +38,7 @@ class TestBirthSpacing(TestCase):
                 self.not_pregnant_form(2012, 10, 12),
                 self.not_pregnant_form(2013, 10, 12),
             ],
-            dod=date(2012, 2, 10),
+            dod=date(2012, 1, 10),
         )
         report = Report(month=1, year=2014, block="Atri")
         row = MockCaseRow(case, report)
@@ -52,7 +52,7 @@ class TestBirthSpacing(TestCase):
                 self.not_pregnant_form(2013, 3, 12),
                 self.pregnant_form(2013, 10, 12),
             ],
-            dod=date(2012, 4, 10),
+            dod=date(2012, 3, 10),
         )
         report = Report(month=1, year=2014, block="Atri")
         row = MockCaseRow(case, report)
@@ -67,7 +67,7 @@ class TestBirthSpacing(TestCase):
                 self.not_pregnant_form(2013, 1, 12),
                 self.pregnant_form(2013, 10, 12),
             ],
-            dod=date(2012, 2, 10),
+            dod=date(2012, 1, 10),
         )
         report = Report(month=1, year=2014, block="Atri")
         row = MockCaseRow(case, report)

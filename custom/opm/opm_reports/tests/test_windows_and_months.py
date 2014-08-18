@@ -2,11 +2,8 @@ from unittest import TestCase
 from datetime import date, datetime
 from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date)
-from dimagi.utils.dates import add_months
-
-
-
+from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date,
+                                          MockDataProvider, AggressiveDefaultDict)
 
 
 class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
@@ -17,34 +14,15 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         """
         return offset_date(self.report_date, offset)
 
-    def test_valid_window_not_yet_delivered(self):
-        # maps number of months in the future your due date is to window
-        window_mapping = {
-            1: 2,
-            2: 2,
-            3: 2,
-            4: 1,
-            5: 1,
-            6: 1,
-        }
-        for i, window in window_mapping.items():
-            case = OPMCase(
-                forms=[],
-                edd=self._offset_date(i),
-            )
-            row = MockCaseRow(case, self.report)
-            self.assertEqual('pregnant', row.status)
-            self.assertEqual(window, row.window)
-
     def test_valid_month_not_yet_delivered(self):
         # maps number of months in the future your due date is to month of pregnancy
         month_mapping = {
-            1: 9,
-            2: 8,
-            3: 7,
-            4: 6,
-            5: 5,
-            6: 4,
+            0: 9,
+            1: 8,
+            2: 7,
+            3: 6,
+            4: 5,
+            5: 4,
         }
         for i, month in month_mapping.items():
             case = OPMCase(
@@ -59,61 +37,129 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         # 7 or more months in the future you don't count
         case = OPMCase(
             forms=[],
-            edd=self._offset_date(7),
+            edd=self._offset_date(6),
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
     def test_past_range(self):
-        # anytime in the period or after you don't count
+        # anytime after the period you don't count
         case = OPMCase(
             forms=[],
-            edd=self.report_date,
+            edd=self._offset_date(-1),
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
-    def test_valid_child_window(self):
-        # maps number of months in the past your delivery date was to window of child calc
-        # todo: this seems really funny. Should 0-2 map to 3, 3-5 map to 4, etc.?
-        window_mapping = {
-            0: 1,
-            1: 1,
-            2: 1,
-            3: 2,
-            4: 2,
-            5: 2,
-            6: 3,
-            7: 3,
-            8: 3,
-            9: 4,
-            10: 4,
-            11: 4,
-            12: 5,
-            13: 5,
-            14: 5,
-            15: 6,
-            16: 6,
-            17: 6,
-        }
-        for i, window in window_mapping.items():
-            case = OPMCase(
-                forms=[],
-                dod=self._offset_date(-i),
-            )
-            row = MockCaseRow(case, self.report)
-            self.assertEqual('mother', row.status)
-            self.assertEqual(window, row.window, 'value {} expected window {} but was {}'.format(
-                i, window, row.window
-            ))
+    def test_child_first_month_not_valid(self):
+        case = OPMCase(
+            forms=[],
+            dod=self.report_date,
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
     def test_valid_child_month(self):
-        for i in range(18):
+        for i in range(1, 18):
             case = OPMCase(
                 forms=[],
                 dod=self._offset_date(-i),
             )
             row = MockCaseRow(case, self.report)
             self.assertEqual('mother', row.status)
-            self.assertEqual(i + 1, row.child_age)
+            self.assertEqual(i, row.child_age)
+
+
+class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
+
+    def test_first_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 1),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(4, row.preg_month)
+
+    def test_last_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 30),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(4, row.preg_month)
+
+    def test_vhnd_after_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the pregnant mother still counts for that period
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(4, row.preg_month)
+
+    def test_vhnd_before_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the pregnant mother
+        # doesn't count for that period
+        case = OPMCase(
+            forms=[],
+            edd=date(2014, 11, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+
+        # the next month should actually start window 4
+        row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(4, row.preg_month)
+        # and so on
+        row = MockCaseRow(case, Report(month=9, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(6, row.preg_month)
+
+
+class TestChildFirstMonthWindow(OPMCaseReportTestBase):
+
+    def test_first_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 1),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(1, row.child_age)
+
+    def test_last_of_month_counts(self):
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 31),
+        )
+        row = MockCaseRow(case, self.report)
+        self.assertEqual(1, row.child_age)
+
+    def test_vhnd_after_checkpoint_child(self):
+        # when a VHND occurs after the window checkpoint the child still counts
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        row = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertEqual(1, row.child_age)
+
+    def test_vhnd_before_checkpoint_pregnancy(self):
+        # when a VHND occurs before the window checkpoint the child doesn't count
+        case = OPMCase(
+            forms=[],
+            dod=date(2014, 5, 15),
+        )
+        data_provider = MockDataProvider(self.report.datespan,
+                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+
+        # the next month should actually start window 1
+        row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(1, row.child_age)
+        # and so on
+        row = MockCaseRow(case, Report(month=9, year=2014, block="Atri"), data_provider=data_provider)
+        self.assertEqual(3, row.child_age)
 
 
 class TestFormFiltering(TestCase):

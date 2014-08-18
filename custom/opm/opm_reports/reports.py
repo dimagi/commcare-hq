@@ -6,29 +6,26 @@ currently specific to monthly reports.  It would be pretty simple to make
 this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
+from collections import defaultdict
 import datetime
 import logging
 import simplejson
 import re
 from dateutil import parser
 from decimal import Decimal
-from numbers import Number
 
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 
-from couchdbkit.exceptions import ResourceNotFound
-from sqlagg.filters import ANDFilter, BETWEEN
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn, CountColumn
+from sqlagg.columns import SimpleColumn, SumColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
-from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -40,7 +37,6 @@ from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 
@@ -169,22 +165,22 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def filter_values(self):
-        return dict(
-            startdate=self.config['startdate'],
-            enddate=self.config['enddate'],
-        )
+        return {}
 
     @property
     def group_by(self):
-        return ['owner_id']
+        return ['owner_id', 'date']
 
     @property
     def filters(self):
-        return [BETWEEN('date', 'startdate', 'enddate')]
+        return []
 
     @property
     def columns(self):
-        return [DatabaseColumn("", SumColumn("vhnd_availability"))]
+        return [
+            DatabaseColumn('date', SimpleColumn("date")),
+            DatabaseColumn("", SumColumn("vhnd_availability"))
+        ]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -288,17 +284,27 @@ class SharedDataProvider(object):
     of a report.
     """
 
-    def __init__(self, datespan):
-        self.datespan = datespan
-
     @property
     @memoized
-    def vhnd_availability(self):
-        data = VhndAvailabilitySqlData({
-            'startdate': self.datespan.startdate_utc.date(),
-            'enddate': self.datespan.enddate_utc.date()
-        }).data
-        return {owner_id: row['vhnd_availability'] > 0 for owner_id, row in data.iteritems()}
+    def _vhnd_dates(self):
+        # todo: this will load one row per every VHND in history.
+        # If this gets too big we'll have to make the queries more targeted (which would be
+        # easy to do in the get_dates_in_range function) but if the dataset is small this will
+        # avoid significantly fewer DB trips.
+        # If things start getting slow or memory intensive this would be a good place to look.
+        data = VhndAvailabilitySqlData().data
+        results = defaultdict(lambda: set())
+        for (owner_id, date), row in data.iteritems():
+            if row['vhnd_availability'] > 0:
+                results[owner_id].add(date)
+
+        return results
+
+    def get_dates_in_range(self, owner_id, stardate, enddate):
+        return filter(
+            lambda vhnd_date: vhnd_date >= stardate and vhnd_date < enddate,
+            [date for date in self._vhnd_dates.get(owner_id, set())],
+        )
 
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
@@ -511,7 +517,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     @memoized
     def data_provider(self):
-        return SharedDataProvider(self.datespan)
+        return SharedDataProvider()
 
 
 class CaseReportMixin(object):

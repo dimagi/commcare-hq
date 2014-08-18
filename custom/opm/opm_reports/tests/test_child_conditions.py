@@ -30,10 +30,10 @@ class ChildConditionMixin(object):
             xmlns=self.xmlns,
         )
 
-    def check_condition(self, forms=None, report=None, child_age=None):
+    def check_condition(self, forms=None, child_age=None):
         child_age = child_age or 5
         report_year, report_month = 2014, 6
-        dod_year, dod_month = add_months(report_year, report_month, 1-child_age)
+        dod_year, dod_month = add_months(report_year, report_month, -child_age)
         report = Report(month=report_month, year=report_year, block="Atri")
         case = OPMCase(
             forms=forms or [],
@@ -43,17 +43,17 @@ class ChildConditionMixin(object):
         self.assertEqual(row.child_age, child_age)
         return getattr(row, self.row_property)
 
-    def assertMeetsCondition(self, forms=None, report=None, child_age=None):
+    def assertMeetsCondition(self, forms=None, child_age=None):
         msg = "{} did not return True".format(self.row_property)
-        self.assertTrue(self.check_condition(forms, report, child_age), msg)
+        self.assertTrue(self.check_condition(forms, child_age), msg)
 
-    def assertFailsCondition(self, forms=None, report=None, child_age=None):
+    def assertFailsCondition(self, forms=None, child_age=None):
         msg = "{} did not return False".format(self.row_property)
-        self.assertEqual(False, self.check_condition(forms, report, child_age), msg)
+        self.assertEqual(False, self.check_condition(forms, child_age), msg)
 
-    def assertConditionIrrelevant(self, forms=None, report=None, child_age=None):
+    def assertConditionIrrelevant(self, forms=None, child_age=None):
         msg = "{} did not return None".format(self.row_property)
-        self.assertEqual(None, self.check_condition(forms, report, child_age), msg)
+        self.assertEqual(None, self.check_condition(forms, child_age), msg)
 
 
 

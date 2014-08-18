@@ -18,16 +18,24 @@ class AggressiveDefaultDict(defaultdict):
     def __contains__(self, item):
         return True
 
+    def get(self, key, default=None):
+        key_miss = object()
+        result = super(AggressiveDefaultDict, self).get(key, key_miss)
+        if result == key_miss:
+            return self[key]
+        return result
+
+
 class MockDataProvider(SharedDataProvider):
     """
     Mock data provider to manually specify vhnd availability per user
     """
     def __init__(self, datespan, vhnd_map=None):
-        super(MockDataProvider, self).__init__(datespan)
-        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: True)
+        super(MockDataProvider, self).__init__()
+        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: set([datespan.enddate.date()]))
 
     @property
-    def vhnd_availability(self):
+    def _vhnd_dates(self):
         return self.vhnd_map
 
 
@@ -72,7 +80,7 @@ class MockCaseRow(OPMCaseRow):
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
-        self.report._data_provider = data_provider or MockDataProvider(self.report.datespan)
+        self.report._data_provider = data_provider or MockDataProvider(report.datespan)
         super(MockCaseRow, self).__init__(case, report)
 
 
@@ -85,7 +93,7 @@ class OPMCaseReportTestBase(TestCase):
 
 
 def get_relative_edd_from_preg_month(report_date, month):
-    months_until_edd = 10 - month
+    months_until_edd = 9 - month
     new_year, new_month = add_months(report_date.year, report_date.month, months_until_edd)
     return type(report_date)(new_year, new_month, 1)
 
@@ -103,6 +111,6 @@ class MockDataTest(OPMCaseReportTestBase):
         case = OPMCase(
             forms=[form],
             # add/override any desired case properties here
-            edd=date(2014, 12, 10),
+            edd=date(2014, 11, 10),
         )
         row = MockCaseRow(case, report)

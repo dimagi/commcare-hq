@@ -6,9 +6,10 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
-from dimagi.utils.dates import months_between, first_of_next_month
+from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
+from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -45,7 +46,7 @@ SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
 
-# This is just a string processing function, not moving to class
+# replace all instances of 'child1' in a string with 'child{N}'
 indexed_child = lambda prop, num: prop.replace("child1", "child" + str(num))
 
 
@@ -57,7 +58,8 @@ class OPMCaseRow(object):
         self.report = report
         self.data_provider = report.data_provider
         self.block = report.block.lower()
-        self.datespan = self.report.datespan
+        self.month = report.month
+        self.year = report.year
 
         if report.snapshot is not None:
             report.filter(
@@ -72,10 +74,161 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
-
         if report.is_rendered_as_email:
             with localize('hin'):
                 self.status = _(self.status)
+
+    @property
+    def datespan(self):
+        return datespan.from_month(self.month, self.year)
+
+    @property
+    def reporting_window_end(self):
+        return first_of_next_month(datetime.date(self.year, self.month, 1))
+
+    @property
+    def reporting_window_start(self):
+        return datetime.date(self.year, self.month, 1)
+
+    @property
+    @memoized
+    def case_id(self):
+        return self.case._id
+
+    @property
+    @memoized
+    def dod(self):
+        return self.case_property('dod')
+
+    @property
+    @memoized
+    def edd(self):
+        return self.case_property('edd')
+
+    @property
+    @memoized
+    def owner_id(self):
+        return self.case_property('owner_id')
+
+    @property
+    @memoized
+    def status(self):
+        if self.dod is not None:
+            # if they delivered within the reporting month, or afterwards they are treated as pregnant
+            if self.dod > self.reporting_window_start:
+                return 'pregnant'
+            else:
+                return 'mother'
+        elif self.edd is not None:
+            # they haven't delivered, so they're pregnant
+            return 'pregnant'
+        else:
+            # no dates, not valid
+            raise InvalidRow()
+
+    @property
+    @memoized
+    def preg_month(self):
+        if self.status == 'pregnant':
+            base_window_start = add_months_to_date(self.edd, -9)
+            non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+
+            # the date to check one month after they first become eligible,
+            # aka the end of their fourth month of pregnancy
+            vhnd_date_to_check = add_months_to_date(self.preg_first_eligible_date, 1)
+
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
+            if month < 4 or month > 9:
+                raise InvalidRow('pregnancy month %s not valid' % month)
+            return month
+
+    @property
+    def preg_month_display(self):
+        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+
+    @property
+    @memoized
+    def child_age(self):
+        if self.status == 'mother':
+            non_adjusted_month = len(months_between(self.dod, self.reporting_window_start)) - 1
+            # anchor date should be their one month birthday
+            anchor_date = add_months_to_date(self.dod, 1)
+
+            month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
+            if month < 1:
+                raise InvalidRow('child month %s not valid' % month)
+
+            return month
+
+    @property
+    def child_age_display(self):
+        return self.child_age if self.child_age is not None else EMPTY_FIELD
+
+    def _adjust_for_vhnd_presence(self, non_adjusted_month, anchor_date_to_check):
+        """
+        check the base window month for a VHND after the anchor date.
+        if no VHND occurs then the month is bumped back a month
+        """
+        # look at vhnds in the same month as the anchor date
+        startdate = datetime.date(anchor_date_to_check.year, anchor_date_to_check.month, 1)
+        enddate = first_of_next_month(startdate)
+        vhnds_to_check = self.data_provider.get_dates_in_range(self.owner_id, startdate, enddate)
+
+        # if any vhnd in the month occurred after the anchor date or it didn't occur at all, no need to adjust.
+        # if it occurred before the anchor date, adjust, by subtracting one from the non-adjusted month
+        adjust = max(vhnds_to_check) < anchor_date_to_check if vhnds_to_check else False
+        return non_adjusted_month - 1 if adjust else non_adjusted_month
+
+    @property
+    @memoized
+    def window(self):
+        if self.status == 'pregnant':
+            # 4, 5, 6 --> 1,
+            # 7, 8, 9 --> 2
+            return (self.preg_month - 1) / 3
+        else:
+            # 1, 2, 3 --> 3
+            # 4, 5, 6 --> 4...
+            return ((self.child_age - 1) / 3) + 3
+
+    @property
+    def preg_first_eligible_date(self):
+        """
+        The date we first start looking for mother data. This is the beginning of the 4th month of pregnancy.
+        """
+        if self.status == 'pregnant':
+            return add_months_to_date(self.edd, -6)
+
+    @property
+    def preg_first_eligible_datetime(self):
+        """
+        The date we first start looking for mother data. This is the beginning of the 4th month of pregnancy.
+        """
+        date = self.preg_first_eligible_date
+        if date:
+            return datetime.datetime.combine(date, datetime.time())
+
+    def set_case_properties(self):
+        if self.child_age is None and self.preg_month is None:
+            raise InvalidRow
+
+        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
+        self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
+        self.block_name = self.case_property('block_name', EMPTY_FIELD)
+        self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
+        self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
+        self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
+        self.village = self.case_property('village_name', EMPTY_FIELD)
+        self.closed = self.case_property('closed', False)
+
+        account = self.case_property('bank_account_number', None)
+        if isinstance(account, Decimal):
+            account = int(account)
+        self.account_number = unicode(account) if account else ''
+        # fake cases will have accounts beginning with 111
+        if re.match(r'^111', self.account_number):
+            raise InvalidRow
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -87,44 +240,69 @@ class OPMCaseRow(object):
 
     @property
     def preg_attended_vhnd(self):
-        # in month 9 they always meet this condition
-        if self.preg_month == 9:
-            return True
-        elif not self.vhnd_available:
-            return True
-        elif 9 > self.preg_month > 3:
-            vhnd_attendance = {
-                4: self.case_property('attendance_vhnd_1', 0),
-                5: self.case_property('attendance_vhnd_2', 0),
-                6: self.case_property('attendance_vhnd_3', 0),
-                7: self.case_property('month_7_attended', 0),
-                8: self.case_property('month_8_attended', 0)
-            }
-            return vhnd_attendance[self.preg_month] == '1'
-        else:
-            return False
+        if self.status == 'pregnant':
+            # in month 9 they always meet this condition
+            if self.preg_month == 9:
+                return True
+            if not self.vhnd_available:
+                return True
+            elif 9 > self.preg_month > 3:
+                def _legacy_method():
+                    vhnd_attendance = {
+                        4: self.case_property('attendance_vhnd_1', 0),
+                        5: self.case_property('attendance_vhnd_2', 0),
+                        6: self.case_property('attendance_vhnd_3', 0),
+                        7: self.case_property('month_7_attended', 0),
+                        8: self.case_property('month_8_attended', 0)
+                    }
+                    return vhnd_attendance[self.preg_month] == '1'
+
+                def _new_method():
+                    if self.preg_month == 4:
+                        kwargs = {
+                            'explicit_start': self.preg_first_eligible_datetime
+                        }
+                    else:
+                        kwargs = {'months_before': 1}
+                    return any(
+                        form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
+                        for form in self.filtered_forms(BIRTH_PREP_XMLNS, **kwargs)
+                    )
+                return _legacy_method() or _new_method()
+            else:
+                return False
 
     @property
     def child_attended_vhnd(self):
-        if self.child_age == 1:
-            return True
-        elif not self.vhnd_available:
-            return True
-        else:
-            return any(
-                form.form.get(indexed_child('child1_vhndattend_calc', self.child_index)) == 'received'
-                for form in self.forms
-                if form.xmlns in CHILDREN_FORMS and self.form_in_range(form)
-            )
+        if self.status == 'mother':
+            if self.child_age == 1:
+                return True
+            elif not self.vhnd_available:
+                return True
+            else:
+                return any(
+                    form.xpath('form/child_1/child1_attendance_vhnd') == '1'
+                    for form in self.filtered_forms(CHILDREN_FORMS, 1)
+                )
 
     @property
     def preg_weighed(self):
-        if self.preg_month == 6:
-            return self.case_property('weight_tri_1') == 'received'
-        elif self.preg_month == 9:
-            return self.case_property('weight_tri_2') == 'received'
 
-    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None):
+        def _from_case(property):
+            return self.case_property(property, 0) == 'received'
+
+        def _from_forms(filter_kwargs):
+            return any(
+                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
+            )
+
+        if self.preg_month == 6:
+            return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
+        elif self.preg_month == 9:
+            return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
+
+    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
         """
         Returns a list of forms filtered by xmlns if specified
         and from the previous number of calendar months if specified
@@ -134,18 +312,17 @@ class OPMCaseRow(object):
         else:
             xmlns_list = xmlns_or_list or []
 
-        reference_date = self.datespan.enddate
         if months_before is not None:
-            new_year, new_month = add_months(reference_date.year, reference_date.month, -months_before)
+            new_year, new_month = add_months(self.year, self.month, -months_before)
             start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
-            start = None
+            start = explicit_start
 
         if months_after is not None:
-            new_year, new_month = add_months(reference_date.year, reference_date.month, months_after)
+            new_year, new_month = add_months(self.year, self.month, months_after)
             end = first_of_next_month(datetime.datetime(new_year, new_month, 1))
         else:
-            end = first_of_next_month(reference_date)
+            end = datetime.datetime.combine(self.reporting_window_end, datetime.time())
 
         def check_form(form):
             if xmlns_list and form.xmlns not in xmlns_list:
@@ -170,7 +347,15 @@ class OPMCaseRow(object):
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
-                return self.case_property('ifa_tri_1', 0) == 'received'
+                def _from_case():
+                    return self.case_property('ifa_tri_1', 0) == 'received'
+                def _from_forms():
+                    return any(
+                        form.xpath('form/pregnancy_questions/ifa_receive') == '1'
+                        for form in self.filtered_forms(BIRTH_PREP_XMLNS,
+                                                        explicit_start=self.preg_first_eligible_datetime)
+                    )
+                return _from_case() or _from_forms()
 
     @property
     def child_received_ors(self):
@@ -185,33 +370,33 @@ class OPMCaseRow(object):
     def child_weighed_once(self):
         if self.child_age == 3:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_weight', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_weight', self.child_index)) == '1'
 
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 2, 1)
+                for form in self.filtered_forms(CFU1_XMLNS, 3)
             )
 
     @property
     def child_birth_registered(self):
         if self.child_age == 6:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_register', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_register', self.child_index)) == '1'
 
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 2, 1)
+                for form in self.filtered_forms(CFU1_XMLNS, 3)
             )
 
     @property
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
             def _test(form):
-                return form.xpath(indexed_child('form/child1/child1_child_measlesvacc', self.child_index)) == '1'
+                return form.xpath(indexed_child('form/child_1/child1_child_measlesvacc', self.child_index)) == '1'
 
             return any(
                 _test(form)
-                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS], 2, 1)
+                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS],3)
             )
 
     @property
@@ -256,7 +441,6 @@ class OPMCaseRow(object):
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        # TODO should this actually be [25, 37] ?
         if self.child_age in [24, 36]:
             for form in self.filtered_forms(CHILDREN_FORMS):
                 if form.form.get('birth_spacing_prompt') == '1':
@@ -269,71 +453,16 @@ class OPMCaseRow(object):
             return default
         return prop
 
-    def form_in_range(self, form, adjust_lower=0):
-        lower = self.datespan.startdate + datetime.timedelta(days=adjust_lower)
-        upper = self.datespan.enddate
-        return lower <= form.received_on <= upper
-
-    def set_case_properties(self):
-        reporting_date = self.datespan.enddate.date()  # last day of the month
-        status = "unknown"
-        self.preg_month = None
-        self.child_age = None
-        window = None
-        dod_date = self.case_property('dod')
-        edd_date = self.case_property('edd')
-        if dod_date is not None:
-            if dod_date > reporting_date:
-                status = 'pregnant'
-                self.preg_month = 9 - (dod_date - reporting_date).days / 30  # edge case
-            elif dod_date < reporting_date:
-                status = 'mother'
-                self.child_age = len(months_between(dod_date, reporting_date))
-        elif edd_date is not None:
-            if edd_date >= reporting_date:
-                status = 'pregnant'
-                self.preg_month = 9 - (edd_date - reporting_date).days / 30
-            elif edd_date < reporting_date:  # edge case
-                raise InvalidRow
-        else: #if dod_date is None and edd_date is None:
-            raise InvalidRow
-        if status == 'pregnant' and (self.preg_month > 3 and self.preg_month < 10):
-            self.window = (self.preg_month - 1) / 3
-        elif status == 'mother' and (self.child_age > 0 and self.child_age < 37):
-            self.window = (self.child_age - 1) / 3 + 1
-        else:
-            raise InvalidRow
-        if (self.child_age is None and self.preg_month is None):
-            raise InvalidRow
-
-        self.status = status
-
-        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
-        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
-        self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
-        self.block_name = self.case_property('block_name', EMPTY_FIELD)
-        self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
-        self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
-        self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
-        self.village = self.case_property('village_name', EMPTY_FIELD)
-        self.case_id = self.case_property('_id', EMPTY_FIELD)
-        self.owner_id = self.case_property('owner_id', '')
-        self.closed = self.case_property('closed', False)
-
-        account = self.case_property('bank_account_number', None)
-        if isinstance(account, Decimal):
-            account = int(account)
-        self.account_number = unicode(account) if account else ''
-        # fake cases will have accounts beginning with 111
-        if re.match(r'^111', self.account_number):
-            raise InvalidRow
+    def form_in_range(self, form):
+        # todo: the reporting window might be different than that data window
+        return self.reporting_window_start <= form.received_on.date() < self.reporting_window_end
 
     @property
     @memoized
     def vhnd_available(self):
-        if self.owner_id not in self.data_provider.vhnd_availability:
-            raise InvalidRow
-        return self.data_provider.vhnd_availability[self.owner_id]
+        return bool(self.data_provider.get_dates_in_range(self.owner_id,
+                                                          self.reporting_window_start,
+                                                          self.reporting_window_end))
 
     def add_extra_children(self):
         if self.child_index == 1:
@@ -400,9 +529,9 @@ class ConditionsMet(OPMCaseRow):
             ('block_name', _("Block Name"), True),
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
-            ('preg_month', _('Pregnancy Month'), True),
+            ('preg_month_display', _('Pregnancy Month'), True),
             ('child_name', _("Child Name"), True),
-            ('child_age', _("Child Age"), True),
+            ('child_age_display', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
             ('two', _("2"), True),
@@ -420,9 +549,9 @@ class ConditionsMet(OPMCaseRow):
             ('block_name', _("Block Name"), True),
             ('husband_name', _("Husband Name"), True),
             ('status', _("Current status"), True),
-            ('preg_month', _('Pregnancy Month'), True),
+            ('preg_month_display', _('Pregnancy Month'), True),
             ('child_name', _("Child Name"), True),
-            ('child_age', _("Child Age"), True),
+            ('child_age_display', _("Child Age"), True),
             ('window', _("Window"), True),
             ('one', _("1"), True),
             ('two', _("2"), True),
@@ -439,7 +568,6 @@ class ConditionsMet(OPMCaseRow):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index)
         if self.status == 'mother':
             self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
-            self.preg_month = EMPTY_FIELD
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
             self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)
@@ -507,12 +635,12 @@ class Beneficiary(OPMCaseRow):
 
     @property
     def bp1(self):
-        if self.window == 1:
+        if 3 < self.preg_month < 7:
             return self.bp_conditions
 
     @property
     def bp2(self):
-        if self.window == 2:
+        if 6 < self.preg_month < 10:
             return self.bp_conditions
 
     @property
