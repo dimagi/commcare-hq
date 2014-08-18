@@ -11,6 +11,7 @@ from custom.opm.opm_reports.reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
+from ..reports import CaseReportMixin
 
 
 class AggressiveDefaultDict(defaultdict):
@@ -39,10 +40,14 @@ class MockDataProvider(SharedDataProvider):
         return self.vhnd_map
 
 
-class Report(JsonObject):
+class Report(CaseReportMixin, JsonObject):
     month = IntegerProperty(required=True)
     year = IntegerProperty(required=True)
     block = StringProperty(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(Report, self).__init__(*args, **kwargs)
+        self._extra_row_objects = []
 
     _data_provider = None
     @property
@@ -52,6 +57,9 @@ class Report(JsonObject):
     @property
     def datespan(self):
         return DateSpan.from_month(self.month, self.year, inclusive=True)
+
+    def set_extra_row_objects(self, row_objects):
+        self._extra_row_objects = row_objects
 
 
 class OPMCase(CommCareCase):
@@ -75,13 +83,13 @@ class MockCaseRow(OPMCaseRow):
     """
     Spoof the following fields to create example cases
     """
-    def __init__(self, case, report, data_provider=None):
+    def __init__(self, case, report, data_provider=None, child_index=1):
         self.case = case
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
         self.report._data_provider = data_provider or MockDataProvider(report.datespan)
-        super(MockCaseRow, self).__init__(case, report)
+        super(MockCaseRow, self).__init__(case, report, child_index=child_index)
 
 
 class OPMCaseReportTestBase(TestCase):
