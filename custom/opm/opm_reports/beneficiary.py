@@ -344,11 +344,10 @@ class OPMCaseRow(object):
             if not self.is_vhnd_last_three_months:
                 return True
 
-            for form in self.filtered_forms(CHILDREN_FORMS, 3):
-                prop = self.child_xpath('child{num}_growthmon_calc')
-                if form.form.get(prop) == 'received':
-                    return True
-            return False
+            return any(
+                form.xpath('form/child_{num}/child{num}_child_growthmon') == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, 3)
+            )
 
     @property
     def preg_received_ifa(self):
