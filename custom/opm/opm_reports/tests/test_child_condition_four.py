@@ -3,6 +3,7 @@ from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow, CFU1_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     offset_date
+from .test_multiple_children import make_child2_form
 
 
 class ConditionFourTestMixin(object):
@@ -65,6 +66,17 @@ class ConditionFourTestMixin(object):
         )
         row = MockCaseRow(case, self.report)
         self.assertEqual(False, self.get_condition(row))
+
+    def test_multiple_children(self):
+        for month in range(self.expected_window - 2, self.expected_window + 1):
+            form_date = datetime.combine(offset_date(self.valid_dod, month), time())
+            case = OPMCase(
+                forms=[make_child2_form(self.valid_form(form_date))],
+                dod=self.valid_dod,
+                child_index=2,
+            )
+            row = MockCaseRow(case, self.report, child_index=2)
+            self.assertEqual(True, self.get_condition(row))
 
 
 class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):

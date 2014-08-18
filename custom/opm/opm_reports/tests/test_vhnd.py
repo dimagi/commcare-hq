@@ -3,6 +3,7 @@ from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS, CFU1_XMLNS
 from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     get_relative_edd_from_preg_month, MockDataProvider
+from .test_multiple_children import make_child2_form
 
 
 class TestChildVHND(OPMCaseReportTestBase):
@@ -23,6 +24,17 @@ class TestChildVHND(OPMCaseReportTestBase):
                 dod=date(2014, 3, 10),
             )
             row = MockCaseRow(case, self.report)
+            self.assertEqual(True, row.child_attended_vhnd)
+
+    def test_multiple_children(self):
+        for xmlns in CHILDREN_FORMS:
+            form = make_child2_form(_child_form_with_vhnd_attendance(self.report_datetime, xmlns))
+            case = OPMCase(
+                forms=[form],
+                dod=date(2014, 3, 10),
+                child_index=2,
+            )
+            row = MockCaseRow(case, self.report, child_index=2)
             self.assertEqual(True, row.child_attended_vhnd)
 
     def test_outside_window(self):

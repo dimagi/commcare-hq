@@ -46,10 +46,6 @@ SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
 
-# replace all instances of 'child1' in a string with 'child{N}'
-indexed_child = lambda prop, num: prop.replace("child1", "child" + str(num))
-
-
 class OPMCaseRow(object):
 
     def __init__(self, case, report, child_index=1):
@@ -77,6 +73,9 @@ class OPMCaseRow(object):
         if report.is_rendered_as_email:
             with localize('hin'):
                 self.status = _(self.status)
+
+    def child_xpath(self, template):
+        return template.format(num=self.child_index)
 
     @property
     def datespan(self):
@@ -281,7 +280,7 @@ class OPMCaseRow(object):
                 return True
             else:
                 return any(
-                    form.xpath('form/child_1/child1_attendance_vhnd') == '1'
+                    form.xpath(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
                     for form in self.filtered_forms(CHILDREN_FORMS, 1)
                 )
 
@@ -338,7 +337,7 @@ class OPMCaseRow(object):
     def child_growth_calculated(self):
         if self.child_age % 3 == 0:
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
-                prop = indexed_child('child1_growthmon_calc', self.child_index)
+                prop = self.child_xpath('child{num}_growthmon_calc')
                 if form.form.get(prop) == 'received':
                     return True
             return False
@@ -361,7 +360,7 @@ class OPMCaseRow(object):
     def child_received_ors(self):
         if self.child_age % 3 == 0:
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
-                prop = indexed_child('child1_child_orszntreat', self.child_index)
+                prop = self.child_xpath('child{num}_child_orszntreat')
                 if form.form.get(prop) == '0':
                     return False
             return True
@@ -370,7 +369,7 @@ class OPMCaseRow(object):
     def child_weighed_once(self):
         if self.child_age == 3:
             def _test(form):
-                return form.xpath(indexed_child('form/child_1/child1_child_weight', self.child_index)) == '1'
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
 
             return any(
                 _test(form)
@@ -381,8 +380,7 @@ class OPMCaseRow(object):
     def child_birth_registered(self):
         if self.child_age == 6:
             def _test(form):
-                return form.xpath(indexed_child('form/child_1/child1_child_register', self.child_index)) == '1'
-
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
                 for form in self.filtered_forms(CFU1_XMLNS, 3)
@@ -392,7 +390,7 @@ class OPMCaseRow(object):
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
             def _test(form):
-                return form.xpath(indexed_child('form/child_1/child1_child_measlesvacc', self.child_index)) == '1'
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
 
             return any(
                 _test(form)
@@ -412,7 +410,7 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            excl_key = indexed_child("child1_child_excbreastfed", self.child_index)
+            excl_key = self.child_xpath("child{num}_child_excbreastfed")
             for form in self.filtered_forms(CHILDREN_FORMS):
                 if form.form.get(excl_key) == '0':
                     return False
@@ -546,7 +544,7 @@ class ConditionsMet(OPMCaseRow):
     def __init__(self, case, report, child_index=1):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index)
         if self.status == 'mother':
-            self.child_name = self.case_property(indexed_child("child1_name", child_index), EMPTY_FIELD)
+            self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
             self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)

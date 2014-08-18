@@ -39,7 +39,7 @@ class ChildConditionMixin(object):
             forms=forms or [],
             dod=date(dod_year, dod_month, 10),
         )
-        row = MockCaseRow(case, report)
+        row = MockCaseRow(case, report, child_index=self.child_index)
         self.assertEqual(row.child_age, child_age)
         return getattr(row, self.row_property)
 
@@ -54,6 +54,15 @@ class ChildConditionMixin(object):
     def assertConditionIrrelevant(self, forms=None, child_age=None):
         msg = "{} did not return None".format(self.row_property)
         self.assertEqual(None, self.check_condition(forms, child_age), msg)
+
+    @property
+    def child_index(self):
+        return getattr(self, '_child_index', 1)
+
+    def test_multiple_children(self):
+        self.form_prop = self.form_prop.replace('1', '2')
+        self._child_index = 2
+        self.test_condition_met()
 
 
 
@@ -154,7 +163,7 @@ class TestChildReceivedORS(ChildConditionMixin, TestCase):
             child_age=9,
         )
 
-    def test_failure_outside_range(self):
+    def test_condition_met(self):
         self.assertMeetsCondition(
             forms=[
                 self.form_without_condition(2014, 3, 31),
