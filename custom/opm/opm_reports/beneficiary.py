@@ -287,9 +287,6 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
 
@@ -300,8 +297,14 @@ class OPMCaseRow(object):
             )
 
         if self.preg_month == 6:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
         elif self.preg_month == 9:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
 
     def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
@@ -338,10 +341,10 @@ class OPMCaseRow(object):
 
     @property
     def child_growth_calculated(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-
         if self.child_age % 3 == 0:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 prop = indexed_child('child1_growthmon_calc', self.child_index)
                 if form.form.get(prop) == 'received':
@@ -350,13 +353,14 @@ class OPMCaseRow(object):
 
     @property
     def preg_received_ifa(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-            
         if self.preg_month == 6:
             if self.block == "atri":
+                if not self.is_vhnd_last_three_months:
+                    return True
+
                 def _from_case():
                     return self.case_property('ifa_tri_1', 0) == 'received'
+
                 def _from_forms():
                     return any(
                         form.xpath('form/pregnancy_questions/ifa_receive') == '1'
@@ -367,10 +371,10 @@ class OPMCaseRow(object):
 
     @property
     def child_received_ors(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-            
         if self.child_age % 3 == 0:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 prop = indexed_child('child1_child_orszntreat', self.child_index)
                 if form.form.get(prop) == '0':
@@ -379,10 +383,10 @@ class OPMCaseRow(object):
 
     @property
     def child_weighed_once(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-            
         if self.child_age == 3:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_weight', self.child_index)) == '1'
 
@@ -393,10 +397,10 @@ class OPMCaseRow(object):
 
     @property
     def child_birth_registered(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-            
         if self.child_age == 6:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_register', self.child_index)) == '1'
 
@@ -407,10 +411,10 @@ class OPMCaseRow(object):
 
     @property
     def child_received_measles_vaccine(self):
-        if not self.is_vhnd_last_three_months:
-            return True
-            
         if self.child_age == 12:
+            if not self.is_vhnd_last_three_months:
+                return True
+
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_measlesvacc', self.child_index)) == '1'
 
@@ -441,10 +445,11 @@ class OPMCaseRow(object):
 
     @property
     def child_breastfed(self):
-        if not self.is_vhnd_last_six_months:
-            return True
-            
+
         if self.child_age == 6 and self.block == 'atri':
+            if not self.is_vhnd_last_six_months:
+                return True
+
             excl_key = indexed_child("child1_child_excbreastfed", self.child_index)
             for form in self.filtered_forms(CHILDREN_FORMS):
                 if form.form.get(excl_key) == '0':
