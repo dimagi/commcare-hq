@@ -898,11 +898,11 @@ def make_buckets(interval, start_date, end_date):
 
     return buckets_list
 
-def get_real_project_spaces(params):
+def get_real_project_spaces():
     real_domain_query = (
             ESQuery('domains')
             .fields(['name'])
-            .filter({"terms": params})
+            .filter({"term": {"is_test": False}})
     )
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
@@ -928,10 +928,10 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
     end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
     keys = make_buckets(interval, begin, end)
 
+    real_domains = get_real_project_spaces()
     histo_data = []
     for timestamp in reversed(keys):
         sms = (ESQuery('sms')
-               .fields(['domain'])
                .filter({
                    "range": {
                        datefield: {
@@ -940,10 +940,11 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
                        }
                    }
                )
+               .filter({"terms": params})
+               .filter({"terms": {"domain": list(real_domains)}})
                .facet('domains', {"field": "domain"})
                .size(0))
         domains = sms.run().facet('domains')
-        domains = [d['term'] for d in domains if d['term'] in real_domains]
         c = len(domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
@@ -963,15 +964,14 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
     keys = make_buckets(interval, begin, end)
 
-    real_domains = get_real_project_spaces(params)
+    real_domains = get_real_project_spaces()
 
     histo_data = []
     for timestamp in reversed(keys):
         t = timestamp
         f = timestamp - SEC_IN_30_DAYS
         form_query = get_form_query(datefield, f, t, 'domains', {"field": "domain"})
-        domains = form_query.run().facet('domains')
-        domains = [d['term'] for d in domains if d['term'] in real_domains]
+        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains')
         c = len(domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})

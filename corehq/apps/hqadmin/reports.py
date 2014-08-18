@@ -135,7 +135,7 @@ INDICATOR_DATA = {
     "sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_domains",
-        "chart_title": "Domains that have received SMS",
+        "chart_title": "Domains that have used SMS",
         "hide_cumulative_charts": True,
         "histogram_type": "sms_domains",
         "interval": "week",
@@ -156,6 +156,18 @@ INDICATOR_DATA = {
             },
         ],
         "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "incoming_sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "incoming_sms_domains",
+        "chart_title": "Domains that have received SMS",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",
     },
@@ -502,4 +514,5 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     indicators = [
         'sms_domain_count',
         'commconnect_domain_count',
+        'incoming_sms_domain_count',
     ]
