@@ -171,10 +171,6 @@ class VhndAvailabilitySqlData(SqlData):
     @property
     def filter_values(self):
         return {}
-        return dict(
-            startdate=self.config['startdate'],
-            enddate=self.config['enddate'],
-        )
 
     @property
     def group_by(self):
