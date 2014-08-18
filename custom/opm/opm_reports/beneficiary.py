@@ -505,7 +505,7 @@ class OPMCaseRow(object):
     @property
     @memoized
     def is_vhnd_last_three_months(self):
-        start = add_months_to_date(self.reporting_window_start, -3)
+        start = add_months_to_date(self.reporting_window_start, -2)
         return bool(self.data_provider.get_dates_in_range(self.owner_id,
                                                           start,
                                                           self.reporting_window_end))
@@ -513,7 +513,7 @@ class OPMCaseRow(object):
     @property
     @memoized
     def is_vhnd_last_six_months(self):
-        start = add_months_to_date(self.reporting_window_start, -6)
+        start = add_months_to_date(self.reporting_window_start, -5)
         return bool(self.data_provider.get_dates_in_range(self.owner_id,
                                                           start,
                                                           self.reporting_window_end))
