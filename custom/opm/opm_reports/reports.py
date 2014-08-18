@@ -300,9 +300,9 @@ class SharedDataProvider(object):
 
         return results
 
-    def get_dates_in_range(self, owner_id, stardate, enddate):
+    def get_dates_in_range(self, owner_id, startdate, enddate):
         return filter(
-            lambda vhnd_date: vhnd_date >= stardate and vhnd_date < enddate,
+            lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
             [date for date in self._vhnd_dates.get(owner_id, set())],
         )
 
