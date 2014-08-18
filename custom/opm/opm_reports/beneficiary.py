@@ -287,6 +287,8 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
+        if not self.is_vhnd_last_three_months:
+            return True
 
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
@@ -336,6 +338,9 @@ class OPMCaseRow(object):
 
     @property
     def child_growth_calculated(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+
         if self.child_age % 3 == 0:
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 prop = indexed_child('child1_growthmon_calc', self.child_index)
@@ -345,6 +350,9 @@ class OPMCaseRow(object):
 
     @property
     def preg_received_ifa(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+            
         if self.preg_month == 6:
             if self.block == "atri":
                 def _from_case():
@@ -359,6 +367,9 @@ class OPMCaseRow(object):
 
     @property
     def child_received_ors(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+            
         if self.child_age % 3 == 0:
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 prop = indexed_child('child1_child_orszntreat', self.child_index)
@@ -368,6 +379,9 @@ class OPMCaseRow(object):
 
     @property
     def child_weighed_once(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+            
         if self.child_age == 3:
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_weight', self.child_index)) == '1'
@@ -379,6 +393,9 @@ class OPMCaseRow(object):
 
     @property
     def child_birth_registered(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+            
         if self.child_age == 6:
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_register', self.child_index)) == '1'
@@ -390,6 +407,9 @@ class OPMCaseRow(object):
 
     @property
     def child_received_measles_vaccine(self):
+        if not self.is_vhnd_last_three_months:
+            return True
+            
         if self.child_age == 12:
             def _test(form):
                 return form.xpath(indexed_child('form/child_1/child1_child_measlesvacc', self.child_index)) == '1'
@@ -410,7 +430,20 @@ class OPMCaseRow(object):
                 return self.child_received_measles_vaccine
 
     @property
+    def child_image_four(self):
+        if self.block == 'atri':
+            if self.child_age == 3:
+                return (CHILD_WEIGHT_Y, CHILD_WEIGHT_N)
+            if self.child_age == 6:
+                return (C_REGISTER_Y, C_REGISTER_N)
+            if self.child_age == 12:
+                return (MEASLEVACC_Y, MEASLEVACC_N)
+
+    @property
     def child_breastfed(self):
+        if not self.is_vhnd_last_six_months:
+            return True
+            
         if self.child_age == 6 and self.block == 'atri':
             excl_key = indexed_child("child1_child_excbreastfed", self.child_index)
             for form in self.filtered_forms(CHILDREN_FORMS):
@@ -464,6 +497,21 @@ class OPMCaseRow(object):
                                                           self.reporting_window_start,
                                                           self.reporting_window_end))
 
+    @property
+    @memoized
+    def is_vhnd_last_three_months(self):
+        start = add_months_to_date(self.reporting_window_start, -3)
+        return bool(self.data_provider.get_dates_in_range(self.owner_id,
+                                                          start,
+                                                          self.reporting_window_end))
+
+    @property
+    @memoized
+    def is_vhnd_last_six_months(self):
+        start = add_months_to_date(self.reporting_window_start, -6)
+        return bool(self.data_provider.get_dates_in_range(self.owner_id,
+                                                          start,
+                                                          self.reporting_window_end))
     def add_extra_children(self):
         if self.child_index == 1:
             # app supports up to three children only
@@ -479,8 +527,6 @@ class OPMCaseRow(object):
 
     @property
     def all_conditions_met(self):
-        if not self.vhnd_available:
-            return True
         if self.status == 'mother':
             relevant_conditions = [
                 self.child_attended_vhnd,
@@ -571,7 +617,10 @@ class ConditionsMet(OPMCaseRow):
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
             self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)
-            self.four = self.condition_image(MEASLEVACC_Y, MEASLEVACC_N, self.child_condition_four)
+            if  self.child_condition_four is not None:
+                self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1], self.child_condition_four)
+            else:
+                self.four = ''
             self.five = self.condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, self.child_breastfed)
         elif self.status == 'pregnant':
             self.child_name = EMPTY_FIELD
@@ -590,10 +639,7 @@ class ConditionsMet(OPMCaseRow):
                 self.five = ''
 
         if not self.vhnd_available:
-            # TODO what if they don't meet the other conditions?
-            met_or_not = True
             self.one = self.img_elem % VHND_NO
-            self.two, self.three, self.four, self.five = '','','',''
 
 
 class Beneficiary(OPMCaseRow):
