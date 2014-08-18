@@ -1,6 +1,7 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
+from sqlalchemy.sql.expression import join, alias
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains
 from sqlalchemy import select
@@ -28,12 +29,15 @@ class CareQueryMeta(QueryMeta):
 
     def execute(self, metadata, connection, filter_values):
         result = connection.execute(self._build_query(filter_values)).fetchall()
+        #debug
+        print result
         return result
 
     def _build_query(self, filter_values):
         having = []
         filter_cols = []
         external_cols = _get_grouping(filter_values)
+        # print filter_values
         for k, v in filter_values.iteritems():
             if v and k not in ['group', 'gender', 'group_leadership']:
                 if isinstance(v, tuple):
@@ -48,22 +52,25 @@ class CareQueryMeta(QueryMeta):
         group_having = ''
         having_group_by = []
         if 'group_leadership' in filter_values and filter_values['group_leadership']:
-            group_having = "MAX(CAST(gender as int4)) + MIN(CAST(gender as int4)) = %s and group_leadership=\'Y\'" % filter_values['group_leadership']
+            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = %s and group_leadership=\'Y\'" % filter_values['group_leadership']
             having_group_by.append('group_leadership')
-            external_cols.append('group_leadership')
+            filter_cols.append('group_leadership')
         elif 'gender' in filter_values and filter_values['gender']:
-            group_having = "MAX(CAST(gender as int4)) + MIN(CAST(gender as int4)) = %s" % filter_values['gender']
-
-        if group_having:
-            having.append('x.group_id IN (%s)' % select(['group_id'], from_obj='"fluff_FarmerRecordFluff"', group_by=['group_id'] + having_group_by, having=group_having))
+            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = %s" % filter_values['gender']
 
         for fil in self.filters:
             having.append("%s %s %s" % (fil.column_name, fil.operator, fil.parameter))
-        return select(['COUNT(x.doc_id) as %s' % self.key, 'x.group_id'] + filter_cols + external_cols,
-               group_by=['maxmin', 'group_id'] + filter_cols + external_cols,
+
+
+        s1 = alias(select(['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
+                                from_obj='"fluff_FarmerRecordFluff"',
+                                group_by=['doc_id', 'group_id'] + filter_cols + external_cols), name='x')
+        s2 = alias(select(['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as maxmingender'], from_obj='"fluff_FarmerRecordFluff"',
+                                group_by=['group_id'] + having_group_by, having=group_having), name='y')
+        return select(['COUNT(x.doc_id) as %s' % self.key] + external_cols,
+               group_by=['maxmin'] + filter_cols + external_cols,
                having=" and ".join(having),
-               from_obj=select(['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
-                               from_obj='"fluff_FarmerRecordFluff"', group_by=['doc_id', 'group_id'] + filter_cols + external_cols).alias('x'))
+               from_obj=join(s1, s2, s1.c.group_id==s2.c.group_id))
 
 
 class CareCustomColumn(CustomQueryColumn):
@@ -100,42 +107,21 @@ class GeographySqlData(SqlData):
             columns.append(DatabaseColumn(k, SimpleColumn(k)))
         return columns
 
-class AdoptionBarChartReportSqlData(SqlData):
-    table_name = 'fluff_FarmerRecordFluff'
+
+class CareSqlData(SqlData):
     no_value = {'sort_key': 0, 'html': 0}
+    table_name = 'fluff_FarmerRecordFluff'
 
     def __init__(self, domain, config, request_params):
         self.domain = domain
         self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
         self.config = config
         self.request_params = request_params
-        super(AdoptionBarChartReportSqlData, self).__init__(config=config)
+        super(CareSqlData, self).__init__(config=config)
 
     def percent_fn(self, x, y, z):
         sum_all = (x or 0) + (y or 0) + (z or 0)
         return "%.2f%%" % (100 * int(x or 0) / float(sum_all or 1))
-
-    def group_name_fn(self, group_name):
-        text = None
-        if is_mapping(group_name, self.domain):
-            self.request_params['type_value_chain'] = group_name
-            self.request_params['group_by'] = 'domain'
-            text = next((item for item in get_mapping(self.domain) if item['val'] == group_name), None)['text']
-
-        if is_domain(group_name, self.domain):
-            self.request_params['type_domain'] = group_name
-            self.request_params['group_by'] = 'practice'
-            text = next((item for item in get_domains(self.domain) if item['val'] == group_name), None)['text']
-
-        if is_practice(group_name, self.domain):
-            # TODO practices should probably redirect to other report
-            self.request_params['type_practice'] = group_name
-            text = next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
-
-        from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
-        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
-        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
-
 
     @property
     def columns(self):
@@ -175,6 +161,39 @@ class AdoptionBarChartReportSqlData(SqlData):
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
         return filters
+
+
+class AdoptionBarChartReportSqlData(CareSqlData):
+
+    def group_name_fn(self, group_name):
+        text = None
+        if is_mapping(group_name, self.domain):
+            self.request_params['type_value_chain'] = group_name
+            self.request_params['group_by'] = 'domain'
+            text = next((item for item in get_mapping(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_domain(group_name, self.domain):
+            self.request_params['type_domain'] = group_name
+            self.request_params['group_by'] = 'practice'
+            text = next((item for item in get_domains(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_practice(group_name, self.domain):
+            # TODO practices should probably redirect to other report
+            self.request_params['type_practice'] = group_name
+
+            text = next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
+
+        from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
+        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
+        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
+
+
+    @property
+    def group_by(self):
+        return _get_grouping(self.config)
+
+
+class AdoptionDisaggregatedSqlData(CareSqlData):
 
     @property
     def group_by(self):
