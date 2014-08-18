@@ -469,7 +469,7 @@ class OPMCaseRow(object):
             # app supports up to three children only
             num_children = min(int(self.case_property("live_birth_amount", 1)), 3)
             if num_children > 1:
-                extra_child_objects = [(ConditionsMet(self.case, self.report, child_index=num + 2)) for num in range(num_children - 1)]
+                extra_child_objects = [(self.__class__(self.case, self.report, child_index=num + 2)) for num in range(num_children - 1)]
                 self.report.set_extra_row_objects(extra_child_objects)
 
     @property
@@ -522,47 +522,26 @@ class OPMCaseRow(object):
 
 
 class ConditionsMet(OPMCaseRow):
-    method_map = {
-        "atri": [
-            ('name', _("List of Beneficiary"), True),
-            ('awc_name', _("AWC Name"), True),
-            ('block_name', _("Block Name"), True),
-            ('husband_name', _("Husband Name"), True),
-            ('status', _("Current status"), True),
-            ('preg_month_display', _('Pregnancy Month'), True),
-            ('child_name', _("Child Name"), True),
-            ('child_age_display', _("Child Age"), True),
-            ('window', _("Window"), True),
-            ('one', _("1"), True),
-            ('two', _("2"), True),
-            ('three', _("3"), True),
-            ('four', _("4"), True),
-            ('five', _("5"), True),
-            ('cash', _("Payment Amount"), True),
-            ('case_id', _('Case ID'), True),
-            ('owner_id', _("Owner Id"), False),
-            ('closed', _('Closed'), False)
-        ],
-        'wazirganj': [
-            ('name', _("List of Beneficiary"), True),
-            ('awc_name', _("AWC Name"), True),
-            ('block_name', _("Block Name"), True),
-            ('husband_name', _("Husband Name"), True),
-            ('status', _("Current status"), True),
-            ('preg_month_display', _('Pregnancy Month'), True),
-            ('child_name', _("Child Name"), True),
-            ('child_age_display', _("Child Age"), True),
-            ('window', _("Window"), True),
-            ('one', _("1"), True),
-            ('two', _("2"), True),
-            ('three', _("3"), True),
-            ('four', _("4"), True),
-            ('cash', _("Payment Amount"), True),
-            ('case_id', _('Case ID'), True),
-            ('owner_id', _("Owner Id"), False),
-            ('closed', _('Closed'), False)
-        ]
-    }
+    method_map = [
+        ('name', _("List of Beneficiaries"), True),
+        ('awc_name', _("AWC Name"), True),
+        ('block_name', _("Block Name"), True),
+        ('husband_name', _("Husband Name"), True),
+        ('status', _("Current status"), True),
+        ('preg_month_display', _('Pregnancy Month'), True),
+        ('child_name', _("Child Name"), True),
+        ('child_age_display', _("Child Age"), True),
+        ('window', _("Window"), True),
+        ('one', _("1"), True),
+        ('two', _("2"), True),
+        ('three', _("3"), True),
+        ('four', _("4"), True),
+        ('five', _("5"), True),
+        ('cash', _("Payment Amount"), True),
+        ('case_id', _('Case ID'), True),
+        ('owner_id', _("Owner Id"), False),
+        ('closed', _('Closed'), False)
+    ]
 
     def __init__(self, case, report, child_index=1):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index)
@@ -619,8 +598,8 @@ class Beneficiary(OPMCaseRow):
         ('owner_id', _("Owner ID"), False)
     ]
 
-    def __init__(self, case, report):
-        super(Beneficiary, self).__init__(case, report)
+    def __init__(self, case, report, child_index=1):
+        super(Beneficiary, self).__init__(case, report, child_index=child_index)
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
         self.delivery_cash = MONTH_AMT if self.live_delivery else 0

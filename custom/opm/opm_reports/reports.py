@@ -572,6 +572,63 @@ class CaseReportMixin(object):
         result = query.run()
         return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
 
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            SelectOpenCloseFilter,
+            SnapshotFilter
+        ]
+
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
+
+    @property
+    def block(self):
+        block = self.request_params.get("block")
+        if block:
+            return block
+        else:
+            return 'atri'
+
+    @property
+    def rows(self):
+        if self.snapshot is not None:
+            try:
+                current_status_index = self.snapshot.slugs.index('status')
+                for row in self.snapshot.rows:
+                    if self.is_rendered_as_email:
+                        with localize('hin'):
+                            row[current_status_index] = _(row[current_status_index])
+                return self.snapshot.rows
+            except ValueError:
+                return []
+        rows = []
+        for row in self.row_objects + self.extra_row_objects:
+            rows.append([getattr(row, method) for
+                method, header, visible in self.model.method_map])
+        return rows
+
+    def filter(self, fn, filter_fields=None):
+        # TODO test with snapshots.
+        if filter_fields is None:
+            filter_fields = self.filter_fields
+        for key, field in filter_fields:
+            keys = self.filter_data.get(field, [])
+            if keys:
+                case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
+                if field == 'is_open':
+                    if case_key != (keys == 'closed'):
+                        raise InvalidRow
+                else:
+                    if field == 'gp':
+                        keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
+                    if case_key not in keys:
+                        raise InvalidRow
+
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
 
@@ -582,19 +639,58 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
-    @property
-    def load_snapshot(self):
-        return self.request.GET.get("load_snapshot", False)
+
+class MetReport(CaseReportMixin, BaseReport):
+    name = ugettext_noop("Conditions Met Report")
+    report_template_path = "opm/met_report.html"
+    slug = "met_report"
+    model = ConditionsMet
+    exportable = False
+    is_rendered_as_email = False
 
     @property
-    def fields(self):
-        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter, SnapshotFilter]
+    def report_subtitles(self):
+        subtitles = ["For filters:",]
+        if self.awcs:
+            subtitles.append("Awc's - %s" % ", ".join(self.awcs))
+        elif self.gp:
+            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
+        elif self.block:
+            subtitles.append("Block - %s" % self.block)
+        startdate = self.datespan.startdate_param_utc
+        enddate = self.datespan.enddate_param_utc
+        if startdate and enddate:
+            sd = parser.parse(startdate)
+            ed = parser.parse(enddate)
+            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        return subtitles
 
-    def cases_meeting_bp1(self):
-        pass
+    @property
+    def headers(self):
+        if not self.is_rendered_as_email:
+            if self.snapshot is not None:
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                ])
+            return DataTablesHeader(*[
+                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+            ])
+        else:
+            with localize('hin'):
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
+                ])
 
-    def cases_meeting_bp1(self):
-        pass
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/met_print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
 
 class IncentivePaymentReport(BaseReport):
@@ -845,116 +941,6 @@ def calculate_total_row(rows):
                 else:
                     total_row.append('')
     return total_row
-
-class MetReport(CaseReportMixin, BaseReport):
-    name = ugettext_noop("Conditions Met Report")
-    report_template_path = "opm/met_report.html"
-    slug = "met_report"
-    model = ConditionsMet
-    exportable = False
-    is_rendered_as_email = False
-
-    @property
-    def report_subtitles(self):
-        subtitles = ["For filters:",]
-        if self.awcs:
-            subtitles.append("Awc's - %s" % ", ".join(self.awcs))
-        elif self.gp:
-            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
-        elif self.block:
-            subtitles.append("Block - %s" % self.block)
-        startdate = self.datespan.startdate_param_utc
-        enddate = self.datespan.enddate_param_utc
-        if startdate and enddate:
-            sd = parser.parse(startdate)
-            ed = parser.parse(enddate)
-            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
-        return subtitles
-
-    @property
-    def load_snapshot(self):
-        return self.request.GET.get("load_snapshot", False)
-
-    @property
-    def block(self):
-        block = self.request_params.get("block")
-        if block:
-            return block
-        else:
-            return 'atri'
-
-
-    @property
-    def fields(self):
-        return [
-            MetHierarchyFilter,
-            MonthFilter,
-            YearFilter,
-            SelectOpenCloseFilter,
-            SnapshotFilter
-        ]
-
-    @property
-    def headers(self):
-        if not self.is_rendered_as_email:
-            if self.snapshot is not None:
-                return DataTablesHeader(*[
-                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
-                ])
-            return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-            ])
-        else:
-            with localize('hin'):
-                return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-                ])
-
-    @property
-    def rows(self):
-        if self.snapshot is not None:
-            try:
-                current_status_index = self.snapshot.slugs.index('status')
-                for row in self.snapshot.rows:
-                    if self.is_rendered_as_email:
-                        with localize('hin'):
-                            row[current_status_index] = _(row[current_status_index])
-                return self.snapshot.rows
-            except ValueError:
-                return []
-        rows = []
-        for row in self.row_objects + self.extra_row_objects:
-            rows.append([getattr(row, method) for
-                method, header, visible in self.model.method_map[self.block.lower()]])
-        return rows
-
-    def filter(self, fn, filter_fields=None):
-        # TODO test with snapshots.  Move to CaseReportMixin?
-        if filter_fields is None:
-            filter_fields = self.filter_fields
-        for key, field in filter_fields:
-            keys = self.filter_data.get(field, [])
-            if keys:
-                case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
-                if field == 'is_open':
-                    if case_key != (keys == 'closed'):
-                        raise InvalidRow
-                else:
-                    if field == 'gp':
-                        keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
-                    if case_key not in keys:
-                        raise InvalidRow
-
-    @property
-    @request_cache("raw")
-    def print_response(self):
-        """
-        Returns the report for printing.
-        """
-        self.is_rendered_as_email = True
-        self.use_datatables = False
-        self.override_template = "opm/met_print_report.html"
-        return HttpResponse(self._async_context()['report'])
 
 
 def _unformat_row(row):
