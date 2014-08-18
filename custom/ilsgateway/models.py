@@ -30,6 +30,11 @@ class ILSGatewayConfig(Document):
         configs = [cls.get(docid=mapping.doc_id) for mapping in mappings]
         return configs
 
+    @classmethod
+    def get_all_enabled_domains(cls):
+        configs = cls.get_all_configs()
+        return [c.domain for c in filter(lambda config: config.enabled, configs)]
+
     @property
     def is_configured(self):
         return True if self.enabled and self.url and self.password and self.username else False

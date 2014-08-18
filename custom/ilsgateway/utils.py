@@ -1,6 +1,6 @@
 from datetime import datetime
 from corehq.apps.commtrack.models import SupplyPointCase
-from custom.ilsgateway.models import SupplyPointStatus
+from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.domain.models import Domain
 from django.db.models.aggregates import Max
@@ -23,15 +23,11 @@ def get_current_group():
 
 
 def send_for_all_domains(date, fn, **kwargs):
-    for domain in Domain.get_all():
-        #TODO Merge with ILSGateway integration?
-        #ilsgateway_config = ILSGatewayConfig.for_domain(domain.name)
-        #if ilsgateway_config and ilsgateway_config.enabled:
-        fn(domain.name, date, **kwargs)
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        fn(domain, date, **kwargs)
 
 
 def send_for_day(date, cutoff, f, **kwargs):
-    print date, cutoff, f, kwargs
     now = datetime.utcnow()
     date = get_business_day_of_month_before(now.year, now.month, date)
     cutoff = get_business_day_of_month_before(now.year, now.month, cutoff)

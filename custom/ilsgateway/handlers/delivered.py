@@ -13,7 +13,8 @@ class DeliveredHandler(KeywordHandler):
         locs = [c._id for c in location.children]
         users = filter(lambda u: u.domain_membership["location_id"] in locs, CommTrackUser.by_domain(self.domain))
         for user in users:
-            send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN % {"district_name": sp_name})
+            if user.get_verified_number():
+                send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN % {"district_name": sp_name})
 
     def handle(self):
         location = get_location(self.domain, self.user, None)

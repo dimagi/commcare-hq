@@ -1,4 +1,5 @@
 from datetime import datetime
+from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
@@ -28,8 +29,8 @@ class MessageInitiatior(KeywordHandler):
     def send_message(self, location, message, **kwargs):
         for user in CommTrackUser.by_domain(self.domain):
             dm = user.get_domain_membership(self.domain)
-            if dm.location_id == location._id:
-                print message % kwargs, user.username
+            if dm.location_id == location._id and user.get_verified_number():
+                send_sms_to_verified_number(user.get_verified_number(), message % kwargs)
 
     def handle(self):
         if len(self.args) < 2:

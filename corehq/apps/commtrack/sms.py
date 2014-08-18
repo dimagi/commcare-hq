@@ -26,11 +26,9 @@ logger = logging.getLogger('commtrack.sms')
 class SMSError(RuntimeError):
     pass
 
-
 def handle(verified_contact, text, msg=None):
     """top-level handler for incoming stock report messages"""
     domain = Domain.get_by_name(verified_contact.domain)
-
     if not domain.commtrack_enabled:
         return False
 
@@ -48,7 +46,6 @@ def handle(verified_contact, text, msg=None):
 
     process(domain.name, data)
     send_confirmation(verified_contact, data)
-    #TODO check if domain has ils enabled
     return True
 
 

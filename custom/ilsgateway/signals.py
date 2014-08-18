@@ -34,7 +34,6 @@ def handle(sender, **kwargs):
             return
         keyword = args[0]
         args = args[1:]
-        handler = None
         params = {
             'user': user,
             'domain': domain,
@@ -43,32 +42,38 @@ def handle(sender, **kwargs):
             'verified_contact': verified_contact
         }
 
-        if keyword in ['soh', 'hmk']:
-            handler = SOHHandler(**params)
-        elif keyword in ['submitted', 'nimetuma']:
-            handler = RandrHandler(**params)
-        elif keyword in ['delivered', 'dlvd', 'nimepokea']:
-            handler = DeliveredHandler(**params)
-        elif keyword == 'sijapokea' or (keyword == 'not' and args and re.match("del", args[0])):
-            handler = NotDeliveredHandler(**params)
-        elif keyword == 'sijatuma' or (keyword == 'not' and args and re.match("sub", args[0])):
-            handler = NotSubmittedHandler(**params)
-        elif keyword in ['supervision', 'usimamizi']:
-            handler = SupervisionHandler(**params)
-        elif keyword in ['arrived', 'aliwasili']:
-            handler = ArrivedHandler(**params)
-        elif keyword in ['help', 'msaada']:
-            handler = HelpHandler(**params)
-        elif keyword in ['language', 'lang', 'lugha']:
-            handler = LanguageHandler(**params)
-        elif keyword in ['stop', 'acha', 'hapo']:
-            handler = StopHandler(**params)
-        elif keyword in ['yes', 'ndio', 'ndyo']:
-            handler = YesHandler(**params)
-        elif keyword in ['register', 'reg', 'join', 'sajili']:
-            handler = RegisterHandler(**params)
-        elif keyword == 'test':
-            handler = MessageInitiatior(**params)
+        def not_function(word):
+            if args and re.match("del", word):
+                return NotDeliveredHandler
+            elif args and re.match("sub", word):
+                return NotSubmittedHandler
+            return None
+
+        handlers = {
+            ('soh', 'hmk'): SOHHandler,
+            ('submitted', 'nimetuma'): RandrHandler,
+            ('delivered', 'dlvd', 'nimepokea'): DeliveredHandler,
+            ('sijapokea',): NotDeliveredHandler,
+            ('sijatuma',): NotSubmittedHandler,
+            ('supervision', 'usimamizi'): SupervisionHandler,
+            ('arrived', 'aliwasili'): ArrivedHandler,
+            ('help', 'msaada'): HelpHandler,
+            ('language', 'lang', 'lugha'): LanguageHandler,
+            ('stop', 'acha', 'hapo'): StopHandler,
+            ('yes', 'ndio', 'ndyo'): YesHandler,
+            ('register', 'reg', 'join', 'sajili'): RegisterHandler,
+            ('test',): MessageInitiatior,
+            ('not',): not_function(args[0]) if args else None
+        }
+
+        def choose_handler(keyword):
+            for k, v in handlers.iteritems():
+                if keyword in k:
+                    return v
+            return None
+
+        handler_class = choose_handler(keyword)
+        handler = handler_class(**params) if handler_class else None
 
         if handler:
             if args:

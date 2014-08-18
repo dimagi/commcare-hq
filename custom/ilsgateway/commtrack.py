@@ -5,7 +5,8 @@ from corehq.apps.sms.mixin import PhoneNumberInUseException
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig
+from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
+    CommtrackActionConfig
 from dimagi.utils.dates import force_to_datetime
 from custom.ilsgateway.models import MigrationCheckpoint
 from requests.exceptions import ConnectionError
@@ -239,7 +240,7 @@ def locations_sync(project, endpoint, **kwargs):
                 next_url = meta['next']
 
 
-def locations_type_sync(project):
+def commtrack_settings_sync(project):
     locations_types = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
     config = CommtrackConfig.for_domain(project)
     for i, value in enumerate(locations_types):
@@ -248,6 +249,14 @@ def locations_type_sync(project):
             allowed_parents = [locations_types[i - 1]] if i > 0 else [""]
             config.location_types.append(
                 LocationType(name=value, allowed_parents=allowed_parents))
+    actions = [action.keyword for action in config.actions]
+    if 'delivered' not in actions:
+        config.actions.append(
+            CommtrackActionConfig(
+                action='receipts',
+                keyword='delivered',
+                caption='Delivered')
+        )
     config.save()
 
 
@@ -263,7 +272,7 @@ def bootstrap_domain(ilsgateway_config):
         checkpoint.domain = domain
         date = None
     try:
-        locations_type_sync(domain)
+        commtrack_settings_sync(domain)
         locations_sync(domain, endpoint, date=date)
         products_sync(domain, endpoint, date=date)
         webusers_sync(domain, endpoint, date=date)
