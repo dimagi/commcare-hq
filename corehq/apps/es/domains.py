@@ -10,6 +10,7 @@ class DomainES(HQESQuery):
         return [
             real_domains,
             commconnect_domains,
+            created,
         ] + super(DomainES, self).builtin_filters
 
 
@@ -19,3 +20,7 @@ def real_domains():
 
 def commconnect_domains():
     return filters.term("commconnect_enabled", True)
+
+
+def created(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('date_created', gt, gte, lt, lte)

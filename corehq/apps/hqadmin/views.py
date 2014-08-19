@@ -49,6 +49,7 @@ from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.es.sms import SMSES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
@@ -937,46 +938,45 @@ def get_form_query(datefield, begin, end, facet_name, facet_terms):
 
 
 def get_sms_only_domain_stats_data(datespan, interval='month',
-        datefield='date'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
-
-    real_domains = get_real_project_spaces()
+        datefield='date_created'):
     histo_data = []
-    for timestamp in reversed(keys):
-        sms = (ESQuery('sms')
-               .filter({
-                   "range": {
-                       datefield: {
-                           "to": timestamp
-                           }
-                       }
-                   }
-               )
-               .filter({"terms": {"domain": list(real_domains)}})
-               .facet('domains', {"terms": {"field": "domain"}})
-               .size(0))
-        forms = (FormES()
-                 .filter({
-                     "range": {
-                         datefield: {
-                             "to": timestamp
-                             }
-                         }
-                     }
-                 )
-                 .filter({"terms": {"domain": list(real_domains)}})
-                 .facet('domains', {"terms": {"field": "domain"}})
-                 .size(0))
-        sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
-        form_domains = {x['term'] for ix in forms.run().facet('domains', 'terms')}
-        c = len(sms_domains - form_domains)
-        if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
+
+    sms = (SMSES()
+            .facet('domains', {"terms": {"field": "domain"}})
+            .size(0))
+    forms = (FormES()
+             .facet('domains', {"terms": {"field": "domain"}})
+             .size(0))
+
+    sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
+    form_domains = {x['term'] for x in forms.run().facet('domains', 'terms')}
+
+    sms_only_domains = sms_domains - form_domains
+
+    domains_after_date = (DomainES()
+            .real_domains()
+            .filter({"terms": {"domain": list(sms_only_domains)}})
+            .created(gte=datespan.startdate)
+            .facet('date', 
+                {
+                    "date_histogram": {
+                        "field": datefield,
+                        "interval": interval
+                    }
+                }) 
+            .size(0))
+
+    histo_data = domains_after_date.run().facet('date', 'entries')
+
+    domains_before_date = (DomainES()
+            .real_domains()
+            .filter({"terms": {"domain": list(sms_only_domains)}})
+            .created(lt=datespan.startdate)
+            .size(0)).run()
+
     return {
         'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
+        'initial_values': {"All Domains": domains_before_date.total},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
