@@ -116,7 +116,7 @@ class CareSqlData(SqlData):
         self.domain = domain
         self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
         self.config = config
-        self.request_params = request_params
+        self.request_params = self.filter_request_params(request_params)
         super(CareSqlData, self).__init__(config=config)
 
     def percent_fn(self, x, y, z):
@@ -161,6 +161,18 @@ class CareSqlData(SqlData):
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
         return filters
+
+    def filter_request_params(self, request_params):
+        if 'startdate' in request_params:
+            request_params.pop('startdate')
+        if 'enddate' in request_params:
+             request_params.pop('enddate')
+        if 'filterSet' in request_params:
+             request_params.pop('filterSet')
+        if 'hq_filters' in request_params:
+             request_params.pop('hq_filters')
+
+        return request_params
 
 
 class AdoptionBarChartReportSqlData(CareSqlData):
