@@ -152,7 +152,7 @@ class ILSGatewayEndpoint(EndpointMixin):
         return meta, [SMSUser.from_json(user) for user in users]
 
     def get_location(self, id):
-        response = requests.get(self.locations_url + str(id), auth=self._auth())
+        response = requests.get(self.locations_url + str(id) + "/", auth=self._auth())
         return response.json()
 
     def get_locations(self, type=None, **kwargs):

@@ -1,7 +1,7 @@
 import logging
 from django.contrib.auth.models import User
 from corehq.apps.locations.models import Location
-from corehq.apps.sms.mixin import PhoneNumberInUseException
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -42,7 +42,7 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
         'is_superuser': ilsgateway_webuser.is_superuser,
         'last_login': force_to_datetime(ilsgateway_webuser.last_login),
         'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
-        'is_ilsuser': True,
+        'password_hashed': True,
     }
     sp = SupplyPointCase.view('hqcase/by_domain_external_id',
                               key=[domain, str(ilsgateway_webuser.location)],
@@ -50,18 +50,19 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
                               include_docs=True,
                               limit=1).first()
     role_id = ilsgateway_webuser.role_id if hasattr(ilsgateway_webuser, 'role_id') else None
+    location_id = sp.location_id if sp else None
 
     if user is None:
         try:
             user = WebUser.create(domain=None, username=ilsgateway_webuser.email.lower(),
                                   password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
-            user.add_domain_membership(domain, role_id=role_id, location_id=sp.location_id)
+            user.add_domain_membership(domain, role_id=role_id, location_id=location_id)
             user.save()
         except Exception as e:
             logging.error(e)
     else:
         if domain not in user.get_domains():
-            user.add_domain_membership(domain, role_id=role_id, location_id=sp.location_id)
+            user.add_domain_membership(domain, role_id=role_id, location_id=location_id)
             user.save()
 
     return user
@@ -122,7 +123,9 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
                 try:
                     user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
                 except PhoneNumberInUseException as e:
-                    logging.error(e)
+                    v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
+                    v.delete()
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
             dm = user.get_domain_membership(domain)
             dm.location_id = location_id
             user.save()
@@ -273,8 +276,8 @@ def bootstrap_domain(ilsgateway_config):
         date = None
     try:
         commtrack_settings_sync(domain)
-        locations_sync(domain, endpoint, date=date)
         products_sync(domain, endpoint, date=date)
+        locations_sync(domain, endpoint, date=date)
         webusers_sync(domain, endpoint, date=date)
         smsusers_sync(domain, endpoint, date=date)
         
