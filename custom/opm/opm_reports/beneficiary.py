@@ -567,15 +567,16 @@ class OPMCaseRow(object):
         return MONTH_AMT if self.all_conditions_met else 0
 
     @property
-    def spacing_cash(self):
+    def year_end_bonus_cash(self):
+        year_value = self.birth_spacing_years or self.weight_grade_normal
         return {
             2: TWO_YEAR_AMT,
             3: THREE_YEAR_AMT,
-        }.get(self.birth_spacing_years, 0)
+        }.get(year_value, 0)
 
     @property
     def cash_amt(self):
-        return self.month_amt + self.spacing_cash
+        return self.month_amt + self.year_end_bonus_cash
 
     @property
     def cash(self):
@@ -629,10 +630,15 @@ class ConditionsMet(OPMCaseRow):
             self.five = ''
 
         if self.child_age in (24, 36):
-            if self.birth_spacing_years:
-                self.five = self.img_elem % SPACING_PROMPT_Y
-            elif self.birth_spacing_years is False:
-                self.five = self.img_elem % SPACING_PROMPT_N
+            if self.block == 'atri':
+                met, pos, neg = self.weight_grade_normal, GRADE_NORMAL_Y, GRADE_NORMAL_N
+            else:
+                met, pos, neg = self.birth_spacing_years, SPACING_PROMPT_Y, SPACING_PROMPT_N
+
+            if condition_met:
+                self.five = self.img_elem % pos
+            elif condition_met is False:
+                self.five = self.img_elem % neg
             else:
                 self.five = ''
 
@@ -658,7 +664,7 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
-        ('spacing_cash', _("Birth Spacing Bonus"), True),
+        ('year_end_bonus_cash', _("Birth Spacing Bonus"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
         ('owner_id', _("Owner ID"), False)
     ]
