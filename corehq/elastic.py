@@ -125,7 +125,7 @@ def get_user_type_filters(histo_type, user_type_mobile):
     return result
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None):
+def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval, user_type_mobile=user_type_mobile))
                         for d in domains])
@@ -150,8 +150,11 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
 
     return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["display_name"],
-                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
+        'initial_values': (
+            dict([(dom["display_name"],
+                 _total_until_date(histo_type, dom["names"])) for dom in domains])
+            if is_cumulative else {"All Domains": 0}
+        ),
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
