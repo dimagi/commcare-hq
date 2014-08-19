@@ -899,11 +899,7 @@ def make_buckets(interval, start_date, end_date):
     return buckets_list
 
 def get_real_project_spaces():
-    real_domain_query = (
-            ESQuery('domains')
-            .fields(['name'])
-            .filter({"term": {"is_test": False}})
-    )
+    real_domain_query = DomainES().real_domains().fields(['name'])
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
 
