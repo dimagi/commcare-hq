@@ -471,16 +471,33 @@ class OPMCaseRow(object):
                 return False
 
     @property
+    def weight_grade_normal(self):
+        if self.block == "wazirganj":
+            if self.child_age in [24, 36]:
+                if self.child_index == 1:
+                    form_prop = 'interpret_grade'
+                else:
+                    form_prop = 'interpret_grade_{}'.format(self.child_index)
+                forms = self.filtered_forms(CHILDREN_FORMS, 3)
+                if len(forms) == 0:
+                    return False
+                form = sorted(forms, key=lambda form: form.received_on)[-1]
+                if form.form.get(form_prop) == 'normal':
+                    return self.child_age/12
+                return False
+
+    @property
     def birth_spacing_years(self):
         """
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        if self.child_age in [24, 36]:
-            for form in self.filtered_forms(CHILDREN_FORMS):
-                if form.form.get('birth_spacing_prompt') == '1':
-                    return False
-            return self.child_age/12
+        if self.block == "atri":
+            if self.child_age in [24, 36]:
+                for form in self.filtered_forms(CHILDREN_FORMS):
+                    if form.form.get('birth_spacing_prompt') == '1':
+                        return False
+                return self.child_age/12
 
     def case_property(self, name, default=None):
         prop = getattr(self.case, name, default)
