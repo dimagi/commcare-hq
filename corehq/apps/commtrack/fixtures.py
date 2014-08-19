@@ -85,4 +85,4 @@ def program_fixture_generator(user, version, last_sync):
         'code'
     ]
     data_fn = lambda: Program.by_domain(user.domain)
-    return _simple_fixture_generator(user, "program", fields, data_fn)
+    return _simple_fixture_generator(user, "program", fields, data_fn, last_sync)
