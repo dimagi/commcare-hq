@@ -136,7 +136,7 @@ function HQReportDataTables(options) {
 
             var use_default_sort = false;
             for (var i=0; i< self.aoColumns.length; i++) {
-                if (self.aoColumns[i].bSortable == true) {
+                if (self.aoColumns[i].bSortable) {
                     use_default_sort = true
                 }
             }
