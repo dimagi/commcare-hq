@@ -149,7 +149,7 @@ class BasicPillow(object):
             query_params.update({
                 'since': self.since,
                 'filter': self.couch_filter,
-                'include_docs': self.include_docs,
+                'include_docs': str(self.include_docs).lower(),
             })
             query_params.update(self.extra_args)
             try:
