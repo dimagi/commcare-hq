@@ -11,6 +11,7 @@ from .case_reports import Report, OPMCase, MockCaseRow
 class ChildConditionMixin(object):
     def setUp(self):
         self.xmlns = CFU2_XMLNS
+        self.child_node = 'child_1'
         self.form_prop = 'out_of_sodas'
         self.met_value = '1'
         self.not_met_value = '0'
@@ -18,14 +19,14 @@ class ChildConditionMixin(object):
 
     def form_with_condition(self, y, m, d):
         return XFormInstance(
-            form={self.form_prop: self.met_value},
+            form={self.child_node: {self.form_prop: self.met_value}},
             received_on=datetime(y, m, d),
             xmlns=self.xmlns,
         )
 
     def form_without_condition(self, y, m, d):
         return XFormInstance(
-            form={self.form_prop: self.not_met_value},
+            form={self.child_node: {self.form_prop: self.not_met_value}},
             received_on=datetime(y, m, d),
             xmlns=self.xmlns,
         )
@@ -43,23 +44,17 @@ class ChildConditionMixin(object):
         self.assertEqual(row.child_age, child_age)
         return getattr(row, self.row_property)
 
-    def assertMeetsCondition(self, forms=None, child_age=None):
-        msg = "{} did not return True".format(self.row_property)
-        self.assertTrue(self.check_condition(forms, child_age), msg)
-
-    def assertFailsCondition(self, forms=None, child_age=None):
-        msg = "{} did not return False".format(self.row_property)
-        self.assertEqual(False, self.check_condition(forms, child_age), msg)
-
-    def assertConditionIrrelevant(self, forms=None, child_age=None):
-        msg = "{} did not return None".format(self.row_property)
-        self.assertEqual(None, self.check_condition(forms, child_age), msg)
+    def assertCondition(self, desired, forms=None, child_age=None):
+        val = self.check_condition(forms, child_age)
+        msg = "{} returned {} not {}".format(self.row_property, val, desired)
+        self.assertEqual(desired, val, msg)
 
     @property
     def child_index(self):
         return getattr(self, '_child_index', 1)
 
     def test_multiple_children(self):
+        self.child_node = self.child_node.replace('1', '2')
         self.form_prop = self.form_prop.replace('1', '2')
         self._child_index = 2
         self.test_condition_met()
@@ -69,13 +64,14 @@ class ChildConditionMixin(object):
 class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
     def setUp(self):
         self.xmlns = CFU2_XMLNS
-        self.form_prop = 'child1_growthmon_calc'
-        self.met_value = 'received'
-        self.not_met_value = 'not_taken'
+        self.child_node = 'child_1'
+        self.form_prop = 'child1_child_growthmon'
+        self.met_value = '1'
+        self.not_met_value = '0'
         self.row_property = 'child_growth_calculated'
 
     def test_condition_met(self):
-        self.assertMeetsCondition(
+        self.assertCondition(True,
             forms=[
                 self.form_without_condition(2014, 4, 15),
                 self.form_with_condition(2014, 5, 15),
@@ -85,7 +81,7 @@ class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
         )
 
     def test_condition_not_met(self):
-        self.assertFailsCondition(
+        self.assertCondition(False,
             forms=[
                 self.form_with_condition(2014, 2, 15),
                 self.form_without_condition(2014, 5, 15),
@@ -98,13 +94,14 @@ class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
 class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
     def setUp(self):
         self.xmlns = CFU1_XMLNS
+        self.child_node = 'child_1'
         self.form_prop = 'child1_child_excbreastfed'
         self.met_value = '1'
         self.not_met_value = '0'
         self.row_property = 'child_breastfed'
 
     def test_missed_a_month(self):
-        self.assertFailsCondition(
+        self.assertCondition(False,
             forms=[
                 self.form_with_condition(2014, 2, 15),
                 self.form_without_condition(2014, 4, 15),
@@ -114,7 +111,7 @@ class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
         )
 
     def test_condition_met(self):
-        self.assertMeetsCondition(
+        self.assertCondition(True,
             forms=[
                 self.form_with_condition(2014, 2, 15),
                 self.form_with_condition(2014, 3, 15),
@@ -129,16 +126,17 @@ class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
 class TestChildReceivedORS(ChildConditionMixin, TestCase):
     def setUp(self):
         self.xmlns = CFU2_XMLNS
+        self.child_node = 'child_1'
         self.form_prop = 'child1_child_orszntreat'
         self.met_value = '1'
         self.not_met_value = '0'
         self.row_property = 'child_received_ors'
 
     def test_irrelevant_month(self):
-        self.assertConditionIrrelevant(child_age=4)
+        self.assertCondition(None, child_age=4)
 
     def test_child_never_sick(self):
-        self.assertMeetsCondition(
+        self.assertCondition(True,
             forms=[
                 XFormInstance(
                     received_on=datetime(2014, 5, 2),
@@ -153,7 +151,7 @@ class TestChildReceivedORS(ChildConditionMixin, TestCase):
         )
 
     def test_missed_one_treatment(self):
-        self.assertFailsCondition(
+        self.assertCondition(False,
             forms=[
                 self.form_with_condition(2014, 3, 1),
                 self.form_without_condition(2014, 4, 1),
@@ -164,7 +162,7 @@ class TestChildReceivedORS(ChildConditionMixin, TestCase):
         )
 
     def test_condition_met(self):
-        self.assertMeetsCondition(
+        self.assertCondition(True,
             forms=[
                 self.form_without_condition(2014, 3, 31),
                 self.form_with_condition(2014, 4, 1),
@@ -176,7 +174,7 @@ class TestChildReceivedORS(ChildConditionMixin, TestCase):
         )
 
     def test_failure_irrelevant_month(self):
-        self.assertConditionIrrelevant(
+        self.assertCondition(None,
             forms=[
                 self.form_without_condition(2014, 4, 30),
                 self.form_without_condition(2014, 5, 1),
