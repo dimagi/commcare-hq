@@ -959,7 +959,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
                    }
                )
                .filter({"terms": {"domain": list(real_domains)}})
-               .facet('domains', {"field": "domain"})
+               .facet('domains', {"terms": {"field": "domain"}})
                .size(0))
         forms = (ESQuery('forms')
                  .filter({
@@ -971,10 +971,10 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
                      }
                  )
                  .filter({"terms": {"domain": list(real_domains)}})
-                 .facet('domains', {"field": "domain"})
+                 .facet('domains', {"terms": {"field": "domain"}})
                  .size(0))
-        sms_domains = {x['term'] for x in sms.run().facet('domains')}
-        form_domains = {x['term'] for ix in forms.run().facet('domains')}
+        sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
+        form_domains = {x['term'] for ix in forms.run().facet('domains', 'terms')}
         c = len(sms_domains - form_domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
@@ -1006,9 +1006,9 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
                )
                .filter({"terms": params})
                .filter({"terms": {"domain": list(real_domains)}})
-               .facet('domains', {"field": "domain"})
+               .facet('domains', {"terms": {"field": "domain"}})
                .size(0))
-        domains = sms.run().facet('domains')
+        domains = sms.run().facet('domains', "terms")
         c = len(domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
@@ -1034,8 +1034,8 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     for timestamp in reversed(keys):
         t = timestamp
         f = timestamp - SEC_IN_30_DAYS
-        form_query = get_form_query(datefield, f, t, 'domains', {"field": "domain"})
-        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains')
+        form_query = get_form_query(datefield, f, t, 'domains', {"terms": {"field": "domain"}})
+        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains', "terms")
         c = len(domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
@@ -1060,8 +1060,8 @@ def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
     for timestamp in reversed(keys):
         t = timestamp
         f = timestamp - SEC_IN_30_DAYS
-        form_query = get_sms_query(datefield, f, t, 'domains', {"field": "domain"})
-        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains')
+        form_query = get_sms_query(datefield, f, t, 'domains', {"terms":{"field": "domain"}})
+        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains', "terms")
         c = len(domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
@@ -1131,6 +1131,7 @@ def stats_data(request):
     if histo_type == "active_commconnect_domains":
         params.update(params_es)
         return json_response(get_active_commconnect_domain_stats_data(params, request.datespan, interval=interval))
+
     if histo_type == "sms_only_domains":
         params.update(params_es)
         return json_response(get_sms_only_domain_stats_data(request.datespan, interval=interval))
