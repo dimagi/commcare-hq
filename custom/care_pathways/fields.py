@@ -154,3 +154,18 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "sex"
+
+
+class TableCardGroupByFilter(BaseSingleOptionFilter):
+    slug = "group_by"
+    label = "Group By"
+    default_text = ugettext_noop("Group by...")
+
+    @property
+    def options(self):
+        return [('group_name', 'Group Name'), ('group_leadership', 'Group Leadership'), ('gender', 'Sex of Members')]
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "group_name"

@@ -1,3 +1,4 @@
+import re
 import os
 import json
 from corehq.apps.reports.sqlreport import DataFormatter
@@ -96,3 +97,84 @@ class CareDataFormatter(DataFormatter):
                 if self.filter_row(value[0], formatted_row):
                     yield [formatted_row[0]['html'], formatted_row[1]['html'], formatted_row[2]['html'], formatted_row[3]['html']]
 
+
+class TableCardDataGroupsFormatter(DataFormatter):
+
+    def group_level(self, row):
+        TAG_RE = re.compile(r'<[^>]+>')
+
+        def remove_tags(text):
+            return TAG_RE.sub('', text)
+
+        practice_percent = map(int, re.findall(r'\d+', remove_tags(row['html'])))[2]
+        if 76 <= practice_percent <= 100:
+            return 0
+        elif 51 <= practice_percent < 76:
+            return 1
+        elif 26 <= practice_percent < 51:
+            return 2
+        else:
+            return 3
+
+
+    def format(self, data, keys=None, group_by=None):
+        range_groups = [
+            ['A'],
+            ['B'],
+            ['C'],
+            ['D'],
+        ]
+        rows_dict = dict()
+        for key, row in data.items():
+            formatted_row = self._format.format_row(row)
+            if not rows_dict.has_key(formatted_row[0]):
+                rows_dict[formatted_row[0]] = []
+            rows_dict[formatted_row[0]].append(formatted_row[1])
+
+        for i in xrange(0, len(rows_dict[rows_dict.keys()[0]])):
+            range_groups[0].append(0)
+            range_groups[1].append(0)
+            range_groups[2].append(0)
+            range_groups[3].append(0)
+
+        for key, row in rows_dict.items():
+             for idx, practice in enumerate(row, 1):
+                range_groups[self.group_level(practice)][idx] += 1
+        all_rows = len(rows_dict)
+
+        for group in range_groups:
+            for idx, row in enumerate(group[1:], 1):
+                percent = 100 * float(group[idx]) / float(all_rows)
+                group[idx] = "%.2f%%" % percent
+        return range_groups
+
+class TableCardDataIndividualFormatter(DataFormatter):
+
+    def calculate_total_column(self, row):
+        TAG_RE = re.compile(r'<[^>]+>')
+
+        def remove_tags(text):
+            return TAG_RE.sub('', text)
+
+        num_practices = 0
+        total_practices = 0
+        for prop in row:
+            values = map(int, re.findall(r'\d+', remove_tags(prop['html'])))
+            num_practices += values[0]
+            total_practices += values[1]
+
+        return "%d/%d (%.2f%%)" % ((num_practices or 0), total_practices, 100 * int(num_practices or 0) / float(total_practices or 1))
+
+    def format(self, data, keys=None, group_by=None):
+        rows_dict = dict()
+        for key, row in data.items():
+            formatted_row = self._format.format_row(row)
+            if not rows_dict.has_key(formatted_row[0]):
+                rows_dict[formatted_row[0]] = []
+            rows_dict[formatted_row[0]].append(formatted_row[1])
+
+        for key, row in rows_dict.items():
+            total_column = self.calculate_total_column(row)
+            res = [key, total_column]
+            res.extend(row)
+            yield res
