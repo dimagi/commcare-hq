@@ -921,7 +921,7 @@ def get_sms_query(datefield, begin, end, facet_name, facet_terms):
 
 
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
-    return (ESQuery('forms')
+    return (FormES()
             .fields(['domain', datefield])
             .filter({
                 "range": {
@@ -957,7 +957,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
                .filter({"terms": {"domain": list(real_domains)}})
                .facet('domains', {"terms": {"field": "domain"}})
                .size(0))
-        forms = (ESQuery('forms')
+        forms = (FormES()
                  .filter({
                      "range": {
                          datefield: {
