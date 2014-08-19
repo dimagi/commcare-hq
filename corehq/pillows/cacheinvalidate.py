@@ -43,22 +43,20 @@ class CacheInvalidatePillow(BasicPillow):
     def get_generations(self):
         return ["%s :: %s" % (gc.generation_key, gc._get_generation()) for gc in self.gen_caches]
 
-    def change_trigger(self, changes_dict):
+    def change_transform(self, doc):
         """
         This function does actual cache invalidation. It's also called manually
         by directly invalidated things.
         """
         # requires pillowtop to listen with include_docs
-        doc = changes_dict['doc']
         doc_id = doc['_id']
-        deleted = changes_dict.get('deleted', False)
 
         if doc_id.startswith('pillowtop_corehq.pillows'):
             return None
 
         # send document to cache invalidation workflow
         generations_prior = set(self.get_generations())
-        cache_core.invalidate_doc(doc, deleted=deleted)
+        cache_core.invalidate_doc(doc)
         generations_after = set(self.get_generations())
 
         generation_change = generations_prior.symmetric_difference(generations_after)

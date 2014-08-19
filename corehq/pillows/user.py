@@ -130,11 +130,14 @@ class UnknownUsersPillow(BulkPillow):
 
     def change_trigger(self, changes_dict):
         if 'key' in changes_dict:
-            user_id, username, domain, xform_id = self.get_fields_from_emitted_dict(changes_dict)
-        else:
-            doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
-            user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+            self._process_change(*self.get_fields_from_emitted_dict(changes_dict))
+            return None # prevent further processing
+        return super(UnknownUsersPillow, self).change_trigger(changes_dict)
 
+    def change_transform(self, doc_dict):
+        self._process_change(*self.get_fields_from_doc(doc_dict))
+
+    def _process_change(self, user_id, username, domain, xform_id):
         if user_id in WEIRD_USER_IDS:
             user_id = None
 
