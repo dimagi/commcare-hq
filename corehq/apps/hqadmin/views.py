@@ -973,8 +973,8 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
                  .filter({"terms": {"domain": list(real_domains)}})
                  .facet('domains', {"field": "domain"})
                  .size(0))
-        sms_domains = set(sms.run().facet('domains'))
-        form_domains = set(forms.run().facet('domains'))
+        sms_domains = {x['term'] for x in sms.run().facet('domains')}
+        form_domains = {x['term'] for ix in forms.run().facet('domains')}
         c = len(sms_domains - form_domains)
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
