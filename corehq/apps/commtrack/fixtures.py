@@ -73,9 +73,7 @@ def product_fixture_generator(user, version, last_sync):
         'cost',
         'product_data'
     ]
-
     data_fn = lambda: Product.by_domain(user.domain)
-
     return _simple_fixture_generator(user, "product", fields, data_fn, last_sync)
 
 
