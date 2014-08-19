@@ -344,11 +344,11 @@ class OPMCaseRow(object):
             if not self.is_vhnd_last_three_months:
                 return True
 
-            for form in self.filtered_forms(CHILDREN_FORMS, 3):
-                prop = self.child_xpath('child{num}_growthmon_calc')
-                if form.form.get(prop) == 'received':
-                    return True
-            return False
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+            return any(
+                form.xpath(xpath) == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, 3)
+            )
 
     @property
     def preg_received_ifa(self):
@@ -375,8 +375,8 @@ class OPMCaseRow(object):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
-                prop = self.child_xpath('child{num}_child_orszntreat')
-                if form.form.get(prop) == '0':
+                xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
+                if form.xpath(xpath) == '0':
                     return False
             return True
 
@@ -446,9 +446,10 @@ class OPMCaseRow(object):
         if self.child_age == 6 and self.block == 'atri':
             if not self.is_vhnd_last_six_months:
                 return True
-            excl_key = self.child_xpath("child{num}_child_excbreastfed")
+
+            xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             for form in self.filtered_forms(CHILDREN_FORMS):
-                if form.form.get(excl_key) == '0':
+                if form.xpath(xpath) == '0':
                     return False
             return True
 
