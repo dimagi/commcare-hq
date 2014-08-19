@@ -24,8 +24,8 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         hierarchy = helper = []
-        hierarchy_config = sorted([k for k in get_domain_configuration('pathways-india-mis')['geography_hierarchy'].keys()])
-        data = GeographySqlData('pathways-india-mis').get_data()
+        hierarchy_config = sorted([k for k in get_domain_configuration(self.request.domain)['geography_hierarchy'].keys()])
+        data = GeographySqlData(self.request.domain).get_data()
         for val in data:
             for lvl in hierarchy_config:
                 tmp = dict(val=val[lvl], text=val[lvl], next=[])
@@ -45,10 +45,8 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
 
         return hierarchy
 
-    @classmethod
-    def get_labels(cls):
-        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration('pathways-india-mis')['geography_hierarchy'].iteritems())]
-
+    def get_labels(self):
+        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration(self.request.domain)['geography_hierarchy'].iteritems())]
 
     @classmethod
     def _get_label_value(cls, request, label):
@@ -110,7 +108,7 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
 
     @property
     def drilldown_map(self):
-        hierarchy_config = get_domain_configuration('pathways-india-mis')['by_type_hierarchy']
+        hierarchy_config = get_domain_configuration(self.request.domain)['by_type_hierarchy']
         return hierarchy_config
 
     @classmethod

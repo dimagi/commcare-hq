@@ -89,11 +89,11 @@ class GeographySqlData(SqlData):
 
     def __init__(self, domain):
         self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
-        super(GeographySqlData, self).__init__()
+        self.config = dict(domain=domain)
 
     @property
     def filters(self):
-        return []
+        return [EQ('domain', 'domain')]
 
     @property
     def group_by(self):

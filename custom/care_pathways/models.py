@@ -113,7 +113,7 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     owner_id = flat_field(lambda c: c.get_case_property('owner_id'))
     gender = flat_field(lambda c: get_gender(c))
     group_leadership = flat_field(lambda c: c.get_case_property('farmer_is_leader'))
-    schedule = flat_field(lambda c: c.get_case_property('farmer_social_category').lower())
+    schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
     prop = Property()
 
 
