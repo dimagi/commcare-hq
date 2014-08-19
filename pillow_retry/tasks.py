@@ -40,6 +40,9 @@ def process_pillow_retry(error_doc_id):
             if not pillow:
                 raise ValueError("Could not find pillowtop class '%s'" % pillow_class)
             change = error_doc.change_dict
+            if pillow.include_docs:
+                change['doc'] = pillow.couch_db.open_doc(change['id'])
+
             pillow.process_change(change, is_retry_attempt=True)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
