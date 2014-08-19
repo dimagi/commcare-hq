@@ -1,0 +1,14 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+    <style>
+        tr:nth-child({{ chunk_size }}n+1) > td {
+            font-weight: 800;
+            background-color: #a2a2a8 !important;
+        }
+    </style>
+{{ block.super }}
+{% endblock %}

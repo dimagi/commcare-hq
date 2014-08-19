@@ -1,6 +1,7 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
+from sqlalchemy.engine.result import RowProxy
 from sqlalchemy.sql.expression import join, alias
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains
@@ -28,18 +29,14 @@ class CareQueryMeta(QueryMeta):
 
 
     def execute(self, metadata, connection, filter_values):
-        result = connection.execute(self._build_query(filter_values)).fetchall()
-        #debug
-        print result
-        return result
+        return connection.execute(self._build_query(filter_values)).fetchall()
 
     def _build_query(self, filter_values):
         having = []
         filter_cols = []
         external_cols = _get_grouping(filter_values)
-        # print filter_values
         for k, v in filter_values.iteritems():
-            if v and k not in ['group', 'gender', 'group_leadership']:
+            if v and k not in ['group', 'gender', 'group_leadership', 'disaggregate_by']:
                 if isinstance(v, tuple):
                     if len(v) == 1:
                         having.append("%s = \'%s\'" % (k, v[0]))
@@ -51,7 +48,10 @@ class CareQueryMeta(QueryMeta):
                     filter_cols.append(k)
         group_having = ''
         having_group_by = []
-        if 'group_leadership' in filter_values and filter_values['group_leadership']:
+        if 'disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group':
+            group_having = "group_leadership=\'Y\'"
+            having_group_by.append('group_leadership')
+        elif 'group_leadership' in filter_values and filter_values['group_leadership']:
             group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = %s and group_leadership=\'Y\'" % filter_values['group_leadership']
             having_group_by.append('group_leadership')
             filter_cols.append('group_leadership')
@@ -61,14 +61,13 @@ class CareQueryMeta(QueryMeta):
         for fil in self.filters:
             having.append("%s %s %s" % (fil.column_name, fil.operator, fil.parameter))
 
-
         s1 = alias(select(['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
                                 from_obj='"fluff_FarmerRecordFluff"',
                                 group_by=['doc_id', 'group_id'] + filter_cols + external_cols), name='x')
-        s2 = alias(select(['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as maxmingender'], from_obj='"fluff_FarmerRecordFluff"',
+        s2 = alias(select(['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'], from_obj='"fluff_FarmerRecordFluff"',
                                 group_by=['group_id'] + having_group_by, having=group_having), name='y')
-        return select(['COUNT(x.doc_id) as %s' % self.key] + external_cols,
-               group_by=['maxmin'] + filter_cols + external_cols,
+        return select(['COUNT(x.doc_id) as %s' % self.key] + self.group_by,
+               group_by=['maxmin'] + filter_cols + self.group_by,
                having=" and ".join(having),
                from_obj=join(s1, s2, s1.c.group_id==s2.c.group_id))
 
@@ -123,26 +122,6 @@ class CareSqlData(SqlData):
         sum_all = (x or 0) + (y or 0) + (z or 0)
         return "%.2f%%" % (100 * int(x or 0) / float(sum_all or 1))
 
-    @property
-    def columns(self):
-        group = self.config['group']
-        first_columns = 'value_chain'
-        if group == '' or group == 'value_chain':
-            first_columns = 'value_chain'
-        elif group == 'domain':
-            first_columns = 'domains'
-        elif group == 'practice':
-            first_columns = 'practices'
-
-        return [
-            DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
-            AggregateColumn('All', self.percent_fn,
-                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2),]), AliasColumn('some'), AliasColumn('none')]),
-            AggregateColumn('Some', self.percent_fn,
-                            [CareCustomColumn('some', filters=[EQ("x.maxmin", 1),]), AliasColumn('all'), AliasColumn('none')]),
-            AggregateColumn('None', self.percent_fn,
-                            [CareCustomColumn('none', filters=[EQ("x.maxmin", 0),]), AliasColumn('all'), AliasColumn('some')])
-        ]
 
     @property
     def filters(self):
@@ -199,6 +178,26 @@ class AdoptionBarChartReportSqlData(CareSqlData):
         url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
         return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
 
+    @property
+    def columns(self):
+        group = self.config['group']
+        first_columns = 'value_chain'
+        if group == '' or group == 'value_chain':
+            first_columns = 'value_chain'
+        elif group == 'domain':
+            first_columns = 'domains'
+        elif group == 'practice':
+            first_columns = 'practices'
+
+        return [
+            DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
+            AggregateColumn('All', self.percent_fn,
+                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2),]), AliasColumn('some'), AliasColumn('none')]),
+            AggregateColumn('Some', self.percent_fn,
+                            [CareCustomColumn('some', filters=[EQ("x.maxmin", 1),]), AliasColumn('all'), AliasColumn('none')]),
+            AggregateColumn('None', self.percent_fn,
+                            [CareCustomColumn('none', filters=[EQ("x.maxmin", 0),]), AliasColumn('all'), AliasColumn('some')])
+        ]
 
     @property
     def group_by(self):
@@ -206,7 +205,62 @@ class AdoptionBarChartReportSqlData(CareSqlData):
 
 
 class AdoptionDisaggregatedSqlData(CareSqlData):
+    no_value = {'sort_key': 0, 'html': 0}
+
+    @property
+    def filters(self):
+        filters = super(AdoptionDisaggregatedSqlData, self).filters
+        if 'disaggregate_by' in self.config and self.config['disaggregate_by']:
+            filters.append(EQ('disaggregate_by', self.config['disaggregate_by']))
+        return filters
 
     @property
     def group_by(self):
-        return _get_grouping(self.config)
+        return _get_grouping(self.config) + ['gender']
+
+    def group_name_fn(self, group_name):
+        text = None
+        if is_mapping(group_name, self.domain):
+            self.request_params['type_value_chain'] = group_name
+            self.request_params['group_by'] = 'domain'
+            text = next((item for item in get_mapping(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_domain(group_name, self.domain):
+            self.request_params['type_domain'] = group_name
+            self.request_params['group_by'] = 'practice'
+            text = next((item for item in get_domains(self.domain) if item['val'] == group_name), None)['text']
+
+        if is_practice(group_name, self.domain):
+            # TODO practices should probably redirect to other report
+            self.request_params['type_practice'] = group_name
+
+            text = next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
+
+        from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
+        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
+        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
+
+
+    def _to_display(self, value):
+        display = {'sort_key': 0, 'html': 0}
+        if value == 0:
+            display = {'sort_key': 0, 'html': 'None Women'}
+        elif value == 1:
+            display = {'sort_key': 0, 'html': 'Some Women'}
+        elif value == 2:
+            display = {'sort_key': 0, 'html': 'All Women'}
+
+        return display
+
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
+            AggregateColumn('All', lambda x:x,
+                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2)])]),
+            AggregateColumn('Some', lambda x:x,
+                            [CareCustomColumn('some', filters=[EQ("x.maxmin", 1)])]),
+            AggregateColumn('None', lambda x:x,
+                            [CareCustomColumn('none', filters=[EQ("x.maxmin", 0)])])
+        ]

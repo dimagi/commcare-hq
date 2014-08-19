@@ -4,6 +4,7 @@ from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
 from custom.care_pathways.sqldata import GeographySqlData
 from custom.care_pathways.utils import get_domain_configuration
+from dimagi.utils.decorators.memoized import memoized
 
 
 class CareBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
@@ -137,3 +138,19 @@ class GroupByFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('value_chain', 'Value Chain'), ('domain', 'Domain'), ('practice', 'Practice')]
+
+
+class DisaggregateByFilter(BaseSingleOptionFilter):
+    slug = "disaggregate_by"
+    label = "Disaggregate By"
+    default_text = ''
+
+    @property
+    def options(self):
+        return [('group', 'Group Leadership'), ('sex', 'Sex of Members')]
+
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "sex"
