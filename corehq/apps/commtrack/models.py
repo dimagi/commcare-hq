@@ -110,6 +110,11 @@ class Product(Document):
     program_id = StringProperty()
     cost = DecimalProperty()
     product_data = DictProperty()
+    last_modified = DateTimeProperty()
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        return super(Product, self).save(*args, **kwargs)
 
     @property
     def code(self):
