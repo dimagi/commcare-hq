@@ -907,6 +907,23 @@ def get_real_project_spaces():
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
 
+
+def get_sms_query(datefield, begin, end, facet_name, facet_terms):
+    return (ESQuery('sms')
+            .fields(['domain', datefield])
+            .filter({
+                "range": {
+                    datefield: {
+                        "from": begin,
+                        "to": end
+                        }
+                    }
+                }
+            )
+            .facet(facet_name, facet_terms)
+            .size(0))
+
+
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
     return (ESQuery('forms')
             .fields(['domain', datefield])
@@ -1031,6 +1048,32 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     }
 
 
+def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
+        datefield='received_on'):
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys = make_buckets(interval, begin, end)
+
+    real_domains = get_real_project_spaces()
+
+    histo_data = []
+    for timestamp in reversed(keys):
+        t = timestamp
+        f = timestamp - SEC_IN_30_DAYS
+        form_query = get_sms_query(datefield, f, t, 'domains', {"field": "domain"})
+        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains')
+        c = len(domains)
+        if c > 0:
+            histo_data.append({"count": c, "time": timestamp})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
@@ -1085,6 +1128,9 @@ def stats_data(request):
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
+    if histo_type == "active_commconnect_domains":
+        params.update(params_es)
+        return json_response(get_active_commconnect_domain_stats_data(params, request.datespan, interval=interval))
     if histo_type == "sms_only_domains":
         params.update(params_es)
         return json_response(get_sms_only_domain_stats_data(request.datespan, interval=interval))
