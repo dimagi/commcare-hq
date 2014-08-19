@@ -134,6 +134,14 @@ function HQReportDataTables(options) {
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
 
+            var use_default_sort = false;
+            for (var i=0; i< self.aoColumns.length; i++) {
+                if (self.aoColumns[i].bSortable == true) {
+                    use_default_sort = true
+                }
+            }
+            params.bSort = use_default_sort;
+
             var datatable = $(this).dataTable(params);
             if (!self.datatable)
                 self.datatable = datatable;
