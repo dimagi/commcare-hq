@@ -660,6 +660,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', _("Bank Account Number"), True),
         ('block_name', _("Block Name"), True),
         ('village', _("Village Name"), True),
+        ('child_count', _("Number of Children"), True),
         ('bp1_cash', _("Birth Preparedness Form 1"), True),
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('delivery_cash', _("Delivery Form"), True),
@@ -671,6 +672,7 @@ class Beneficiary(OPMCaseRow):
 
     def __init__(self, case, report, child_index=1):
         super(Beneficiary, self).__init__(case, report, child_index=child_index)
+        self.child_count = 0 if self.status == "pregnant" else 1
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
         self.delivery_cash = MONTH_AMT if self.live_delivery else 0
