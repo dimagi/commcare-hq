@@ -33,36 +33,118 @@
             $("#id_selected_ids").width(800).height(400).multiselect();
 
             // "are you sure?" stuff
-            var unsavedChanges = false;
-            $("#id_selected_ids").change(function () {
-                unsavedChanges = true;
+            var unsavedChanges = {};
+
+            $("#edit_membership").change(function () {
+                unsavedChanges["Group membership"] = true;
+            });
+
+            $("#edit-group-settings").change(function () {
+                unsavedChanges["Group settings"] = true;
+            });
+
+            $("#group-data-form").change(function () {
+                unsavedChanges["Group data"] = true;
             });
 
             $(window).bind('beforeunload', function () {
-                if (unsavedChanges) {
-                    return "{% trans "Group membership has changed." %}";
+                var someUnsavedChanges = false;
+                var ret = "{% trans "The following changes will not be saved: " %}";
+
+                for (var key in unsavedChanges) {
+                    if (unsavedChanges.hasOwnProperty(key) && unsavedChanges[key]) {
+                        ret += "\n" + key;
+                        someUnsavedChanges = true;
+                    }
                 }
+
+                if (someUnsavedChanges) {
+                    return ret;
+                }
+
+                return;
             });
-            $("#edit_membership").submit(function () {
-                $(window).unbind("beforeunload");
+
+            function success(name, id) {
+                return function() {
+                    unsavedChanges[name] = false;
+                    $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
+                    $('.alert')[0].innerHTML = name + " was successfully saved";
+                    $('.alert').show();
+                    $(id).find(':button').removeAttr('disabled');
+                }
+            }
+
+            var edit_membership_succ = success("Group membership", "#edit_membership");
+            var edit_settings_succ = success("Group settings", "#edit-group-settings");
+            var edit_data_succ = success("Group data", "#group-data-form");
+
+            function failure(name, id) {
+                return function() {
+                    $('.alert').removeClass('alert-success alert-info').addClass('alert-error');
+                    $('.alert')[0].innerHTML = name + " was not successfully saved";
+                    $('.alert').show();
+                    $(id).find(':button').removeAttr('disabled');
+                }
+            }
+
+            var edit_membership_fail = failure("Group membership", "#edit_membership");
+            var edit_settings_fail = failure("Group settings", "#edit-group-settings");
+            var edit_data_fail = failure("Group data", "#group-data-form");
+
+            $(document).ready(function() {
+                $('#edit_membership').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).ajaxSubmit({
+                        success: edit_membership_succ,
+                        error: edit_membership_fail
+                    });
+                    return false;
+                });
+                $('#edit-group-settings').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).ajaxSubmit({
+                        success: edit_settings_succ,
+                        error: edit_settings_fail
+                    });
+                    return false;
+                });
+                $('#group-data-form').submit(function() {
+                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).ajaxSubmit({
+                        success: edit_data_succ,
+                        error: edit_data_fail
+                    });
+                    return false;
+                });
             });
         });
+
     </script>
 {% endblock %}
 
 {% block group-info %}
+{% if group.is_deleted %}
+    <div class="alert alert-info">{% trans "Whoa, how did you get here? This group has been deleted already. If you would like to undelete it you can do so below."%}</div>
+    <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
+        <button class="btn btn-primary disable-on-submit" type="submit">
+            {% blocktrans with group.name as group_name %}
+                Restore Group "{{group_name}}"
+            {% endblocktrans %}
+        </button>
+    </form>
+{% else %}
 <div class="row-fluid">
     <div class="span12">
         <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count group.users|length as num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> {% trans "Edit Settings" %}</a>
-            <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url "delete_group" domain group.get_id %}" method="post">
-                <button class="btn btn-danger" type="submit">
-                    {% blocktrans with group.name as group_name %}
-                        <i class="icon icon-white icon-remove"></i> Delete Group "{{group_name}}"
-                    {% endblocktrans %}
-                </button>
-            </form>
+            <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
+                <i class="icon-remove"></i>
+                {% blocktrans with group.name as group_name %}
+                    Delete Group "{{group_name}}"
+                {% endblocktrans %}
+            </a>
         </div>
 
         <div class="modal hide fade" id="editGroupSettings">
@@ -74,7 +156,7 @@
                     {% endblocktrans %}
                 </h3>
             </div>
-            <form class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
+            <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
                 <div class="modal-body">
                     <div class="control-group">
                         <label class="control-label" for="group-name-input">{% trans "Group Name" %}</label>
@@ -109,9 +191,9 @@
                 </div>
             </form>
         </div>
-
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block group-view %}
@@ -129,3 +211,31 @@
     </form>
 {% endblock %}
 
+{% block modals %}{{ block.super }}
+    <div id="delete_group_modal" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>
+            {% blocktrans with group.name as group_name %}
+                Delete Group "{{group_name}}"?
+            {% endblocktrans %}
+            </h3>
+        </div>
+        <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
+            <div class="modal-body">
+                <p>
+                {% blocktrans with group.name as group_name %}
+                    Are you sure you want to delete the group "{{group_name}}"?
+                {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                <button class="btn btn-danger disable-on-submit" type="submit">
+                    <i class="icon icon-white icon-remove"></i>
+                    {% trans 'Delete' %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock modals %}

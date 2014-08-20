@@ -2,8 +2,9 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -14,7 +15,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
-from corehq.apps.registration.utils import *
+from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
+    send_domain_registration_email
+from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 from corehq.apps.orgs.models import Organization
@@ -40,7 +43,8 @@ def registration_default(request):
 @transaction.commit_on_success
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    assert domain_type in DOMAIN_TYPES
+    if domain_type not in DOMAIN_TYPES:
+        raise Http404()
 
     context = get_domain_context(domain_type)
 
@@ -110,7 +114,9 @@ def register_org(request, template="registration/org_request.html"):
 @login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    assert domain_type in DOMAIN_TYPES
+    if domain_type not in DOMAIN_TYPES or request.couch_user.is_commcare_user():
+        raise Http404()
+
     context = get_domain_context(domain_type)
 
     is_new = False

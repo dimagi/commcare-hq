@@ -100,33 +100,16 @@
             $(".for_sms").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_survey").show();
-            if($("#id_start_condition_type").val() == "CASE_CRITERIA") {
-                $(".recipient_parent_case").show();
-                $(".recipient_subcase").show();
-                $(".recipient_user_group").show();
-            }
-            if(recipient == "USER" || recipient == "OWNER") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         } else if (value == "callback") {
             $(".for_sms").hide();
             $(".for_sms_survey").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_callback").show();
-            if(recipient != "CASE") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         } else if (value == "ivr_survey") {
             $(".for_sms").hide();
             $(".for_sms_survey").hide();
             $(".for_sms_callback").hide();
             $(".for_ivr_survey").show();
-            if(recipient != "CASE") {
-                $("#id_recipient").val("CASE");
-                recipient_changed();
-            }
         }
         use_custom_content_handler_changed();
     }
@@ -587,12 +570,12 @@
                     <td>To</td>
                     <td>
                         <select name="recipient" id="id_recipient">
-                            <option value="OWNER" class="for_sms for_case_criteria" {% if form.recipient.value == "OWNER" %}selected="selected"{% endif %}>The case's owner(s)</option>
-                            <option value="USER" class="for_sms for_case_criteria" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
+                            <option value="OWNER" class="for_case_criteria" {% if form.recipient.value == "OWNER" %}selected="selected"{% endif %}>The case's owner(s)</option>
+                            <option value="USER" class="for_case_criteria" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
                             <option value="CASE" class="for_case_criteria" {% if form.recipient.value == "CASE" %}selected="selected"{% endif %}>The case</option>
-                            <option value="PARENT_CASE" class="for_sms for_case_criteria recipient_parent_case" {% if form.recipient.value == "PARENT_CASE" %}selected="selected"{% endif %}>The case's parent case</option>
-                            <option value="SUBCASE" class="for_sms for_case_criteria recipient_subcase" {% if form.recipient.value == "SUBCASE" %}selected="selected"{% endif %}>The case's child case(s)</option>
-                            <option value="USER_GROUP" class="for_sms for_case_criteria recipient_user_group" {% if form.recipient.value == "USER_GROUP" %}selected="selected"{% endif %}>User Group</option>
+                            <option value="PARENT_CASE" class="for_case_criteria" {% if form.recipient.value == "PARENT_CASE" %}selected="selected"{% endif %}>The case's parent case</option>
+                            <option value="SUBCASE" class="for_case_criteria" {% if form.recipient.value == "SUBCASE" %}selected="selected"{% endif %}>The case's child case(s)</option>
+                            <option value="USER_GROUP" class="for_case_criteria" {% if form.recipient.value == "USER_GROUP" %}selected="selected"{% endif %}>User Group</option>
                             {% if can_use_survey %}
                             <option value="SURVEY_SAMPLE" class="for_on_datetime" {% if form.recipient.value == "SURVEY_SAMPLE" %}selected="selected"{% endif %}>Survey Sample</option>
                             {% endif %}
@@ -794,7 +777,6 @@
                         <td>{{ form.enable_advanced_time_choices }}</td>
                         <td>Enable advanced reminder time choices <span class="help_popover" data-help-key="Advanced Reminder Time Choices"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
-                    {% if can_use_survey %}
                     <tr>
                         <td></td>
                         <td>
@@ -812,7 +794,6 @@
                         <td>{{ form.force_surveys_to_use_triggered_case }}</td>
                         <td>When answering suveys, force the form submission to use the case that triggered the reminder. <span class="help_popover" data-help-key="Use Case That Triggered Reminder in Submission"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
-                    {% endif %}
                     {% if is_superuser %}
                     <tr>
                         <td>{{ form.use_custom_content_handler }}</td>

@@ -1,11 +1,13 @@
 {% extends original_template %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
     <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
     {{ block.super }}
 {% endblock %}
 
@@ -14,24 +16,12 @@
     <script type="text/javascript">
 
         $(function() {
-
-            function split($table, chunkSize) {
-                var cols = $("th", $table).length - 1;
-                var n = cols / chunkSize;
-
-                $("<br/>").appendTo("body");
-                var $newTable = $table.clone().appendTo("body");
-                for (var i = chunkSize; i > 0; i--) {
-                    $('td:nth-child('+i+'),th:nth-child('+i+')', $newTable).remove();
-                }
-                for (var i = cols; i > chunkSize; i--) {
-                    $('td:nth-child('+i+'),th:nth-child('+i+')', $table).remove();
-                }
-            }
-
             document.body.style.zoom="55%"
             setTimeout(function() {
-                split($("#report_table_health_status_report"), 8);
+                splitTable($("#report_table_health_status"), 800);
+                $('.table').each(function() {
+                    split($(this), 8)
+                })
                 $('.hq-loading').hide();
                 window.print();
             }, 2000);
@@ -40,16 +30,24 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     <style>
         @page {
             size: A4 landscape;
         }
-        tr{
-            page-break-before: always;
+        th {
+            font-weight:bold;
+            line-height: 1.3;
+        }
+        tr {
+            line-height: 1.3;
+        }
+        table{
+            page-break-after: always;
         }
     </style>
-
+    {% endcompress %}
 {{ block.super }}
 {% endblock %}
 

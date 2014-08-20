@@ -189,7 +189,7 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-      <datum id="case_id_case_clinic" function="some xpath expression"/>
+      <datum id="case_id_case_clinic" function="some xpath expression containing instance('casedb') and instance('commcaresession')"/>
     </session>
   </entry>
   <entry>

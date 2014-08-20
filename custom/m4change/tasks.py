@@ -80,8 +80,8 @@ def generate_fixtures_for_locations():
             for report_slug in report_data:
 
                 # Remove cached fixture docs
-                db.delete_docs(FixtureReportResult.all_by_composite_key(domain, location_id, start_date.date(),
-                                                                   end_date.date(), report_slug))
+                db.delete_docs(FixtureReportResult.all_by_composite_key(domain, location_id, start_date.strftime("%Y-%m-%d"),
+                                                                   end_date.strftime("%Y-%m-%d"), report_slug))
                 rows = dict(report_data[report_slug].get("data", []))
                 name = report_data[report_slug].get("name")
                 FixtureReportResult.save_result(domain, location_id, start_date.date(), end_date.date(),

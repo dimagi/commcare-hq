@@ -1,0 +1,45 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="New Beneficiary" xmlns:cc="http://commcarehq.org/xforms"
+	xmlns="http://bihar.commcarehq.org/pregnancy/new">
+	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+		<n0:deviceID>71WALRV4IXH2FRM86XPE9QYW3</n0:deviceID>
+		<n0:timeStart>2012-05-25T15:27:12.178+05:30</n0:timeStart>
+		<n0:timeEnd>2012-05-25T15:27:38.490+05:30</n0:timeEnd>
+		<n0:username>sheel.test</n0:username>
+		<n0:userID>67bffa913b38e7901851d863ededa475</n0:userID>
+		<n0:instanceID>8c4a4668-6be0-4f32-a1fd-e4d4e3ba2019</n0:instanceID>
+		<cc:appVersion>v2.0.0dev
+			(7d4efc-006e8e-unvers-2.1.0-Nokia/S40-native-input) #13 b:2012-May-25
+			r:2012-May-25</cc:appVersion>
+	</n0:meta>
+	<n1:case case_id="9dbce942-0163-438b-b3e5-67b473d2f719"
+		date_modified="2012-05-25T15:27:38.490+05:30" user_id="67bffa913b38e7901851d863ededa475"
+		xmlns:n1="http://commcarehq.org/case/transaction/v2">
+		<n1:create>
+			<n1:case_type>cc_bihar_pregnancy</n1:case_type>
+			<n1:owner_id>main_user</n1:owner_id>
+			<n1:case_name>Ad</n1:case_name>
+		</n1:create>
+		<n1:update>
+			<n1:last_visit_type>new</n1:last_visit_type>
+			<n1:date_last_visit>2012-05-25</n1:date_last_visit>
+			<n1:date_next_reg>2012-05-25</n1:date_next_reg>
+			<n1:mother_alive>yes</n1:mother_alive>
+			<n1:mother_name>Ad</n1:mother_name>
+			<n1:husband_name />
+			<n1:hh_number />
+			<n1:family_number>2</n1:family_number>
+			<n1:mother_dob>1990-05-25</n1:mother_dob>
+		</n1:update>
+	</n1:case>
+	<full_name>Ad</full_name>
+	<husband_name />
+	<hh_number />
+	<family_number>2</family_number>
+	<dob_known>yes</dob_known>
+	<dob>1990-05-25</dob>
+	<show_age>OK</show_age>
+	<caste>other</caste>
+	<success>OK</success>
+	<age_calc>22</age_calc>
+</data>

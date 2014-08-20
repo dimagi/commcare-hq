@@ -1,5 +1,7 @@
 import re
 
+ROOT = u'root'
+
 
 def _format_to_regex(pattern):
     """
@@ -64,21 +66,24 @@ def detail_title_locale(module, detail_type):
 
 @pattern('m%d.%s.%s_%s_%d.header')
 def detail_column_header_locale(module, detail_type, column):
-
-    return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.header".format(
+    field = column.field.replace('#', '')
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
         detail_type=detail_type,
         module=module,
         d=column,
+        field=field,
         d_id=column.id + 1
     )
 
 
 @pattern('m%d.%s.%s_%s_%s.enum.k%s')
 def detail_column_enum_variable(module, detail_type, column, key):
-    return u"m{module.id}.{detail_type}.{d.model}_{d.field}_{d_id}.enum.k{key}".format(
+    field = column.field.replace('#', '')
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.k{key}".format(
         module=module,
         detail_type=detail_type,
         d=column,
+        field=field,
         d_id=column.id + 1,
         key=key,
     )
@@ -133,7 +138,7 @@ def detail(module, detail_type):
 
 def menu(module):
     put_in_root = getattr(module, 'put_in_root', False)
-    return u'root' if put_in_root else u"m{module.id}".format(module=module)
+    return ROOT if put_in_root else u"m{module.id}".format(module=module)
 
 
 def form_command(form):
@@ -150,4 +155,4 @@ def referral_list_command(module):
 
 
 def indicator_instance(indicator_set_name):
-    return u"indicators_%s" % indicator_set_name
+    return u"indicators:%s" % indicator_set_name

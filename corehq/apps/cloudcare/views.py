@@ -1,6 +1,8 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.app_manager.exceptions import FormNotFoundException, \
+    ModuleNotFoundException
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -149,10 +151,15 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
 
+    try:
+        form = app.get_module(module_id).get_form(form_id).name.values()[0]
+    except (FormNotFoundException, ModuleNotFoundException):
+        raise Http404()
+
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
         app=app.name,
-        form=app.get_module(module_id).forms[int(form_id)].name.values()[0]
+        form=form,
     )
     if case_id:
         session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
@@ -240,7 +247,7 @@ def filter_cases(request, domain, app_id, module_id):
     suite_gen = SuiteGenerator(app)
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
-                       for inst in suite_gen.get_extra_instances(module)]
+                       for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)

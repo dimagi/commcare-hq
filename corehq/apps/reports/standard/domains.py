@@ -298,6 +298,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
             DataTablesColumn(_("Date Last Updated"), prop_name="cp_last_updated",
                 help_text=_("The time when these indicators were last calculated")),
+            DataTablesColumn(_("Sector"), prop_name="internal.area.exact"),
+            DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
+            DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started")
         )
         return headers
 
@@ -340,6 +343,11 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
             return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
 
+        def format_bool(val):
+            if isinstance(val, bool):
+                return u"{}".format(val)
+            return _('No info')
+
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
@@ -361,7 +369,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('notes') or _('No notes'),
                     dom.get('internal', {}).get('services') or _('No info'),
                     dom.get('internal', {}).get('project_state') or _('No info'),
-                    dom.get('internal', {}).get('using_adm') or False,
-                    dom.get('internal', {}).get('using_call_center') or False,
+                    format_bool(dom.get('internal', {}).get('using_adm')),
+                    format_bool(dom.get('internal', {}).get('using_call_center')),
                     format_date(dom.get("cp_last_updated"), _("No Info")),
+                    dom.get('internal', {}).get('area') or _('No info'),
+                    dom.get('internal', {}).get('sub_area') or _('No info'),
+                    format_bool(dom.get('internal', {}).get('self_started')),
                 ]

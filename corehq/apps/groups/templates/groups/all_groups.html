@@ -46,10 +46,12 @@
                 {% endfor %}
             {% endwith %}
         </ul>
+        {% if not group.is_deleted %}
         <div class="tab-content span9">
             {% block group-view %}
             {% endblock %}
         </div>
+        {% endif %}
     </div>
     <form class="well form-inline" method="post" action="{% url "add_group" domain %}">
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" />

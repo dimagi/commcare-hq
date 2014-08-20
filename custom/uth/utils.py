@@ -1,11 +1,12 @@
+from casexml.apps.case import get_case_updates
+from corehq.apps.receiverwrapper import submit_form_locally
+from couchforms import convert_xform_to_json
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from lxml import etree
 import os
 from datetime import datetime, timedelta
 import uuid
-from casexml.apps.case import process_cases
-from couchforms.util import create_and_lock_xform
 from django.core.files.uploadedfile import UploadedFile
 from custom.uth.const import UTH_DOMAIN
 import re
@@ -176,15 +177,18 @@ def create_case(case_id, files, patient_case_id=None):
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
-    lock = create_and_lock_xform(
-        xform,
+    submit_form_locally(
+        instance=xform,
         attachments=file_dict,
-        process=None,
         domain=UTH_DOMAIN,
     )
-    lock.obj.domain = UTH_DOMAIN
-
-    return process_cases(lock.obj)
+    # this is a bit of a hack / abstraction violation
+    # would be nice if submit_form_locally returned info about cases updated
+    case_ids = {
+        case_update.id
+        for case_update in get_case_updates(convert_xform_to_json(xform))
+    }
+    return [CommCareCase.get(case_id) for case_id in case_ids]
 
 
 def attach_images_to_case(case_id, files):
@@ -198,16 +202,7 @@ def attach_images_to_case(case_id, files):
     for f in files:
         identifier = os.path.split(f)[-1]
         file_dict[identifier] = UploadedFile(files[f], identifier)
-
-    lock = create_and_lock_xform(
-        xform,
-        attachments=file_dict,
-        process=None,
-        domain=UTH_DOMAIN,
-    )
-    lock.obj.domain = UTH_DOMAIN
-
-    return process_cases(lock.obj)
+    submit_form_locally(xform, attachments=file_dict, domain=UTH_DOMAIN)
 
 
 def submit_error_case(case_id):
@@ -218,14 +213,10 @@ def submit_error_case(case_id):
 
     xform = render_vscan_error(case_id)
 
-    lock = create_and_lock_xform(
-        xform,
-        process=None,
+    submit_form_locally(
+        instance=xform,
         domain=UTH_DOMAIN,
     )
-    lock.obj.domain = UTH_DOMAIN
-
-    return process_cases(lock.obj)
 
 
 def put_request_files_in_doc(request, doc):

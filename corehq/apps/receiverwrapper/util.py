@@ -166,3 +166,14 @@ def _get_app_and_build_ids(domain, build_or_app_id):
             if copy_of:
                 return copy_of, build_or_app_id
     return build_or_app_id, None
+
+
+J2ME = 'j2me'
+ANDROID = 'android'
+
+def guess_phone_type_from_user_agent(user_agent):
+    """
+    A really dumb utility that guesses the phone type based on the user-agent header.
+    """
+    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
+    return 'j2me' if user_agent and re.search(j2me_pattern, user_agent) else ANDROID

@@ -4,6 +4,7 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime, timedelta
+from pytz import timezone
 
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
@@ -26,28 +27,32 @@ CONFIG = {
 }
 
 
+def has_role(user, roles):
+    return user.get_role() is not None and user.get_role()['name'] in roles
+
+
 def is_succeed_admin(user):
-    return user.get_role()['name'] in [CONFIG['succeed_admin'], 'Admin']
+    return has_role(user, [CONFIG['succeed_admin'], 'Admin'])
 
 
 def is_pi(user):
-    return user.get_role()['name'] in [CONFIG['pi_role']]
+    return has_role(user, [CONFIG['pi_role']])
 
 
 def is_cm(user):
-    return user.get_role()['name'] in [CONFIG['cm_role']]
+    return has_role(user, [CONFIG['cm_role']])
 
 
 def is_chw(user):
-    return user.get_role()['name'] in [CONFIG['chw_role']]
+    return has_role(user, [CONFIG['chw_role']])
 
 
 def is_pm_or_pi(user):
-    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role']]
+    return has_role(user, [CONFIG['pm_role'], CONFIG['pi_role']])
 
 
 def has_any_role(user):
-    return user.get_role()['name'] in [CONFIG['pm_role'], CONFIG['pi_role'], CONFIG['cm_role'], CONFIG['chw_role']]
+    return is_chw(user) or is_pm_or_pi(user) or is_cm(user)
 
 
 def get_app_build(app_dict):
@@ -68,8 +73,8 @@ def get_form_dict(case, form_xmlns):
     return None
 
 
-def format_date(date_string, OUTPUT_FORMAT):
-    if date_string is None or date_string == '' or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
+def format_date(date_string, OUTPUT_FORMAT, localize=None):
+    if date_string is None or date_string == '' or date_string == " " or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
         return _("Bad Date Format!")
 
     if isinstance(date_string, basestring):
@@ -77,6 +82,12 @@ def format_date(date_string, OUTPUT_FORMAT):
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
             return _("Bad Date Format!")
+
+    if localize:
+        tz = timezone(Domain.get_by_name(SUCCEED_DOMAIN).default_timezone)
+        if date_string.tzname() is None:
+            date_string = timezone('UTC').localize(date_string)
+        date_string = date_string.astimezone(tz)
 
     return date_string.strftime(OUTPUT_FORMAT)
 

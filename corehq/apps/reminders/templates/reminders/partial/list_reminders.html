@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'reminders/ko/reminders.old.list.js' %}"></script>
+{% endblock %}
+
 {% block head %}{{ block.super }}
 
 {% include "imports/datatables.html" %}
@@ -19,6 +23,13 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
+            $(".rule-status").each(function(index) {
+                var bar = new RuleProgressBar(
+                    $(this).attr("data-handler-id"),
+                    '{% url "reminder_rule_progress" domain %}'
+                );
+                ko.applyBindings(bar, this);
+            });
             $("#table_1").dataTable({
                 "sPaginationType" : "bootstrap",
                 "bLengthChange" : false,
@@ -67,6 +78,7 @@
                 {% endif %}
                 <th></th>
                 <th></th>
+                {% if reminder_type != "ONE_TIME" %}<th>{% trans 'Rule Progress' %}</th>{% endif %}
             </tr>
         </thead>
         <tbody>
@@ -102,6 +114,16 @@
                             </form>
                         </div>
                     </td>
+                    {% if reminder_type != "ONE_TIME" %}
+                    <td>
+                        <div class="rule-status" data-handler-id="{{ handler.handler.get_id }}">
+                            <div data-bind="visible: in_progress()" class="progress progress-striped active">
+                                <span class="bar" data-bind="style: {width: progress_pct()}"></span>
+                            </div>
+                            <span class="label" data-bind="visible: !in_progress()">{% trans "Up-to-date" %}</span>
+                        </div>
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endif %}
             {% endfor %}

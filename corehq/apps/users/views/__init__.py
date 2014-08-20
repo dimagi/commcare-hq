@@ -80,24 +80,9 @@ class BaseUserSettingsView(BaseDomainView):
         return user
 
     @property
-    @memoized
-    def web_users(self):
-        web_users = WebUser.by_domain(self.domain)
-        teams = Team.get_by_domain(self.domain)
-        for team in teams:
-            for user in team.get_members():
-                if user.get_id not in [web_user.get_id for web_user in web_users]:
-                    user.from_team = True
-                    web_users.append(user)
-        for user in web_users:
-            user.current_domain = self.domain
-        return web_users
-
-    @property
     def main_context(self):
         context = super(BaseUserSettingsView, self).main_context
         context.update({
-            'web_users': self.web_users,
             'couch_user': self.couch_user,
         })
         return context
@@ -373,6 +358,21 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     @memoized
+    def web_users(self):
+        web_users = WebUser.by_domain(self.domain)
+        teams = Team.get_by_domain(self.domain)
+        for team in teams:
+            for user in team.get_members():
+                if user.get_id not in [web_user.get_id for web_user in web_users]:
+                    user.from_team = True
+                    web_users.append(user)
+        for user in web_users:
+            user.current_domain = self.domain
+        web_users.sort(key=lambda x: (x.role_label(), x.email))
+        return web_users
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(UserRole.by_domain(self.domain),
@@ -413,6 +413,7 @@ class ListWebUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
+            'web_users': self.web_users,
             'user_roles': self.user_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),

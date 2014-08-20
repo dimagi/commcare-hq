@@ -10,6 +10,18 @@ class VersioningError(AppManagerException):
     pass
 
 
+class ModuleNotFoundException(AppManagerException, IndexError):
+    pass
+
+
+class FormNotFoundException(AppManagerException, IndexError):
+    pass
+
+
+class IncompatibleFormTypeException(AppManagerException):
+    pass
+
+
 class AppEditingError(AppManagerException):
     pass
 
@@ -93,4 +105,8 @@ class XFormIdNotUnique(AppManagerException, couchdbkit.MultipleResultsFound):
 
 
 class LocationXpathValidationError(AppManagerException):
+    pass
+
+
+class UnknownInstanceError(SuiteError):
     pass

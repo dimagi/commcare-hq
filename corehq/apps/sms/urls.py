@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import patterns, url
+from corehq import SMSAdminInterfaceDispatcher
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
@@ -50,4 +51,6 @@ sms_admin_interface_urls = patterns('corehq.apps.sms.views',
     url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_backend', name='edit_backend'),
     url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_backend', name='delete_backend'),
     url(r'^global_backend_map/$', 'global_backend_map', name='global_backend_map'),
+    url(SMSAdminInterfaceDispatcher.pattern(), SMSAdminInterfaceDispatcher.as_view(),
+        name=SMSAdminInterfaceDispatcher.name()),
 )

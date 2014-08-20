@@ -7,11 +7,10 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-    DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+    DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
-from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
@@ -290,6 +289,8 @@ class Domain(Document, SnapshotMixin):
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
+
+    default_mobile_worker_redirect = StringProperty(default=None)
 
     @property
     def domain_type(self):
@@ -1044,4 +1045,4 @@ class DomainCounter(Document):
 
 
 def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()

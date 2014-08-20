@@ -20,7 +20,6 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     fields = []
     es_results=None
 
-
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         if domain and project and user is None:
@@ -35,7 +34,10 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
         try:
             module = app_dict['modules'][module_idx]
-            form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
+            if len(module['forms']) == 1:
+                form_idx = 0
+            else:
+                form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == form][0]
         except IndexError:
             form_idx = None
 
@@ -70,7 +72,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
             self.pm_app_dict = get_cloudcare_app(case['domain'], SUCCEED_PM_APPNAME)
             self.latest_pm_build = get_app_build(self.pm_app_dict)
             self.chw_app_dict = get_cloudcare_app(case['domain'], SUCCEED_CHW_APPNAME)
-            self.latest_chw_build = get_app_build(self.pm_app_dict)
+            self.latest_chw_build = get_app_build(self.chw_app_dict)
         except ResourceNotFound as ex:
             self.report_template_path = "patient_error.html"
             ret['error_message'] = ex.message
@@ -125,10 +127,10 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
 
     @property
     def patient_careplan_url(self):
-        from custom.succeed.reports.patient_careplan import PatientCarePlanReport
-        if self.is_all_reports_enabled or unicode(PatientCarePlanReport.__module__+'.'+PatientCarePlanReport.__name__) in self.get_available_report_list:
+        from custom.succeed.reports.patient_tasks import PatientTasksReport
+        if self.is_all_reports_enabled or unicode(PatientTasksReport.__module__+'.'+PatientTasksReport.__name__) in self.get_available_report_list:
             return html.escape(
-                PatientCarePlanReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
+                PatientTasksReport.get_url(*[self.get_case()["domain"]]) + "?patient_id=%s" % self.get_case()['_id'])
         else:
             return EMPTY_URL
 

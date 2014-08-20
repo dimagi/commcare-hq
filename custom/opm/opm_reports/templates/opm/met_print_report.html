@@ -1,11 +1,13 @@
 {% extends original_template %}
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
     <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
     <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
     {{ block.super }}
 {% endblock %}
 
@@ -19,6 +21,7 @@
                 for (var i = 3; i > 0; i--) {
                     $('td:nth-last-child(1),th:nth-last-child(1)', $("#report_table_met_report")).remove();
                 }
+                splitTable($(".table"), 1100);
                 $('.hq-loading').hide();
                 window.print();
             }, 2000);
@@ -27,16 +30,27 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link rel="stylesheet" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     <style>
         @page {
             size: A4 landscape;
         }
-        tr{
-            page-break-before: always;
+        th {
+            font-weight:bold;
+            line-height: 1.3;
+        }
+        tr {
+            line-height: 1.3;
+        }
+        table{
+            page-break-after: always;
+        }
+        td > div > img {
+            width: 100px !important;
         }
     </style>
-
+    {% endcompress %}
 {{ block.super }}
 {% endblock %}
 

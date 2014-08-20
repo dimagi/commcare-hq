@@ -323,7 +323,7 @@ class AllHmisCaseSqlData(SqlData):
             DatabaseColumn(_("HIV rapid antibody test done"), SumColumn("hiv_rapid_antibody_test_done_total")),
             DatabaseColumn(_("Deaths of women related to pregnancy"),
                            SumColumn("deaths_of_women_related_to_pregnancy_total")),
-            DatabaseColumn(_("Pregnant Mothers tested for HIV"),
+            DatabaseColumn(_("Pregnant mothers tested positive for HIV"),
                            SumColumn("pregnant_mothers_tested_for_hiv_total")),
             DatabaseColumn(_("Pregnant Mothers with confirmed Malaria"),
                            SumColumn("pregnant_mothers_with_confirmed_malaria_total")),

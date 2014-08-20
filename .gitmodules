@@ -49,9 +49,6 @@
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
-[submodule "submodules/hqstyle-src"]
-	path = submodules/hqstyle-src
-	url = git://github.com/dimagi/hqstyle-src.git
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
 	url = git://github.com/dimagi/couchdbkit-aggregate.git
@@ -76,3 +73,9 @@
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git
+[submodule "corehq/apps/style/static/style/lib/bootstrap-3.2.0"]
+	path = corehq/apps/style/static/style/lib/bootstrap-3.2.0
+	url = https://github.com/twbs/bootstrap.git
+[submodule "corehq/apps/style/static/style/lib/fontawesome-4.1.0"]
+	path = corehq/apps/style/static/style/lib/fontawesome-4.1.0
+	url = https://github.com/FortAwesome/Font-Awesome.git

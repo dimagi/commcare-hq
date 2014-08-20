@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import MinLengthValidator
-from hqstyle.forms.fields import MultiEmailField
+from corehq.apps.style.forms.fields import MultiEmailField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import ReportNotification

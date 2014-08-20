@@ -1,24 +1,67 @@
 #!/bin/bash
 
-if [[ -z "$1" ]]; then
-    echo "usage: $0 path/to/staging.yaml [--deploy]"
-    exit
-fi
+function usage() {
+    cat << EOF
+usage: $0 [-h|--help] [-v|--verbose] [--deploy] [--skip-fetch]
 
-f=$1
-shift
+rebuild staging from yaml configuration (scripts/staging.yaml)
 
-if [[ $1 = "--deploy" ]]; then
-    deploy='y'
-    shift
-fi
-
-function rebuildstaging() {
-    python scripts/rebuildstaging.py < $f "$@"
+    -h --help       print this help text
+    -v --verbose    display debugging output
+    --deploy        deploy after rebuild is complete
+    --skip-fetch    assume local copy is already update date with remote
+EOF
 }
 
-if [[ $deploy = "y" ]]; then
-    rebuildstaging && fab --linewise staging preindex_views && printf 'y\ny\n' | fab --linewise staging deploy
+while [[ $# > 0 ]]
+do
+    key="$1"
+    shift
+
+    case $key in
+      --deploy)
+        deploy=y
+        ;;
+      -h|--help)
+        usage
+        exit
+        ;;
+      -v|--verbose)
+        verbose=y
+        ;;
+      --skip-fetch)
+        skip_fetch=y
+        echo skip-fetch
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+function rebuildstaging() {
+    python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
+}
+
+args=''
+
+[[ $verbose = 'y' ]] && args="$args -v"
+
+[[ $skip_fetch = 'y' ]] && args="$args sync check rebuild"
+
+# if staging.yaml isn't up-to-date, warn and quit
+git fetch origin master
+if [[ -n $(git diff origin/master -- scripts/staging.yaml) ]]
+then
+    echo "scripts/staging.yaml on this branch different from the one on master"
+    echo "Aborting."
+    exit 1
+fi
+
+if [[ $deploy = 'y' ]]
+then
+    rebuildstaging $args && git checkout autostaging && fab staging awesome_deploy:confirm=no
 else
-    rebuildstaging
+    rebuildstaging $args
 fi

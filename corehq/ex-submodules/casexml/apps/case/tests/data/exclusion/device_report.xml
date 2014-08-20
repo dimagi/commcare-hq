@@ -1,0 +1,13 @@
+<?xml version='1.0' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+	<case>
+		<case_id>case_in_device</case_id>
+		<user_id>device_user</user_id>
+		<date_modified>2010-06-29T13:42:50</date_modified>
+		<create>
+			<case_type_id>device_case_type</case_type_id>
+			<user_id>device_user</user_id>
+			<case_name>device case</case_name>
+		</create>
+	</case>
+</device_report>

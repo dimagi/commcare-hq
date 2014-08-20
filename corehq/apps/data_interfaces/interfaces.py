@@ -1,3 +1,4 @@
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -62,13 +63,13 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                util.format_relative_date(display.parse_date(display.case['modified_on']))['html'],
+                naturaltime(display.parse_date(display.case['modified_on'])),
             ]
 
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
+        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],

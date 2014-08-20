@@ -5,6 +5,7 @@ from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequ
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from tastypie.exceptions import BadRequest
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 
 from couchforms.models import XFormInstance
@@ -26,6 +27,7 @@ from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
+from no_exceptions.exceptions import Http400
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -66,7 +68,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        es_query = es_search(bundle.request, domain)
+        try:
+            es_query = es_search(bundle.request, domain)
+        except Http400 as e:
+            raise BadRequest(e.message)
         es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
@@ -284,6 +289,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
 
 class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
 
+    id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
 
     modules = fields.ListField()

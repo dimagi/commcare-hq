@@ -13,8 +13,8 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.users import (ExpandedMobileWorkerFilter,
-        SelectMobileWorkerFilter)
+from corehq.apps.reports.filters.users import SelectMobileWorkerFilter,\
+    ExpandedMobileWorkerFilterWithAllData
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -25,7 +25,7 @@ from .data_sources import CaseInfo, CaseDisplay
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilterWithAllData',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
@@ -59,11 +59,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
 
-        owner_filters = _filter_gen('owner_id', owner_ids)
-        user_filters = _filter_gen('user_id', user_ids)
-        filters = filter(None, [owner_filters, user_filters])
-        if filters:
-            subterms.append({'or': filters})
+
+        if not ExpandedMobileWorkerFilterWithAllData.show_all_data(self.request):
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
+            if filters:
+                subterms.append({'or': filters})
 
         if search_string:
             query_block = {
@@ -84,7 +86,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             'from': self.pagination.start,
             'size': self.pagination.count,
         }
-
         return es_query
 
     @property
@@ -95,9 +96,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
                                  status=self.case_status, owner_ids=owner_ids+user_ids, user_ids=user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
+
         query_results = case_es.run_query(query)
 
-        if query_results is None or 'hits' not in query_results:
+        if 'hits' not in query_results:
             logging.error("CaseListMixin query error: %s, urlpath: %s, params: %s, user: %s yielded a result indicating a query error: %s, results: %s" % (
                 self.__class__.__name__,
                 self.request.path,
@@ -112,7 +114,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_users_and_owners(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_from_es(
+        users_data = ExpandedMobileWorkerFilterWithAllData.pull_users_from_es(
             self.domain, self.request, fields=[])
         user_ids = filter(None, [u["_id"] for u in users_data["hits"]["hits"]])
         group_owner_ids = []
@@ -122,7 +124,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 for group in Group.by_user(user_id)
                 if group.case_sharing
             ])
-        if HQUserType.COMMTRACK in ExpandedMobileWorkerFilter.user_types(self.request):
+        if HQUserType.COMMTRACK in ExpandedMobileWorkerFilterWithAllData.user_types(self.request):
             user_ids.append("commtrack-system")
         return user_ids, filter(None, group_owner_ids)
 

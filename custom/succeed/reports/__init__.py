@@ -13,6 +13,8 @@ CM4 = 'http://openrosa.org/formdesigner/263cc99e9f0cdbc55d307359c7b45a1e555f35d1
 CM5 = 'http://openrosa.org/formdesigner/8abd54794d8c5d592100b8cdf1f642903b7f4abe'
 CM6 = 'http://openrosa.org/formdesigner/9b47556945c6476438c2ac2f0583e2ca0055e46a'
 CM7 = 'http://openrosa.org/formdesigner/4b924f784e8dd6a23045649730e82f6a2e7ce7cf'
+CM_NEW_TASK = 'http://openrosa.org/formdesigner/BBDEBCBD-5EC6-47F9-A8E3-5CCF74AB9EFE'
+CM_UPDATE_TASK = 'http://openrosa.org/formdesigner/2447a22e4a648d5510db9a4db65f3b60ac91ed98'
 HUD1 = 'http://openrosa.org/formdesigner/24433229c5f25d0bd3ceee9bf70c72093056d1af'
 HUD2 = 'http://openrosa.org/formdesigner/63f8287ac6e7dce0292ebac9b232b0d3bde327dc'
 PD1 = 'http://openrosa.org/formdesigner/9eb0eaf6954791425d6d5f0b66db9a484cacd264'
@@ -25,6 +27,13 @@ PD2DEPM = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511
 PD2SCM = 'http://openrosa.org/formdesigner/b3226cecdc7c32fe7aca37a76799b48900b2e050'
 PD2OM = 'http://openrosa.org/formdesigner/e859b4d46422f61d902be6acd3ed758009694998'
 CHW1 = 'http://openrosa.org/formdesigner/4b368b1d73862abeca3bce67b6e09724b8dca850'
+CHW1PS = 'http://openrosa.org/formdesigner/40836f5360aad0e4ae84f39dd45d2c205511e73b'
+CHW1DIAB = 'http://openrosa.org/formdesigner/2FD5DD7C-38A2-4F46-9386-134C574F7407'
+CHW1CHOL = 'http://openrosa.org/formdesigner/351ec6c430a7dd90f6f7a96938f3d58183ec3992'
+CHW1SMOKINGSENS = 'http://openrosa.org/formdesigner/937a24202f98f87263a7ecbe5fe8a559dc827a05'
+CHW1SL = 'http://openrosa.org/formdesigner/137B1EC0-0DF9-4238-8E7C-0191EF1187AA'
+CHW1DIETOBESITY = 'http://openrosa.org/formdesigner/5DE940C5-430B-41AF-8C58-E4C63C49470F'
+CHW1COMPREF = 'http://openrosa.org/formdesigner/282DAA4B-6246-43B2-9551-A905C05D8476'
 CHW2 = 'http://openrosa.org/formdesigner/cbc4e37437945bfda04e391d11006b6d02c24fc2'
 CHW3 = 'http://openrosa.org/formdesigner/5d77815bf7631a527d8647cdbaa5971e367f6548'
 CHW4 = 'http://openrosa.org/formdesigner/f8a741808584d772c4b899ef84db197da5b4d12a'
@@ -40,9 +49,10 @@ CM_APP_CM_MODULE = 0
 CM_APP_HUD_MODULE = 1
 CM_APP_PD_MODULE = 2
 CM_APP_CHW_MODULE = 3
-CM_APP_CP_MODULE = 4
-CM_APP_APPOINTMENTS_MODULE = 5
-CM_APP_MEDICATIONS_MODULE = 6
+CM_APP_APPOINTMENTS_MODULE = 4
+CM_APP_MEDICATIONS_MODULE = 5
+CM_APP_CREATE_TASK_MODULE = 6
+CM_APP_UPDATE_VIEW_TASK_MODULE = 7
 
 PM_APP_PM_MODULE = 0
 
@@ -52,6 +62,7 @@ CHW_APP_CHW1_MODULE = 2
 CHW_APP_CHW2_MODULE = 3
 CHW_APP_CM_MODULE = 4
 CHW_APP_MA_MODULE = 5
+CHW_APP_TASK_MODULE = 6
 
 VISIT_SCHEDULE = [
     {
@@ -221,12 +232,32 @@ SUBMISSION_SELECT_FIELDS = [
         ]
     },
     {
-        "text": "CHW Manager Forms",
+        "text": "CHW Forms",
         "val": "chwm_forms",
         "next": [
             {
                 "text": "CHW1 Initial Home Visit",
                 "val": CHW1
+            },
+            {
+                "text": "CHW1 Psycho-Social",
+                "val": CHW1PS
+            },
+            {
+                "text": "CHW1 Cholesterol",
+                "val": CHW1CHOL
+            },
+            {
+                "text": "CHW1 Smoking Cessation",
+                "val": CHW1SMOKINGSENS
+            },
+            {
+                "text": "CHW1 Stroke Literacy",
+                "val": CHW1SL
+            },
+            {
+                "text": "CHW1 Communication Preferences",
+                "val": CHW1COMPREF
             },
             {
                 "text": "CHW2 Follow-up Home Visit",
@@ -253,6 +284,34 @@ SUBMISSION_SELECT_FIELDS = [
             {
                 "text": "PD2 Medications",
                 "val": PD2
+            },
+            {
+                "text": "PD2 Antithrombotic Meds",
+                "val": PD2AM
+            },
+            {
+                "text": "PD2 Blood Pressure Meds",
+                "val": PD2BPM
+            },
+            {
+                "text": "PD2 Cholesterol Meds",
+                "val": PD2CHM
+            },
+            {
+                "text": "PD2 Diabetes Meds",
+                "val": PD2DIABM
+            },
+            {
+                "text": "PD2 Depression Meds",
+                "val": PD2DEPM
+            },
+            {
+                "text": "PD2 Smoking Cessation Meds",
+                "val": PD2SCM
+            },
+            {
+                "text": "PD2 Other Meds",
+                "val": PD2OM
             }
         ]
     },
@@ -275,6 +334,37 @@ SUBMISSION_SELECT_FIELDS = [
 LAST_INTERACTION_LIST = [PM1, PM3, CM1, CM3, CM4, CM5, CM6, CHW1, CHW2, CHW3, CHW4]
 MEDICATION_DETAILS = ['MEDS_at_prescribed', 'MEDS_bp_prescribed', 'MEDS_cholesterol_prescribed', 'MEDS_depression_prescribed',
                       'MEDS_diabetes_prescribed', 'MEDS_smoking_prescribed', 'MEDS_other_prescribed']
+
+TASK_RISK_FACTOR = {
+    "stroke_literacy": "Stroke Literacy",
+    "blood_pressure": "Blood Pressure",
+    "cholesterol": "Cholesterol",
+    "diabetes": "Diabetes",
+    "psycho-social": "Psycho/social",
+    "healthy-eating": "Healthy Eating",
+    "physical_activity": "Physical activity",
+    "transportation": "Transportation",
+    "insurance": "Access to Insurance",
+    "alcohol-drug": "Alcohol and Drug Use",
+    "medication": "Medication Management",
+    "general": "General"
+}
+
+
+TASK_ACTIVITY = {
+    "review": "Review",
+    "call": "Call",
+    "clinic_visit": "Clinic Visit",
+    "home_visit": "Home Visit",
+    "huddle_action": "Huddle Action",
+    "medication": "Medication",
+    "medication_adjustment" : "Medication Adjustment",
+    "order_lab": "Order Lab",
+    "review_lab": "Review Lab",
+    "make_referral": "Make Referral",
+    "mail_document": "Mail Document(s)",
+    "visit_preparation": "Visit Preparation"
+}
 
 class DrilldownReportMixin(object):
 

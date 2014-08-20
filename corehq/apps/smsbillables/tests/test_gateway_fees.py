@@ -25,10 +25,17 @@ class TestGatewayFee(TestCase):
         self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
         self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
 
+        self.other_currency = generator.arbitrary_currency()
+
     def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
             for backend_api_id, amount in fees.items():
                 SmsGatewayFee.create_new(backend_api_id, direction, amount)
+
+    def create_other_currency_fees(self):
+        for direction, fees in self.least_specific_fees.items():
+            for backend_api_id, amount in fees.items():
+                SmsGatewayFee.create_new(backend_api_id, direction, amount, currency=self.other_currency)
 
     def create_country_code_gateway_fees(self):
         for direction, backend in self.country_code_fees.items():
@@ -55,8 +62,20 @@ class TestGatewayFee(TestCase):
             billable = SmsBillable.create(msg_log)
             self.assertIsNotNone(billable)
             self.assertEqual(
-                billable.gateway_fee.amount,
+                billable.gateway_charge,
                 self.least_specific_fees[billable.direction][billable.gateway_fee.criteria.backend_api_id]
+            )
+
+    def test_other_currency_fees(self):
+        self.create_other_currency_fees()
+
+        for msg_log in self.message_logs:
+            billable = SmsBillable.create(msg_log)
+            self.assertIsNotNone(billable)
+            self.assertEqual(
+                billable.gateway_charge,
+                self.least_specific_fees[billable.direction][billable.gateway_fee.criteria.backend_api_id]
+                / self.other_currency.rate_to_default
             )
 
     def test_country_code_fees(self):
@@ -71,7 +90,7 @@ class TestGatewayFee(TestCase):
                 billable = SmsBillable.create(msg_log)
                 self.assertIsNotNone(billable)
                 self.assertEqual(
-                    billable.gateway_fee.amount,
+                    billable.gateway_charge,
                     self.country_code_fees[billable.direction]
                     [billable.gateway_fee.criteria.backend_api_id]
                     [int(phone_number[:-10])]
@@ -90,7 +109,7 @@ class TestGatewayFee(TestCase):
                 billable = SmsBillable.create(msg_log)
                 self.assertIsNotNone(billable)
                 self.assertEqual(
-                    billable.gateway_fee.amount,
+                    billable.gateway_charge,
                     self.instance_fees[billable.direction]
                     [billable.gateway_fee.criteria.backend_api_id]
                     [1]
@@ -110,7 +129,7 @@ class TestGatewayFee(TestCase):
                 billable = SmsBillable.create(msg_log)
                 self.assertIsNotNone(billable)
                 self.assertEqual(
-                    billable.gateway_fee.amount,
+                    billable.gateway_charge,
                     self.most_specific_fees[billable.direction]
                     [billable.gateway_fee.criteria.backend_api_id]
                     [int(phone_number[:-10])]
@@ -140,5 +159,6 @@ class TestGatewayFee(TestCase):
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
         self.currency_usd.delete()
+        self.other_currency.delete()
         for log in SMSLog.by_domain_asc(generator.TEST_DOMAIN):
             log.delete()

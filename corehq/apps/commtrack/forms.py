@@ -25,11 +25,10 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label="SMS Code", max_length=10)
-    description = forms.CharField(max_length=500, required=False,
-        widget=forms.Textarea)
-    unit = forms.CharField(label="Default Unit", max_length=100, required=False)
-    program_id = forms.ChoiceField(label="Program", choices=(), required=True)
+    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10)
+    description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
+    unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
+    program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):
@@ -66,7 +65,7 @@ class ProductForm(forms.Form):
                 'action': lambda o: o.caption,
                 'command': lambda o: o['caption'],
             }[conflict[0]](conflict[1])
-            raise forms.ValidationError('sms code not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
+            raise forms.ValidationError('product id not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
 
         return code.lower()
 
@@ -184,7 +183,7 @@ class ConsumptionForm(forms.Form):
         super(ConsumptionForm, self).__init__(*args, **kwargs)
         products = Product.by_domain(domain)
         for p in products:
-            field_name = 'default_%s' % p.code
+            field_name = 'default_%s' % p._id
             display = _('Default %(product_name)s') % {'product_name': p.name}
             self.fields[field_name] = forms.DecimalField(
                 label=display,
@@ -200,13 +199,14 @@ class ConsumptionForm(forms.Form):
     def save(self):
         for field in self.fields:
             val = self.cleaned_data[field]
+            product = Product.get(field.split('_')[1])
+            assert product.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
+                product._id, self.domain
+            )
             set_default_consumption_for_product(
                 self.domain,
-                Product.get_by_code(
-                    self.domain,
-                    field.split('_')[1]
-                )._id,
-                val
+                product._id,
+                val,
             )
 
 

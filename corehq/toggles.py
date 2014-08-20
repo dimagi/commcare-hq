@@ -2,7 +2,6 @@ from functools import wraps
 from django.http import Http404
 from toggle.shortcuts import toggle_enabled
 
-
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
@@ -68,6 +67,12 @@ ACCOUNTING_PREVIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+BOOTSTRAP3_PREVIEW = StaticToggle(
+    'bootstrap3_preview',
+    'Bootstrap 3 Preview',
+    [NAMESPACE_USER]
+)
+
 INVOICE_TRIGGER = StaticToggle(
     'invoice_trigger',
     'Accounting Trigger Invoices',
@@ -89,8 +94,18 @@ CASE_REBUILD = StaticToggle(
     'Show UI-based case rebuild option',
 )
 
-ANDROID_OFFLINE_INSTALL = StaticToggle(
-    'android_offline_install',
-    'Android Offline Install',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+IS_DEVELOPER = StaticToggle(
+    'is_developer',
+    'Is developer'
+)
+
+CUSTOM_PRODUCT_DATA = StaticToggle(
+    'custom_product_data',
+    'Custom Product Data',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+MM_CASE_PROPERTIES = StaticToggle(
+    'mm_case_properties',
+    'Multimedia Case Properties',
 )

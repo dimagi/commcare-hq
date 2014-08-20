@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<suite descriptor="Suite File" version="26">
+<suite version="26" descriptor="Suite File">
   <xform>
     <resource id="94d7c0f74533ebf746a8067ea326c25245f24514" version="26" descriptor="Form: (Module Clinic) - Register Clinic">
       <location authority="local">./modules-0/forms-0.xml</location>
@@ -304,11 +304,11 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
-    <instance id="products" src="jr://fixture/commtrack:products"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <session>
       <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
-      <datum id="product_id" nodeset="instance('products')/products/product" value="./@id" detail-select="m1_product_short"/>
+      <datum id="product_id" nodeset="instance('commtrack:products')/products/product" value="./@id" detail-select="m1_product_short"/>
     </session>
   </entry>
   <entry>
@@ -332,12 +332,12 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
-    <instance id="products" src="jr://fixture/commtrack:products"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <session>
       <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short"/>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id_load_clinic0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
-      <datum id="product_id" nodeset="instance('products')/products/product" value="./@id" detail-select="m2_product_short"/>
+      <datum id="product_id" nodeset="instance('commtrack:products')/products/product" value="./@id" detail-select="m2_product_short"/>
     </session>
   </entry>
   <entry>
@@ -347,12 +347,12 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="products" src="jr://fixture/commtrack:products"/>
-    <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
+    <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <session>
       <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
-      <datum id="product_id" nodeset="instance('products')/products/product" value="./@id" detail-select="m1_product_short"/>
+      <datum id="product_id" nodeset="instance('commtrack:products')/products/product" value="./@id" detail-select="m1_product_short"/>
     </session>
   </entry>
   <entry>
@@ -364,11 +364,11 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
-    <instance id="products" src="jr://fixture/commtrack:products"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <session>
       <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
-      <datum id="product_id" nodeset="instance('products')/products/product[program_id='abc123def']" value="./@id" detail-select="m2_product_short"/>
+      <datum id="product_id" nodeset="instance('commtrack:products')/products/product[program_id='abc123def']" value="./@id" detail-select="m2_product_short"/>
     </session>
   </entry>
   <menu id="m0">

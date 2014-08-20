@@ -1,4 +1,5 @@
 from collections import defaultdict
+import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
@@ -111,6 +112,13 @@ class WrappedNode(object):
                     xpath.format(**self.namespaces), *args, **kwargs)]
         else:
             return []
+
+    def iterfind(self, xpath, *args, **kwargs):
+        if self.xml is None:
+            return
+        formatted_xpath = xpath.format(**self.namespaces)
+        for n in self.xml.iterfind(formatted_xpath, *args, **kwargs):
+            yield WrappedNode(n)
 
     def findtext(self, xpath, *args, **kwargs):
         if self.xml is not None:
@@ -342,18 +350,21 @@ class CaseBlock(object):
     def add_update_block(self, updates, make_relative=False):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
-        update_mapping = {}
+        if not updates:
+            return
 
-        if updates:
-            for key, value in updates.items():
-                if key == 'name':
-                    key = 'case_name'
+        update_mapping = {}
+        attachments = {}
+        for key, value in updates.items():
+            if key == 'name':
+                key = 'case_name'
+            if self.is_attachment(value):
+                attachments[key] = value
+            else:
                 update_mapping[key] = value
 
-        for key in sorted(update_mapping.keys()):
-            update_block.append(make_case_elem(key))
-
         for key, q_path in sorted(update_mapping.items()):
+            update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
             resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
@@ -364,6 +375,29 @@ class CaseBlock(object):
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
+
+        if attachments:
+            attachment_block = make_case_elem('attachment')
+            self.elem.append(attachment_block)
+            for key, q_path in sorted(attachments.items()):
+                attach_elem = make_case_elem(key, {'src': '', 'from': 'local'})
+                attachment_block.append(attach_elem)
+                nodeset = self.xform.resolve_path(
+                    "%scase/attachment/%s" % (self.path, key))
+                resolved_path = self.xform.resolve_path(q_path)
+                if make_relative:
+                    resolved_path = relative_path(nodeset, resolved_path)
+                self.xform.add_bind(nodeset=nodeset, relevant=("count(%s) = 1" % resolved_path))
+                self.xform.add_bind(nodeset=nodeset + "/@src", calculate=resolved_path)
+
+    def is_attachment(self, ref):
+        """Return true if there is an upload node with the given ref """
+        try:
+            uploads = self.xform.__upload_refs
+        except AttributeError:
+            itr = self.xform.find('{h}body').iterfind(".//{f}upload[@ref]")
+            uploads = self.xform.__upload_refs = set(node.attrib["ref"] for node in itr)
+        return ref in uploads
 
     def add_close_block(self, relevance):
         self.elem.append(make_case_elem('close'))
@@ -394,6 +428,20 @@ def autoset_owner_id_for_subcase(subcase):
     return 'owner_id' not in subcase.case_properties
 
 
+def validate_xform(source, version='1.0'):
+    if isinstance(source, unicode):
+        source = source.encode("utf-8")
+    # normalize and strip comments
+    source = ET.tostring(parse_xml(source))
+    validation_results = formtranslate.api.validate(source, version=version)
+    if not validation_results.success:
+        raise XFormValidationError(
+            fatal_error=validation_results.fatal_error,
+            version=version,
+            validation_problems=validation_results.problems,
+        )
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -409,9 +457,8 @@ class XForm(WrappedNode):
         self.has_casedb = False
 
     def validate(self, version='1.0'):
-        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml is not None else '', version=version)
-        if not validation_results.success:
-            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
+        validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
+                       version=version)
         return self
 
     @property
@@ -498,29 +545,31 @@ class XForm(WrappedNode):
         for g in node_groups.values():
             duplicate_dict[g].append(g)
 
-        def replace_ref(old_xpath, attrib_name, new):
-            for ref in self.findall(old_xpath):
-                if ref.xml is not None:
-                    ref.attrib[attrib_name] = new
+        duplicates = [sorted(g, key=lambda ng: ng.id) for g in duplicate_dict.values() if len(g) > 1]
 
-        duplicates = [g for g in duplicate_dict.values() if len(g) > 1]
-        for d in duplicates:
-            d = sorted(d, key=lambda ng: ng.id)
-            reference = d[0]
-            new_ref = u"jr:itext('{0}')".format(reference.id)
-
-            for group in d[1:]:
+        for dup in duplicates:
+            for group in dup[1:]:
                 itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                ref_path = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(ref_path, 'ref', new_ref)
+        def replace_ref_s(xmlstring, find, replace):
+            find = find.encode('ascii', 'xmlcharrefreplace')
+            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            return xmlstring.replace(find, replace)
 
-                constraint_path = u'.//*[@{{jr}}constraintMsg="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(constraint_path, '{jr}constraintMsg', new_ref)
+        xf_string = self.render()
+        for dup in duplicates:
+            reference = dup[0]
+            new_ref = u"jr:itext('{0}')".format(reference.id)
+
+            for group in dup[1:]:
+                old_ref = u'jr:itext(\'{0}\')'.format(group.id)
+                xf_string = replace_ref_s(xf_string, old_ref, new_ref)
+
+        self.xml = parse_xml(xf_string)
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
@@ -1124,6 +1173,9 @@ class XForm(WrappedNode):
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
+
+                if subcase.close_condition.is_active():
+                    subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'

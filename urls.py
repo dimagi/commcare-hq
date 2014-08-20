@@ -6,6 +6,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 
@@ -17,6 +18,7 @@ admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
+handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
@@ -60,7 +62,8 @@ domain_specific = patterns('',
 )
 
 urlpatterns = patterns('',
-    (r'^favicon\.ico$', RedirectView.as_view(url='%shqwebapp/img/favicon2.png' % settings.STATIC_URL)),
+    (r'^favicon\.ico$', RedirectView.as_view(
+        url=static('hqwebapp/img/favicon2.png'))),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
@@ -101,6 +104,7 @@ urlpatterns = patterns('',
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^500/$', TemplateView.as_view(template_name='500.html')),
     (r'^404/$', TemplateView.as_view(template_name='404.html')),
+    (r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
     url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),

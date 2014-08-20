@@ -61,6 +61,10 @@ class ESError(Exception):
     pass
 
 
+def run_query(url, q):
+    return get_es().get(url, data=q)
+
+
 def get_stats_data(domains, histo_type, datespan, interval="day"):
     histo_data = dict([(d['display_name'],
                         es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
@@ -280,6 +284,14 @@ def stream_es_query(chunksize=100, **kwargs):
         if not res["hits"]["hits"]:
             return
         for hit in res["hits"]["hits"]:
+            yield hit
+
+
+def stream_esquery(esquery, chunksize=100):
+    size = esquery._size if esquery._size is not None else SIZE_LIMIT
+    start = esquery._start if esquery._start is not None else 0
+    for chunk_start in range(start, start + size, chunksize):
+        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
             yield hit
 
 

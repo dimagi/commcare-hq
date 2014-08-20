@@ -2,6 +2,8 @@ import os
 
 ####### Configuration for CommCareHQ Running on Travis-CI #####
 
+BASE_ADDRESS = '127.0.0.1:8000'
+
 ####### Database config. This assumes Postgres ####### 
 DATABASES = {
     'default': {
@@ -14,13 +16,11 @@ DATABASES = {
     }
 }
 
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
-
 ####### Couch Config ######
-COUCH_HTTPS = False 
-COUCH_SERVER_ROOT = '127.0.0.1:5984' 
-COUCH_USERNAME = 'commcarehq'
-COUCH_PASSWORD = 'not-a-real-password'
+COUCH_HTTPS = False
+COUCH_SERVER_ROOT = '127.0.0.1:5984'
+COUCH_USERNAME = ''
+COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
 
 ######## Email setup ########
@@ -33,7 +33,7 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 
 ####### Bitly ########
 
-BITLY_LOGIN = 'dimagi'
+BITLY_LOGIN = None
 BITLY_APIKEY = '*******'
 
 

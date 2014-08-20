@@ -23,13 +23,30 @@ class XPath(unicode):
         else:
             return XPath(xpath)
 
-    def select(self, ref, value, quote=True):
+    def select(self, ref, value, quote=None):
+        if quote is None:
+            quote = not isinstance(value, XPath)
         if quote:
-            value = "'{val}'".format(val=value)
+            value = XPath.string(value)
         return XPath("{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def count(self):
         return XPath('count({self})'.format(self=self))
+
+    def equals(self, b):
+        return XPath(u'{} = {}'.format(self, b))
+
+    def not_equals(self, b):
+        return XPath(u'{} != {}'.format(self, b))
+
+    @staticmethod
+    def if_(a, b, c):
+        return XPath(u"if({}, {}, {})".format(a, b, c))
+
+    @staticmethod
+    def string(a):
+        # todo: escape text
+        return XPath(u"'{}'".format(a))
 
 
 class CaseSelectionXPath(XPath):
@@ -63,12 +80,6 @@ class CaseXPath(XPath):
 
     def status_open(self):
         return self.select('@status', 'open')
-
-
-class IndicatorXpath(XPath):
-
-    def indicator(self, indicator_name):
-        return XPath(u"instance('%s')/indicators/case[@id = current()/@case_id]" % self).slash(indicator_name)
 
 
 class LocationXpath(XPath):
@@ -171,7 +182,45 @@ class LedgerSectionXpath(XPath):
         return XPath(self.slash(u'entry').select(u'@id', id, quote=False))
 
 
-class FixtureXpath(XPath):
+class InstanceXpath(XPath):
+    id = ''
+    path = ''
 
-    def table(self):
-        return XPath(u"instance('{0}s')/{0}_list/{0}".format(self))
+    def instance(self):
+        return XPath(u"instance('{id}')/{path}".format(
+            id=self.id,
+            path=self.path)
+        )
+
+
+class SessionInstanceXpath(InstanceXpath):
+    id = u'commcaresession'
+    path = u'session/context'
+
+
+class ItemListFixtureXpath(InstanceXpath):
+    @property
+    def id(self):
+        return u'item-list:{}'.format(self)
+
+    @property
+    def path(self):
+        return u'{0}_list/{0}'.format(self)
+
+
+class ProductInstanceXpath(InstanceXpath):
+    id = u'commtrack:products'
+    path = u'products/product'
+
+
+class IndicatorXpath(InstanceXpath):
+    path = u'indicators/case[@id = current()/@case_id]'
+
+    @property
+    def id(self):
+        return self
+
+
+class CommCareSession(object):
+    username = SessionInstanceXpath().instance().slash(u"username")
+    userid = SessionInstanceXpath().instance().slash(u"userid")

@@ -53,7 +53,7 @@ class PatientInteractionsReport(PatientDetailsReport):
                     interaction['received_date'] = action['date'].strftime(INTERACTION_OUTPUT_DATE_FORMAT)
                     try:
                         user = self.get_user(action['user_id'])
-                        interaction['completed_by'] = user.raw_username
+                        interaction['completed_by'] = user.human_friendly_name
                     except ResourceNotFound:
                         interaction['completed_by'] = EMPTY_FIELD
                     del ret['patient']['actions'][key]
@@ -61,7 +61,7 @@ class PatientInteractionsReport(PatientDetailsReport):
             if visit['show_button']:
                 interaction['url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, visit['module_idx'], visit['xmlns'], ret['patient']['_id'])
             if 'scheduled_source' in visit and ret['patient'].get_case_property(visit['scheduled_source']):
-                interaction['scheduled_date'] = format_date(ret['patient'].get_case_property(visit['scheduled_source']), INTERACTION_OUTPUT_DATE_FORMAT)
+                interaction['scheduled_date'] = format_date(ret['patient'].get_case_property(visit['scheduled_source']), INTERACTION_OUTPUT_DATE_FORMAT, localize=True)
 
             ret['interaction_table'].append(interaction)
 

@@ -1,6 +1,7 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -40,6 +41,23 @@
             }
         }
 
+        function RefreshableViewModel(url, model, sort_by) {
+            var self = this;
+            self.models = ko.observableArray();
+            self.refresh = function () {
+                $.getJSON(url, function (data) {
+                    var objects = _(data).map(function (item) {
+                        return new model(item);
+                    });
+                    if (sort_by) {
+                        objects = _(objects).sortBy(function (x) { return x[sort_by]; })
+                    }
+                    self.models(objects);
+                });
+            };
+            self.refresh();
+        }
+
         function ActiveTaskModel(data) {
 
             this.pid = ko.observable(data.pid);
@@ -51,26 +69,7 @@
             this.updated_on = ko.observable(format_date(data.updated_on));
             this.total_changes = ko.observable(data.total_changes);
         }
-        function ActiveTaskListViewModel() {
-            // Data
-            var self = this;
 
-            self.getTasks = function () {
-                $.getJSON("{% url "system_ajax" %}?api=_active_tasks", function (allData) {
-                            var mappedTasks = $.map(allData, function (item) {
-                                return new ActiveTaskModel(item)
-                            });
-                            self.couch_tasks(mappedTasks);
-                        }
-                );
-            };
-            self.couch_tasks = ko.observableArray(self.getTasks());
-            self.refresh = function () {
-                self.getTasks();
-            }
-        }
-
-        //CELERY model declarations
         function CeleryTaskModel(data) {
             this.name = ko.observable(data.name);
             this.uuid = ko.observable(data.uuid);
@@ -83,24 +82,6 @@
             this.args = ko.observable(data.args);
             this.kwargs = ko.observable(data.kwargs);
             this.runtime = ko.observable(number_fix(data.runtime));
-        }
-        function CeleryTaskListViewModel() {
-            // Data
-            var self = this;
-
-            self.getCeleryTasks = function () {
-                $.getJSON("{% url "system_ajax" %}?api=flower_poll", function (allData) {
-                            var mappedTasks = $.map(allData, function (item) {
-                                return new CeleryTaskModel(item)
-                            });
-                            self.celery_tasks(mappedTasks);
-                        }
-                );
-            };
-            self.celery_tasks = ko.observableArray(self.getCeleryTasks());
-            self.refresh = function () {
-                self.getCeleryTasks();
-            }
         }
 
         function PillowModel(pillow) {
@@ -124,32 +105,36 @@
             })();
             self.show_progress = function () {
                     return (self.seq * 100) / self.db_seq <= 99;
-            }
-        }
-
-        function PillowtopViewModel() {
-            var self = this;
-            self.pillows = ko.observableArray();
-            self.refresh = function () {
-                $.getJSON("{% url "system_ajax" %}?api=pillowtop", function (data) {
-                    self.pillows(_(_(data).map(function (item) {
-                        return new PillowModel(item);
-                    })).sortBy(function (pillow) { return pillow.name; }));
-                });
             };
-            self.refresh();
         }
 
-        var celeryViewModel = new CeleryTaskListViewModel();
-        var couchViewModel = new ActiveTaskListViewModel();
-        var pillowtopViewModel = new PillowtopViewModel();
+        function DbComparisons(data) {
+            var self = this;
+            self.description = data.description;
+            self.es_docs = data.es_docs;
+            self.couch_docs = data.couch_docs;
+            self.sql_rows = data.sql_rows;
+        }
+
+        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
+        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
         $(function () {
             ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
             ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
+            ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
             setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
             setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
             setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
+            setInterval(function () { dbComparisonsViewModel.refresh(); }, {{ db_update }});
+        });
+
+        $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
+            var pillowName = $(this).val();
+            $(".modal-header h3").text(pillowName);
+            $(".modal-body #pillow_name").val(pillowName);
         });
     </script>
 
@@ -157,8 +142,10 @@
 {% endblock js-inline %}
 {% block reportcontent %}
     <div class="row-fluid">
+        {% with deploy_history|first as last_deploy %}
         <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
-         at {{ last_deploy.date|date:"H:i:s"}} UTC by {{ last_deploy.user }}</span>
+         at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}</span>
+        {% endwith %}
     </div>
     <div class="row-fluid">
         <table class="table table-striped">
@@ -247,9 +234,10 @@
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
+                    <th>Reset pillow checkpoint</th>
                 </tr>
             </thead>
-            <tbody data-bind="foreach: pillows">
+            <tbody data-bind="foreach: models">
                 <tr>
                     <td><code data-bind="text: name"></code></td>
                     <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
@@ -268,10 +256,38 @@
                         <span data-bind="text: seq"></span>
                         / <span data-bind="text: db_seq"></span>
                     </td>
+                    <td>
+                        <a class="btn btn-info pull-right reset_pillow_checkpoint_btn" data-bind="value: name" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
+                            {% trans "Reset" %}
+                        </a>
+                    </td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <div class="row-fluid" id="elastic-vs-couch">
+        <h3>Elasticsearch/Couch/Postgres comparison</h3>
+        <table class="table">
+            <thread>
+            <tr>
+                <th>Description</th>
+                <th>CouchDB</th>
+                <th>Elasticsearch</th>
+                <th>PostgreSQL</th>
+            </tr>
+            </thread>
+            <tbody data-bind="foreach: models">
+            <tr>
+                <td data-bind="text: description"></td>
+                <td data-bind="text: couch_docs"></td>
+                <td data-bind="text: es_docs"></td>
+                <td data-bind="text: sql_rows"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
         <table class="table">
@@ -287,7 +303,7 @@
                 <th></th>
             </tr>
             </thead>
-            <tbody data-bind="foreach: couch_tasks">
+            <tbody data-bind="foreach: models">
             <tr>
                 <td data-bind="text: pid"></td>
                 <td data-bind="text: name"></td>
@@ -323,7 +339,7 @@
                 <th>Args</th>
             </tr>
             </thead>
-            <tbody data-bind="foreach: celery_tasks">
+            <tbody data-bind="foreach: models">
             <tr>
                 <td data-bind="text: name"></td>
                 <td data-bind="text: state"></td>
@@ -342,15 +358,16 @@
     </div>
 
     <div class="row-fluid">
-    {% include "hqadmin/partials/project_snapshot.html" %}
+    {% include "hqadmin/partials/deploy_history.html" %}
     </div>
     <div class="row-fluid">
-        <h3>Recent Database Changes</h3>
+        <h3>Recent Database Changes <small><a href="{% url 'download_recent_changes' %}">download</a></small></h3>
         <table class="table table-striped">
             <thead>
             <tr>
                 <th>Domain</th>
                 <th>Doc Type</th>
+                <th>Date modified (guess)</th>
                 <th>id</th>
                 <th>rev</th>
             </tr>
@@ -360,6 +377,7 @@
             <tr>
                 <td>{{ change.domain }}</td>
                 <td>{{ change.doc_type }}</td>
+                <td>{{ change.date }}</td>
                 <td>{{ change.id }}</td>
                 <td>{{ change.rev }}</td>
             </tr>
@@ -367,4 +385,8 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
 {% endblock %}

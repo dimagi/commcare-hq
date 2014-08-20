@@ -22,8 +22,9 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq import toggles
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -31,6 +32,7 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
+from couchexport.groupexports import rebuild_export
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
     export_response)
@@ -62,12 +64,15 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema
+from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema, \
+    HQGroupExportConfiguration
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
-from corehq.apps.reports.util import get_all_users_by_domain, \
-    users_matching_filter
+from corehq.apps.reports.util import (
+    get_all_users_by_domain,
+    users_matching_filter,
+)
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
@@ -102,10 +107,12 @@ def default(request, domain):
 def old_saved_reports(request, domain):
     return default(request, domain)
 
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
+    if not (request.couch_user.can_view_reports()
+            or request.couch_user.get_viewable_reports()):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id)
@@ -215,12 +222,12 @@ def export_data_async(request, domain):
 
 @login_or_digest
 @datespan_default
-@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
-    deid = request.GET.get('deid') == 'true'
+    r = request.POST if request.method == 'POST' else request.GET
+    deid = r.get('deid') == 'true'
     if deid:
         return _export_deid(request, domain, export_id, bulk_export=bulk_export)
     else:
@@ -235,20 +242,21 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    async = request.GET.get('async') == 'true'
-    next = request.GET.get("next", "")
-    format = request.GET.get("format", "")
-    export_type = request.GET.get("type", "form")
-    previous_export_id = request.GET.get("previous_export", None)
-    filename = request.GET.get("filename", None)
-    max_column_size = int(request.GET.get("max_column_size", 2000))
-    limit = int(request.GET.get("limit", 0))
+    req = request.POST if request.method == 'POST' else request.GET
+    async = req.get('async') == 'true'
+    next = req.get("next", "")
+    format = req.get("format", "")
+    export_type = req.get("type", "form")
+    previous_export_id = req.get("previous_export", None)
+    filename = req.get("filename", None)
+    max_column_size = int(req.get("max_column_size", 2000))
+    limit = int(req.get("limit", 0))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
         try:
-            is_custom = json.loads(request.GET.get("is_custom", "false"))
-            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+            is_custom = json.loads(req.get("is_custom", "false"))
+            export_tags = json.loads(req.get("export_tags", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
 
@@ -279,7 +287,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             # FakeSavedExportSchema a download_data function (called below)
             return HttpResponseBadRequest()
         try:
-            export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+            export_tag = json.loads(req.get("export_tag", "null") or "null")
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
@@ -337,6 +345,22 @@ def hq_download_saved_export(req, domain, export_id):
     # to be the domain
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
+
+
+@login_or_digest
+@require_form_export_permission
+@require_POST
+def hq_update_saved_export(req, domain):
+    group_id = req.POST['group_export_id']
+    index = int(req.POST['index'])
+    group_config = HQGroupExportConfiguration.get(group_id)
+    assert domain == group_config.domain
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, 'couch')
+    messages.success(req, _('The data for {} has been refreshed!').format(config.name))
+    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
+                                        args=[domain, req.POST['report_slug']]))
+
 
 @login_or_digest
 @require_form_export_permission
@@ -757,7 +781,48 @@ def case_xml(request, domain, case_id):
 def rebuild_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     rebuild_case(case_id)
-    messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
+    messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def close_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    if case.closed:
+        messages.info(request, u'Case {} is already closed.'.format(case.name))
+    else:
+        form_id = close_case(case_id, domain, request.couch_user)
+        msg = _(u'''Case {name} has been closed.
+            <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
+            You can also reopen the case in the future by archiving the last form in the case history.
+            <form id="{html_form_id}" action="{url}" method="POST">
+                <input type="hidden" name="closing_form" value="{xform_id}" />
+            </form>
+        '''.format(
+            name=case.name,
+            html_form_id='undo-close-case',
+            xform_id=form_id,
+            url=reverse('undo_close_case', args=[domain, case_id]),
+        ))
+        messages.success(request, mark_safe(msg), extra_tags='html')
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def undo_close_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    if not case.closed:
+        messages.info(request, u'Case {} is not closed.'.format(case.name))
+    else:
+        closing_form_id = request.POST['closing_form']
+        assert closing_form_id in case.xform_ids
+        form = XFormInstance.get(closing_form_id)
+        form.archive(user=request.couch_user._id)
+        messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
@@ -864,7 +929,8 @@ def _get_form_context(request, domain, instance_id):
         "domain": domain,
         "display": display,
         "timezone": timezone,
-        "instance": instance
+        "instance": instance,
+        "user": request.couch_user,
     }
     context['form_render_options'] = context
     return context
@@ -902,6 +968,7 @@ def form_data(request, domain, instance_id):
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
+
 
 @require_form_view_permission
 @login_and_domain_required

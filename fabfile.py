@@ -15,18 +15,19 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
-import sys
-from collections import defaultdict
-
-from fabric.context_managers import settings, cd
-
-from fabric.operations import require, local, prompt
+import datetime
 import os
-from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.contrib import files, console
-from fabric import utils
 import posixpath
+import sys
 import time
+from collections import defaultdict
+from distutils.util import strtobool
+
+from fabric import utils
+from fabric.api import run, roles, execute, task, sudo, env, parallel
+from fabric.context_managers import settings, cd
+from fabric.contrib import files, console
+from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -37,6 +38,7 @@ ROLES_DJANGO = ['django_monolith', 'django_app']
 ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
 ROLES_STATIC = ['django_monolith', 'staticfiles']
 ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
+ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
@@ -56,6 +58,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.linewise = True
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "
@@ -72,6 +75,7 @@ env.roledefs = {
     # for now combined with celery
     'django_pillowtop': [],
     'sms_queue': [],
+    'reminder_queue': [],
     'pillow_retry_queue': [],
     # 'django_celery, 'django_app', and 'django_pillowtop' all in one
     # use this ONLY for single server config,
@@ -92,6 +96,9 @@ env.roledefs = {
 
 env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
+env.reminder_queue_enabled = False
+env.reminder_rule_queue_enabled = False
+env.reminder_case_update_queue_enabled = False
 env.pillow_retry_queue_enabled = True
 
 
@@ -196,6 +203,7 @@ def india():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -231,6 +239,7 @@ def zambia():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -255,6 +264,9 @@ def production():
     env.django_port = '9010'
     env.should_migrate = True
     env.sms_queue_enabled = True
+    env.reminder_queue_enabled = True
+    env.reminder_rule_queue_enabled = True
+    env.reminder_case_update_queue_enabled = True
     env.pillow_retry_queue_enabled = True
 
     if env.code_branch != 'master':
@@ -279,6 +291,7 @@ def production():
         'rabbitmq': Servers.db,
         'django_celery': Servers.celery,
         'sms_queue': Servers.celery,
+        'reminder_queue': Servers.celery,
         'pillow_retry_queue': Servers.celery,
         'django_app': Servers.django,
         'django_pillowtop': Servers.db,
@@ -333,6 +346,7 @@ def staging():
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
+        'reminder_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
@@ -386,6 +400,7 @@ def preview():
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
+        'reminder_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': [
             'hqdjango0-preview.internal.commcarehq.org',
@@ -430,6 +445,7 @@ def development():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -717,7 +733,7 @@ def hotfix_deploy():
     for small python-only hotfixes
 
     """
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
        not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
         utils.abort('Deployment aborted.')
@@ -740,16 +756,22 @@ def hotfix_deploy():
 @task
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    _require_target()
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
-    _require_target()
     run('echo ping!')  # workaround for delayed console response
+    _deploy_without_asking()
 
+
+def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
+        execute(_do_compress)
+        # softly update manifest (original keys remain)
+        execute(update_manifest, soft=True)
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
@@ -761,6 +783,8 @@ def deploy():
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
+        # hard update of manifest.json
+        execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -769,6 +793,47 @@ def deploy():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
+
+
+@task
+def awesome_deploy(confirm="yes"):
+    """preindex and deploy if it completes quickly enough, otherwise abort"""
+    if strtobool(confirm) and not console.confirm(
+            'Are you sure you want to preindex and deploy to '
+            '{env.environment}?'.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+    max_wait = datetime.timedelta(minutes=5)
+    start = datetime.datetime.utcnow()
+    pause_length = datetime.timedelta(seconds=5)
+
+    execute(preindex_views)
+
+    @roles(*ROLES_DB_ONLY)
+    def preindex_complete():
+        with settings(warn_only=True):
+            return sudo(
+                '%(virtualenv_root_preindex)s/bin/python '
+                '%(code_root_preindex)s/manage.py preindex_everything '
+                '--check' % env,
+                user=env.sudo_user,
+            ).succeeded
+
+    done = False
+    while not done and datetime.datetime.utcnow() - start < max_wait:
+        time.sleep(pause_length.seconds)
+        if preindex_complete():
+            done = True
+        pause_length *= 2
+
+    if done:
+        _deploy_without_asking()
+    else:
+        mail_admins(
+            " You can't deploy yet",
+            ("Preindexing is taking a while, so hold tight "
+             "and wait for an email saying it's done. "
+             "Thank you for using AWESOME DEPLOY.")
+        )
 
 
 @task
@@ -923,10 +988,45 @@ def flip_es_aliases():
 
 @parallel
 @roles(*ROLES_STATIC)
+def _do_compress():
+    """Run Django Compressor after a code update"""
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env, user=env.sudo_user)
+    update_manifest(save=True)
+
+
+@parallel
+@roles(*ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+
+
+@roles(*ROLES_DJANGO)
+@parallel
+def update_manifest(save=False, soft=False):
+    """
+    Puts the manifest.json file with the references to the compressed files
+    from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
+    governs the actual static reference.
+
+    save=True saves the manifest.json file to redis, otherwise it grabs the
+    manifest.json file from redis and inserts it into the staticfiles dir.
+    """
+    withpath = env.code_root
+    venv = env.virtualenv_root
+
+    args = ''
+    if save:
+        args = ' save'
+    if soft:
+        args = ' soft'
+    cmd = 'update_manifest%s' % args
+    with cd(withpath):
+        sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
+            user=env.sudo_user
+        )
 
 
 @roles(*ROLES_DJANGO)
@@ -959,6 +1059,8 @@ def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
     update_code()
+    _do_compress()
+    update_manifest(save=True)
     _do_collectstatic()
 
 
@@ -1029,6 +1131,12 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
+    if env.reminder_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_queue.conf')
+    if env.reminder_rule_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
+    if env.reminder_case_update_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
@@ -1058,6 +1166,11 @@ def set_sms_queue_supervisorconf():
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
+@roles(*ROLES_REMINDER_QUEUE)
+def set_reminder_queue_supervisorconf():
+    if env.reminder_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
+
 @roles(*ROLES_PILLOW_RETRY_QUEUE)
 def set_pillow_retry_queue_supervisorconf():
     if env.pillow_retry_queue_enabled:
@@ -1072,6 +1185,7 @@ def set_supervisor_config():
     execute(set_formsplayer_supervisorconf)
     execute(set_pillowtop_supervisorconf)
     execute(set_sms_queue_supervisorconf)
+    execute(set_reminder_queue_supervisorconf)
     execute(set_pillow_retry_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in

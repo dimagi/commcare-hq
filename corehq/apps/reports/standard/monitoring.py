@@ -36,11 +36,11 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
 
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.cases.basic import CaseListReport
-        user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+        user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
         user_link = user_link_template % {
             'link': "%s%s" % (get_url_base(),
                               CaseListReport.get_url(domain=self.domain)),
-            'user_id': user.user_id,
+            'params': urlencode(ExpandedMobileWorkerFilter.for_user(user.user_id)),
             'username': user.username_in_report,
         }
         return user_link
@@ -561,7 +561,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
     def get_user_link(self, user):
 
         params = {
-            'select_mw': user.user_id,
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
             "form_status": self.request.GET.get("form_status", ''),
@@ -571,6 +570,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "startdate": self.request.GET.get("startdate", ''),
             "enddate": self.request.GET.get("enddate", '')
         }
+
+        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 

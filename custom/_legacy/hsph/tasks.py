@@ -9,7 +9,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
 from dimagi.utils.decorators.memoized import memoized
@@ -26,9 +25,27 @@ OWNER_FIELD_MAPPINGS = {
 INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
-def indexed_fixtures():
-    return dict((domain, FixtureDataItem.get_indexed_items(domain, "site", "site_id")) for domain in DOMAINS)
+def indexed_facilities():
+    facility_index = {}
+    for domain in DOMAINS:
+        current_domain_index = {}
+        facilities = get_cases_in_domain(domain, type="facility")
+        for facility in facilities:
+            current_domain_index[facility.facility_id] = {
+                "cati": facility.cati_user,
+                "fida": facility.fida_user
+            }
+        facility_index[domain] = current_domain_index
+    return facility_index
 
+def get_owner_username(domain, owner_type, facility_id):
+    if not owner_type:
+        return ''
+    facility_index_by_domain = indexed_facilities()
+    try:
+        return facility_index_by_domain[domain][facility_id][owner_type]
+    except KeyError:
+        return None
 
 def update_groups_index(domain):
     groups = Group.by_domain(domain)
@@ -36,20 +53,8 @@ def update_groups_index(domain):
         if group.case_sharing and group.metadata.get("main_user", None):
             INDEXED_GROUPS[domain][group.metadata["main_user"]] = group
 
-
-def get_owner_username(domain, owner_type, site_id):
-    INDEXED_FIXTURES = indexed_fixtures()
-    if not owner_type:
-        return ''
-    field_name = OWNER_FIELD_MAPPINGS[owner_type]
-    try:
-        return INDEXED_FIXTURES[domain][site_id][field_name]
-    except KeyError:
-        return None
-
-
-def get_group_id(domain, owner_type, site_id):
-    owner_username = get_owner_username(domain, owner_type, site_id)
+def get_group_id(domain, owner_type, facility_id):
+    owner_username = get_owner_username(domain, owner_type, facility_id)
     try:
         return INDEXED_GROUPS[domain][owner_username]._id
     except KeyError:
@@ -78,18 +83,18 @@ def new_update_case_properties():
         for case in case_list:
             if case.closed:
                 continue
-            if not get_none_or_value(case, "owner_id") or not get_none_or_value(case, "date_admission") or not get_none_or_value(case, "site_id"):
+            if not get_none_or_value(case, "owner_id") or not get_none_or_value(case, "date_admission") or not get_none_or_value(case, "facility_id"):
                 continue
             curr_assignment = get_none_or_value(case, "current_assignment")
             next_assignment = get_none_or_value(case, "next_assignment")
-            site_id = case.site_id
-            fida_group = get_group_id(domain, "fida", site_id)
-            cati_owner_username = get_owner_username(domain, "cati", site_id)
+            facility_id = get_none_or_value(case, "facility_id")
+            fida_group = get_group_id(domain, "fida", facility_id)
+            cati_owner_username = get_owner_username(domain, "cati", facility_id)
 
             ## Assignment Directly from Registration ##
             # Assign Cases to Call Center
             if case.date_admission >= past_21_date and (not curr_assignment) and (not next_assignment):
-                owner_id = get_group_id(domain, "cati", site_id)
+                owner_id = get_group_id(domain, "cati", facility_id)
                 if not owner_id:
                     continue
                 update = {
@@ -172,12 +177,12 @@ def new_update_case_properties():
                 )
             # Assign Cases to Lost to Follow Up
             elif case.date_admission < past_42_date and (curr_assignment == "cati" or curr_assignment == "cati_tl"):
-                if not get_owner_username(domain, curr_assignment, site_id) or not cati_owner_username:
+                if not get_owner_username(domain, curr_assignment, facility_id) or not cati_owner_username:
                     continue
                 update = {
                     "last_cati_assignment": curr_assignment,
                     "last_cati_user": cati_owner_username,
-                    "last_user": get_owner_username(domain, curr_assignment, site_id),
+                    "last_user": get_owner_username(domain, curr_assignment, facility_id),
                     "cati_status": 'timed_out',
                     "last_assignment": curr_assignment,
                     "current_assignment": '',
@@ -195,10 +200,10 @@ def new_update_case_properties():
             ## Assignment from Field ##
             # Assign Cases to Lost to Follow Up
             elif case.date_admission < past_42_date and (curr_assignment == "fida" or curr_assignment == "fida_tl"):
-                if not get_owner_username(domain, curr_assignment, site_id):
+                if not get_owner_username(domain, curr_assignment, facility_id):
                     continue
                 update = {
-                    "last_user": get_owner_username(domain, curr_assignment, site_id),
+                    "last_user": get_owner_username(domain, curr_assignment, facility_id),
                     "last_assignment": curr_assignment,
                     "current_assignment": '',
                     "closed_status": "timed_out_lost_to_follow_up",

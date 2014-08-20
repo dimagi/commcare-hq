@@ -25,6 +25,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
+from corehq.apps.users.models import DomainInvitation
 from corehq.toggles import NAMESPACE_DOMAIN
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -34,6 +35,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
 from corehq import toggles, privileges, feature_previews
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
@@ -72,8 +74,9 @@ from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater
+from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
+    RepeatRecord
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -83,7 +86,7 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key
+from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -94,12 +97,18 @@ accounting_logger = logging.getLogger('accounting')
 
 @login_required
 def select(request, domain_select_template='domain/select.html'):
-
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    return render(request, domain_select_template, {})
+    email = request.couch_user.get_email()
+    open_invitations = DomainInvitation.by_email(email)
+
+    additional_context = {
+        'domains_for_user': domains_for_user,
+        'open_invitations': open_invitations,
+    }
+    return render(request, domain_select_template, additional_context)
 
 
 class DomainViewMixin(object):
@@ -314,7 +323,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
-                self.request.POST, can_use_custom_logo=self.can_use_custom_logo
+                self.request.POST,
+                self.request.FILES,
+                can_use_custom_logo=self.can_use_custom_logo
             )
 
         if self.can_user_see_meta:
@@ -327,7 +338,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_type',
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
-                'default_sms_backend_id',
                 'restrict_superusers',
                 'ota_restore_caching',
                 'secure_submissions',
@@ -471,7 +481,7 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = FormRepeaterForm({"url": url})
+    form = GenericRepeaterForm({"url": url})
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -528,6 +538,32 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
+    def main_context(self):
+        context = super(DomainAccountingSettings, self).main_context
+        if (hasattr(self.request, 'is_billing_admin')
+            and not self.request.is_billing_admin
+            and self.request.couch_user.is_superuser
+        ):
+            # check to see if superuser is accounting admin
+            # If not, notify that they should change it.
+            from corehq.apps.accounting.utils import is_accounting_admin
+            has_privs = is_accounting_admin(self.request.user)
+            if has_privs:
+                context.update(is_ops_user_but_not_admin=True)
+                messages.info(
+                    self.request, mark_safe(_(
+                        "Hi there, Operations User. You are currently not "
+                        "a Billing Admin for this account.<br />"
+                        "<a href='%(url)s' class='btn btn-primary'>"
+                        "Change This</a>"
+                    ) % {
+                        'url': reverse(AddOpsUserAsDomainAdminView.urlname,
+                                       args=[self.domain]),
+                    })
+                )
+        return context
+
+    @property
     @memoized
     def product(self):
         return SoftwareProductType.get_type_by_domain(self.domain_object)
@@ -540,6 +576,34 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     @property
     def current_subscription(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+
+
+class AddOpsUserAsDomainAdminView(BaseAdminProjectSettingsView):
+    urlname = 'domain_ops_billing_admin'
+    template_name = 'domain/new_ops_billing_admin.html'
+    page_title = ugettext_noop("Join Billing Account Admins")
+
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    def dispatch(self, request, *args, **kwargs):
+        is_domain_admin, self.account = BillingAccountAdmin.get_admin_status_and_account(
+            request.couch_user, self.domain
+        )
+        if is_domain_admin:
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return super(AddOpsUserAsDomainAdminView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        admin = BillingAccountAdmin.objects.get_or_create(
+            web_user=request.user.username,
+            domain=self.domain,
+        )[0]
+        self.account.billing_admins.add(admin)
+        self.account.save()
+        messages.success(
+            request,
+            _("Successfully added as Billing Admin for project %s" % self.domain)
+        )
+        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -1662,6 +1726,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     def page_context(self):
         return {
             'repeaters': self.repeaters,
+            'pending_record_count': RepeatRecord.count(self.domain),
         }
 
 
@@ -1669,6 +1734,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     urlname = 'add_repeater'
     page_title = ugettext_noop("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
+    repeater_form_class = GenericRepeaterForm
 
     @property
     def page_url(self):
@@ -1701,8 +1767,8 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return FormRepeaterForm(self.request.POST)
-        return FormRepeaterForm()
+            return self.repeater_form_class(self.request.POST)
+        return self.repeater_form_class()
 
     @property
     def page_context(self):
@@ -1711,16 +1777,34 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
             'repeater_type': self.repeater_type,
         }
 
+    def make_repeater(self):
+        repeater = self.repeater_class(
+            domain=self.domain,
+            url=self.add_repeater_form.cleaned_data['url'],
+        )
+        return repeater
+
     def post(self, request, *args, **kwargs):
         if self.add_repeater_form.is_valid():
-            repeater = self.repeater_class(
-                domain=self.domain,
-                url=self.add_repeater_form.cleaned_data['url']
-            )
+            repeater = self.make_repeater()
             repeater.save()
             messages.success(request, _("Forwarding set up to %s" % repeater.url))
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+class AddFormRepeaterView(AddRepeaterView):
+    urlname = 'add_form_repeater'
+    repeater_form_class = FormRepeaterForm
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def make_repeater(self):
+        repeater = super(AddFormRepeaterView, self).make_repeater()
+        repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
+        return repeater
 
 
 class OrgSettingsView(BaseAdminProjectSettingsView):
@@ -1915,91 +1999,6 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class BaseCommTrackAdminView(BaseAdminProjectSettingsView):
-
-    @property
-    @memoized
-    def commtrack_settings(self):
-        return self.domain_object.commtrack_settings
-
-
-class CommTrackSettingsView(BaseCommTrackAdminView):
-    urlname = 'commtrack_settings'
-    page_title = ugettext_lazy("CommTrack Settings")
-    template_name = 'domain/admin/commtrack_settings.html'
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.commtrack_settings_form
-        }
-
-    @property
-    @memoized
-    def commtrack_settings_form(self):
-        from corehq.apps.commtrack.forms import CommTrackSettingsForm
-        initial = self.commtrack_settings.to_json()
-        initial.update(dict(('consumption_' + k, v) for k, v in
-            self.commtrack_settings.consumption_config.to_json().items()))
-        initial.update(dict(('stock_' + k, v) for k, v in
-            self.commtrack_settings.stock_levels_config.to_json().items()))
-
-        if self.request.method == 'POST':
-            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
-        return CommTrackSettingsForm(initial=initial, domain=self.domain)
-
-    def set_ota_restore_config(self):
-        """
-        If the checkbox for syncing consumption fixtures is
-        checked, then we build the restore config with appropriate
-        special properties, otherwise just clear the object.
-
-        If there becomes a way to tweak these on the UI, this should
-        be done differently.
-        """
-
-        from corehq.apps.commtrack.models import StockRestoreConfig
-        if self.commtrack_settings.sync_consumption_fixtures:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
-                section_to_consumption_types={
-                    'stock': 'consumption'
-                },
-                force_consumption_case_types=[
-                    'supply-point'
-                ],
-                use_dynamic_product_list=True,
-            )
-        else:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
-
-    def post(self, request, *args, **kwargs):
-        if self.commtrack_settings_form.is_valid():
-            data = self.commtrack_settings_form.cleaned_data
-            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
-            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
-            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
-
-            self.set_ota_restore_config()
-
-            fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
-            for field in fields:
-                if data.get('stock_' + field):
-                    setattr(self.commtrack_settings.stock_levels_config, field,
-                            data['stock_' + field])
-
-            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
-            for field in consumption_fields:
-                if data.get('consumption_' + field):
-                    setattr(self.commtrack_settings.consumption_config, field,
-                            data['consumption_' + field])
-
-            self.commtrack_settings.save()
-            messages.success(request, _("Settings updated!"))
-            return HttpResponseRedirect(self.page_url)
-        return self.get(request, *args, **kwargs)
-
-
 class ProBonoMixin():
     page_title = ugettext_noop("Pro-Bono Application")
     is_submitted = False
@@ -2088,7 +2087,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
         if not slug in [f.slug for f, _ in self.features()]:
             raise Http404()
         try:
-            return Toggle.get(generate_toggle_id(slug))
+            return Toggle.get(slug)
         except ResourceNotFound:
             return Toggle(slug=slug)
 
@@ -2106,19 +2105,19 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            if feature.save_fn is not None:
-                feature.save_fn(self.domain, new_state)
             slug = feature.slug
             toggle = self.get_toggle(slug)
-            item = '{0}:{1}'.format(NAMESPACE_DOMAIN, self.domain)
+            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
             if new_state:
                 if not item in toggle.enabled_users:
                     toggle.enabled_users.append(item)
             else:
                 toggle.enabled_users.remove(item)
             toggle.save()
-            cache_key = get_toggle_cache_key(slug, item)
-            cache.set(cache_key, new_state)
+            update_toggle_cache(slug, item, new_state)
+
+            if feature.save_fn is not None:
+                feature.save_fn(self.domain, new_state)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

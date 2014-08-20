@@ -73,6 +73,14 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "invalid sort field" %}
+                            {% if error.field %}
+                                Case List has invalid sort field <code>{{ error.field }}</code> in module
+                            {% else %}
+                                Case List has blank sort field in module
+                            {% endif %}
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
                         {% if error.type == "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}
@@ -117,6 +125,9 @@
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
                             {% endif %}
                         {% endif %}
+                        {% if error.type == "multimedia case property not supported" %}
+                            Multimedia case property "{{ error.path }}" is not supported on apps on or before v2.5
+                        {% endif %}
                         {% if error.type == "remote error" %}
                             Remote Error:
                         {% endif %}
@@ -135,13 +146,25 @@
                             A circular reference was detected in the hierarchy of subcase "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
-                        {% if error.type == "auto select ref" %}
+                        {% if error.type == "auto select key" %}
+                            The auto-select case action is missing the "{{ error.key_name }}" value
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "auto select source" %}
+                            The auto-select case action is missing the "{{ error.source_name }}" value
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "auto select case ref" %}
                             The case tag referenced in the auto-select expression of "{{ error.case_tag }}" was not found
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
                         {% if error.type == "no case type in action" %}
                             The form action "{{ error.case_tag }}" does not have a case type selected
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "no case type in action" %}
+                            The form has filtering enabled but no cases are being loaded (excluding auto-loaded cases)
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}.
                         {% endif %}
                         {# And then show the optional `message` regardless #}
                         <span>{{ error.message }}</span>

@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import sys
 import os
+from urllib import urlencode
 from django.contrib import messages
 
 # odd celery fix
@@ -15,6 +16,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+LESS_DEBUG = DEBUG
 
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
@@ -73,7 +75,8 @@ LOCALE_PATHS = (
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder"
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    'compressor.finders.CompressorFinder',
 )
 
 STATICFILES_DIRS = (
@@ -150,9 +153,11 @@ DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -163,6 +168,7 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -208,6 +214,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -256,7 +263,7 @@ HQ_APPS = (
     'hutch',
     'pillowtop',
     'pillow_retry',
-    'hqstyle',
+    'corehq.apps.style',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -289,6 +296,7 @@ HQ_APPS = (
     'custom.uth',
 
     'custom.colalife',
+    'custom.intrahealth',
 )
 
 TEST_APPS = ()
@@ -299,7 +307,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.kookoo',
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
@@ -326,9 +333,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
@@ -345,10 +349,6 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
-
-
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -389,8 +389,9 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
-LOGGEDOUT_TEMPLATE = "loggedout.html"
+LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "user@domain.com"
@@ -447,9 +448,21 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 BROKER_URL = 'django://'  # default django db based
 
+CELERY_MAIN_QUEUE = 'celery'
+
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = 'celery'
+CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder rules.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder case updates.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -525,6 +538,32 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Reminders Queue Settings #######
+
+# Setting this to False will make the system fire reminders every
+# minute on the periodic queue. Setting to True will queue up reminders
+# on the reminders queue.
+REMINDERS_QUEUE_ENABLED = False
+
+# If a reminder still has not been processed in this number of minutes, enqueue it
+# again.
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single reminder
+REMINDERS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the reminder
+REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The number of hours to wait before counting a reminder as stale. Stale
+# reminders will not be processed.
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
@@ -752,6 +791,14 @@ LOGGING = {
     }
 }
 
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
+
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
@@ -770,6 +817,8 @@ STRIPE_PRIVATE_KEY = ''
 MAILCHIMP_APIKEY = ''
 MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
+
+SQL_REPORTING_DATABASE_URL = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -799,6 +848,20 @@ else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
+
+### Reporting database - use same DB as main database
+db_settings = DATABASES["default"].copy()
+db_settings['PORT'] = db_settings.get('PORT', '5432')
+options = db_settings.get('OPTIONS')
+db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
+
+if UNIT_TESTING:
+    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+
+if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
+    SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
+        **db_settings
+    )
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
@@ -967,6 +1030,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
 
+IVR_BACKEND_MAP = {
+    "91": "MOBILE_BACKEND_KOOKOO",
+}
+
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
 IVR_GATEWAY_TIMEOUT = 60
@@ -1033,8 +1100,8 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmCaseFluffPillow',
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
+        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1044,6 +1111,10 @@ PILLOWTOPS = {
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
         'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.intrahealth.models.CouvertureFluffPillow',
+        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
+        'custom.intrahealth.models.IntraHealthFluffPillow',
+        'custom.intrahealth.models.RecapPassagePillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1069,6 +1140,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1138,6 +1211,8 @@ DOMAIN_MODULE_MAP = {
     'gc': 'custom.trialconnect',
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
+    'ipm-senegal': 'custom.intrahealth',
+    'testing-ipm-senegal': 'custom.intrahealth',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1165,3 +1240,18 @@ TRAVIS_TEST_GROUPS = (
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )
+
+#### Django Compressor Stuff after localsettings overrides ####
+
+# This makes sure that Django Compressor does not run at all
+# when LESS_DEBUG is set to True.
+if LESS_DEBUG:
+    COMPRESS_ENABLED = False
+    COMPRESS_PRECOMPILERS = ()
+
+COMPRESS_OFFLINE_CONTEXT = {
+    'base_template': BASE_TEMPLATE,
+    'login_template': LOGIN_TEMPLATE,
+    'original_template': BASE_ASYNC_TEMPLATE,
+    'less_debug': LESS_DEBUG,
+}

@@ -1,4 +1,5 @@
 # Standard Library imports
+import base64
 from functools import wraps
 import logging
 
@@ -15,16 +16,19 @@ from django.utils.translation import ugettext as _
 # External imports
 from django_digest.decorators import httpdigest
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.models import Role
 from django_prbac.utils import ensure_request_has_privilege
+
+from django.http import HttpResponse
+from django.contrib.auth import authenticate, login
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.models import CouchUser, PublicUser
-from corehq import toggles, privileges
+from corehq.apps.users.models import CouchUser
+from corehq import privileges
 
 ########################################################################################################
+from corehq.toggles import IS_DEVELOPER
 
 logger = logging.getLogger(__name__)
 
@@ -99,10 +103,39 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-def login_or_digest_ex(allow_cc_users=False):
+def basicauth(realm=''):
+    # stolen and modified from: https://djangosnippets.org/snippets/243/
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            if 'HTTP_AUTHORIZATION' in request.META:
+                auth = request.META['HTTP_AUTHORIZATION'].split()
+                if len(auth) == 2:
+                    if auth[0].lower() == "basic":
+                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
+                        user = authenticate(username=uname, password=passwd)
+                        if user is not None and user.is_active:
+                            login(request, user)
+                            request.user = user
+                            return view(request, *args, **kwargs)
+
+            # Either they did not provide an authorization header or
+            # something in the authorization attempt failed. Send a 401
+            # back to them to ask them to authenticate.
+            response = HttpResponse()
+            response.status_code = 401
+            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            return response
+        return wrapper
+    return real_decorator
+
+
+def _login_or_challenge(challenge_fn, allow_cc_users=False):
+    # ensure someone is logged in, or challenge
+    # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
         def safe_fn(request, domain, *args, **kwargs):
             if not request.user.is_authenticated():
+                @challenge_fn
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
                     if (allow_cc_users or couch_user.is_web_user()) and couch_user.is_member_of(domain):
@@ -110,13 +143,24 @@ def login_or_digest_ex(allow_cc_users=False):
                     else:
                         return HttpResponseForbidden()
 
-                return httpdigest(_inner)(request, domain, *args, **kwargs)
+                return _inner(request, domain, *args, **kwargs)
             else:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
         return safe_fn
     return _outer
 
+
+def login_or_digest_ex(allow_cc_users=False):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users)
+
 login_or_digest = login_or_digest_ex()
+
+
+def login_or_basic_ex(allow_cc_users=False):
+    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users)
+
+login_or_basic = login_or_basic_ex()
+
 
 # For views that are inside a class
 # todo where is this being used? can be replaced with decorator below
@@ -172,6 +216,7 @@ def login_required(view_func):
 # config setting
 
 def domain_admin_required_ex(redirect_page_name=None):
+    # todo: this is weirdly similar but different to require_permission. they should probably be combined
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
 
@@ -191,6 +236,19 @@ def domain_admin_required_ex(redirect_page_name=None):
 
         return _inner
     return _outer
+
+
+def require_superuser_or_developer(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
 
 # Parallel to what we did with login_and_domain_required, above
 domain_admin_required = domain_admin_required_ex()

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE
+    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -27,6 +27,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
+        # print app.create_suite()
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_app_strings(self, app_tag):
@@ -74,6 +75,19 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
 
+    def test_advanced_suite_case_list_filter(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        clinic_module = app.get_module(0)
+        clinic_module.case_details.short.columns.append(DetailColumn(
+            header={"en": "Filter"},
+            format='filter',
+            filter_xpath=". = 'danny'",
+            field='filter'
+        ))
+        clinic_module_id = clinic_module.unique_id
+        app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+        self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
+
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.commtrack_enabled = True
@@ -100,7 +114,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_RAW,
-            value_key='some xpath expression'
+            value_key=("some xpath expression "
+                       "containing instance('casedb') "
+                       "and instance('commcaresession')")
         )
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite())
 
@@ -117,11 +133,36 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite())
 
+    def test_advanced_suite_auto_select_with_filter(self):
+        """
+        Form filtering should be done using the last 'non-autoload' case being loaded.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='autoload',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_USER,
+                value_key='case_id'
+            )
+        ))
+        form = app.get_module(1).get_form(0)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('suite-advanced-autoselect-with-filter'), app.create_suite())
+
     def test_case_assertions(self):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
 
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
+    def test_picture_format(self):
+        self._test_generic_suite('app_picture_format', 'suite-picture-format')
+
+    def test_audio_format(self):
+        self._test_generic_suite('app_audio_format', 'suite-audio-format')
+
+    def test_attached_picture(self):
+        self._test_generic_suite('app_attached_image', 'suite-attached-image')
 
     def test_form_workflow_previous(self):
         """
@@ -151,6 +192,28 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
                 form.post_form_workflow = WORKFLOW_MODULE
 
         self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
+
+    def test_form_workflow_root(self):
+        # app = Application.wrap(self.get_json('suite-workflow-root'))
+        
+        app = Application.wrap(self.get_json('suite-workflow'))
+        for m in [1, 2]:
+            module = app.get_module(m)
+            module.put_in_root = True
+
+        self.assertXmlEqual(self.get_xml('suite-workflow-root'), app.create_suite())
+
+    def test_owner_name(self):
+        self._test_generic_suite('owner-name')
+
+    def test_form_filter(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(1).get_form(1)
+        form.form_filter = "./edd = '123'"
+        self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
 
 class RegexTest(SimpleTestCase):

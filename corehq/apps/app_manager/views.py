@@ -1,16 +1,13 @@
 from StringIO import StringIO
 import logging
 import hashlib
+import itertools
 from lxml import etree
 import os
 import re
 import json
-import zipfile
 from collections import defaultdict
 from xml.dom.minidom import parseString
-from django.http import HttpResponse
-from django.core.servers.basehttp import FileWrapper
-import tempfile
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
@@ -20,16 +17,21 @@ from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     AppManagerException,
     BlankXFormError,
     ConflictingCaseTypeError,
+    FormNotFoundException,
+    IncompatibleFormTypeException,
+    ModuleNotFoundException,
     RearrangeError,
 )
-from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX
+
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
+from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
@@ -44,6 +46,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
+from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -70,7 +73,7 @@ from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm, VELLUM_TYPES
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -83,24 +86,36 @@ from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
-from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppEditingError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, \
-    DeleteApplicationRecord, str_to_cls, SavedAppBuild, ParentSelect, Module, CareplanModule, CareplanForm, AdvancedModule, AdvancedForm, AdvancedFormActions, \
-    IncompatibleFormTypeException, ModuleNotFoundException, FormNotFoundException
+from corehq.apps.app_manager.models import (
+    AdvancedForm,
+    AdvancedFormActions,
+    AdvancedModule,
+    Application,
+    ApplicationBase,
+    CareplanForm,
+    CareplanModule,
+    DeleteApplicationRecord,
+    DeleteFormRecord,
+    DeleteModuleRecord,
+    DetailColumn,
+    Form,
+    FormActions,
+    Module,
+    ParentSelect,
+    SavedAppBuild,
+    get_app,
+    load_case_reserved_words,
+    str_to_cls,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST
+from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
+    require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
 logger = logging.getLogger(__name__)
-
-require_can_edit_apps = require_permission(Permissions.edit_apps)
-
-
-def set_file_download(response, filename):
-    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
 
 
 def _encode_if_unicode(s):
@@ -114,32 +129,7 @@ CASE_TYPE_CONFLICT_MSG = (
 )
 
 
-class ApplicationViewMixin(DomainViewMixin):
-    """
-    Helper for class-based views in app manager
-
-    Currently only used in hqmedia
-
-    """
-
-    @property
-    @memoized
-    def app_id(self):
-        return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
-
-    @property
-    @memoized
-    def app(self):
-        try:
-            # if get_app is mainly used for views,
-            # maybe it should be a classmethod of this mixin? todo
-            return get_app(self.domain, self.app_id)
-        except Exception:
-            pass
-        return None
-
-
-@login_and_domain_required
+@require_deploy_apps
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None,
                  unique_form_id=None, edit=True):
     """
@@ -212,7 +202,8 @@ def _get_xform_source(request, app, form, filename="form.xml"):
     else:
         return json_response(source)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_xform_source(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     try:
@@ -221,7 +212,8 @@ def get_xform_source(req, domain, app_id, module_id, form_id):
         raise Http404()
     return _get_xform_source(req, app, form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
@@ -250,7 +242,7 @@ def xform_display(req, domain, form_unique_id):
         return json_response(questions)
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def form_casexml(req, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)
@@ -261,16 +253,19 @@ def form_casexml(req, domain, form_unique_id):
     return HttpResponse(form.create_casexml())
 
 @login_or_digest
+@require_can_edit_apps
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app_check_domain(req, domain, name, app_id):
     app_copy = import_app_util(app_id, domain, name=name)
     return back_to_main(req, app_copy.domain, app_id=app_copy._id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def copy_app(req, domain):
     app_id = req.POST.get('app')
     form = CopyApplicationForm(app_id, req.POST)
@@ -279,7 +274,8 @@ def copy_app(req, domain):
     else:
         return view_generic(req, domain, app_id=app_id, copy_app_form=form)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
         _clear_app_cache(req, domain)
@@ -334,6 +330,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         })
 
 
+@require_deploy_apps
 def default(req, domain):
     """
     Handles a url that does not include an app_id.
@@ -341,8 +338,6 @@ def default(req, domain):
     but this view exists so that there's something to
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
-
-
     """
     return view_app(req, domain)
 
@@ -388,6 +383,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                 raise
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
+        else:
+            # remove upload questions (attachemnts) until MM Case Properties
+            # are released to general public
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
+            xform_questions = [q for q in xform_questions
+                               if q["tag"] != "upload" or is_previewer]
 
         try:
             form_action_errors = form.validate_for_build()
@@ -432,6 +433,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         app.save()
 
     context = {
+        'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
         "xform_questions": xform_questions,
@@ -439,6 +441,10 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
+        'allow_form_copy': isinstance(form, Form),
+        'allow_form_filtering': not isinstance(form, CareplanForm),
+        'allow_form_workflow': not isinstance(form, CareplanForm),
     }
 
     if isinstance(form, CareplanForm):
@@ -465,7 +471,6 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
-            'is_user_registration': is_user_registration,
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
@@ -582,8 +587,8 @@ def get_apps_base_context(request, domain, app):
     lang, langs = get_langs(request, app)
 
     if getattr(request, 'couch_user', None):
-        edit = (request.GET.get('edit', 'true') == 'true') and\
-               (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        edit = ((request.GET.get('edit', 'true') == 'true') and
+                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
         edit = False
@@ -620,7 +625,7 @@ def get_apps_base_context(request, domain, app):
 
 
 @cache_control(no_cache=True, no_store=True)
-@login_and_domain_required
+@require_deploy_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
@@ -649,7 +654,7 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@login_and_domain_required
+@require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
@@ -711,10 +716,10 @@ def release_build(request, domain, app_id, saved_app_id):
 
 
 def get_module_view_context_and_template(app, module):
-    builder = ParentCasePropertyBuilder(
-        app,
-        defaults=('name', 'date-opened', 'status')
-    )
+    defaults = ('name', 'date-opened', 'status')
+    if app.case_sharing:
+        defaults += ('#owner_name',)
+    builder = ParentCasePropertyBuilder(app, defaults=defaults)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -742,25 +747,71 @@ def get_module_view_context_and_template(app, module):
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
-            'goal_case_properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
-            'task_case_properties': sorted(builder.get_properties(CAREPLAN_TASK)),
-            "goal_sortElements": json.dumps(get_sort_elements(module.goal_details.short)),
-            "task_sortElements": json.dumps(get_sort_elements(module.task_details.short)),
+            'details': [
+                {
+                    'label': _('Goal List'),
+                    'type': 'careplan_goal',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
+                    'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
+                    'short': module.goal_details.short,
+                    'long': module.goal_details.long,
+                },
+                {
+                    'label': _('Task List'),
+                    'type': 'careplan_task',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
+                    'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
+                    'short': module.task_details.short,
+                    'long': module.task_details.long,
+                },
+            ],
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        return "app_manager/module_view_advanced.html", {
-            'case_properties': sorted(builder.get_properties(case_type)),
-            'product_properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-            'case_sortElements': json.dumps(get_sort_elements(module.case_details.short)),
-            'product_sortElements': json.dumps(get_sort_elements(module.product_details.short)),
+        def get_details():
+            details = [{
+                'label': _('Case List'),
+                'type': 'case',
+                'model': 'case',
+                'properties': sorted(builder.get_properties(case_type)),
+                'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                'short': module.case_details.short,
+                'long': module.case_details.long,
+            }]
+
+            if app.commtrack_enabled:
+                details.append({
+                    'label': _('Product List'),
+                    'type': 'product',
+                    'model': 'product',
+                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                    'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
+                    'short': module.product_details.short,
+                })
+
+            return details
+
+        return "app_manager/module_view.html", {
+            'details': get_details(),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
-            'case_properties': sorted(builder.get_properties(case_type)),
-            "sortElements": json.dumps(get_sort_elements(module.case_details.short))
+            'details': [
+                {
+                    'label': _('Case List'),
+                    'type': 'case',
+                    'model': 'case',
+                    'properties': sorted(builder.get_properties(case_type)),
+                    'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                    'short': module.case_details.short,
+                    'long': module.case_details.long,
+                    'parent_select': module.parent_select,
+                },
+            ],
         }
 
 
@@ -780,14 +831,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if is_user_registration:
             if not app.show_user_registration:
                 raise Http404()
-            if not app.user_registration.unique_id:
-                # you have to do it this way because get_user_registration
-                # changes app.user_registration.unique_id
-                form = app.get_user_registration()
-                app.save()
-            else:
-                form = app.get_user_registration()
-
+            form = app.get_user_registration()
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -848,7 +892,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
         )
         module_context["enable_enum_image"] = (
-            req.couch_user.is_previewer or
             feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
         )
         context.update(module_context)
@@ -873,24 +916,32 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def get_commcare_version(request, app_id, app_version):
     options = CommCareBuildConfig.fetch().get_menu(app_version)
     return json_response(options)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def view_user_registration(request, domain, app_id):
     return view_generic(request, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_form(req, domain, app_id, module_id, form_id):
     return view_generic(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_module(req, domain, app_id, module_id):
     return view_generic(req, domain, app_id, module_id)
 
-@login_and_domain_required
+
+@require_GET
+@require_deploy_apps
 def view_app(req, domain, app_id=None):
     # redirect old m=&f= urls
     module_id = req.GET.get('m', None)
@@ -901,15 +952,18 @@ def view_app(req, domain, app_id=None):
 
     return view_generic(req, domain, app_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def form_designer(req, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     app = get_app(domain, app_id)
@@ -1728,7 +1782,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('name', None),
         ('platform', None),
         ('recipients', None),
-        ('show_user_registration', None),
         ('text_input', None),
         ('use_custom_suite', None),
         ('secure_submissions', None),
@@ -1770,6 +1823,12 @@ def edit_app_attr(request, domain, app_id, attr):
         except PermissionDenied:
             app.cloudcare_enabled = False
 
+    if should_edit('show_user_registration'):
+        show_user_registration = hq_settings['show_user_registration']
+        app.show_user_registration = show_user_registration
+        if show_user_registration:
+            #  load the form source and also set its unique_id
+            app.get_user_registration()
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
@@ -1981,24 +2040,25 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     })
 
 
-def _make_zip_payload(files):
-    buffer = StringIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
-        for filename, f in files:
-            z.writestr(filename, f)
-    return buffer.getvalue()
+class DownloadCCZ(DownloadMultimediaZip):
+    name = 'download_ccz'
+    compress_zip = True
+    zip_name = 'commcare.ccz'
 
+    def check_before_zipping(self):
+        pass
 
-@safe_download
-def download_ccz(req, domain, app_id):
-    files = ((name, f.encode('utf-8'))
-             for name, f in _download_index_files(req))
-    response = HttpResponse(
-        _make_zip_payload(files),
-        content_type='application/x-zip-compressed',
-    )
-    set_file_download(response, 'commcare.ccz')
-    return response
+    def iter_files(self):
+        skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+
+        def _files():
+            for name, f in _download_index_files(self.request):
+                if name not in skip_files:
+                    yield (get_name(name), f.encode('utf-8'))
+
+        media_files, errors = super(DownloadCCZ, self).iter_files()
+        return itertools.chain(_files(), media_files), errors
 
 
 @safe_download
@@ -2060,16 +2120,27 @@ def download_file(req, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    logging.error(
-                        'Unknown build resource %s not found' % path)
+                    # todo: log since it likely exposes a mobile bug
+                    # logging was removed because such a mobile bug existed
+                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't
                     logging.error(
-                        'Expected build resource %s not found' % path)
-                    req.app.build_broken = True
-                    req.app.build_broken_reason = 'incomplete-build'
-                    req.app.save()
+                        'Expected build resource %s not found' % path,
+                        extra={'request': req}
+                    )
+                    if not req.app.build_broken:
+                        req.app.build_broken = True
+                        req.app.build_broken_reason = 'incomplete-build'
+                        try:
+                            req.app.save()
+                        except ResourceConflict:
+                            # this really isn't a big deal:
+                            # It'll get updated next time a resource is req'd;
+                            # in fact the conflict is almost certainly from
+                            # another thread doing this exact update
+                            pass
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)
@@ -2174,7 +2245,7 @@ def download_xform(req, domain, app_id, module_id, form_id):
         return HttpResponse(
             req.app.fetch_xform(module_id, form_id)
         )
-    except IndexError:
+    except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
         unique_form_id = req.app.get_module(module_id).get_form(form_id).unique_id
@@ -2273,7 +2344,7 @@ def emulator_page(req, domain, app_id, template):
     })
 
 
-@login_and_domain_required
+@require_can_edit_apps
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return emulator_page(req, domain, app_id, template)
 
@@ -2292,7 +2363,8 @@ def emulator_commcare_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def formdefs(request, domain, app_id):
     langs = [json.loads(request.GET.get('lang', '"en"'))]
     format = request.GET.get('format', 'json')
@@ -2365,7 +2437,8 @@ def _find_name(names, langs):
         name = names[lang]
     return name
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def app_summary(request, domain, app_id):
     return summary(request, domain, app_id, should_edit=True)
 
@@ -2403,7 +2476,8 @@ def summary(request, domain, app_id, should_edit=True):
     else:
         return render(request, "app_manager/exchange_summary.html", context)
 
-@login_and_domain_required
+
+@require_can_edit_apps
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     properties = tuple(["property"] + app.langs + ["default"])

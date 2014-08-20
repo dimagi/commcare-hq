@@ -149,6 +149,11 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     allowed_actions = [
         'country',
         'billing_admins',
+        'active_accounts',
+        'domain',
+        'account',
+        'plan_version',
+        'new_plan_version',
     ]
 
     @property
@@ -169,15 +174,12 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
                                        or self.search_string in x.full_name), admins)
         return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
 
-
-class Select2SubscriptionInfoHandler(BaseSelect2AsyncHandler):
-    slug = 'select2_billing'
-    allowed_actions = [
-        'domain',
-        'account',
-        'plan_version',
-        'new_plan_version',
-    ]
+    @property
+    def active_accounts_response(self):
+        accounts = BillingAccount.objects.filter(is_active=True)
+        if self.search_string:
+            accounts = accounts.filter(name__contains=self.search_string)
+        return [(a.name, a.name) for a in accounts]
 
     @property
     def domain_response(self):

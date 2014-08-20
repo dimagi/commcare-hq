@@ -9,6 +9,7 @@ var ExportManager = function (o) {
     self.downloadUrl = o.downloadUrl;
     self.bulkDownloadUrl = o.bulkDownloadUrl;
     self.exportFilters = o.exportFilters;
+    self.jsonExportFilters = o.jsonExportFilters;
 
     self.exportModal = o.modal || "#export-download-status";
     self.$modal = $(self.exportModal);
@@ -101,6 +102,24 @@ var ExportManager = function (o) {
             error: displayDownloadError
         });
     };
+
+    self.downloadBulkExport = function(downloadUrl, data) {
+        var displayDownloadError = function (response) {
+            displayModalError('Sorry, something unexpected went wrong and your download ' +
+                    'could not be completed. Please try again and report an issue if the problem ' +
+                    'persists.'
+            );
+        };
+        $.ajax({
+            dataType: 'json',
+            url: downloadUrl,
+            type: 'POST',
+            data: data,
+            success: updateModal,
+            error: displayDownloadError
+        });
+    };
+        
     self.requestBulkDownload = function(data, event) {
         resetModal("Bulk "+self.bulk_download_notice_text, false);
         var prepareExport = new Object();
@@ -154,13 +173,19 @@ var ExportManager = function (o) {
             return;
         }
 
-        var downloadUrl = self.bulkDownloadUrl +
-            "?"+self.exportFilters +
-            "&export_tags="+encodeURIComponent(JSON.stringify(prepareExport)) +
-            "&is_custom="+self.is_custom +
-            "&async=true";
+        var params = {
+            'export_tags': JSON.stringify(prepareExport),
+            'is_custom': self.is_custom,
+            'async': true
+        };
 
-        self.downloadExport(downloadUrl);
+        for(var filter in self.jsonExportFilters) {
+            if(self.jsonExportFilters.hasOwnProperty(filter)) {
+                params[filter] = self.jsonExportFilters[filter];
+            }
+        }
+
+        self.downloadBulkExport(self.bulkDownloadUrl, params);
     };
 
     self._requestDownload = function(event, options) {

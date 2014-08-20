@@ -2,6 +2,7 @@
 Fluff calculators that pertain to specific cases/beneficiaries (mothers)
 These are used in the Incentive Payment Report
 """
+from decimal import Decimal
 import re
 from .constants import *
 
@@ -14,29 +15,40 @@ class Beneficiary(object):
     # maps method name to header
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', "List of Beneficiaries"),
-        ('husband_name', "Husband Name"),
-        ('awc_name', "AWC Name"),
-        ('bank_name', "Bank Name"),
-        ('ifs_code', "IFS Code"),
-        ('account_number', "Bank Account Number"),
-        ('block', "Block Name"),
-        ('village', "Village Name"),
-        ('bp1_cash', "Birth Preparedness Form 1"),
-        ('bp2_cash', "Birth Preparedness Form 2"),
-        ('delivery_cash', "Delivery Form"),
-        ('child_cash', "Child Followup Form"),
-        ('spacing_cash', "Birth Spacing Bonus"),
-        ('total', "Amount to be paid to beneficiary"),
+        ('name', "List of Beneficiaries", True),
+        ('husband_name', "Husband Name", True),
+        ('awc_name', "AWC Name", True),
+        ('bank_name', "Bank Name", True),
+        ('ifs_code', "IFS Code", True),
+        ('account_number', "Bank Account Number", True),
+        ('block', "Block Name", True),
+        ('village', "Village Name", True),
+        ('bp1_cash', "Birth Preparedness Form 1", True),
+        ('bp2_cash', "Birth Preparedness Form 2", True),
+        ('delivery_cash', "Delivery Form", True),
+        ('child_cash', "Child Followup Form", True),
+        ('spacing_cash', "Birth Spacing Bonus", True),
+        ('total', "Amount to be paid to beneficiary", True),
+        ('owner_id', 'Owner ID', False)
     ]
 
     def __init__(self, case, report, sql_form_data=None):
 
         # make sure beneficiary passes the filters
+        filter_by = []
+        if hasattr(report, 'request'):
+            if report.awcs:
+                filter_by = [('awc_name', 'awcs')]
+            elif report.gp:
+                filter_by = [('owner_id', 'gp')]
+            elif report.block:
+                filter_by = [('block_name', 'blocks')]
+
         report.filter(
             lambda key: case.get_case_property(key),
             # case.awc_name, case.block_name
-            report.filter_fields,
+            # need to be hardcoded because in case we have block_name not block property
+            filter_by,
         )
 
         if case.closed and case.closed_on <= report.datespan.startdate_utc:
@@ -46,6 +58,8 @@ class Beneficiary(object):
             return case.get_case_property(property)
 
         account = case_data('bank_account_number')
+        if isinstance(account, Decimal):
+            account = int(account)
         self.account_number = unicode(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
@@ -58,6 +72,7 @@ class Beneficiary(object):
         self.ifs_code = case_data('ifsc')
         self.block = case_data('block_name')
         self.village = case_data('village_name')
+        self.owner_id = case_data('owner_id')
 
         def get_sql_property(property):
             property = int(0 if sql_form_data.get(property) is None

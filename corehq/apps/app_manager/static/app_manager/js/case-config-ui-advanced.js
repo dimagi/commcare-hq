@@ -605,9 +605,6 @@ var AdvancedCase = (function () {
 
             self.validate = ko.computed(function () {
                 if (self.auto_select){
-                    if (!self.config.caseConfigViewModel) {
-                        return;
-                    }
                     var mode = self.auto_select.mode();
                     var value_source = self.auto_select.value_source();
                     var value_key = self.auto_select.value_key();
@@ -774,7 +771,10 @@ var AdvancedCase = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return ActionBase.suggestedProperties(self, false);
+                return CC_UTILS.filteredSuggestedProperties(
+                    ActionBase.suggestedProperties(self, false),
+                    self.case_properties()
+                );
             });
 
             self.validate = ko.computed(function () {
@@ -930,7 +930,12 @@ var AdvancedCase = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-properties
-                suggestedSaveProperties: self.action.suggestedProperties
+                suggestedSaveProperties: ko.computed(function () {
+                    return CC_UTILS.filteredSuggestedProperties(
+                        self.action.suggestedProperties(),
+                        self.action.case_properties()
+                    );
+                })
             };
 
             self.defaultKey = ko.computed(function () {
@@ -974,7 +979,12 @@ var AdvancedCase = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-preload
-                suggestedPreloadProperties: self.action.suggestedProperties
+                suggestedPreloadProperties: ko.computed(function () {
+                    return CC_UTILS.filteredSuggestedProperties(
+                        self.action.suggestedProperties(),
+                        self.action.preload()
+                    );
+                })
             };
             self.defaultKey = ko.computed(function () {
                 return '';

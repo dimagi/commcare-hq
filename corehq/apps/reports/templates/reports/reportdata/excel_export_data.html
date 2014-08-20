@@ -16,6 +16,7 @@
         var customExportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            jsonExportFilters: {{ get_filter_params|JSON }},
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             is_custom: true
         } );
@@ -282,6 +283,7 @@
                 <td class="cell-vertical-centered">
                     {% if form.submissions %}
                         <a data-toggle="modal" href="#export-download-status"
+                           data-backdrop="static"
                            data-modulename="{% if form.has_app and form.module %}{{ form.module.name|trans:form.app.langs }}{% endif %}"
                            data-formname="{% include 'reports/partials/form_name.html' %}"
                            data-xmlns="{% if form.xmlns != None %}{{ form.xmlns }}{% endif %}"
@@ -335,6 +337,7 @@
                data-xmlns=""
                data-appid=""
                data-bind="click: requestDownload"
+               data-backdrop="static"
                class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
         </a>
     </div>

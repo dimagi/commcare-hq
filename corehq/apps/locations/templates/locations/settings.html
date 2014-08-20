@@ -52,8 +52,8 @@
                             <tr>
                                 <th>{% trans "Location Type" %}</th>
                                 <th>{% trans "Location Type Code" %}</th>
-                                <th>{% trans "Allowed Parent Types" %}</th>
-                                <th>{% trans "Administrative only?" %}</th>
+                                <th>{% trans "Allowed Parent Type" %}</th>
+                                <th>{% trans "Tracks Stock" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -68,12 +68,12 @@
                                     <div class="help-inline" data-bind="text: code_error"></div>
                                 </td>
                                 <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                                    <select multiple="true" data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
+                                    <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
                                     </select>
                                     <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                                 </td>
                                 <td>
-                                    <input data-bind="checked: administrative" type="checkbox" />
+                                    <input data-bind="checked: tracks_stock" type="checkbox" />
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">

@@ -50,11 +50,18 @@ var mk_translation_ui = function (spec) {
                     this.$error.hide();
                 }
 
-                this.value.on('change', function () {
+                var helperFunction = function () {
                     if (that.solid) {
                         translation_ui.saveButton.fire('change');
                     }
+                };
+
+                this.value.on('change', helperFunction);
+
+                this.value.ui.find('input').autocomplete({
+                    select: helperFunction
                 });
+
                 this.value.ui.find('input').focus(function () {
                     var input = $(this);
                     if (!suggestionCache.hasOwnProperty('-' + that.key.val())) {
@@ -125,6 +132,10 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
+        }).after($('<a style="padding-left: 6px;"><i class="icon-question-sign" data-trigger="click"></i></a>')).popover({
+            placement: 'right',
+            title: 'Auto Fill translations',
+            content: 'This will pick the most common translations for your selected language.  You can then edit them as needed.'
         });
 
     for (key in spec.translations) {

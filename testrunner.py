@@ -100,7 +100,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         Check if any of the tests to run subclasses TransactionTestCase.
         """
         simple_tests = unittest.TestSuite()
-        db_tests = TimingTestSuite()
+        db_tests = unittest.TestSuite()
         for test in suite:
             if isinstance(test, TransactionTestCase):
                 db_tests.addTest(test)
@@ -141,6 +141,11 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         print("Running {0} tests with database".format(suite.countTestCases()))
         old_config = self.setup_databases()
         result = self.run_suite(suite)
+
+        from corehq.db import _engine, Session
+        Session.remove()
+        _engine.dispose()
+
         self.teardown_databases(old_config)
         return self.suite_result(suite, result)
 
@@ -157,9 +162,13 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         if simple_suite.countTestCases():
             failures += self.run_non_db_tests(simple_suite)
 
+        if failures and self.failfast:
+            return failures
+
         if db_suite.countTestCases():
             failures += self.run_db_tests(db_suite)
-            self.print_test_times(db_suite)
+            # disabled until TimingTestSuite fixed: http://manage.dimagi.com/default.asp?121894
+            # self.print_test_times(db_suite)
         self.teardown_test_environment()
         return failures
 
@@ -242,6 +251,9 @@ class GroupTestRunnerCatchall(_OnlySpecificApps, TwoStageTestRunner):
         if simple_suite.countTestCases():
             failures += self.run_non_db_tests(simple_suite)
 
+        if failures and self.failfast:
+            return failures
+
         # then run db tests from specified apps
         db_labels = test_labels or self.get_test_labels()
         full_suite = self.build_suite(db_labels, extra_tests)
@@ -249,7 +261,8 @@ class GroupTestRunnerCatchall(_OnlySpecificApps, TwoStageTestRunner):
 
         if db_suite.countTestCases():
             failures += self.run_db_tests(db_suite)
-            self.print_test_times(db_suite)
+            # disabled until TimingTestSuite fixed: http://manage.dimagi.com/default.asp?121894
+            # self.print_test_times(db_suite)
         self.teardown_test_environment()
         return failures
 

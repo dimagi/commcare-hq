@@ -49,8 +49,14 @@
                     <label class="control-label">{% trans 'Plan' %}</label>
                     <div class="controls">
                         <div class="{{ plan.css_class }}">
-                            <h4>{{ plan.name }} {% if plan.is_trial %}{% trans 'Trial' %}{% endif %}</h4>
-                            <p><i class="icon-info-sign"></i> {{ plan.description }}</p>
+                            <h4>{% if plan.is_trial %}{% trans '30 Day Trial' %}{% else %}{{ plan.name }}{% endif %}</h4>
+                            <p><i class="icon-info-sign"></i>
+                                {% if plan.is_trial %}
+                                    {% blocktrans with plan.name as pn %}
+                                        The 30 Day Trial includes all the features present in the {{ pn }} Software Plan,
+                                        which is our full set of features.
+                                    {% endblocktrans %}
+                                {% else %}{{ plan.description }}{% endif %}</p>
                         </div>
                         {% if plan.is_dimagi_subscription %}
                             <div class="alert alert-info">
@@ -123,6 +129,7 @@
                                 <span class="help-inline"
                                       style="margin-right: 10px;"
                                       data-bind="text: amount"></span>
+                                {% if not is_ops_user_but_not_admin %}
                                 <button type="button"
                                         class="btn add-credit-button"
                                         data-toggle="modal"
@@ -131,6 +138,12 @@
                                     <i class="icon-plus"></i>
                                     {% trans 'Add Credit' %}
                                 </button>
+                                {% else %}
+                                    <span class="label">
+                                        <i class="icon-info-sign"></i>
+                                        {% trans "Not Billing Admin, Can't Add Credit" %}
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -177,14 +190,21 @@
                         {% endif %}
                         {% if can_purchase_credits and not plan.is_trial %}
                         <td data-bind="visible: canPurchaseCredits">
-                            <button type="button"
-                                    class="btn"
-                                    data-toggle="modal"
-                                    data-target="#paymentModal"
-                                    data-bind="click: triggerPayment">
-                                <i class="icon-plus"></i>
-                                {% trans 'Add Credit' %}
-                            </button>
+                            {% if not is_ops_user_but_not_admin %}
+                                <button type="button"
+                                        class="btn"
+                                        data-toggle="modal"
+                                        data-target="#paymentModal"
+                                        data-bind="click: triggerPayment">
+                                    <i class="icon-plus"></i>
+                                    {% trans 'Add Credit' %}
+                                </button>
+                            {% else %}
+                                <span class="label">
+                                    <i class="icon-info-sign"></i>
+                                    {% trans "Not Billing Admin, Can't Add Credit" %}
+                                </span>
+                            {% endif %}
                         </td>
                         {% endif %}
                     </tr>
@@ -307,6 +327,7 @@
                         data-dismiss="modal">
                     {% trans "Cancel" %}
                 </button>
+                <!-- ko if: hasAgreedToPrivacy -->
                 <button type="submit"
                         data-bind="
                             visible: paymentIsNotComplete,
@@ -315,6 +336,15 @@
                         class="btn btn-success">
                     {% trans 'Buy Credits' %}
                 </button>
+                <!-- /ko -->
+                <!-- ko ifnot: hasAgreedToPrivacy -->
+                <button type="submit"
+                        class="btn btn-success disabled"
+                        disabled="disabled">
+                    {% trans 'Buy Credits' %}
+                </button>
+                <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+                <!-- /ko -->
                 <button type="button"
                         data-bind="visible: paymentIsComplete"
                         class="btn"
