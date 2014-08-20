@@ -103,9 +103,7 @@ def new_static(url, **kwargs):
         '.js',
     ]])
     use_cache = kwargs.pop('cache', False) if 'cache' in kwargs else False
-    use_versions = True
-    if can_be_compressed and not use_cache:
-        use_versions = False
+    use_versions = not can_be_compressed or use_cache
 
     resource_url = url
     url = settings.STATIC_URL + url
