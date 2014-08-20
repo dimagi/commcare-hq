@@ -6,7 +6,7 @@ currently specific to monthly reports.  It would be pretty simple to make
 this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import datetime
 import logging
 import simplejson
@@ -633,11 +633,36 @@ class CaseReportMixin(object):
         self.extra_row_objects = self.extra_row_objects + row_objects
 
 
+def join_lists(a, b):
+    def zip_fn((x, y)):
+        if isinstance(x, int):
+            return x + y
+        return x
+    return map(zip_fn, zip(a, b))
+
+
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
+
+    @property
+    def rows(self):
+        raw_rows = super(BeneficiaryPaymentReport, self).rows
+        # Consolidate rows with the same account number
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == 'account_number':
+                account_num = i
+        rows = OrderedDict()
+        for row in raw_rows:
+            account_number = row[account_num]
+            existing_row = rows.get(account_number)
+            if existing_row is None:
+                rows[account_number] = row
+            else:
+                rows[account_number] = join_lists(existing_row, row)
+        return rows.values()
 
 
 class MetReport(CaseReportMixin, BaseReport):
