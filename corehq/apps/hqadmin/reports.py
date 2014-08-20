@@ -220,6 +220,23 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "total_incoming_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_incoming_sms",
+        "chart_title": "Total Incoming SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -573,6 +590,7 @@ class RealSMSMessages(GlobalAdminReports):
     name = ugettext_noop('Real SMS Messages')
     indicators = [
         'total_outgoing_sms',
+        'total_incoming_sms',
     ]
 
     @property
