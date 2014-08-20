@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from corehq.apps.commtrack.models import Product, Program
 from dimagi.utils.couch.database import iter_docs
 from datetime import datetime
-import json
 
 class Command(BaseCommand):
     help = 'Populate last_modified field for products and programs'
@@ -19,7 +18,7 @@ class Command(BaseCommand):
 
         for product in iter_docs(Product.get_db(), relevant_ids):
             if 'last_modified' not in product or not product['last_modified']:
-                product['last_modified'] = json.dumps(datetime.now().isoformat())
+                product['last_modified'] = datetime.now().isoformat()
                 to_save.append(product)
 
                 if len(to_save) > 500:
@@ -40,7 +39,7 @@ class Command(BaseCommand):
 
         for program in iter_docs(Program.get_db(), relevant_ids):
             if 'last_modified' not in program or not program['last_modified']:
-                program['last_modified'] = json.dumps(datetime.now().isoformat())
+                program['last_modified'] = datetime.now().isoformat()
                 to_save.append(program)
 
                 if len(to_save) > 500:
