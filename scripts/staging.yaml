@@ -55,7 +55,8 @@ branches:
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
-  - bootstrap3-stylin # bb 8/20
+  - vellum-requirejs+bootstrap3-stylin  # bb 8/20
+  - bootstrap3-stylin  # bb 8/20
 submodules:
   submodules/couchlog-src:
     branches:
