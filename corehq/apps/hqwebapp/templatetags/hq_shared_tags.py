@@ -89,6 +89,35 @@ def static(url):
 
 
 @register.simple_tag
+def new_static(url, **kwargs):
+    """Caching must explicitly be defined on tags with any of the extensions
+    that could be compressed by django compressor. The static tag above will
+    eventually turn into this tag.
+    :param url:
+    :param kwargs:
+    :return:
+    """
+    can_be_compressed = any([url.endswith(ext) for ext in [
+        '.less',
+        '.css',
+        '.js',
+    ]])
+    use_cache = kwargs.pop('cache', False) if 'cache' in kwargs else False
+    use_versions = True
+    if can_be_compressed and not use_cache:
+        use_versions = False
+
+    resource_url = url
+    url = settings.STATIC_URL + url
+    if use_versions:
+        version = resource_versions.get(resource_url)
+        if version:
+            url += "?version=%s" % version
+
+    return url
+
+
+@register.simple_tag
 def domains_for_user(request, selected_domain=None):
     """
     Generate pulldown menu for domains.
