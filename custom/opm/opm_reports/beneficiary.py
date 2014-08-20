@@ -471,16 +471,33 @@ class OPMCaseRow(object):
                 return False
 
     @property
+    def weight_grade_normal(self):
+        if self.block == "wazirganj":
+            if self.child_age in [24, 36]:
+                if self.child_index == 1:
+                    form_prop = 'interpret_grade'
+                else:
+                    form_prop = 'interpret_grade_{}'.format(self.child_index)
+                forms = self.filtered_forms(CHILDREN_FORMS, 3)
+                if len(forms) == 0:
+                    return False
+                form = sorted(forms, key=lambda form: form.received_on)[-1]
+                if form.form.get(form_prop) == 'normal':
+                    return self.child_age/12
+                return False
+
+    @property
     def birth_spacing_years(self):
         """
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        if self.child_age in [24, 36]:
-            for form in self.filtered_forms(CHILDREN_FORMS):
-                if form.form.get('birth_spacing_prompt') == '1':
-                    return False
-            return self.child_age/12
+        if self.block == "atri":
+            if self.child_age in [24, 36]:
+                for form in self.filtered_forms(CHILDREN_FORMS):
+                    if form.form.get('birth_spacing_prompt') == '1':
+                        return False
+                return self.child_age/12
 
     def case_property(self, name, default=None):
         prop = getattr(self.case, name, default)
@@ -550,15 +567,16 @@ class OPMCaseRow(object):
         return MONTH_AMT if self.all_conditions_met else 0
 
     @property
-    def spacing_cash(self):
+    def year_end_bonus_cash(self):
+        year_value = self.birth_spacing_years or self.weight_grade_normal
         return {
             2: TWO_YEAR_AMT,
             3: THREE_YEAR_AMT,
-        }.get(self.birth_spacing_years, 0)
+        }.get(year_value, 0)
 
     @property
     def cash_amt(self):
-        return self.month_amt + self.spacing_cash
+        return self.month_amt + self.year_end_bonus_cash
 
     @property
     def cash(self):
@@ -612,10 +630,15 @@ class ConditionsMet(OPMCaseRow):
             self.five = ''
 
         if self.child_age in (24, 36):
-            if self.birth_spacing_years:
-                self.five = self.img_elem % SPACING_PROMPT_Y
-            elif self.birth_spacing_years is False:
-                self.five = self.img_elem % SPACING_PROMPT_N
+            if self.block == 'atri':
+                met, pos, neg = self.weight_grade_normal, GRADE_NORMAL_Y, GRADE_NORMAL_N
+            else:
+                met, pos, neg = self.birth_spacing_years, SPACING_PROMPT_Y, SPACING_PROMPT_N
+
+            if condition_met:
+                self.five = self.img_elem % pos
+            elif condition_met is False:
+                self.five = self.img_elem % neg
             else:
                 self.five = ''
 
@@ -641,7 +664,7 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
-        ('spacing_cash', _("Birth Spacing Bonus"), True),
+        ('year_end_bonus_cash', _("Birth Spacing Bonus"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
         ('owner_id', _("Owner ID"), False)
     ]

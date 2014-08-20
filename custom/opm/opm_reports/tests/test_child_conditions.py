@@ -17,16 +17,19 @@ class ChildConditionMixin(object):
         self.not_met_value = '0'
         self.row_property = 'check_soda_level'
 
+    def form_json(self, value):
+        return {self.child_node: {self.form_prop: value}}
+
     def form_with_condition(self, y, m, d):
         return XFormInstance(
-            form={self.child_node: {self.form_prop: self.met_value}},
+            form=self.form_json(self.met_value),
             received_on=datetime(y, m, d),
             xmlns=self.xmlns,
         )
 
     def form_without_condition(self, y, m, d):
         return XFormInstance(
-            form={self.child_node: {self.form_prop: self.not_met_value}},
+            form=self.form_json(self.not_met_value),
             received_on=datetime(y, m, d),
             xmlns=self.xmlns,
         )
@@ -35,7 +38,11 @@ class ChildConditionMixin(object):
         child_age = child_age or 5
         report_year, report_month = 2014, 6
         dod_year, dod_month = add_months(report_year, report_month, -child_age)
-        report = Report(month=report_month, year=report_year, block="Atri")
+        report = Report(
+            month=report_month,
+            year=report_year,
+            block=getattr(self, 'block', 'Atri'),
+        )
         case = OPMCase(
             forms=forms or [],
             dod=date(dod_year, dod_month, 10),
