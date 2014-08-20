@@ -135,8 +135,13 @@ INDICATOR_DATA = {
     "sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_domains",
-        "chart_title": "Domains that have used SMS",
-        "hide_cumulative_charts": True,
+        "chart_title": "Total Projects That Have Used SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
         "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -144,8 +149,7 @@ INDICATOR_DATA = {
     "commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commconnect_domains",
-        "chart_title": "CommConnect Domains",
-        "hide_cumulative_charts": True,
+        "chart_title": "Total CommConnect Enabled Domains",
         "params_es_dict": {
             "commconnect_enabled": ["T"],
         },
@@ -162,11 +166,16 @@ INDICATOR_DATA = {
     "incoming_sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
-        "chart_title": "Domains that have received SMS",
-        "hide_cumulative_charts": True,
+        "chart_title": "Total Projects Using Incoming SMS",
         "params_es_dict": {
             "direction": ["i"],
         },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
         "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",
