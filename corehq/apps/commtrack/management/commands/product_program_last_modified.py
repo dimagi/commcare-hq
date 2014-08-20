@@ -19,7 +19,6 @@ class Command(BaseCommand):
 
         for product in iter_docs(Product.get_db(), relevant_ids):
             if 'last_modified' not in product or not product['last_modified']:
-                print product['_id']
                 product['last_modified'] = json.dumps(datetime.now().isoformat())
                 to_save.append(product)
 
@@ -41,7 +40,6 @@ class Command(BaseCommand):
 
         for program in iter_docs(Program.get_db(), relevant_ids):
             if 'last_modified' not in program or not program['last_modified']:
-                print program['_id']
                 program['last_modified'] = json.dumps(datetime.now().isoformat())
                 to_save.append(program)
 
