@@ -49,7 +49,7 @@ branches:
   - admin-reports # Nick P 8/13
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
-  - subscription-no-contact-info # bb 8/4
+#  - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
