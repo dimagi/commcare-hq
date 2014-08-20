@@ -448,10 +448,8 @@ class OPMCaseRow(object):
                 return True
 
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
-            for form in self.filtered_forms(CHILDREN_FORMS):
-                if form.xpath(xpath) == '0':
-                    return False
-            return True
+            forms = self.filtered_forms(CHILDREN_FORMS)
+            return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
 
     @property
     def live_delivery(self):
