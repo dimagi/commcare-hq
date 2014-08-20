@@ -1,3 +1,35 @@
+########################
+#   STAGING WORKFLOW   #
+########################
+
+# GENERAL PROCESS
+# From your commcare-hq directory with the virtualenv turned on
+# to safely push your changes to scripts/staging.yaml
+#     $ scripts/commit-staging --push
+# to rebuild from your new spec and deploy
+#     $ scripts/rebuildstaging --deploy
+# Both commands commands can be run without the flag as well.
+
+# CONFLICT RESOLUTION
+# First, determine where the conflict lies.
+# a). branch `foo` conflicts with `master`
+#       $ git checkout -b foo origin/foo
+#       $ git pull origin master
+#     try to resolve conflict
+#       $ git push origin foo
+# b). branch `foo` conflicts with branch `bar`
+#     you can't just merge foo into bar or vice versa, otherwise the PR
+#     for foo will contain commits from bar.  Instead make a third,
+#     conflict-resolution branch:
+#       $ git checkout -b foo+bar origin/foo
+#       $ git pull origin bar
+#     try to resolve conflict
+#       $ git push origin foo+bar
+#     add the branch `foo+bar` to staging.yaml and move branches foo and
+#     bar to right below it
+# If you are unsure of how to resolve a conflict, notify the branch owner.
+
+
 trunk: master
 name: autostaging
 branches:
