@@ -176,6 +176,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
+    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
