@@ -1,5 +1,5 @@
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.style.decorators import use_bootstrap_3
+from corehq.apps.style.decorators import preview_boostrap3
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -87,7 +87,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     page_title = ugettext_lazy("My Information")
     template_name = 'settings/edit_my_account.html'
 
-    @method_decorator(use_bootstrap_3())
+    @method_decorator(preview_boostrap3())
     def dispatch(self, request, *args, **kwargs):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
