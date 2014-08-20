@@ -6,6 +6,9 @@ from corehq import toggles, privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.logging import notify_exception
+
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
 
 def base_template(request):
@@ -71,6 +74,29 @@ def domain(request):
 
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
+
+
+def domains_for_user(request):
+    """Global domain list for a user context"""
+    domain_list = []
+    if hasattr(request, 'couch_user') and request.user.is_authenticated:
+        cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
+        from corehq.apps.domain.models import Domain
+        if cached_domains:
+            domain_list = [Domain.wrap(x) for x in cached_domains]
+        else:
+            try:
+                domain_list = Domain.active_for_user(request.couch_user)
+                cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', [x.to_json() for x in domain_list])
+            except Exception:
+                if settings.DEBUG:
+                    raise
+                else:
+                    domain_list = Domain.active_for_user(request.user)
+                    notify_exception(request)
+    return {
+        'domains_for_user': domain_list,
+    }
 
 
 def current_url_name(request):
