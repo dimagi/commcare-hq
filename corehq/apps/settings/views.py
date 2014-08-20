@@ -18,6 +18,9 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
+import corehq.apps.style.utils as style_utils
+
+
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
@@ -92,9 +95,11 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     def template_name(self):
-        if self.request.preview_bootstrap3:
-            return 'settings/edit_my_account.html'
-        return 'settings/edit_my_account.b2.html'
+        template = {
+            style_utils.BOOTSTRAP_2: 'settings/edit_my_account.b2.html',
+            style_utils.BOOTSTRAP_3: 'settings/edit_my_account.html',
+        }[style_utils.bootstrap_version(self.request)]
+        return template
 
     @property
     @memoized

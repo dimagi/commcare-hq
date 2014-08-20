@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
+import corehq.apps.style.utils as style_utils
 import corehq
 
 
@@ -131,9 +132,10 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    template = 'hqwebapp/partials/sidebar.html'
-    if hasattr(request, 'preview_bootstrap3') and request.preview_bootstrap3:
-        template = 'style/includes/navigation_left_sidebar.html'
+    template = {
+        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/sidebar.html',
+        style_utils.BOOTSTRAP_3: 'style/includes/navigation_left_sidebar.html',
+    }[style_utils.bootstrap_version(request)]
     return mark_safe(render_to_string(template, {
         'sections': sections
     }))
