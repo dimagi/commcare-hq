@@ -302,6 +302,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+
+    'bootstrap3_crispy.crispy_forms',
 )
 
 TEST_APPS = ()
