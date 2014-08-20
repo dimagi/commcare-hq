@@ -1017,7 +1017,6 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
     }
 
 
-
 def get_active_domain_stats_data(params, datespan, interval='month', 
         datefield='received_on'):
     begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
@@ -1043,6 +1042,53 @@ def get_active_domain_stats_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
+def get_mobile_workers_data(params, datespan, interval='month',
+        datefield='created_on'):
+    real_domains = get_real_project_spaces()
+
+    sms_users = (SMSES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .received(gte=datespan.startdate, lte=datespan.enddate)
+            .facet('users',
+                {
+                    "terms": {
+                        "field": "couch_recipient",
+                    }
+                })
+            .size(0))
+
+    users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
+
+    users_after_date = (UserES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .filter({"ids": {"values": users}})
+            .mobile_users()
+            .created(gte=datespan.startdate, lte=datespan.enddate)
+            .facet('date',
+                {
+                    "date_histogram": {
+                        "field": datefield,
+                        "interval": interval
+                    }
+                })
+            .size(0))
+
+    histo_data = users_after_date.run().facet('date', 'entries')
+
+    users_before_date = (UserES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .filter({"ids": {"values": users}})
+            .mobile_users()
+            .created(lt=datespan.startdate)
+            .size(0)).run().total
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": users_before_date},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+ 
 
 def get_real_sms_messages_data(params, datespan, interval='month',
         datefield='date'):
@@ -1099,7 +1145,6 @@ def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
-
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
@@ -1153,6 +1198,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "mobile_workers":
+        params.update(params_es)
+        return json_response(get_mobile_workers_data(params, request.datespan, interval=interval))
 
     if histo_type == "real_sms_messages":
         params.update(params_es)
