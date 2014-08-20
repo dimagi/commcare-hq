@@ -131,6 +131,9 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    return mark_safe(render_to_string("hqwebapp/partials/sidebar.html", {
+    template = 'hqwebapp/partials/sidebar.html'
+    if hasattr(request, 'preview_bootstrap3') and request.preview_bootstrap3:
+        template = 'style/includes/navigation_left_sidebar.html'
+    return mark_safe(render_to_string(template, {
         'sections': sections
     }))
