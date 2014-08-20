@@ -306,6 +306,14 @@ class OPMCaseRow(object):
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
 
+    def get_months_before(self, months_before=None):
+        new_year, new_month = add_months(self.year, self.month, -months_before)
+        return first_of_next_month(datetime.datetime(new_year, new_month, 1))
+
+    def get_months_after(self, months_after=None):
+        new_year, new_month = add_months(self.year, self.month, months_after)
+        return first_of_next_month(datetime.datetime(new_year, new_month, 1))
+
     def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
         """
         Returns a list of forms filtered by xmlns if specified
@@ -317,14 +325,12 @@ class OPMCaseRow(object):
             xmlns_list = xmlns_or_list or []
 
         if months_before is not None:
-            new_year, new_month = add_months(self.year, self.month, -months_before)
-            start = first_of_next_month(datetime.datetime(new_year, new_month, 1))
+            start = self.get_months_before(months_before)
         else:
             start = explicit_start
 
         if months_after is not None:
-            new_year, new_month = add_months(self.year, self.month, months_after)
-            end = first_of_next_month(datetime.datetime(new_year, new_month, 1))
+            end = self.get_months_after(months_after)
         else:
             end = datetime.datetime.combine(self.reporting_window_end, datetime.time())
 
@@ -503,32 +509,29 @@ class OPMCaseRow(object):
             return default
         return prop
 
-    def form_in_range(self, form):
-        # todo: the reporting window might be different than that data window
-        return self.reporting_window_start <= form.received_on.date() < self.reporting_window_end
-
     @property
     @memoized
     def vhnd_available(self):
-        return bool(self.data_provider.get_dates_in_range(self.owner_id,
-                                                          self.reporting_window_start,
-                                                          self.reporting_window_end))
+        return self.is_service_available('vhnd_available', months_before=1)
 
     @property
     @memoized
     def is_vhnd_last_three_months(self):
-        start = add_months_to_date(self.reporting_window_start, -2)
-        return bool(self.data_provider.get_dates_in_range(self.owner_id,
-                                                          start,
-                                                          self.reporting_window_end))
+        return self.is_service_available('vhnd_available', months_before=3)
 
     @property
     @memoized
     def is_vhnd_last_six_months(self):
-        start = add_months_to_date(self.reporting_window_start, -5)
-        return bool(self.data_provider.get_dates_in_range(self.owner_id,
-                                                          start,
-                                                          self.reporting_window_end))
+        return self.is_service_available('vhnd_available', months_before=6)
+
+    def is_service_available(self, prop, months_before=1):
+        return bool(self.data_provider.get_dates_in_range(
+            owner_id=self.owner_id,
+            startdate=self.get_months_before(months_before).date(),
+            enddate=self.reporting_window_end,
+            prop=prop,
+        ))
+
     def add_extra_children(self):
         if self.child_index == 1:
             # app supports up to three children only
