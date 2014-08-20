@@ -237,6 +237,24 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "total_outgoing_client_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_client_sms",
+        "chart_title": "Total Outgoing Client SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+            "couch_recipient_doc_type": ["commcarecase"]
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -591,6 +609,7 @@ class RealSMSMessages(GlobalAdminReports):
     indicators = [
         'total_outgoing_sms',
         'total_incoming_sms',
+        'total_outgoing_client_sms',
     ]
 
     @property
