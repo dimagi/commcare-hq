@@ -19,8 +19,8 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import CommTrackUser, Program, SupplyPointCase
-from bootstrap3_crispy.crispy_forms import layout as cb3_layout
-from bootstrap3_crispy.crispy_forms import helper as cb3_helper
+from bootstrap3_crispy import layout as cb3_layout
+from bootstrap3_crispy import helper as cb3_helper
 import re
 import settings
 
