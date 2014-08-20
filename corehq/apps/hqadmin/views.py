@@ -1044,6 +1044,36 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     }
 
 
+def get_real_sms_messages_data(params, datespan, interval='month',
+        datefield='date'):
+    real_domains = get_real_project_spaces()
+    sms_after_date = (SMSES()
+            .filter({"terms": params})
+            .filter({"terms": {"domain": list(real_domains)}})
+            .received(gte=datespan.startdate)
+            .facet('date',
+                {
+                    "date_histogram": {
+                        "field": datefield,
+                        "interval": interval
+                    }
+                })
+            .size(0))
+
+    histo_data = sms_after_date.run().facet('date', 'entries')
+
+    domains_before_date = (DomainES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .received(lt=datespan.startdate)
+            .size(0)).run().total
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": domains_before_date},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
 def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         datefield='received_on'):
     begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
@@ -1123,6 +1153,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "real_sms_messages":
+        params.update(params_es)
+        return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_commconnect_domains":
         params.update(params_es)

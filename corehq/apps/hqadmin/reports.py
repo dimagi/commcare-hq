@@ -203,6 +203,23 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "total_outgoing_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_sms",
+        "chart_title": "Total Outgoing SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["o"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -550,3 +567,14 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'sms_only_domain_count',
         'active_commconnect_domain_count',
     ]
+
+class RealSMSMessages(GlobalAdminReports):
+    slug = 'real_sms_messages'
+    name = ugettext_noop('Real SMS Messages')
+    indicators = [
+        'total_outgoing_sms',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False

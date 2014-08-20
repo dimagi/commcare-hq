@@ -14,7 +14,8 @@ from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
     UserReport,
-    CommConnectProjectSpacesReport
+    CommConnectProjectSpacesReport,
+    RealSMSMessages,
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -1228,6 +1229,7 @@ class AdminReportsTab(UITab):
                     RealProjectSpacesPlansReport,
                     UserReport,
                     CommConnectProjectSpacesReport,
+                    RealSMSMessages,
                 ]
             ]),
         ]
