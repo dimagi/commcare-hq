@@ -25,7 +25,7 @@
                     <span class="input-xlarge uneditable-input">{{ request.couch_user.html_username|safe }}</span>
                 </div>
             </div>
-            {% crispy form form.new_helper 'bootstrap3' %}
+            {% crispy form %}
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
             </div>
