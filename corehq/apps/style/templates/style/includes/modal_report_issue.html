@@ -1,0 +1,96 @@
+{% load i18n %}
+{% if user.is_authenticated %}
+    <div class="modal fade" id="modalReportIssue">
+        <div class="modal-dialog">
+            <form id="hqwebapp-bugReportForm"
+                  action="{% url "bug_report" %}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  role="form">
+                <input type="hidden" id="bug-report-url" name="url"/>
+                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                    <h4 class="modal-title">{% trans "Report an Issue with CommCare HQ" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label for="bug-report-subject"
+                                   class="col-sm-3 control-label">{% trans "Short Description" %}</label>
+                            <div class="col-sm-9">
+                                <input type="text"
+                                       class="form-control"
+                                       name="subject"
+                                       id="bug-report-subject"
+                                       placeholder="{% trans 'One Sentence Description of Issue' %}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="bug-report-message"
+                                   class="col-sm-3 control-label">{% trans "Full Description" %}</label>
+                            <div class="col-sm-9">
+                                <textarea name="message"
+                                          class="form-control"
+                                          id="bug-report-message"
+                                          rows="3"
+                                          placeholder="{% trans "Please try to include as much information as possible." %}"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group" id="bug-report-cc-form-group">
+                            <label for="bug-report-cc"
+                                   class="col-sm-3 control-label">{% trans "Other recipients (optional)" %}</label>
+                            <div class="col-sm-9">
+                                <input type="text"
+                                       name="cc"
+                                       class="form-control"
+                                       id="bug-report-cc"
+                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
+                                <p class="help-block">
+                                    {% blocktrans %}
+                                        Comma-separated email addresses of others you want to notify about this issue.
+                                    {% endblocktrans %}
+                                    <span class="label label-danger hide">
+                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="bug-report-file"
+                                   class="col-sm-3 control-label">{% trans 'Upload file' %}</label>
+                            <div class="col-sm-9">
+                                <input type="file" id="bug-report-file" name="report_issue"/>
+                                <p class="help-block">
+                                    <i class="fa fa-warning"></i>
+                                    {% blocktrans %}
+                                        Do not upload a file containing individually identifiable data.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                    <button type="submit"
+                            class="btn btn-primary"
+                            id="bug-report-cancel"
+                            data-loading-text="{% trans "Submitting Report..." %}"
+                            data-complete-text="{% trans "Report Submitted, Close Window" %}">
+                        {% trans "Submit Report" %}
+                    </button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(window).load(function(){
+            $('#modalTrial30Day').modal('show');
+        });
+    </script>
+{% endif %}
