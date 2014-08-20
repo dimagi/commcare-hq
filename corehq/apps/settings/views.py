@@ -85,11 +85,16 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
 
     @method_decorator(preview_boostrap3())
     def dispatch(self, request, *args, **kwargs):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def template_name(self):
+        if self.request.preview_bootstrap3:
+            return 'settings/edit_my_account.html'
+        return 'settings/edit_my_account.b2.html'
 
     @property
     @memoized

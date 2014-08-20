@@ -1,0 +1,34 @@
+{% extends 'settings/base_template.html' %}
+{# This is for editing information for the currently logged in WebUser #}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $('#id_language').combobox({
+                placeholder: "{% trans 'Select a language...' %}"
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <form class="form form-horizontal" name="user_information" method="post">
+        <fieldset>
+            <legend>{% trans 'My Information' %}</legend>
+            <div class="control-group">
+                <label class="control-label">{% trans 'Username' %}</label>
+                <div class="controls">
+                    <span class="input-xlarge uneditable-input">{{ request.couch_user.html_username|safe }}</span>
+                </div>
+            </div>
+            {% crispy form form.new_helper 'bootstrap3' %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}
