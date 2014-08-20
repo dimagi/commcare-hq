@@ -1767,8 +1767,8 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return self.repeater_form_class(self.request.POST)
-        return self.repeater_form_class()
+            return self.repeater_form_class(self.request.POST, domain=self.domain)
+        return self.repeater_form_class(domain=self.domain)
 
     @property
     def page_context(self):
@@ -1781,6 +1781,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
 
