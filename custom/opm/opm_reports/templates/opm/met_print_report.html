@@ -21,7 +21,7 @@
                 for (var i = 3; i > 0; i--) {
                     $('td:nth-last-child(1),th:nth-last-child(1)', $("#report_table_met_report")).remove();
                 }
-                splitTable($(".table"), 700);
+                splitTable($(".table"), 1100);
                 $('.hq-loading').hide();
                 window.print();
             }, 2000);
@@ -38,9 +38,16 @@
         }
         th {
             font-weight:bold;
+            line-height: 1.3;
         }
-        tr{
-            page-break-before: always;
+        tr {
+            line-height: 1.3;
+        }
+        table{
+            page-break-after: always;
+        }
+        td > div > img {
+            width: 100px !important;
         }
     </style>
     {% endcompress %}

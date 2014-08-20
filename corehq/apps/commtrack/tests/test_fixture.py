@@ -8,6 +8,9 @@ from corehq.apps.commtrack.fixtures import product_fixture_generator, program_fi
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.tests.util import bootstrap_user
+from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.restore import generate_restore_payload
+import datetime
 
 
 class FixtureTest(CommTrackTest, TestFileMixin):
@@ -23,9 +26,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                 yield name
         self.product_names = get_product_name()
 
-    def test_product_fixture(self):
-        user = bootstrap_user(self, phone_number="1234567890")
-        user_id = user.user_id
+    def generate_product_xml(self, user, randomize_data=True):
         products = ''
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
@@ -87,24 +88,90 @@ class FixtureTest(CommTrackTest, TestFileMixin):
             product.cost = product_cost
             product.product_data = product_data
             product.save()
+
+        return products
+
+    def generate_product_fixture_xml(self, user, randomize_data=True):
+        return """
+            <fixture id="commtrack:products" user_id="{user_id}">
+                <products>
+                    {products}
+                </products>
+            </fixture>
+        """.format(
+            user_id=user.user_id,
+            products=self.generate_product_xml(user, randomize_data)
+        )
+
+    def test_product_fixture(self):
+        user = bootstrap_user(self, phone_number="1234567890")
+        xml = self.generate_product_fixture_xml(user)
         fixture = product_fixture_generator(user, V1, None)
 
-        self.assertXmlEqual('''<fixture id="commtrack:products" user_id="{user_id}">
-                                    <products>
-                                        {products}
-                                    </products>
-                                </fixture>'''.format(user_id=user_id, products=products),
-                            ElementTree.tostring(fixture[0]))
+        self.assertXmlEqual(
+            xml,
+            ElementTree.tostring(fixture[0])
+        )
 
-    def test_program_fixture(self):
+    def test_selective_product_sync(self):
         user = bootstrap_user(self, phone_number="1234567890")
-        Program(
-            domain=user.domain,
-            name="test1",
-            code="t1"
-        ).save()
 
-        program_list = Program.by_domain(user.domain)
+        expected_xml = self.generate_product_fixture_xml(user)
+
+        product_list = Product.by_domain(user.domain)
+        self._initialize_product_names(len(product_list))
+
+        fixture_original = product_fixture_generator(user, V1, None)
+        generate_restore_payload(user.to_casexml_user())
+        self.assertXmlEqual(
+            expected_xml,
+            ElementTree.tostring(fixture_original[0])
+        )
+
+        first_sync = sorted(SyncLog.view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False
+        ).all(), key=lambda x: x.date)[-1]
+
+        # make sure the time stamp on this first sync is
+        # not on the same second that the products were created
+        first_sync.date += datetime.timedelta(seconds=1)
+
+        # second sync is before any changes are made, so there should
+        # be no products synced
+        fixture_pre_change = product_fixture_generator(user, V1, first_sync)
+        generate_restore_payload(user.to_casexml_user())
+        self.assertEqual(
+            [],
+            fixture_pre_change,
+            "Fixture was not empty on second sync"
+        )
+
+        second_sync = sorted(SyncLog.view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False
+        ).all(), key=lambda x: x.date)[-1]
+
+        self.assertTrue(first_sync._id != second_sync._id)
+
+        # save should make the product more recently updated than the
+        # last sync
+        for product in product_list:
+            product.save()
+
+        # now that we've updated a product, we should get
+        # product data in sync again
+        fixture_post_change = product_fixture_generator(user, V1, second_sync)
+
+        # regenerate the fixture xml to make sure it is still legit
+        self.assertXmlEqual(
+            expected_xml,
+            ElementTree.tostring(fixture_post_change[0])
+        )
+
+    def generate_program_xml(self, program_list, user):
         program_xml = ''
         for program in program_list:
             program_xml += '''
@@ -118,11 +185,93 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                 code=program.code
             )
 
+        return """
+            <fixture id="commtrack:programs" user_id="{user_id}">
+                <programs>
+                    {programs}
+                </programs>
+            </fixture>
+        """.format(
+            user_id=user.user_id,
+            programs=program_xml
+        )
+
+    def test_program_fixture(self):
+        user = bootstrap_user(self, phone_number="1234567890")
+        Program(
+            domain=user.domain,
+            name="test1",
+            code="t1"
+        ).save()
+
+        program_list = Program.by_domain(user.domain)
+        program_xml = self.generate_program_xml(program_list, user)
+
         fixture = program_fixture_generator(user, V1, None)
 
-        self.assertXmlEqual('''<fixture id="commtrack:programs" user_id="{user_id}">
-                                    <programs>
-                                        {programs}
-                                    </programs>
-                                </fixture>'''.format(user_id=user.user_id, programs=program_xml),
-                            ElementTree.tostring(fixture[0]))
+        self.assertXmlEqual(
+            program_xml,
+            ElementTree.tostring(fixture[0])
+        )
+
+    def test_selective_program_sync(self):
+        user = bootstrap_user(self, phone_number="1234567890")
+        Program(
+            domain=user.domain,
+            name="test1",
+            code="t1"
+        ).save()
+
+        program_list = Program.by_domain(user.domain)
+        program_xml = self.generate_program_xml(program_list, user)
+
+        fixture_original = program_fixture_generator(user, V1, None)
+
+        generate_restore_payload(user.to_casexml_user())
+        self.assertXmlEqual(
+            program_xml,
+            ElementTree.tostring(fixture_original[0])
+        )
+
+        first_sync = sorted(SyncLog.view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False
+        ).all(), key=lambda x: x.date)[-1]
+
+        # make sure the time stamp on this first sync is
+        # not on the same second that the programs were created
+        first_sync.date += datetime.timedelta(seconds=1)
+
+        # second sync is before any changes are made, so there should
+        # be no programs synced
+        fixture_pre_change = program_fixture_generator(user, V1, first_sync)
+        generate_restore_payload(user.to_casexml_user())
+        self.assertEqual(
+            [],
+            fixture_pre_change,
+            "Fixture was not empty on second sync"
+        )
+
+        second_sync = sorted(SyncLog.view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False
+        ).all(), key=lambda x: x.date)[-1]
+
+        self.assertTrue(first_sync._id != second_sync._id)
+
+        # save should make the program more recently updated than the
+        # last sync
+        for program in program_list:
+            program.save()
+
+        # now that we've updated a program, we should get
+        # program data in sync again
+        fixture_post_change = program_fixture_generator(user, V1, second_sync)
+
+        # regenerate the fixture xml to make sure it is still legit
+        self.assertXmlEqual(
+            program_xml,
+            ElementTree.tostring(fixture_post_change[0])
+        )

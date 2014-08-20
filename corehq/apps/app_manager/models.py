@@ -170,6 +170,8 @@ class FormActionCondition(DocumentSchema):
     answer = StringProperty()
     operator = StringProperty(choices=['=', 'selected'], default='=')
 
+    def is_active(self):
+        return self.type in ('if', 'always')
 
 class FormAction(DocumentSchema):
     """
@@ -179,7 +181,7 @@ class FormAction(DocumentSchema):
     condition = SchemaProperty(FormActionCondition)
 
     def is_active(self):
-        return self.condition.type in ('if', 'always')
+        return self.condition.is_active()
 
     @classmethod
     def get_action_paths(cls, action):
@@ -247,6 +249,7 @@ class OpenSubCaseAction(FormAction):
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
+    close_condition = SchemaProperty(FormActionCondition)
 
 class FormActions(DocumentSchema):
 
@@ -302,7 +305,7 @@ class AutoSelectCase(DocumentSchema):
         value_source    Reference to the source of the value. For mode = fixture,
                         this represents the FixtureDataType ID. For mode = case
                         this represents the 'case_tag' for the case.
-                        The mode 'user' doesn't require a value_source.
+                        The modes 'user' and 'raw' don't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
                         index or a user data key or a fixture field name or the raw
                         xpath expression.
@@ -310,7 +313,7 @@ class AutoSelectCase(DocumentSchema):
     """
     mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
     value_source = StringProperty()
-    value_key = StringProperty()
+    value_key = StringProperty(required=True)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -822,7 +825,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             if self.requires == 'none':
                 action_types = (
-                    'open_case', 'update_case', 'subcases',
+                    'open_case', 'update_case', 'close_case', 'subcases',
                 )
             elif self.requires == 'case':
                 action_types = (
@@ -1497,11 +1500,28 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
                 errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
 
-            if isinstance(action, LoadUpdateAction) and \
-                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
-                case_tag = action.auto_select.value_source
-                if not self.actions.get_action_from_tag(case_tag):
-                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
+            if isinstance(action, LoadUpdateAction) and action.auto_select:
+                mode = action.auto_select.mode
+                if not action.auto_select.value_key:
+                    key_name = {
+                        AUTO_SELECT_CASE: _('Case property'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table field'),
+                        AUTO_SELECT_USER: _('custom user property'),
+                        AUTO_SELECT_RAW: _('custom XPath expression'),
+                    }[mode]
+                    errors.append({'type': 'auto select key', 'key_name': key_name})
+
+                if not action.auto_select.value_source:
+                    source_names = {
+                        AUTO_SELECT_CASE: _('Case tag'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table tag'),
+                    }
+                    if mode in source_names:
+                        errors.append({'type': 'auto select source', 'source_name': source_names[mode]})
+                elif mode == AUTO_SELECT_CASE:
+                    case_tag = action.auto_select.value_source
+                    if not self.actions.get_action_from_tag(case_tag):
+                        errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
