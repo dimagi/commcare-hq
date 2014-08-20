@@ -820,6 +820,13 @@ MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
 
+# Mapping of payload format type to payload generators.
+# Values should be fully qualified python paths
+REPEATER_PAYLOAD_GENERATORS = {
+    'XML': 'corehq.apps.receiverwrapper.models.FormRepeaterXMLPayloadGenerator',
+    'HL7-mWellCare': 'mwellcare.repeater_generators.HL7mWellCarePayloadGenerator',
+}
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":

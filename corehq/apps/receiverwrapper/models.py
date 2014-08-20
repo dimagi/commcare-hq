@@ -4,6 +4,7 @@ import json
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
+from django.conf import settings
 import socket
 import hashlib
 
@@ -12,6 +13,7 @@ from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
@@ -58,6 +60,12 @@ class Repeater(Document, UnicodeMixIn):
 
     domain = StringProperty()
     url = StringProperty()
+    format = StringProperty(default='XML')
+
+    @memoized
+    def get_payload_generator(self, payload_format):
+        gen = settings.REPEATER_PAYLOAD_GENERATORS[payload_format]
+        return to_function(gen)()
 
     def register(self, payload, next_check=None):
         try:
@@ -131,12 +139,9 @@ class FormRepeater(Repeater):
 
     exclude_device_reports = BooleanProperty(default=False)
 
-    @memoized
-    def _payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
-
     def get_payload(self, repeat_record):
-        return self._payload_doc(repeat_record).get_xml()
+        generator = self.get_payload_generator(self.format)
+        return generator.get_payload(repeat_record)
 
     def get_headers(self, repeat_record):
         return {
@@ -145,6 +150,21 @@ class FormRepeater(Repeater):
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
+
+
+class BasePayloadGenerator(object):
+    def enabled_for_domain(self, domain):
+        return True
+
+    def get_payload(self, repeat_record, **kwargs):
+        raise NotImplementedError()
+
+
+class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+    @memoized
+    def get_payload(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id).get_xml()
+
 
 @register_repeater_type
 class CaseRepeater(Repeater):
