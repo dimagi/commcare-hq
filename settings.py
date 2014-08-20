@@ -173,6 +173,10 @@ DEFAULT_APPS = (
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+)
 
 HQ_APPS = (
     'django_digest',
