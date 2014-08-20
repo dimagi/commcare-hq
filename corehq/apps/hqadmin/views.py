@@ -956,7 +956,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
     domains_after_date = (DomainES()
             .real_domains()
             .filter({"terms": {"domain": list(sms_only_domains)}})
-            .created(gte=datespan.startdate)
+            .created(gte=datespan.startdate, lte=datespan.enddate)
             .facet('date', 
                 {
                     "date_histogram": {
@@ -1050,7 +1050,7 @@ def get_real_sms_messages_data(params, datespan, interval='month',
     sms_after_date = (SMSES()
             .filter({"terms": params})
             .filter({"terms": {"domain": list(real_domains)}})
-            .received(gte=datespan.startdate)
+            .received(gte=datespan.startdate, lte=datespan.enddate)
             .facet('date',
                 {
                     "date_histogram": {
@@ -1059,17 +1059,17 @@ def get_real_sms_messages_data(params, datespan, interval='month',
                     }
                 })
             .size(0))
-
+ 
     histo_data = sms_after_date.run().facet('date', 'entries')
 
-    domains_before_date = (DomainES()
+    sms_before_date = (SMSES()
             .filter({"terms": {"domain": list(real_domains)}})
             .received(lt=datespan.startdate)
             .size(0)).run().total
 
     return {
         'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": domains_before_date},
+        'initial_values': {"All Domains": sms_before_date},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
