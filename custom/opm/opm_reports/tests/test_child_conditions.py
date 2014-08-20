@@ -129,6 +129,11 @@ class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
             child_age=6,
         )
 
+    def test_no_forms_returns_false(self):
+        self.assertCondition(False,
+            forms=[],
+            child_age=6,
+        )
 
 class TestChildReceivedORS(ChildConditionMixin, TestCase):
     def setUp(self):
