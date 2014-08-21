@@ -159,6 +159,16 @@ class OpmFormSqlData(SqlData):
             return None
 
 
+VHND_PROPERTIES = [
+    "vhnd_available",
+    "vhnd_ifa_available",
+    "vhnd_adult_scale_available",
+    "vhnd_child_scale_available",
+    "vhnd_ors_available",
+    "vhnd_zn_available",
+    "vhnd_measles_vacc_available",
+]
+
 class VhndAvailabilitySqlData(SqlData):
 
     table_name = "fluff_VhndAvailabilityFluff"
@@ -177,10 +187,8 @@ class VhndAvailabilitySqlData(SqlData):
 
     @property
     def columns(self):
-        return [
-            DatabaseColumn('date', SimpleColumn("date")),
-            DatabaseColumn("", SumColumn("vhnd_availability"))
-        ]
+        return [DatabaseColumn('date', SimpleColumn("date"))] +\
+               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
 
 
 class OpmHealthStatusSqlData(SqlData):
@@ -287,23 +295,34 @@ class SharedDataProvider(object):
     @property
     @memoized
     def _vhnd_dates(self):
-        # todo: this will load one row per every VHND in history.
+        """
+        returns {
+            u'df5123010b24fc35260a84547148af06': {
+                'ifa_available': {datetime.date(2013, 1, 14),
+                                  datetime.date(2013, 8, 23)}
+                'zn_available': {datetime.date(2013, 1, 14)}
+            }
+        }
+        """
+        # TODO: this will load one row per every VHND in history.
         # If this gets too big we'll have to make the queries more targeted (which would be
         # easy to do in the get_dates_in_range function) but if the dataset is small this will
         # avoid significantly fewer DB trips.
         # If things start getting slow or memory intensive this would be a good place to look.
         data = VhndAvailabilitySqlData().data
-        results = defaultdict(lambda: set())
+        results = defaultdict(lambda: defaultdict(lambda: set()))
+        prop_available = lambda prop: row[prop] == '1'
         for (owner_id, date), row in data.iteritems():
-            if row['vhnd_availability'] > 0:
-                results[owner_id].add(date)
-
+            if row['vhnd_available'] > 0:
+                for prop in VHND_PROPERTIES:
+                    if row[prop] == '1' or prop == 'vhnd_available':
+                        results[owner_id][prop].add(date)
         return results
 
-    def get_dates_in_range(self, owner_id, startdate, enddate):
+    def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
         return filter(
             lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
-            [date for date in self._vhnd_dates.get(owner_id, set())],
+            [date for date in self._vhnd_dates[owner_id][prop]],
         )
 
 
