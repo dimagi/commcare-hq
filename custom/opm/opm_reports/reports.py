@@ -140,11 +140,6 @@ class OpmFormSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn("Case ID", SimpleColumn("case_id")),
-            DatabaseColumn("Bp1 Cash Total", SumColumn("bp1_cash_total")),
-            DatabaseColumn("Bp2 Cash Total", SumColumn("bp2_cash_total")),
-            DatabaseColumn("Child Followup Total", SumColumn("child_followup_total")),
-            DatabaseColumn("Child Spacing Deliveries", SumColumn("child_spacing_deliveries")),
-            DatabaseColumn("Delivery Total", SumColumn("delivery_total")),
             DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
             DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
