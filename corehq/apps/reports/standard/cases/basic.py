@@ -115,7 +115,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def case_users_and_owners(self):
         users_data = ExpandedMobileWorkerFilterWithAllData.pull_users_from_es(
-            self.domain, self.request, fields=[])
+            self.domain, self.request, fields=[], exclude_url_users=True)
         user_ids = filter(None, [u["_id"] for u in users_data["hits"]["hits"]])
         group_owner_ids = []
         for user_id in user_ids:
@@ -124,6 +124,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 for group in Group.by_user(user_id)
                 if group.case_sharing
             ])
+        # The following two lines are copied from `pull_users_from_es`. Consider pulling into separate function.
+        emws = self.request.GET.getlist(ExpandedMobileWorkerFilterWithAllData.slug)
+        user_ids_from_url = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
+        user_ids = list(set(user_ids) | set(user_ids_from_url))
+
         if HQUserType.COMMTRACK in ExpandedMobileWorkerFilterWithAllData.user_types(self.request):
             user_ids.append("commtrack-system")
         return user_ids, filter(None, group_owner_ids)

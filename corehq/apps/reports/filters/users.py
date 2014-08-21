@@ -344,7 +344,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return [Group.get(g) for g in group_ids]
 
     @classmethod
-    def pull_users_from_es(cls, domain, request, initial_query=None, **kwargs):
+    def pull_users_from_es(cls, domain, request, initial_query=None, exclude_url_users=False, **kwargs):
         emws = request.GET.getlist(cls.slug)
         user_ids = [u[3:] for u in filter(lambda s: s.startswith("u__"), emws)]
         group_ids = [g[3:] for g in filter(lambda s: s.startswith("g__"), emws)]
@@ -369,6 +369,10 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 {"terms": {"_id": user_ids}},
                 {"terms": {"__group_ids": group_ids}},
             ]}
+
+            if exclude_url_users:
+                # Don't search for users that were included in the url
+                or_filter["or"].pop(0)
 
             # for setting up an 'or' filter for non commcare users. This occurs when all mobile workers is not selected,
             # but admin, demo, or unknown users are
