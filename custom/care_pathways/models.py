@@ -3,14 +3,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.care_pathways.utils import get_domain_configuration
 
-
-def flat_field(fn):
-    def getter(item):
-        return unicode(fn(item) or "")
-    return fluff.FlatField(getter)
-
-
 # This calculator is necessary to generate 'date' field which is required in the database
+from custom.utils.utils import flat_field
+
+
 class Numerator(fluff.Calculator):
     @fluff.null_emitter
     def numerator(self, case):
@@ -21,61 +17,63 @@ class Property(fluff.Calculator):
 
     @fluff.date_emitter
     def value(self, case):
-        config = get_domain_configuration(case.domain)['by_type_hierarchy']
+        config = get_domain_configuration(case.domain).by_type_hierarchy
         for chain in config:
-            if chain['val'] == case['crop_id'].lower():
-                for domain in chain['next']:
-                    for practice in domain['next']:
-                        ppt_prop = case.get_case_property(practice['val'])
+            if chain.val == (case['crop_id'] or '').lower():
+                for domain in chain.next:
+                    for practice in domain.next:
+                        ppt_prop = case.get_case_property(practice.val)
                         yield {
                             'date': case.opened_on,
                             'value': 1 if ppt_prop == 'Y' else 0,
-                            'group_by': [case.domain, chain['val'], domain['val'], practice['val']]
+                            'group_by': [case.domain, chain.val, domain.val, practice.val]
                         }
 
 
 def get_property(case, property):
     configuration = get_domain_configuration(case.domain)
-    if property in configuration['geography_hierarchy']:
-        result = case.get_case_property(configuration['geography_hierarchy'][property]['prop'])
+    if property in configuration.geography_hierarchy:
+        result = case.get_case_property(configuration.geography_hierarchy[property]['prop'])
         return result.lower() if result else result
     return None
 
 
 def get_mapping(case):
-    value_chains = get_domain_configuration(case.domain)['by_type_hierarchy']
-    return list({vc['val'] for vc in value_chains})
+    value_chains = get_domain_configuration(case.domain).by_type_hierarchy
+    return list({vc.val for vc in value_chains})
 
 
 def get_domains_with_next(case):
-    configuration = get_domain_configuration(case.domain)['by_type_hierarchy']
+    configuration = get_domain_configuration(case.domain).by_type_hierarchy
     domains = []
     for chain in configuration:
-        domains.extend(chain['next'])
+        domains.extend(chain.next)
     return domains
 
 
 def get_domains(case):
     domains = get_domains_with_next(case)
-    return list({d['val'] for d in domains})
+    return list({d.val for d in domains})
 
 
 def get_practices(case):
     domains = get_domains_with_next(case)
     practices = []
     for domain in domains:
-        practices.extend(domain['next'])
-    return list({p['val'] for p in practices})
+        practices.extend(domain.next)
+    return list({p.val for p in practices})
+
 
 def get_gender(case):
     gender =case.get_case_property('farmer_gender')
     return '1' if gender and gender[0].lower() == 'f' else '0'
 
 
-class GeographyFluff(fluff.IndicatorDocument):
-    def case_property(property):
-        return flat_field(lambda case: get_property(case, property))
+def case_property(property):
+    return flat_field(lambda case: get_property(case, property))
 
+
+class GeographyFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
     domains = ('pathways-india-mis', 'pathways-tanzania',)
@@ -91,9 +89,6 @@ class GeographyFluff(fluff.IndicatorDocument):
 
 
 class FarmerRecordFluff(fluff.IndicatorDocument):
-    def case_property(property):
-        return flat_field(lambda case: get_property(case, property))
-
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
     domains = ('pathways-india-mis', 'pathways-tanzania',)

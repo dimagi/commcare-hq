@@ -1,11 +1,18 @@
 import re
 import os
 import json
+from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
+from dimagi.utils.decorators.memoized import memoized
 
+@memoized
 def get_domain_configuration(domain):
     with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
-        return json.loads(f.read())
+        _loaded_configuration = json.loads(f.read())
+        return DomainConfiguration(
+            geography_hierarchy=_loaded_configuration['geography_hierarchy'],
+            by_type_hierarchy=[ByTypeHierarchyRecord(d) for d in _loaded_configuration['by_type_hierarchy']]
+        )
 
 def is_mapping(prop, domain):
     return any(d['val'] == prop for d in get_mapping(domain))
@@ -17,32 +24,43 @@ def is_practice(prop, domain):
     return any(d['val'] == prop for d in get_pracices(domain))
 
 def get_mapping(domain_name):
-    value_chains = get_domain_configuration(domain_name)['by_type_hierarchy']
-    return list({'val': vc['val'], "text": vc['text']} for vc in value_chains)
+    value_chains = get_domain_configuration(domain_name).by_type_hierarchy
+    return list({'val': vc.val, "text": vc.text} for vc in value_chains)
 
 def get_domains_with_next(domain_name):
-    configuration = get_domain_configuration(domain_name)['by_type_hierarchy']
+    configuration = get_domain_configuration(domain_name).by_type_hierarchy
     domains = []
     for chain in configuration:
-        domains.extend(chain['next'])
+        domains.extend(chain.next)
     return domains
 
 
 def get_domains(domain_name):
     domains = get_domains_with_next(domain_name)
-    return list({'val': d['val'], "text": d['text']} for d in domains)
+    return list({'val': d.val, "text": d.text} for d in domains)
 
 
 def get_pracices(case):
     domains = get_domains_with_next(case)
     practices = []
     for domain in domains:
-        practices.extend(domain['next'])
-    return list({'val': p['val'], "text": p['text']} for p in practices)
+        practices.extend(domain.next)
+    return list({'val': p.val, "text": p.text} for p in practices)
 
 
 def _chunks(l, n):
     return [l[i:i+n] for i in xrange(0, len(l), n)]
+
+
+class ByTypeHierarchyRecord(JsonObject):
+    val = StringProperty()
+    text = StringProperty()
+    next = ListProperty(lambda: ByTypeHierarchyRecord, exclude_if_none=True)
+
+
+class DomainConfiguration(JsonObject):
+    geography_hierarchy = DictProperty()
+    by_type_hierarchy = ListProperty(ByTypeHierarchyRecord)
 
 
 class CareDataFormatter(DataFormatter):
@@ -80,14 +98,14 @@ class CareDataFormatter(DataFormatter):
                 for k, v in val[1].iteritems():
                     if k in group_row:
                         group_row[k] += v
-                value_chains = get_domain_configuration(domain)['by_type_hierarchy']
+                value_chains = get_domain_configuration(domain).by_type_hierarchy
 
                 def find_name(list, deep):
                     for element in list:
-                        if deep == len(val[0])-2 and val[0][deep] == element['val']:
-                            return element['text']
-                        elif val[0][deep] == element['val']:
-                            return find_name(element['next'], deep+1)
+                        if deep == len(val[0])-2 and val[0][deep] == element.val:
+                            return element.text
+                        elif val[0][deep] == element.val:
+                            return find_name(element.next, deep+1)
 
                 disp_name = find_name(value_chains, 0)
             row = self._format.format_row(group_row)

@@ -3,24 +3,15 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.toggles import PATHWAYS_PREVIEW
-from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
+from custom.care_pathways.reports import CareReportMixin
+from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
-from custom.care_pathways.utils import get_domain_configuration
 import re
 
-class AdoptionBarChartReport(GenericTabularReport, CustomProjectReport):
+class AdoptionBarChartReport(GenericTabularReport, CustomProjectReport, CareReportMixin):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
     report_title = 'Adoption Bar Chart'
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
-        if user and PATHWAYS_PREVIEW.enabled(user.username):
-            return True
-        return False
 
     @property
     def fields(self):
@@ -39,24 +30,11 @@ class AdoptionBarChartReport(GenericTabularReport, CustomProjectReport):
 
     @property
     def report_config(self):
-        config = dict(
-            domain=self.domain,
-            ppt_year=self.request.GET.get('year', ''),
-            value_chain=self.request.GET.get('type_value_chain', ''),
-            domains=tuple(self.request.GET.getlist('type_domain', [])),
-            practices=tuple(self.request.GET.getlist('type_practice', [])),
+        config = super(AdoptionBarChartReport, self).report_config
+        config.update(dict(
             group=self.request.GET.get('group_by', ''),
-            owner_id=self.request.GET.get('cbt_name', ''),
-            gender=self.request.GET.get('gender', ''),
-            group_leadership=self.request.GET.get('group_leadership', ''),
-            schedule=self.request.GET.get('farmer_social_category', ''),
-        )
-        hierarchy_config = get_domain_configuration(self.domain)['geography_hierarchy']
-        for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
-            req_prop = 'geography_%s' % v['prop']
-            if self.request.GET.getlist(req_prop, []):
-                config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
-                break
+        ))
+
         return config
 
     def get_chart(self, rows, columns, x_label, y_label):

@@ -25,7 +25,7 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         hierarchy = helper = []
-        hierarchy_config = sorted([k for k in get_domain_configuration(self.request.domain)['geography_hierarchy'].keys()])
+        hierarchy_config = sorted([k for k in get_domain_configuration(self.request.domain).geography_hierarchy.keys()])
         data = GeographySqlData(self.request.domain).get_data()
         for val in data:
             for lvl in hierarchy_config:
@@ -47,7 +47,7 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration(self.request.domain)['geography_hierarchy'].iteritems())]
+        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration(self.request.domain).geography_hierarchy.iteritems())]
 
     @classmethod
     def _get_label_value(cls, request, label):

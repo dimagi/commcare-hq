@@ -10,6 +10,3 @@ CUSTOM_REPORTS = (
         TableCardReport
     )),
 )
-
-
-

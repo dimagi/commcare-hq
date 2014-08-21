@@ -92,7 +92,7 @@ class GeographySqlData(SqlData):
     table_name = "fluff_GeographyFluff"
 
     def __init__(self, domain):
-        self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
+        self.geography_config = get_domain_configuration(domain).geography_hierarchy
         self.config = dict(domain=domain)
 
     @property
@@ -118,7 +118,7 @@ class CareSqlData(SqlData):
 
     def __init__(self, domain, config, request_params):
         self.domain = domain
-        self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
+        self.geography_config = get_domain_configuration(domain).geography_hierarchy
         self.config = config
         self.request_params = self.filter_request_params(request_params)
         super(CareSqlData, self).__init__(config=config)
@@ -130,7 +130,7 @@ class CareSqlData(SqlData):
 
     @property
     def filters(self):
-        filters = [EQ("ppt_year", "ppt_year")]
+        filters = [EQ("ppt_year", "ppt_year"), EQ('domain', 'domain')]
         for k, v in self.geography_config.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
                 filters.append(IN(k, v['prop']))
