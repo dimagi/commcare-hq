@@ -37,7 +37,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertHasAllStrings(app_xml, app_strings)
 
-
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
 

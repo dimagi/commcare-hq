@@ -1,6 +1,7 @@
 trunk: master
 name: autostaging
 branches:
+  - auto-gps
   - subtree-merge-forms-cases
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -14,6 +15,8 @@ branches:
 #  - emwf-refactor  # Ethan 7/25
   - real-project-spaces # Nick P 7/27
   - closecase  # SK 7/28
+  - basic-auth
+  - archive-to-deactivate  # cz 7/30
 submodules:
   submodules/couchlog-src:
     branches:
