@@ -91,8 +91,7 @@ class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 11, 15),
         )
-        data_provider = MockDataProvider(self.report.datespan,
-                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        data_provider = MockDataProvider(default_date=date(2014, 6, 25))
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertEqual(4, row.preg_month)
 
@@ -103,8 +102,7 @@ class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 11, 15),
         )
-        data_provider = MockDataProvider(self.report.datespan,
-                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        data_provider = MockDataProvider(default_date=date(2014, 6, 5))
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
 
         # the next month should actually start window 4
@@ -139,8 +137,7 @@ class TestChildFirstMonthWindow(OPMCaseReportTestBase):
             forms=[],
             dod=date(2014, 5, 15),
         )
-        data_provider = MockDataProvider(self.report.datespan,
-                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 25)])))
+        data_provider = MockDataProvider(default_date=date(2014, 6, 25))
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertEqual(1, row.child_age)
 
@@ -150,8 +147,7 @@ class TestChildFirstMonthWindow(OPMCaseReportTestBase):
             forms=[],
             dod=date(2014, 5, 15),
         )
-        data_provider = MockDataProvider(self.report.datespan,
-                                         vhnd_map=AggressiveDefaultDict(lambda: set([date(2014, 6, 5)])))
+        data_provider = MockDataProvider(default_date=date(2014, 6, 5))
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
 
         # the next month should actually start window 1
