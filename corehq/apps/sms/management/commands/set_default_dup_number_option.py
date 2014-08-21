@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMSLog, CallLog
 
 class Command(BaseCommand):
     args = ""
@@ -10,7 +10,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for domain in Domain.get_all():
-            count = SMSLog.count_by_domain(domain.name)
+            count = (SMSLog.count_by_domain(domain.name) +
+                CallLog.count_by_domain(domain.name))
             if count > 0:
                 if not domain.send_to_duplicated_case_numbers:
                     # if not True, explicitly set to False
