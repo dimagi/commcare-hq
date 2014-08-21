@@ -132,6 +132,19 @@ INDICATOR_DATA = {
         },
         "xaxis_label": "# users",
     },
+    "active_users_mobile": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_users_mobile",
+        "chart_title": "Active Mobile Users (last 30 days)",
+        "hide_cumulative_charts": True,
+        "histogram_type": "users",
+        "interval": "month",
+        "is_cumulative": False,
+        "params_es_dict": {
+            "user_type_mobile": True,
+        },
+        "xaxis_label": "# users",
+    },
 }
 
 
@@ -467,4 +480,5 @@ class UserReport(GlobalAdminReports):
         'users',
         'users_mobile',
         'users_web',
+        'active_users_mobile',
     ]
