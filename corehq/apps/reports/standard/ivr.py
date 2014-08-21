@@ -15,6 +15,7 @@ from django.conf import settings
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reminders.util import get_form_name
 import pytz
+from math import ceil
 
 class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     """
@@ -56,6 +57,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
         # Store the results of lookups for faster loading
         username_map = {} 
         form_map = {}
+        xforms_sessions = {}
         
         direction_map = {
             INCOMING: _("Incoming"),
@@ -105,19 +107,17 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             else:
                 answered = _("Yes") if call.answered else _("No")
             
-            if call.xforms_session_id is None:
-                submission_id = None
-            else:
-                session = XFormsSession.by_session_id(call.xforms_session_id)
-                submission_id = session.submission_id
+            if call.xforms_session_id:
+                xforms_sessions[call.xforms_session_id] = None
             
             row = [
+                call.xforms_session_id,
                 self._fmt_timestamp(timestamp),
                 self._fmt(username),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction,"-")),
                 self._fmt(form_name),
-                self._fmt("-") if submission_id is None else self._fmt_submission_link(submission_id),
+                self._fmt("-"),
                 self._fmt(answered),
                 self._fmt(call.duration),
                 self._fmt(_("Yes") if call.error else _("No")),
@@ -128,8 +128,35 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
                 row.append(self._fmt(call.gateway_session_id))
             
             result.append(row)
-        
-        return result
+
+        # Look up the XFormsSession documents 500 at a time.
+        # Had to do this because looking up one document at a time slows things
+        # down a lot.
+        all_session_ids = xforms_sessions.keys()
+        limit = 500
+        range_max = int(ceil(len(all_session_ids) * 1.0 / limit))
+        for i in range(range_max):
+            lower_bound = i * limit
+            upper_bound = (i + 1) * limit
+            sessions = XFormsSession.view("smsforms/sessions_by_touchforms_id",
+                keys=all_session_ids[lower_bound:upper_bound],
+                include_docs=True).all()
+            for session in sessions:
+                xforms_sessions[session.session_id] = session.submission_id
+
+        # Add into the final result the link to the submission based on the
+        # outcome of the above lookups.
+        final_result = []
+        for row in result:
+            final_row = row[1:]
+            session_id = row[0]
+            if session_id:
+                submission_id = xforms_sessions[session_id]
+                if submission_id:
+                    final_row[5] = self._fmt_submission_link(submission_id)
+            final_result.append(final_row)
+
+        return final_result
     
     def _fmt(self, val):
         if val is None:
