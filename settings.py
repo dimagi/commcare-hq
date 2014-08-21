@@ -41,15 +41,15 @@ PILLOW_RETRY_BACKOFF_FACTOR = 2
 
 
 ####### Couch Config ######
-COUCH_HTTPS = False # recommended production value is True if enabling https
-COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'pillowtop'
+COUCH_DATABASE = 'http://localhost:5984/pillowtop'
 
-COUCH_DATABASE = 'http://127.0.0.1:5984/pillowtop'
-
-COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/pillowtop') for app in ['pillow_retry'] ]
+COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
+    'pillowtop',
+    'pillow_retry',
+    'couch',
+    # This is necessary for abstract classes in dimagi.utils.couch.undo
+    # otherwise breaks tests
+]]
 
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
