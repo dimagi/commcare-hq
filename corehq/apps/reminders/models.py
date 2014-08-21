@@ -236,6 +236,7 @@ class CaseReminderEvent(DocumentSchema):
 
 def run_rule(case_id, handler, schedule_changed, prev_definition):
     case = CommCareCase.get(case_id)
+    handler.set_rule_checkpoint(1, incr=True)
     try:
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
@@ -244,6 +245,7 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         # the scheduling.
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
+    handler.set_rule_checkpoint(2, incr=True)
     try:
         # It shouldn't be necessary to lock this out, but a deadlock can
         # happen in rare cases without it
@@ -252,6 +254,7 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
             client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
+    handler.set_rule_checkpoint(3, incr=True)
 
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
@@ -438,6 +441,15 @@ class CaseReminderHandler(Document):
     #   Note that this option only makes a difference if a case is filling out the SMS survey,
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
+
+    def set_rule_checkpoint(self, num, incr=False):
+        """ Only used for debugging. """
+        client = get_redis_client()
+        key = "reminder-rule-processing-checkpoint-%s-%s" % (num, self._id)
+        if incr:
+            client.incr(key)
+        else:
+            client.set(key, 0)
 
     @property
     def uses_parent_case_property(self):
@@ -998,15 +1010,19 @@ class CaseReminderHandler(Document):
                         len(case_ids))
                 except:
                     pass
+                self.set_rule_checkpoint(1)
+                self.set_rule_checkpoint(2)
+                self.set_rule_checkpoint(3)
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True)
+                    use_critical_section=True, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True)
+                max_threads=5, use_critical_section=True,
+                print_stack_interval=60)
 
     @classmethod
     def get_handlers(cls, domain, case_type=None, ids_only=False):

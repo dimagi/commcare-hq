@@ -46,6 +46,8 @@ class CacheableRequestMixIn(object):
 
     def set_in_cache(self, tag, object, expiry=DEFAULT_EXPIRY):
         if self._is_valid():
+            # accessing it first (somehow) makes a test not hang
+            self.get_cache()
             self.get_cache().set(self.get_cache_key(tag), object, expiry)
         else:
             pass

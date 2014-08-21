@@ -102,6 +102,18 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
                 title="# Under5s receiving on-time MUAC (90 days)",
                 indicator_key="routine_muac"
             ),
+            child_moderate_muac_wasting=dict(
+                description="No. children aged 6-59 months with moderate wasting (MUAC 115<125)"
+                            " at last MUAC reading this time period",
+                title="# 6-59 month Children with moderate MUAC (115<125)",
+                indicator_key="moderate_muac_wasting"
+            ),
+            child_severe_muac_wasting=dict(
+                description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"
+                            " at last MUAC reading this time period",
+                title="# 6-59 month Children with severe MUAC < 115",
+                indicator_key="severe_muac_wasting"
+            ),
             child_muac_wasting=dict(
                 description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"
                             " at last MUAC reading this time period",

@@ -862,6 +862,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         detail_ids = [self.get_detail_id_safe(module, detail_type)
                       for detail_type, detail, enabled in module.get_details()
                       if enabled]
+        detail_ids = filter(None, detail_ids)
         xpaths = set()
 
         if additional_xpaths:

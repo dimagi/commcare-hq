@@ -1297,7 +1297,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     return self.has_permission(domain, perm, data)
                 fn.__name__ = item
                 return fn
-        return super(CouchUser, self).__getattr__(item)
+        raise AttributeError("'{}' object has no attribute '{}'".format(
+            self.__class__.__name__, item))
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):

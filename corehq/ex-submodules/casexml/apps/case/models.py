@@ -962,23 +962,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             actions.pop(0)
         else:
             actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
-            # Log weirdly placed 'create' actions so we can investigate.
-            # This is temporary, for information gathering.
-            for a in self.actions[1:]:
-                if a.action_type == const.CASE_ACTION_CREATE:
-                    logging.exception(
-                        "There's a second case create for case {} "
-                        "from form {} submitted at {} in domain {}, "
-                        "caught during rebuild. Action order: {}."
-                        .format(
-                            self.case_id,
-                            a.xform_id,
-                            a.server_date,
-                            self.domain,
-                            [a.action_type for a in self.actions],
-                        )
-                    )
-                    break
 
         for a in actions:
             self._apply_action(a)

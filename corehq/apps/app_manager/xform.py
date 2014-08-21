@@ -1,4 +1,5 @@
 from collections import defaultdict
+import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
@@ -427,6 +428,20 @@ def autoset_owner_id_for_subcase(subcase):
     return 'owner_id' not in subcase.case_properties
 
 
+def validate_xform(source, version='1.0'):
+    if isinstance(source, unicode):
+        source = source.encode("utf-8")
+    # normalize and strip comments
+    source = ET.tostring(parse_xml(source))
+    validation_results = formtranslate.api.validate(source, version=version)
+    if not validation_results.success:
+        raise XFormValidationError(
+            fatal_error=validation_results.fatal_error,
+            version=version,
+            validation_problems=validation_results.problems,
+        )
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -442,9 +457,8 @@ class XForm(WrappedNode):
         self.has_casedb = False
 
     def validate(self, version='1.0'):
-        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml is not None else '', version=version)
-        if not validation_results.success:
-            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
+        validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
+                       version=version)
         return self
 
     @property
@@ -1179,6 +1193,9 @@ class XForm(WrappedNode):
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
+
+                if subcase.close_condition.is_active():
+                    subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
