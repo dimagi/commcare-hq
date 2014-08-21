@@ -27,19 +27,19 @@ def outgoing_messages():
 
 
 def to_commcare_user():
-    return filters.term("couch_receipient_doc_type", "couchuser")
+    return filters.term("couch_recipient_doc_type", "commcareuser")
 
 
 def to_commcare_case():
-    return filters.term("couch_receipient_doc_type", "commcarecase")
+    return filters.term("couch_recipient_doc_type", "commcarecase")
 
 
 def to_web_user():
-    return filters.term("couch_receipient_doc_type", "webuser")
+    return filters.term("couch_recipient_doc_type", "webuser")
 
 
 def to_couch_user():
-    return filters.term("couch_receipient_doc_type", "couchuser")
+    return filters.term("couch_recipient_doc_type", "couchuser")
 
 
 def received(gt=None, gte=None, lt=None, lte=None):
