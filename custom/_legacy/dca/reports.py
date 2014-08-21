@@ -6,7 +6,6 @@ from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from functools import wraps
 from dateutil.parser import parse, tz
 
 class ProjectOfficerReport(GenericTabularReport, CustomProjectReport):

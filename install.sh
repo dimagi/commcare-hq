@@ -23,16 +23,16 @@
 
 
 
-# Database settings; change these if desired
+# Database settings
+# (`: ${FOO=bar}` is bash's "set if not set" notation)
+: ${POSTGRES_DB="commcarehq"}
+: ${POSTGRES_REPORTING_DB="commcarehq_reporting"}
+: ${POSTGRES_USER="commcarehq"}
+: ${POSTGRES_PW="commcarehq"}
 
-POSTGRES_DB="commcarehq"
-POSTGRES_REPORTING_DB="commcarehq_reporting"
-POSTGRES_USER="commcarehq"
-POSTGRES_PW="commcarehq"
-
-COUCHDB_DB="commcarehq"
-COUCHDB_USER="commcarehq"
-COUCHDB_PW="commcarehq"
+: ${COUCHDB_DB="commcarehq"}
+: ${COUCHDB_USER="commcarehq"}
+: ${COUCHDB_PW="commcarehq"}
 
 ## Misc settings
 
@@ -73,7 +73,12 @@ if [ $? -eq 0 ]; then
     fi
     sudo apt-get update
 
-    cat requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
+    ## Ignore packages that have the [travis_ignore] hashtag from the apt-packages.txt file if TRAVIS_INSTALL = yes
+    if [ "$TRAVIS_INSTALL" == "y" ]; then
+        grep -v '\[travis_ignore\]' requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
+    else
+        cat requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
+    fi
 
 else
     command -v yum > /dev/null 2>&1
@@ -312,5 +317,6 @@ sudo -u postgres createdb $REPORTING_DB
 echo "CREATE USER $USER WITH PASSWORD '$PW'; ALTER USER $USER CREATEDB;" | sudo -u postgres psql $DB
 
 curl -X PUT "http://localhost:5984/$COUCHDB_DB"
-curl -X PUT "http://localhost:5984/_config/admins/$COUCHDB_USER" -d \"$COUCHDB_PW\"
-
+if [[ -n $COUCHDB_USER ]]; then
+    curl -X PUT "http://localhost:5984/_config/admins/$COUCHDB_USER" -d \"$COUCHDB_PW\"
+fi

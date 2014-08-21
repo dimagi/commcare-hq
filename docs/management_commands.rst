@@ -174,7 +174,6 @@ Complete list of available subcommands:
     | prime_views
     | print_settings
     | print_user_for_session
-    | printstatic
     | ptop_es_manage
     | ptop_fast_reindex_apps
     | ptop_fast_reindex_cases

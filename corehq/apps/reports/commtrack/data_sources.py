@@ -1,3 +1,4 @@
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
@@ -12,15 +13,6 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
-
-
-def reporting_status(transaction, start_date, end_date):
-    # for now we have decided to remove the "late" distinction
-    # so we are only checking if a time even exists in this period
-    if transaction:
-        return 'reporting'
-    else:
-        return 'nonreporting'
 
 
 class CommtrackDataSourceMixin(object):
@@ -99,20 +91,41 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CATEGORY = 'category'
     SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
 
-    _slug_attrib_map = {
-        SLUG_PRODUCT_NAME: lambda s: Product.get(s.product_id).name,
-        SLUG_PRODUCT_ID: lambda s: s.product_id,
-        SLUG_LOCATION_ID: lambda s: SupplyPointCase.get(s.case_id).location_[-1],
-        # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
-        SLUG_CURRENT_STOCK: 'stock_on_hand',
-        SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
-        SLUG_MONTHS_REMAINING: 'months_remaining',
-        SLUG_CATEGORY: 'stock_category',
-        # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
-        # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
-        SLUG_LAST_REPORTED: 'last_modified_date',
-        SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
-    }
+    @property
+    @memoized
+    def _slug_attrib_map(self):
+        @memoized
+        def product_name(product_id):
+            return Product.get(product_id).name
+        @memoized
+        def supply_point_location(case_id):
+            return SupplyPointCase.get(case_id).location_[-1]
+
+        raw_map = {
+            self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
+            self.SLUG_PRODUCT_ID: 'product_id',
+            self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
+            # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
+            self.SLUG_CURRENT_STOCK: 'stock_on_hand',
+            self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
+            self.SLUG_MONTHS_REMAINING: 'months_remaining',
+            self.SLUG_CATEGORY: 'stock_category',
+            # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
+            # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
+            self.SLUG_LAST_REPORTED: 'last_modified_date',
+            self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
+        }
+
+        # normalize the slug attrib map so everything is callable
+        def _normalize_row(slug, function_or_property):
+            if not callable(function_or_property):
+                function = lambda s: getattr(s, function_or_property, '')
+            else:
+                function = function_or_property
+
+            return slug, function
+
+        return dict(_normalize_row(k, v) for k, v in raw_map.items())
 
     def slugs(self):
         return self._slug_attrib_map.keys()
@@ -231,19 +244,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return product_aggregation.values()
 
     def raw_product_states(self, stock_states, slugs):
-        def _slug_attrib(slug, attrib, product, output):
-            if not slugs or slug in slugs:
-                if callable(attrib):
-                    output[slug] = attrib(product)
-                else:
-                    output[slug] = getattr(product, attrib, '')
-
         for state in stock_states:
-            out = {}
-            for slug, attrib in self._slug_attrib_map.items():
-                _slug_attrib(slug, attrib, state, out)
-
-            yield out
+            yield {
+                slug: f(state) for slug, f in self._slug_attrib_map.items() if not slugs or slug in slugs
+            }
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
@@ -273,6 +277,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
 
+
 class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, MultiFormDrilldownMixin):
     """
     Config:
@@ -281,66 +286,45 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
     """
 
     def get_data(self):
-        sp_ids = get_relevant_supply_point_ids(
-            self.domain,
-            self.active_location
-        )
-
-        products = Product.by_domain(self.domain)
-        if self.program_id:
-            products = filter(
-                lambda product: product.program_id == self.program_id, products
+        # todo: this will probably have to paginate eventually
+        if self.all_relevant_forms:
+            sp_ids = get_relevant_supply_point_ids(
+                self.domain,
+                self.active_location,
             )
 
-        for sp_id in sp_ids:
-            loc = SupplyPointCase.get(sp_id).location
-            transactions = StockTransaction.objects.filter(
-                case_id=sp_id,
-            ).exclude(
-                report__date__lte=self.start_date
-            ).exclude(
-                report__date__gte=self.end_date
-            )
+            supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
+            form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
 
-            if transactions:
-                transactions = sorted(
-                    transactions,
-                    key=lambda trans: trans.report.date
-                )
-
-            if self.all_relevant_forms:
-                forms_xmlns = []
-
-                for form in self.all_relevant_forms.values():
-                    forms_xmlns.append(form['xmlns'])
-
-                form_filtered_transactions = [
-                    t for t in transactions if XFormInstance.get(t.report.form_id).xmlns in forms_xmlns
-                ]
-
-                if form_filtered_transactions:
+            for supply_point in supply_points:
+                # todo: get locations in bulk
+                loc = supply_point.location
+                transactions = StockTransaction.objects.filter(
+                    case_id=supply_point._id,
+                ).exclude(
+                    report__date__lte=self.start_date
+                ).exclude(
+                    report__date__gte=self.end_date
+                ).order_by('-report__date')
+                matched = False
+                for trans in transactions:
+                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
+                        yield {
+                            'loc_id': loc._id,
+                            'loc_path': loc.path,
+                            'name': loc.name,
+                            'type': loc.location_type,
+                            'reporting_status': 'reporting',
+                            'geo': loc._geopoint,
+                        }
+                        matched = True
+                        break
+                if not matched:
                     yield {
                         'loc_id': loc._id,
                         'loc_path': loc.path,
                         'name': loc.name,
                         'type': loc.location_type,
-                        'reporting_status': reporting_status(
-                            form_filtered_transactions[-1],
-                            self.start_date,
-                            self.end_date
-                        ),
-                        'geo': loc._geopoint,
-                    }
-                else:
-                    yield {
-                        'loc_id': loc._id,
-                        'loc_path': loc.path,
-                        'name': loc.name,
-                        'type': loc.location_type,
-                        'reporting_status': reporting_status(
-                            None,
-                            self.start_date,
-                            self.end_date
-                        ),
+                        'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
                     }

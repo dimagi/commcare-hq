@@ -605,9 +605,6 @@ var AdvancedCase = (function () {
 
             self.validate = ko.computed(function () {
                 if (self.auto_select){
-                    if (!self.config.caseConfigViewModel) {
-                        return;
-                    }
                     var mode = self.auto_select.mode();
                     var value_source = self.auto_select.value_source();
                     var value_key = self.auto_select.value_key();

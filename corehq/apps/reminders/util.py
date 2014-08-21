@@ -128,6 +128,11 @@ def get_recipient_name(recipient, include_desc=True):
     else:
         return name
 
+def enqueue_reminder_directly(reminder):
+    from corehq.apps.reminders.management.commands.run_reminder_queue import (
+        ReminderEnqueuingOperation)
+    ReminderEnqueuingOperation().enqueue_directly(reminder)
+
 def create_immediate_reminder(contact, content_type, reminder_type=None, message=None, form_unique_id=None, case=None):
     """
     contact - the contact to send to

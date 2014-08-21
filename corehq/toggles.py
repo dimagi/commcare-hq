@@ -110,12 +110,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
 )
 
-AUTO_GPS_CAPTURE = StaticToggle(
-    'auto_gps_capture',
-    'Auto GPS Capture',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'Visit Scheduler',

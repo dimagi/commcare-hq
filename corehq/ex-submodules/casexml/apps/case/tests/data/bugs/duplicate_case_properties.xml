@@ -1,0 +1,24 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="Registration" xmlns:cc="http://commcarehq.org/xforms"
+	xmlns="http://bihar.commcarehq.org/pregnancy/registration">
+	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+		<n0:deviceID>95NGKBTQRKFWMYH6OSIMBQEZQ</n0:deviceID>
+		<n0:timeStart>2012-04-25T14:03:39.251+05:30</n0:timeStart>
+		<n0:timeEnd>2012-04-25T14:05:45.250+05:30</n0:timeEnd>
+		<n0:username>mtest</n0:username>
+		<n0:userID>3ed205ad5d96199104c08eb5e0f5ae42</n0:userID>
+		<n0:instanceID>ea9571f2-785a-4159-8937-caf66c25ac4f</n0:instanceID>
+		<cc:appVersion>v2.0.0dev
+			(5fb368-980df7-unvers-2.1.0-Nokia/S40-native-input) #86 b:2012-Apr-23
+			r:2012-Apr-24</cc:appVersion>
+	</n0:meta>
+	<n1:case case_id="061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b"
+		date_modified="2012-04-25T14:05:45.250+05:30" user_id="3ed205ad5d96199104c08eb5e0f5ae42"
+		xmlns:n1="http://commcarehq.org/case/transaction/v2">
+		<n1:update>
+			<n1:foo />
+			<n1:foo />
+			<n1:date_next_eb>2012-05-27</n1:date_next_eb>
+		</n1:update>
+	</n1:case>
+</data>

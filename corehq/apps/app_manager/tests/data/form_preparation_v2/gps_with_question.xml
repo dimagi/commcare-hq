@@ -35,7 +35,7 @@
             <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid" />
             <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()" />
             <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion" />
-            <pollsensor event="xforms-ready"/>
+            <orx:pollsensor event="xforms-ready"/>
         </model>
     </h:head>
     <h:body>

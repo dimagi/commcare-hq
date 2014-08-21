@@ -30,7 +30,7 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm)
+from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm, UpdateUserPermissionForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -216,12 +216,28 @@ class EditWebUserView(BaseEditUserView):
         return form
 
     @property
+    def form_user_update_permissions(self):
+        user = self.editable_user
+        is_super_user = user.is_superuser
+
+        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
+
+    @property
+    def main_context(self):
+        ctx = super(EditWebUserView, self).main_context
+        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
+        return ctx
+
+    @property
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
         }
         if self.request.project.commtrack_enabled:
             ctx.update({'update_form': self.commtrack_form})
+        if self.request.couch_user.is_superuser:
+            ctx.update({'update_permissions': True})
+
         return ctx
 
     @method_decorator(require_can_edit_web_users)
@@ -232,6 +248,14 @@ class EditWebUserView(BaseEditUserView):
         if self.editable_user_id == self.couch_user._id:
             return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "update-user-permissions" and request.couch_user.is_superuser:
+            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
+                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
+                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+        return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
 class BaseFullEditUserView(BaseEditUserView):

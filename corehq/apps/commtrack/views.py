@@ -18,7 +18,8 @@ from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async
+from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
+    recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
 import csv
@@ -107,6 +108,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
+            previous_config = copy.copy(self.commtrack_settings)
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
             self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
@@ -127,7 +129,17 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                             data['consumption_' + field])
 
             self.commtrack_settings.save()
-            messages.success(request, _("Settings updated!"))
+
+
+            if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
+                or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
+            ):
+                # kick off delayed consumption rebuild
+                recalculate_domain_consumption_task.delay(self.domain)
+                messages.success(request, _("Settings updated! Your updated consumption settings may take a "
+                                            "few minutes to show up in reports and on phones."))
+            else:
+                messages.success(request, _("Settings updated!"))
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 

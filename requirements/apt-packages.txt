@@ -9,6 +9,10 @@ memcached
 gdebi-core
 apache2
 
+# packages ignored by travis install
+# note: you have to incude the hashtag after each package to ensure they are ignored
+redis-server # [travis_ignore]
+
 # dependencies for the pip modules
 libxml2-dev
 libxslt-dev 

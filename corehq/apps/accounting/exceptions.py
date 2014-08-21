@@ -48,3 +48,7 @@ class PaymentHandlerError(Exception):
 
 class BillingContactInfoError(Exception):
     pass
+
+
+class CreateAccountingAdminError(Exception):
+    pass

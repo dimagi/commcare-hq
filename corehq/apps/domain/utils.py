@@ -5,7 +5,7 @@ from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db
-from django.core.cache import cache
+
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
@@ -65,3 +65,17 @@ def get_dummy_domain(domain_type=None):
     dummy_domain = Domain()
     dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
     return dummy_domain
+
+
+def get_doc_ids(domain, doc_type, database=None):
+    """
+    Given a domain and doc type, get all docs matching that domain and type
+    """
+    if not database:
+        database = get_db()
+    return [row['id'] for row in database.view('domain/docs',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
+        reduce=False,
+        include_docs=False,
+    )]
