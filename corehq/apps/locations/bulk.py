@@ -264,6 +264,14 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
 
         if consumption and sp:
             for product_code, value in consumption:
+                product = Product.get_by_code(domain, product_code)
+
+                if not product:
+                    # skip any consumption column that doesn't match
+                    # to a real product. currently there is no easy
+                    # way to alert here, though.
+                    continue
+
                 try:
                     amount = Decimal(value)
 
@@ -271,7 +279,7 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
                     if amount and amount >= 0:
                         set_default_consumption_for_supply_point(
                             domain,
-                            Product.get_by_code(domain, product_code)._id,
+                            product._id,
                             sp._id,
                             amount
                         )

@@ -241,7 +241,7 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     #Handwashing
-    latrine_with_handwashing_proportion=dict(
+    handwashing_near_latrine_proportion=dict(
         description="Proportion of households ASSESSED with handwashing station within 10m"\
                     " of the latrine during the time period",
         title="% of households ASSESSED with handwashing station within 10m of the latrine",

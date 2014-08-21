@@ -73,6 +73,11 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
+    last_modified = DateTimeProperty()
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        return super(Program, self).save(*args, **kwargs)
 
     @classmethod
     def by_domain(cls, domain, wrap=True):
@@ -113,6 +118,7 @@ class Product(Document):
     cost = DecimalProperty()
     product_data = DictProperty()
     is_archived = BooleanProperty(default=False)
+    last_modified = DateTimeProperty()
 
     def save(self, *args, **kwargs):
         """
@@ -134,8 +140,12 @@ class Product(Document):
             'product_data',
         ]
 
+        # mark modified time stamp for selective syncing
+        self.last_modified = datetime.now()
+
         result = super(Product, self).save(*args, **kwargs)
 
+        # sync properties to SQL version
         sql_product, _ = SQLProduct.objects.get_or_create(
             product_id=self._id
         )
