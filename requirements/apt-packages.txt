@@ -6,6 +6,7 @@ libevent-dev
 python-setuptools
 postgresql
 memcached
+redis-server
 gdebi-core
 apache2
 
