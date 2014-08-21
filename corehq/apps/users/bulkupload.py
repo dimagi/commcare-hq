@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.users.forms import CommCareAccountForm
-from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.util import normalize_username, raw_username, validate_password
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.domain.models import Domain
 from couchexport.writers import Excel2007ExportWriter
@@ -326,7 +326,16 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         if username and user.username != username:
                             user.change_username(username)
                         if is_password(password):
-                            user.set_password(password)
+                            try:
+                                user.set_password(password)
+                            except ValidationError as e:
+                                ret['rows'].append({
+                                    'username': username,
+                                    'row': row,
+                                    'flag': _("'|' is not allowed in a password"),
+                                })
+                                continue
+
                         status_row['flag'] = 'updated'
                     else:
                         if len(raw_username(username)) > CommCareAccountForm.max_len_username:

@@ -2,6 +2,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
@@ -137,3 +138,7 @@ def can_add_extra_mobile_workers(request):
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
+
+def validate_password(raw_password):
+    if raw_password and '|' in raw_password:
+        raise ValidationError("'|' is not allowed in a password")

@@ -4,6 +4,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
@@ -16,7 +17,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, validate_password
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import CommTrackUser, Program, SupplyPointCase
 import re
@@ -261,6 +262,7 @@ class CommCareAccountForm(forms.Form):
                 raise forms.ValidationError("Passwords do not match")
             if self.password_format == 'n' and not password.isnumeric():
                 raise forms.ValidationError("Password is not numeric")
+            validate_password(password)
 
         try:
             username = self.cleaned_data['username']
@@ -424,3 +426,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         self.account.date_confirmed_extra_charges = datetime.datetime.today()
         self.account.save()
         return True
+
+class ValidateSetPasswordForm(SetPasswordForm):
+    def clean_new_password1(self):
+        new_password1 = self.cleaned_data['new_password1']
+        validate_password(new_password1)
