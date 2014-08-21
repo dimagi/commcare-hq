@@ -109,9 +109,3 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
 )
-
-AUTO_GPS_CAPTURE = StaticToggle(
-    'auto_gps_capture',
-    'Auto GPS Capture',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
