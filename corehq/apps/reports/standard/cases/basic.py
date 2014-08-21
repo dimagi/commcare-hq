@@ -94,7 +94,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         case_es = self.case_es
         user_ids, owner_ids = self.case_users_and_owners
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
-                                 status=self.case_status, owner_ids=owner_ids+user_ids, user_ids=user_ids,
+                                 status=self.case_status, owner_ids=owner_ids+user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
 
         query_results = case_es.run_query(query)

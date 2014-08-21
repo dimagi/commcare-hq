@@ -261,7 +261,7 @@ class ESQuerySet(object):
         return self.raw['hits']['hits']
 
     def doc_ids(self):
-        return [r['_id'] for r in self.raw_hits()]
+        return [r['_id'] for r in self.raw_hits]
 
     @property
     def hits(self):
