@@ -12,3 +12,7 @@ install:
 script: coverage run `which django-admin.py` test --settings settings
 after_success:
  - coveralls
+services:
+  - postgresql
+  - couchdb
+  - redis-server

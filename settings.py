@@ -61,6 +61,17 @@ EMAIL_PASSWORD = "******"
 EMAIL_SMTP_HOST = "smtp.example.com"
 EMAIL_SMTP_PORT = 587
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+    'redis': {
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': 'localhost:6379:0',
+        'OPTIONS': {},
+    },
+}
+
 # Disable logging during testing
 LOGGING = {
     'version': 1,
