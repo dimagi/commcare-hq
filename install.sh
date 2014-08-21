@@ -74,7 +74,8 @@ if [ $? -eq 0 ]; then
     sudo apt-get update
 
     ## Ignore packages that have the [travis_ignore] hashtag from the apt-packages.txt file if TRAVIS_INSTALL = yes
-    if [$TRAVIS_INSTALL == "y"]; then
+    echo $TRAVIS_INSTALL
+    if [$TRAVIS_INSTALL = "y"]; then
         grep -v '\[travis_ignore\]' requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
     else
         cat requirements/apt-packages.txt | sed 's/#.*$//g' | xargs sudo apt-get install -y
