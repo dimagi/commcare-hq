@@ -27,14 +27,19 @@ class CachedCouchDB(Database):
         return doc_id in self._docs or super(CachedCouchDB, self).doc_exist(doc_id)
 
     def open_doc(self, doc_id, check_main=True):
-        return self._docs.get(doc_id,
-                              super(CachedCouchDB, self).open_doc(doc_id) if check_main else None)
+        doc = self._docs.get(doc_id)
+        if not doc and check_main:
+            doc = super(CachedCouchDB, self).open_doc(doc_id)
+            self._docs[doc_id] = doc
+
+        return doc
 
     def save_doc(self, doc):
         if self.readonly:
             raise NotImplementedError("Can't save doc, this is just a loader class")
         else:
             super(CachedCouchDB, self).save_doc(doc)
+            self._docs[doc['_id']] = doc
 
     def bulk_load(self, doc_ids, purge_existing=True):
         """

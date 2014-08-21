@@ -1,8 +1,11 @@
 import sys
 from datetime import datetime
-from pillow_retry.models import PillowError, path_from_object
+from pillow_retry.models import PillowError, Stub
 from django.test import TestCase
+from pillow_retry.tasks import process_pillow_retry
+from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import BasicPillow
+
 
 def get_ex_tb(message, ex_class=None):
     ex_class = ex_class if ex_class else ExceptionA
@@ -77,12 +80,31 @@ class PillowRetryTestCase(TestCase):
             date.replace(day=3),
         ).all()
 
+    def test_include_doc(self):
+        id = 'test_doc'
+        FakePillow.couch_db._docs[id] = {'id': id, 'property': 'value'}
+        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        error = create_error(change_dict)
+        error.save()
+        process_pillow_retry(error.id)
+
+        with self.assertRaises(PillowError.DoesNotExist):
+            #  if processing is successful the record will be deleted
+            PillowError.objects.get(id=error.id)
+
 
 class FakePillow(BasicPillow):
-    pass
+    couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
+
+    def process_change(self, change, is_retry_attempt=False):
+        #  see test_include_doc
+        if 'doc' not in change:
+            raise Exception('missing doc in change')
+
 
 class FakePillow1(BasicPillow):
-    pass
+    couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
+
 
 class ExceptionA(Exception):
     pass

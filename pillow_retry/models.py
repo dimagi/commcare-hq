@@ -102,3 +102,11 @@ class PillowError(models.Model):
     def get_error_types(cls):
         results = PillowError.objects.values('error_type').annotate(count=Count('error_type'))
         return (e['error_type'] for e in results)
+
+
+# Stub models file, also used in tests
+from couchdbkit.ext.django.schema import Document
+
+
+class Stub(Document):
+    pass
