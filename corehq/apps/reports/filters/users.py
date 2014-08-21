@@ -373,10 +373,13 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                 filters.term("_id", user_ids),
                 filters.term("__group_ids", group_ids),
             )
-            return q.OR(
-                id_filter,
-                filters.OR(*user_type_filters),
-            )
+            if user_type_filters:
+                return q.OR(
+                    id_filter,
+                    filters.OR(*user_type_filters),
+                )
+            else:
+                return q.filter(id_filter)
 
 
     @classmethod
