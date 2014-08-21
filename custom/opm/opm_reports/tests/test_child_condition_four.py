@@ -136,6 +136,18 @@ class TestChildWeighedOnce(OPMCaseReportTestBase, ConditionFourTestMixin):
         self.valid_form_function = _valid_child_weight_registration_form
         self.condition_getter = lambda row: row.child_weighed_once
 
+    def test_service_unavailable_at_all(self):
+        # This condition isn't affected by service availability
+        pass
+
+    def test_service_unavailable_partial(self):
+        # This condition isn't affected by service availability
+        pass
+
+    def test_service_unavailable_out_of_range(self):
+        # This condition isn't affected by service availability
+        pass
+
 
 def _valid_measles_form(received_on):
     return XFormInstance(
