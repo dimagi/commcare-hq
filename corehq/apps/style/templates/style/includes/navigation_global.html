@@ -63,27 +63,28 @@
             <span class="caret"></span>
         </a>
         <ul class="dropdown-menu" role="menu">
-            <li>
-                <h2>
+            <li class="dropdown-header">
                 {% if user.first_name %}
                     {{ user.first_name }} {{ user.last_name }}
                 {% else %}
                     {{ user.username }}
                 {% endif %}
-                </h2>
             </li>
             {% with request.couch_user.role_label.strip as role %}{% if role %}
-                <li>
+                <li class="dropdown-header">
                     {{ role }}
                 </li>
             {% endif %}{% endwith %}
             <li>
                 <a href="{% url "my_account_settings" %}">
-                    {% trans 'My Account Settings' %}
+                    <i class="fa fa-cog"></i> {% trans 'Account Settings' %}
                 </a>
             </li>
             <li class="divider"></li>
-            <li><a href="{% url "logout" %}">{% trans 'Sign Out' %}</a></li>
+            <li>
+                <a href="{% url "logout" %}">
+                    <i class="fa fa-sign-out"></i> {% trans 'Sign Out' %}
+                </a>
         </ul>
     </li>
 
