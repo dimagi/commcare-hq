@@ -281,6 +281,15 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# workers",
     },
+    "active_mobile_workers": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_mobile_workers",
+        "chart_title": "Active Mobile Workers",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_mobile_workers",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
 }
 
 
@@ -642,6 +651,7 @@ class RealSMSMessages(GlobalAdminReports):
         'total_outgoing_client_sms',
         'total_incoming_client_sms',
         'total_mobile_workers',
+        'active_mobile_workers',
     ]
 
     @property

@@ -1046,6 +1046,34 @@ def get_active_domain_stats_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
+def get_active_mobile_workers_data(params, datespan, interval='month',
+        datefield='date'):
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys = make_buckets(interval, begin, end)
+    sms_users_facet = {"terms": {
+        "field": "couch_recipient",
+        "size": 10000}}
+
+    real_domains = get_real_project_spaces()
+
+    histo_data = []
+    for timestamp in reversed(keys):
+        t = timestamp
+        f = timestamp - SEC_IN_30_DAYS
+        sms_query = get_sms_query(datefield, f, t, 'users', sms_users_facet)
+        users = sms_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('users', "terms")
+        c = len(users)
+        if c > 0:
+            histo_data.append({"count": c, "time": timestamp})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
 def get_mobile_workers_data(params, datespan, interval='month',
         datefield='created_on'):
     real_domains = get_real_project_spaces()
@@ -1204,6 +1232,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "active_mobile_workers":
+        params.update(params_es)
+        return json_response(get_active_mobile_workers_data(params, request.datespan, interval=interval))
 
     if histo_type == "mobile_workers":
         params.update(params_es)
