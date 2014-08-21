@@ -219,9 +219,8 @@ class EditWebUserView(BaseEditUserView):
     def form_user_update_permissions(self):
         user = self.editable_user
         is_super_user = user.is_superuser
-        is_user_staff = user.is_staff
 
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user, 'staff_user': is_user_staff})
+        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
 
     @property
     def main_context(self):
@@ -253,10 +252,8 @@ class EditWebUserView(BaseEditUserView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "update-user-permissions" and request.couch_user.is_superuser:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
-            is_staff_user = True if  'staff_user' in self.request.POST and self.request.POST['staff_user'] == 'on' else False
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user,
-                                                                        is_super_user=is_super_user, is_staff_user=is_staff_user):
+                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
                 messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 

@@ -132,13 +132,11 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 class UpdateUserPermissionForm(forms.Form):
     super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
-    staff_user = forms.BooleanField(label=ugettext_lazy('System Staff User'), required=False)
 
-    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None, is_staff_user=None):
+    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
         is_update_successful = False
         if editable_user and couch_user.is_superuser:
             editable_user.is_superuser = is_super_user
-            editable_user.is_staff = is_staff_user
             editable_user.save()
             is_update_successful = True
 
