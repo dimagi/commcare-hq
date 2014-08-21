@@ -89,15 +89,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
 
     name = flat_field(lambda form: form.name)
 
-    # per case
-    bp1_cash = case_calcs.BirthPreparedness(
-        ['window_1_1', 'window_1_2', 'window_1_3'])
-    bp2_cash = case_calcs.BirthPreparedness(
-        ['window_2_1', 'window_2_2', 'window_2_3'])
-    delivery = case_calcs.Delivery()
-    child_followup = case_calcs.ChildFollowup()
-    child_spacing = case_calcs.ChildSpacing()
-
     # per user
     service_forms = user_calcs.ServiceForms()
     growth_monitoring = user_calcs.GrowthMonitoring()
