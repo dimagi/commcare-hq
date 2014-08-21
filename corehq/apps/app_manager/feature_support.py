@@ -53,3 +53,7 @@ class CommCareFeatureSupportMixin(object):
         # I wanted to record that dependency
         return (self.enable_local_resource
                 and self._require_minimum_version('2.12'))
+
+    @property
+    def enable_auto_gps(self):
+        return self._require_minimum_version('2.14')
