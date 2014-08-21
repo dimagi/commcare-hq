@@ -629,6 +629,10 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'active_commconnect_domain_count',
     ]
 
+    @property
+    def use_real_project_spaces(self):
+        return False
+
 class RealSMSMessages(GlobalAdminReports):
     slug = 'real_sms_messages'
     name = ugettext_noop('Real SMS Messages')

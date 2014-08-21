@@ -955,7 +955,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
 
     domains_after_date = (DomainES()
             .real_domains()
-            .filter({"terms": {"domain": list(sms_only_domains)}})
+            .filter({"terms": {"name": list(sms_only_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .facet('date', 
                 {
@@ -970,7 +970,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
 
     domains_before_date = (DomainES()
             .real_domains()
-            .filter({"terms": {"domain": list(sms_only_domains)}})
+            .filter({"terms": {"name": list(sms_only_domains)}})
             .created(lt=datespan.startdate)
             .size(0)).run()
 
@@ -983,35 +983,39 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
 
 
 def get_commconnect_domain_stats_data(params, datespan, interval='month',
-        datefield='date'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
+        datefield='date_created'):
+    sms = (SMSES()
+           .facet('domains', {"terms": {"field": "domain"}})
+           .size(0))
 
-    real_domains = get_real_project_spaces()
-    histo_data = []
-    for timestamp in reversed(keys):
-        sms = (ESQuery('sms')
-               .filter({
-                   "range": {
-                       datefield: {
-                           "to": timestamp
-                           }
-                       }
-                   }
-               )
-               .filter({"terms": params})
-               .filter({"terms": {"domain": list(real_domains)}})
-               .facet('domains', {"terms": {"field": "domain"}})
-               .size(0))
-        domains = sms.run().facet('domains', "terms")
-        c = len(domains)
-        if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
+    if len(params.keys()) > 0:
+        sms = sms.filter({"terms": params})
+
+    sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
+
+    domains_after_date = (DomainES()
+            .filter({"terms": {"name": list(sms_domains)}})
+            .created(gte=datespan.startdate, lte=datespan.enddate)
+            .facet('date',
+                {
+                    "date_histogram": {
+                        "field": datefield,
+                        "interval": interval
+                    }
+                })
+            .size(0))
+
+    histo_data = domains_after_date.run().facet('date', 'entries')
+
+    domains_before_date = (DomainES()
+            .real_domains()
+            .filter({"terms": {"name": list(sms_domains)}})
+            .created(lt=datespan.startdate)
+            .size(0)).run()
 
     return {
         'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
+        'initial_values': {"All Domains": domains_before_date.total},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
