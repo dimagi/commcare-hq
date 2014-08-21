@@ -906,7 +906,7 @@ def get_real_project_spaces():
 
 
 def get_sms_query(datefield, begin, end, facet_name, facet_terms):
-    return (ESQuery('sms')
+    return (SMSES()
             .fields(['domain', datefield])
             .filter({
                 "range": {
@@ -1125,7 +1125,7 @@ def get_real_sms_messages_data(params, datespan, interval='month',
     }
 
 def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
-        datefield='received_on'):
+        datefield='date'):
     begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
     end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
     keys = make_buckets(interval, begin, end)
@@ -1137,8 +1137,9 @@ def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         t = timestamp
         f = timestamp - SEC_IN_30_DAYS
         form_query = get_sms_query(datefield, f, t, 'domains', {"terms":{"field": "domain"}})
-        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains', "terms")
-        c = len(domains)
+        domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run()
+        c = len(domains.facet('domains', 'terms'))
+        print c
         if c > 0:
             histo_data.append({"count": c, "time": timestamp})
 
