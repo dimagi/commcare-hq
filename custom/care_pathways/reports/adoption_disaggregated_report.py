@@ -1,16 +1,14 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import TableDataFormat
-from corehq.apps.reports.standard import CustomProjectReport
-from custom.care_pathways.reports import CareReportMixin
+from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter, \
     DisaggregateByFilter
 from custom.care_pathways.sqldata import AdoptionDisaggregatedSqlData
 from custom.care_pathways.utils import CareDataFormatter, _chunks
 
 
-class AdoptionDisaggregatedReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
+class AdoptionDisaggregatedReport(CareBaseReport):
     name = 'Adoption Disaggregated'
     slug = 'adoption_disaggregated'
     report_title = 'Adoption Disaggregated'

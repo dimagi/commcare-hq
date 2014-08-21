@@ -1,3 +1,5 @@
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.toggles import PATHWAYS_PREVIEW
 from custom.care_pathways.utils import get_domain_configuration
 
@@ -23,6 +25,9 @@ class CareReportMixin(object):
                 config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return config
+
+
+class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

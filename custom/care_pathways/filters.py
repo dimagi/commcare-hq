@@ -9,11 +9,13 @@ from dimagi.utils.decorators.memoized import memoized
 
 class CareBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
+    single_option_select_without_default_text = -1
 
     @property
     def filter_context(self):
         context = super(CareBaseDrilldownOptionFilter, self).filter_context
         context.update({'single_option_select': self.single_option_select})
+        context.update({'single_option_select_without_default_text': self.single_option_select_without_default_text})
         return context
 
 
@@ -169,3 +171,15 @@ class TableCardGroupByFilter(BaseSingleOptionFilter):
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "group_name"
+
+class TableCardTypeFilter(TypeFilter):
+    single_option_select_without_default_text = 1
+
+    @property
+    def selected(self):
+        selected = super(TableCardTypeFilter, self).selected
+        if len(selected) == 0 and len(self.drilldown_map) > 0:
+            # No data selected, select first element from top hierarchy
+            selected.append([self.drilldown_map[0].val])
+        return selected
+

@@ -1,14 +1,12 @@
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
-from corehq.apps.reports.standard import CustomProjectReport
-from custom.care_pathways.reports import CareReportMixin
 from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
+from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 import re
 
-class AdoptionBarChartReport(GenericTabularReport, CustomProjectReport, CareReportMixin):
+class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
     report_title = 'Adoption Bar Chart'

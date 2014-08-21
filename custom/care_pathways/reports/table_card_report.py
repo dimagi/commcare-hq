@@ -1,13 +1,11 @@
-from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
-from corehq.apps.reports.standard import CustomProjectReport
-from custom.care_pathways.reports import CareReportMixin
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, PPTYearFilter, TypeFilter, ScheduleFilter, TableCardGroupByFilter
+from custom.care_pathways.reports import CareBaseReport
+from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, PPTYearFilter, ScheduleFilter, TableCardGroupByFilter, TableCardTypeFilter
 from dimagi.utils.decorators.memoized import memoized
 from custom.care_pathways.sqldata import TableCardReportIndividualPercentSqlData, TableCardReportGrouppedPercentSqlData, TableCardSqlData
 
 
-class TableCardReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
+class TableCardReport(CareBaseReport):
     name = 'Table Report Card'
     slug = 'table_card_report'
     report_title = 'Table Report Card'
@@ -83,7 +81,7 @@ class TableCardReport(GetParamsMixin, GenericTabularReport, CustomProjectReport,
         filters = [GeographyFilter,
               TableCardGroupByFilter,
               PPTYearFilter,
-              TypeFilter,
+              TableCardTypeFilter,
               GenderFilter,
               GroupLeadershipFilter,
               CBTNameFilter,
