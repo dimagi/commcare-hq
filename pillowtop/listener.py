@@ -125,9 +125,12 @@ class BasicPillow(object):
         if document_class:
             self.document_class = document_class
 
-        self.couch_db = couch_db or self.couch_db or (
-            self.document_class.get_db() if self.document_class else None
-        )
+        # Explicitly check for None since a couch db class will evaluate to False
+        # if there are no docs in the database.
+        self.couch_db = couch_db if couch_db is not None else (
+            self.couch_db if self.couch_db is not None else (
+                self.document_class.get_db() if self.document_class else None
+            ))
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
