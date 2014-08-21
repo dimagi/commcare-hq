@@ -1051,12 +1051,13 @@ def get_mobile_workers_data(params, datespan, interval='month',
     real_domains = get_real_project_spaces()
 
     sms_users = (SMSES()
+            .to_commcare_user()
             .filter({"terms": {"domain": list(real_domains)}})
-            .received(gte=datespan.startdate, lte=datespan.enddate)
             .facet('users',
                 {
                     "terms": {
                         "field": "couch_recipient",
+                        "size": 100000,
                     }
                 })
             .size(0))
@@ -1092,7 +1093,7 @@ def get_mobile_workers_data(params, datespan, interval='month',
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
- 
+
 
 def get_real_sms_messages_data(params, datespan, interval='month',
         datefield='date'):
@@ -1109,7 +1110,7 @@ def get_real_sms_messages_data(params, datespan, interval='month',
                     }
                 })
             .size(0))
- 
+
     histo_data = sms_after_date.run().facet('date', 'entries')
 
     sms_before_date = (SMSES()
