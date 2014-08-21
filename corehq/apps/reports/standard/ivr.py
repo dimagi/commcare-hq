@@ -108,7 +108,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             if call.xforms_session_id is None:
                 submission_id = None
             else:
-                session = XFormsSession.latest_by_session_id(call.xforms_session_id)
+                session = XFormsSession.by_session_id(call.xforms_session_id)
                 submission_id = session.submission_id
             
             row = [

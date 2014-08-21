@@ -93,7 +93,7 @@ def _get_responses(domain, recipient, text, yield_responses=False, session_id=No
     if session_id is not None:
         if update_timestamp:
             # The IVR workflow passes the session id
-            session = XFormsSession.latest_by_session_id(session_id)
+            session = XFormsSession.by_session_id(session_id)
     else:
         # The SMS workflow grabs the open sms session
         session = XFormsSession.get_open_sms_session(domain, recipient)
@@ -125,7 +125,7 @@ will be performed, but the form will still be submitted.
 The form is only submitted if the smsforms session has not yet completed.
 """
 def submit_unfinished_form(session_id, include_case_side_effects=False):
-    session = XFormsSession.latest_by_session_id(session_id)
+    session = XFormsSession.by_session_id(session_id)
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
         try:
