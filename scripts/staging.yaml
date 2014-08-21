@@ -48,7 +48,6 @@ branches:
   - auto-gps+schedule
   - auto-gps
   - schedule # SK 7/17
-  - active_domain # Emord 8/15
   - commconnect-reports
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
