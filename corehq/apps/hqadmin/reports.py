@@ -20,6 +20,27 @@ from corehq.toggles import IS_DEVELOPER
 
 
 INDICATOR_DATA = {
+    "active_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_domains",
+        "chart_title": "Active Project Spaces",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_self_started_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_self_started_domains",
+        "chart_title": "Active Self Started Project Spaces",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "self_started": ["T"],
+        },
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
     "domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "domains",
@@ -377,6 +398,14 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'domain_self_started_count',
     ]
 
+
+class ActiveRealProjectSpacesReport(GlobalAdminReports):
+    slug = 'active_real_project_spaces'
+    name = ugettext_noop('Active Project Spaces')
+    indicators = [
+        'active_domain_count',
+        'active_self_started_domain_count',
+    ]
 
 class RealProjectSpacesPlansReport(GlobalAdminReports):
     slug = 'real_project_spaces_plans'

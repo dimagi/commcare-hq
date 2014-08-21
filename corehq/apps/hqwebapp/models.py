@@ -10,6 +10,7 @@ from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.hqadmin.reports import (
     FormSubmissionsReport,
+    ActiveRealProjectSpacesReport,
     RealProjectSpacesReport,
     RealProjectSpacesPlansReport,
     UserReport,
@@ -1221,6 +1222,7 @@ class AdminReportsTab(UITab):
                                    args=(report.slug,)),
                 } for report in [
                     FormSubmissionsReport,
+                    ActiveRealProjectSpacesReport,
                     RealProjectSpacesReport,
                     RealProjectSpacesPlansReport,
                     UserReport,

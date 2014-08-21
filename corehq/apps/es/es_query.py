@@ -13,7 +13,8 @@ SQLAlchemy. Here's an example usage:
         .fields(['xmlns', 'domain', 'app_id'])\
         .sort('received_on', desc=False)\
         .size(self.pagination.count)\
-        .start(self.pagination.start)
+        .start(self.pagination.start)\
+        .facet("domains", {"field": "domains"})
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -83,12 +84,16 @@ class ESQuery(object):
                 index, ', '.join(ES_URLS.keys()))
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
-        self.es_query = {"query": {
-            "filtered": {
-                "filter": {"and": []},
-                "query": {'match_all': {}}
+        self.es_query = {
+            "query": {
+                "filtered": {
+                    "filter": {"and": []},
+                    "query": {'match_all': {}}
+                }
+            },
+            "facets": {
             }
-        }}
+        }
 
     @property
     def builtin_filters(self):
@@ -145,6 +150,25 @@ class ESQuery(object):
         want to reproduce a query with additional filtering.
         """
         return self._default_filters.values() + self._filters
+
+    @property
+    def _facets(self):
+        return self.es_query['facets']
+
+    def facet(self, name, terms):
+        """
+        Add a facet to the query.
+        """
+        query = deepcopy(self)
+        query._facets[name] = {'terms': terms}
+        return query
+
+    @property
+    def facets(self):
+        """
+        Return a dictionary of the facets used in this query.
+        """
+        return self._facets
 
     @property
     def _query(self):
@@ -278,6 +302,13 @@ class ESQuerySet(object):
     @property
     def ids(self):
         return [r['_id'] for r in self.raw_hits]
+
+    @property
+    def raw_facets(self):
+        return self.raw['facets']
+
+    def facet(self, name):
+        return self.raw['facets'][name]['terms']
 
 
 class HQESQuery(ESQuery):

@@ -1,11 +1,12 @@
 import HTMLParser
-from datetime import timedelta, datetime
 import time
 import json
 import logging
 import socket
 import time
-from datetime import timedelta, datetime
+import bisect
+from datetime import timedelta, datetime, date
+from dateutil.relativedelta import relativedelta
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
@@ -77,8 +78,10 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.es.es_query import ESQuery
 from .multimech import GlobalConfig
 
+SEC_IN_30_DAYS = 1000 * 60 * 60 * 24 * 30
 
 @require_superuser
 def default(request):
@@ -868,6 +871,79 @@ class FlagBrokenBuilds(FormView):
         db.bulk_save(docs)
         return HttpResponse("posted!")
 
+def daterange(interval, start_date, end_date):
+    cur_date = end_date
+    if interval == 'day':
+        step = relativedelta(days=1)
+    elif interval == 'week':
+        step = relativedelta(weeks=1)
+    elif interval == 'month':
+        step = relativedelta(months=1)
+    elif interval == 'year':
+        step = relativedelta(years=1)
+
+    while cur_date > start_date:
+        yield cur_date
+        cur_date -= step
+
+def make_buckets(interval, start_date, end_date):
+    """
+    Returns a descending sorted list of timestamps to use from end_date to 
+    start_date
+    """
+    buckets_list = list()
+    for single_date in daterange(interval, start_date, end_date):
+        t =int(1000*time.mktime(single_date.timetuple()))
+        buckets_list.append(t)
+
+    return buckets_list
+
+def get_form_query(datefield, begin, end, facet_name, facet_terms):
+    return (ESQuery('forms')
+            .fields(['domain', datefield])
+            .filter({
+                "range": {
+                    datefield: {
+                        "from": begin, 
+                        "to": end
+                        }
+                    }
+                }
+            )
+            .facet(facet_name, facet_terms)
+            .size(0))
+
+def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
+    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
+    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
+    keys = make_buckets(interval, begin, end)
+
+    real_domain_query = (
+            ESQuery('domains')
+            .fields(['name'])
+            .filter({"terms": params})
+    )
+    real_domain_query_results = real_domain_query.run().raw_hits
+    real_domains = {x['fields']['name'] for x in real_domain_query_results}
+
+    histo_data = []
+    for timestamp in reversed(keys):
+        t = timestamp
+        f = timestamp - SEC_IN_30_DAYS
+        form_query = get_form_query(datefield, f, t, 'domains', {"field": "domain"})
+        domains = form_query.run().facet('domains')
+        domains = [d['term'] for d in domains if d['term'] in real_domains]
+        c = len(domains)
+        if c > 0:
+            histo_data.append({"count": c, "time": timestamp})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
 
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
@@ -922,6 +998,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "active_domains":
+        params.update(params_es)
+        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "domains":
         params.update(params_es)
