@@ -2,6 +2,7 @@ from corehq.apps.reports.datatables import DataTablesColumnGroup, DataTablesColu
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
+from corehq.toggles import PATHWAYS_PREVIEW
 from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, PPTYearFilter, TypeFilter, ScheduleFilter, TableCardGroupByFilter, GroupByFilter
 from dimagi.utils.decorators.memoized import memoized
 from custom.care_pathways.sqldata import TableCardReportIndividualPercentSqlData, TableCardReportGrouppedPercentSqlData, TableCardSqlData
@@ -13,6 +14,14 @@ class TableCardReport(GetParamsMixin, GenericTabularReport, CustomProjectReport)
     slug = 'table_card_report'
     report_title = 'Table Report Card'
     report_template_path = "care_pathways/multi_report.html"
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+        if user and PATHWAYS_PREVIEW.enabled(user.username):
+            return True
+        return False
 
     @property
     @memoized

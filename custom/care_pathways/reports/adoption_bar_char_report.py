@@ -3,6 +3,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.toggles import PATHWAYS_PREVIEW
 from custom.care_pathways.fields import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 from custom.care_pathways.utils import get_domain_configuration
@@ -12,6 +13,14 @@ class AdoptionBarChartReport(GenericTabularReport, CustomProjectReport):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
     report_title = 'Adoption Bar Chart'
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if domain and project and user is None:
+            return True
+        if user and PATHWAYS_PREVIEW.enabled(user.username):
+            return True
+        return False
 
     @property
     def fields(self):
