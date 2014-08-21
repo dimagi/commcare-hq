@@ -43,7 +43,7 @@
 trunk: master
 name: autostaging
 branches:
-#  - archive-products+explicit_case_processing # tw 8/14
+  - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
   - auto-gps+schedule
   - auto-gps
@@ -57,14 +57,14 @@ branches:
   - vellum-requirejs # Daniel 6/12
   - emwf-refactor  # Ethan 8/06
   - admin-reports # Nick P 8/13
-#  - archive-products+archive-to-deactivate # tw 8/14
+  - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
 #  - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
-#  - archive-products # tw 8/14
+  - archive-products # tw 8/14
   - vellum-requirejs+bootstrap3-stylin  # bb 8/20
   - bootstrap3-stylin  # bb 8/20
 submodules:
