@@ -55,12 +55,13 @@
             </li>
             <li class="divider"></li>
             {% endif %}
-            {% if domains_for_user %}
-                {% for d in domains_for_user %}
-                    <li><a href="{% url 'domain_homepage' d.name %}">{{ d.name }}</a></li>
-                {% endfor %}
-                <li class="divider"></li>
-            {% endif %}
+{#            Todo update template tag for domains_for_user #}
+{#            {% if domains_for_user %}#}
+{#                {% for d in domains_for_user %}#}
+{#                    <li><a href="{% url 'domain_homepage' d.name %}">{{ d.name }}</a></li>#}
+{#                {% endfor %}#}
+{#                <li class="divider"></li>#}
+{#            {% endif %}#}
             <li>
                 <a href="{% url 'registration_domain' %}">
                     {% trans 'Add Project' %}
