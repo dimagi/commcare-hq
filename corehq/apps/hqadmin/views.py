@@ -1262,6 +1262,39 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
         'enddate': datespan.enddate_key_utc,
     }
 
+def get_active_clients_data(params, datespan, interval='month',
+        datefield='date'):
+    """
+    Returns list of timestamps and how many mobile workers were active in the 30
+    days before the timestamp
+    """
+    sms_case_facet = {"terms": {
+        "field": "couch_recipient",
+        "size": 10000}}
+
+    real_domains = get_real_project_spaces()
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        cases = (get_sms_query(datefield, f, t, 'cases', sms_case_facet)
+                    .to_commcare_case()
+                    .filter({"terms": {"domain": list(real_domains)}}))
+        cases = cases.run().facet('cases', "terms")
+        c = len(cases)
+        if c > 0:
+            histo_data.append({"count": c, "time":
+                1000 * time.mktime(timestamp.timetuple())})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 def get_total_clients_data(params, datespan, interval='month',
         datefield='opened_on'):
     """
@@ -1331,6 +1364,10 @@ def stats_data(request):
     if histo_type == "active_dimagi_gateways":
         params.update(params_es)
         return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
+
+    if histo_type == "active_mobile_clients":
+        params.update(params_es)
+        return json_response(get_active_clients_data(params, request.datespan, interval=interval))
 
     if histo_type == "mobile_clients":
         params.update(params_es)
