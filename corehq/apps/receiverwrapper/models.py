@@ -98,11 +98,11 @@ class Repeater(Document, UnicodeMixIn):
     @memoized
     def get_payload_generator(self, payload_format):
         gen = get_generator_class(self.__class__, payload_format)
-        return gen()
+        return gen(self)
 
     def get_payload(self, repeat_record):
         generator = self.get_payload_generator(self.format)
-        return generator.get_payload(repeat_record, repeater=self)
+        return generator.get_payload(repeat_record)
 
     def register(self, payload, next_check=None):
         try:
