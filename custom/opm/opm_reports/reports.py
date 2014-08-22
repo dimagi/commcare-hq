@@ -361,6 +361,16 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             sd = parser.parse(startdate)
             ed = parser.parse(enddate)
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        datetime_format = "%Y-%m-%d %H:%M:%S"
+        if self.snapshot is not None:
+            snapshot_str = "Loaded from snapshot %s" % self.snapshot._id
+            date = getattr(self.snapshot, 'generated_on', False)
+            if date:
+                snapshot_str += " generated on %s" % date.strftime(datetime_format)
+            subtitles.append(snapshot_str)
+        else:
+            subtitles.append("Generated {}".format(
+                datetime.datetime.utcnow().strftime(datetime_format)))
         return subtitles
 
     def filter(self, fn, filter_fields=None):
@@ -412,7 +422,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         else:
             return None
 
-
     @property
     def headers(self):
         if self.snapshot is not None:
@@ -434,20 +443,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     @property
     def rows(self):
-        # is it worth noting whether or not the data being displayed is pulled
-        # from an old snapshot?
         if self.snapshot is not None:
-            # needed to support old snapshots
-            if isinstance(self, BeneficiaryPaymentReport):
-                for i, val in enumerate(self.snapshot.rows):
-                    if 'account_number' in self.snapshot.slugs:
-                        index = self.snapshot.slugs.index('account_number')
-                        if isinstance(self.snapshot.rows[i][index], Decimal):
-                            self.snapshot.rows[i][index] = int(self.snapshot.rows[i][index])
-                    if 'bank_branch_name' in self.snapshot.slugs:
-                        index = self.snapshot.slugs.index('bank_branch_name')
-                        del self.snapshot.rows[i][index]
-
             return self.snapshot.rows
         rows = []
         for row in self.row_objects:
@@ -616,15 +612,13 @@ class CaseReportMixin(object):
     @property
     def rows(self):
         if self.snapshot is not None:
-            try:
+            if 'status' in self.snapshot.slugs:
                 current_status_index = self.snapshot.slugs.index('status')
                 for row in self.snapshot.rows:
                     if self.is_rendered_as_email:
                         with localize('hin'):
                             row[current_status_index] = _(row[current_status_index])
-                return self.snapshot.rows
-            except ValueError:
-                return []
+            return self.snapshot.rows
         rows = []
         for row in self.row_objects + self.extra_row_objects:
             rows.append([getattr(row, method) for
@@ -690,23 +684,6 @@ class MetReport(CaseReportMixin, BaseReport):
     slug = "met_report"
     model = ConditionsMet
     exportable = False
-
-    @property
-    def report_subtitles(self):
-        subtitles = ["For filters:",]
-        if self.awcs:
-            subtitles.append("Awc's - %s" % ", ".join(self.awcs))
-        elif self.gp:
-            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
-        elif self.block:
-            subtitles.append("Block - %s" % self.block)
-        startdate = self.datespan.startdate_param_utc
-        enddate = self.datespan.enddate_param_utc
-        if startdate and enddate:
-            sd = parser.parse(startdate)
-            ed = parser.parse(enddate)
-            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
-        return subtitles
 
     @property
     def headers(self):
