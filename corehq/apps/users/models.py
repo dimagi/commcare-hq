@@ -1621,8 +1621,28 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.save()
         self.save()
 
-    def get_group_fixture(self):
-        return group_fixture(self.get_case_sharing_groups(), self)
+    def get_group_fixture(self, last_sync=None):
+        def _should_sync_groups(groups, last_sync):
+            """
+            Determine if we need to sync the groups fixture by checking
+            the modified date on all groups compared to the
+            last sync.
+            """
+            if not last_sync or not last_sync.date:
+                return True
+
+            for group in groups:
+                if not group.last_modified or group.last_modified >= last_sync.date:
+                    return True
+
+            return False
+
+        groups = self.get_case_sharing_groups()
+
+        if _should_sync_groups(groups, last_sync):
+            return group_fixture(groups, self)
+        else:
+            return None
 
     @memoized
     def get_case_sharing_groups(self):
