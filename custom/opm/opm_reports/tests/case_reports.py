@@ -88,6 +88,10 @@ class OPMCase(CommCareCase):
     def get_forms(self):
         return self._fake_forms
 
+    class Meta:
+        # This is necessary otherwise tests get sad
+        app_label = "opm_reports"
+
 
 class MockCaseRow(OPMCaseRow):
     """
