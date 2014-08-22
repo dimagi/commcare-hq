@@ -33,12 +33,12 @@ class MockDataProvider(SharedDataProvider):
     """
     def __init__(self, default_date=None):
         super(MockDataProvider, self).__init__()
-        if default_date is not None:
-            get_default_set = lambda: {default_date}
-        else:
-            get_default_set = lambda: set()
+
+        get_default_set = lambda: {default_date} if default_date is not None else set()
+
         def get_date_set_dict():
             return AggressiveDefaultDict(get_default_set)
+
         self.vhnd_map = AggressiveDefaultDict(get_date_set_dict)
 
     @property
