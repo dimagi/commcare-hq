@@ -296,12 +296,12 @@ class OPMCaseRow(object):
             )
 
         if self.preg_month == 6:
-            if not self.is_vhnd_last_three_months:
+            if not self.is_service_available('vhnd_adult_scale_available', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
         elif self.preg_month == 9:
-            if not self.is_vhnd_last_three_months:
+            if not self.is_service_available('vhnd_adult_scale_available', months=3):
                 return True
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
@@ -347,7 +347,7 @@ class OPMCaseRow(object):
     @property
     def child_growth_calculated(self):
         if self.child_age % 3 == 0:
-            if not self.is_vhnd_last_three_months:
+            if not self.is_service_available('vhnd_child_scale_available', months=3):
                 return True
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
@@ -360,7 +360,7 @@ class OPMCaseRow(object):
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
-                if not self.is_vhnd_last_three_months:
+                if not self.is_service_available('vhnd_ifa_available', months=3):
                     return True
 
                 def _from_case():
@@ -377,7 +377,7 @@ class OPMCaseRow(object):
     @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
-            if not self.is_vhnd_last_three_months:
+            if not self.is_service_available('vhnd_ors_available', months=3):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
@@ -389,9 +389,7 @@ class OPMCaseRow(object):
     @property
     def child_weighed_once(self):
         if self.child_age == 3:
-            if not self.is_vhnd_last_three_months:
-                return True
-
+            # This doesn't depend on a VHND - it should happen at the hospital
             def _test(form):
                 return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
 
@@ -416,7 +414,7 @@ class OPMCaseRow(object):
     @property
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
-            if not self.is_vhnd_last_three_months:
+            if not self.is_service_available('vhnd_measles_vacc_available', months=3):
                 return True
 
             def _test(form):
@@ -512,22 +510,22 @@ class OPMCaseRow(object):
     @property
     @memoized
     def vhnd_available(self):
-        return self.is_service_available('vhnd_available', months_before=1)
+        return self.is_service_available('vhnd_available', months=1)
 
     @property
     @memoized
     def is_vhnd_last_three_months(self):
-        return self.is_service_available('vhnd_available', months_before=3)
+        return self.is_service_available('vhnd_available', months=3)
 
     @property
     @memoized
     def is_vhnd_last_six_months(self):
-        return self.is_service_available('vhnd_available', months_before=6)
+        return self.is_service_available('vhnd_available', months=6)
 
-    def is_service_available(self, prop, months_before=1):
+    def is_service_available(self, prop, months=1):
         return bool(self.data_provider.get_dates_in_range(
             owner_id=self.owner_id,
-            startdate=self.get_months_before(months_before).date(),
+            startdate=self.get_months_before(months).date(),
             enddate=self.reporting_window_end,
             prop=prop,
         ))

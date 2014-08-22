@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, datetime, timedelta, time
 from couchforms.models import XFormInstance
 from custom.opm.opm_reports.constants import InvalidRow, CFU1_XMLNS
@@ -79,6 +80,12 @@ class ConditionFourTestMixin(object):
             row = MockCaseRow(case, self.report, child_index=2)
             self.assertEqual(True, self.get_condition(row))
 
+
+class ServiceAvailabilityTestMixIn(object):
+
+    service_key = None
+    mismatched_service_key = 'aint_no_service_with_this_name'
+
     def test_service_unavailable_at_all(self):
         data_provider = MockDataProvider()
         case = OPMCase(
@@ -90,7 +97,8 @@ class ConditionFourTestMixin(object):
 
     def test_service_unavailable_partial(self):
         date = add_months_to_date(self.report_date, -2)
-        data_provider = MockDataProvider(default_date=date)
+        data_provider = MockDataProvider(explicit_map=self._service_map(date,
+                                                                        [self.service_key]))
         case = OPMCase(
             forms=[],
             dod=self.valid_dod,
@@ -101,17 +109,41 @@ class ConditionFourTestMixin(object):
 
     def test_service_unavailable_out_of_range(self):
         date = add_months_to_date(self.report_date, -3)
-        data_provider = MockDataProvider(default_date=date)
+        data_provider = MockDataProvider(explicit_map=self._service_map(date,
+                                                                        [self.service_key]))
         case = OPMCase(
             forms=[],
             dod=self.valid_dod,
+            owner_id='mock_owner_id',
         )
         row = MockCaseRow(case, self.report, data_provider)
         self.assertEqual(True, self.get_condition(row))
 
+    def test_service_unavailable_different_condition(self):
+        date = add_months_to_date(self.report_date, -2)
+        data_provider = MockDataProvider(explicit_map=self._service_map(date, [self.mismatched_service_key]))
+        case = OPMCase(
+            forms=[],
+            dod=self.valid_dod,
+            owner_id='mock_owner_id',
+        )
+        row = MockCaseRow(case, self.report, data_provider)
+        self.assertEqual(True, self.get_condition(row))
 
-class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
+    def _service_map(self, date, keys):
+        inner = defaultdict(lambda: set())
+        for key in keys:
+            inner[key] = {date}
+
+        return {
+            'mock_owner_id': inner
+        }
+
+
+
+class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
     expected_window = 12
+    service_key = 'vhnd_measles_vacc_available'
 
     def setUp(self):
         super(TestChildMeasles, self).setUp()
@@ -119,8 +151,9 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
         self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
-class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
+class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
     expected_window = 6
+    service_key = 'vhnd_available'
 
     def setUp(self):
         super(TestChildBirthRegistration, self).setUp()

@@ -289,7 +289,7 @@ class SharedDataProvider(object):
 
     @property
     @memoized
-    def _vhnd_dates(self):
+    def _service_dates(self):
         """
         returns {
             u'df5123010b24fc35260a84547148af06': {
@@ -306,7 +306,6 @@ class SharedDataProvider(object):
         # If things start getting slow or memory intensive this would be a good place to look.
         data = VhndAvailabilitySqlData().data
         results = defaultdict(lambda: defaultdict(lambda: set()))
-        prop_available = lambda prop: row[prop] == '1'
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
@@ -317,7 +316,7 @@ class SharedDataProvider(object):
     def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
         return filter(
             lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
-            [date for date in self._vhnd_dates[owner_id][prop]],
+            [date for date in self._service_dates[owner_id][prop]],
         )
 
 

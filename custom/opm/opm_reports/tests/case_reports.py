@@ -31,19 +31,23 @@ class MockDataProvider(SharedDataProvider):
     """
     Mock data provider to manually specify vhnd availability per user
     """
-    def __init__(self, default_date=None):
+    def __init__(self, default_date=None, explicit_map=None):
         super(MockDataProvider, self).__init__()
 
-        get_default_set = lambda: {default_date} if default_date is not None else set()
+        if explicit_map is not None:
+            self.service_map = explicit_map
 
-        def get_date_set_dict():
-            return AggressiveDefaultDict(get_default_set)
+        else:
+            get_default_set = lambda: {default_date} if default_date is not None else set()
 
-        self.vhnd_map = AggressiveDefaultDict(get_date_set_dict)
+            def get_date_set_dict():
+                return AggressiveDefaultDict(get_default_set)
+
+            self.service_map = AggressiveDefaultDict(get_date_set_dict)
 
     @property
-    def _vhnd_dates(self):
-        return self.vhnd_map
+    def _service_dates(self):
+        return self.service_map
 
 
 class Report(CaseReportMixin, JsonObject):
