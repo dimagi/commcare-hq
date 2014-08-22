@@ -18,26 +18,26 @@ class BasePayloadGenerator(object):
         raise NotImplementedError()
 
 
-@RegisterGeneratorDecorator(repeater_cls=FormRepeater, format='XML', label='Default XML')
+@RegisterGeneratorDecorator(FormRepeater, 'form_xml', 'Default XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         return self.repeater._payload_doc(repeat_record).get_xml()
 
 
-@RegisterGeneratorDecorator(repeater_cls=CaseRepeater, format='XML', label='Default XML')
+@RegisterGeneratorDecorator(CaseRepeater, 'case_xml', 'Default XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
-        return self.repeater._payload_doc(repeat_record).to_xml(version=self.repeater.version or V2)
+        return self.repeater._payload_doc(repeat_record).to_xml(self.repeater.version or V2)
 
 
-@RegisterGeneratorDecorator(repeater_cls=AppStructureRepeater, format="XML", label="Default XML")
+@RegisterGeneratorDecorator(AppStructureRepeater, "app_structure_xml", "Default XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         # This is the id of the application, currently all we forward
         return repeat_record.payload_id
 
 
-@RegisterGeneratorDecorator(repeater_cls=ShortFormRepeater, format="XML", label="Default XML")
+@RegisterGeneratorDecorator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         form = self.repeater._payload_doc(repeat_record)

@@ -1,3 +1,4 @@
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import json
 
@@ -56,44 +57,35 @@ DELETED = "-Deleted"
 
 
 def get_generator_class(repeater_cls, format):
-    return get_generator_class.repeater_format_map[repeater_cls][format]['generator_cls']
+    print repeater_cls, format
+    return get_generator_class._repeater_format_map[repeater_cls][format]['generator_cls']
 
 
 def get_all_formats_in_repeater(repeater_cls):
-    return get_generator_class.repeater_format_map[repeater_cls]
+    return get_generator_class._repeater_format_map[repeater_cls]
 
-get_generator_class.repeater_format_map = {}
+get_generator_class._repeater_format_map = defaultdict(dict)
 
 
 class RegisterGeneratorDecorator(object):
 
-    def __init__(self, format, repeater_cls, label):
+    def __init__(self, repeater_cls, format, label, is_default=False):
         self.format = format
         self.repeater_cls = repeater_cls
         self.label = label
 
-    def __call__(self, cls):
-        if get_generator_class.repeater_format_map.has_key(self.repeater_cls):
-            get_generator_class.repeater_format_map[self.repeater_cls].update({
-                self.format: {
-                    'label': self.label,
-                    'generator_cls': cls
-                }
-            })
-        else:
-            get_generator_class.repeater_format_map[self.repeater_cls] = {
-                self.format: {
-                    'label': self.label,
-                    'generator_cls': cls
-                }
-            }
+    def __call__(self, klass):
+        get_generator_class._repeater_format_map[self.repeater_cls][self.format] = {
+            'label': self.label,
+            'generator_cls': klass
+        }
 
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
     domain = StringProperty()
     url = StringProperty()
-    format = StringProperty(default='XML')
+    format = StringProperty()
 
     @memoized
     def get_payload_generator(self, payload_format):

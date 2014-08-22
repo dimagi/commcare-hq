@@ -1,2 +1,3 @@
 from .util import submit_form_locally
-from corehq.apps.receiverwrapper.repeater_generators import * 
+# following import registers all Generator classes to a Mapping
+import corehq.apps.receiverwrapper.repeater_generators
