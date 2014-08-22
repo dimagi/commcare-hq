@@ -47,7 +47,7 @@
           var data = customDataEditor.val();
           $("input#metadata-input").val(JSON.stringify(data));
       }
-      customDataEditor = uiElement.map_list('{{ location.get_id}}', '{% trans 'Location Data' %}');
+      customDataEditor = uiElement.map_list('{{ location.get_id}}', "{% trans 'Location Data' %}");
       customDataEditor.val({{ metadata|JSON }});
       customDataEditor.on('change', handleChange);
       $("#loc_form .custom-data-controls").append(customDataEditor.ui);
