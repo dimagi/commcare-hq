@@ -289,7 +289,7 @@ class SharedDataProvider(object):
 
     @property
     @memoized
-    def _vhnd_dates(self):
+    def _service_dates(self):
         """
         returns {
             u'df5123010b24fc35260a84547148af06': {
@@ -316,7 +316,7 @@ class SharedDataProvider(object):
     def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
         return filter(
             lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
-            [date for date in self._vhnd_dates[owner_id][prop]],
+            [date for date in self._service_dates[owner_id][prop]],
         )
 
 
