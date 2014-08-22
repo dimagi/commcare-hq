@@ -457,17 +457,12 @@ class OPMCaseRow(object):
 
     @property
     def live_delivery(self):
-        # TODO czue, please verify the dates here, it should only be looking at
-        # delivery forms submitted in the last month, but I'm seeing some cases
-        # with child_age as 2 or 3, which is inconsistent.  Uncomment the print
-        # lines below and run the report to replicate. (block: Atri, gp: Sahora
-        # are the filters I'm using)
+        # NOTE: this can be flagged several months after the actual delivery date
+        # since that is in a question in the form but could be reported several months
+        # after. This is known and expected behavior.
         for form in self.filtered_forms(DELIVERY_XMLNS, months_before=1):
             outcome = form.form.get('mother_preg_outcome')
             if outcome == '1':
-                # print "*"*40, 'live_delivery', "*"*40
-                # print self.child_age
-                # print form.received_on
                 return True
             elif outcome in ['2', '3']:
                 return False
