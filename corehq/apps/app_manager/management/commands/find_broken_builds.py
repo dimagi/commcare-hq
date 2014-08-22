@@ -8,6 +8,19 @@ from corehq.apps.app_manager.models import Application
 from dimagi.utils.couch.database import iter_docs
 
 
+def premeture_auto_gps(build):
+    app = Application.wrap(build)
+    if app.build_version >= '2.14':
+        return
+
+    for module in app.get_modules():
+        for form in module.get_forms():
+            if form.get_auto_gps_capture():
+                return 'auto gps error'
+            elif form.wrapped_xform.model_node.find("{f}bind[@type='geopoint']"):
+                return 'auto gps error'
+
+
 def form_filter_error(build):
     app = Application.wrap(build)
     modules = app.get_modules()
