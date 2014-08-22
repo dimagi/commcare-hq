@@ -1,4 +1,5 @@
 from StringIO import StringIO
+import copy
 import logging
 import hashlib
 import itertools
@@ -32,6 +33,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
@@ -485,8 +487,19 @@ def get_app_view_context(request, app):
     except PermissionDenied:
         pass
 
+    settings_layout = copy.deepcopy(
+        commcare_settings.LAYOUT[app.get_doc_type()])
+    for section in settings_layout:
+        new_settings = []
+        for setting in section['settings']:
+            toggle_name = setting.get('toggle')
+            if toggle_name and not toggle_enabled(request, toggle_name):
+                continue
+            new_settings.append(setting)
+        section['settings'] = new_settings
+
     context = {
-        'settings_layout': commcare_settings.LAYOUT[app.get_doc_type()],
+        'settings_layout': settings_layout,
         'settings_values': get_settings_values(app),
         'is_cloudcare_allowed': is_cloudcare_allowed,
     }
@@ -1480,6 +1493,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.form_filter = req.POST['form_filter']
     if should_edit('post_form_workflow'):
         form.post_form_workflow = req.POST['post_form_workflow']
+    if should_edit('auto_gps_capture'):
+        form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
 
     _handle_media_edits(req, form, should_edit, resp)
 
@@ -1759,7 +1774,8 @@ def edit_app_attr(request, domain, app_id, attr):
         'cloudcare_enabled',
         'application_version',
         'case_sharing',
-        'translation_strategy'
+        'translation_strategy',
+        'auto_gps_capture',
         # RemoteApp only
         'profile_url',
         'manage_urls'
@@ -1786,6 +1802,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('use_custom_suite', None),
         ('secure_submissions', None),
         ('translation_strategy', None),
+        ('auto_gps_capture', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

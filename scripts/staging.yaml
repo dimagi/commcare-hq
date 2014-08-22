@@ -45,10 +45,7 @@ name: autostaging
 branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
-  - auto-gps+schedule
-  - auto-gps
   - schedule # SK 7/17
-  - active_domain # Emord 8/15
   - commconnect-reports
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
