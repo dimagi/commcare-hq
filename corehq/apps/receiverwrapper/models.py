@@ -59,6 +59,9 @@ def get_generator_class(repeater_cls, format):
     return get_generator_class.repeater_format_map[repeater_cls][format]['generator_cls']
 
 
+def get_all_formats_in_repeater(repeater_cls):
+    return get_generator_class.repeater_format_map[repeater_cls]
+
 get_generator_class.repeater_format_map = {}
 
 
@@ -70,13 +73,20 @@ class RegisterGeneratorDecorator(object):
         self.label = label
 
     def __call__(self, cls):
-        get_generator_class.repeater_format_map[self.repeater_cls] = {
-            self.format: {
-                'label': self.label,
-                'generator_cls': cls
+        if get_generator_class.repeater_format_map.has_key(self.repeater_cls):
+            get_generator_class.repeater_format_map[self.repeater_cls].update({
+                self.format: {
+                    'label': self.label,
+                    'generator_cls': cls
+                }
+            })
+        else:
+            get_generator_class.repeater_format_map[self.repeater_cls] = {
+                self.format: {
+                    'label': self.label,
+                    'generator_cls': cls
+                }
             }
-        }
-
 
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
