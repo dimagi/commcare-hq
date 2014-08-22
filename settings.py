@@ -918,6 +918,8 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
     'reportfixtures',
     'reports',
