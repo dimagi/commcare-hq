@@ -363,11 +363,16 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
         datetime_format = "%Y-%m-%d %H:%M:%S"
         if self.snapshot is not None:
-            snapshot_str = "Loaded from snapshot %s" % self.snapshot._id
+            snapshot_str = "Loaded from snapshot"
             date = getattr(self.snapshot, 'generated_on', False)
             if date:
                 snapshot_str += " generated on %s" % date.strftime(datetime_format)
             subtitles.append(snapshot_str)
+            try:
+                if self.request.user.is_superuser:
+                    subtitles.append("Snapshot id: %s" % self.snapshot._id)
+            except AttributeError:
+                pass
         else:
             subtitles.append("Generated {}".format(
                 datetime.datetime.utcnow().strftime(datetime_format)))
