@@ -22,7 +22,7 @@
     <script type="text/javascript">
         $(function () {
             // custom data
-            var customDataEditor = uiElement.map_list('{{ group.group_id }}', '{% trans "Group Information" %}');
+            var customDataEditor = uiElement.map_list('{{ group.group_id }}', "{% trans "Group Information" %}");
             customDataEditor.val({{ group.metadata|JSON }});
             customDataEditor.on("change", function () {
                 $("input#group-data").val(JSON.stringify(this.val()));

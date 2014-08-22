@@ -33,7 +33,7 @@
                     });
                 } else {
                     if (attempts >= 10) {
-                        $('#upload-notice').text('{% trans 'Sorry, it looks like the upload failed.' %}');
+                        $('#upload-notice').text("{% trans 'Sorry, it looks like the upload failed.' %}");
                     }
                     clearInterval(pollingInterval);
                 }
