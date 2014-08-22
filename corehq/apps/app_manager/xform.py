@@ -922,10 +922,12 @@ class XForm(WrappedNode):
             value="instance('commcaresession')/session/context/appversion"
         )
 
-        if form.get_auto_gps_capture():
-            self.add_pollsensor(ref="/data/meta/location")
-        elif self.model_node.findall("{f}bind[@type='geopoint']"):
-            self.add_pollsensor()
+        # temporary fix for P1 bug http://manage.dimagi.com/default.asp?131021
+        if form.get_app().build_version >= '2.14':
+            if form.get_auto_gps_capture():
+                self.add_pollsensor(ref="/data/meta/location")
+            elif self.model_node.findall("{f}bind[@type='geopoint']"):
+                self.add_pollsensor()
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
