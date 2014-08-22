@@ -1,6 +1,8 @@
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RegisterGeneratorDecorator
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
+    AppStructureRepeater, RegisterGeneratorDecorator
+from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
+
 
 
 class BasePayloadGenerator(object):
@@ -19,7 +21,7 @@ class BasePayloadGenerator(object):
 @RegisterGeneratorDecorator(repeater_cls=FormRepeater, format='XML', label='Default XML')
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id).get_xml()
+        return self.repeater._payload_doc(repeat_record).get_xml()
 
 
 @RegisterGeneratorDecorator(repeater_cls=CaseRepeater, format='XML', label='Default XML')

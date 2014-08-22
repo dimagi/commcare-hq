@@ -176,6 +176,10 @@ class FormRepeater(Repeater):
 
     exclude_device_reports = BooleanProperty(default=False)
 
+    @memoized
+    def _payload_doc(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id)
+
     def get_headers(self, repeat_record):
         return {
             "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
