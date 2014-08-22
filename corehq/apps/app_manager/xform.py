@@ -922,8 +922,8 @@ class XForm(WrappedNode):
             value="instance('commcaresession')/session/context/appversion"
         )
 
-        # temporary fix for P1 bug http://manage.dimagi.com/default.asp?131021
-        if form.get_app().build_version >= '2.14':
+        # never add pollsensor to a pre-2.14 app
+        if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref="/data/meta/location")
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
