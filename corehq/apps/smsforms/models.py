@@ -71,11 +71,9 @@ class XFormsSession(Document):
             session.save()
 
     @classmethod
-    def latest_by_session_id(cls, id):
-        return XFormsSession.view("smsforms/sessions_by_touchforms_id", 
-                                  startkey=[id],
-                                  endkey=[id, {}],
-                                  include_docs=True).one()
+    def by_session_id(cls, id):
+        return XFormsSession.view("smsforms/sessions_by_touchforms_id",
+                                  key=id, include_docs=True).one()
 
     @classmethod
     def get_open_sms_session(cls, domain, contact_id):
