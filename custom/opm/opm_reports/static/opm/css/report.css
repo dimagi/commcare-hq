@@ -8,9 +8,8 @@
     top: 20px;
     left: 20px;
 }
-
 #opm-report {
-    height: 200px;
+    min-height: 200px;
 }
 #opm-report h1 {
     font-size: 50px;

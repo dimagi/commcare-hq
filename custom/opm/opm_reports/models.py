@@ -1,9 +1,12 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
+from corehq.fluff.calculators.case import CasePropertyFilter
+from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import CFU1_XMLNS
+from custom.opm.opm_reports.case_calcs import VhndAvailabilityCalc
+from custom.opm.opm_reports.constants import CFU1_XMLNS, VHND_XMLNS
 import fluff
 
 from . import case_calcs, user_calcs
@@ -86,15 +89,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
 
     name = flat_field(lambda form: form.name)
 
-    # per case
-    bp1_cash = case_calcs.BirthPreparedness(
-        ['window_1_1', 'window_1_2', 'window_1_3'])
-    bp2_cash = case_calcs.BirthPreparedness(
-        ['window_2_1', 'window_2_2', 'window_2_3'])
-    delivery = case_calcs.Delivery()
-    child_followup = case_calcs.ChildFollowup()
-    child_spacing = case_calcs.ChildSpacing()
-
     # per user
     service_forms = user_calcs.ServiceForms()
     growth_monitoring = user_calcs.GrowthMonitoring()
@@ -167,9 +161,22 @@ class OPMHierarchyFluff(fluff.IndicatorDocument):
     gp = user_data('gp')
     awc = user_data('awc')
 
+
+class VhndAvailabilityFluff(fluff.IndicatorDocument):
+
+    document_class = CommCareCase
+    domains = ('opm',)
+    group_by = ('owner_id',)
+    save_direct_to_sql = True
+    document_filter = CasePropertyFilter(type='vhnd')
+
+    vhnd = VhndAvailabilityCalc()
+
+
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
 OpmHealthStatusAllInfoFluffPillow = OpmHealthStatusAllInfoFluff.pillow()
+VhndAvailabilityFluffPillow = VhndAvailabilityFluff.pillow()
 OPMHierarchyFluffPillow = OPMHierarchyFluff.pillow()

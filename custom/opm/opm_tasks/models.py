@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
-    StringListProperty, IntegerProperty, ListProperty)
+    StringListProperty, IntegerProperty, ListProperty, DateTimeProperty)
 
 from ..opm_reports.constants import DOMAIN, InvalidRow
 
@@ -17,6 +17,7 @@ class OpmReportSnapshot(Document):
     rows = ListProperty()
     block = StringProperty()
     visible_cols = ListProperty()
+    generated_on = DateTimeProperty()
 
     @classmethod
     def by_month(cls, month, year, report_class, block=None):
