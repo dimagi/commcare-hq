@@ -610,7 +610,7 @@ class ConditionsMet(OPMCaseRow):
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
             self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)
-            if  self.child_condition_four is not None:
+            if self.child_condition_four is not None:
                 self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1], self.child_condition_four)
             else:
                 self.four = ''
@@ -629,9 +629,9 @@ class ConditionsMet(OPMCaseRow):
             else:
                 met, pos, neg = self.birth_spacing_years, SPACING_PROMPT_Y, SPACING_PROMPT_N
 
-            if condition_met:
+            if met:
                 self.five = self.img_elem % pos
-            elif condition_met is False:
+            elif met is False:
                 self.five = self.img_elem % neg
             else:
                 self.five = ''
