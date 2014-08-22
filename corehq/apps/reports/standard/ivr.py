@@ -41,12 +41,15 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             DataTablesColumn(_("Error")),
             DataTablesColumn(_("Error Message")),
         ]
-        
+
         if self.request.couch_user.is_previewer():
             header_list.append(DataTablesColumn(_("Gateway - Session Id")))
-        
-        return DataTablesHeader(*header_list)
-    
+
+        header = DataTablesHeader(*header_list)
+        header.custom_sort = [[0, 'desc']]
+
+        return header
+
     @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
