@@ -15,25 +15,31 @@ from ..reports import CaseReportMixin
 
 
 class AggressiveDefaultDict(defaultdict):
+    """
+    Like a normal defaultdict, except it ignores any default you pass with
+    mydict.get() and always returns True to the in operator.
+    """
 
     def __contains__(self, item):
         return True
 
     def get(self, key, default=None):
-        key_miss = object()
-        result = super(AggressiveDefaultDict, self).get(key, key_miss)
-        if result == key_miss:
-            return self[key]
-        return result
+        return self[key]
 
 
 class MockDataProvider(SharedDataProvider):
     """
     Mock data provider to manually specify vhnd availability per user
     """
-    def __init__(self, datespan, vhnd_map=None):
+    def __init__(self, default_date=None):
         super(MockDataProvider, self).__init__()
-        self.vhnd_map = vhnd_map if vhnd_map is not None else AggressiveDefaultDict(lambda: set([datespan.enddate.date()]))
+
+        get_default_set = lambda: {default_date} if default_date is not None else set()
+
+        def get_date_set_dict():
+            return AggressiveDefaultDict(get_default_set)
+
+        self.vhnd_map = AggressiveDefaultDict(get_date_set_dict)
 
     @property
     def _vhnd_dates(self):
@@ -88,7 +94,7 @@ class MockCaseRow(OPMCaseRow):
         self.report = report
         self.report.snapshot = None
         self.report.is_rendered_as_email = None
-        self.report._data_provider = data_provider or MockDataProvider(report.datespan)
+        self.report._data_provider = data_provider or MockDataProvider(report.datespan.enddate.date())
         super(MockCaseRow, self).__init__(case, report, child_index=child_index)
 
 

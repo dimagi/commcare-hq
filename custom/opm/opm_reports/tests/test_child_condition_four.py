@@ -80,7 +80,7 @@ class ConditionFourTestMixin(object):
             self.assertEqual(True, self.get_condition(row))
 
     def test_service_unavailable_at_all(self):
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        data_provider = MockDataProvider()
         case = OPMCase(
             forms=[],
             dod=self.valid_dod,
@@ -89,10 +89,8 @@ class ConditionFourTestMixin(object):
         self.assertEqual(True, self.get_condition(row))
 
     def test_service_unavailable_partial(self):
-        vhnd_map = {
-            'mock_owner_id': set([add_months_to_date(self.report_date, -2)])
-        }
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map)
+        date = add_months_to_date(self.report_date, -2)
+        data_provider = MockDataProvider(default_date=date)
         case = OPMCase(
             forms=[],
             dod=self.valid_dod,
@@ -102,10 +100,8 @@ class ConditionFourTestMixin(object):
         self.assertEqual(False, self.get_condition(row))
 
     def test_service_unavailable_out_of_range(self):
-        vhnd_map = {
-            'mock_owner_id': set([add_months_to_date(self.report_date, -3)])
-        }
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map)
+        date = add_months_to_date(self.report_date, -3)
+        data_provider = MockDataProvider(default_date=date)
         case = OPMCase(
             forms=[],
             dod=self.valid_dod,

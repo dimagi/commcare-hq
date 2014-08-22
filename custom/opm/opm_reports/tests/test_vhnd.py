@@ -72,7 +72,7 @@ class TestChildVHND(OPMCaseReportTestBase):
             forms=[],
             dod=date(2014, 3, 10),
         )
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        data_provider = MockDataProvider()
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertEqual(True, row.child_attended_vhnd)
 
@@ -121,7 +121,7 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 11, 10),
         )
-        data_provider = MockDataProvider(self.report.datespan, vhnd_map={})
+        data_provider = MockDataProvider()
         row = MockCaseRow(case, self.report, data_provider=data_provider)
         self.assertEqual(True, row.preg_attended_vhnd)
 
