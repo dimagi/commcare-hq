@@ -17,19 +17,14 @@ from ..reports import CaseReportMixin
 class AggressiveDefaultDict(defaultdict):
     """
     Like a normal defaultdict, except it ignores any default you pass with
-    mydict.get() and it makes mydict.get(<key>) use mydict[<key>], creating
-    an entry for <key> no matter what.
+    mydict.get() and always returns True to the in operator.
     """
 
     def __contains__(self, item):
         return True
 
     def get(self, key, default=None):
-        key_miss = object()
-        result = super(AggressiveDefaultDict, self).get(key, key_miss)
-        if result == key_miss:
-            return self[key]
-        return result
+        return self[key]
 
 
 class MockDataProvider(SharedDataProvider):
