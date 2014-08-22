@@ -16,8 +16,11 @@ def premature_auto_gps(build):
 
     for module in app.get_modules():
         for form in module.get_forms():
-            built_source = app.fetch_attachment(
-                'files/modules-{}/forms-{}.xml'.format(module.id, form.id))
+            try:
+                built_source = app.fetch_attachment(
+                    'files/modules-{}/forms-{}.xml'.format(module.id, form.id))
+            except ResourceNotFound:
+                continue
             if form.get_auto_gps_capture():
                 return 'auto gps error'
             elif XForm(built_source).model_node.find("{orx}pollsensor"):
