@@ -1212,7 +1212,6 @@ def get_active_dimagi_owned_gateway_projects(params, datespan, interval='month',
         domains = (form_query
                    .filter({"terms": {"domain": list(real_domains)}})
                    .filter({"terms": {"backend_id": dimagi_owned_backend_ids}}))
-        print domains.pprint()
         c = len(domains.run().facet('domains', 'terms'))
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
@@ -1263,6 +1262,55 @@ def get_domain_stats_data(params, datespan, interval='week', datefield="date_cre
         'enddate': datespan.enddate_key_utc,
     }
 
+def get_total_clients_data(params, datespan, interval='month',
+        datefield='opened_on'):
+    """
+    Returns cases that have used SMS.
+    Returned based on date case is opened
+    """
+    real_domains = get_real_project_spaces()
+
+    sms_cases = (SMSES()
+            .to_commcare_case()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .facet('cases',
+                {
+                    "terms": {
+                        "field": "couch_recipient",
+                        "size": 100000,
+                    }
+                })
+            .size(0))
+
+    cases = [u['term'] for u in sms_cases.run().facet('cases', 'terms')]
+
+    cases_after_date = (CaseES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .filter({"ids": {"values": cases}})
+            .opened_range(gte=datespan.startdate, lte=datespan.enddate)
+            .facet('date',
+                {
+                    "date_histogram": {
+                        "field": datefield,
+                        "interval": interval
+                    }
+                })
+            .size(0))
+
+    histo_data = cases_after_date.run().facet('date', 'entries')
+
+    cases_before_date = (CaseES()
+            .filter({"terms": {"domain": list(real_domains)}})
+            .filter({"ids": {"values": cases}})
+            .opened_range(lt=datespan.startdate)
+            .size(0)).run().total
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": cases_before_date},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
 
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
@@ -1283,6 +1331,10 @@ def stats_data(request):
     if histo_type == "active_dimagi_gateways":
         params.update(params_es)
         return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
+
+    if histo_type == "mobile_clients":
+        params.update(params_es)
+        return json_response(get_total_clients_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_mobile_workers":
         params.update(params_es)
