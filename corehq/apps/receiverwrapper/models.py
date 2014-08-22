@@ -55,6 +55,29 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
 DELETED = "-Deleted"
 
 
+def get_generator_class(repeater_cls, format):
+    return get_generator_class.repeater_format_map[repeater_cls][format]['generator_cls']
+
+
+get_generator_class.repeater_format_map = {}
+
+
+class RegisterGeneratorDecorator(object):
+
+    def __init__(self, format, repeater_cls, label):
+        self.format = format
+        self.repeater_cls = repeater_cls
+        self.label = label
+
+    def __call__(self, cls):
+        get_generator_class.repeater_format_map[self.repeater_cls] = {
+            self.format: {
+                'label': self.label,
+                'generator_cls': cls
+            }
+        }
+
+
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
@@ -64,8 +87,12 @@ class Repeater(Document, UnicodeMixIn):
 
     @memoized
     def get_payload_generator(self, payload_format):
-        gen = settings.REPEATER_PAYLOAD_GENERATORS[payload_format]
-        return to_function(gen)()
+        gen = get_generator_class(self.__class__, payload_format)
+        return gen()
+
+    def get_payload(self, repeat_record):
+        generator = self.get_payload_generator(self.format)
+        return generator.get_payload(repeat_record, repeater=self)
 
     def register(self, payload, next_check=None):
         try:
@@ -139,10 +166,6 @@ class FormRepeater(Repeater):
 
     exclude_device_reports = BooleanProperty(default=False)
 
-    def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format)
-        return generator.get_payload(repeat_record)
-
     def get_headers(self, repeat_record):
         return {
             "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
@@ -150,20 +173,6 @@ class FormRepeater(Repeater):
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
-
-
-class BasePayloadGenerator(object):
-    def enabled_for_domain(self, domain):
-        return True
-
-    def get_payload(self, repeat_record, **kwargs):
-        raise NotImplementedError()
-
-
-class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
-    @memoized
-    def get_payload(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id).get_xml()
 
 
 @register_repeater_type
@@ -179,9 +188,6 @@ class CaseRepeater(Repeater):
     def _payload_doc(self, repeat_record):
         return CommCareCase.get(repeat_record.payload_id)
 
-    def get_payload(self, repeat_record):
-        return self._payload_doc(repeat_record).to_xml(version=self.version or V2)
-
     def get_headers(self, repeat_record):
         return {
             "server-modified-on": self._payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
@@ -189,6 +195,7 @@ class CaseRepeater(Repeater):
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
+
 
 @register_repeater_type
 class ShortFormRepeater(Repeater):
@@ -203,13 +210,6 @@ class ShortFormRepeater(Repeater):
     def _payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
-    def get_payload(self, repeat_record):
-        form = self._payload_doc(repeat_record)
-        cases = CommCareCase.get_by_xform_id(form.get_id)
-        return json.dumps({'form_id': form._id,
-                           'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case._id for case in cases]})
-
     def get_headers(self, repeat_record):
         return {
             "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
@@ -222,8 +222,8 @@ class ShortFormRepeater(Repeater):
 @register_repeater_type
 class AppStructureRepeater(Repeater):
     def get_payload(self, repeat_record):
-        # This is the id of the application, currently all we forward
-        return repeat_record.payload_id
+        generator = self.get_payload_generator(self.format)
+        return generator.get_payload(repeat_record, repeater=self)
 
 
 class RepeatRecord(Document, LockableMixIn):
