@@ -79,6 +79,9 @@ class ConditionFourTestMixin(object):
             row = MockCaseRow(case, self.report, child_index=2)
             self.assertEqual(True, self.get_condition(row))
 
+
+class ServiceAvailabilityTestMixIn(object):
+
     def test_service_unavailable_at_all(self):
         data_provider = MockDataProvider()
         case = OPMCase(
@@ -110,7 +113,7 @@ class ConditionFourTestMixin(object):
         self.assertEqual(True, self.get_condition(row))
 
 
-class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
+class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
     expected_window = 12
 
     def setUp(self):
@@ -119,7 +122,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin):
         self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
-class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
+class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
     expected_window = 6
 
     def setUp(self):
@@ -135,18 +138,6 @@ class TestChildWeighedOnce(OPMCaseReportTestBase, ConditionFourTestMixin):
         super(TestChildWeighedOnce, self).setUp()
         self.valid_form_function = _valid_child_weight_registration_form
         self.condition_getter = lambda row: row.child_weighed_once
-
-    def test_service_unavailable_at_all(self):
-        # This condition isn't affected by service availability
-        pass
-
-    def test_service_unavailable_partial(self):
-        # This condition isn't affected by service availability
-        pass
-
-    def test_service_unavailable_out_of_range(self):
-        # This condition isn't affected by service availability
-        pass
 
 
 def _valid_measles_form(received_on):
