@@ -4,7 +4,6 @@ import json
 import logging
 import socket
 import time
-import bisect
 from datetime import timedelta, datetime, date
 from dateutil.relativedelta import relativedelta
 from copy import deepcopy
@@ -873,7 +872,11 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 def daterange(interval, start_date, end_date):
-    cur_date = end_date
+    """
+    Generator that yields dates from start_date to end_date in the interval
+    specified
+    """
+    cur_date = start_date
     if interval == 'day':
         step = relativedelta(days=1)
     elif interval == 'week':
@@ -883,21 +886,10 @@ def daterange(interval, start_date, end_date):
     elif interval == 'year':
         step = relativedelta(years=1)
 
-    while cur_date > start_date:
+    while cur_date < end_date:
         yield cur_date
-        cur_date -= step
+        cur_date += step
 
-def make_buckets(interval, start_date, end_date):
-    """
-    Returns a descending sorted list of timestamps to use from end_date to 
-    start_date
-    """
-    buckets_list = list()
-    for single_date in daterange(interval, start_date, end_date):
-        t =int(1000*time.mktime(single_date.timetuple()))
-        buckets_list.append(t)
-
-    return buckets_list
 
 def get_real_project_spaces():
     real_domain_query = DomainES().real_domains().fields(['name'])
@@ -908,15 +900,7 @@ def get_real_project_spaces():
 def get_sms_query(datefield, begin, end, facet_name, facet_terms):
     return (SMSES()
             .fields(['domain', datefield])
-            .filter({
-                "range": {
-                    datefield: {
-                        "from": begin,
-                        "to": end
-                        }
-                    }
-                }
-            )
+            .received(gte=begin, lte=end)
             .facet(facet_name, facet_terms)
             .size(0))
 
@@ -924,15 +908,7 @@ def get_sms_query(datefield, begin, end, facet_name, facet_terms):
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
     return (FormES()
             .fields(['domain', datefield])
-            .filter({
-                "range": {
-                    datefield: {
-                        "from": begin, 
-                        "to": end
-                        }
-                    }
-                }
-            )
+            .submitted(gte=begin, lte=end)
             .facet(facet_name, facet_terms)
             .size(0))
 
@@ -1023,21 +999,19 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
 
 def get_active_domain_stats_data(params, datespan, interval='month', 
         datefield='received_on'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
-
+    domain_facet = {'terms': {'field': 'domain'}}
     real_domains = get_real_project_spaces()
 
     histo_data = []
-    for timestamp in reversed(keys):
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
-        f = timestamp - SEC_IN_30_DAYS
-        form_query = get_form_query(datefield, f, t, 'domains', {"terms": {"field": "domain"}})
+        f = timestamp - relativedelta(days=30)
+        form_query = get_form_query(datefield, f, t, 'domains', domain_facet)
         domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('domains', "terms")
         c = len(domains)
         if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
 
     return {
         'histo_data': {"All Domains": histo_data},
@@ -1048,9 +1022,6 @@ def get_active_domain_stats_data(params, datespan, interval='month',
 
 def get_active_mobile_workers_data(params, datespan, interval='month',
         datefield='date'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
     sms_users_facet = {"terms": {
         "field": "couch_recipient",
         "size": 10000}}
@@ -1058,14 +1029,15 @@ def get_active_mobile_workers_data(params, datespan, interval='month',
     real_domains = get_real_project_spaces()
 
     histo_data = []
-    for timestamp in reversed(keys):
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
-        f = timestamp - SEC_IN_30_DAYS
+        f = timestamp - relativedelta(days=30)
         sms_query = get_sms_query(datefield, f, t, 'users', sms_users_facet)
         users = sms_query.filter({"terms": {"domain": list(real_domains)}}).run().facet('users', "terms")
         c = len(users)
         if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
+            histo_data.append({"count": c, "time":
+                1000 * time.mktime(timestamp.timetuple())})
 
     return {
         'histo_data': {"All Domains": histo_data},
@@ -1155,22 +1127,19 @@ def get_real_sms_messages_data(params, datespan, interval='month',
 
 def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         datefield='date'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
-
+    domain_facet = {"terms": {"field": "domain"}}
     real_domains = get_real_project_spaces()
 
     histo_data = []
-    for timestamp in reversed(keys):
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
-        f = timestamp - SEC_IN_30_DAYS
-        form_query = get_sms_query(datefield, f, t, 'domains', {"terms":{"field": "domain"}})
+        f = timestamp - relativedelta(days=30)
+        form_query = get_sms_query(datefield, f, t, 'domains', domain_facet)
         domains = form_query.filter({"terms": {"domain": list(real_domains)}}).run()
         c = len(domains.facet('domains', 'terms'))
-        print c
         if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
 
     return {
         'histo_data': {"All Domains": histo_data},
