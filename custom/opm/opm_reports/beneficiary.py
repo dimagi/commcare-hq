@@ -675,6 +675,7 @@ class Beneficiary(OPMCaseRow):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.delivery_cash + self.child_cash
         )
+        self.total += self.year_end_bonus_cash
         # Show only cases that require payment
         if self.total == 0:
             raise InvalidRow
