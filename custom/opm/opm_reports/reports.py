@@ -306,7 +306,6 @@ class SharedDataProvider(object):
         # If things start getting slow or memory intensive this would be a good place to look.
         data = VhndAvailabilitySqlData().data
         results = defaultdict(lambda: defaultdict(lambda: set()))
-        prop_available = lambda prop: row[prop] == '1'
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
