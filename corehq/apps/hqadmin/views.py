@@ -892,12 +892,18 @@ def daterange(interval, start_date, end_date):
 
 
 def get_real_project_spaces():
+    """
+    Returns a set of names of real domains
+    """
     real_domain_query = DomainES().real_domains().fields(['name'])
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
 
 
 def get_sms_query(datefield, begin, end, facet_name, facet_terms):
+    """
+    Returns domain and date of SMS sent during this time
+    """
     return (SMSES()
             .fields(['domain', datefield])
             .received(gte=begin, lte=end)
@@ -906,6 +912,9 @@ def get_sms_query(datefield, begin, end, facet_name, facet_terms):
 
 
 def get_form_query(datefield, begin, end, facet_name, facet_terms):
+    """
+    Returns domain and date of forms sent during this time
+    """
     return (FormES()
             .fields(['domain', datefield])
             .submitted(gte=begin, lte=end)
@@ -915,6 +924,10 @@ def get_form_query(datefield, begin, end, facet_name, facet_terms):
 
 def get_sms_only_domain_stats_data(datespan, interval='month',
         datefield='date_created'):
+    """
+    Returns domains that have only used SMS and not forms.
+    Returned based on date domain is created
+    """
     histo_data = []
 
     sms = (SMSES()
@@ -960,6 +973,10 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
 
 def get_commconnect_domain_stats_data(params, datespan, interval='month',
         datefield='date_created'):
+    """
+    Returns domains that have used SMS.
+    Returned based on date domain is created
+    """
     sms = (SMSES()
            .facet('domains', {"terms": {"field": "domain"}})
            .size(0))
@@ -999,6 +1016,10 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
 
 def get_active_domain_stats_data(params, datespan, interval='month', 
         datefield='received_on'):
+    """
+    Returns list of timestamps and how many domains were active in the 30 days
+    before the timestamp
+    """
     domain_facet = {'terms': {'field': 'domain'}}
     real_domains = get_real_project_spaces()
 
@@ -1022,6 +1043,10 @@ def get_active_domain_stats_data(params, datespan, interval='month',
 
 def get_active_mobile_workers_data(params, datespan, interval='month',
         datefield='date'):
+    """
+    Returns list of timestamps and how many mobile workers were active in the 30
+    days before the timestamp
+    """
     sms_users_facet = {"terms": {
         "field": "couch_recipient",
         "size": 10000}}
@@ -1046,8 +1071,13 @@ def get_active_mobile_workers_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
+
 def get_mobile_workers_data(params, datespan, interval='month',
         datefield='created_on'):
+    """
+    Returns mobile workers that have used SMS.
+    Returned based on date mobile worker is created
+    """
     real_domains = get_real_project_spaces()
 
     sms_users = (SMSES()
@@ -1097,6 +1127,10 @@ def get_mobile_workers_data(params, datespan, interval='month',
 
 def get_real_sms_messages_data(params, datespan, interval='month',
         datefield='date'):
+    """
+    Returns SMS sent in timespan.
+    Returned based on date SMS was sent
+    """
     real_domains = get_real_project_spaces()
     sms_after_date = (SMSES()
             .filter({"terms": params})
@@ -1125,8 +1159,13 @@ def get_real_sms_messages_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
+
 def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         datefield='date'):
+    """
+    Returns list of timestamps and how many commconnect domains were active in
+    the 30 days before the timestamp
+    """
     domain_facet = {"terms": {"field": "domain"}}
     real_domains = get_real_project_spaces()
 
@@ -1147,6 +1186,7 @@ def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
+
 
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
