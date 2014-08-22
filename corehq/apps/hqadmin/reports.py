@@ -290,6 +290,15 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# workers",
     },
+    "active_dimagi_owned_gateways": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_dimagi_owned_gateways",
+        "chart_title": "Active Projects Using Dimagi Owned Gateways",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_dimagi_gateways",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
 }
 
 
@@ -636,6 +645,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'incoming_sms_domain_count',
         'sms_only_domain_count',
         'active_commconnect_domain_count',
+        'active_dimagi_owned_gateways',
     ]
 
     @property

@@ -59,6 +59,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.ota.views import get_restore_response, get_restore_params
+from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard.domains import es_domain_query
@@ -1187,6 +1188,43 @@ def get_active_commconnect_domain_stats_data(params, datespan, interval='month',
         'enddate': datespan.enddate_key_utc,
     }
 
+def get_active_dimagi_owned_gateway_projects(params, datespan, interval='month',
+        datefield='date'):
+    """
+    Returns list of timestamps and how many domains used a Dimagi owned gateway
+    in the past thrity days before each timestamp
+    """
+    domain_facet = {"terms": {"field": "domain"}}
+    real_domains = get_real_project_spaces()
+
+    dimagi_owned_backend = SMSBackend.view(
+        "sms/global_backends",
+        reduce=False
+    ).all()
+
+    dimagi_owned_backend_ids = [x['id'] for x in dimagi_owned_backend]
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        form_query = get_sms_query(datefield, f, t, 'domains', domain_facet)
+        domains = (form_query
+                   .filter({"terms": {"domain": list(real_domains)}})
+                   .filter({"terms": {"backend_id": dimagi_owned_backend_ids}}))
+        print domains.pprint()
+        c = len(domains.run().facet('domains', 'terms'))
+        if c > 0:
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
 
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
@@ -1241,6 +1279,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "active_dimagi_gateways":
+        params.update(params_es)
+        return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
 
     if histo_type == "active_mobile_workers":
         params.update(params_es)
