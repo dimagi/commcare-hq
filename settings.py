@@ -264,6 +264,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
 
     # custom reports
