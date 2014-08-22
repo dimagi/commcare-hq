@@ -67,7 +67,7 @@
                             id="reassign_owner_type_select"
                             class="span2"
                             data-bind="options: owner_types,
-                                        optionsCaption: "{% trans 'Select Type...' %}",
+                                        optionsCaption: '{% trans 'Select Type...' %}',
                                         grabUniqueDefault: selected_owner_types,
                                         event: {change: changeNewOwnerType}"></select>
                     <label for="reassign_owner_select" class="inline" data-bind="visible: should_show_owners"> {% trans 'named' %} </label>
@@ -79,7 +79,7 @@
                                         comboboxOptions: available_owners,
                                         optionsText: 'name',
                                         optionsValue: 'ownerid',
-                                        comboboxCaption: "{% trans 'Select New Owner...' %}",
+                                        comboboxCaption: '{% trans 'Select New Owner...' %}',
                                         event: {change: changeNewOwner},
                                         combobox: true"></select>
                 <button type="submit"
