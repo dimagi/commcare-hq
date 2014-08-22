@@ -46,6 +46,6 @@ def get_repeater_formats(repeater, domain):
     formats = []
     for format_name, details in get_all_formats_in_repeater(repeater).iteritems():
         generator_cls = details['generator_cls']
-        if generator_cls().enabled_for_domain(domain):
+        if generator_cls.enabled_for_domain(domain):
             formats.append((format_name, format_name))
     return formats
