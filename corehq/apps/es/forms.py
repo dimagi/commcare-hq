@@ -16,6 +16,7 @@ class FormES(HQESQuery):
             app,
             submitted,
             completed,
+            in_domains,
         ] + super(FormES, self).builtin_filters
 
 
@@ -33,3 +34,7 @@ def submitted(gt=None, gte=None, lt=None, lte=None):
 
 def completed(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('form.meta.timeEnd', gt, gte, lt, lte)
+
+
+def in_domains(domains):
+    return filters.term('domain', list(domains))
