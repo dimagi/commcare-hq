@@ -83,10 +83,10 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     }
 
 
-def get_active_mobile_workers_data(params, datespan, interval='month',
+def get_active_mobile_users_data(params, datespan, interval='month',
         datefield='date'):
     """
-    Returns list of timestamps and how many mobile workers were active in the
+    Returns list of timestamps and how many users of SMS were active in the
     30 days before the timestamp
     """
     sms_users_facet = {"terms": {
@@ -99,7 +99,8 @@ def get_active_mobile_workers_data(params, datespan, interval='month',
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'users', sms_users_facet, real_domains)
+        sms_query = get_sms_query(f, t, 'users', sms_users_facet,
+                real_domains).filter({"terms": params})
         users = sms_query.run().facet('users', "terms")
         c = len(users)
         if c > 0:
@@ -169,38 +170,6 @@ def get_active_dimagi_owned_gateway_projects(params, datespan,
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
-
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-
-def get_active_clients_data(params, datespan, interval='month',
-        datefield='date'):
-    """
-    Returns list of timestamps and how many mobile workers were active in the 30
-    days before the timestamp
-    """
-    sms_case_facet = {"terms": {
-        "field": "couch_recipient",
-        "size": 10000}}
-
-    real_domains = get_real_project_spaces()
-
-    histo_data = []
-    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
-        t = timestamp
-        f = timestamp - relativedelta(days=30)
-        cases = (get_sms_query(f, t, 'cases', sms_case_facet, real_domains)
-                    .to_commcare_case())
-        cases = cases.run().facet('cases', "terms")
-        c = len(cases)
-        if c > 0:
-            histo_data.append({"count": c, "time":
-                1000 * time.mktime(timestamp.timetuple())})
 
     return {
         'histo_data': {"All Domains": histo_data},

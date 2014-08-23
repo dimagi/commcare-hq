@@ -59,13 +59,12 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_sms_only_domain_stats_data,
     get_commconnect_domain_stats_data,
     get_active_domain_stats_data,
-    get_active_mobile_workers_data,
+    get_active_mobile_users_data,
     get_mobile_workers_data,
     get_real_sms_messages_data,
     get_active_commconnect_domain_stats_data,
     get_active_dimagi_owned_gateway_projects,
     get_domain_stats_data,
-    get_active_clients_data,
     get_total_clients_data
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -899,17 +898,13 @@ def stats_data(request):
         params.update(params_es)
         return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
 
-    if histo_type == "active_mobile_clients":
-        params.update(params_es)
-        return json_response(get_active_clients_data(params, request.datespan, interval=interval))
-
     if histo_type == "mobile_clients":
         params.update(params_es)
         return json_response(get_total_clients_data(params, request.datespan, interval=interval))
 
-    if histo_type == "active_mobile_workers":
+    if histo_type == "active_mobile_users":
         params.update(params_es)
-        return json_response(get_active_mobile_workers_data(params, request.datespan, interval=interval))
+        return json_response(get_active_mobile_users_data(params, request.datespan, interval=interval))
 
     if histo_type == "mobile_workers":
         params.update(params_es)
