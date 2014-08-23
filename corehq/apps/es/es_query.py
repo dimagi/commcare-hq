@@ -170,6 +170,15 @@ class ESQuery(object):
         """
         return self._facets
 
+    def date_histogram(self, name, datefield, interval):
+        facet_terms = {
+                "date_histogram": {
+                    "field": datefield,
+                    "interval": interval
+                }
+        }
+        return self.facet(name, facet_terms)
+
     @property
     def _query(self):
         return self.es_query['query']['filtered']['query']

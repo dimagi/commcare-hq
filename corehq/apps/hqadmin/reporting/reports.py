@@ -189,7 +189,7 @@ def get_total_clients_data(params, datespan, interval='month',
 
     sms_cases = (SMSES()
             .to_commcare_case()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .facet('cases',
                 {
                     "terms": {
@@ -202,22 +202,16 @@ def get_total_clients_data(params, datespan, interval='month',
     cases = [u['term'] for u in sms_cases.run().facet('cases', 'terms')]
 
     cases_after_date = (CaseES()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .filter({"ids": {"values": cases}})
             .opened_range(gte=datespan.startdate, lte=datespan.enddate)
-            .facet('date',
-                {
-                    "date_histogram": {
-                        "field": datefield,
-                        "interval": interval
-                    }
-                })
+            .date_histogram('date', datefield, interval)
             .size(0))
 
     histo_data = cases_after_date.run().facet('date', 'entries')
 
     cases_before_date = (CaseES()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .filter({"ids": {"values": cases}})
             .opened_range(lt=datespan.startdate)
             .size(0)).run().total
@@ -240,7 +234,7 @@ def get_mobile_workers_data(params, datespan, interval='month',
 
     sms_users = (SMSES()
             .to_commcare_user()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .facet('users',
                 {
                     "terms": {
@@ -253,23 +247,17 @@ def get_mobile_workers_data(params, datespan, interval='month',
     users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
 
     users_after_date = (UserES()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
             .created(gte=datespan.startdate, lte=datespan.enddate)
-            .facet('date',
-                {
-                    "date_histogram": {
-                        "field": datefield,
-                        "interval": interval
-                    }
-                })
+            .date_histogram('date', datefield, interval)
             .size(0))
 
     histo_data = users_after_date.run().facet('date', 'entries')
 
     users_before_date = (UserES()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
             .created(lt=datespan.startdate)
@@ -292,21 +280,15 @@ def get_real_sms_messages_data(params, datespan, interval='month',
     real_domains = get_real_project_spaces()
     sms_after_date = (SMSES()
             .filter({"terms": params})
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .received(gte=datespan.startdate, lte=datespan.enddate)
-            .facet('date',
-                {
-                    "date_histogram": {
-                        "field": datefield,
-                        "interval": interval
-                    }
-                })
+            .date_histogram('date', datefield, interval)
             .size(0))
 
     histo_data = sms_after_date.run().facet('date', 'entries')
 
     sms_before_date = (SMSES()
-            .filter({"terms": {"domain": list(real_domains)}})
+            .in_domains(real_domains)
             .received(lt=datespan.startdate)
             .size(0)).run().total
 
@@ -342,13 +324,7 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
             .real_domains()
             .filter({"terms": {"name": list(sms_only_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
-            .facet('date',
-                {
-                    "date_histogram": {
-                        "field": datefield,
-                        "interval": interval
-                    }
-                })
+            .date_histogram('date', datefield, interval)
             .size(0))
 
     histo_data = domains_after_date.run().facet('date', 'entries')
@@ -385,13 +361,7 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
     domains_after_date = (DomainES()
             .filter({"terms": {"name": list(sms_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
-            .facet('date',
-                {
-                    "date_histogram": {
-                        "field": datefield,
-                        "interval": interval
-                    }
-                })
+            .date_histogram('date', datefield, interval)
             .size(0))
 
     histo_data = domains_after_date.run().facet('date', 'entries')

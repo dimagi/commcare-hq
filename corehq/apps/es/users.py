@@ -14,6 +14,7 @@ class UserES(HQESQuery):
             domain,
             created,
             mobile_users,
+            in_domains,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -46,3 +47,6 @@ def demo_users():
 
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
+
+def in_domains(domains):
+    return filters.term("domain", list(domains))
