@@ -691,9 +691,7 @@ def db_comparisons(request):
             'description': 'Users (base_doc is "CouchUser")',
             'couch_db': CommCareUser.get_db(),
             'view_name': 'users/by_username',
-            'es_query': UserES().remove_default_filter('active')
-                .remove_default_filter('mobile_worker')
-                .size(0),
+            'es_query': UserES().remove_default_filter('active').size(0),
             'sql_rows': User.objects.count(),
         },
         {

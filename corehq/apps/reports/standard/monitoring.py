@@ -9,7 +9,7 @@ import numpy
 import operator
 import pytz
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
@@ -40,7 +40,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         user_link = user_link_template % {
             'link': "%s%s" % (get_url_base(),
                               CaseListReport.get_url(domain=self.domain)),
-            'params': urlencode(ExpandedMobileWorkerFilter.for_user(user.user_id)),
+            'params': urlencode(EMWF.for_user(user.user_id)),
             'username': user.username_in_report,
         }
         return user_link
@@ -215,7 +215,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         rows = [self.Row(self, user) for user in users_data.combined_users]
 
@@ -327,7 +327,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         for user in users_data.combined_users:
             row = []
@@ -416,8 +416,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     def shared_pagination_GET_params(self):
         params = [
             dict(
-                name=ExpandedMobileWorkerFilter.slug,
-                value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
+                name=EMWF.slug,
+                value=EMWF.get_value(self.request, self.domain)),
             dict(
                 name=CompletionOrSubmissionTimeFilter.slug,
                 value=CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)),
@@ -434,12 +434,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     @memoized
     def all_users(self):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        result = ExpandedMobileWorkerFilter.pull_users_from_es(
-            self.domain, self.request, fields=fields)
-        return sorted(map(
-            util._report_user_dict,
-            [u['fields'] for u in result['hits']['hits']]
-        ), key=lambda u: u['username_in_report'])
+        users = EMWF.user_es_query(self.domain, self.request).fields(fields)\
+                .run().hits
+        users = map(util._report_user_dict, users)
+        return sorted(users, key=lambda u: u['username_in_report'])
 
     def paginate_list(self, data_list):
         if self.pagination:
@@ -670,7 +668,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
                     Count('duration')
                 )
 
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         user_ids = [user.user_id for user in users_data.combined_users]
 
@@ -724,7 +722,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            users_data = EMWF.pull_users_and_groups(
                 self.domain, self.request, True, True)
 
             placeholders = []
@@ -847,7 +845,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
@@ -1140,10 +1138,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
             fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
             if type == 'user':
-                url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+                url_args = EMWF.for_user(owner_id)
             else:
                 assert type == 'group'
-                url_args = ExpandedMobileWorkerFilter.for_group(owner_id)
+                url_args = EMWF.for_group(owner_id)
 
             start_date, end_date = dates_for_linked_reports()
             url_args.update({
@@ -1163,7 +1161,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 takes a row, and converts certain cells in the row to links that link to the case list page
             """
             cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+            url_args = EMWF.for_user(owner_id)
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
             start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
