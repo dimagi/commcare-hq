@@ -8,6 +8,8 @@ from couchdbkit import RequestFailed
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.api.es import CaseES
+from corehq.apps.es import filters
+from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -92,7 +94,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         case_es = self.case_es
-        user_ids, owner_ids = self.case_users_and_owners
+        user_ids, owner_ids = self.case_owners
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
                                  status=self.case_status, owner_ids=owner_ids+user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
@@ -113,7 +115,45 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     @memoized
-    def case_users_and_owners(self):
+    def case_owners(self):
+
+        # Here is a plan:
+        # Have this return a list of owner ids as specified in the FB ticket
+
+        # Get user ids for each user that was specifically selected
+        selected_user_ids = EMWF.selected_user_ids(self.request)
+
+        # Get group ids for each group that was specified
+        selected_group_ids = EMWF.selected_group_ids(self.request)
+
+        # Get user ids for each user in specified reporting groups
+        report_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                           .doc_type("Group")\
+                                           .filter(filters.term("_id", selected_group_ids))\
+                                           .filter(filters.term("reporting", True))\
+                                           .fields(["users"])
+        user_lists = [group["users"] for group in report_group_q.run().hits]
+        selected_reporting_group_users = set().union(*user_lists)
+
+        # Get ids for each sharing group that contains a user from selected_reporting_group_users
+        share_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                                .doc_type("Group")\
+                                                .filter(filters.term("case_sharing", True))\
+                                                .filter(filters.term("users", selected_reporting_group_users))\
+                                                .fields([])
+        sharing_group_ids = share_group_q.run().doc_ids()
+
+        #TODO: Demo user? Unknown user?
+
+        '''
+        return set().union(selected_user_ids,
+                           selected_group_ids,
+                           selected_reporting_group_users,
+                           sharing_group_ids)
+        '''
+
+        #######################################################################
+
         user_query = EMWF.user_es_query(self.domain, self.request).fields([])
         user_ids = user_query.run().doc_ids()
         group_owner_ids = []
@@ -126,6 +166,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
             user_ids.append("commtrack-system")
         return user_ids, filter(None, group_owner_ids)
+        #TODO: Have this just return one list of owner_ids (which is a combination of user and group ids)
+
 
     def get_case(self, row):
         if '_source' in row:
