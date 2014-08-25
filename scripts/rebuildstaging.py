@@ -1,7 +1,7 @@
 """
 This file is meant to be used in the following manner:
 
-$ python make_rebuild_staging.py < staging.yaml [-v] [fetch] [sync] [check] [rebuild]
+$ python make_rebuild_staging.py < staging.yaml [-v] [--no-push] [fetch] [sync] [rebuild]
 
 Where staging.yaml looks as follows:
 
@@ -70,14 +70,23 @@ def fetch_remote(base_config):
     print "All branches fetched"
 
 
-def has_local(git, branch):
+def has_ref(git, ref):
     """Return true if the named branch exists"""
-    ref = "refs/heads/{}".format(branch)
     try:
         out = git("show-ref", "--verify", "--quiet", ref)
     except sh.ErrorReturnCode:
         return False
     return out.exit_code == 0
+
+
+def has_local(git, branch):
+    """Return true if the named local branch exists"""
+    return has_ref(git, "refs/heads/{}".format(branch))
+
+
+def has_remote(git, branch, remote="origin"):
+    """Return true if the named remote branch exists"""
+    return has_ref(git, "refs/remotes/{}/{}".format(remote, branch))
 
 
 def origin(branch):
@@ -127,37 +136,54 @@ def sync_local_copies(config):
         print "All branches up-to-date."
 
 
-def check_merges(config, print_details=True):
+def rebuild_staging(config, push=True):
     merge_conflicts = []
     not_found = []
-    base_config = config
-    for path, config in base_config.span_configs():
-        git = get_git(path)
-        with OriginalBranch(git):
-            trunk = origin(config.trunk)
-            git.checkout('-B', config.name, trunk, '--no-track')
+    all_configs = list(config.span_configs())
+    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
+                                          for path, _ in all_configs])
+    with context_manager:
+        for path, config in all_configs:
+            git = get_git(path)
+            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
             for branch in config.branches:
                 if not has_local(git, branch):
+                    if not has_remote(git, branch):
+                        not_found.append((path, branch))
+                        print "  [{cwd}] {trunk} => {branch} NOT FOUND".format(
+                            cwd=format_cwd(path),
+                            trunk=trunk,
+                            branch=branch,
+                        )
+                        continue
                     branch = origin(branch)
-                print "  [{cwd}] {trunk} => {branch}".format(
-                    cwd=format_cwd(path),
-                    trunk=trunk,
+                print "  [{cwd}] Merging {branch} into {name}".format(
+                    cwd=path,
                     branch=branch,
+                    name=config.name
                 ),
                 try:
-                    git.checkout(branch)
-                except sh.ErrorReturnCode_1 as e:
-                    assert (
-                        "error: pathspec '%s' did not "
-                        "match any file(s) known to git." % branch) in e.stderr, e.stderr
-                    not_found.append((path, branch))
-                    print "NOT FOUND"
-                    continue
-                if not git_check_merge(config.name, branch, git=git):
+                    git.merge(branch, '--no-edit')
+                except sh.ErrorReturnCode_1:
                     merge_conflicts.append((path, origin(config.trunk), branch))
+                    git.merge("--abort")
                     print "FAIL"
                 else:
                     print "ok"
+            if config.submodules:
+                for submodule in config.submodules:
+                    git.add(submodule)
+                git.commit('-m', "update submodule refs", '--no-edit',
+                           '--allow-empty')
+            # stupid safety check
+            assert config.name != 'master'
+            if push:
+                print "  [{cwd}] Force pushing to origin {name}".format(
+                    cwd=path,
+                    name=config.name,
+                )
+                force_push(git, config.name)
+
     if not_found:
         print "You must remove the following branches before rebuilding:"
         for cwd, branch in not_found:
@@ -168,7 +194,7 @@ def check_merges(config, print_details=True):
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
         for cwd, trunk, branch in merge_conflicts:
-            print "  [{cwd}] {trunk} => {branch}".format(
+            print "  [{cwd}] {branch} => {trunk}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
                 trunk=trunk,
@@ -179,39 +205,6 @@ def check_merges(config, print_details=True):
 
     if merge_conflicts or not_found:
         exit(1)
-    else:
-        print "No merge conflicts"
-
-
-def rebuild_staging(config):
-    all_configs = list(config.span_configs())
-    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
-                                          for path, _ in all_configs])
-    with context_manager:
-        for path, config in all_configs:
-            git = get_git(path)
-            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
-            for branch in config.branches:
-                if not has_local(git, branch):
-                    branch = origin(branch)
-                print "  [{cwd}] Merging {branch} into {name}".format(
-                    cwd=path,
-                    branch=branch,
-                    name=config.name
-                )
-                git.merge(branch, '--no-edit')
-            if config.submodules:
-                for submodule in config.submodules:
-                    git.add(submodule)
-                git.commit('-m', "update submodule refs", '--no-edit',
-                           '--allow-empty')
-            # stupid safety check
-            assert config.name != 'master'
-            print "  [{cwd}] Force pushing to origin {name}".format(
-                cwd=path,
-                name=config.name,
-            )
-            force_push(git, config.name)
 
 
 def force_push(git, branch):
@@ -270,15 +263,15 @@ if __name__ == '__main__':
     config.normalize()
     args = set(sys.argv[1:])
     verbose = '-v' in args
+    do_push = '--no-push' not in args
     args.discard('-v')
+    args.discard('--no-push')
     if not args:
-        args = set('fetch sync check rebuild'.split())
+        args = set('fetch sync rebuild'.split())
     with DisableGitHooks(), ShVerbose(verbose):
         if 'fetch' in args:
             fetch_remote(config)
         if 'sync' in args:
             sync_local_copies(config)
-        if 'check' in args:
-            check_merges(config)
         if 'rebuild' in args:
-            rebuild_staging(config)
+            rebuild_staging(config, do_push)
