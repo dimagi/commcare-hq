@@ -1018,6 +1018,7 @@ class Subscription(models.Model):
         domain_name = self.subscriber.domain
         product = self.plan_version.core_product
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s" % {
