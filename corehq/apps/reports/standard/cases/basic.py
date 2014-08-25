@@ -115,7 +115,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def case_users_and_owners(self):
         user_query = EMWF.user_es_query(self.domain, self.request).fields([])
-        user_ids = user_query.run().doc_ids()
+        user_ids = user_query.run().doc_ids
         group_owner_ids = []
         for user_id in user_ids:
             group_owner_ids.extend([
