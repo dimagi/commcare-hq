@@ -1,3 +1,4 @@
+from corehq.apps.domain.utils import get_doc_ids
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from corehq import Domain
@@ -15,11 +16,7 @@ class Command(BaseCommand):
         old_db = Domain.get_db()
         new_db = RepeatRecord.get_db()
         assert old_db.dbname != new_db.dbname
-        doc_ids = [r['id'] for r in old_db.view('domain/docs',
-            startkey=[domain, 'RepeatRecord'],
-            endkey=[domain, 'RepeatRecord', {}],
-            reduce=False,
-        )]
+        doc_ids = get_doc_ids(domain, 'RepeatRecord', old_db)
         count = len(doc_ids)
         chunksize = 250
 

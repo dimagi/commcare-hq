@@ -443,7 +443,7 @@ var DetailScreenConfig = (function () {
             }
 
             var longColumns = spec.long ? spec.long.columns : [];
-            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
+            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
@@ -766,7 +766,7 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
-            if (spec.hasOwnProperty('parentSelect')) {
+            if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
                 this.parentSelect = new ParentSelect({
                     active: spec.parentSelect.active,
                     moduleId: spec.parentSelect.module_id,

@@ -6,48 +6,48 @@ currently specific to monthly reports.  It would be pretty simple to make
 this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
+from collections import defaultdict, OrderedDict
 import datetime
-from numbers import Number
+import logging
+import simplejson
 import re
-from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
+from decimal import Decimal
+
+from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
-import simplejson
+from django.utils.translation import ugettext_noop, ugettext as _
+
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
+
+from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
-from django.http import HttpResponse
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
-
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.users.models import CommCareCase, CouchUser
-from dimagi.utils.dates import DateSpan
+from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
-from django.utils.translation import ugettext as _
-from custom.opm import HealthStatusMixin, normal_format, format_percent
-from custom.opm.opm_reports.conditions_met import ConditionsMet
-from custom.opm.opm_reports.filters import SelectBlockFilter, GramPanchayatFilter
-from custom.opm.opm_reports.health_status import HealthStatus
-from dimagi.utils.decorators.memoized import memoized
 
+from custom.opm import BaseMixin, normal_format, format_percent
 from ..opm_tasks.models import OpmReportSnapshot
-from .beneficiary import Beneficiary
+from .beneficiary import Beneficiary, ConditionsMet
+from .health_status import HealthStatus
 from .incentive import Worker
+from .filters import SnapshotFilter, HierarchyFilter, MetHierarchyFilter
 from .constants import *
-from .filters import BlockFilter, AWCFilter
-import logging
-from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 
 
 DATE_FILTER ="date between :startdate and :enddate"
@@ -107,7 +107,6 @@ class OpmCaseSqlData(SqlData):
 
 
 class OpmFormSqlData(SqlData):
-
     table_name = "fluff_OpmFormFluff"
 
     def __init__(self, domain, case_id, datespan):
@@ -117,7 +116,6 @@ class OpmFormSqlData(SqlData):
 
     @property
     def filter_values(self):
-
         return dict(
             domain=self.domain,
             case_id=self.case_id,
@@ -143,11 +141,6 @@ class OpmFormSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn("Case ID", SimpleColumn("case_id")),
-            DatabaseColumn("Bp1 Cash Total", SumColumn("bp1_cash_total")),
-            DatabaseColumn("Bp2 Cash Total", SumColumn("bp2_cash_total")),
-            DatabaseColumn("Child Followup Total", SumColumn("child_followup_total")),
-            DatabaseColumn("Child Spacing Deliveries", SumColumn("child_spacing_deliveries")),
-            DatabaseColumn("Delivery Total", SumColumn("delivery_total")),
             DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
             DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
@@ -160,6 +153,39 @@ class OpmFormSqlData(SqlData):
             return super(OpmFormSqlData, self).data[self.case_id]
         else:
             return None
+
+
+VHND_PROPERTIES = [
+    "vhnd_available",
+    "vhnd_ifa_available",
+    "vhnd_adult_scale_available",
+    "vhnd_child_scale_available",
+    "vhnd_ors_available",
+    "vhnd_zn_available",
+    "vhnd_measles_vacc_available",
+]
+
+class VhndAvailabilitySqlData(SqlData):
+
+    table_name = "fluff_VhndAvailabilityFluff"
+
+    @property
+    def filter_values(self):
+        return {}
+
+    @property
+    def group_by(self):
+        return ['owner_id', 'date']
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def columns(self):
+        return [DatabaseColumn('date', SimpleColumn("date"))] +\
+               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
+
 
 class OpmHealthStatusSqlData(SqlData):
 
@@ -256,7 +282,46 @@ class OpmHealthStatusSqlData(SqlData):
         ]
 
 
-class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
+class SharedDataProvider(object):
+    """
+    Data provider for report data that can be shared across rows in an instance
+    of a report.
+    """
+
+    @property
+    @memoized
+    def _service_dates(self):
+        """
+        returns {
+            u'df5123010b24fc35260a84547148af06': {
+                'ifa_available': {datetime.date(2013, 1, 14),
+                                  datetime.date(2013, 8, 23)}
+                'zn_available': {datetime.date(2013, 1, 14)}
+            }
+        }
+        """
+        # TODO: this will load one row per every VHND in history.
+        # If this gets too big we'll have to make the queries more targeted (which would be
+        # easy to do in the get_dates_in_range function) but if the dataset is small this will
+        # avoid significantly fewer DB trips.
+        # If things start getting slow or memory intensive this would be a good place to look.
+        data = VhndAvailabilitySqlData().data
+        results = defaultdict(lambda: defaultdict(lambda: set()))
+        for (owner_id, date), row in data.iteritems():
+            if row['vhnd_available'] > 0:
+                for prop in VHND_PROPERTIES:
+                    if row[prop] == '1' or prop == 'vhnd_available':
+                        results[owner_id][prop].add(date)
+        return results
+
+    def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
+        return filter(
+            lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
+            [date for date in self._service_dates[owner_id][prop]],
+        )
+
+
+class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     """
     Report parent class.  Children must provide a get_rows() method that
     returns a list of the raw data that forms the basis of each row.
@@ -275,27 +340,42 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     exportable_all = True
     export_format_override = "csv"
     block = ''
-    filter_fields = [('awc_name', 'awcs'), ('block', 'blocks')]
+    load_snapshot = True
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter] + super(BaseReport, self).fields
+        return [HierarchyFilter] + super(BaseReport, self).fields
 
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
-        if self.filter_data.get('blocks', []):
-            subtitles.append("Blocks - %s" % ", ".join(self.filter_data.get('blocks', [])))
         if self.filter_data.get('awcs', []):
-            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
-        if self.filter_data.get('gp', ''):
-            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
+            subtitles.append("Awc's - %s" % ", ".join(self.awcs))
+        elif self.filter_data.get('gp', ''):
+            subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
+        elif self.filter_data.get('blocks', []):
+            subtitles.append("Blocks - %s" % ", ".join(self.blocks))
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
         if startdate and enddate:
             sd = parser.parse(startdate)
             ed = parser.parse(enddate)
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        datetime_format = "%Y-%m-%d %H:%M:%S"
+        if self.snapshot is not None:
+            snapshot_str = "Loaded from snapshot"
+            date = getattr(self.snapshot, 'generated_on', False)
+            if date:
+                snapshot_str += " generated on %s" % date.strftime(datetime_format)
+            subtitles.append(snapshot_str)
+            try:
+                if self.request.user.is_superuser:
+                    subtitles.append("Snapshot id: %s" % self.snapshot._id)
+            except AttributeError:
+                pass
+        else:
+            subtitles.append("Generated {}".format(
+                datetime.datetime.utcnow().strftime(datetime_format)))
         return subtitles
 
     def filter(self, fn, filter_fields=None):
@@ -312,8 +392,27 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
             filter_fields = self.filter_fields
         for key, field in filter_fields:
             keys = self.filter_data.get(field, [])
-            if keys and fn(key) not in keys:
+            value = fn(key) if (fn(key) is not None) else ""
+            if field == 'gp':
+                keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
+                        user.user_data['gp'] and user.user_data['gp'] in keys]
+            if keys and value not in keys:
                 raise InvalidRow
+
+    @property
+    def filter_fields(self):
+        filter_by = []
+        if self.awcs:
+            filter_by = [('awc_name', 'awc')]
+        elif self.gp:
+            filter_by = [('owner_id', 'gp')]
+        elif self.block:
+            if isinstance(self, BeneficiaryPaymentReport):
+                filter_by = [('block_name', 'block')]
+            else:
+                filter_by = [('block', 'block')]
+        return filter_by
+
 
     @property
     @memoized
@@ -322,43 +421,55 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
         # instead, calculate again.
         if self.filter_data.get('is_open', False):
             return None
-        return OpmReportSnapshot.from_view(self)
-
+        snapshot = OpmReportSnapshot.from_view(self)
+        if snapshot and self.load_snapshot:
+            return snapshot
+        else:
+            return None
 
     @property
     def headers(self):
         if self.snapshot is not None:
-            return DataTablesHeader(*[
-                DataTablesColumn(header) for header in self.snapshot.headers if header != 'Bank Branch Name' # needed to support old snapshots
-            ])
-        return DataTablesHeader(*[
-            DataTablesColumn(header) for method, header in self.model.method_map
-        ])
+            headers = []
+            for i, header in enumerate(self.snapshot.headers):
+                if header != 'Bank Branch Name':
+                    if self.snapshot.visible_cols:
+                        headers.append(DataTablesColumn(name=header, visible=self.snapshot.visible_cols[i]))
+                    else:
+                        headers.append(DataTablesColumn(name=header))
+            return DataTablesHeader(*headers)
+        headers = []
+        for t in self.model.method_map:
+            if len(t) == 3:
+                headers.append(DataTablesColumn(name=t[1], visible=t[2]))
+            else:
+                headers.append(DataTablesColumn(name=t[1]))
+        return DataTablesHeader(*headers)
 
     @property
     def rows(self):
-        # is it worth noting whether or not the data being displayed is pulled
-        # from an old snapshot?
         if self.snapshot is not None:
-            # needed to support old snapshots
-            if isinstance(self, BeneficiaryPaymentReport):
-                for i, val in enumerate(self.snapshot.rows):
-                    if 'bank_branch_name' in self.snapshot.slugs:
-                        index = self.snapshot.slugs.index('bank_branch_name')
-                        del self.snapshot.rows[i][index]
             return self.snapshot.rows
         rows = []
         for row in self.row_objects:
-            rows.append([getattr(row, method) for
-                method, header in self.model.method_map])
+            data = []
+            for t in self.model.method_map:
+                data.append(getattr(row, t[0]))
+            rows.append(data)
         return rows
 
     @property
+    @memoized
     def filter_data(self):
-        return dict([
-            (field.slug, field.get_value(self.request, DOMAIN))
-            for field in self.fields
-        ])
+        fields = []
+        for field in self.fields:
+            value = field.get_value(self.request, DOMAIN)
+            if isinstance(value, tuple):
+                for lvl in field.get_value(self.request, DOMAIN)[0]:
+                    fields.append((lvl['slug'], lvl['value']))
+            else:
+                fields.append((field.slug, field.get_value(self.request, DOMAIN)))
+        return dict(fields)
 
     @property
     def row_objects(self):
@@ -372,6 +483,9 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
             except InvalidRow:
                 pass
         return rows
+
+    def get_row_data(self, row):
+        return self.model(row, self)
 
     @property
     def date_range(self):
@@ -409,40 +523,199 @@ class BaseReport(MonthYearMixin, CustomProjectReport, ElasticTabularReport):
 
         return HttpResponse()
 
-class BeneficiaryPaymentReport(BaseReport):
+    @property
+    @memoized
+    def users(self):
+        return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
+
+    @property
+    @memoized
+    def data_provider(self):
+        return SharedDataProvider()
+
+
+class CaseReportMixin(object):
+    default_case_type = "Pregnancy"
+    extra_row_objects = []
+    is_rendered_as_email = False
+
+    @property
+    def is_open(self):
+        is_open = self.request_params.get('is_open', None)
+        if is_open is not None:
+            return is_open == 'open'
+
+    def get_rows(self, datespan):
+        def get_awc_filter(awcs):
+            # TODO confirm that this places nicely with ES tokenization
+            awc_filters = []
+            def make_filter(term):
+                return es_filters.term("awc_name.#value", term)
+            for awc in awcs:
+                awc_terms = filter(None, awc.lower().split())
+                if len(awc_terms) == 1:
+                    awc_filters.append(make_filter(awc_terms[0]))
+                elif len(awc_terms) > 1:
+                    awc_filters.append(es_filters.AND(
+                        make_filter(term) for term in awc_terms))
+            return es_filters.OR(*awc_filters)
+
+        def get_gp_filter(gp):
+            users = CouchUser.by_domain(self.domain)
+            owner_ids = [user._id for user in users
+                         if getattr(user, 'user_data', {}).get('gp') in self.gp]
+            return es_filters.term("owner_id", owner_ids)
+
+        def get_block_filter(block):
+            return es_filters.term("block_name.#value", block.lower())
+
+        query = case_es.CaseES().domain(self.domain)\
+                .fields([])\
+                .opened_range(lte=self.datespan.enddate_utc)\
+                .term("type.exact", self.default_case_type)
+        query.index = 'report_cases'
+
+        if self.is_open:
+            query = query.filter(es_filters.OR(
+                case_es.is_closed(False),
+                case_es.closed_range(gte=self.datespan.enddate_utc)
+            ))
+        elif not self.is_open:
+            query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
+
+        if self.awcs:
+            query = query.filter(get_awc_filter(self.awcs))
+        elif self.gp:
+            query = query.filter(get_gp_filter(self.gp))
+        elif self.block:
+            query = query.filter(get_block_filter(self.block))
+        result = query.run()
+        return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            SelectOpenCloseFilter,
+            SnapshotFilter
+        ]
+
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
+
+    @property
+    def block(self):
+        block = self.request_params.get("block")
+        if block:
+            return block
+        else:
+            return 'atri'
+
+    @property
+    def rows(self):
+        if self.snapshot is not None:
+            if 'status' in self.snapshot.slugs:
+                current_status_index = self.snapshot.slugs.index('status')
+                for row in self.snapshot.rows:
+                    if self.is_rendered_as_email:
+                        with localize('hin'):
+                            row[current_status_index] = _(row[current_status_index])
+            return self.snapshot.rows
+        rows = []
+        for row in self.row_objects + self.extra_row_objects:
+            rows.append([getattr(row, method) for
+                method, header, visible in self.model.method_map])
+        return rows
+
+    def filter(self, fn, filter_fields=None):
+        # TODO test with snapshots.
+        if filter_fields is None:
+            filter_fields = self.filter_fields
+        for key, field in filter_fields:
+            keys = self.filter_data.get(field, [])
+            if keys:
+                case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
+                if field == 'is_open':
+                    if case_key != (keys == 'closed'):
+                        raise InvalidRow
+                else:
+                    if field == 'gp':
+                        keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
+                    if case_key not in keys:
+                        raise InvalidRow
+
+    def set_extra_row_objects(self, row_objects):
+        self.extra_row_objects = self.extra_row_objects + row_objects
+
+
+def join_lists(a, b):
+    def zip_fn((x, y)):
+        if isinstance(x, int):
+            return x + y
+        return x
+    return map(zip_fn, zip(a, b))
+
+
+class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
     @property
-    def fields(self):
-        return super(BeneficiaryPaymentReport, self).fields + [SelectOpenCloseFilter]
+    def rows(self):
+        raw_rows = super(BeneficiaryPaymentReport, self).rows
+        # Consolidate rows with the same account number
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == 'account_number':
+                account_num = i
+        rows = OrderedDict()
+        for row in raw_rows:
+            account_number = row[account_num]
+            existing_row = rows.get(account_number)
+            if existing_row is None:
+                rows[account_number] = row
+            else:
+                rows[account_number] = join_lists(existing_row, row)
+        return rows.values()
 
-    # TODO: Switch to ES. Peformance aaah!
-    def get_rows(self, datespan):
-        cases = []
-        self.form_sql_data = OpmFormSqlData(domain=DOMAIN, case_id=None, datespan=self.datespan)
-        for case_id in self.form_sql_data.data.keys():
-            try:
-                cases.append(CommCareCase.get(case_id))
-            except ResourceNotFound:
-                pass
 
-        return [case for case in cases if self.passes_filter(case)]
+class MetReport(CaseReportMixin, BaseReport):
+    name = ugettext_noop("Conditions Met Report")
+    report_template_path = "opm/met_report.html"
+    slug = "met_report"
+    model = ConditionsMet
+    exportable = False
 
-    def passes_filter(self, case):
-        status = self.filter_data.get('is_open', None)
-        if status:
-            if status == 'open' and not case.closed:
-                return True
-            elif status == 'closed' and case.closed:
-                return True
-            return False
-        return True
+    @property
+    def headers(self):
+        if not self.is_rendered_as_email:
+            if self.snapshot is not None:
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
+                ])
+            return DataTablesHeader(*[
+                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+            ])
+        else:
+            with localize('hin'):
+                return DataTablesHeader(*[
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
+                ])
 
-    def get_row_data(self, row):
-        return self.model(row, self, self.form_sql_data.data.__getitem__(row._id))
+    @property
+    @request_cache("raw")
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "opm/met_print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
 
 class IncentivePaymentReport(BaseReport):
@@ -450,10 +723,13 @@ class IncentivePaymentReport(BaseReport):
     slug = 'incentive_payment_report'
     model = Worker
 
-
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter, GramPanchayatFilter] + super(BaseReport, self).fields
+        return [HierarchyFilter] + super(BaseReport, self).fields + [SnapshotFilter,]
+
+    @property
+    def load_snapshot(self):
+        return self.request.GET.get("load_snapshot", False)
 
     @property
     @memoized
@@ -479,36 +755,50 @@ class IncentivePaymentReport(BaseReport):
         form_sql_data = OpmFormSqlData(DOMAIN, row._id, self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
-
-def last_if_none(month, year):
+def this_month_if_none(month, year):
     if month is not None:
         assert year is not None, \
             "You must pass either nothing or a month AND a year"
         return month, year
     else:
-        last_month = datetime.datetime.now() - datetime.timedelta(days=27)
-        return last_month.month, last_month.year
+        this_month = datetime.datetime.now()
+        return this_month.month, this_month.year
 
 
 def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     """
     Utility method to run a report for an arbitrary month without a request
     """
-    month, year = last_if_none(month, year)
+    month, year = this_month_if_none(month, year)
     class Report(ReportClass):
         snapshot = None
         report_class = ReportClass
-        domain = DOMAIN
-        visible_cols = []
+        _visible_cols = []
 
         def __init__(self, *args, **kwargs):
-            if ReportClass.__name__ == "MetReport":
-                self.slugs, self._headers, self.visible_cols = [list(tup) for tup in zip(*self.model.method_map[self.block])]
+            if ReportClass.__name__ in ["MetReport", "BeneficiaryPaymentReport"]:
+                self._slugs, self._headers, self._visible_cols = [
+                    list(tup) for tup in zip(*self.model.method_map)
+                ]
                 for idx, val in enumerate(self._headers):
                     with localize(self.lang):
                         self._headers[idx] = _(self._headers[idx])
+            elif ReportClass.__name__ == "IncentivePaymentReport":
+                self._slugs, self._headers, self._visible_cols = [list(tup) for tup in zip(*self.model.method_map)]
             else:
-                self.slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
+                self._slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
+
+        @property
+        def domain(self):
+            return DOMAIN
+
+        @property
+        def slugs(self):
+            return self._slugs
+
+        @property
+        def visible_cols(self):
+            return self._visible_cols
 
         @property
         def month(self):
@@ -532,16 +822,26 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
 
         @property
         def datespan(self):
-            return DateSpan.from_month(month, year)
+            return DateSpan.from_month(self.month, self.year)
 
         @property
         def filter_data(self):
             return {}
 
+        @property
+        def request(self):
+            request = HttpRequest()
+            request.GET = QueryDict(None)
+            return request
+
+        @property
+        def request_params(self):
+            return json_request({})
+
     return Report()
 
 
-class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport):
+class HealthStatusReport(BaseReport):
 
     ajax_pagination = True
     asynchronous = True
@@ -559,7 +859,7 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport):
 
     @property
     def fields(self):
-        return [BlockFilter, AWCFilter, GramPanchayatFilter, SelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
 
     @property
     @memoized
@@ -582,9 +882,6 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport):
             "from": self.pagination.start,
         }
         es_filters = q["query"]["filtered"]["filter"]
-        if self.blocks:
-            block_lower = [block.lower() for block in self.blocks]
-            es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
         if self.awcs:
             awcs_lower = [awc.lower() for awc in self.awcs]
             awc_term = {
@@ -594,9 +891,12 @@ class HealthStatusReport(HealthStatusMixin, GetParamsMixin, BaseReport):
                     } for awc in awcs_lower]
             }
             es_filters["bool"]["must"].append(awc_term)
-
-        if self.gp:
+        elif self.gp:
             es_filters["bool"]["must"].append({"term": {"user_data.gp": self.gp.lower()}})
+
+        elif self.blocks:
+            block_lower = [block.lower() for block in self.blocks]
+            es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
         q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
@@ -690,160 +990,6 @@ def calculate_total_row(rows):
                     total_row.append('')
     return total_row
 
-class MetReport(BaseReport):
-    name = ugettext_noop("Conditions Met Report")
-    report_template_path = "opm/met_report.html"
-    slug = "met_report"
-    model = ConditionsMet
-    exportable = False
-    default_case_type = "Pregnancy"
-    filter_fields = [('awc_name', 'awcs'), ('owner_id', 'gp'), ('closed', 'is_open')]
-
-    @property
-    def report_subtitles(self):
-        subtitles = ["For filters:",]
-        if self.block:
-            subtitles.append("Block - %s" % self.block)
-        if self.filter_data.get('awcs', []):
-            subtitles.append("Awc's - %s" % ", ".join(self.filter_data.get('awcs', [])))
-        if self.filter_data.get('gp', ''):
-            subtitles.append("Gram Panchayat - %s" % self.filter_data.get('gp', ''))
-        startdate = self.datespan.startdate_param_utc
-        enddate = self.datespan.enddate_param_utc
-        if startdate and enddate:
-            sd = parser.parse(startdate)
-            ed = parser.parse(enddate)
-            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
-        return subtitles
-
-
-    @property
-    def block(self):
-        block = self.request_params.get("block")
-        if block:
-            return block
-        else:
-            return 'atri'
-
-
-    @property
-    def fields(self):
-        return [
-            SelectBlockFilter,
-            AWCFilter,
-            GramPanchayatFilter,
-            MonthFilter,
-            YearFilter,
-            SelectOpenCloseFilter
-        ]
-
-    @property
-    def headers(self):
-        if not self.is_rendered_as_email:
-            if self.snapshot is not None:
-                return DataTablesHeader(*[
-                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
-                ])
-            return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-            ])
-        else:
-            with localize('hin'):
-                return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map[self.block.lower()]
-                ])
-
-    @property
-    @memoized
-    def users(self):
-        return CouchUser.by_domain(self.domain) if self.filter_data.get('gp', []) else []
-
-    @property
-    def rows(self):
-        if self.snapshot is not None:
-            return self.snapshot.rows
-        rows = []
-        for row in self.row_objects:
-            rows.append([getattr(row, method) for
-                method, header, visible in self.model.method_map[self.block.lower()]])
-        return rows
-
-    def filter(self, fn, filter_fields=None):
-        if filter_fields is None:
-            filter_fields = self.filter_fields
-        for key, field in filter_fields:
-            keys = self.filter_data.get(field, [])
-            if keys:
-                case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
-                if field == 'is_open':
-                    if case_key != (keys == 'closed'):
-                        raise InvalidRow
-                else:
-                    if field == 'gp':
-                        keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
-                    if case_key not in keys:
-                        raise InvalidRow
-
-    def get_rows(self, datespan):
-        block = self.block
-        q = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {},
-                    },
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}},
-                                {"term": {"block_name.#value": block.lower()}}
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        es_filters = q["query"]["filtered"]["filter"]
-        if self.snapshot is None and hasattr(self, 'request'):
-
-            awcs = self.request.GET.getlist('awcs')
-            if awcs:
-                awcs_lower = [awc.lower() for awc in awcs]
-                awc_term = {
-                    "or":
-                        [{"and": [{"term": {"awc_name.#value": term}} for term in re.split('\s', awc)
-                                    if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
-                        } for awc in awcs_lower]
-                }
-                es_filters["bool"]["must"].append(awc_term)
-            gp = self.request_params.get('gp', None)
-            if gp:
-                users = CouchUser.by_domain(self.domain)
-                users_id = [user._id for user in users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] == gp]
-                es_filters["bool"]["must"].append({"terms": {"owner_id": users_id}})
-            is_open = self.request_params.get('is_open', None)
-            if is_open:
-                es_filters["bool"]["must"].append({"term": {"closed": is_open == 'closed'}})
-        if self.default_case_type:
-            es_filters["bool"]["must"].append({"term": {"type.exact": self.default_case_type}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
-
-
-    def get_row_data(self, row):
-        return self.model(row, self)
-
-    @property
-    @request_cache("raw")
-    def print_response(self):
-        """
-        Returns the report for printing.
-        """
-        self.is_rendered_as_email = True
-        self.use_datatables = False
-        self.override_template = "opm/met_print_report.html"
-        return HttpResponse(self._async_context()['report'])
-
 
 def _unformat_row(row):
     regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
@@ -923,11 +1069,11 @@ class HealthMapSource(HealthStatusReport):
         return new_rows
 
 
-class HealthMapReport(HealthStatusMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
+class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [BlockFilter, AWCFilter, SelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
 
     data_source = {
         'adapter': 'legacyreport',

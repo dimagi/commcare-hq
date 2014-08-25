@@ -1,0 +1,23 @@
+{% load i18n %}
+{% blocktrans %}
+Dear {{ domain }} administrator,
+
+Your 30 Day Trial for {{ domain }} is ending soon! If you do not
+change your subscription before then, you will automatically be subscribed
+to the {{ product }} Community plan and lose access to all pay-only
+features {{ ending_on }}
+
+To change your subscription, please log into your project on
+{{ product }} HQ and and navigate to the subscription page in your project
+settings: {{ subscription_url }}
+
+If you have questions about our pricing plans, you can review them here:
+http://www.commcarehq.org/software-plans/
+
+Thank you for your use and support of {{ product }}.
+
+Best regards,
+
+The {{ product }} HQ Team
+{{ base_url }}
+{% endblocktrans %}

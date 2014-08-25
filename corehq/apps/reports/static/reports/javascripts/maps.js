@@ -43,7 +43,6 @@ MetricsControl = L.Control.extend({
 
     render: function(metric) {
         this.activeMetric = metric;
-
         resetTable(this.options.data); // clear out handlers on table before makeDisplayContext adds new ones
 
         var m = this;
@@ -52,7 +51,9 @@ MetricsControl = L.Control.extend({
         }));
 
         this.options.legend.render(metric);
-        this.options.table.fnDraw(); // update datatables filtering
+        if (this.options.table) {
+            this.options.table.fnDraw();  // update datatables filtering
+        }
     }
 });
 
@@ -60,7 +61,16 @@ MetricsControl = L.Control.extend({
 function mapsInit(context) {
     var map = initMap($('#map'), context.layers, [30., 0.], 2);
     initData(context.data, context.config);
-    var table = initTable(context.data, context.config);
+    var display = context.config.display;
+    if (!display) {
+        // we can add other things here eventually
+        display = {
+            'table': true
+        }
+    }
+    if (display.table) {
+        var table = initTable(context.data, context.config);
+    }
     initMetrics(map, table, context.data, context.config);
     $('#zoomtofit').css('display', 'block');
     $('#toggletable').css('display', 'block');
@@ -183,10 +193,11 @@ function resetTable(data) {
     // we can't use $('#tabular tr') as that will only select the rows currently shown by datatables
     var rows = [];
     $.each(data.features, function(i, e) {
-        rows.push(e.$tr[0]);
+        if (e.$tr) {
+            rows.push(e.$tr[0]);
+        }
     });
     rows = $(rows);
-
     rows.unbind('click').unbind('mouseenter').unbind('mouseleave');
     rows.removeClass('inactive-row');
 }

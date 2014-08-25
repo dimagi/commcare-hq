@@ -12,8 +12,23 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
     slug = 'fiche_consommation'
     report_title = "Fiche Consommation"
     fields = [DatespanFilter, FicheLocationFilter]
+    exportable = True
     col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
+    export_format_override = 'csv'
+
 
     @property
     def model(self):
         return FicheData(config=self.report_config)
+
+    @property
+    def export_table(self):
+        table = super(FicheConsommationReport, self).export_table
+        #  remove first row from table headers
+        replace = ''
+        for k, v in enumerate(table[0][1][0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][1][0][k] = replace
+        return table

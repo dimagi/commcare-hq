@@ -1,15 +1,16 @@
-from celery.task import task, periodic_task
-from celery.schedules import crontab, schedule
-from django.core.cache import cache
+from celery.task import periodic_task
+from celery.schedules import crontab
 from dimagi.utils.couch.database import get_db
 from corehq.apps.locations.models import Location
 from django.conf import settings
+
 
 @periodic_task(run_every=crontab(minute=0, hour=20),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def reparent_location_linked_docs():
     reparented_locs = [row['id'] for row in get_db().view('locations/post_move_processing')]
     for loc_id in reparented_locs:
         reparent_linked_docs(loc_id)
+
 
 def reparent_linked_docs(loc_id):
     # NOTE this updates linked docs for this location and all its descendant locations, but we never
@@ -37,4 +38,3 @@ def reparent_linked_docs(loc_id):
 
     delattr(loc, 'flag_post_move')
     loc.save()
-

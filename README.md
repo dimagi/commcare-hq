@@ -23,6 +23,9 @@ More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs
 + Over-the-air (ota) restore of user and cases
 + Integrated web and email reporting
 
+Contributing
+------------
+We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document for more.
 
 Installing CommCare HQ
 ----------------------
@@ -31,7 +34,7 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 ### Installing dependencies
 
-For Ubuntu 12.04, download the JDK tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
+For Ubuntu 12.04, download the JDK (version 7) tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
 Run the included `install.sh` script to install all
 dependencies, set them up to run at startup, and set up required databases.
 Then skip to "Setting up a virtualenv". 
@@ -177,7 +180,7 @@ that you have a 32bit version of Python installed.
 ### Optional for using Django Compressor: Install lessc for compiling less files
 
     1. Install node and alongside it npm (eg, on a mac: `brew install node`)
-    2. Install less@1.7.1 with npm `npm install -g less@1.3.1`
+    2. Install less@1.3.1 with npm `npm install -g less@1.3.1`
     3. Make sure `lessc --version` runs and outputs 1.3.1 as the current version
 
     If you don't do this, all the .less files should compile on the fly with

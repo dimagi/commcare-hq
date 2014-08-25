@@ -56,7 +56,8 @@ def get_location_id(form):
     return _get_location(form)._id
 
 def get_location_id_by_type(form, type):
-    return get_location_by_type(form, type)._id
+    loc = get_location_by_type(form, type)
+    return loc._id if loc else None
 
 def get_location_by_type(form, type):
     loc = _get_location(form)

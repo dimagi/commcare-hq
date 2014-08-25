@@ -1,11 +1,12 @@
 import json
 from django import forms
-from corehq.apps.locations.models import Location, root_locations
+from corehq.apps.locations.models import Location
 from django.template.loader import get_template
-from django.template import Template, Context
-from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties
+from django.template import Context
+from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties, lookup_by_property
 from django.utils.safestring import mark_safe
 from corehq.apps.locations.signals import location_created, location_edited
+from django.utils.translation import ugettext as _
 import re
 
 class ParentLocWidget(forms.Widget):
@@ -29,6 +30,11 @@ class LocationForm(forms.Form):
     location_type = forms.CharField(widget=LocTypeWidget())
     coordinates = forms.CharField(max_length=30, required=False,
                                   help_text="enter as 'lat lon' or 'lat, lon' (e.g., '42.3652 -71.1029')")
+    site_code = forms.CharField(
+        label='Site Code',
+        required=False,
+        help_text=_("A unique system code for this location. Leave this blank to have it auto generated")
+    )
 
     strict = True # optimization hack: strict or loose validation 
     def __init__(self, location, bound_data=None, *args, **kwargs):
@@ -90,6 +96,23 @@ class LocationForm(forms.Form):
 
         return name
 
+    def clean_site_code(self):
+        site_code = self.cleaned_data['site_code']
+
+        if site_code:
+            site_code = site_code.lower()
+
+        lookup = lookup_by_property(
+            self.location.domain,
+            'site_code',
+            site_code,
+            'global'
+        )
+        if lookup and lookup != set([self.location._id]):
+            raise forms.ValidationError('another location already uses this site code')
+
+        return site_code
+
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
 
@@ -140,7 +163,7 @@ class LocationForm(forms.Form):
         location = instance or self.location
         is_new = location._id is None
 
-        for field in ('name', 'location_type'):
+        for field in ('name', 'location_type', 'site_code'):
             setattr(location, field, self.cleaned_data[field])
         coords = self.cleaned_data['coordinates']
         setattr(location, 'latitude', coords[0] if coords else None)

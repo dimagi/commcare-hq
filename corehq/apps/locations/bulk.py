@@ -44,35 +44,107 @@ class LocationCache(object):
                 self._existing_by_type[key][location.name] = location
 
 
-def import_locations(domain, worksheets, task=None):
-    processed = 0
-    total_rows = sum(ws.worksheet.get_highest_row() for ws in worksheets)
+def top_level_location_types(domain):
+    """
+    Return all location types which do not have
+    any potential parents
+    """
+    from corehq.apps.locations.util import location_hierarchy_config
+    hierarchy = location_hierarchy_config(domain)
+    return [t[0] for t in hierarchy if t[1] == [None]]
 
-    for worksheet in worksheets:
+
+class LocationImporter(object):
+    def __init__(self, domain, excel_importer):
+        self.domain = domain
+        self.excel_importer = excel_importer
+
+        self.processed = 0
+        self.results = []
+        self.seen_site_codes = set()
+
+        self.parent_child_map = parent_child(self.domain)
+
+        self.total_rows = sum(
+            ws.worksheet.get_highest_row() for ws in self.excel_importer.worksheets
+        )
+        self.types = [ws.worksheet.title for ws in self.excel_importer.worksheets]
+        self.top_level_types = top_level_location_types(domain)
+
+    def run(self):
+        for loc_type in self.top_level_types:
+            self.import_loc_type(loc_type)
+
+        return self.results
+
+    def import_loc_type(self, loc_type):
+        if loc_type in self.types:
+            self.import_worksheet(
+                self.excel_importer.worksheets[self.types.index(loc_type)]
+            )
+
+            if loc_type in self.parent_child_map:
+                for child_type in self.parent_child_map[loc_type]:
+                    self.import_loc_type(child_type)
+
+    def import_worksheet(self, worksheet):
         location_type = worksheet.worksheet.title
-        if location_type not in defined_location_types(domain):
-            yield "location with type %s not found, this worksheet will not be imported" % location_type
+
+        if location_type not in defined_location_types(self.domain):
+            self.results.append(_(
+                "Location with type {location_type} not found, this worksheet \
+                will not be imported"
+                ).format(
+                    location_type=location_type
+                )
+            )
         else:
-            data = list(worksheet)
+            for loc in worksheet:
+                if loc['site_code'] and loc['site_code'] in self.seen_site_codes:
+                    self.results.append(_(
+                        "Location {name} with site code {site_code} could not \
+                        be imported due to duplicated site codes in the excel \
+                        file"
+                    ).format(
+                        name=loc['name'],
+                        site_code=loc['site_code']
+                    ))
+                else:
+                    if loc['site_code']:
+                        self.seen_site_codes.add(loc['site_code'])
 
-            for loc in data:
-                yield import_location(domain, location_type, loc)['message']
-                if task:
-                    processed += 1
-                    DownloadBase.set_progress(task, processed, total_rows)
+                    self.results.append(import_location(
+                        self.domain,
+                        location_type,
+                        loc,
+                        self.parent_child_map
+                    )['message'])
+                self.excel_importer.add_progress()
 
 
-def import_location(domain, location_type, location_data):
+def import_locations(domain, excel_importer):
+    location_importer = LocationImporter(domain, excel_importer)
+    results = location_importer.run()
+
+    return results
+
+
+def import_location(domain, location_type, location_data, parent_child_map=None):
     data = dict(location_data)
 
-    existing_id = data.pop('id', None)
+    provided_code = data.pop('site_code', None)
 
-    parent_id = data.pop('parent_id', None)
+    parent_site_code = data.pop('parent_site_code', None)
+
+    if not parent_child_map:
+        parent_child_map = parent_child(domain)
 
     form_data = {}
 
     try:
-        _check_parent_id(parent_id, domain, location_type)
+        parent_id = _process_parent_site_code(
+            parent_site_code, domain, location_type, parent_child_map
+        )
     except LocationImportError as e:
         return {
             'id': None,
@@ -81,27 +153,22 @@ def import_location(domain, location_type, location_data):
             )
         }
 
-    if existing_id:
-        try:
-            existing = Location.get(existing_id)
-        except ResourceNotFound:
-            return {
-                'id': None,
-                'message': _("Location with id {0} was not found").format(
-                    existing_id
-                )
-            }
-        if existing.location_type != location_type:
-            return {
-                'id': None,
-                'message': _("Existing location type error, type of {0} is not {1}").format(
-                    existing.name, location_type
-                )
-            }
-        parent = parent_id or existing.parent_id
-    else:
-        existing = None
-        parent = parent_id
+    existing = None
+    parent = parent_id
+    if provided_code:
+        existing = Location.by_site_code(domain, provided_code)
+        if existing:
+            if existing.location_type != location_type:
+                return {
+                    'id': None,
+                    'message': _("Existing location type error, type of {0} is not {1}").format(
+                        existing.name, location_type
+                    )
+                }
+
+            parent = parent_id or existing.parent_id
+
+    form_data['site_code'] = provided_code
 
     form_data['parent_id'] = parent
     form_data['name'] = data.pop('name')
@@ -137,23 +204,23 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
     )
 
 
-def _check_parent_id(parent_id, domain, location_type):
-    if parent_id:
-        try:
-            parent_obj = Location.get(parent_id)
-        except ResourceNotFound:
-            raise LocationImportError(_('Parent with id {0} does not exist').format(parent_id))
+def _process_parent_site_code(parent_site_code, domain, location_type, parent_child_map):
+    if not parent_site_code:
+        return None
 
-        if parent_obj.domain != domain:
+    parent_obj = Location.by_site_code(domain, parent_site_code)
+    if parent_obj:
+        if invalid_location_type(location_type, parent_obj, parent_child_map):
             raise LocationImportError(
-                _('Parent ID {0} references a location in another project').format(parent_id)
+                _('Invalid parent type of {0} for child type {1}').format(
+                    parent_obj.location_type,
+                    location_type
+                )
             )
-
-        parent_relationships = parent_child(domain)
-        if invalid_location_type(location_type, parent_obj, parent_relationships):
-            raise LocationImportError(
-                _('Invalid parent type of {0} for child type {1}').format(parent_obj.location_type, location_type)
-            )
+        else:
+            return parent_obj._id
+    else:
+        raise LocationImportError(_('Parent with id {0} does not exist in this project').format(parent_site_code))
 
 
 def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
@@ -197,6 +264,14 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
 
         if consumption and sp:
             for product_code, value in consumption:
+                product = Product.get_by_code(domain, product_code)
+
+                if not product:
+                    # skip any consumption column that doesn't match
+                    # to a real product. currently there is no easy
+                    # way to alert here, though.
+                    continue
+
                 try:
                     amount = Decimal(value)
 
@@ -204,7 +279,7 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
                     if amount and amount >= 0:
                         set_default_consumption_for_supply_point(
                             domain,
-                            Product.get_by_code(domain, product_code)._id,
+                            product._id,
                             sp._id,
                             amount
                         )

@@ -1,0 +1,43 @@
+{% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>CommCare HQ Style Guide</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/bootstrap.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+        {% endcompress %}
+
+        {% if less_debug %}
+            <script src="{% static 'style/lib/lessjs/less-1.7.3.min.js' %}"></script>
+            <script>less.watch();</script>
+        {% endif %}
+    </head>
+    <body>
+        <div class="navbar navbar-default navbar-static-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a href="{% url "styleguide_home" %}" class="navbar-brand">
+                        HQ Style Guide
+                    </a>
+                </div>
+                <nav class="collapse navbar-collapse" role="navigation">
+                    <ul class="nav navbar-nav">
+                        <li><a href="{% url 'styleguide_forms' %}">Forms</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>

@@ -1,4 +1,5 @@
 from collections import defaultdict
+import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
@@ -427,6 +428,20 @@ def autoset_owner_id_for_subcase(subcase):
     return 'owner_id' not in subcase.case_properties
 
 
+def validate_xform(source, version='1.0'):
+    if isinstance(source, unicode):
+        source = source.encode("utf-8")
+    # normalize and strip comments
+    source = ET.tostring(parse_xml(source))
+    validation_results = formtranslate.api.validate(source, version=version)
+    if not validation_results.success:
+        raise XFormValidationError(
+            fatal_error=validation_results.fatal_error,
+            version=version,
+            validation_problems=validation_results.problems,
+        )
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -442,9 +457,8 @@ class XForm(WrappedNode):
         self.has_casedb = False
 
     def validate(self, version='1.0'):
-        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml is not None else '', version=version)
-        if not validation_results.success:
-            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
+        validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
+                       version=version)
         return self
 
     @property
@@ -832,11 +846,11 @@ class XForm(WrappedNode):
             self.add_case_and_meta_1(form)
         else:
             self.create_casexml_2(form)
-            self.add_meta_2()
+            self.add_meta_2(form)
 
     def add_case_and_meta_advanced(self, form):
         self.create_casexml_2_advanced(form)
-        self.add_meta_2()
+        self.add_meta_2(form)
 
     def already_has_meta(self):
         meta_blocks = set()
@@ -847,7 +861,7 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def add_meta_2(self):
+    def add_meta_2(self, form):
         case_parent = self.data_node
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
@@ -860,7 +874,7 @@ class XForm(WrappedNode):
         nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
         meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-        for tag in (
+        tags = (
             '{orx}deviceID',
             '{orx}timeStart',
             '{orx}timeEnd',
@@ -868,7 +882,10 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
-        ):
+        )
+        if form.get_auto_gps_capture():
+            tags += ('{cc}location',)
+        for tag in tags:
             meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
 
         case_parent.append(meta)
@@ -904,6 +921,13 @@ class XForm(WrappedNode):
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
         )
+
+        # never add pollsensor to a pre-2.14 app
+        if form.get_app().enable_auto_gps:
+            if form.get_auto_gps_capture():
+                self.add_pollsensor(ref="/data/meta/location")
+            elif self.model_node.findall("{f}bind[@type='geopoint']"):
+                self.add_pollsensor()
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
@@ -1018,6 +1042,18 @@ class XForm(WrappedNode):
         self.model_node.append(_make_elem('setvalue', {'ref': ref, 'value': value, 'event': event}))
         if type:
             self.add_bind(nodeset=ref, type=type)
+
+    def add_pollsensor(self, event="xforms-ready", ref=None):
+        """
+        <orx:pollsensor event="xforms-ready" ref="/data/meta/location" />
+        <bind nodeset="/data/meta/location" type="geopoint"/>
+        """
+        if ref:
+            self.model_node.append(_make_elem('{orx}pollsensor',
+                                              {'event': event, 'ref': ref}))
+            self.add_bind(nodeset=ref, type="geopoint")
+        else:
+            self.model_node.append(_make_elem('{orx}pollsensor', {'event': event}))
 
     def action_relevance(self, condition):
         if condition.type == 'always':
@@ -1159,6 +1195,9 @@ class XForm(WrappedNode):
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
+
+                if subcase.close_condition.is_active():
+                    subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
@@ -1653,7 +1692,7 @@ class XForm(WrappedNode):
     def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
         from corehq.apps.app_manager.util import split_path
-        self.add_meta_2()
+        self.add_meta_2(form)
         self.add_instance('casedb', src='jr://instance/casedb')
 
         for property, nodeset in form.case_preload.items():

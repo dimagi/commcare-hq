@@ -1,0 +1,72 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="EBF" xmlns:cc="http://commcarehq.org/xforms"
+	xmlns="http://bihar.commcarehq.org/pregnancy/cf">
+	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+		<n0:deviceID>71WALRV4IXH2FRM86XPE9QYW3</n0:deviceID>
+		<n0:timeStart>2012-05-25T15:30:50.652+05:30</n0:timeStart>
+		<n0:timeEnd>2012-05-25T15:31:38.109+05:30</n0:timeEnd>
+		<n0:username>sheel.test</n0:username>
+		<n0:userID>67bffa913b38e7901851d863ededa475</n0:userID>
+		<n0:instanceID>d66482bf-874e-42d9-b2b7-620ba6e4b3b3</n0:instanceID>
+		<cc:appVersion>v2.0.0dev
+			(7d4efc-006e8e-unvers-2.1.0-Nokia/S40-native-input) #13 b:2012-May-25
+			r:2012-May-25</cc:appVersion>
+	</n0:meta>
+	<n1:case case_id="9dbce942-0163-438b-b3e5-67b473d2f719"
+		date_modified="2012-05-25T15:31:38.109+05:30" user_id="67bffa913b38e7901851d863ededa475"
+		xmlns:n1="http://commcarehq.org/case/transaction/v2">
+		<n1:update>
+			<n1:last_visit_type>cf</n1:last_visit_type>
+			<n1:date_last_visit>2012-05-25</n1:date_last_visit>
+			<n1:date_cf_1>2012-05-25</n1:date_cf_1>
+			<n1:date_next_cf>2012-06-24</n1:date_next_cf>
+		</n1:update>
+	</n1:case>
+	<cf_visit_num>1</cf_visit_num>
+	<play_comp_feeding_vid>yes</play_comp_feeding_vid>
+	<comp_feeding_vid>OK</comp_feeding_vid>
+	<num_children>2</num_children>
+	<children>7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9
+		17e36de1-b9de-423c-a6a6-605d291ec976</children>
+	<child_info>
+		<cid>7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9</cid>
+		<index>0</index>
+		<n2:case case_id="7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9"
+			date_modified="2012-05-25T15:31:38.109+05:30" user_id="67bffa913b38e7901851d863ededa475"
+			xmlns:n2="http://commcarehq.org/case/transaction/v2">
+			<n2:update>
+				<n2:baby_measles />
+			</n2:update>
+		</n2:case>
+		<display_child>OK</display_child>
+		<name_update>no</name_update>
+		<new_name />
+		<eaten_cereal>no</eaten_cereal>
+		<recent_fever>no</recent_fever>
+		<add_vaccinations>no</add_vaccinations>
+	</child_info>
+	<child_info>
+		<cid>17e36de1-b9de-423c-a6a6-605d291ec976</cid>
+		<index>1</index>
+		<n3:case case_id="17e36de1-b9de-423c-a6a6-605d291ec976"
+			date_modified="2012-05-25T15:31:38.109+05:30" user_id="67bffa913b38e7901851d863ededa475"
+			xmlns:n3="http://commcarehq.org/case/transaction/v2">
+			<n3:update>
+				<n3:baby_measles />
+			</n3:update>
+		</n3:case>
+		<display_child>OK</display_child>
+		<name_update>no</name_update>
+		<new_name />
+		<eaten_cereal>yes</eaten_cereal>
+		<number_good>yes</number_good>
+		<amount_good>yes</amount_good>
+		<dal>no</dal>
+		<oil_ghee>yes</oil_ghee>
+		<milk_curd>yes</milk_curd>
+		<recent_fever>no</recent_fever>
+		<add_vaccinations>no</add_vaccinations>
+	</child_info>
+	<success>OK</success>
+	<nextvisit>OK</nextvisit>
+</data>

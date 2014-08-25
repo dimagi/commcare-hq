@@ -29,6 +29,7 @@ class PhoneLogPillow(SQLPillow):
             'users/by_username',
             key=cc_username,
             include_docs=False,
+            reduce=False,
         )
         row = result.one()
         if row:

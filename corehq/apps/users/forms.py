@@ -18,7 +18,7 @@ from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser, Program
+from corehq.apps.commtrack.models import CommTrackUser, Program, SupplyPointCase
 import re
 import settings
 
@@ -56,7 +56,7 @@ class BaseUpdateUserForm(forms.Form):
     def direct_properties(self):
         return []
 
-    def update_user(self, existing_user=None, **kwargs):
+    def update_user(self, existing_user=None, save=True, **kwargs):
         is_update_successful = False
         if not existing_user and 'email' in self.cleaned_data:
             from django.contrib.auth.models import User
@@ -90,7 +90,7 @@ class BaseUpdateUserForm(forms.Form):
             setattr(existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
-        if is_update_successful:
+        if is_update_successful and save:
             existing_user.save()
         return is_update_successful
 
@@ -106,7 +106,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
     def update_user(self, existing_user=None, domain=None, **kwargs):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user)
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user, save=False)
 
         if domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
@@ -116,6 +116,8 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 is_update_successful = True
             except KeyError:
                 pass
+        elif is_update_successful:
+            existing_user.save()
 
         return is_update_successful
 
@@ -127,6 +129,18 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
         if current_role:
             self.initial['role'] = current_role
 
+
+class UpdateUserPermissionForm(forms.Form):
+    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
+
+    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
+        is_update_successful = False
+        if editable_user and couch_user.is_superuser:
+            editable_user.is_superuser = is_super_user
+            editable_user.save()
+            is_update_successful = True
+
+        return is_update_successful
 
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
@@ -273,7 +287,8 @@ class CommCareAccountForm(forms.Form):
             domain = self.cleaned_data['domain']
             username = format_username(username, domain)
             num_couch_users = len(CouchUser.view("users/by_username",
-                                                 key=username))
+                                                 key=username,
+                                                 reduce=False))
             if num_couch_users > 0:
                 raise forms.ValidationError("CommCare user already exists")
 
@@ -345,8 +360,14 @@ class CommtrackUserForm(forms.Form):
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
+
             commtrack_user.clear_locations()
             commtrack_user.add_location(loc, create_sp_if_missing=True)
+
+            # add the supply point case id to user data fields
+            # so that the phone can auto select
+            supply_point = SupplyPointCase.get_by_location(loc)
+            user.user_data['commtrack-supply-point'] = supply_point._id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

@@ -128,6 +128,9 @@ class FormRepeater(Repeater):
     Record that forms should be repeated to a new url
 
     """
+
+    exclude_device_reports = BooleanProperty(default=False)
+
     @memoized
     def _payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
@@ -253,6 +256,15 @@ class RepeatRecord(Document, LockableMixIn):
             limit=limit,
         )
         return repeat_records
+
+    @classmethod
+    def count(cls, domain=None):
+        results = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=True,
+        ).one()
+        return results['value'] if results else 0
 
     def update_success(self):
         self.last_checked = datetime.utcnow()

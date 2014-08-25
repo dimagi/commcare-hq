@@ -38,6 +38,7 @@ ROLES_DJANGO = ['django_monolith', 'django_app']
 ROLES_TOUCHFORMS = ['django_monolith', 'formsplayer']
 ROLES_STATIC = ['django_monolith', 'staticfiles']
 ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
+ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
@@ -74,6 +75,7 @@ env.roledefs = {
     # for now combined with celery
     'django_pillowtop': [],
     'sms_queue': [],
+    'reminder_queue': [],
     'pillow_retry_queue': [],
     # 'django_celery, 'django_app', and 'django_pillowtop' all in one
     # use this ONLY for single server config,
@@ -94,7 +96,9 @@ env.roledefs = {
 
 env.django_bind = '127.0.0.1'
 env.sms_queue_enabled = False
-env.use_separate_reminder_rule_queue = False
+env.reminder_queue_enabled = False
+env.reminder_rule_queue_enabled = False
+env.reminder_case_update_queue_enabled = False
 env.pillow_retry_queue_enabled = True
 
 
@@ -199,6 +203,7 @@ def india():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -234,6 +239,7 @@ def zambia():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -258,7 +264,9 @@ def production():
     env.django_port = '9010'
     env.should_migrate = True
     env.sms_queue_enabled = True
-    env.use_separate_reminder_rule_queue = True
+    env.reminder_queue_enabled = True
+    env.reminder_rule_queue_enabled = True
+    env.reminder_case_update_queue_enabled = True
     env.pillow_retry_queue_enabled = True
 
     if env.code_branch != 'master':
@@ -283,6 +291,7 @@ def production():
         'rabbitmq': Servers.db,
         'django_celery': Servers.celery,
         'sms_queue': Servers.celery,
+        'reminder_queue': Servers.celery,
         'pillow_retry_queue': Servers.celery,
         'django_app': Servers.django,
         'django_pillowtop': Servers.db,
@@ -337,6 +346,7 @@ def staging():
         'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
         'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
+        'reminder_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
         'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
         'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
@@ -390,6 +400,7 @@ def preview():
         'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
         'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
         'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
+        'reminder_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
         'django_app': [
             'hqdjango0-preview.internal.commcarehq.org',
@@ -434,6 +445,7 @@ def development():
         'rabbitmq': [],
         'django_celery': [],
         'sms_queue': [],
+        'reminder_queue': [],
         'pillow_retry_queue': [],
         'django_app': [],
         'django_pillowtop': [],
@@ -721,7 +733,7 @@ def hotfix_deploy():
     for small python-only hotfixes
 
     """
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False) or \
        not console.confirm('HEY!!!! YOU ARE ONLY DEPLOYING CODE. THIS IS NOT A NORMAL DEPLOY. COOL???', default=False):
         utils.abort('Deployment aborted.')
@@ -745,7 +757,7 @@ def hotfix_deploy():
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
     _require_target()
-    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
+    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
@@ -757,19 +769,22 @@ def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
+        execute(_do_compress)
+        # softly update manifest (original keys remain)
+        execute(update_manifest, soft=True)
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
-        execute(_do_compress)
         execute(_do_collectstatic)
         execute(do_update_django_locales)
-        execute(update_manifest)
         execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
+        # hard update of manifest.json
+        execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -784,7 +799,7 @@ def _deploy_without_asking():
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     if strtobool(confirm) and not console.confirm(
-            'Are you sure you want to preindex and deploy '
+            'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
     max_wait = datetime.timedelta(minutes=5)
@@ -990,7 +1005,7 @@ def _do_collectstatic():
 
 @roles(*ROLES_DJANGO)
 @parallel
-def update_manifest(save=False):
+def update_manifest(save=False, soft=False):
     """
     Puts the manifest.json file with the references to the compressed files
     from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
@@ -1002,7 +1017,12 @@ def update_manifest(save=False):
     withpath = env.code_root
     venv = env.virtualenv_root
 
-    cmd = 'resource_compress save' if save else 'resource_compress'
+    args = ''
+    if save:
+        args = ' save'
+    if soft:
+        args = ' soft'
+    cmd = 'update_manifest%s' % args
     with cd(withpath):
         sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
             user=env.sudo_user
@@ -1111,8 +1131,12 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_sms_queue.conf')
-    if env.use_separate_reminder_rule_queue:
+    if env.reminder_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_queue.conf')
+    if env.reminder_rule_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
+    if env.reminder_case_update_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
@@ -1142,6 +1166,11 @@ def set_sms_queue_supervisorconf():
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
+@roles(*ROLES_REMINDER_QUEUE)
+def set_reminder_queue_supervisorconf():
+    if env.reminder_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
+
 @roles(*ROLES_PILLOW_RETRY_QUEUE)
 def set_pillow_retry_queue_supervisorconf():
     if env.pillow_retry_queue_enabled:
@@ -1156,6 +1185,7 @@ def set_supervisor_config():
     execute(set_formsplayer_supervisorconf)
     execute(set_pillowtop_supervisorconf)
     execute(set_sms_queue_supervisorconf)
+    execute(set_reminder_queue_supervisorconf)
     execute(set_pillow_retry_queue_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in

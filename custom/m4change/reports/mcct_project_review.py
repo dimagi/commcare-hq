@@ -91,7 +91,7 @@ def calculate_form_data(self, form):
         location_name = location.name
         location_parent = location.parent
         if location_parent is not None and location_parent.location_type != 'state':
-            while location_parent is not None and location_parent.location_type != 'district':
+            while location_parent is not None and location_parent.location_type not in ('district', 'lga'):
                 location_parent = location_parent.parent
         location_parent_name = location_parent.name if location_parent is not None else EMPTY_FIELD
 
@@ -190,9 +190,10 @@ class McctProjectReview(BaseReport):
             DataTablesColumn(_("LGA"), sortable=False),
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount"), sortable=False),
+            DataTablesColumn(_("Visits"), sortable=False),
             DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
                                        '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
-                                        sortable=False, span=3))
+                             sortable=False, span=3))
         return headers
 
     def es_query(self, paginated):
@@ -254,7 +255,8 @@ class McctProjectReview(BaseReport):
                 get_property(data.get('case'), "card_number", EMPTY_FIELD),
                 data.get('location_parent_name'),
                 get_property(data.get('case'), "phone_number", EMPTY_FIELD),
-                data.get('amount_due')
+                data.get('amount_due'),
+                get_property(data.get('case'), "visits", EMPTY_FIELD)
             ]
             if with_checkbox:
                 checkbox = mark_safe('<input type="checkbox" class="selected-element" '

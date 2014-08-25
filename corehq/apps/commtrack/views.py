@@ -1,5 +1,3 @@
-import os
-import tempfile
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -20,13 +18,18 @@ from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async
+from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
+    recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
 import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 import copy
+from couchexport.writers import Excel2007ExportWriter
+from StringIO import StringIO
+from couchexport.models import Format
+
 
 @domain_admin_required
 def default(request, domain):
@@ -105,6 +108,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
+            previous_config = copy.copy(self.commtrack_settings)
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
             self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
@@ -125,7 +129,17 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                             data['consumption_' + field])
 
             self.commtrack_settings.save()
-            messages.success(request, _("Settings updated!"))
+
+
+            if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
+                or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
+            ):
+                # kick off delayed consumption rebuild
+                recalculate_domain_consumption_task.delay(self.domain)
+                messages.success(request, _("Settings updated! Your updated consumption settings may take a "
+                                            "few minutes to show up in reports and on phones."))
+            else:
+                messages.success(request, _("Settings updated!"))
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
@@ -306,8 +320,8 @@ class UploadProductView(BaseCommTrackManageView):
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)
-        elif not upload.name.endswith('.csv'):
-            messages.error(request, _('please use csv format only'))
+        elif not upload.name.endswith('.xlsx'):
+            messages.error(request, _('please use xlsx format only'))
             return self.get(request, *args, **kwargs)
 
         domain = args[0]
@@ -364,45 +378,53 @@ def download_products(request, domain):
     def _build_row(keys, product):
         row = []
         for key in keys:
-            row.append(product.get(key, ''))
+            row.append(product.get(key, '') or '')
 
         return row
 
-    fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as file:
-        product_keys = [
-            'id',
-            'name',
-            'unit',
-            'product_id',
-            'description',
-            'category',
-            'program_id',
-            'cost',
-        ]
+    file = StringIO()
+    writer = Excel2007ExportWriter()
 
-        data_keys = set()
+    product_keys = [
+        'id',
+        'name',
+        'unit',
+        'product_id',
+        'description',
+        'category',
+        'program_id',
+        'cost',
+    ]
 
-        products = []
-        for product in _get_products(domain):
-            product_dict = product.to_dict()
+    data_keys = set()
 
-            custom_properties = product.custom_property_dict()
-            data_keys.update(custom_properties.keys())
-            product_dict.update(custom_properties)
+    products = []
+    for product in _get_products(domain):
+        product_dict = product.to_dict()
 
-            products.append(product_dict)
+        custom_properties = product.custom_property_dict()
+        data_keys.update(custom_properties.keys())
+        product_dict.update(custom_properties)
 
-        keys = product_keys + list(data_keys)
+        products.append(product_dict)
 
-        writer = csv.writer(file, dialect=csv.excel)
-        writer.writerow(keys)
+    keys = product_keys + list(data_keys)
 
-        for product in products:
-            writer.writerow(_build_row(keys, product))
+    writer.open(
+        header_table=[
+            ('products', [keys])
+        ],
+        file=file,
+    )
 
-    response = HttpResponse(open(path, 'rb').read())
-    response['Content-Disposition'] = 'attachment; filename="{domain}-products.csv"'.format(domain=domain)
+    for product in products:
+        writer.write([('products', [_build_row(keys, product)])])
+
+    writer.close()
+
+    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
+    response.write(file.getvalue())
     return response
 
 

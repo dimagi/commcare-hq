@@ -214,6 +214,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
@@ -263,6 +264,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -332,9 +334,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
@@ -450,14 +449,21 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 BROKER_URL = 'django://'  # default django db based
 
+CELERY_MAIN_QUEUE = 'celery'
+
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = 'celery'
+CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
 
 # This is the celery queue to use for running reminder rules.
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
-CELERY_REMINDER_RULE_QUEUE = 'celery'
+CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder case updates.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -533,6 +539,32 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Reminders Queue Settings #######
+
+# Setting this to False will make the system fire reminders every
+# minute on the periodic queue. Setting to True will queue up reminders
+# on the reminders queue.
+REMINDERS_QUEUE_ENABLED = False
+
+# If a reminder still has not been processed in this number of minutes, enqueue it
+# again.
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single reminder
+REMINDERS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the reminder
+REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The number of hours to wait before counting a reminder as stale. Stale
+# reminders will not be processed.
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
@@ -766,6 +798,8 @@ COMPRESS_PRECOMPILERS = (
 )
 COMPRESS_ENABLED = True
 
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
@@ -885,6 +919,8 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
     'reportfixtures',
     'reports',
@@ -1068,6 +1104,8 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
+        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1106,6 +1144,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

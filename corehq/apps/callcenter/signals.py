@@ -5,7 +5,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.db.models import signals
 from requests.exceptions import RequestException
-from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter
+from corehq.apps.callcenter.utils import sync_user_cases, bootstrap_callcenter, get_call_center_domains
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import commcare_user_post_save
@@ -37,22 +37,15 @@ def catch_signal(app, **kwargs):
                 print(msg, file=sys.stderr)
 
         try:
-            q = {'fields': ['name']}
-            result = es_query(params={
-                'internal.using_call_center': True,
-                'is_active': True,
-                'is_snapshot': False
-            }, q=q)
-            hits = result.get('hits', {}).get('hits', {})
-            for hit in hits:
-                try:
-                    domain = Domain.get(hit['_id'])
-                    print('  callcenter bootstap `{0}`'.format(domain.name))
-                    bootstrap_callcenter(domain)
-                except ResourceNotFound:
-                    _log("Couldn't find domain {dom} during call center sync".format(dom=hit['_id']))
-
+            domains = get_call_center_domains()
         except (RequestException, ESError):
             _log('Unable to query ES for call-center domains during syncdb')
+            domains = []
+
+        for name in domains:
+            domain = Domain.get_by_name(name)
+            if domain:
+                print('  callcenter bootstap `{0}`'.format(domain.name))
+                bootstrap_callcenter(domain)
 
 signals.post_syncdb.connect(catch_signal)

@@ -1,8 +1,8 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
@@ -84,4 +84,62 @@ class PatientFormNameFilter(BaseDrilldownOptionFilter):
         return [
             ('Form Group', 'All Form Groups', 'group'),
             ('Form Name', 'All Form names', 'xmlns'),
+        ]
+
+class PatientNameFilterMixin(object):
+    slug = "patient_id"
+    label = ugettext_noop("Patient Name")
+    default_text = ugettext_noop("All Patients")
+
+    @property
+    def options(self):
+        q = { "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "and": [
+                            {"term": {"domain.exact": self.domain}},
+                            {"term": {"type.exact": "participant"}},
+                        ]
+                    }
+                }
+            }
+        }
+        es_filters = q["query"]["filtered"]["filter"]
+        def _filter_gen(key, flist):
+            return {"terms": {
+                key: [item.lower() for item in flist if item]
+            }}
+
+        user = self.request.couch_user
+        if not user.is_web_user():
+            owner_ids = user.get_group_ids()
+            user_ids = [user._id]
+            owner_filters = _filter_gen('owner_id', owner_ids)
+            user_filters = _filter_gen('user_id', user_ids)
+            filters = filter(None, [owner_filters, user_filters])
+            subterms = []
+            subterms.append({'or': filters})
+            es_filters["and"].append({'and': subterms} if subterms else {})
+
+        es_results = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in es_results['hits'].get('hits', [])]
+
+class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
+    placeholder = ugettext_noop('Click to select a patient')
+
+class TaskStatus(ReportSelectField):
+    slug = "task_status"
+    name = ugettext_noop("Task Status")
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = ugettext_noop("All Tasks")
+
+    @property
+    def options(self):
+        return [
+            dict(val='open', text=ugettext_noop("Only Open Tasks")),
+            dict(val='closed', text=ugettext_noop("Only Closed Tasks")),
         ]

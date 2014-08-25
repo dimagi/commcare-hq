@@ -9,30 +9,40 @@ from .constants import *
 class Worker(object):
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', "List of AWWs"),
-        ('awc_name', "AWC Name"),
-        ('awc_code', "AWC Code"),
-        ('bank_name', "AWW Bank Name"),
-        ('ifs_code', "IFS Code"),
-        ('account_number', "AWW Bank Account Number"),
-        ('block', "Block Name"),
-        ('women_registered', "No. of women registered under BCSP"),
-        ('children_registered', "No. of children registered under BCSP"),
-        ('service_forms_count', "Service Availability Form Submitted"),
-        ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children"),
-        ('service_forms_cash', "Payment for Service Availability Form (in Rs.)"),
-        ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)"),
-        ('month_total', "Total Payment Made for the month (in Rs.)"),
-        ('last_month_total', "Amount of AWW incentive paid last month"),
+        ('name', "List of AWWs", True),
+        ('awc_name', "AWC Name", True),
+        ('awc_code', "AWC Code", True),
+        ('bank_name', "AWW Bank Name", True),
+        ('ifs_code', "IFS Code", True),
+        ('account_number', "AWW Bank Account Number", True),
+        ('block', "Block Name", True),
+        ('women_registered', "No. of women registered under BCSP", True),
+        ('children_registered', "No. of children registered under BCSP", True),
+        ('service_forms_count', "Service Availability Form Submitted", True),
+        ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children", True),
+        ('service_forms_cash', "Payment for Service Availability Form (in Rs.)", True),
+        ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True),
+        ('month_total', "Total Payment Made for the month (in Rs.)", True),
+        ('last_month_total', "Amount of AWW incentive paid last month", True),
+        ('owner_id', 'Owner ID', False)
     ]
 
     def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
 
         # make sure worker passes the filters
+        filter_by = []
+        if hasattr(report, 'request'):
+            if report.awcs:
+                filter_by = [('awc_name', 'awcs')]
+            elif report.gp:
+                filter_by = [('owner_id', 'gp')]
+            elif report.block:
+                filter_by = [('block', 'blocks')]
+
         report.filter(
             lambda key: worker.user_data.get(key),
             # user.awc, user.block
-            report.filter_fields
+            filter_by
         )
 
         def user_data(property):
@@ -45,6 +55,7 @@ class Worker(object):
         self.ifs_code = user_data('ifs_code')
         self.account_number = user_data('account_number')
         self.block = user_data('block')
+        self.owner_id = worker._id
 
         if case_sql_data:
             self.women_registered = str(case_sql_data.get('women_registered_total', None))

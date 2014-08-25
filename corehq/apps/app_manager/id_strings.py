@@ -1,5 +1,7 @@
 import re
 
+ROOT = u'root'
+
 
 def _format_to_regex(pattern):
     """
@@ -136,7 +138,7 @@ def detail(module, detail_type):
 
 def menu(module):
     put_in_root = getattr(module, 'put_in_root', False)
-    return u'root' if put_in_root else u"m{module.id}".format(module=module)
+    return ROOT if put_in_root else u"m{module.id}".format(module=module)
 
 
 def form_command(form):

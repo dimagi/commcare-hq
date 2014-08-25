@@ -121,7 +121,7 @@ class ParentCasePropertyBuilder(object):
         case_properties = set(self.defaults)
 
         for m_case_type, form in self.forms_info:
-            case_properties.update(form.get_case_updates(case_type))
+            case_properties.update(self.get_case_updates(form, case_type))
 
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
@@ -131,6 +131,10 @@ class ParentCasePropertyBuilder(object):
                 case_properties.add('%s/%s' % (parent_type[1], property))
 
         return case_properties
+
+    @memoized
+    def get_case_updates(self, form, case_type):
+        return form.get_case_updates(case_type)
 
     def get_case_property_map(self, case_types):
         case_types = sorted(case_types)

@@ -46,7 +46,8 @@ class SuccessMessageTest(TestCase):
         form.xmlns = self.xmlns
         app.success_message = {"en": self.message}
         app.save()
-
+        # hack: prime the view once so the success message takes even though we use stale queries in submissions
+        Application.get_db().view('exports_forms/by_xmlns', limit=1).one()
         def fake_form_submission(userID=userID, username=self.username, xmlns=self.xmlns, time=None):
             submission = submission_template % {
                 "userID": userID,

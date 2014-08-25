@@ -22,11 +22,10 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from casexml.apps.case.cleanup import rebuild_case
 import pytz
 from corehq import toggles, Domain
+from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.reports.standard.export import ExcelExportReport
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -842,7 +841,48 @@ def case_xml(request, domain, case_id):
 def rebuild_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     rebuild_case(case_id)
-    messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
+    messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def close_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    if case.closed:
+        messages.info(request, u'Case {} is already closed.'.format(case.name))
+    else:
+        form_id = close_case(case_id, domain, request.couch_user)
+        msg = _(u'''Case {name} has been closed.
+            <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
+            You can also reopen the case in the future by archiving the last form in the case history.
+            <form id="{html_form_id}" action="{url}" method="POST">
+                <input type="hidden" name="closing_form" value="{xform_id}" />
+            </form>
+        '''.format(
+            name=case.name,
+            html_form_id='undo-close-case',
+            xform_id=form_id,
+            url=reverse('undo_close_case', args=[domain, case_id]),
+        ))
+        messages.success(request, mark_safe(msg), extra_tags='html')
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def undo_close_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    if not case.closed:
+        messages.info(request, u'Case {} is not closed.'.format(case.name))
+    else:
+        closing_form_id = request.POST['closing_form']
+        assert closing_form_id in case.xform_ids
+        form = XFormInstance.get(closing_form_id)
+        form.archive(user=request.couch_user._id)
+        messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
@@ -949,7 +989,8 @@ def _get_form_context(request, domain, instance_id):
         "domain": domain,
         "display": display,
         "timezone": timezone,
-        "instance": instance
+        "instance": instance,
+        "user": request.couch_user,
     }
     context['form_render_options'] = context
     return context
@@ -987,6 +1028,7 @@ def form_data(request, domain, instance_id):
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
+
 
 @require_form_view_permission
 @login_and_domain_required

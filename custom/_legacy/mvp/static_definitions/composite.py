@@ -77,6 +77,20 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     # Child Nutrition
+    moderate_muac_wasting_proportion=dict(
+        description="Proportion of children aged 6-59 months with moderate wasting (MUAC 115<125) "\
+                    "at last MUAC reading this time period",
+        title="% 6-59 month Children with moderate MUAC (115<125)",
+        numerator_slug="child_moderate_muac_wasting",
+        denominator_slug="child_muac_reading"
+    ),
+    severe_muac_wasting_proportion=dict(
+        description="Proportion of children aged 6-59 months with severe wasting (MUAC <115) "\
+                    "at last MUAC reading this time period",
+        title="% 6-59 month Children with severe MUAC < 115",
+        numerator_slug="child_severe_muac_wasting",
+        denominator_slug="child_muac_reading"
+    ),
     muac_wasting_proportion=dict(
         description="Proportion of children aged 6-59 months with moderate or severe wasting (MUAC < 125) "\
                     "at last MUAC reading this time period",
@@ -215,5 +229,23 @@ COMPOSITE_INDICATORS = dict(
         title="% of Over-5s with positive RDT result who received antimalarial/ADT medication",
         numerator_slug="over5_positive_rdt_medicated",
         denominator_slug="over5_positive_rdt",
+    ),
+
+    #Functioning Bednet
+    functioning_bednet_proportion=dict(
+        description="Proportion of households ASSESSED with at least one functioning bednet"\
+                    "per sleeping site during the time period",
+        title="% of households ASSESSED with at least one functioning bednet per sleeping site",
+        numerator_slug="household_num_func_bednets",
+        denominator_slug="household_num_bednets",
+    ),
+
+    #Handwashing
+    handwashing_near_latrine_proportion=dict(
+        description="Proportion of households ASSESSED with handwashing station within 10m"\
+                    " of the latrine during the time period",
+        title="% of households ASSESSED with handwashing station within 10m of the latrine",
+        numerator_slug="num_handwashing_latrine",
+        denominator_slug="num_handwashing",
     ),
 )

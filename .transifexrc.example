@@ -1,0 +1,5 @@
+[https://www.transifex.com]
+username = TRANSIFEX_USERNAME
+token =
+password = TRANSIFEX_PASSWORD
+hostname = https://www.transifex.com
