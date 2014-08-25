@@ -8,7 +8,6 @@ from PIL import Image
 import uuid
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD
-from django.core.validators import validate_email
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -960,7 +959,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=_("Contact email"))
+    contact_email = forms.EmailField(label=_("Contact email"))
     organization = forms.CharField(label=_("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
@@ -1003,11 +1002,6 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
-
-    def clean_contact_email(self):
-        email = self.cleaned_data['contact_email']
-        validate_email(email)
-        return email
 
     def process_submission(self, domain=None):
         try:
