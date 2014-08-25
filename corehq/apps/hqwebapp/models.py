@@ -8,6 +8,15 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.hqadmin.reports import (
+    FormSubmissionsReport,
+    ActiveRealProjectSpacesReport,
+    RealProjectSpacesReport,
+    RealProjectSpacesPlansReport,
+    UserReport,
+    CommConnectProjectSpacesReport,
+    RealSMSMessages,
+)
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -1206,7 +1215,24 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]), (_('Administrative Operations'), admin_operations)]
+            ]),
+            (_('Administrative Operations'), admin_operations),
+            (_('CommCare Reports'), [
+                {
+                    'title': report.name,
+                    'url': reverse('admin_report_dispatcher',
+                                   args=(report.slug,)),
+                } for report in [
+                    FormSubmissionsReport,
+                    ActiveRealProjectSpacesReport,
+                    RealProjectSpacesReport,
+                    RealProjectSpacesPlansReport,
+                    UserReport,
+                    CommConnectProjectSpacesReport,
+                    RealSMSMessages,
+                ]
+            ]),
+        ]
 
     @property
     def is_viewable(self):

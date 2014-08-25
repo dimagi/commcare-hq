@@ -13,7 +13,8 @@ SQLAlchemy. Here's an example usage:
         .fields(['xmlns', 'domain', 'app_id'])\
         .sort('received_on', desc=False)\
         .size(self.pagination.count)\
-        .start(self.pagination.start)
+        .start(self.pagination.start)\
+        .facet("domains", {"field": "domains"})
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -94,7 +95,7 @@ class ESQuery(object):
                 "filter": {"and": []},
                 "query": {'match_all': {}}
             }
-        }}
+        }
 
     @property
     def builtin_filters(self):
@@ -162,6 +163,34 @@ class ESQuery(object):
 
     def terms_facet(self, term, name, size=None):
         return self.facet(facets.TermsFacet(term, name, size))
+
+    @property
+    def _facets(self):
+        return self.es_query['facets']
+
+    def facet(self, name, _facet):
+        """
+        Add a facet to the query.
+        """
+        query = deepcopy(self)
+        query._facets[name] = _facet
+        return query
+
+    @property
+    def facets(self):
+        """
+        Return a dictionary of the facets used in this query.
+        """
+        return self._facets
+
+    def date_histogram(self, name, datefield, interval):
+        facet_terms = {
+                "date_histogram": {
+                    "field": datefield,
+                    "interval": interval
+                }
+        }
+        return self.facet(name, facet_terms)
 
     @property
     def _query(self):

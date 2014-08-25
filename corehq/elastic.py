@@ -11,6 +11,7 @@ from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from settings import ES_QUERY_CHUNKSIZE
 
 
 def get_es(timeout=30):
@@ -41,7 +42,7 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
     "users": [
-        {"term": {"doc_type": "CommCareUser"}},
+        #{"term": {"doc_type": "CommCareUser"}}, # TODO check nothing broken
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
@@ -67,9 +68,68 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day"):
+def get_user_type_filters(histo_type, user_type_mobile):
+    def user_doc_type():
+        return "CommCareUser" if user_type_mobile else "WebUser"
+
+    def get_user_ids():
+        from corehq.apps.users.models import CouchUser
+        return {
+            mobile_user._id for mobile_user in CouchUser.all()
+            if mobile_user.doc_type == user_doc_type()
+        }
+
+    result = {'terms': {}}
+    if histo_type == 'forms':
+        result['terms']["form.meta.userID"] = [
+            user_id for user_id in get_user_ids()
+        ]
+    elif histo_type == 'users':
+        existing_users = get_user_ids()
+
+        from corehq.apps.es.es_query import ESQuery
+        LARGE_NUMBER = 1000 * 1000 * 10
+        form_query = (
+            ESQuery('forms')
+            .fields(['form.meta.userID'])
+            .size(LARGE_NUMBER)
+        )
+        real_form_users = {
+            query_result.get('fields', {}).get('form.meta.userID', '')
+            for query_result in stream_esquery(
+                form_query,
+                chunksize=ES_QUERY_CHUNKSIZE['forms']
+            )
+        }
+
+        from corehq.apps.sms.models import INCOMING
+        sms_query = (
+            ESQuery('sms')
+            .fields(['couch_recipient'])
+            .term('couch_recipient_doc_type', user_doc_type())
+            .term('direction', INCOMING)
+            .size(LARGE_NUMBER)
+        )
+        real_sms_users = {
+            query_result.get('fields', {}).get('couch_recipient', '')
+            for query_result in stream_esquery(
+                sms_query,
+                chunksize=ES_QUERY_CHUNKSIZE['sms']
+            )
+        }
+
+        filtered_real_users = (
+            existing_users & (real_form_users | real_sms_users)
+        )
+        result['terms']['_id'] = [
+            user_id for user_id in filtered_real_users
+        ]
+    return result
+
+
+def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None):
     histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
+                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval, user_type_mobile=user_type_mobile))
                         for d in domains])
 
     def _total_until_date(histo_type, doms=None):
@@ -83,6 +143,10 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
             },
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
+        if user_type_mobile is not None:
+            q["filter"]["and"].append(
+                get_user_type_filters(histo_type, user_type_mobile)
+            )
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
@@ -95,7 +159,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_mobile=None):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -119,6 +183,11 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
                             }}}]}}},
         "size": 0
     })
+
+    if user_type_mobile is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(
+            get_user_type_filters(histo_type, user_type_mobile)
+        )
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
@@ -289,12 +358,16 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
-def stream_esquery(esquery, chunksize=100):
+def stream_esquery(esquery, chunksize=SIZE_LIMIT):
     size = esquery._size if esquery._size is not None else SIZE_LIMIT
     start = esquery._start if esquery._start is not None else 0
     for chunk_start in range(start, start + size, chunksize):
-        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
-            yield hit
+        es_query_set = esquery.size(chunksize).start(chunk_start).run()
+        if not es_query_set.raw_hits:
+            break
+        else:
+            for hit in es_query_set.raw_hits:
+                yield hit
 
 
 def parse_args_for_es(request, prefix=None):

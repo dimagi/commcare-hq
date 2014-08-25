@@ -35,6 +35,7 @@ var HQVisualizations = function (options) {
     self.should_update_url = options.should_update_url === undefined ? false : options.should_update_url;
     self.interval = options.interval || "day";
     self.datefield = options.datefield;
+    self.params_es = options.params_es || {};
 
     self.charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
     self.charts_id = '#' + self.chart_name + '-charts';
@@ -132,6 +133,10 @@ var HQVisualizations = function (options) {
         }
         if (startdate) {
             data["startdate"] = startdate;
+        }
+
+        if(!jQuery.isEmptyObject(self.params_es)) {
+            data['params_es'] = self.params_es;
         }
 
         self.data = merge_options(self.data, data);

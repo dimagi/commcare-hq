@@ -1,4 +1,11 @@
+import copy
 from datetime import datetime
+import json
+from corehq import Domain
+from corehq.apps.accounting.models import (
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -10,6 +17,312 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
 from corehq.toggles import IS_DEVELOPER
+
+
+INDICATOR_DATA = {
+    "active_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_domains",
+        "chart_title": "Active Project Spaces",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_self_started_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_self_started_domains",
+        "chart_title": "Active Self Started Project Spaces",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "self_started": ["T"],
+        },
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "domains",
+        "chart_title": "Total Project Spaces",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "domain_self_started_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "self_started_domains",
+        "chart_title": "Self-Started Project Spaces",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "params_es_dict": {
+            "internal.self_started": ["T"],
+        },
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "forms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms",
+        "chart_title": "All Forms",
+        "histogram_type": "forms",
+        "interval": "week",
+        "xaxis_label": "# forms",
+    },
+    "forms_mobile": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_mobile",
+        "chart_title": "Forms Submitted by Mobile Workers",
+        "histogram_type": "forms",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": True,
+        },
+        "xaxis_label": "# forms",
+    },
+    "forms_web": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_web",
+        "chart_title": "Forms Submitted by Web Users",
+        "histogram_type": "forms",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": False,
+        },
+        "xaxis_label": "# forms",
+    },
+    "users": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users",
+        "chart_title": "Total Users",
+        "histogram_type": "users",
+        "interval": "week",
+        "xaxis_label": "# users",
+    },
+    "users_mobile": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users_mobile",
+        "chart_title": "Mobile Users (submitted)",
+        "histogram_type": "users",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": True,
+        },
+        "xaxis_label": "# users",
+    },
+    "users_web": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "users_web",
+        "chart_title": "Web Users (submitted)",
+        "histogram_type": "users",
+        "interval": "week",
+        "params_es_dict": {
+            "user_type_mobile": False,
+        },
+        "xaxis_label": "# users",
+    },
+    "sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "sms_domains",
+        "chart_title": "Total Projects That Have Used SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "commconnect_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commconnect_domains",
+        "chart_title": "Total CommConnect Enabled Domains",
+        "params_es_dict": {
+            "commconnect_enabled": ["T"],
+        },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "incoming_sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "incoming_sms_domains",
+        "chart_title": "Total Projects Using Incoming SMS",
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "sms_only_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "sms_only_domains",
+        "chart_title": "Total SMS Only Projects",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_only_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_commconnect_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_commconnect_domains",
+        "chart_title": "Active CommConnect Project Spaces",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_commconnect_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_outgoing_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_sms",
+        "chart_title": "Total Outgoing SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["o"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_incoming_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_incoming_sms",
+        "chart_title": "Total Incoming SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_outgoing_client_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_client_sms",
+        "chart_title": "Total Outgoing Client SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+            "couch_recipient_doc_type": ["commcarecase"]
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_incoming_client_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_incoming_client_sms",
+        "chart_title": "Total Incoming Client SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+            "couch_recipient_doc_type": ["commcarecase"]
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_mobile_workers": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_mobile_workers",
+        "chart_title": "Total Mobile Workers",
+        "histogram_type": "mobile_workers",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_mobile_workers": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_mobile_workers",
+        "chart_title": "Active Mobile Workers",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "couch_recipient_doc_type": ["commcareuser"],
+        },
+        "histogram_type": "active_mobile_users",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_dimagi_owned_gateways": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_dimagi_owned_gateways",
+        "chart_title": "Active Projects Using Dimagi Owned Gateways",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_dimagi_gateways",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_clients": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_clients",
+        "chart_title": "Total Clients",
+        "histogram_type": "mobile_clients",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_clients": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_mobile_clients",
+        "chart_title": "Active Mobile Clients",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "couch_recipient_doc_type": ["commcarecase"],
+        },
+        "histogram_type": "active_mobile_users",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+}
 
 
 class AdminReport(GenericTabularReport):
@@ -223,3 +536,159 @@ class AdminAppReport(AdminFacetedReport):
                 app.get('domain'),
                 app.get('build_comment'),
             ]
+
+
+class GlobalAdminReports(AdminReport):
+    base_template = "hqadmin/indicator_report.html"
+    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
+
+    @property
+    def template_context(self):
+        context = super(AdminReport, self).template_context
+        indicator_data = copy.deepcopy(INDICATOR_DATA)
+        from django.core.urlresolvers import reverse
+        for key in self.indicators:
+            indicator_data[key]["ajax_url"] = reverse(
+                indicator_data[key]["ajax_view"]
+            )
+            if not ("params_es_dict" in indicator_data[key]):
+                indicator_data[key]["params_es_dict"] = {}
+            if self.use_real_project_spaces:
+                indicator_data[key]["params_es_dict"].update({
+                    "is_test": ["false"],
+                })
+            indicator_data[key]["params_es"] = json.dumps(
+                indicator_data[key]["params_es_dict"]
+            )
+        context.update({
+            'indicator_data': indicator_data,
+            'indicators': self.indicators,
+            'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
+        })
+        return context
+
+    @property
+    def domains(self):
+        return Domain.get_all()
+
+    @property
+    def indicators(self):
+        raise NotImplementedError
+
+    @property
+    def use_real_project_spaces(self):
+        return True
+
+
+class RealProjectSpacesReport(GlobalAdminReports):
+    slug = 'real_project_spaces'
+    name = ugettext_noop('Real Project Spaces')
+    indicators = [
+        'domain_count',
+        'domain_self_started_count',
+    ]
+
+
+class ActiveRealProjectSpacesReport(GlobalAdminReports):
+    slug = 'active_real_project_spaces'
+    name = ugettext_noop('Active Project Spaces')
+    indicators = [
+        'active_domain_count',
+        'active_self_started_domain_count',
+    ]
+
+class RealProjectSpacesPlansReport(GlobalAdminReports):
+    slug = 'real_project_spaces_plans'
+    name = ugettext_noop('Real Project Spaces - Plans')
+    indicators = []
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("# Community Projects")),
+            DataTablesColumn(_("# Standard Projects")),
+            DataTablesColumn(_("# Pro Projects")),
+            DataTablesColumn(_("# Advanced Projects")),
+            DataTablesColumn(_("# Enterprise Projects")),
+        )
+
+    @property
+    def rows(self):
+        return [
+            [
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.STANDARD,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.PRO,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.ADVANCED,
+                    is_active=True,
+                ).count(),
+                Subscription.objects.filter(
+                    plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE,
+                    is_active=True,
+                ).count(),
+            ]
+        ]
+
+
+class FormSubmissionsReport(GlobalAdminReports):
+    slug = 'form_submissions'
+    name = _('Form Submissions')
+    indicators = [
+        'forms',
+        'forms_mobile',
+        'forms_web',
+    ]
+
+
+class UserReport(GlobalAdminReports):
+    slug = 'user_report'
+    name = _('User Report')
+    indicators = [
+        'users',
+        'users_mobile',
+        'users_web',
+    ]
+
+class CommConnectProjectSpacesReport(GlobalAdminReports):
+    slug = 'commconnect_project_spaces'
+    name = ugettext_noop('CommConnect Project Spaces')
+    indicators = [
+        'sms_domain_count',
+        'commconnect_domain_count',
+        'incoming_sms_domain_count',
+        'sms_only_domain_count',
+        'active_commconnect_domain_count',
+        'active_dimagi_owned_gateways',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False
+
+class RealSMSMessages(GlobalAdminReports):
+    slug = 'real_sms_messages'
+    name = ugettext_noop('Real SMS Messages')
+    indicators = [
+        'total_outgoing_sms',
+        'total_incoming_sms',
+        'total_outgoing_client_sms',
+        'total_incoming_client_sms',
+        'total_mobile_workers',
+        'active_mobile_workers',
+        'total_clients',
+        'active_clients',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False

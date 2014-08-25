@@ -648,6 +648,11 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+ES_QUERY_CHUNKSIZE = {
+    'forms': 10000,
+    'sms': 10000,
+}
+
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False

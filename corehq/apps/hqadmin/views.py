@@ -1,3 +1,4 @@
+import HTMLParser
 import json
 import logging
 import socket
@@ -54,6 +55,18 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
+from corehq.apps.hqadmin.reporting.reports import (
+    get_sms_only_domain_stats_data,
+    get_commconnect_domain_stats_data,
+    get_active_domain_stats_data,
+    get_active_mobile_users_data,
+    get_mobile_workers_data,
+    get_real_sms_messages_data,
+    get_active_commconnect_domain_stats_data,
+    get_active_dimagi_owned_gateway_projects,
+    get_domain_stats_data,
+    get_total_clients_data
+)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
@@ -64,7 +77,7 @@ from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import get_stats_data, parse_args_for_es, ES_MAX_CLAUSE_COUNT
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
@@ -75,7 +88,6 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
-
 
 @require_superuser
 def default(request):
@@ -864,50 +876,15 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 
-def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
-    q = {
-        "query": {"bool": {"must":
-                                  [{"match": {'doc_type': "Domain"}},
-                                   {"term": {"is_snapshot": False}}]}},
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            datefield: {
-                                "from": datespan.startdate_display,
-                                "to": datespan.enddate_display,
-                            }}}]}}}}
-
-    histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    del q["facets"]
-    q["filter"] = {
-        "and": [
-            {"range": {datefield: {"lt": datespan.startdate_display}}},
-        ],
-    }
-
-    domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    return {
-        'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
-        'initial_values': {"All Domains": domains_before_date["hits"]["total"]},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
     datefield = request.GET.get("datefield")
+    params_es = request.GET.get("params_es", None)
+    params_es = (json.loads(HTMLParser.HTMLParser().unescape(params_es))
+                 if params_es is not None else {})
     individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
@@ -915,7 +892,44 @@ def stats_data(request):
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
+    if histo_type == "active_dimagi_gateways":
+        params.update(params_es)
+        return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
+
+    if histo_type == "mobile_clients":
+        params.update(params_es)
+        return json_response(get_total_clients_data(params, request.datespan, interval=interval))
+
+    if histo_type == "active_mobile_users":
+        params.update(params_es)
+        return json_response(get_active_mobile_users_data(params, request.datespan, interval=interval))
+
+    if histo_type == "mobile_workers":
+        params.update(params_es)
+        return json_response(get_mobile_workers_data(params, request.datespan, interval=interval))
+
+    if histo_type == "real_sms_messages":
+        params.update(params_es)
+        return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval))
+
+    if histo_type == "active_commconnect_domains":
+        params.update(params_es)
+        return json_response(get_active_commconnect_domain_stats_data(params, request.datespan, interval=interval))
+
+    if histo_type == "sms_only_domains":
+        params.update(params_es)
+        return json_response(get_sms_only_domain_stats_data(request.datespan, interval=interval))
+
+    if histo_type == "sms_domains":
+        params.update(params_es)
+        return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
+
+    if histo_type == "active_domains":
+        params.update(params_es)
+        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
+
     if histo_type == "domains":
+        params.update(params_es)
         return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
 
     if params:
@@ -934,8 +948,15 @@ def stats_data(request):
     else:
         domain_info = [{"names": None, "display_name": _("All Domains")}]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
+    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval,
+                                user_type_mobile=params_es.get("user_type_mobile"))
     return json_response(stats_data)
+
+
+@require_superuser
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+def admin_reports_stats_data(request):
+    return stats_data(request)
 
 
 @require_superuser
