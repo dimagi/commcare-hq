@@ -1001,30 +1001,42 @@ def stats_data(request):
 
     if histo_type == "active_domains":
         params.update(params_es)
-        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
-
-    if histo_type == "domains":
+        stats_data = get_active_domain_stats_data(
+            params,
+            request.datespan,
+            interval=interval,
+        )
+    elif histo_type == "domains":
         params.update(params_es)
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
-
-    if params:
-        domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
-        domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-
-        if len(domains) <= individual_domain_limit:
-            domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) < ES_MAX_CLAUSE_COUNT:
-            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-        else:
-            domain_info = [{
-                "names": None,
-                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-            }]
+        stats_data = get_domain_stats_data(
+            params, request.datespan,
+            interval=interval,
+            datefield=datefield,
+        )
     else:
-        domain_info = [{"names": None, "display_name": _("All Domains")}]
+        if params:
+            domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval,
-                                user_type_mobile=params_es.get("user_type_mobile"))
+            if len(domains) <= individual_domain_limit:
+                domain_info = [{"names": [d], "display_name": d} for d in domains]
+            elif len(domains) < ES_MAX_CLAUSE_COUNT:
+                domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
+            else:
+                domain_info = [{
+                    "names": None,
+                    "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+                }]
+        else:
+            domain_info = [{"names": None, "display_name": _("All Domains")}]
+
+        stats_data = get_stats_data(
+            domain_info,
+            histo_type,
+            request.datespan,
+            interval=interval,
+            user_type_mobile=params_es.get("user_type_mobile"),
+        )
     return json_response(stats_data)
 
 
