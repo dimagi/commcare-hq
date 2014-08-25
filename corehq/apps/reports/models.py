@@ -440,7 +440,6 @@ class ReportNotification(Document):
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
 
-    timezone_source = StringProperty(choices=["domain", "user"], default='domain')
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)

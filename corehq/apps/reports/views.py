@@ -80,7 +80,7 @@ from corehq.apps.reports.export import (ApplicationBulkExportHelper,
     CustomBulkExportHelper, save_metadata_export_to_tempfile)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -127,7 +127,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
     scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
     for report in scheduled_reports:
-        time_difference = get_timezone_difference(report.timezone_source, unicode(request.user), domain)
+        time_difference = get_timezone_difference(domain)
         (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
         report.minute = 0
         if day_change:
@@ -567,14 +567,8 @@ def recalculate_hour(hour, hour_difference, minute_difference):
     return normalize_hour(hour)
 
 
-def get_timezone_difference(timezone_source, username, domain):
-    if timezone_source == 'user':
-        user = CouchUser.get_by_username(username)
-        timezone = user.get_domain_membership(domain)['timezone']
-    else:
-        timezone = Domain._get_by_name(domain)['default_timezone']
-
-    return datetime.now(pytz.timezone(timezone)).strftime('%z')
+def get_timezone_difference(domain):
+    return datetime.now(pytz.timezone(Domain._get_by_name(domain)['default_timezone'])).strftime('%z')
 
 
 def calculate_day(interval, day, day_change):
@@ -617,7 +611,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     if scheduled_report_id:
         instance = ReportNotification.get(scheduled_report_id)
-        time_difference = get_timezone_difference(instance.timezone_source, unicode(request.user), domain)
+        time_difference = get_timezone_difference(domain)
         (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
         instance.minute = 0
         if day_change:
@@ -627,7 +621,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8, minute=0, timezone_source='domain',
+                                      config_ids=[], hour=8, minute=0,
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -641,11 +635,16 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     form.fields['config_ids'].choices = config_choices
     form.fields['recipient_emails'].choices = web_user_emails
 
+    form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
+                                    (Domain._get_by_name(domain)['default_timezone'],
+                                    get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
+
+
     if request.method == "POST" and form.is_valid():
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
 
-        time_difference = get_timezone_difference(instance.timezone_source, unicode(request.user), domain)
+        time_difference = get_timezone_difference(domain)
         (instance.hour, day_change) = calculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
         instance.minute = int(time_difference[3:])
         if day_change:
