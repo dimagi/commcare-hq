@@ -39,6 +39,15 @@ SNAPSHOT_MAPPING = [
             }
         },
         {"facet": "author.exact", "name": ugettext_lazy("Author"), "expanded": True },
+        {
+            "facet": "commtrack_enabled",
+            "name": "Commtrack",
+            "expanded": True,
+            "mapping": {
+                'T': 'Enabled',
+                'F': 'Not enabled'
+            }
+        }
     ]),
 ]
 DEPLOYMENT_MAPPING = [
@@ -140,7 +149,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
-    results = es_snapshot_query(params, SNAPSHOT_FACETS)
+    results = es_snapshot_query(params, SNAPSHOT_FACETS + ['commtrack_enabled'])
     hits = results.get('hits', {}).get('hits', [])
     hits = deduplicate(hits)
     d_results = [Domain.wrap(res['_source']) for res in hits]
