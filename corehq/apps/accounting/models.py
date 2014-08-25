@@ -1061,12 +1061,15 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
+        cc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
+        if self.account.dimagi_contact is not None:
+            cc.append(self.account.dimagi_contact)
         for email in emails:
             send_HTML_email(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
-                cc=[settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else None
+                cc=cc,
             )
             logger.info(
                 "[BILLING] Sent %(days_left)s-day subscription reminder "
