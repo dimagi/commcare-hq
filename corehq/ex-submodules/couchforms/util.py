@@ -274,14 +274,13 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
         new_form.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(new_form.to_json())
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-        dupe.save()
         return MultiLockManager([LockManager(dupe, lock)])
 
 
 def _log_hard_failure(instance, attachments, error):
     """
-    Handle's a hard failure from posting a form to couch. 
-    
+    Handle's a hard failure from posting a form to couch.
+
     Currently, it will save the raw payload to couch in a hard-failure doc
     and return that doc.
     """
@@ -479,6 +478,9 @@ class SubmissionPost(object):
                             # .problems was added to instance
                             instance.save()
                         unfinished_submission_stub.delete()
+                elif instance.doc_type == 'XFormDuplicate':
+                    assert len(xforms) == 1
+                    instance.save()
             if instance.doc_type == "XFormInstance":
                 response = self.get_success_response(instance,
                                                      responses, errors)
