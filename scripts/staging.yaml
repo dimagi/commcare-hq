@@ -47,6 +47,7 @@ branches:
   - explicit_case_processing # danny?
   - schedule # SK 7/17
   - active-mobile-workers-merge+commconnect-reports # Nick P 8/25
+  - submissions-by-form+commconnect-reports # Nick P 8/25
   - commconnect-reports
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
