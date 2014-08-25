@@ -659,7 +659,7 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
-        ('year_end_bonus_cash', _("Birth Spacing Bonus"), True),
+        ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
         ('owner_id', _("Owner ID"), False)
     ]
