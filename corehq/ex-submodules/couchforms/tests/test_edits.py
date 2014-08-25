@@ -61,6 +61,9 @@ class EditFormTest(TestCase):
         self.assertEqual("", doc.form['vitals']['height'])
         self.assertEqual("other", doc.form['assessment']['categories'])
 
+        self.assertEqual(XFormInstance.get_db().fetch_attachment(doc.get_id, 'form.xml'), xml_data1)
+        self.assertEqual(XFormInstance.get_db().fetch_attachment(self.ID, 'form.xml'), xml_data2)
+
         for doc in docs:
             doc.delete()
 
