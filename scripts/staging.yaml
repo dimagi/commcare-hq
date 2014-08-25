@@ -47,8 +47,9 @@ branches:
   - explicit_case_processing # danny?
   - schedule # SK 7/17
   - active-mobile-workers-merge+commconnect-reports # Nick P 8/25
-  - submissions-by-form+commconnect-reports # Nick P 8/25
-  - commconnect-reports
+  - submissions-by-form+commconnect-reports  # Nick P / Ethan / J$ 8/25
+  - commconnect-reports  # J$
+  - submissions-by-form  # Ethan 8/25
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
@@ -65,7 +66,6 @@ branches:
   - archive-products # tw 8/14
   - vellum-requirejs+bootstrap3-stylin  # bb 8/20
   - bootstrap3-stylin  # bb 8/20
-  - submissions-by-form  # Ethan 8/25
 submodules:
   submodules/couchlog-src:
     branches:
