@@ -1065,6 +1065,7 @@ class Subscription(models.Model):
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
+                cc=[settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else None
             )
             logger.info(
                 "[BILLING] Sent %(days_left)s-day subscription reminder "
