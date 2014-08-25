@@ -945,6 +945,23 @@ def get_active_domain_stats_data(params, datespan, interval='month', datefield='
     }
 
 
+def add_blank_data(stat_data, start, end):
+    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
+    if not histo_data:
+        new_stat_data = deepcopy(stat_data)
+        new_stat_data["histo_data"]["All Domains"] = [
+            {
+                "count": 0,
+                "time": timestamp,
+            } for timestamp in [
+                int(1000 * time.mktime(date.timetuple()))
+                for date in [start, end]
+            ]
+        ]
+        return new_stat_data
+    return stat_data
+
+
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
@@ -1001,31 +1018,47 @@ def stats_data(request):
 
     if histo_type == "active_domains":
         params.update(params_es)
-        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
-
-    if histo_type == "domains":
+        stats_data = get_active_domain_stats_data(
+            params,
+            request.datespan,
+            interval=interval,
+        )
+    elif histo_type == "domains":
         params.update(params_es)
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
-
-    if params:
-        domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
-        domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-
-        if len(domains) <= individual_domain_limit:
-            domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) < ES_MAX_CLAUSE_COUNT:
-            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-        else:
-            domain_info = [{
-                "names": None,
-                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-            }]
+        stats_data = get_domain_stats_data(
+            params, request.datespan,
+            interval=interval,
+            datefield=datefield,
+        )
     else:
-        domain_info = [{"names": None, "display_name": _("All Domains")}]
+        if params:
+            domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval,
-                                user_type_mobile=params_es.get("user_type_mobile"))
-    return json_response(stats_data)
+            if len(domains) <= individual_domain_limit:
+                domain_info = [{"names": [d], "display_name": d} for d in domains]
+            elif len(domains) < ES_MAX_CLAUSE_COUNT:
+                domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
+            else:
+                domain_info = [{
+                    "names": None,
+                    "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+                }]
+        else:
+            domain_info = [{"names": None, "display_name": _("All Domains")}]
+
+        stats_data = get_stats_data(
+            domain_info,
+            histo_type,
+            request.datespan,
+            interval=interval,
+            user_type_mobile=params_es.get("user_type_mobile"),
+        )
+    return json_response(add_blank_data(
+        stats_data,
+        request.datespan.startdate,
+        request.datespan.enddate
+    ))
 
 
 @require_superuser
