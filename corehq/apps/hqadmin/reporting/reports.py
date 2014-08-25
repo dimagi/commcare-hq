@@ -68,6 +68,45 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
             .size(0))
 
 
+def get_active_countries_stats_data(params, datespan, interval='month',
+        datefield='received_on'):
+    """
+    Returns list of timestamps and how many countries were active in the 30 days
+    before the timestamp
+    """
+    domain_facet = {'terms': {'field': 'domain'}}
+    country_facet = {'terms': {'field': 'country'}}
+    real_domains = get_real_project_spaces()
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        form_query = (FormES()
+            .in_domains(real_domains)
+            .submitted(gte=f, lte=t)
+            .facet('domains', domain_facet)
+            .size(0))
+
+        domains = form_query.run().facet('domains', "terms")
+        domains = [x['term'] for x in domains]
+        countries = (DomainES()
+                .in_domains(domains)
+                .facet('countries', country_facet))
+
+        c = len(countries.run().facet('countries', 'terms'))
+        if c > 0:
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 def get_active_domain_stats_data(params, datespan, interval='month',
         datefield='received_on'):
     """
