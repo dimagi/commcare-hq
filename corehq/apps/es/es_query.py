@@ -14,7 +14,7 @@ SQLAlchemy. Here's an example usage:
         .sort('received_on', desc=False)\
         .size(self.pagination.count)\
         .start(self.pagination.start)\
-        .facet("domains", {"field": "domains"})
+        .terms_facet('babies_saved', 'babies.count', size=10)
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -95,7 +95,7 @@ class ESQuery(object):
                 "filter": {"and": []},
                 "query": {'match_all': {}}
             }
-        }
+        }}
 
     @property
     def builtin_filters(self):
@@ -161,36 +161,11 @@ class ESQuery(object):
         query._facets.append(_facet)
         return query
 
-    def terms_facet(self, term, name, size=None):
-        return self.facet(facets.TermsFacet(term, name, size))
-
-    @property
-    def _facets(self):
-        return self.es_query['facets']
-
-    def facet(self, name, _facet):
-        """
-        Add a facet to the query.
-        """
-        query = deepcopy(self)
-        query._facets[name] = _facet
-        return query
-
-    @property
-    def facets(self):
-        """
-        Return a dictionary of the facets used in this query.
-        """
-        return self._facets
+    def terms_facet(self, name, term, size=None):
+        return self.facet(facets.TermsFacet(name, term, size))
 
     def date_histogram(self, name, datefield, interval):
-        facet_terms = {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                }
-        }
-        return self.facet(name, facet_terms)
+        return self.facet(facet.DateHistogram(name, datefield, interval))
 
     @property
     def _query(self):

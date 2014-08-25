@@ -27,12 +27,21 @@ class TermsFacet(Facet):
     type = "terms"
     result_class = TermsResult
 
-    def __init__(self, term, name, size=None):
-        if name is not None:
-            assert(name.isalnum(), "name must be a valid python variable name")
+    def __init__(self, name, term, size=None):
+        self.name = name
         self.params = {
             "field": term,
         }
         if size is not None:
             self.params["size"] = size
-        self.name = name if name is not None else term
+
+
+class DateHistogram(Facet):
+    type = "date_histogram"
+
+    def __init__(self, name, datefield, interval):
+        self.name = name
+        facet_params = {
+            "field": datefield,
+            "interval": interval
+        }

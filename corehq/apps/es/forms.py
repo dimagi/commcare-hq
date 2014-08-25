@@ -20,7 +20,7 @@ class FormES(HQESQuery):
         ] + super(FormES, self).builtin_filters
 
     def user_facet(self):
-        return self.terms_facet('form.meta.userID', 'user')
+        return self.terms_facet('user', 'form.meta.userID')
 
 
 def xmlns(xmlns):
