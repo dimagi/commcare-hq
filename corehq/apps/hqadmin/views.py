@@ -945,6 +945,23 @@ def get_active_domain_stats_data(params, datespan, interval='month', datefield='
     }
 
 
+def add_blank_data(stat_data, start, end):
+    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
+    if not histo_data:
+        new_stat_data = deepcopy(stat_data)
+        new_stat_data["histo_data"]["All Domains"] = [
+            {
+                "count": 0,
+                "time": timestamp,
+            } for timestamp in [
+                int(1000 * time.mktime(date.timetuple()))
+                for date in [start, end]
+            ]
+        ]
+        return new_stat_data
+    return stat_data
+
+
 def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
     q = {
         "query": {"bool": {"must":
@@ -1037,7 +1054,11 @@ def stats_data(request):
             interval=interval,
             user_type_mobile=params_es.get("user_type_mobile"),
         )
-    return json_response(stats_data)
+    return json_response(add_blank_data(
+        stats_data,
+        request.datespan.startdate,
+        request.datespan.enddate
+    ))
 
 
 @require_superuser
