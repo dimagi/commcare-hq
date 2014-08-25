@@ -155,12 +155,12 @@ class ESQuery(object):
     def _facets(self):
         return self.es_query['facets']
 
-    def facet(self, name, terms):
+    def facet(self, name, _facet):
         """
         Add a facet to the query.
         """
         query = deepcopy(self)
-        query._facets[name] = {'terms': terms}
+        query._facets[name] = _facet
         return query
 
     @property
@@ -169,6 +169,15 @@ class ESQuery(object):
         Return a dictionary of the facets used in this query.
         """
         return self._facets
+
+    def date_histogram(self, name, datefield, interval):
+        facet_terms = {
+                "date_histogram": {
+                    "field": datefield,
+                    "interval": interval
+                }
+        }
+        return self.facet(name, facet_terms)
 
     @property
     def _query(self):
@@ -307,8 +316,8 @@ class ESQuerySet(object):
     def raw_facets(self):
         return self.raw['facets']
 
-    def facet(self, name):
-        return self.raw['facets'][name]['terms']
+    def facet(self, name, _type):
+        return self.raw['facets'][name][_type]
 
 
 class HQESQuery(ESQuery):
