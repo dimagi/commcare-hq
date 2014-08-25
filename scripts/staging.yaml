@@ -53,6 +53,7 @@ branches:
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
   - emwf-refactor  # Ethan 8/06
+  - active-mobile-workers-merge # Nick P 8/25
   - admin-reports # Nick P 8/13
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
