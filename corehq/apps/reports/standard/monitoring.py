@@ -357,6 +357,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         query = FormES()\
                 .domain(self.domain)\
                 .xmlns(xmlns)\
+                .size(0)\
                 .user_facet()
         res = query.run()
         return res.facets.user.counts_by_term()
