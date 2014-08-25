@@ -43,11 +43,15 @@ TODOs:
 sorting
 Add esquery.iter() method
 """
+from collections import namedtuple
 from copy import deepcopy
 import json
 
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
+from . import facets
 from . import filters
 
 
@@ -72,6 +76,7 @@ class ESQuery(object):
     _fields = None
     _start = None
     _size = None
+    _facets = None
     default_filters = {
         "match_all": {"match_all": {}}
     }
@@ -83,6 +88,7 @@ class ESQuery(object):
                 index, ', '.join(ES_URLS.keys()))
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
+        self._facets = []
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -146,6 +152,17 @@ class ESQuery(object):
         """
         return self._default_filters.values() + self._filters
 
+    def facet(self, _facet):
+        """
+        Add a facet to the query.
+        """
+        query = deepcopy(self)
+        query._facets.append(_facet)
+        return query
+
+    def terms_facet(self, term, name, size=None):
+        return self.facet(facets.TermsFacet(term, name, size))
+
     @property
     def _query(self):
         return self.es_query['query']['filtered']['query']
@@ -170,6 +187,11 @@ class ESQuery(object):
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
+        if self._facets:
+            self.es_query['facets'] = {
+                facet.name: {facet.type: facet.params}
+                for facet in self._facets
+            }
 
     def fields(self, fields):
         """
@@ -260,6 +282,7 @@ class ESQuerySet(object):
     def raw_hits(self):
         return self.raw['hits']['hits']
 
+    @property
     def doc_ids(self):
         return [r['_id'] for r in self.raw_hits]
 
@@ -279,6 +302,21 @@ class ESQuerySet(object):
     @property
     def ids(self):
         return [r['_id'] for r in self.raw_hits]
+
+    @property
+    def raw_facets(self):
+        return self.raw['facets']
+
+    def facet(self, name, _type):
+        return self.raw['facets'][name][_type]
+
+    @property
+    @memoized
+    def facets(self):
+        facets = self.query._facets
+        raw = self.raw.get('facets', {})
+        results = namedtuple('facet_results', [f.name for f in facets])
+        return results(**{f.name: f.parse_result(raw) for f in facets})
 
 
 class HQESQuery(ESQuery):

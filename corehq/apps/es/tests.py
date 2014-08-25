@@ -3,21 +3,23 @@ from unittest import TestCase
 
 from corehq.elastic import ESError, SIZE_LIMIT
 from .es_query import HQESQuery, ESQuerySet
+from . import facets
 from . import filters
 from . import forms, users
 
 
-class TestESQuery(TestCase):
-    maxDiff = 1000
-
+class ElasticTestMixin(object):
     def checkQuery(self, query, json_output):
         msg = "Expected Query:\n{}\nGenerated Query:\n{}".format(
                 json.dumps(json_output, indent=4),
                 query.dumps(pretty=True),
             )
-        # NOTE: This method thinks [a, b, c] != [b, c, a], which it is
-        # in elasticsearch; order doesn't matter
+        # NOTE: This method thinks [a, b, c] != [b, c, a]
         self.assertEqual(query.raw_query, json_output, msg=msg)
+
+
+class TestESQuery(ElasticTestMixin, TestCase):
+    maxDiff = 1000
 
     def test_basic_query(self):
         json_output = {
@@ -182,3 +184,74 @@ class TestESQuerySet(TestCase):
     def test_error(self):
         with self.assertRaises(ESError):
             ESQuerySet(self.example_error, HQESQuery('forms'))
+
+
+class TestESFacet(ElasticTestMixin, TestCase):
+    def test_terms_facet(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "facets": {
+                "babies_saved": {
+                    "terms": {
+                        "field": "babies.count",
+                        "size": 10,
+                    }
+                }
+            },
+            "size": SIZE_LIMIT,
+        }
+        query = HQESQuery('forms')\
+                .terms_facet('babies.count', 'babies_saved', size=10)
+        self.checkQuery(query, json_output)
+
+    def test_facet_response(self):
+        example_response = {
+            "hits": {},
+            "shards": {},
+            "facets": {
+                "user": {
+                    "_type": "terms",
+                    "missing": 0,
+                    "total": 3406,
+                    "other": 619,
+                    "terms": [
+                        {
+                        "term": "92647b9eafd9ea5ace2d1470114dbddd",
+                        "count": 579
+                        },
+                        {
+                        "term": "df5123010b24fc35260a84547148de93",
+                        "count": 310
+                        },
+                        {
+                        "term": "df5123010b24fc35260a84547148d47e",
+                        "count": 303
+                        },
+                        {
+                        "term": "7334d1ab1cd8847c69fba75043ed43d3",
+                        "count": 298
+                        }
+                    ]
+                }
+            }
+        }
+        expected_output = {
+            "92647b9eafd9ea5ace2d1470114dbddd": 579,
+            "df5123010b24fc35260a84547148de93": 310,
+            "df5123010b24fc35260a84547148d47e": 303,
+            "7334d1ab1cd8847c69fba75043ed43d3": 298,
+        }
+        query = HQESQuery('forms')\
+                .terms_facet('form.meta.userID', 'user', size=10)
+        res = ESQuerySet(example_response, query)
+        output = res.facets.user.counts_by_term()
+        self.assertEqual(output, expected_output)
