@@ -534,7 +534,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
 class DomainDeploymentForm(forms.Form):
     city = CharField(label=ugettext_noop("City"), required=False)
-    country = CharField(label=ugettext_noop("Country"), required=False)
+    country = forms.MultipleChoiceField(label=ugettext_noop("Country"),
+            choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)

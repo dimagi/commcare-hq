@@ -21,6 +21,7 @@ from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
+from django_countries.countries import COUNTRIES
 
 
 lang_lookup = defaultdict(str)
@@ -89,7 +90,7 @@ class UpdatableSchema():
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
     city = StringProperty()
-    country = StringProperty()
+    country = StringListProperty()
     region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     description = StringProperty()
     public = BooleanProperty(default=False)
@@ -331,6 +332,16 @@ class Domain(Document, SnapshotMixin):
 
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
+
+        print data
+        if 'deployment' in data and isinstance(data['deployment']['country'], basestring):
+            prev = data['deployment']['country']
+            new_country = []
+            for x in COUNTRIES:
+                if x[1].encode(encoding="UTF-8").lower() == prev.encode("UTF-8").lower():
+                    new_country.append(x[0])
+
+            data['deployment']['country'] = new_country
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
