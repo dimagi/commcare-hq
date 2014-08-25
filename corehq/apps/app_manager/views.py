@@ -553,6 +553,13 @@ def get_app_view_context(request, app):
             'adjective': _(u"U\u200BI translation"),
             'plural_noun': _(u"U\u200BI translations"),
         },
+        # TODO: Consider renaming "bulk_upload" above to "bulk_ui_translation_upload"
+        'bulk_app_translation_upload': {
+            'action': None,
+            'download_url': None,
+            'adjective': _("app translation"),
+            'plural_noun': _("app translations"),
+        },
     })
     context.update({
         'bulk_upload_form': get_bulk_upload_form(context),
