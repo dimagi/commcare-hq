@@ -56,6 +56,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.hqadmin.reporting.reports import (
+    add_blank_data,
     get_sms_only_domain_stats_data,
     get_commconnect_domain_stats_data,
     get_active_domain_stats_data,
@@ -928,31 +929,47 @@ def stats_data(request):
 
     if histo_type == "active_domains":
         params.update(params_es)
-        return json_response(get_active_domain_stats_data(params, request.datespan, interval=interval))
-
-    if histo_type == "domains":
+        stats_data = get_active_domain_stats_data(
+            params,
+            request.datespan,
+            interval=interval,
+        )
+    elif histo_type == "domains":
         params.update(params_es)
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
-
-    if params:
-        domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
-        domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-
-        if len(domains) <= individual_domain_limit:
-            domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) < ES_MAX_CLAUSE_COUNT:
-            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-        else:
-            domain_info = [{
-                "names": None,
-                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-            }]
+        stats_data = get_domain_stats_data(
+            params, request.datespan,
+            interval=interval,
+            datefield=datefield,
+        )
     else:
-        domain_info = [{"names": None, "display_name": _("All Domains")}]
+        if params:
+            domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
+            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval,
-                                user_type_mobile=params_es.get("user_type_mobile"))
-    return json_response(stats_data)
+            if len(domains) <= individual_domain_limit:
+                domain_info = [{"names": [d], "display_name": d} for d in domains]
+            elif len(domains) < ES_MAX_CLAUSE_COUNT:
+                domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
+            else:
+                domain_info = [{
+                    "names": None,
+                    "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+                }]
+        else:
+            domain_info = [{"names": None, "display_name": _("All Domains")}]
+
+        stats_data = get_stats_data(
+            domain_info,
+            histo_type,
+            request.datespan,
+            interval=interval,
+            user_type_mobile=params_es.get("user_type_mobile"),
+        )
+    return json_response(add_blank_data(
+        stats_data,
+        request.datespan.startdate,
+        request.datespan.enddate
+    ))
 
 
 @require_superuser

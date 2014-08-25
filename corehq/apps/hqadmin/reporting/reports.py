@@ -1,4 +1,5 @@
 import time
+from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.es.cases import CaseES
@@ -8,6 +9,23 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import es_query, ES_URLS
+
+
+def add_blank_data(stat_data, start, end):
+    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
+    if not histo_data:
+        new_stat_data = deepcopy(stat_data)
+        new_stat_data["histo_data"]["All Domains"] = [
+            {
+                "count": 0,
+                "time": timestamp,
+            } for timestamp in [
+                int(1000 * time.mktime(date.timetuple()))
+                for date in [start, end]
+            ]
+        ]
+        return new_stat_data
+    return stat_data
 
 
 def daterange(interval, start_date, end_date):
