@@ -125,10 +125,70 @@ def get_user_type_filters(histo_type, user_type_mobile):
     return result
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None):
-    histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval, user_type_mobile=user_type_mobile))
-                        for d in domains])
+def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
+    user_type_filters = (
+        get_user_type_filters(histo_type, user_type_mobile)
+        if user_type_mobile is not None else None
+    )
+
+
+    def _histo_data(domains, histo_type, start_date, end_date, user_type_filters):
+        return dict([
+            (d['display_name'],
+             es_histogram(
+                 histo_type,
+                 d["names"],
+                 start_date,
+                 end_date,
+                 interval=interval,
+                 user_type_filters=user_type_filters,
+             ))
+            for d in domains
+        ])
+
+    def _histo_data_non_cumulative(domains, histo_type, start_date, end_date, interval, user_type_filters):
+        from corehq.apps.hqadmin.views import make_buckets, SEC_IN_30_DAYS
+        from datetime import datetime
+        timestamps = make_buckets(
+            interval,
+            datetime.strptime(start_date, "%Y-%m-%d").date(),
+            datetime.strptime(end_date, "%Y-%m-%d").date(),
+        )
+        histo_data = {}
+        for domain_name_data in domains:
+            display_name = domain_name_data['display_name']
+            domain_data = []
+            for timestamp in reversed(timestamps):
+                past_30_days = _histo_data(
+                    [domain_name_data],
+                    histo_type,
+                    timestamp - SEC_IN_30_DAYS,
+                    timestamp,
+                    user_type_filters=user_type_filters,
+                )
+                domain_data.append({
+                    'time': timestamp,
+                    'count': sum(point['count'] for point in past_30_days[display_name]),
+                })
+            histo_data.update({
+                display_name: domain_data
+            })
+        return histo_data
+
+    histo_data = _histo_data(
+        domains,
+        histo_type,
+        datespan.startdate_display,
+        datespan.enddate_display,
+        user_type_filters
+    ) if is_cumulative else _histo_data_non_cumulative(
+        domains,
+        histo_type,
+        datespan.startdate_display,
+        datespan.enddate_display,
+        interval,
+        user_type_filters
+    )
 
     def _total_until_date(histo_type, doms=None):
         query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
@@ -150,14 +210,17 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
 
     return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["display_name"],
-                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
+        'initial_values': (
+            dict([(dom["display_name"],
+                 _total_until_date(histo_type, dom["names"])) for dom in domains])
+            if is_cumulative else {"All Domains": 0}
+        ),
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_mobile=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_filters=None):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -182,10 +245,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
         "size": 0
     })
 
-    if user_type_mobile is not None:
-        q["facets"]["histo"]["facet_filter"]["and"].append(
-            get_user_type_filters(histo_type, user_type_mobile)
-        )
+    if user_type_filters is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(user_type_filters)
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff

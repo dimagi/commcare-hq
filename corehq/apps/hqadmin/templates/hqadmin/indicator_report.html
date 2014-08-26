@@ -61,6 +61,7 @@
                     ajax_url: visualizations[key].ajax_url,
                     data: url_params,
                     interval: visualizations[key].interval,
+                    is_cumulative: visualizations[key].is_cumulative,
                     params_es: visualizations[key].params_es
                 });
                 visualizations[key].viz.init();
