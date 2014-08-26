@@ -569,7 +569,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
