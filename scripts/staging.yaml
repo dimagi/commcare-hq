@@ -46,25 +46,20 @@ branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
   - schedule # SK 7/17
-  - active-mobile-workers-merge+commconnect-reports # Nick P 8/25
-  - submissions-by-form+commconnect-reports  # Nick P / Ethan / J$ 8/25
-  - submissions-by-form  # Ethan 8/25
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
-  - active-mobile-workers-merge # Nick P 8/25
   - admin-reports # Nick P 8/13
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
-#  - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
-  - vellum-requirejs+bootstrap3-stylin  # bb 8/20
-  - bootstrap3-stylin  # bb 8/20
+  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
+  - subscription-no-contact-info # bb 8/4
 submodules:
   submodules/couchlog-src:
     branches:
