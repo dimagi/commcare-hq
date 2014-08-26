@@ -1293,7 +1293,11 @@ class FeatureRateForm(forms.ModelForm):
             crispy.Field('rate_id', data_bind="value: rate_id"),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
             crispy.Field('monthly_limit', data_bind="value: monthly_limit"),
-            crispy.Field('per_excess_fee', data_bind="value: per_excess_fee"),
+            crispy.Div(
+                crispy.Field('per_excess_fee',
+                             data_bind="value: per_excess_fee"),
+                data_bind="visible: isPerExcessVisible",
+            ),
         )
 
     def is_new(self):
