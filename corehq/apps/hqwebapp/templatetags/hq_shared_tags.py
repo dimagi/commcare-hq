@@ -97,12 +97,8 @@ def new_static(url, **kwargs):
     :param kwargs:
     :return:
     """
-    can_be_compressed = any([url.endswith(ext) for ext in [
-        '.less',
-        '.css',
-        '.js',
-    ]])
-    use_cache = kwargs.pop('cache', False) if 'cache' in kwargs else False
+    can_be_compressed = url.endswith(('.less', '.css', '.js'))
+    use_cache = kwargs.pop('cache', False)
     use_versions = not can_be_compressed or use_cache
 
     resource_url = url
