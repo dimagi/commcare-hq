@@ -136,7 +136,7 @@ def sync_local_copies(config):
         print "All branches up-to-date."
 
 
-def rebuild_staging(config, push=True):
+def rebuild_staging(config, print_details=True, push=True):
     merge_conflicts = []
     not_found = []
     all_configs = list(config.span_configs())
@@ -274,4 +274,4 @@ if __name__ == '__main__':
         if 'sync' in args:
             sync_local_copies(config)
         if 'rebuild' in args:
-            rebuild_staging(config, do_push)
+            rebuild_staging(config, push=do_push)
