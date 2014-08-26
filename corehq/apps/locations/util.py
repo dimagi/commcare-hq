@@ -165,6 +165,8 @@ def get_default_column_data(domain, location_types):
     if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
         products = Product.by_domain(domain)
 
+        supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)
+
         for loc_type in location_types:
             loc = get_loc_config(domain)[loc_type]
             if not loc.administrative:
@@ -175,14 +177,19 @@ def get_default_column_data(domain, location_types):
 
                 locations = Location.filter_by_type(domain, loc_type)
                 for loc in locations:
-                    sp = SupplyPointCase.get_or_create_by_location(loc)
+                    if loc._id in supply_point_map:
+                        sp_id = supply_point_map[loc._id]
+                    else:
+                        # this only happens if the supply point case did
+                        # not already exist
+                        sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
 
                     data['values'][loc._id] = [
                         get_default_monthly_consumption(
                             domain,
                             p._id,
                             loc_type,
-                            sp._id
+                            sp_id
                         ) or '' for p in products
                     ]
             else:
