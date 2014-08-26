@@ -60,7 +60,7 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
     else:
         Connection = httplib.HTTPConnection
     conn = Connection(up.netloc, timeout=timeout)
-    conn.request('POST', up.path, data, default_headers)
+    conn.request('POST', url, data, default_headers)
     return conn.getresponse()
 
 
