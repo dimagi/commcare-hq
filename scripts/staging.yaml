@@ -65,6 +65,7 @@ branches:
   - archive-products # tw 8/14
   - vellum-requirejs+bootstrap3-stylin  # bb 8/20
   - bootstrap3-stylin  # bb 8/20
+  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
 submodules:
   submodules/couchlog-src:
     branches:
