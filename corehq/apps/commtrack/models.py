@@ -252,13 +252,7 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        # pack and add custom data items
-        product_data = {}
-        for k, v in row.iteritems():
-            if str(k).startswith('data: '):
-                product_data[k[6:]] = v
-
-        setattr(p, 'product_data', product_data)
+        p.product_data = row.get('data', {})
 
         return p
 
