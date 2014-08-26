@@ -60,6 +60,7 @@ branches:
   - archive-products # tw 8/14
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
+  - fix-timeout # Nick P 8/26
 submodules:
   submodules/couchlog-src:
     branches:
