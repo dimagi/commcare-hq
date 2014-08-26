@@ -545,6 +545,7 @@ def get_app_view_context(request, app):
         })
 
     context.update({
+        # TODO: Rename "bulk_upload" to "bulk_ui_translation_upload"
         'bulk_upload': {
             'action': reverse('upload_translations',
                               args=(app.domain, app.get_id)),
@@ -553,10 +554,11 @@ def get_app_view_context(request, app):
             'adjective': _(u"U\u200BI translation"),
             'plural_noun': _(u"U\u200BI translations"),
         },
-        # TODO: Consider renaming "bulk_upload" above to "bulk_ui_translation_upload"
         'bulk_app_translation_upload': {
-            'action': None,
-            'download_url': None,
+            'action': reverse('upload_bulk_app_translations',
+                              args=(app.domain, app.get_id)),
+            'download_url': reverse('download_bulk_app_translations',
+                                    args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
         },
@@ -2536,6 +2538,7 @@ def download_translations(request, domain, app_id):
     rows = [add_default(fillrow(row)) for row in rows]
 
     data = (("translations", tuple(rows)),)
+    #import ipdb; ipdb.set_trace()
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
@@ -2579,6 +2582,59 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+@require_can_edit_apps
+def download_bulk_app_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    languages_list = tuple('default_'+l for l in app.langs)
+    audio_lang_list = tuple('audio_'+l for l in app.langs)
+    image_lang_list = tuple('image_'+l for l in app.langs)
+    video_lang_list = tuple('video_'+l for l in app.langs)
+
+    rows = {}
+
+    # Add headers for the first sheet
+    # headers = (("Modules_and_forms", ('Type', 'name', 'sheet_name')+tuple('default_'+l for l in app.langs)+('icon_filepath', 'audio_filepath', 'unique_id')),)
+    headers = [("Modules_and_forms", ('Type', 'name', 'sheet_name')+tuple(languages_list)+('icon_filepath', 'audio_filepath', 'unique_id')),]
+    rows["Modules_and_forms"] = []
+
+    for mod_index, module in enumerate(app.modules):
+        module_string = "module"+str(mod_index+1)
+
+        # Add module to the first sheet and add a sheet for the module
+        module_sheet_header = (module_string, ('case_property',)+languages_list)
+        headers.append(module_sheet_header)
+        row_data = ("Modules_and_forms",
+                    ("Module", "foo")+
+                        tuple(module.name.get(lang, None) for lang in app.langs)+
+                        (module.media_image, module.media_image, module.id)
+                   )
+        rows["Modules_and_forms"].append(row_data)
+
+        for form_index, form in enumerate(module.forms):
+            form_string = module_string + "_form" + str(form_index+1)
+
+            # Add form to the first sheet and add a sheet for the form
+            form_sheet_header = (form_string, ('label',)+languages_list
+                                                       +audio_lang_list
+                                                       +image_lang_list
+                                                       +video_lang_list)
+            headers.append(form_sheet_header)
+            #rows[form_sheet_header] = []
+
+    temp = StringIO()
+    foo = tuple((k, v) for k, v in rows.values())
+    print foo
+    bar = ((header[0], ()) for header in headers)
+    export_raw(headers, foo, temp)
+    return export_response(temp, Format.XLS_2007, "bulk_app_translations")
+
+@no_conflict_require_POST
+@require_can_edit_apps
+@get_file("bulk_upload_file")
+def upload_bulk_app_translations(request, domain, app_id):
+    pass
 
 
 common_module_validations = [
