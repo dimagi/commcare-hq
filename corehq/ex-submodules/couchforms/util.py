@@ -28,6 +28,7 @@ from .exceptions import DuplicateError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
+    UnfinishedSubmissionStub,
     XFormDeprecated,
     XFormDuplicate,
     XFormError,
@@ -430,6 +431,13 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
                         process_cases_with_casedb(instance, case_db)
                         process_stock(instance, case_db)
+                        now = datetime.datetime.utcnow()
+                        unfinished_submission_stub = UnfinishedSubmissionStub(
+                            xform_id=instance.get_id,
+                            timestamp=now,
+                            saved=False,
+                        )
+                        unfinished_submission_stub.save()
                         cases = case_db.get_changed()
                         # todo: this property is useless now
                         instance.initial_processing_complete = True
@@ -438,7 +446,6 @@ class SubmissionPost(object):
 
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
-                        now = datetime.datetime.utcnow()
                         for case in cases:
                             case.initial_processing_complete = True
                             case.server_modified_on = now
@@ -463,12 +470,15 @@ class SubmissionPost(object):
                             )
                         except BulkSaveError as e:
                             raise
+                        unfinished_submission_stub.saved = True
+                        unfinished_submission_stub.save()
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
                         responses, errors = self.process_signals(instance)
                         if errors:
                             # .problems was added to instance
                             instance.save()
+                        unfinished_submission_stub.delete()
             if instance.doc_type == "XFormInstance":
                 response = self.get_success_response(instance,
                                                      responses, errors)

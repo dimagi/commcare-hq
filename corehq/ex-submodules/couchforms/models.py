@@ -406,3 +406,11 @@ class DefaultAuthContext(DocumentSchema):
 
     def is_valid(self):
         return True
+
+from django.db import models
+
+
+class UnfinishedSubmissionStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    timestamp = models.DateTimeField()
+    saved = models.BooleanField()

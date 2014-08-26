@@ -3,7 +3,8 @@ from couchdbkit import ResourceNotFound, RequestFailed
 from django.test import TestCase
 from mock import MagicMock
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormDeprecated, XFormInstance
+from couchforms.models import XFormDeprecated, XFormInstance, \
+    UnfinishedSubmissionStub
 from couchforms.tests.testutils import post_xform_to_couch
 
 
@@ -100,6 +101,11 @@ class EditFormTest(TestCase):
         self.assertEqual("XFormInstance", doc.doc_type)
         self.assertEqual('test-domain', doc.domain)
 
+        self.assertEqual(
+            UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(),
+            0
+        )
+
         with BorkDB(XFormInstance.get_db()):
             with self.assertRaises(RequestFailed):
                 submit_form_locally(xml_data2, 'test-domain')
@@ -108,3 +114,12 @@ class EditFormTest(TestCase):
         self.assertEqual(
             XFormInstance.view('couchforms/edits', key=self.ID).count(), 0)
         self.assertTrue(XFormInstance.get_db().doc_exist(self.ID))
+        self.assertEqual(
+            UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
+                                                    saved=False).count(),
+            1
+        )
+        self.assertEqual(
+            UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(),
+            1
+        )
