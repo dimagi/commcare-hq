@@ -150,9 +150,8 @@ def rebuild_staging(config, print_details=True, push=True):
                 if not has_local(git, branch):
                     if not has_remote(git, branch):
                         not_found.append((path, branch))
-                        print "  [{cwd}] {trunk} => {branch} NOT FOUND".format(
+                        print "  [{cwd}] {branch} NOT FOUND".format(
                             cwd=format_cwd(path),
-                            trunk=trunk,
                             branch=branch,
                         )
                         continue
