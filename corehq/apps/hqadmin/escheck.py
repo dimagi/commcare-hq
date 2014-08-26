@@ -38,13 +38,18 @@ def check_index_by_doc(es_index, db, doc_id, interval=10):
     target_rev = None
     try:
         couch_doc = db.open_doc(doc_id if doc_id else "")
-        save_results = db.save_doc(couch_doc)
-        target_rev = save_results['rev']
+        # due to a way that long polling works we have to save it twice because the pillow
+        # doesn't seem to pick up on the last line until there is a new one available.
+        target_revs = []
+        for i in range(2):
+            save_results = db.save_doc(couch_doc)
+            target_revs.append(save_results['rev'])
+
     except ResourceNotFound:
         pass
 
     time.sleep(interval)
-    return _check_es_rev(es_index, doc_id, target_rev)
+    return _check_es_rev(es_index, doc_id, target_revs)
 
 
 def is_real_submission(xform_view_row):
@@ -190,7 +195,7 @@ def _get_latest_doc_id(db, doc_type, skip=0, limit=100, skipfunc=None):
         return None
 
 
-def _check_es_rev(index, doc_id, couch_rev):
+def _check_es_rev(index, doc_id, couch_revs):
     """
     Specific docid and rev checker.
 
@@ -214,16 +219,16 @@ def _check_es_rev(index, doc_id, couch_rev):
         if res.has_key('hits'):
             if res['hits'].get('total', 0) == 0:
                 status = False
-                #if doc doesn't exist it's def. not in sync
+                # if doc doesn't exist it's def. not in sync
                 message = "Not in sync %s" % index
             elif 'hits' in res['hits']:
                 fields = res['hits']['hits'][0]['fields']
-                if fields['_rev'] == couch_rev:
+                if fields['_rev'] in couch_revs:
                     status = True
                     message = "%s OK" % index
                 else:
                     status = False
-                    #less likely, but if it's there but the rev is off
+                    # less likely, but if it's there but the rev is off
                     message = "Not in sync - %s stale" % index
         else:
             status = False

@@ -172,6 +172,11 @@ DEFAULT_APPS = (
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+    'bootstrap3_transitional',
+)
 
 HQ_APPS = (
     'django_digest',
@@ -298,6 +303,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+
+    'bootstrap3_crispy',
 )
 
 TEST_APPS = ()
@@ -317,6 +324,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
+    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',

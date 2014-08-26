@@ -959,7 +959,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=_("Contact email"))
+    contact_email = forms.EmailField(label=_("Contact email"))
     organization = forms.CharField(label=_("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")

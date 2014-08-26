@@ -357,6 +357,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         query = FormES()\
                 .domain(self.domain)\
                 .xmlns(xmlns)\
+                .size(0)\
                 .user_facet()
         res = query.run()
         return res.facets.user.counts_by_term()
@@ -567,7 +568,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
