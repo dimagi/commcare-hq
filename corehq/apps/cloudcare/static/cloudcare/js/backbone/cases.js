@@ -311,12 +311,12 @@ cloudCare.CaseMainView = Backbone.View.extend({
             // we'll change it to something more appropriate.
             if (self.options.appConfig.parentSelectActive && self.options.parent === null){
                 // Select parent case
-                headingText = "Select Parent Case:";
+                headingText = "Select Parent Case";
             } else if (self.options.appConfig.parentSelectActive) {
                 // Select child case
-                headingText = "Select Child Case:";
+                headingText = "Select Child Case";
             } else {
-                headingText = "Select Case:"
+                headingText = "Select Case"
             }
         } else {
             headingText = "Select Case: "+ case_label;
