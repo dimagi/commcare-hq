@@ -132,6 +132,196 @@ INDICATOR_DATA = {
         },
         "xaxis_label": "# users",
     },
+    "sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "sms_domains",
+        "chart_title": "Total Projects That Have Used SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "commconnect_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commconnect_domains",
+        "chart_title": "Total CommConnect Enabled Domains",
+        "params_es_dict": {
+            "commconnect_enabled": ["T"],
+        },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "incoming_sms_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "incoming_sms_domains",
+        "chart_title": "Total Projects Using Incoming SMS",
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "sms_only_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "sms_only_domains",
+        "chart_title": "Total SMS Only Projects",
+        "date_field_opts": [
+            {
+                "name": "Date Created",
+                "value": "date_created",
+            },
+        ],
+        "histogram_type": "sms_only_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_commconnect_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_commconnect_domains",
+        "chart_title": "Active CommConnect Project Spaces",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_commconnect_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_outgoing_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_sms",
+        "chart_title": "Total Outgoing SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["o"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_incoming_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_incoming_sms",
+        "chart_title": "Total Incoming SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_outgoing_client_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_outgoing_client_sms",
+        "chart_title": "Total Outgoing Client SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+            "couch_recipient_doc_type": ["commcarecase"]
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_incoming_client_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_incoming_client_sms",
+        "chart_title": "Total Incoming Client SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+            "couch_recipient_doc_type": ["commcarecase"]
+        },
+        "histogram_type": "real_sms_messages",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_mobile_workers": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_mobile_workers",
+        "chart_title": "Total Mobile Workers",
+        "histogram_type": "mobile_workers",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_mobile_workers": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_mobile_workers",
+        "chart_title": "Active Mobile Workers",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "couch_recipient_doc_type": ["commcareuser"],
+        },
+        "histogram_type": "active_mobile_users",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_dimagi_owned_gateways": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_dimagi_owned_gateways",
+        "chart_title": "Active Projects Using Dimagi Owned Gateways",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_dimagi_gateways",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "total_clients": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_clients",
+        "chart_title": "Total Clients",
+        "histogram_type": "mobile_clients",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
+    "active_clients": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_mobile_clients",
+        "chart_title": "Active Mobile Clients",
+        "hide_cumulative_charts": True,
+        "params_es_dict": {
+            "couch_recipient_doc_type": ["commcarecase"],
+        },
+        "histogram_type": "active_mobile_users",
+        "interval": "week",
+        "xaxis_label": "# workers",
+    },
 }
 
 
@@ -468,3 +658,37 @@ class UserReport(GlobalAdminReports):
         'users_mobile',
         'users_web',
     ]
+
+class CommConnectProjectSpacesReport(GlobalAdminReports):
+    slug = 'commconnect_project_spaces'
+    name = ugettext_noop('CommConnect Project Spaces')
+    indicators = [
+        'sms_domain_count',
+        'commconnect_domain_count',
+        'incoming_sms_domain_count',
+        'sms_only_domain_count',
+        'active_commconnect_domain_count',
+        'active_dimagi_owned_gateways',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False
+
+class RealSMSMessages(GlobalAdminReports):
+    slug = 'real_sms_messages'
+    name = ugettext_noop('Real SMS Messages')
+    indicators = [
+        'total_outgoing_sms',
+        'total_incoming_sms',
+        'total_outgoing_client_sms',
+        'total_incoming_client_sms',
+        'total_mobile_workers',
+        'active_mobile_workers',
+        'total_clients',
+        'active_clients',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False

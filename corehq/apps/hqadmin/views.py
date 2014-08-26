@@ -1,12 +1,9 @@
 import HTMLParser
-import time
 import json
 import logging
 import socket
 import time
-import bisect
-from datetime import timedelta, datetime, date
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta, datetime
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
@@ -58,6 +55,19 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
+from corehq.apps.hqadmin.reporting.reports import (
+    add_blank_data,
+    get_sms_only_domain_stats_data,
+    get_commconnect_domain_stats_data,
+    get_active_domain_stats_data,
+    get_active_mobile_users_data,
+    get_mobile_workers_data,
+    get_real_sms_messages_data,
+    get_active_commconnect_domain_stats_data,
+    get_active_dimagi_owned_gateway_projects,
+    get_domain_stats_data,
+    get_total_clients_data
+)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
@@ -68,7 +78,7 @@ from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import get_stats_data, parse_args_for_es, ES_MAX_CLAUSE_COUNT
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
@@ -78,10 +88,7 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
-from corehq.apps.es.es_query import ESQuery
 from .multimech import GlobalConfig
-
-SEC_IN_30_DAYS = 1000 * 60 * 60 * 24 * 30
 
 @require_superuser
 def default(request):
@@ -871,134 +878,6 @@ class FlagBrokenBuilds(FormView):
         db.bulk_save(docs)
         return HttpResponse("posted!")
 
-def daterange(interval, start_date, end_date):
-    cur_date = end_date
-    if interval == 'day':
-        step = relativedelta(days=1)
-    elif interval == 'week':
-        step = relativedelta(weeks=1)
-    elif interval == 'month':
-        step = relativedelta(months=1)
-    elif interval == 'year':
-        step = relativedelta(years=1)
-
-    while cur_date > start_date:
-        yield cur_date
-        cur_date -= step
-
-def make_buckets(interval, start_date, end_date):
-    """
-    Returns a descending sorted list of timestamps to use from end_date to 
-    start_date
-    """
-    buckets_list = list()
-    for single_date in daterange(interval, start_date, end_date):
-        t =int(1000*time.mktime(single_date.timetuple()))
-        buckets_list.append(t)
-
-    return buckets_list
-
-def get_form_query(datefield, begin, end, facet_name, facet_terms):
-    return (ESQuery('forms')
-            .fields(['domain', datefield])
-            .filter({
-                "range": {
-                    datefield: {
-                        "from": begin, 
-                        "to": end
-                        }
-                    }
-                }
-            )
-            .facet(facet_name, facet_terms)
-            .size(0))
-
-def get_active_domain_stats_data(params, datespan, interval='month', datefield='received_on'):
-    begin = datetime.strptime(datespan.startdate_display, "%Y-%m-%d").date()
-    end = datetime.strptime(datespan.enddate_display, "%Y-%m-%d").date()
-    keys = make_buckets(interval, begin, end)
-
-    real_domain_query = (
-            ESQuery('domains')
-            .fields(['name'])
-            .filter({"terms": params})
-    )
-    real_domain_query_results = real_domain_query.run().raw_hits
-    real_domains = {x['fields']['name'] for x in real_domain_query_results}
-
-    histo_data = []
-    for timestamp in reversed(keys):
-        t = timestamp
-        f = timestamp - SEC_IN_30_DAYS
-        form_query = get_form_query(datefield, f, t, 'domains', {"field": "domain"})
-        domains = form_query.run().facet('domains')
-        domains = [d['term'] for d in domains if d['term'] in real_domains]
-        c = len(domains)
-        if c > 0:
-            histo_data.append({"count": c, "time": timestamp})
-
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-
-def add_blank_data(stat_data, start, end):
-    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
-    if not histo_data:
-        new_stat_data = deepcopy(stat_data)
-        new_stat_data["histo_data"]["All Domains"] = [
-            {
-                "count": 0,
-                "time": timestamp,
-            } for timestamp in [
-                int(1000 * time.mktime(date.timetuple()))
-                for date in [start, end]
-            ]
-        ]
-        return new_stat_data
-    return stat_data
-
-
-def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
-    q = {
-        "query": {"bool": {"must":
-                                  [{"match": {'doc_type': "Domain"}},
-                                   {"term": {"is_snapshot": False}}]}},
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            datefield: {
-                                "from": datespan.startdate_display,
-                                "to": datespan.enddate_display,
-                            }}}]}}}}
-
-    histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    del q["facets"]
-    q["filter"] = {
-        "and": [
-            {"range": {datefield: {"lt": datespan.startdate_display}}},
-        ],
-    }
-
-    domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    return {
-        'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
-        'initial_values': {"All Domains": domains_before_date["hits"]["total"]},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
 
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
@@ -1015,6 +894,38 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "active_dimagi_gateways":
+        params.update(params_es)
+        return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
+
+    if histo_type == "mobile_clients":
+        params.update(params_es)
+        return json_response(get_total_clients_data(params, request.datespan, interval=interval))
+
+    if histo_type == "active_mobile_users":
+        params.update(params_es)
+        return json_response(get_active_mobile_users_data(params, request.datespan, interval=interval))
+
+    if histo_type == "mobile_workers":
+        params.update(params_es)
+        return json_response(get_mobile_workers_data(params, request.datespan, interval=interval))
+
+    if histo_type == "real_sms_messages":
+        params.update(params_es)
+        return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval))
+
+    if histo_type == "active_commconnect_domains":
+        params.update(params_es)
+        return json_response(get_active_commconnect_domain_stats_data(params, request.datespan, interval=interval))
+
+    if histo_type == "sms_only_domains":
+        params.update(params_es)
+        return json_response(get_sms_only_domain_stats_data(request.datespan, interval=interval))
+
+    if histo_type == "sms_domains":
+        params.update(params_es)
+        return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
         params.update(params_es)
