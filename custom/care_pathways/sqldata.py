@@ -41,7 +41,6 @@ class CareQueryMeta(QueryMeta):
             if v and k not in ['group', 'gender', 'group_leadership', 'disaggregate_by', 'table_card_group_by']:
                 if isinstance(v, tuple):
                     if len(v) == 1:
-                        print 123
                         having.append("%s = :%s" % (k, k))
                     else:
                         having.append("%s IN :%s" % (k, k))
