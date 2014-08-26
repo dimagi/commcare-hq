@@ -46,7 +46,6 @@ branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
   - schedule # SK 7/17
-  - active-mobile-workers-merge+commconnect-reports # Nick P 8/25
   - submissions-by-form+commconnect-reports  # Nick P / Ethan / J$ 8/25
   - submissions-by-form  # Ethan 8/25
 #  - add-build-ui
@@ -54,7 +53,6 @@ branches:
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
   - vellum-requirejs # Daniel 6/12
-  - active-mobile-workers-merge # Nick P 8/25
   - admin-reports # Nick P 8/13
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
