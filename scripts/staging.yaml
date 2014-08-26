@@ -46,8 +46,6 @@ branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
   - schedule # SK 7/17
-  - submissions-by-form+commconnect-reports  # Nick P / Ethan / J$ 8/25
-  - submissions-by-form  # Ethan 8/25
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
