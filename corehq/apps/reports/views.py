@@ -22,8 +22,9 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
+import pytz
+from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
-from corehq import toggles
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 import couchexport
@@ -124,6 +125,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
     scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
+    for report in scheduled_reports:
+        time_difference = get_timezone_difference(domain)
+        (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
+        report.minute = 0
+        if day_change:
+            report.day = calculate_day(report.interval, report.day, day_change)
 
     context = dict(
         couch_user=request.couch_user,
@@ -535,6 +542,43 @@ def delete_config(request, domain, config_id):
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
+def normalize_hour(hour):
+    day_change = 0
+    if hour < 0:
+        day_change = -1
+        hour += 24
+    elif hour > 24:
+        day_change = 1
+        hour -= 24
+
+    assert 0 <= hour < 24
+    return (hour, day_change)
+
+def calculate_hour(hour, hour_difference, minute_difference):
+    hour += hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour -= 1
+    return normalize_hour(hour)
+
+
+def recalculate_hour(hour, hour_difference, minute_difference):
+    hour -= hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour += 1
+    return normalize_hour(hour)
+
+
+def get_timezone_difference(domain):
+    return datetime.now(pytz.timezone(Domain._get_by_name(domain)['default_timezone'])).strftime('%z')
+
+
+def calculate_day(interval, day, day_change):
+    if interval == "weekly":
+        return (day + day_change) % 7
+    elif interval == "monthly":
+        return (day - 1 + day_change) % 31 + 1
+    return day
+
 
 @login_and_domain_required
 def edit_scheduled_report(request, domain, scheduled_report_id=None,
@@ -568,11 +612,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     if scheduled_report_id:
         instance = ReportNotification.get(scheduled_report_id)
+        time_difference = get_timezone_difference(domain)
+        (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = 0
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
+
         if instance.owner_id != user_id or instance.domain != domain:
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8,
+                                      config_ids=[], hour=8, minute=0,
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -586,9 +636,21 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     form.fields['config_ids'].choices = config_choices
     form.fields['recipient_emails'].choices = web_user_emails
 
+    form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
+                                    (Domain._get_by_name(domain)['default_timezone'],
+                                    get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
+
+
     if request.method == "POST" and form.is_valid():
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
+
+        time_difference = get_timezone_difference(domain)
+        (instance.hour, day_change) = calculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = int(time_difference[3:])
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
+
         instance.save()
         if is_new:
             messages.success(request, "Scheduled report added!")

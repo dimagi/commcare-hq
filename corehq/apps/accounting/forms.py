@@ -86,6 +86,11 @@ class BillingAccountBasicForm(forms.Form):
                     "Billing Account Specified here."),
         required=False,
     )
+    dimagi_contact = forms.EmailField(
+        label=_("Dimagi Contact Email"),
+        max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
+        required=False,
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -97,6 +102,7 @@ class BillingAccountBasicForm(forms.Form):
                 'currency': account.currency.code,
                 'emails': contact_info.emails,
                 'is_active': account.is_active,
+                'dimagi_contact': account.dimagi_contact,
             }
         else:
             kwargs['initial'] = {
@@ -128,6 +134,7 @@ class BillingAccountBasicForm(forms.Form):
                 'Basic Information',
                 'name',
                 crispy.Field('emails', css_class='input-xxlarge'),
+                'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
                 crispy.Div(*additional_fields),
@@ -208,6 +215,7 @@ class BillingAccountBasicForm(forms.Form):
         account.currency, _ = Currency.objects.get_or_create(
             code=self.cleaned_data['currency'],
         )
+        account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -1293,7 +1301,11 @@ class FeatureRateForm(forms.ModelForm):
             crispy.Field('rate_id', data_bind="value: rate_id"),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
             crispy.Field('monthly_limit', data_bind="value: monthly_limit"),
-            crispy.Field('per_excess_fee', data_bind="value: per_excess_fee"),
+            crispy.Div(
+                crispy.Field('per_excess_fee',
+                             data_bind="value: per_excess_fee"),
+                data_bind="visible: isPerExcessVisible",
+            ),
         )
 
     def is_new(self):

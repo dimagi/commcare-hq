@@ -6,6 +6,7 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 from django.dispatch import receiver
+from datetime import datetime
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -15,6 +16,7 @@ class Location(CachedCouchDocumentMixin, Document):
     # unique id from some external data source
     external_id = StringProperty()
     metadata = DictProperty()
+    last_modified = DateTimeProperty()
 
     latitude = FloatProperty()
     longitude = FloatProperty()
@@ -45,6 +47,9 @@ class Location(CachedCouchDocumentMixin, Document):
         return "%s (%s)" % (self.name, self.location_type)
 
     def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+
+        # lazy migration for site_code
         if not self.site_code:
             from corehq.apps.locations.util import generate_site_code
             self.site_code = generate_site_code(

@@ -193,6 +193,11 @@
                     },
                     $('#form-workflow').get(0)
                 );
+
+                ko.applyBindings({
+                    auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }}),
+                }, $('#auto-gps-capture').get(0));
+
                 {% endif %}
             {% endif %}
 
@@ -299,6 +304,7 @@
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
                 {% endif %}
+                {% include "app_manager/partials/form_gps_capture.html" %}
             </form>
         </div>
         {% endif %}
