@@ -85,6 +85,7 @@ submodules:
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
+      - update-jars # Noah 8/26
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
