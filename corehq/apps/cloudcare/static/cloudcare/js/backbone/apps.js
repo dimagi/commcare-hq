@@ -472,6 +472,9 @@ cloudCare.AppView = Backbone.View.extend({
         self.formListView = new cloudCare.FormListView({
             language: self.options.language
         });
+        self.caseSelectionView = new cloudCare.CaseSelectionView({
+            language: self.options.language
+        });
 
         cloudCare.dispatch.on("form:selected", function (form) {
             if (self.selectedForm !== form){
@@ -631,19 +634,10 @@ cloudCare.AppView = Backbone.View.extend({
         var caseModel = options.caseModel;
         var submitUrl = self.model.getSubmitUrl();
         var selectedModule = self.formListView.model;
-        self._renderParentCasePane(self.selectedParent, self.options.language);
+        self.caseSelectionView.model.set("parentCase", self.selectedParent);
         if (caseModel) {
-            // Not all forms have a case associated with them.
-            var case_label = selectedModule.attributes.case_label[self.options.language];
-            if (case_label === "Cases"){
-                if (self.selectedParent){
-                    case_label = "Child Case";
-                } else {
-                    case_label = "Case"
-                }
-            }
-            var case_name = caseModel.attributes.properties.case_name;
-            $('#current-case').html('<h2>' + case_label + ': ' + case_name + '</h2>');
+            caseModel.set("module", selectedModule);
+            self.caseSelectionView.model.set("childCase", caseModel);
         }
 
         data.onsubmit = function (xml) {
@@ -713,7 +707,7 @@ cloudCare.AppView = Backbone.View.extend({
                 // If a parent is selected, we want to filter the cases differently.
                 if (self.selectedParent){
                     cloudCare.dispatch.trigger("form:selected:parent:caselist", form, self.selectedParent.id);
-                    self._renderParentCasePane(self.selectedParent, self.options.language);
+                    self.caseSelectionView.model.set("parentCase", self.selectedParent);
                 } else {
                     cloudCare.dispatch.trigger("form:selected:caselist", form);
                 }
@@ -784,16 +778,6 @@ cloudCare.AppView = Backbone.View.extend({
         }
         return this;
     },
-    _renderParentCasePane: function (parent, language) {
-        if (parent) {
-            var case_label = parent.get("appConfig").module.get("case_label")[language];
-            if (case_label === "Cases"){
-                case_label = "Parent Case";
-            }
-            var case_name = parent.get("properties").case_name;
-            $('#current-parent').html('<h2>' + case_label + ': ' + case_name + '</h2>');
-        }
-    },
     _clearMainPane: function () {
         this._clearCaseView();
         this._clearFormPlayer();
@@ -808,12 +792,9 @@ cloudCare.AppView = Backbone.View.extend({
     _clearFormPlayer: function () {
         // TODO: clean hack/hard coded id
         //       One posibility would be to set an `el` for this View. Then the id is only in one place.
-        this._clearParentCasePane();
-        $('#current-case').html("");
         $('#webforms').html("");
-    },
-    _clearParentCasePane: function () {
-        $('#current-parent').empty();
+        this.caseSelectionView.model.set("parentCase", null);
+        this.caseSelectionView.model.set("childCase", null);
     }
 });
 
@@ -843,8 +824,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.initialCase = new cloudCare.Case(self.options.initialCase);
         }
         if (self.options.initialParent) {
-            console.log("setting initial parent");
-            console.log(self.options.initialParent);
             self.initialParent = new cloudCare.Case(self.options.initialParent);
         }
 
