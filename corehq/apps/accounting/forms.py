@@ -86,7 +86,7 @@ class BillingAccountBasicForm(forms.Form):
                     "Billing Account Specified here."),
         required=False,
     )
-    dimagi_contact = forms.CharField(
+    dimagi_contact = forms.EmailField(
         label=_("Dimagi Contact Email"),
         max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
         required=False,
