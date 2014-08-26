@@ -1,4 +1,9 @@
+from datetime import datetime
+from celery.schedules import crontab
 from celery.task import task
+from celery.task.base import periodic_task
+import settings
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from django.core.cache import cache
 import uuid
@@ -28,3 +33,19 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
     cls.get_db().bulk_save(docs)
+
+
+@periodic_task(
+    run_every=crontab(hour=23, minute=55),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+)
+def remove_expired_pending_invitations():
+    from corehq.apps.users.models import DomainInvitation
+    #When it should expire?
+    days_to_expire = 1
+    domains = Domain.get_all()
+    for domain in domains:
+        invitations = DomainInvitation.by_domain(domain.name)
+        for invitation in invitations:
+            if (datetime.now() - invitation.invited_on).days >= days_to_expire:
+                invitation.delete()
