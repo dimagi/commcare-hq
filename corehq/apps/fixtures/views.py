@@ -281,6 +281,7 @@ def download_item_lists(request, domain, html_response=False):
                 for prop_index, property in enumerate(field.properties):
                     prop_key = get_field_prop_format(index + 1, prop_index + 1)
                     type_field_properties[data_type.tag][prop_key] = property
+
         # Helpers to generate item-sheets
         data_items_book_by_type[data_type.tag] = []
         max_users = 0
@@ -293,10 +294,12 @@ def download_item_lists(request, domain, html_response=False):
             user_len = len(item_row.users)
             max_users = user_len if user_len > max_users else max_users
             for field_key in item_row.fields:
-                max_combos = max_field_prop_combos[field_key]
-                cur_combo_len = len(item_row.fields[field_key].field_list)
-                max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
-                max_field_prop_combos[field_key] = max_combos
+                if field_key in max_field_prop_combos:
+                    max_combos = max_field_prop_combos[field_key]
+                    cur_combo_len = len(item_row.fields[field_key].field_list)
+                    max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
+                    max_field_prop_combos[field_key] = max_combos
+
         item_helpers = {
             "max_users": max_users,
             "max_groups": max_groups,

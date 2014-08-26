@@ -264,6 +264,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -923,6 +924,8 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
     'reportfixtures',
     'reports',
@@ -1107,6 +1110,7 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
         'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
+        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',

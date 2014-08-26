@@ -26,7 +26,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     def get(self, request, domain, all_data=False):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
-        if self.q:
+        if self.q and self.q.strip():
             tokens = self.q.split()
             queries = ['%s*' % tokens.pop()] + tokens
             self.user_query = {"bool": {"must": [
@@ -71,7 +71,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
     def _init_counts(self):
         groups, _ = self.group_es_call(size=0, return_count=True)
         users, _ = self.user_es_call(size=0, return_count=True)
-        self.group_start = len(self.basics)
+        self.group_start = len(self.user_types)
         self.user_start = self.group_start + groups
         self.total_results = self.user_start + users
 
@@ -81,7 +81,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         start = limit*(page-1)
         stop = start + limit
 
-        options = self.basics[start:stop]
+        options = self.user_types[start:stop]
 
         g_start = max(0, start - self.group_start)
         g_size = limit - len(options) if start < self.user_start else 0
@@ -95,10 +95,10 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
 
     @property
     @memoized
-    def basics(self):
+    def user_types(self):
         return filter(
-            lambda basic: self.q.lower() in basic[1].lower(),
-            super(EmwfOptionsView, self).basics
+            lambda user_type: self.q.lower() in user_type[1].lower(),
+            super(EmwfOptionsView, self).user_types
         )
 
     def user_es_call(self, **kwargs):

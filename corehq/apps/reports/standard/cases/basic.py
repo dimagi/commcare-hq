@@ -14,7 +14,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.users import SelectMobileWorkerFilter,\
-    ExpandedMobileWorkerFilterWithAllData
+    ExpandedMobileWorkerFilterWithAllData as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -60,7 +60,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             subterms.append({"term": {"closed": (status == 'closed')}})
 
 
-        if not ExpandedMobileWorkerFilterWithAllData.show_all_data(self.request):
+        if not EMWF.show_all_data(self.request):
             owner_filters = _filter_gen('owner_id', owner_ids)
             user_filters = _filter_gen('user_id', user_ids)
             filters = filter(None, [owner_filters, user_filters])
@@ -94,7 +94,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         case_es = self.case_es
         user_ids, owner_ids = self.case_users_and_owners
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
-                                 status=self.case_status, owner_ids=owner_ids+user_ids, user_ids=user_ids,
+                                 status=self.case_status, owner_ids=owner_ids+user_ids,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
 
         query_results = case_es.run_query(query)
@@ -114,9 +114,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_users_and_owners(self):
-        users_data = ExpandedMobileWorkerFilterWithAllData.pull_users_from_es(
-            self.domain, self.request, fields=[])
-        user_ids = filter(None, [u["_id"] for u in users_data["hits"]["hits"]])
+        user_query = EMWF.user_es_query(self.domain, self.request).fields([])
+        user_ids = user_query.run().doc_ids
         group_owner_ids = []
         for user_id in user_ids:
             group_owner_ids.extend([
@@ -124,7 +123,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 for group in Group.by_user(user_id)
                 if group.case_sharing
             ])
-        if HQUserType.COMMTRACK in ExpandedMobileWorkerFilterWithAllData.user_types(self.request):
+        if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
             user_ids.append("commtrack-system")
         return user_ids, filter(None, group_owner_ids)
 
