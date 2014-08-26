@@ -22,10 +22,6 @@ from dateutil.parser import parse
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.groups.models import Group
 
-from django.dispatch.dispatcher import Signal
-
-signal = Signal(providing_args=['verified_contact', 'domain', 'text', 'msg'])
-
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
 # Keywords should be in all caps.
@@ -319,12 +315,12 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 def process_incoming(msg, delay=True):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
+
     if v is not None and v.verified:
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
         msg.save()
-    signal.send(verified_contact=v, sender="incoming_sms", domain=msg.domain, text=msg.text, msg=msg)
 
     if msg.domain_scope:
         # only process messages for phones known to be associated with this domain
