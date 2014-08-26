@@ -31,7 +31,7 @@ class CacheInvalidatePillow(BasicPillow):
     def reset_checkpoint(self):
         pass
 
-    def get_checkpoint(self):
+    def get_checkpoint(self, verify_unchanged=False):
         doc_name = self.get_checkpoint_doc_name()
         current_db_seq = self.couch_db.info()['update_seq']
         checkpoint_doc = {
