@@ -165,7 +165,7 @@ def rebuild_staging(config, print_details=True, push=True):
                 try:
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
-                    merge_conflicts.append((path, origin(config.trunk), branch))
+                    merge_conflicts.append((path, branch, config.name))
                     git.merge("--abort")
                     print "FAIL"
                 else:
@@ -193,15 +193,15 @@ def rebuild_staging(config, print_details=True, push=True):
             )
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
-        for cwd, trunk, branch in merge_conflicts:
-            print "  [{cwd}] {branch} => {trunk}".format(
+        for cwd, branch, name in merge_conflicts:
+            print "  [{cwd}] {branch} => {name}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
-                trunk=trunk,
+                name=name,
             )
             git = get_git(cwd)
             if print_details:
-                print_merge_details(branch, trunk, git)
+                print_merge_details(branch, name, git)
 
     if merge_conflicts or not_found:
         exit(1)
