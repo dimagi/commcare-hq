@@ -149,9 +149,11 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
         ])
 
     def _histo_data_non_cumulative(domains, histo_type, start_date, end_date, interval, user_type_filters):
-        from corehq.apps.hqadmin.views import make_buckets, SEC_IN_30_DAYS
+        import time
         from datetime import datetime
-        timestamps = make_buckets(
+        from dateutil.relativedelta import relativedelta
+        from corehq.apps.hqadmin.reporting.reports import daterange
+        timestamps = daterange(
             interval,
             datetime.strptime(start_date, "%Y-%m-%d").date(),
             datetime.strptime(end_date, "%Y-%m-%d").date(),
@@ -160,16 +162,16 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
         for domain_name_data in domains:
             display_name = domain_name_data['display_name']
             domain_data = []
-            for timestamp in reversed(timestamps):
+            for timestamp in timestamps:
                 past_30_days = _histo_data(
                     [domain_name_data],
                     histo_type,
-                    timestamp - SEC_IN_30_DAYS,
-                    timestamp,
+                    (timestamp - relativedelta(days=30)).isoformat(),
+                    timestamp.isoformat(),
                     user_type_filters=user_type_filters,
                 )
                 domain_data.append({
-                    'time': timestamp,
+                    'time': 1000 * time.mktime(timestamp.timetuple()),
                     'count': sum(point['count'] for point in past_30_days[display_name]),
                 })
             histo_data.update({
