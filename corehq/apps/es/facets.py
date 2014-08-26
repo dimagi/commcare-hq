@@ -41,7 +41,7 @@ class DateHistogram(Facet):
 
     def __init__(self, name, datefield, interval):
         self.name = name
-        facet_params = {
+        self.params = {
             "field": datefield,
             "interval": interval
         }
