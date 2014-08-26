@@ -550,6 +550,8 @@ def normalize_hour(hour):
     elif hour > 24:
         day_change = 1
         hour -= 24
+
+    assert 0 <= hour < 24
     return (hour, day_change)
 
 def calculate_hour(hour, hour_difference, minute_difference):
