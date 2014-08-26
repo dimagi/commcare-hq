@@ -711,7 +711,8 @@ cloudCare.AppView = Backbone.View.extend({
                     cloudCare.dispatch.trigger("form:selected:caselist", form);
                 }
 
-                if (module.get("parent_select").active && !self.selectedParent) {
+                var parentSelectActive = module.get("parent_select").active;
+                if (parentSelectActive && !self.selectedParent) {
                     var parent_module_id = module.get("parent_select").module_id;
                     var parent_module_index = 0;
                     var parent_module = null;
@@ -741,6 +742,7 @@ cloudCare.AppView = Backbone.View.extend({
 	                    module_index: form.get("module_index"),
                         form_index: form.get("index"),
                         module: module,
+                        parentSelectActive: parentSelectActive,
                         parentId: parentId
                     },
 	                language: formListView.options.language,
@@ -1046,6 +1048,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                             module_index: parentModuleIndex,
                             form_index: formIndex,
                             module: parentModule,
+                            parentSelectActive: true,
                             parentId: self.initialParent.id
                         });
                         self.appView.selectParent(self.initialParent);

@@ -302,8 +302,27 @@ cloudCare.CaseMainView = Backbone.View.extend({
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
         // adding an internal section so that the filter button displays correctly
         self.el = self.options.el;
+
         var case_label = self.options.appConfig.module.attributes.case_label[self.options.language];
-        self.el.append($("<h2>Select Case: "+case_label+"</h2>"));
+        var headingText;
+        if (case_label === "Cases"){
+            // If the user has left the case list label at the default "Cases" value
+            // the label will read "Select Case: Cases". This is confusing. So,
+            // we'll change it to something more appropriate.
+            if (self.options.appConfig.parentSelectActive && self.options.parent === null){
+                // Select parent case
+                headingText = "Select Parent Case:";
+            } else if (self.options.appConfig.parentSelectActive) {
+                // Select child case
+                headingText = "Select Child Case:";
+            } else {
+                headingText = "Select Case:"
+            }
+        } else {
+            headingText = "Select Case: "+ case_label;
+        }
+        self.el.append($("<h2>" + headingText + "</h2>"));
+
         self.section = $('<section class="row-fluid" />');
         self.section.appendTo(self.el);
         // this is copy-pasted
