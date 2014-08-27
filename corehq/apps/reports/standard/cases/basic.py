@@ -140,11 +140,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             user_type_filters.append(user_es.demo_users())
         if HQUserType.REGISTERED in user_types:
             user_type_filters.append(user_es.mobile_users())
-        special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters)
-        #import ipdb; ipdb.set_trace()
-        special_user_ids = special_q.run().doc_ids()
 
-
+        if len(user_type_filters) > 0:
+            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters)
+            special_user_ids = special_q.run().doc_ids()
+        else:
+            special_user_ids = []
 
         # Get user ids for each user that was specifically selected
         selected_user_ids = EMWF.selected_user_ids(self.request)
