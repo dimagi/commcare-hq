@@ -868,7 +868,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 attachment_builder.add(name=k, content=attach,
                                        content_type=v.server_mime)
             else:
-                attachment_builder.remove(k)
+                try:
+                    attachment_builder.remove(k)
+                except KeyError:
+                    pass
                 del update_attachments[k]
         self._attachments = attachment_builder.to_json()
         self.case_attachments = update_attachments
