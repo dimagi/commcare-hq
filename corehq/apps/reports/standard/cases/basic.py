@@ -159,11 +159,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                                 .fields([])
         sharing_group_ids = share_group_q.run().doc_ids()
 
-        owner_ids = set().union(special_user_ids,
+        owner_ids = list(set().union(special_user_ids,
                                 selected_user_ids,
                                 selected_group_ids,
                                 selected_reporting_group_users,
-                                sharing_group_ids)
+                                sharing_group_ids))
         if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
             owner_ids.append("commtrack-system")
         return owner_ids
