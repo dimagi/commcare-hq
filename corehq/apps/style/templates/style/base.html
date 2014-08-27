@@ -85,7 +85,7 @@
                                  alt="Powered by Dimagi, Inc." />
                         </a>
                     </div>
-                    <p class="text-align-center pull-left">
+                    <p class="text-align-center pull-left text-hq-copyright">
                         {% blocktrans %}
                             <a href="http://www.commcarehq.org/">CommCare HQ</a>
                             is copyright &copy;
@@ -102,21 +102,22 @@
                     </p>
                     <div class="btn-toolbar pull-right">
                         <button type="button"
-                                class="btn btn-warning"
+                                class="btn btn-footer-highlight"
                                 data-toggle="modal"
                                 data-target="#modalReportIssue">
+                            <i class="fa fa-comment"></i>&nbsp;
                             {% trans 'Report an Issue' %}
                         </button>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
                            target="_blank"
-                           class="btn btn-default">
-                            <i class="fa fa-info-sign"></i>
+                           class="btn btn-footer">
+                            <i class="fa fa-info-circle"></i>&nbsp;
                             {% trans 'CommCare Help Site' %}
                         </a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}"
                            target="_blank"
-                           class="btn btn-default">
-                            <i class="fa fa-envelope"></i>
+                           class="btn btn-footer">
+                            <i class="fa fa-envelope"></i>&nbsp;
                             {% trans 'Mailing List' %}
                         </a>
                     </div>
