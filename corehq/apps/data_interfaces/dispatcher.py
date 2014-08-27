@@ -16,7 +16,6 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'data_interface'
     map_name = 'DATA_INTERFACES'
 
-    @profile("/home/sravfeyn/src/hotshot-logfiles/users.prof")
     def dispatch(self, request, *args, **kwargs):
         from corehq.apps.reports.standard.export import DeidExportReport
         if kwargs['report_slug'] in [DeidExportReport.slug]:
