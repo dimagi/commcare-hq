@@ -11,6 +11,14 @@ from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import es_query, ES_URLS
 
 
+def format_return_data(shown_data, initial_value, datespan):
+    return add_blank_data({
+        'histo_data': {"All Domains": shown_data},
+        'initial_values': {"All Domains": initial_value},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }, datespan.startdate, datespan.enddate)
+
 def add_blank_data(stat_data, start, end):
     histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
     if not histo_data:
@@ -99,12 +107,7 @@ def get_active_countries_stats_data(params, datespan, interval='month',
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_active_domain_stats_data(params, datespan, interval='month',
@@ -132,12 +135,7 @@ def get_active_domain_stats_data(params, datespan, interval='month',
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_active_mobile_users_data(params, datespan, interval='month',
@@ -164,12 +162,7 @@ def get_active_mobile_users_data(params, datespan, interval='month',
             histo_data.append({"count": c, "time":
                 1000 * time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_active_commconnect_domain_stats_data(params, datespan,
@@ -192,12 +185,7 @@ def get_active_commconnect_domain_stats_data(params, datespan,
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_active_dimagi_owned_gateway_projects(params, datespan,
@@ -228,12 +216,7 @@ def get_active_dimagi_owned_gateway_projects(params, datespan,
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_countries_stats_data(params, datespan, interval='month',
@@ -255,12 +238,7 @@ def get_countries_stats_data(params, datespan, interval='month',
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": 0},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, 0, datespan)
 
 
 def get_total_clients_data(params, datespan, interval='month',
@@ -300,12 +278,7 @@ def get_total_clients_data(params, datespan, interval='month',
             .opened_range(lt=datespan.startdate)
             .size(0)).run().total
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": cases_before_date},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, cases_before_date, datespan)
 
 
 def get_mobile_workers_data(params, datespan, interval='month',
@@ -347,12 +320,7 @@ def get_mobile_workers_data(params, datespan, interval='month',
             .created(lt=datespan.startdate)
             .size(0)).run().total
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": users_before_date},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, users_before_date, datespan)
 
 
 def get_real_sms_messages_data(params, datespan, interval='month',
@@ -376,12 +344,7 @@ def get_real_sms_messages_data(params, datespan, interval='month',
             .received(lt=datespan.startdate)
             .size(0)).run().total
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": sms_before_date},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, sms_before_date, datespan)
 
 
 def get_sms_only_domain_stats_data(datespan, interval='month',
@@ -417,14 +380,9 @@ def get_sms_only_domain_stats_data(datespan, interval='month',
             .real_domains()
             .filter({"terms": {"name": list(sms_only_domains)}})
             .created(lt=datespan.startdate)
-            .size(0)).run()
+            .size(0)).run().total
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": domains_before_date.total},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, domains_before_date, datespan)
 
 
 def get_commconnect_domain_stats_data(params, datespan, interval='month',
@@ -454,14 +412,9 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
             .real_domains()
             .filter({"terms": {"name": list(sms_domains)}})
             .created(lt=datespan.startdate)
-            .size(0)).run()
+            .size(0)).run().total
 
-    return {
-        'histo_data': {"All Domains": histo_data},
-        'initial_values': {"All Domains": domains_before_date.total},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data, domains_before_date, datespan)
 
 
 def get_domain_stats_data(params, datespan, interval='week',
@@ -495,9 +448,6 @@ def get_domain_stats_data(params, datespan, interval='week',
 
     domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
 
-    return {
-        'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
-        'initial_values': {"All Domains": domains_before_date["hits"]["total"]},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
+    return format_return_data(histo_data['facets']['histo']['entries'], 
+                              domains_before_date['hits']['total'], 
+                              datespan)
