@@ -19,6 +19,7 @@ def format_return_data(shown_data, initial_value, datespan):
         'enddate': datespan.enddate_key_utc,
     }, datespan.startdate, datespan.enddate)
 
+
 def add_blank_data(stat_data, start, end):
     histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
     if not histo_data:
@@ -247,6 +248,32 @@ def get_mobile_workers_data(params, datespan, interval='month',
             .size(0)).run().total
 
     return format_return_data(histo_data, users_before_date, datespan)
+
+
+def get_commtrack_real_sms_messages_data(params, datespan, interval='month',
+        datefield='date'):
+    """
+    Returns SMS sent in timespan.
+    Returned based on date SMS was sent
+    """
+    real_domains = get_real_project_spaces()
+    sms_after_date = (SMSES()
+            .filter({"terms": params})
+            .to_commcare_user_or_case()
+            .in_domains(real_domains)
+            .received(gte=datespan.startdate, lte=datespan.enddate)
+            .date_histogram('date', datefield, interval)
+            .size(0))
+
+    histo_data = sms_after_date.run().facet('date', 'entries')
+
+    sms_before_date = (SMSES()
+            .in_domains(real_domains)
+            .to_commcare_user_or_case()
+            .received(lt=datespan.startdate)
+            .size(0)).run().total
+
+    return format_return_data(histo_data, sms_before_date, datespan)
 
 
 def get_real_sms_messages_data(params, datespan, interval='month',
