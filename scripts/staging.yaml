@@ -61,6 +61,7 @@ branches:
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
+  - ilsgateway-integration  # czue/lwysomi 8/27 - this one might stick around a while
 submodules:
   submodules/couchlog-src:
     branches:
