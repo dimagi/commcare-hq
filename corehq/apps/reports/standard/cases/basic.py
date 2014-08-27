@@ -117,17 +117,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def case_owners(self):
 
-        # UPDATE:
-        # owner_ids should now contain all of the proper ids, it only uses two queries!
-        # However, we need to review EMWF.user_es_query to see what magic should happen
-        # for special cases (like "all mobile works")
-        #TODO: Demo user? Unknown user?
-        #TODO: Commtrack user?
-
-        # Plan:
-        # We can add another list here, something like "my_special_list" that includes all ids
-        # pulled based on the special filters (that is: all mobile workers, demo, admin, unknown)
-
         # Get user ids for each user that match the demo_user, admin, Unknown Users, or All Mobile Workers filters
         user_types = EMWF.selected_user_types(self.request)
         user_type_filters = []
@@ -170,52 +159,15 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                                 .fields([])
         sharing_group_ids = share_group_q.run().doc_ids()
 
-        # QUESTION: Do we want users specified with "All mobile workers" to have the group affects applied?
-        #           Do we want users specified with "admin", "demo", or "unknown" to have the group affects applied
-
-        #import ipdb; ipdb.set_trace()
-
-        print "Special user ids:"
-        print special_user_ids
-        '''
-        print "Selected user ids:"
-        print selected_user_ids
-        print "Selected group ids:"
-        print selected_group_ids
-        print "Selected reporting group users"
-        print selected_reporting_group_users
-        print "Sharing group ids"
-        print sharing_group_ids
-        '''
-
         owner_ids = set().union(special_user_ids,
                                 selected_user_ids,
                                 selected_group_ids,
                                 selected_reporting_group_users,
                                 sharing_group_ids)
-
         if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
             owner_ids.append("commtrack-system")
-
         return owner_ids
 
-        #######################################################################
-
-        '''
-        user_query = EMWF.user_es_query(self.domain, self.request).fields([])
-        user_ids = user_query.run().doc_ids()
-        group_owner_ids = []
-        for user_id in user_ids:
-            group_owner_ids.extend([
-                group._id
-                for group in Group.by_user(user_id)
-                if group.case_sharing
-            ])
-        if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
-            user_ids.append("commtrack-system")
-        return user_ids, filter(None, group_owner_ids)
-        #TODO: Have this just return one list of owner_ids (which is a combination of user and group ids)
-        '''
 
     def get_case(self, row):
         if '_source' in row:
