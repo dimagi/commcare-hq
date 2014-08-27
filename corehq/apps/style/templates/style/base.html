@@ -63,7 +63,7 @@
                         {% format_main_menu %}
                     {% endblock %}
                     {% if request.user.is_authenticated %}
-                        {% include 'style/includes/navigation_global.html' %}
+                        {% include 'hqwebapp/partials/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
