@@ -116,6 +116,7 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
 
     def get_groups(self, start, size):
         fields = ['_id', 'name', 'reporting']
-        groups = self.group_es_call(fields=fields, sort_by=['reporting','name.exact'],
-            order='asc', start_at=start, size=size)
+        groups = self.group_es_call(fields=fields,
+            sort_by=[('reporting', 'desc'), ('name.exact', 'asc')],
+            start_at=start, size=size)
         return [self.group_tuple(g) for g in groups]

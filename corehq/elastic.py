@@ -251,12 +251,17 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         es_filters.extend(filters)
     es_filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
     if sort_by:
-        assert(order in ["asc", "desc"]),\
-            'To sort, you must specify the order as "asc" or "desc"'
-        if isinstance(sort_by, type([])):
-            query["sort"] = [{key: {'order': order}} for key in sort_by]
+        if isinstance(sort_by, list):
+            assert(order == None),\
+                'order must be None if sort_by is a list. Usage: sort_by=[("name", "asc"),("dob", "desc")]'
         else:
-            query["sort"] = [{sort_by: {"order": order}}]
+            sort_by = [(sort_by, order)]
+        sort = []
+        for sort_key in sort_by:
+            assert(sort_key[1] in ['asc', 'desc']),\
+                'Sort order must be "asc" or "desc"'
+            sort.append({sort_key[0]: {'order': sort_key[1]}})
+        query['sort'] = sort
 
     # make query
     res = es_query(
