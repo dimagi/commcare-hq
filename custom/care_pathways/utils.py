@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import re
 import os
 import json
@@ -183,10 +184,29 @@ class TableCardDataIndividualFormatter(DataFormatter):
 
         return "%d/%d (%.2f%%)" % ((num_practices or 0), total_practices, 100 * int(num_practices or 0) / float(total_practices or 1))
 
-    def format(self, data, keys=None, group_by=None):
-        rows_dict = dict()
+    def format(self, data, keys=None, group_by=None, domain=None):
+        rows_dict = OrderedDict()
+        tmp_data = OrderedDict()
+        sorted_data = []
+        value_chains = get_domain_configuration(domain).by_type_hierarchy
         for key, row in data.items():
-            formatted_row = self._format.format_row(row)
+            to_list = list(key)
+
+            def find_name(list, deep):
+                for element in list:
+                    if deep == len(key)-3 and key[deep+1] == element.val:
+                        return element.text
+                    elif key[deep+1] == element.val:
+                        return find_name(element.next, deep+1)
+
+            name = find_name(value_chains, 0)
+            to_list[2] = name
+            tmp_data.update({tuple(to_list): row})
+        if tmp_data:
+            sorted_data = sorted(tmp_data.items(), key=lambda x: (x[0][0], x[0][2]))
+
+        for row in sorted_data:
+            formatted_row = self._format.format_row(row[1])
             if not rows_dict.has_key(formatted_row[0]):
                 rows_dict[formatted_row[0]] = []
             rows_dict[formatted_row[0]].append(formatted_row[1])

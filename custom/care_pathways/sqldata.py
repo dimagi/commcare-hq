@@ -37,17 +37,13 @@ class CareQueryMeta(QueryMeta):
         having = []
         filter_cols = []
         external_cols = _get_grouping(filter_values)
-        for k, v in filter_values.iteritems():
-            if v and k not in ['group', 'gender', 'group_leadership', 'disaggregate_by', 'table_card_group_by']:
-                if isinstance(v, tuple):
-                    if len(v) == 1:
-                        having.append("%s = :%s" % (k, k))
-                    else:
-                        having.append("%s IN :%s" % (k, k))
-                else:
-                    having.append("%s = :%s" % (k, k))
-                if k not in external_cols:
-                    filter_cols.append(k)
+
+        for fil in self.filters:
+            if fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by', 'table_card_group_by']:
+                if fil.column_name not in external_cols and fil.column_name != 'maxmin':
+                    filter_cols.append(fil.column_name)
+                having.append(fil.build_expression())
+
         group_having = ''
         having_group_by = []
         if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
@@ -59,9 +55,6 @@ class CareQueryMeta(QueryMeta):
             filter_cols.append('group_leadership')
         elif 'gender' in filter_values and filter_values['gender']:
             group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = :gender"
-
-        for fil in self.filters:
-            having.append("%s %s %s" % (fil.column_name, fil.operator, fil.parameter))
 
         table_card_group = []
         if 'group_name' in self.group_by:
@@ -144,6 +137,8 @@ class CareSqlData(SqlData):
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
+        if 'schedule' in self.config and self.config['schedule']:
+            filters.append(EQ('schedule', 'schedule'))
         return filters
 
     def filter_request_params(self, request_params):
@@ -197,11 +192,11 @@ class AdoptionBarChartReportSqlData(CareSqlData):
         return [
             DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
             AggregateColumn('All', self.percent_fn,
-                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2),]), AliasColumn('some'), AliasColumn('none')]),
+                            [CareCustomColumn('all', filters=self.filters + [EQ("maxmin", 'all'),]), AliasColumn('some'), AliasColumn('none')]),
             AggregateColumn('Some', self.percent_fn,
-                            [CareCustomColumn('some', filters=[EQ("x.maxmin", 1),]), AliasColumn('all'), AliasColumn('none')]),
+                            [CareCustomColumn('some', filters=self.filters + [EQ("maxmin", 'some'),]), AliasColumn('all'), AliasColumn('none')]),
             AggregateColumn('None', self.percent_fn,
-                            [CareCustomColumn('none', filters=[EQ("x.maxmin", 0),]), AliasColumn('all'), AliasColumn('some')])
+                            [CareCustomColumn('none', filters=self.filters + [EQ("maxmin", 'none'),]), AliasColumn('all'), AliasColumn('some')])
         ]
 
     @property
@@ -240,11 +235,11 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
         return [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
             AggregateColumn('All', lambda x:x,
-                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2)])]),
+                            [CareCustomColumn('all', filters=self.filters + [EQ("maxmin", 'all')])]),
             AggregateColumn('Some', lambda x:x,
-                            [CareCustomColumn('some', filters=[EQ("x.maxmin", 1)])]),
+                            [CareCustomColumn('some', filters=self.filters + [EQ("maxmin", 'some')])]),
             AggregateColumn('None', lambda x:x,
-                            [CareCustomColumn('none', filters=[EQ("x.maxmin", 0)])])
+                            [CareCustomColumn('none', filters=self.filters + [EQ("maxmin", 'none')])])
         ]
 
 class TableCardSqlData(CareSqlData):
@@ -293,8 +288,8 @@ class TableCardSqlData(CareSqlData):
         return [
             DatabaseColumn('', SimpleColumn(first_column), format_fn=self.first_column_format),
             AggregateColumn('practice_count', self.format_cell_fn,
-                            [CareCustomColumn('all', filters=[EQ("x.maxmin", 2)]),
-                             CareCustomColumn('none', filters=[EQ("x.maxmin", 0)])]),
+                            [CareCustomColumn('all', filters=self.filters + [EQ("maxmin", 'all')]),
+                             CareCustomColumn('none', filters=self.filters + [EQ("maxmin", 'none')])]),
         ]
 
     def headers(self, data):
@@ -307,6 +302,7 @@ class TableCardSqlData(CareSqlData):
                 domain_group.add_column(DataTablesColumn(self.group_name_fn(practice[0][3])))
 
             column_headers.append(domain_group)
+        column_headers = sorted(column_headers, key=lambda x: x.html)
         return column_headers
 
     @property
@@ -373,7 +369,7 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
 
     def format_rows(self, rows):
         formatter = TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return formatter.format(rows, keys=self.keys, group_by=self.group_by)
+        return formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain)
 
     def calculate_total_row(self, headers, rows):
         total_row = ['Total']

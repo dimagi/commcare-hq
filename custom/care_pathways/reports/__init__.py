@@ -17,6 +17,9 @@ class CareReportMixin(object):
             gender=self.request.GET.get('gender', ''),
             group_leadership=self.request.GET.get('group_leadership', ''),
             schedule=self.request.GET.get('farmer_social_category', ''),
+            none=0,
+            some=1,
+            all=2
         )
         hierarchy_config = get_domain_configuration(self.domain).geography_hierarchy
         for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
