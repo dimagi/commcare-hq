@@ -60,7 +60,8 @@ class BulkExport(object):
                     if self.export_objects[i].transform:
                         doc = self.export_objects[i].transform(doc)
                     table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                        include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
+                                          include_headers=isinstance(self, CustomBulkExport),
+                                          separator=self.separator)
                     if isinstance(self, CustomBulkExport):
                         table = self.export_objects[i].trim(table, doc)
                     table = self.export_objects[i].parse_tables(table)
