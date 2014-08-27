@@ -67,7 +67,7 @@ def bulk_export_async(bulk_export_helper, download_id,
                     bulk = Temp(file.generate_bulk_file())
                     zf.write(bulk.path, "%s/%s" %(filename, file.filename))
                 except Exception as e:
-                    logging.error("FAILED to add file to bulk export archive. %s" % e)
+                    logging.exception("FAILED to add file to bulk export archive. %s" % e)
         finally:
             zf.close()
 
