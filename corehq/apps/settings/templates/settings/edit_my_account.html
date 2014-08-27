@@ -3,6 +3,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+    $('input').on("input", null, null, function() {
+        $(":submit").prop("disabled", false);
+    })
+    </script>
+{% endblock %}
+
 {% block page_content %}
 {% crispy_b3 form form.new_helper 'bootstrap3_transitional' %}
 <form class="form form-horizontal"
@@ -17,7 +25,7 @@
             </div>
         </div>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
+            <button type="submit" class="btn btn-primary" disabled>{% trans 'Update Information' %}</button>
         </div>
     </fieldset>
 </form>
