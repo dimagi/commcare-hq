@@ -354,11 +354,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
 
     @memoized
     def forms_per_user(self, xmlns):
-        query = FormES()\
-                .domain(self.domain)\
-                .xmlns(xmlns)\
-                .size(0)\
-                .user_facet()
+        query = (FormES()
+                 .domain(self.domain)
+                 .xmlns(xmlns)
+                 .submitted(gt=self.datespan.startdate_utc,
+                            lte=self.datespan.enddate_utc)
+                 .size(0)
+                 .user_facet())
         res = query.run()
         return res.facets.user.counts_by_term()
 
