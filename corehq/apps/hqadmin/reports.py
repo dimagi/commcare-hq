@@ -330,6 +330,14 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# workers",
     },
+    "countries": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "countries",
+        "chart_title": "Countries",
+        "histogram_type": "countries",
+        "interval": "week",
+        "xaxis_label": "# countries",
+    },
 }
 
 
@@ -604,6 +612,7 @@ class ActiveRealProjectSpacesReport(GlobalAdminReports):
         'active_domain_count',
         'active_self_started_domain_count',
         'active_countries',
+        'countries',
     ]
 
 class RealProjectSpacesPlansReport(GlobalAdminReports):

@@ -236,6 +236,33 @@ def get_active_dimagi_owned_gateway_projects(params, datespan,
     }
 
 
+def get_countries_stats_data(params, datespan, interval='month',
+        datefield='created_on'):
+    """
+    Returns list of timestamps and how many countries have been created
+    """
+    country_facet = {'terms': {'field': 'country'}}
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        countries = (DomainES()
+                .real_domains()
+                .created(lte=timestamp)
+                .facet('countries', country_facet))
+
+        c = len(countries.run().facet('countries', 'terms'))
+        if c > 0:
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
+
+    return {
+        'histo_data': {"All Domains": histo_data},
+        'initial_values': {"All Domains": 0},
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 def get_total_clients_data(params, datespan, interval='month',
         datefield='opened_on'):
     """
