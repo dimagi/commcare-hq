@@ -215,7 +215,7 @@ class EmwfMixin(object):
         return (uid, name)
 
     def group_tuple(self, g):
-        return ("g__%s" % g['_id'], "%s [group]" % g['name'])
+        return ("g__%s" % g['_id'], "%s [%s]" % (g['name'], 'group' if g['reporting'] else 'case sharing'))
 
     def user_type_tuple(self, t):
         return (

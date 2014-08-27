@@ -111,12 +111,11 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         return [self.user_tuple(u) for u in users]
 
     def group_es_call(self, **kwargs):
-        reporting_filter = {"term": {"reporting": "true"}}
         return es_wrapper('groups', domain=self.domain, q=self.group_query,
-            doc_type='Group', filters=[reporting_filter], **kwargs)
+            doc_type='Group', **kwargs)
 
     def get_groups(self, start, size):
-        fields = ['_id', 'name']
-        groups = self.group_es_call(fields=fields, sort_by='name.exact',
+        fields = ['_id', 'name', 'reporting']
+        groups = self.group_es_call(fields=fields, sort_by=['reporting','name.exact'],
             order='asc', start_at=start, size=size)
         return [self.group_tuple(g) for g in groups]

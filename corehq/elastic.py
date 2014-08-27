@@ -253,7 +253,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     if sort_by:
         assert(order in ["asc", "desc"]),\
             'To sort, you must specify the order as "asc" or "desc"'
-        query["sort"] = [{sort_by: {"order": order}}]
+        if isinstance(sort_by, type([])):
+            query["sort"] = [{key: {'order': order}} for key in sort_by]
+        else:
+            query["sort"] = [{sort_by: {"order": order}}]
 
     # make query
     res = es_query(
