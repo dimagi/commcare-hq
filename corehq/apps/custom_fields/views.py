@@ -8,6 +8,8 @@ from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
+from .models import CustomFieldsDefinition, CustomField
+
 
 class CustomFieldsForm(forms.Form):
     name = forms.CharField(label="Field Name")
@@ -29,7 +31,7 @@ class CustomFieldsForm(forms.Form):
                                       '<i class="icon-resize-vertical"></i>'
                                     '</span>'),
                         crispy.Field('name', data_bind='value: name'),
-                        crispy.Field('is_required', data_bind='checked: isRequired'),
+                        crispy.Field('is_required', data_bind='checked: is_required'),
                         css_class="form-inline",
                     ),
                     data_bind="sortable: customFields",
@@ -63,22 +65,38 @@ class CustomFieldsMixin(object):
     template_name = "custom_fields/custom_fields.html"
     # form_class = CustomFieldsForm
     page_name = ugettext_noop("Edit Custom Fields")
+    doc_type = None
+
+    def get_definition(self):
+        return CustomFieldsDefinition.by_domain(self.domain, 'UserFields')
 
     def get_custom_fields(self):
-        # TODO load me from db
-        return [
-            {"slug": "dob", "label": "DOB", "isRequired": True},
-            {"slug": "gender", "label": "Gender", "isRequired": False},
-        ]
+        definition = self.get_definition()
+        if definition:
+            return definition.fields
+        else:
+            return [
+                {"slug": "dob", "label": "not found", "is_required": True},
+                {"slug": "gender", "label": "Gender", "is_required": False},
+            ]
 
     def save_custom_fields(self, fields):
-        # TODO actually save me
-        print json.loads(fields)
+        definition = self.get_definition() or CustomFieldsDefinition()
+        definition.doc_type = 'UserFields'
+        definition.domain = self.domain
+        definition.fields = [self.get_field(field) for field in json.loads(fields)]
+        definition.save()
+
+    def get_field(self, field):
+        return CustomField(
+            slug=field.get('slug'),
+            is_required=field.get('is_required'),
+            label=field.get('label'),
+        )
 
     @property
     def page_context(self):
         return {
-            # "custom_fields_form": self.form_class(),
             "custom_fields": self.get_custom_fields(),
         }
 

@@ -19,13 +19,14 @@ class UserFieldsView(CustomFieldsMixin, BaseUserSettingsView):
     urlname = "user_fields_view"
     page_name = ugettext_noop("Edit User Fields")
 
+
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(UserFieldsView, self).dispatch(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        self.save_custom_fields(self.request.POST.get('customFields', u'[]'))
-        return self.get(request, success=True, *args, **kwargs)
+    # def post(self, request, *args, **kwargs):
+        # self.save_custom_fields(self.request.POST.get('customFields', u'[]'))
+        # return self.get(request, success=True, *args, **kwargs)
 
     # def post(self, request, *args, **kwargs):
         # form = self.form_class(data=self.request.POST)

@@ -2,7 +2,7 @@ function CustomField (field) {
     var self = this;
     self.slug = ko.observable(field.slug);
     self.label = ko.observable(field.label);
-    self.isRequired = ko.observable(field.isRequired);
+    self.is_required = ko.observable(field.is_required);
 }
 
 
@@ -30,7 +30,7 @@ function CustomFieldsModel () {
             fields.push({
                 'slug': field.slug(),
                 'label': field.label(),
-                'isRequired': field.isRequired(),
+                'is_required': field.is_required(),
             });
         });
         return fields;
