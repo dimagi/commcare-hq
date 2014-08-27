@@ -172,6 +172,11 @@ DEFAULT_APPS = (
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+    'bootstrap3_transitional',
+)
 
 HQ_APPS = (
     'django_digest',
@@ -264,6 +269,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
 
     # custom reports
@@ -297,7 +303,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
-    'custom.care_pathways'
+    'custom.care_pathways',
+    'bootstrap3_crispy',
 )
 
 TEST_APPS = ()
@@ -317,6 +324,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
+    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -919,6 +927,8 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
     'reportfixtures',
     'reports',
@@ -1103,6 +1113,7 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
         'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
+        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',

@@ -1,6 +1,4 @@
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.fixtures.models import FixtureDataItem
-from corehq.apps.users.models import CommCareUser, CommCareCase
 
 DOMAIN = 'opm'
 
@@ -13,22 +11,17 @@ CFU1_XMLNS = "http://openrosa.org/formdesigner/d642dd328514f2af92c093d414d63e5b2
 CFU2_XMLNS = "http://openrosa.org/formdesigner/9ef423bba8595a99976f0bc9532617841253a7fa"
 CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609ed16649"
 
-children_forms = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS]
+CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, CHILD_FOLLOWUP_XMLNS]
 
-# @memoized
+# TODO Move these to a cached fixtures lookup
+MONTH_AMT = 250
+TWO_YEAR_AMT = 2000
+THREE_YEAR_AMT = 3000
+
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
         'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
-
-# memoize or cache?
-def get_user_data_set():
-    users = CommCareUser.by_domain(DOMAIN)
-    return {
-        'blocks': sorted(list(set(u.user_data.get('block') for u in users))),
-        'awcs': sorted(list(set(u.user_data.get('awc') for u in users))),
-        'gp': sorted(list(set(u.user_data.get('gp') for u in users))),
-    }
 
 class InvalidRow(Exception):
     """

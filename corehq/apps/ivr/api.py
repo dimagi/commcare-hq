@@ -133,7 +133,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         if hang_up:
             if call_log_entry.xforms_session_id is not None:
                 # Process disconnect
-                session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
+                session = XFormsSession.by_session_id(call_log_entry.xforms_session_id)
                 if session.end_time is None:
                     if call_log_entry.submit_partial_form:
                         submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)

@@ -114,6 +114,32 @@ class CaseSharingFormPrepTest(TestCase, TestFileMixin):
         self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
                               self.get_xml('complex-case-sharing'))
 
+
+class GPSFormPrepTest(TestCase, TestFileMixin):
+    file_path = ('data', 'form_preparation_v2')
+
+    def setUp(self):
+        self.app = Application.wrap(self.get_json('gps'))
+
+    def test_form_with_gps_question(self):
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
+                            self.get_xml('gps_with_question'))
+
+    def test_form_without_gps_question(self):
+        self.assertXmlEqual(self.app.get_module(0).get_form(1).render_xform(),
+                            self.get_xml('gps_no_question'))
+
+    def test_form_with_gps_question_auto(self):
+        self.app.auto_gps_capture = True
+        self.assertXmlEqual(self.app.get_module(0).get_form(0).render_xform(),
+                            self.get_xml('gps_with_question_auto'))
+
+    def test_form_without_gps_question_auto(self):
+        self.app.auto_gps_capture = True
+        self.assertXmlEqual(self.app.get_module(0).get_form(1).render_xform(),
+                            self.get_xml('gps_no_question_auto'))
+
+
 class FormPreparationCareplanTest(TestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_careplan'
     def setUp(self):

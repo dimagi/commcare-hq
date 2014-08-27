@@ -247,6 +247,7 @@ class BillingAccount(models.Model):
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
+    dimagi_contact = models.CharField(max_length=80, null=True, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
@@ -1018,6 +1019,7 @@ class Subscription(models.Model):
         domain_name = self.subscriber.domain
         product = self.plan_version.core_product
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s" % {
@@ -1059,11 +1061,15 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
+        cc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
+        if self.account.dimagi_contact is not None:
+            cc.append(self.account.dimagi_contact)
         for email in emails:
             send_HTML_email(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
+                cc=cc,
             )
             logger.info(
                 "[BILLING] Sent %(days_left)s-day subscription reminder "
