@@ -74,3 +74,5 @@ django-compressor==1.4
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.4
+
+django-jsonview
