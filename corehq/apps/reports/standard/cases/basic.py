@@ -155,7 +155,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         share_group_q = HQESQuery(index="groups").domain(self.domain)\
                                                 .doc_type("Group")\
                                                 .filter(filters.term("case_sharing", True))\
-                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids))\
+                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids+special_user_ids))\
                                                 .fields([])
         sharing_group_ids = share_group_q.run().doc_ids()
 
