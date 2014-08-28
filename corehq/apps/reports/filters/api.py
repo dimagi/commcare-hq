@@ -111,8 +111,13 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         return [self.user_tuple(u) for u in users]
 
     def group_es_call(self, **kwargs):
+        # It is possible for a group to be neither a reporting or case sharing group.
+        reporting_or_sharing_filter = {"or": [
+                                        {"term": {"reporting": "true"}},
+                                        {"term": {"case_sharing": "true"}}
+                                       ]}
         return es_wrapper('groups', domain=self.domain, q=self.group_query,
-            doc_type='Group', **kwargs)
+            filters=[reporting_or_sharing_filter], doc_type='Group', **kwargs)
 
     def get_groups(self, start, size):
         fields = ['_id', 'name', 'reporting']
