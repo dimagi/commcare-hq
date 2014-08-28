@@ -391,12 +391,12 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
 
         if (parentCase){
             data.parentCase = {};
-            var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language];
+            var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language] + ": ";
             if (caseLabel === "Cases"){
-                caseLabel = "Parent Case";
+                caseLabel = "";
             }
             var caseName = parentCase.get("properties").case_name;
-            data.parentCase.text = caseLabel + ": " + caseName;
+            data.parentCase.text = caseLabel + caseName;
 
             // This is hacky and I hate it
             var root = window.location.href.replace(Backbone.history.getFragment(), '');
@@ -407,16 +407,16 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
         }
         if (childCase){
             data.childCase = {};
-            var caseLabel = childCase.get("module").get("case_label")[self.language];
+            var caseLabel = childCase.get("module").get("case_label")[self.language] + ": ";
             if (caseLabel === "Cases"){
                 if (parentCase){
                     caseLabel = "Child Case";
                 } else {
-                    caseLabel = "Case"
+                    caseLabel = ""
                 }
             }
             var caseName = childCase.get("properties").case_name;
-            data.childCase.text = caseLabel + ': ' + caseName
+            data.childCase.text = caseLabel + caseName
         }
         self.$el.html(self.template(data));
         return self;
