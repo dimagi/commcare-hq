@@ -1,10 +1,12 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import json_error
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig
 from django.http import HttpResponse
 
 
+@json_error
 @httpdigest
 def restore(request, domain):
     """
