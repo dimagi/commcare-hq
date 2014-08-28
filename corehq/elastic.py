@@ -211,8 +211,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     This is a flat wrapper for es_query.
 
     To sort, specify the path to the relevant field
-    and the order ("asc" or "desc")
+    and the order ("asc" or "desc"), or provide a list of tuples to sort by
+    multiple fields.
     eg: sort_by=form.meta.timeStart, order="asc"
+    eg: sort_by=[(form.meta.timeStart, "asc"), ("name", "desc")]
     """
     if index not in ES_URLS:
         msg = "%s is not a valid ES index.  Available options are: %s" % (
