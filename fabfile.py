@@ -757,8 +757,12 @@ def hotfix_deploy():
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
     _require_target()
-    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
-       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+    user_confirm = (
+        console.confirm("Hey girl, you sure you didn't mean to run AWESOME DEPLOY?", default=False) and
+        console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) and
+        console.confirm('Did you run "fab {env.environment} preindex_views"?'.format(env=env), default=False)
+    )
+    if not user_confirm:
         utils.abort('Deployment aborted.')
 
     run('echo ping!')  # workaround for delayed console response
