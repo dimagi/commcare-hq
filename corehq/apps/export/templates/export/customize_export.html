@@ -209,7 +209,7 @@
                                     || compare(x_tag, y_tag);
                             result = result || x_tag ?
                                     result || compare(x_index, y_index) :
-                                    result || compare(order.indexOf(x_index), order.indexOf(y_index));
+                                    result || order && compare(order.indexOf(x_index), order.indexOf(y_index));
 
                             return result
                         });
