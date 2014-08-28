@@ -62,6 +62,7 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
   - ilsgateway-integration  # czue/lwysomi 8/27 - this one might stick around a while
+  - caselistmixin-refactor # Noah 8/14
 submodules:
   submodules/couchlog-src:
     branches:
