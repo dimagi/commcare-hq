@@ -260,6 +260,25 @@ def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
     r.retire()
 
+def get_case_ids(domain):
+    """
+    Had to add this because this query kept intermittently raising
+    "NoMoreData: Can't parse headers" exceptions.
+    """
+    max_tries = 5
+    for i in range(max_tries):
+        try:
+            result = CommCareCase.view('hqcase/types_by_domain',
+                reduce=False,
+                startkey=[domain],
+                endkey=[domain, {}],
+                include_docs=False,
+            ).all()
+            return [entry["id"] for entry in result]
+        except Exception:
+            if i == (max_tries - 1):
+                raise
+
 class CaseReminderHandler(Document):
     """
     A CaseReminderHandler defines the rules and schedule which govern how messages 
@@ -995,13 +1014,7 @@ class CaseReminderHandler(Document):
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
-                case_id_result = CommCareCase.view('hqcase/types_by_domain',
-                    reduce=False,
-                    startkey=[self.domain],
-                    endkey=[self.domain, {}],
-                    include_docs=False,
-                ).all()
-                case_ids = [entry["id"] for entry in case_id_result]
+                case_ids = get_case_ids(self.domain)
                 try:
                     client = get_redis_client()
                     client.set("reminder-rule-processing-current-%s" % self._id,

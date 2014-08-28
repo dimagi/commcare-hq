@@ -1965,6 +1965,13 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             if web_user.is_domain_admin(domain):
                 yield web_user
 
+    @classmethod
+    def get_dimagi_emails_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            if user_doc['email'].endswith('@dimagi.com'):
+                yield user_doc['email']
+
 
 class FakeUser(WebUser):
     """
