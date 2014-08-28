@@ -12,7 +12,7 @@ class MigrationCheckpoint(models.Model):
 class ILSGatewayConfig(Document):
     enabled = BooleanProperty(default=False)
     domain = StringProperty()
-    url = StringProperty()
+    url = StringProperty(default="http://ilsgateway.com/api/v0_1")
     username = StringProperty()
     password = StringProperty()
 

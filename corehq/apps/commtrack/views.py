@@ -6,13 +6,15 @@ from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required, \
+    cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
+from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from soil.util import expose_download, get_download_context
@@ -733,12 +735,17 @@ class ILSConfigView(BaseCommTrackManageView):
     template_name = 'locations/facility_sync.html'
     source = 'ilsgateway'
 
+    @cls_require_superuser_or_developer
+    def dispatch(self, request, *args, **kwargs):
+        return super(ILSConfigView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
             'settings': self.settings_context,
             'source': self.source,
-            'sync_url': self.sync_urlname
+            'sync_url': self.sync_urlname,
+            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username)
         }
 
     @property
