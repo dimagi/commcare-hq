@@ -392,7 +392,7 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
         if (parentCase){
             data.parentCase = {};
             var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language] + ": ";
-            if (caseLabel === "Cases"){
+            if (caseLabel === "Cases: "){
                 caseLabel = "";
             }
             var caseName = parentCase.get("properties").case_name;
@@ -408,12 +408,8 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
         if (childCase){
             data.childCase = {};
             var caseLabel = childCase.get("module").get("case_label")[self.language] + ": ";
-            if (caseLabel === "Cases"){
-                if (parentCase){
-                    caseLabel = "Child Case";
-                } else {
-                    caseLabel = ""
-                }
+            if (caseLabel === "Cases: "){
+                caseLabel = "";
             }
             var caseName = childCase.get("properties").case_name;
             data.childCase.text = caseLabel + caseName
