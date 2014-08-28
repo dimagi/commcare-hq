@@ -39,13 +39,16 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
     run_every=crontab(hour=23, minute=55),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
-def remove_expired_pending_invitations():
+def resend_or_remove_expired_pending_invitations():
     from corehq.apps.users.models import DomainInvitation
-    #When it should expire?
-    days_to_expire = 1
+    days_to_resend = (15, 29)
+    days_to_expire = 30
     domains = Domain.get_all()
     for domain in domains:
         invitations = DomainInvitation.by_domain(domain.name)
         for invitation in invitations:
-            if (datetime.now() - invitation.invited_on).days >= days_to_expire:
+            days = (datetime.now() - invitation.invited_on).days
+            if days >= days_to_expire:
                 invitation.delete()
+            elif days in days_to_resend:
+                invitation.send_activation_email(days_to_expire - days)
