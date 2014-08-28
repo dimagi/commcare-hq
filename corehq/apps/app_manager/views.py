@@ -2621,7 +2621,7 @@ def download_bulk_app_translations(request, domain, app_id):
         for detail in module.case_details.long.columns:
             rows[module_string].append((detail.field,) + tuple(detail.header.get(lang, "") for lang in app.langs))
             # Add advanced logic here for the different types (ID Mapping) and repeat names
-
+            # https://confluence.dimagi.com/display/commcarepublic/Case+List+and+Case+Detail+View+Configuration
             # NOTE: might be possible for something to be in short but not in long. How do we get the same ordering that the webpage uses?
 
 
@@ -2644,6 +2644,12 @@ def download_bulk_app_translations(request, domain, app_id):
 
             # Populate form sheet
             # We can probably use this page: https://confluence.dimagi.com/display/commcarepublic/Bulk+Translation
+            # Actually we can't because its js :(
+            # Here is where it happens:
+            # submodules/formdesigner/src/js/controller.js:759
+            #
+            # form.get_questions(app.langs) might be good
+            # Yeargh, it doesn't return the labels for all questions though
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
