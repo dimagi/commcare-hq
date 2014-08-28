@@ -2586,6 +2586,14 @@ def upload_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
+
+    def cleaned_row(row):
+        '''
+        :param row: A tuple representing a row in the spreadsheet
+        Returns a cleaned version of row with all instances of None changed to ""
+        '''
+        return tuple(item if item != None else "" for item in row)
+
     app = get_app(domain, app_id)
     languages_list = tuple('default_'+l for l in app.langs)
     audio_lang_list = tuple('audio_'+l for l in app.langs)
@@ -2593,10 +2601,8 @@ def download_bulk_app_translations(request, domain, app_id):
     video_lang_list = tuple('video_'+l for l in app.langs)
 
     rows = {}
-
     # Add headers for the first sheet
-    # headers = (("Modules_and_forms", ('Type', 'name', 'sheet_name')+tuple('default_'+l for l in app.langs)+('icon_filepath', 'audio_filepath', 'unique_id')),)
-    headers = [("Modules_and_forms", ('Type', 'name', 'sheet_name')+tuple(languages_list)+('icon_filepath', 'audio_filepath', 'unique_id')),]
+    headers = [("Modules_and_forms", ('Type', 'sheet_name')+tuple(languages_list)+('icon_filepath', 'audio_filepath', 'unique_id')),]
     rows["Modules_and_forms"] = []
 
     for mod_index, module in enumerate(app.modules):
@@ -2605,29 +2611,37 @@ def download_bulk_app_translations(request, domain, app_id):
         # Add module to the first sheet and add a sheet for the module
         module_sheet_header = (module_string, ('case_property',)+languages_list)
         headers.append(module_sheet_header)
-        row_data = ("Modules_and_forms",
-                    ("Module", "foo")+
-                        tuple(module.name.get(lang, None) for lang in app.langs)+
-                        (module.media_image, module.media_image, module.id)
-                   )
+        row_data = cleaned_row(("Module", module_string)+\
+                                tuple(module.name.get(lang, "") for lang in app.langs)+\
+                                (module.media_image, module.media_image, module.unique_id))
         rows["Modules_and_forms"].append(row_data)
+
+        # Populate module sheet
+        
 
         for form_index, form in enumerate(module.forms):
             form_string = module_string + "_form" + str(form_index+1)
 
-            # Add form to the first sheet and add a sheet for the form
+            # Add sheet for the form
             form_sheet_header = (form_string, ('label',)+languages_list
                                                        +audio_lang_list
                                                        +image_lang_list
                                                        +video_lang_list)
             headers.append(form_sheet_header)
+
+            # Add row for this form to the first sheet
+            # This next line is same logic as above :(
+            first_sheet_row = cleaned_row(("Form", form_string)+\
+                                            tuple(form.name.get(lang, "") for lang in app.langs)+\
+                                            (form.media_image, form.media_image, form.unique_id))
+            rows["Modules_and_forms"].append(first_sheet_row)
+
+            # Populate form sheet
             #rows[form_sheet_header] = []
 
     temp = StringIO()
-    foo = tuple((k, v) for k, v in rows.values())
-    print foo
-    bar = ((header[0], ()) for header in headers)
-    export_raw(headers, foo, temp)
+    data = [(k,v) for k,v in rows.iteritems()]
+    export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 
 @no_conflict_require_POST
