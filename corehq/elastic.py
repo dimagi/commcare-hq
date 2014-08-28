@@ -257,10 +257,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         else:
             sort_by = [(sort_by, order)]
         sort = []
-        for sort_key in sort_by:
-            assert(sort_key[1] in ['asc', 'desc']),\
+        for sort_key, sort_order in sort_by:
+            assert(sort_order in ['asc', 'desc']),\
                 'Sort order must be "asc" or "desc"'
-            sort.append({sort_key[0]: {'order': sort_key[1]}})
+            sort.append({sort_key: {'order': sort_order}})
         query['sort'] = sort
 
     # make query
