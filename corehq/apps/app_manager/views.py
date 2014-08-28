@@ -2617,7 +2617,13 @@ def download_bulk_app_translations(request, domain, app_id):
         rows["Modules_and_forms"].append(row_data)
 
         # Populate module sheet
-        
+        rows[module_string] = []
+        for detail in module.case_details.long.columns:
+            rows[module_string].append((detail.field,) + tuple(detail.header.get(lang, "") for lang in app.langs))
+            # Add advanced logic here for the different types (ID Mapping) and repeat names
+
+            # NOTE: might be possible for something to be in short but not in long. How do we get the same ordering that the webpage uses?
+
 
         for form_index, form in enumerate(module.forms):
             form_string = module_string + "_form" + str(form_index+1)
@@ -2637,7 +2643,7 @@ def download_bulk_app_translations(request, domain, app_id):
             rows["Modules_and_forms"].append(first_sheet_row)
 
             # Populate form sheet
-            #rows[form_sheet_header] = []
+            # We can probably use this page: https://confluence.dimagi.com/display/commcarepublic/Bulk+Translation
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
