@@ -70,9 +70,13 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
-        if report.is_rendered_as_email:
+
+    @property
+    def readable_status(self):
+        if self.report.is_rendered_as_email:
             with localize('hin'):
-                self.status = _(self.status)
+                return _(self.status)
+        return self.status
 
     def child_xpath(self, template):
         return template.format(num=self.child_index)
@@ -587,7 +591,7 @@ class ConditionsMet(OPMCaseRow):
         ('awc_name', _("AWC Name"), True),
         ('block_name', _("Block Name"), True),
         ('husband_name', _("Husband Name"), True),
-        ('status', _("Current status"), True),
+        ('readable_status', _("Current status"), True),
         ('preg_month_display', _('Pregnancy Month'), True),
         ('child_name', _("Child Name"), True),
         ('child_age_display', _("Child Age"), True),
@@ -659,7 +663,7 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
-        ('year_end_bonus_cash', _("Birth Spacing Bonus"), True),
+        ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
         ('owner_id', _("Owner ID"), False)
     ]

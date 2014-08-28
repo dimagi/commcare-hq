@@ -252,13 +252,7 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        # pack and add custom data items
-        product_data = {}
-        for k, v in row.iteritems():
-            if str(k).startswith('data: '):
-                product_data[k[6:]] = v
-
-        setattr(p, 'product_data', product_data)
+        p.product_data = row.get('data', {})
 
         return p
 
@@ -916,6 +910,23 @@ class SupplyPointCase(CommCareCase):
         #data['last_reported'] = None
 
         return data
+
+    @classmethod
+    def get_location_map_by_domain(cls, domain):
+        """
+        Returns a dict that maps from associated location id's
+        to supply point id's for all supply point cases in the passed
+        domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/supply_point_by_loc',
+            startkey=[domain],
+            endkey=[domain, {}],
+        )
+
+        return dict(
+            (row['key'][1], row['id']) for row in cls.get_db().view(**kwargs)
+        )
 
     @classmethod
     def get_by_location(cls, location):

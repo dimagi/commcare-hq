@@ -8,11 +8,12 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -334,8 +335,8 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(
-                        self._get_num_submissions(
-                            user.user_id, form['xmlns'], form['app_id'])
+                        self.forms_per_user(form.get('app_id'), form['xmlns'])
+                            .get(user.user_id, 0)
                     )
                 row_sum = sum(row)
                 row = (
@@ -352,16 +353,19 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
-                                  app_id=app_id)
-        data = get_db().view(
-            'reports_forms/all_forms',
-            reduce=True,
-            startkey=key + [self.datespan.startdate_param_utc],
-            endkey=key + [self.datespan.enddate_param_utc],
-        ).first()
-        return data['value'] if data else 0
+    @memoized
+    def forms_per_user(self, app_id, xmlns):
+        query = (FormES()
+                 .domain(self.domain)
+                 .xmlns(xmlns)
+                 .submitted(gt=self.datespan.startdate_utc,
+                            lte=self.datespan.enddate_utc)
+                 .size(0)
+                 .user_facet())
+        if app_id and app_id != MISSING_APP_ID:
+            query = query.app(app_id)
+        res = query.run()
+        return res.facets.user.counts_by_term()
 
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
@@ -569,7 +573,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 

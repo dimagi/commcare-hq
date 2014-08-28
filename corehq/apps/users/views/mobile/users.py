@@ -341,7 +341,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'show_inactive': self.show_inactive,
             'more_columns': self.more_columns,
             'show_case_sharing': self.show_case_sharing,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': (10, 20, 50, 100),
             'query': self.query,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,

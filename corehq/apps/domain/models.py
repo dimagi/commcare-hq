@@ -249,7 +249,7 @@ class Domain(Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     # Set to True to allow sending sms and all-label surveys to cases whose
     # phone number is duplicated with another contact
-    send_to_duplicated_case_numbers = BooleanProperty(default=False)
+    send_to_duplicated_case_numbers = BooleanProperty(default=True)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

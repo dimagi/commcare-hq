@@ -456,6 +456,14 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
         emws = request.GET.getlist(cls.slug)
         return 'all_data' in emws
 
+    @property
+    @memoized
+    def selected(self):
+        selected = super(ExpandedMobileWorkerFilterWithAllData, self).selected
+        if self.show_all_data(self.request):
+            selected = [{'id': 'all_data', 'text': "[All Data]"}] + selected
+        return selected
+
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None

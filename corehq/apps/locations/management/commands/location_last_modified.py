@@ -17,7 +17,12 @@ class Command(BaseCommand):
         to_save = []
 
         for location in iter_docs(Location.get_db(), relevant_ids):
-            if 'last_modified' not in location or not location['last_modified']:
+            # exclude any psi domain to make this take a realistic
+            # amount fo time
+            if (
+                not location.get('last_modified', False) and
+                'psi' not in location.get('domain', '')
+            ):
                 location['last_modified'] = datetime.now().isoformat()
                 to_save.append(location)
 
