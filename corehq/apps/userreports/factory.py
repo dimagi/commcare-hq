@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.definitions import RawIndicatorSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
@@ -65,20 +66,20 @@ def _build_count_indicator(spec):
         CustomFilter(lambda item: True)
     )
 
+
 def _build_raw_indicator(spec):
-    _validate_required_fields(spec, ('column_id', 'datatype', 'property_name'))
-    display_name = spec.get('display_name', spec['column_id'])
+    wrapped = RawIndicatorSpec.wrap(spec)
 
     column = Column(
-        id=spec['column_id'],
-        datatype=spec['datatype'],
-        is_nullable=spec.get('is_nullable', True),
-        is_primary_key=spec.get('is_primary_key', False),
+        id=wrapped.column_id,
+        datatype=wrapped.datatype,
+        is_nullable=wrapped.is_nullable,
+        is_primary_key=wrapped.is_primary_key,
     )
     return RawIndicator(
-        display_name,
+        wrapped.display_name,
         column,
-        getter=DictGetter(property_name=spec['property_name'])
+        getter=wrapped.getter
     )
 
 
