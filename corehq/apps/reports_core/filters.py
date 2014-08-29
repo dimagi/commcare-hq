@@ -93,7 +93,6 @@ class DatespanFilter(BaseFilter):
         self.template = template
         self.css_id = css_id or self.name
 
-
     @memoized
     def value(self, startdate, enddate, date_range_inclusive=True):
         def date_or_nothing(param):
