@@ -200,6 +200,57 @@ class RawIndicatorTest(SingleIndicatorTestBase):
         self._check_result(indicator, dict(foo=None), None)
         self._check_result(indicator, dict(nofoo='foryou'), None)
 
+    def testNestedSinglePath(self):
+        self._check_result(
+            self._default_nested_indicator(['property']),
+            {'property': 'the right value'},
+            'the right value'
+        )
+
+    def testNestedDeepReference(self):
+        test_doc = {
+            'parent': {
+                'child': {
+                    'grandchild': 'the right value'
+                }
+            }
+        }
+        self._check_result(
+            self._default_nested_indicator(["parent", "child", "grandchild"]),
+            test_doc,
+            'the right value'
+        )
+
+    def testNestedInvalidTopLevel(self):
+        self._check_result(
+            self._default_nested_indicator(['parent', 'child']),
+            {'badparent': 'bad value'},
+            None,
+        )
+
+    def testNestedInvalidMidLevel(self):
+        test_doc = {
+            'parent': {
+                'badchild': {
+                    'grandchild': 'the wrong value'
+                }
+            }
+        }
+        self._check_result(
+            self._default_nested_indicator(["parent", "child", "grandchild"]),
+            test_doc,
+            None
+        )
+
+    def _default_nested_indicator(self, path):
+        return IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            "datatype": "string",
+            "property_path": path,
+            "display_name": "indexed",
+        })
+
 
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):
