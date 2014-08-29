@@ -17,6 +17,9 @@ class DateFilterValue(FilterValue):
 
     def __init__(self, filter, value):
         assert filter.type == 'date'
+        # todo: might want some better way to set defaults
+        if value is None:
+            value = DateSpan.since(7)
         assert isinstance(value, DateSpan)
         super(DateFilterValue, self).__init__(filter, value)
 
