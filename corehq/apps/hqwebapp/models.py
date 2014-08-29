@@ -237,10 +237,8 @@ class ProjectReportsTab(UITab):
              'icon': 'icon-tasks'}
         ])]
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            context)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            context)
+        project_reports = ProjectReportDispatcher.navigation_sections(context)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(context)
 
         return tools + project_reports + custom_reports
 
