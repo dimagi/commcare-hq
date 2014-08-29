@@ -1,9 +1,8 @@
 import json
 import os
-from datetime import date
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.models import IndicatorConfiguration, ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration
 
 
 class ReportConfigurationTest(SimpleTestCase):
