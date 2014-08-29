@@ -551,13 +551,14 @@ class CaseReportMixin(object):
             awc_filters = []
             def make_filter(term):
                 return es_filters.term("awc_name.#value", term)
+
             for awc in awcs:
                 awc_terms = filter(None, awc.lower().split())
                 if len(awc_terms) == 1:
                     awc_filters.append(make_filter(awc_terms[0]))
                 elif len(awc_terms) > 1:
-                    awc_filters.append(es_filters.AND(
-                        make_filter(term) for term in awc_terms))
+                    awc_filters.append(es_filters.AND(*(make_filter(term) for term in awc_terms)))
+
             return es_filters.OR(*awc_filters)
 
         def get_gp_filter(gp):
