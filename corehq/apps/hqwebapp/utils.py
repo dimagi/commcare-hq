@@ -16,7 +16,7 @@ from django.views.generic import TemplateView
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import Invitation, CouchUser, WebUser
+from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class InvitationView():
 
         self.validate_invitation(invitation)
 
-        if invitation.invited_on.date() + relativedelta(months=1) < datetime.now().date():
+        if invitation.invited_on.date() + relativedelta(months=1) < datetime.now().date()  and isinstance(invitation, DomainInvitation):
                 return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():
