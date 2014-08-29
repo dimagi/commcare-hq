@@ -60,14 +60,14 @@ class BranchConfig(jsonobject.JsonObject):
         yield os.path.join(*path), self
 
 
-def fetch_remote(base_config):
+def fetch_remote(base_config, name="origin"):
     jobs = []
     for path in set(path for path, _ in base_config.span_configs()):
         git = get_git(path)
-        print "  [{cwd}] fetching all".format(cwd=path)
-        jobs.append(gevent.spawn(git.fetch, '--all'))
+        print "  [{cwd}] fetching {name}".format(cwd=path, name=name)
+        jobs.append(gevent.spawn(git.fetch, name))
     gevent.joinall(jobs)
-    print "All branches fetched"
+    print "fetched {}".format(name)
 
 
 def has_ref(git, ref):
