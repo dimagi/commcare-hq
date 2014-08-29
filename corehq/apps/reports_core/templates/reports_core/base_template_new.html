@@ -15,18 +15,6 @@
             return base_url;
         }
 
-         // raw datatables version
-{#        $(document).ready(function() {#}
-{#            $('#report_table_{{ report.slug }}').dataTable({#}
-{#                "bProcessing": true,#}
-{#                "bServerSide": true,#}
-{#                "sAjaxSource": "{{ url }}",#}
-{#                "sAjaxDataProp": "aaData",#}
-{#                "bPaginate": true,#}
-{#                "aoColumns": {{ headers.render_aoColumns|JSON }}#}
-{#            });#}
-{#        });#}
-
     $(function(){
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
