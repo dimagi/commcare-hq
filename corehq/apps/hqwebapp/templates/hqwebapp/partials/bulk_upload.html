@@ -5,12 +5,14 @@
 <h2>{% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Upload {{ plural_noun }} Using Excel{% endblocktrans %}</h2>
 <p>
     <ol>
-        <li>
+        <li id="download_block">
             <p>
                 {% blocktrans with adjective=bulk_upload.adjective %}Download your current {{ adjective }} Excel file.{% endblocktrans %}
             </p>
+            {% block extra_option %}
+            {% endblock %}
             <p>
-                <a href="{{ bulk_upload.download_url }}">
+                <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
                     <button class="btn btn-success">
                         <i class="icon-download-alt"></i> {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Download {{ plural_noun }}{% endblocktrans %}
                     </button>

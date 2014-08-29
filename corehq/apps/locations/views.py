@@ -289,6 +289,7 @@ class LocationImportView(BaseLocationView):
                 "adjective": _("location"),
                 "plural_noun": _("locations"),
             },
+            "manage_consumption": self.domain_object.commtrack_settings.individual_consumption_defaults,
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -334,9 +335,10 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 
 @login_and_domain_required
 def location_export(request, domain):
+    include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain)
+    dump_locations(response, domain, include_consumption)
     return response
 
 

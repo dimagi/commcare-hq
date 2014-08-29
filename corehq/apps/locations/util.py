@@ -197,13 +197,19 @@ def get_default_column_data(domain, location_types):
     return data
 
 
-def dump_locations(response, domain):
+def dump_locations(response, domain, include_consumption=False):
     file = StringIO()
     writer = Excel2007ExportWriter()
 
     location_types = defined_location_types(domain)
 
-    defaults = get_default_column_data(domain, location_types)
+    if include_consumption:
+        defaults = get_default_column_data(domain, location_types)
+    else:
+        defaults = {
+            'headers': {},
+            'values': {}
+        }
 
     common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
     writer.open(
