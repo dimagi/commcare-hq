@@ -72,6 +72,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         return {
+            'domain': self.domain,
             'report': self,
             'filter_context': self.filter_context,
             'url': reverse(self.slug, args=[self.domain, self.report_config_id]),
