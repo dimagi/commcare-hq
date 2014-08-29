@@ -4,6 +4,7 @@ from fluff.filters import ORFilter, ANDFilter
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter
+from custom.utils.utils import flat_field
 
 
 def _get_all_forms():
@@ -11,12 +12,6 @@ def _get_all_forms():
     for xmlns in OPERATEUR_XMLNSES:
         form_filters.append(FormPropertyFilter(xmlns=xmlns))
     return form_filters
-
-
-def flat_field(fn):
-    def getter(item):
-        return unicode(fn(item) or "")
-    return fluff.FlatField(getter)
 
 
 class CouvertureFluff(fluff.IndicatorDocument):
