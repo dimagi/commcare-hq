@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
+from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportFilterFactory
 from dimagi.utils.decorators.memoized import memoized
@@ -53,6 +54,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def filters(self):
         return [ReportFilterFactory.from_spec(f) for f in self.spec['filters']]
 
+    @cls_to_view_login_and_domain
     def dispatch(self, request, domain, report_config_id, **kwargs):
         self.domain = domain
         self.report_config_id = report_config_id
@@ -70,7 +72,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         return {
-            'project': self.domain,
             'report': self,
             'filter_context': self.filter_context,
             'url': reverse(self.slug, args=[self.domain, self.report_config_id]),
