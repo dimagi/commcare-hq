@@ -76,6 +76,7 @@ class ReportConfiguration(Document):
     config_id = StringProperty(required=True)
     table_id = StringProperty(required=True)  # todo: validate that we want this here as opposed to getting it from the config
     display_name = StringProperty()
+    description = StringProperty()
     aggregation_columns = StringListProperty()
     configured_filters = ListProperty()
     configured_columns = ListProperty()
