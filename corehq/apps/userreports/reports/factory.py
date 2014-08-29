@@ -5,6 +5,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import DatespanFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.reports.filters import DateFilterValue
 
 
 def _build_date_filter(spec):
@@ -41,16 +42,23 @@ class ReportFactory(object):
         return ConfigurableReportDataSource(
             domain=spec['domain'],
             table_id=spec['table_id'],
+            filters=[ReportFilter.wrap(f) for f in spec['filters']],
             aggregation_columns=spec['aggregation_columns'],
-            columns=[ReportColumnFactory.from_spec(colspec) for colspec in spec['columns']],
+            columns=[ReportColumn.wrap(colspec) for colspec in spec['columns']],
         )
 
-class ReportColumnFactory(object):
 
-    @classmethod
-    def from_spec(cls, spec):
-        # todo: type convert to runtime object
-        return ReportColumn.wrap(spec)
+class ReportFilter(JsonObject):
+    type = StringProperty(required=True)
+    slug = StringProperty(required=True)
+    field = StringProperty(required=True)
+    display = StringProperty()
+
+    def create_filter_value(self, value):
+        # todo: this intentionally only supports dates for now
+        return {
+            'date': DateFilterValue
+        }[self.type](self, value)
 
 
 class ReportColumn(JsonObject):

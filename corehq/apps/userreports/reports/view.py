@@ -83,8 +83,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     def get_ajax(self, request, domain=None, **kwargs):
         data = self.data_source
-        params = self.filter_values
-        data.configure(params)
+        data.set_filter_values(self.filter_values)
         total_records = data.get_total_records()
         return self.render_json_response({
             'data_keys': data.slugs(),
