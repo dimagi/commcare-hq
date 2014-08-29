@@ -81,18 +81,19 @@ function HQReportDataTables(options) {
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
                     var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
-                    console.log(ajaxParams);
                     for (var p in ajaxParams) {
-                        var currentParam = ajaxParams[p];
-                        if(_.isObject(currentParam.value)) {
-                            for (var j=0; j < currentParam.value.length; j++) {
-                                aoData.push({
-                                    name: currentParam.name,
-                                    value: currentParam.value[j]
-                                });
+                        if (ajaxParams.hasOwnProperty(p)) {
+                            var currentParam = ajaxParams[p];
+                            if(_.isObject(currentParam.value)) {
+                                for (var j=0; j < currentParam.value.length; j++) {
+                                    aoData.push({
+                                        name: currentParam.name,
+                                        value: currentParam.value[j]
+                                    });
+                                }
+                            } else {
+                                aoData.push(currentParam);
                             }
-                        } else {
-                            aoData.push(currentParam);
                         }
                     }
                 };
