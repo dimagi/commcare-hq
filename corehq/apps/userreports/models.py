@@ -20,8 +20,8 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
     @property
     def filter(self):
+        extras = [FilterFactory.from_spec(self.configured_filter)] if self.configured_filter else []
         return ANDFilter([
-            FilterFactory.from_spec(self.configured_filter),
             SinglePropertyValueFilter(
                 getter=DictGetter('domain'),
                 operator=EQUAL,
@@ -32,7 +32,8 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
                 operator=EQUAL,
                 reference_value=self.referenced_doc_type
             ),
-        ])
+        ] + extras
+        )
 
     @property
     def indicators(self):
