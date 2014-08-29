@@ -11,6 +11,8 @@ from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.reports.view import ConfigurableReport
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
@@ -99,6 +101,7 @@ def REPORTS(project):
         reports.append(messaging)
 
     reports.extend(dynamic_reports(project))
+    reports.extend(configurable_reports(project))
 
     return reports
 
@@ -106,6 +109,29 @@ def dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
         yield (reportset.section_title, filter(None, (make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
+
+def configurable_reports(project):
+    """
+    User configurable reports
+    """
+    configs = ReportConfiguration.by_domain(project.name)
+    if configs:
+        def _make_report_class(config):
+            from corehq.apps.reports.generic import GenericReportView
+
+            # this is really annoying.
+            # the report metadata should really be pulled outside of the report classes
+            @classmethod
+            def get_url(cls, domain):
+                return reverse(ConfigurableReport.slug, args=[domain, config._id])
+
+            return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
+                'name': config.display_name,
+                'description': config.description,
+                'get_url': get_url,
+            })
+
+        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
 
 def make_dynamic_report(report_config, keyprefix):
     """create a report class the descends from a generic report class but has specific parameters set"""
