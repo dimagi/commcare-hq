@@ -39,14 +39,8 @@
             {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
 
             ajaxSource: '{{ url }}',
-            {# ajaxParams: function() { #}
-                {# return [ #}
-                    {# {"name": "startdate", "value": "2014-01-01"}, #}
-                    {# {"name": "enddate", "value": "2014-04-01"} #}
-                {# ]; #}
-            {# }, #}
             ajaxParams: function() {
-                return $('#report-filters').serialize();
+                return $('#report-filters').serializeArray();
             },
 
             {% if report_table.left_col.is_fixed %}
@@ -57,7 +51,6 @@
         });
         $('#report-filters').submit(function(event) {
             var postData = $(this).serialize();
-            console.log(postData);
             $.ajax({
                 url: $(this).attr("action"),
                 type: $(this).attr("method"),
