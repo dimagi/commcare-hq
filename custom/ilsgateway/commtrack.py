@@ -277,10 +277,10 @@ def bootstrap_domain(ilsgateway_config):
         date = None
         commtrack_settings_sync(domain)
     try:
-        #products_sync(domain, endpoint, date=date)
-        #locations_sync(domain, endpoint, date=date)
+        products_sync(domain, endpoint, date=date)
+        locations_sync(domain, endpoint, date=date)
         webusers_sync(domain, endpoint, date=date)
-        #smsusers_sync(domain, endpoint, date=date)
+        smsusers_sync(domain, endpoint, date=date)
         
         checkpoint.date = start_date
         checkpoint.save()
