@@ -536,6 +536,17 @@ def reinvite_web_user(request, domain):
     except ResourceNotFound:
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
+@require_POST
+@require_can_edit_web_users
+def delete_invitation(request, domain):
+    invitation_id = request.POST['invite']
+    try:
+        invitation = DomainInvitation.get(invitation_id)
+        invitation.delete()
+        return json_response({'response': _("Invitation deleted"), 'status': 'ok'})
+    except ResourceNotFound:
+        return json_response({'response': _("Error while deleting invitation"), 'status': 'error'})
+
 
 class BaseManageWebUserView(BaseUserSettingsView):
 

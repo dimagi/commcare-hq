@@ -1,5 +1,7 @@
+from datetime import datetime
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.relativedelta import relativedelta
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
@@ -99,6 +101,9 @@ class InvitationView():
             return HttpResponseRedirect(reverse("login"))
 
         self.validate_invitation(invitation)
+
+        if invitation.invited_on.date() + relativedelta(months=1) < datetime.now().date():
+                return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
