@@ -313,7 +313,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             res = es_query(
                 es_url=ES_URLS["groups"],
                 q=q,
-                fields=['_id', 'name'],
+                fields=['_id', 'name', 'reporting'],
             )
             selected += [self.group_tuple(hit['fields']) for hit in res['hits']['hits']]
         if user_ids:
