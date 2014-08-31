@@ -706,9 +706,7 @@ def db_comparisons(request):
             'description': 'Users (base_doc is "CouchUser")',
             'couch_db': CommCareUser.get_db(),
             'view_name': 'users/by_username',
-            'es_query': UserES().remove_default_filter('active')
-                .remove_default_filter('mobile_worker')
-                .size(0),
+            'es_query': UserES().remove_default_filter('active').size(0),
             'sql_rows': User.objects.count(),
         },
         {
@@ -974,6 +972,7 @@ def stats_data(request):
             request.datespan,
             interval=interval,
             user_type_mobile=params_es.get("user_type_mobile"),
+            is_cumulative=request.GET.get("is_cumulative", "True") == "True",
         )
     return json_response(add_blank_data(
         stats_data,

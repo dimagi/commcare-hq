@@ -305,7 +305,7 @@ class AutoSelectCase(DocumentSchema):
         value_source    Reference to the source of the value. For mode = fixture,
                         this represents the FixtureDataType ID. For mode = case
                         this represents the 'case_tag' for the case.
-                        The mode 'user' doesn't require a value_source.
+                        The modes 'user' and 'raw' don't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
                         index or a user data key or a fixture field name or the raw
                         xpath expression.
@@ -313,7 +313,7 @@ class AutoSelectCase(DocumentSchema):
     """
     mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
     value_source = StringProperty()
-    value_key = StringProperty()
+    value_key = StringProperty(required=True)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -510,6 +510,7 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -720,6 +721,13 @@ class FormBase(DocumentSchema):
     @property
     def has_fixtures(self):
         return 'src="jr://fixture/item-list:' in self.source
+
+    def get_auto_gps_capture(self):
+        app = self.get_app()
+        if app.build_version and app.enable_auto_gps:
+            return self.auto_gps_capture or app.auto_gps_capture
+        else:
+            return False
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -1500,11 +1508,28 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
                 errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
 
-            if isinstance(action, LoadUpdateAction) and \
-                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
-                case_tag = action.auto_select.value_source
-                if not self.actions.get_action_from_tag(case_tag):
-                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
+            if isinstance(action, LoadUpdateAction) and action.auto_select:
+                mode = action.auto_select.mode
+                if not action.auto_select.value_key:
+                    key_name = {
+                        AUTO_SELECT_CASE: _('Case property'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table field'),
+                        AUTO_SELECT_USER: _('custom user property'),
+                        AUTO_SELECT_RAW: _('custom XPath expression'),
+                    }[mode]
+                    errors.append({'type': 'auto select key', 'key_name': key_name})
+
+                if not action.auto_select.value_source:
+                    source_names = {
+                        AUTO_SELECT_CASE: _('Case tag'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table tag'),
+                    }
+                    if mode in source_names:
+                        errors.append({'type': 'auto select source', 'source_name': source_names[mode]})
+                elif mode == AUTO_SELECT_CASE:
+                    case_tag = action.auto_select.value_source
+                    if not self.actions.get_action_from_tag(case_tag):
+                        errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
@@ -2377,7 +2402,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # `LooseVersion`s are smart!
         # LooseVersion('2.12.0') > '2.2'
         # (even though '2.12.0' < '2.2')
-        return LooseVersion(self.build_spec.version)
+        if self.build_spec.version:
+            return LooseVersion(self.build_spec.version)
 
     def get_preview_build(self):
         preview = self.get_build()
@@ -2746,6 +2772,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

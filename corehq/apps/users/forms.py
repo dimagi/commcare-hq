@@ -18,7 +18,9 @@ from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser, Program
+from corehq.apps.commtrack.models import CommTrackUser, Program, SupplyPointCase
+from bootstrap3_crispy import layout as cb3_layout
+from bootstrap3_crispy import helper as cb3_helper
 import re
 import settings
 
@@ -130,10 +132,22 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             self.initial['role'] = current_role
 
 
+class UpdateUserPermissionForm(forms.Form):
+    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
+
+    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
+        is_update_successful = False
+        if editable_user and couch_user.is_superuser:
+            editable_user.is_superuser = is_super_user
+            editable_user.save()
+            is_update_successful = True
+
+        return is_update_successful
+
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
     last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
-    email = forms.EmailField(label=ugettext_lazy("E-mail"), max_length=75, required=False)
+    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
         initial=None,
@@ -154,6 +168,24 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
+
+
+    def __init__(self, *args, **kwargs):
+        super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
+
+        self.new_helper = cb3_helper.FormHelper()
+        self.new_helper.form_method = 'POST'
+        self.new_helper.form_class = 'form-horizontal'
+        self.new_helper.label_class = 'col-lg-2'
+        self.new_helper.field_class = 'col-lg-8'
+        self.new_helper.layout = cb3_layout.Layout(
+            cb3_layout.Fieldset(
+                _("Basic"),
+                cb3_layout.Field('email'),
+                cb3_layout.Field('first_name'),
+            )
+        )
+
     @property
     def direct_properties(self):
         return self.fields.keys()
@@ -348,8 +380,14 @@ class CommtrackUserForm(forms.Form):
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
+
             commtrack_user.clear_locations()
             commtrack_user.add_location(loc, create_sp_if_missing=True)
+
+            # add the supply point case id to user data fields
+            # so that the phone can auto select
+            supply_point = SupplyPointCase.get_by_location(loc)
+            user.user_data['commtrack-supply-point'] = supply_point._id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

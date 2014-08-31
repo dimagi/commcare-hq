@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
-from django.conf import settings
+from datetime import datetime
 
 
 class Group(UndoableDocument):
@@ -21,9 +21,14 @@ class Group(UndoableDocument):
     path = ListProperty()
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
+    last_modified = DateTimeProperty()
 
     # custom data can live here
     metadata = DictProperty()
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        return super(Group, self).save(*args, **kwargs)
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):

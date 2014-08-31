@@ -72,6 +72,11 @@ class Program(Document):
     domain = StringProperty()
     name = StringProperty()
     code = StringProperty()
+    last_modified = DateTimeProperty()
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        return super(Program, self).save(*args, **kwargs)
 
     @classmethod
     def by_domain(cls, domain, wrap=True):
@@ -110,6 +115,11 @@ class Product(Document):
     program_id = StringProperty()
     cost = DecimalProperty()
     product_data = DictProperty()
+    last_modified = DateTimeProperty()
+
+    def save(self, *args, **kwargs):
+        self.last_modified = datetime.now()
+        return super(Product, self).save(*args, **kwargs)
 
     @property
     def code(self):

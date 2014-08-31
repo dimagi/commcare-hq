@@ -14,7 +14,7 @@ SQLAlchemy. Here's an example usage:
         .sort('received_on', desc=False)\
         .size(self.pagination.count)\
         .start(self.pagination.start)\
-        .facet("domains", {"field": "domains"})
+        .terms_facet('babies_saved', 'babies.count', size=10)
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -44,11 +44,15 @@ TODOs:
 sorting
 Add esquery.iter() method
 """
+from collections import namedtuple
 from copy import deepcopy
 import json
 
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
+from . import facets
 from . import filters
 
 
@@ -73,6 +77,7 @@ class ESQuery(object):
     _fields = None
     _start = None
     _size = None
+    _facets = None
     default_filters = {
         "match_all": {"match_all": {}}
     }
@@ -84,16 +89,13 @@ class ESQuery(object):
                 index, ', '.join(ES_URLS.keys()))
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
-        self.es_query = {
-            "query": {
-                "filtered": {
-                    "filter": {"and": []},
-                    "query": {'match_all': {}}
-                }
-            },
-            "facets": {
+        self._facets = []
+        self.es_query = {"query": {
+            "filtered": {
+                "filter": {"and": []},
+                "query": {'match_all': {}}
             }
-        }
+        }}
 
     @property
     def builtin_filters(self):
@@ -151,33 +153,19 @@ class ESQuery(object):
         """
         return self._default_filters.values() + self._filters
 
-    @property
-    def _facets(self):
-        return self.es_query['facets']
-
-    def facet(self, name, _facet):
+    def facet(self, _facet):
         """
         Add a facet to the query.
         """
         query = deepcopy(self)
-        query._facets[name] = _facet
+        query._facets.append(_facet)
         return query
 
-    @property
-    def facets(self):
-        """
-        Return a dictionary of the facets used in this query.
-        """
-        return self._facets
+    def terms_facet(self, name, term, size=None):
+        return self.facet(facets.TermsFacet(name, term, size))
 
     def date_histogram(self, name, datefield, interval):
-        facet_terms = {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                }
-        }
-        return self.facet(name, facet_terms)
+        return self.facet(facets.DateHistogram(name, datefield, interval))
 
     @property
     def _query(self):
@@ -203,6 +191,11 @@ class ESQuery(object):
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
+        if self._facets:
+            self.es_query['facets'] = {
+                facet.name: {facet.type: facet.params}
+                for facet in self._facets
+            }
 
     def fields(self, fields):
         """
@@ -265,7 +258,8 @@ class ESQuery(object):
 
     def remove_default_filter(self, default):
         query = deepcopy(self)
-        query._default_filters.pop(default)
+        if default in query._default_filters:
+            query._default_filters.pop(default)
         return query
 
 
@@ -292,8 +286,9 @@ class ESQuerySet(object):
     def raw_hits(self):
         return self.raw['hits']['hits']
 
+    @property
     def doc_ids(self):
-        return [r['_id'] for r in self.raw_hits()]
+        return [r['_id'] for r in self.raw_hits]
 
     @property
     def hits(self):
@@ -318,6 +313,14 @@ class ESQuerySet(object):
 
     def facet(self, name, _type):
         return self.raw['facets'][name][_type]
+
+    @property
+    @memoized
+    def facets(self):
+        facets = self.query._facets
+        raw = self.raw.get('facets', {})
+        results = namedtuple('facet_results', [f.name for f in facets])
+        return results(**{f.name: f.parse_result(raw) for f in facets})
 
 
 class HQESQuery(ESQuery):
