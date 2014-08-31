@@ -283,8 +283,8 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
     @classmethod
     def selected_group_ids(cls, request):
-        return cls.selected_reporting_group_ids(cls, request) +\
-               cls.selected_sharing_group_ids(cls, request)
+        return cls.selected_reporting_group_ids(request) +\
+               cls.selected_sharing_group_ids(request)
 
     @classmethod
     def selected_reporting_group_ids(cls, request):
