@@ -1,5 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.models import (
+    Form,
+    FormActionCondition,
+    OpenSubCaseAction,
+)
 from corehq.apps.reports.formdetails.readable import FormQuestion
 
 
@@ -9,12 +13,26 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('ran command')
 
+        '''
         conf = {
             "form_id": '548fe79579be510fba8fcf49b098a07a49305e2b',
             # List of question ids
-            "questions": ['CHW1_transportation_assessment_getting_to_appointments'],
+            "questions": [
+                'CHW1_transportation_cm_metro_reduced_activities',
+                'CHW1_transportation_assessment_getting_to_appointments',
+            ],
             "additional_properties": []
         }
+        '''
+        conf = {
+            "form_id": '3ea3d49524fec7c7a2fb1f92f3a6d599048dfa54',
+            # List of question ids
+            "questions": [
+                'my-multi-select',
+            ],
+            "additional_properties": []
+        }
+
 
         # Hmmm... questions might need to be in the form:
         # "questions": [
@@ -37,13 +55,58 @@ class Command(BaseCommand):
         question_ids = {"/data/" + q for q in conf["questions"]}.intersection(question_dict.keys())
         questions = [question_dict[k] for k in question_ids]
 
+        # Get the existing subcases
+        existing_subcases = {c.name:c for c in form.actions.subcases}
+
         for question in questions:
-            print question
-            # Create new hidden values for each question option if they don't already exist:
-            for option in options:
-                #TODO: Check if it exists
-                hidden_value_id = None
+            for option in question.options:
+
+                # Create new hidden values for each question option if they don't already exist:
+
+                hidden_value_path = question.value + "-" + option.value
                 hidden_value_text = option.label
 
-                # ex: CHW1_transportation_cm_metro_reduced_activities-help_complete_application
+                # ex: /data/CHW1_transportation_cm_metro_reduced_activities-help_complete_application
                 #     "Help patient complete Metro reduced fare pass for disability application"
+
+                if hidden_value_path not in question_dict:
+                    # TODO: Create a new hidden value
+                    # How do I do this?
+                    # I think I copy the xform, modify it, then pass it to Form.add_stuff_to_xform.
+                    # How do I persist it? with XFormInstance?
+                    # corehq/apps/app_manager/views.py:435 suggests maybe I just save the app
+                    # corehq/apps/app_manager/views.py:1397 This might be another route (see save_xform)
+                    pass
+                else:
+                    self.stdout.write("Node " + hidden_value_path + " already exists, skipping.")
+
+                # Create FormActions for opening subcases
+
+                # corehq/apps/app_manager/views.py:1540
+
+                if hidden_value_path not in existing_subcases:
+                    action = OpenSubCaseAction(
+                        condition=FormActionCondition(
+                            type='if',
+                            question=question.value,
+                            operator='selected',
+                            answer=option.label,
+                        ),
+                        case_name=hidden_value_path,
+                        case_type='task',
+                        # Will this work as expected?
+                        case_properties={
+                            'task_responsible': '/data/task_responsible',
+                            'task_due': '/data/task_due',
+                            'owner_id': '/data/owner_id',
+                            'task_risk_factor': '/data/task_risk_factor',
+                        },
+                        close_condition=FormActionCondition(
+                            answer=None,
+                            operator=None,
+                            question=None,
+                            type='never'
+                        )
+                    )
+                    form.actions.subcases.append(action)
+        form.get_app().save()
