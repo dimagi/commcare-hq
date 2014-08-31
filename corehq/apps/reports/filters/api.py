@@ -69,7 +69,9 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         })
 
     def _init_counts(self):
-        groups, _ = self.group_es_call(size=0, return_count=True)
+        report_groups, _ = self.group_es_call(group_type="reporting",size=0, return_count=True)
+        share_groups, _ = self.group_es_call(group_type="case_sharing",size=0, return_count=True)
+        groups = report_groups + share_groups
         users, _ = self.user_es_call(size=0, return_count=True)
         self.group_start = len(self.user_types)
         self.user_start = self.group_start + groups
@@ -110,27 +112,43 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
             sort_by='username.exact', order='asc')
         return [self.user_tuple(u) for u in users]
 
-    def group_es_call(self, **kwargs):
-        # It is possible for a group to be neither a reporting or case sharing group.
-        reporting_or_sharing_filter = {"or": [
-                                        {"term": {"reporting": "true"}},
-                                        {"term": {"case_sharing": "true"}}
-                                       ]}
+    def group_es_call(self, group_type="reporting", **kwargs):
+        # Valid group_types are "reporting" and "case_sharing"
         return es_wrapper('groups', domain=self.domain, q=self.group_query,
-            filters=[reporting_or_sharing_filter], doc_type='Group', **kwargs)
+            filters=[{"term": {group_type: "true"}}], doc_type='Group',
+            **kwargs)
 
     def get_groups(self, start, size):
-        fields = ['_id', 'name', 'reporting']
-        groups = self.group_es_call(fields=fields,
-            sort_by=[('reporting', 'desc'), ('name.exact', 'asc')],
-            start_at=start, size=size)
-        # Idea: If `groups` contains a group that is both case sharing and reporting,
-        #       modify the first version (in the list we return) to just be a
-        #       reporting group and add a second version of that group that is
-        #       just a reporting group to our return list.
-        #       But there is a problem... Due to pagination, this second version
-        #       of the group will be out of order. We can't just sort `groups`
-        #       again because it will only contain the beginning of the list.
-        #       Possible solution:
-        #       Do two queries here instead of one...
-        return [self.group_tuple(g) for g in groups]
+        fields = ['_id', 'name']
+        total_reporting_groups, ret_reporting_groups = self.group_es_call(
+            group_type="reporting",
+            fields=fields,
+            sort_by="name.exact",
+            order="asc",
+            start_at=start,
+            size=size,
+            return_count=True
+        )
+        if len(ret_reporting_groups) == size:
+            ret_sharing_groups = []
+        else:
+            # The page size was not consumed by the reporting groups, so add some
+            # sharing groups as well.
+            if len(ret_reporting_groups) == 0:
+                # The start parameter for the reporting group query was greater
+                # than the total unpaginated number of reporting groups.
+                share_start = start - total_reporting_groups
+            else:
+                share_start = 0
+            share_size = size - len(ret_reporting_groups)
+
+            ret_sharing_groups = self.group_es_call(
+                group_type="case_sharing",
+                fields=fields,
+                sort_by="name.exact",
+                order="asc",
+                start_at=share_start,
+                size=share_size
+            )
+        return [self.reporting_group_tuple(g) for g in ret_reporting_groups] + \
+               [self.sharing_group_tuple(g) for g in ret_sharing_groups]

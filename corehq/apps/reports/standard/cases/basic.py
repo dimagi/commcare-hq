@@ -140,17 +140,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_user_ids = EMWF.selected_user_ids(self.request)
 
         # Get group ids for each group that was specified
-        selected_group_ids = EMWF.selected_group_ids(self.request)
-
-        # Idea: Use a new method in EMWF to get selected_case_sharing_groups
-        #       (This is necessary because we need to know if a both group was
-        #        selected as a case_sharing group or as a reporting groups)
+        selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
+        selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
+        #TODO: It is impossible to get this to show cases owned by a reporting (only) group. Is this desired?
 
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\
                                            .doc_type("Group")\
-                                           .filter(filters.term("_id", selected_group_ids))\
-                                           .filter(filters.term("reporting", True))\
+                                           .filter(filters.term("_id", selected_reporting_group_ids))\
                                            .fields(["users"])
         user_lists = [group["users"] for group in report_group_q.run().hits]
         selected_reporting_group_users = list(set().union(*user_lists))
@@ -165,7 +162,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         owner_ids = list(set().union(special_user_ids,
                                 selected_user_ids,
-                                selected_group_ids,
+                                selected_sharing_group_ids,
                                 selected_reporting_group_users,
                                 sharing_group_ids))
         if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
