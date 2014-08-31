@@ -11,30 +11,19 @@ class Command(BaseCommand):
     help = 'Does things'
 
     def handle(self, *args, **options):
-        self.stdout.write('ran command')
-
-        '''
         conf = {
-            "form_id": '548fe79579be510fba8fcf49b098a07a49305e2b',
-            # List of question ids
-            "questions": [
-                'CHW1_transportation_cm_metro_reduced_activities',
-                'CHW1_transportation_assessment_getting_to_appointments',
-            ],
-            "additional_properties": []
-        }
-        '''
-        conf = {
-            "form_id": '3ea3d49524fec7c7a2fb1f92f3a6d599048dfa54',
+            "form_id": '3ea3d49524fec7c7a2fb1f92f3a6d599048dfa54',  # sandbox
+            #"form_id": '548fe79579be510fba8fcf49b098a07a49305e2b', # jeremy copy
             # List of question ids
             "questions": [
                 'my-multi-select',
+                #'CHW1_transportation_cm_metro_reduced_activities',
+                #'CHW1_transportation_assessment_getting_to_appointments',
             ],
             "additional_properties": []
         }
 
-
-        # Hmmm... questions might need to be in the form:
+        # Hmmm... questions might need to be in this form:
         # "questions": [
         #   {
         #       "id": "CHW1_transportation_cm_cityride_activities",
@@ -50,7 +39,7 @@ class Command(BaseCommand):
 
         form = Form.get_form(conf["form_id"])
 
-        # Get the questions specified
+        # Get the questions specified in conf
         question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
         question_ids = {"/data/" + q for q in conf["questions"]}.intersection(question_dict.keys())
         questions = [question_dict[k] for k in question_ids]
@@ -71,12 +60,19 @@ class Command(BaseCommand):
 
                 if hidden_value_path not in question_dict:
                     # TODO: Create a new hidden value
+
                     # How do I do this?
-                    # I think I copy the xform, modify it, then pass it to Form.add_stuff_to_xform.
-                    # How do I persist it? with XFormInstance?
-                    # corehq/apps/app_manager/views.py:435 suggests maybe I just save the app
+                    # Idea:
+                    # Get the XForm with
+                    #   xform = form.wrapped_xform()
+                    # Modify the XForm
+                    #   (how?)
+                    # Save the XForm with
+                    #   form.add_stuff_to_xform(xform)
+
                     # corehq/apps/app_manager/views.py:1397 This might be another route (see save_xform)
                     pass
+
                 else:
                     self.stdout.write("Node " + hidden_value_path + " already exists, skipping.")
 
@@ -94,7 +90,7 @@ class Command(BaseCommand):
                         ),
                         case_name=hidden_value_path,
                         case_type='task',
-                        # Will this work as expected?
+                        # TODO: Determine if this puts the case properties in the expected order.
                         case_properties={
                             'task_responsible': '/data/task_responsible',
                             'task_due': '/data/task_due',
@@ -109,4 +105,10 @@ class Command(BaseCommand):
                         )
                     )
                     form.actions.subcases.append(action)
+                else:
+                    self.stdout.write("OpenSubCaseAction " + hidden_value_path + " already exists, skipping.")
+        self.stdout.write("Saving modified app...")
+
         form.get_app().save()
+
+        self.stdout.write('command finished')
