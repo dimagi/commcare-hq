@@ -333,7 +333,6 @@ class Domain(Document, SnapshotMixin):
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
 
-        print data
         if 'deployment' in data and isinstance(data['deployment']['country'], basestring):
             prev = data['deployment']['country']
             new_country = []
