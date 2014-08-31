@@ -331,7 +331,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             for group in res['hits']['hits']:
                 if group['fields']["reporting"]:
                     selected.append(self.reporting_group_tuple(group['fields']))
-                elif group['fields']["case_sharing"]:
+                if group['fields']["case_sharing"]:
                     selected.append(self.sharing_group_tuple(group['fields']))
         if user_ids:
             q = {"query": {"filtered": {"filter": {
