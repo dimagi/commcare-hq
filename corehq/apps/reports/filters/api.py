@@ -124,4 +124,13 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         groups = self.group_es_call(fields=fields,
             sort_by=[('reporting', 'desc'), ('name.exact', 'asc')],
             start_at=start, size=size)
+        # Idea: If `groups` contains a group that is both case sharing and reporting,
+        #       modify the first version (in the list we return) to just be a
+        #       reporting group and add a second version of that group that is
+        #       just a reporting group to our return list.
+        #       But there is a problem... Due to pagination, this second version
+        #       of the group will be out of order. We can't just sort `groups`
+        #       again because it will only contain the beginning of the list.
+        #       Possible solution:
+        #       Do two queries here instead of one...
         return [self.group_tuple(g) for g in groups]

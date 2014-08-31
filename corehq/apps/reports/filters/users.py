@@ -215,6 +215,9 @@ class EmwfMixin(object):
         return (uid, name)
 
     def group_tuple(self, g):
+        # Idea:
+        #   Change the first value of these tuples to ge either "g__<id>" or
+        #   "sg__<id>" if the group is a case sharing group.
         return ("g__%s" % g['_id'], "%s [%s]" % (g['name'], 'group' if g['reporting'] else 'case sharing'))
 
     def user_type_tuple(self, t):
@@ -282,6 +285,9 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     def selected_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
         return [g[3:] for g in emws if g.startswith("g__")]
+
+    # Idea: Add an additional method here called selected_case_sharing_group_ids
+    #       that looks for items starting with "sg__" in emws
 
     @property
     @memoized

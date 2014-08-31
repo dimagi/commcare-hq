@@ -142,6 +142,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         # Get group ids for each group that was specified
         selected_group_ids = EMWF.selected_group_ids(self.request)
 
+        # Idea: Use a new method in EMWF to get selected_case_sharing_groups
+        #       (This is necessary because we need to know if a both group was
+        #        selected as a case_sharing group or as a reporting groups)
+
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\
                                            .doc_type("Group")\
