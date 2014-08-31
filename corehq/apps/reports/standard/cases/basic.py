@@ -132,7 +132,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         if len(user_type_filters) > 0:
             special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters)
-            special_user_ids = special_q.run().doc_ids()
+            special_user_ids = special_q.run().doc_ids
         else:
             special_user_ids = []
 
@@ -157,7 +157,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                                 .filter(filters.term("case_sharing", True))\
                                                 .filter(filters.term("users", selected_reporting_group_users+selected_user_ids+special_user_ids))\
                                                 .fields([])
-        sharing_group_ids = share_group_q.run().doc_ids()
+        sharing_group_ids = share_group_q.run().doc_ids
 
         owner_ids = list(set().union(special_user_ids,
                                 selected_user_ids,
