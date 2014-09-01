@@ -88,7 +88,6 @@ class TestMeta(TestCase):
             xform = XFormInstance.get(doc_id)
             self.assertEqual(xform.metadata.appVersion, '2.0')
 
-            j = xform.metadata.to_json()
             self.assertEqual(xform.metadata.to_json(), {
                 'username': u'some_username@test.commcarehq.org',
                 'doc_type': 'Metadata',
@@ -119,7 +118,6 @@ class TestMeta(TestCase):
                 )
             )
 
-            j = xform.metadata.to_json()
             self.assertEqual(xform.metadata.to_json(), {
                 'username': u'some_username@test.commcarehq.org',
                 'doc_type': 'Metadata',
@@ -132,6 +130,19 @@ class TestMeta(TestCase):
                 'deviceID': u'commconnect',
                 'location': '42.3739063 -71.1109113 0.0 886.0',
             })
+            xform.delete()
+
+    def test_empty_gps_location(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "gps_empty_location.xml")
+        xml_data = open(file_path, "rb").read()
+        with create_xform_from_xml(xml_data) as doc_id:
+            xform = XFormInstance.get(doc_id)
+            self.assertEqual(
+                xform.metadata.location,
+                None
+            )
+
+            self.assertEqual(xform.metadata.to_json()['location'], None)
             xform.delete()
 
     def testMetaDateInDatetimeFields(self):

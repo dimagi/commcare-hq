@@ -14,6 +14,7 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
+from corehq.apps.reports.filters.forms import MISSING_APP_ID
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
@@ -88,16 +89,16 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
         return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
 
     def _es_extra_filters(self):
+        def form_filter(form):
+            app_id = form.get('app_id', None)
+            if app_id and app_id != MISSING_APP_ID:
+                return {'and': [{'term': {'xmlns.exact': form['xmlns']}},
+                                {'term': {'app_id': app_id}}]}
+            return {'term': {'xmlns.exact': form['xmlns']}}
         truthy_only = functools.partial(filter, None)
         form_values = self.all_relevant_forms.values()
         if form_values:
-            yield {
-                'or': [
-                    {'and': [{'term': {'xmlns.exact': f['xmlns']}},
-                             {'term': {'app_id': f['app_id']}}]}
-                    for f in form_values
-                ]
-            }
+            yield {'or': [form_filter(f) for f in form_values]}
 
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
             self.domain, self.request, True, True)

@@ -442,6 +442,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     attach_excel = BooleanProperty()
 
     hour = IntegerProperty(default=8)
+    minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
 

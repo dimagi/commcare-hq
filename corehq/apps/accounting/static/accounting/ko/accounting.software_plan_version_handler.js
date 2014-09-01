@@ -387,6 +387,10 @@ var FeatureRate = function (data) {
     self.per_excess_fee = ko.observable(data.per_excess_fee);
     self.monthly_limit = ko.observable(data.monthly_limit);
 
+    self.isPerExcessVisible = ko.computed(function () {
+        return self.feature_type() !== 'SMS';
+    });
+
     self.asJSON = function () {
         var result = {};
         _.each(['name', 'feature_type', 'feature_id', 'rate_id', 'monthly_fee',

@@ -14,7 +14,7 @@
         </div>
         {% crispy form_user_update %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update Information' %}</button>
+            <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
         </div>
     </fieldset>
 </form>
@@ -148,5 +148,11 @@
         }
         return false;
     });
+
+    $('form[name="user_information"]').on("change", null, null, function() {
+        $(":submit").prop("disabled", false);
+    }).on("input", null, null, function() {
+        $(":submit").prop("disabled", false);
+    })
 </script>
 {% endblock %}

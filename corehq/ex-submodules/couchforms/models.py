@@ -151,6 +151,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return None
             if isinstance(node, dict) and '#text' in node:
                 value = node['#text']
+            elif isinstance(node, dict) and all(a.startswith('@') for a in node):
+                return None
             else:
                 value = node
 

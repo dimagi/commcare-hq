@@ -1,3 +1,4 @@
+from calendar import monthrange
 from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
 import os
@@ -95,43 +96,58 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
-@periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():
-    # this should get called every hour by celery
+    # this should get called every half hour by celery
     reps = ReportNotification.view("reportconfig/all_notifications",
-                                   startkey=["daily", datetime.utcnow().hour],
-                                   endkey=["daily", datetime.utcnow().hour, {}],
+                                   startkey=["daily", datetime.utcnow().hour, datetime.utcnow().minute],
+                                   endkey=["daily", datetime.utcnow().hour, datetime.utcnow().minute, {}],
                                    reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def weekly_reports():
-    # this should get called every hour by celery
+    # this should get called every half hour by celery
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["weekly", now.hour, now.weekday()],
+                                   key=["weekly", now.hour, now.minute, now.weekday()],
                                    reduce=False,
                                    include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 
-@periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def monthly_reports():
     now = datetime.utcnow()
     reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["monthly", now.hour, now.day],
+                                   key=["monthly", now.hour, now.minute, now.day],
                                    reduce=False,
                                    include_docs=True).all()
+
+    if now.day == monthrange(now.year, now.month)[1]:
+        for day in range(now.day + 1, 31):
+            reps.append(ReportNotification.view("reportconfig/all_notifications",
+                                   key=["monthly", now.hour, day],
+                                   reduce=False,
+                                   include_docs=True).all())
+
     for rep in reps:
         send_report.delay(rep._id)
+
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
     for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
                                                         include_docs=True).all():
-        export_for_group(group_config, "couch")
+        export_for_group_async.delay(group_config, 'couch')
+
+
+@task(queue='saved_exports_queue')
+def export_for_group_async(group_config, output_dir):
+    export_for_group(group_config, output_dir)
+
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def update_calculated_properties():

@@ -935,10 +935,12 @@ class XForm(WrappedNode):
             value="instance('commcaresession')/session/context/appversion"
         )
 
-        if form.get_auto_gps_capture():
-            self.add_pollsensor(ref="/data/meta/location")
-        elif self.model_node.findall("{f}bind[@type='geopoint']"):
-            self.add_pollsensor()
+        # never add pollsensor to a pre-2.14 app
+        if form.get_app().enable_auto_gps:
+            if form.get_auto_gps_capture():
+                self.add_pollsensor(ref="/data/meta/location")
+            elif self.model_node.findall("{f}bind[@type='geopoint']"):
+                self.add_pollsensor()
 
     def add_case_and_meta_1(self, form):
         case = self.case_node

@@ -11,11 +11,11 @@
     <script type="text/javascript">
         $(function(){
             var help_text = {
-                "Archive User": "Archive a user if they are no longer active, and they will stop appearing in reports to reduce clutter. " +
-                        "Archiving is completely reversible, so you can always reactivate them later.",
+                "Deactivate User": "Deactivate a user if they are no longer active, and they will stop appearing in reports to reduce clutter. " +
+                        "Deactivating is completely reversible, so you can always reactivate them later.",
                 "Delete User": "Deleting a user removes any record of them, including all of the forms they ever submitted and their " +
                         "associated cases. We recommend only deleting users that never corresponded to real people to begin with, " +
-                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>archive</strong> a user.",
+                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>deactivate</strong> a user.",
                 "Case Sharing": "You have selected to use case sharing in your apps. To use basic case sharing, " +
                         "a user must belong to exactly one case sharing group."
             };
@@ -83,7 +83,7 @@
         <div class="span4">
             {% if not show_inactive %}
                 <a class="btn btn-inverse pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
-                    {% trans "Show Archived Mobile Workers" %}
+                    {% trans "Show Deactivated Mobile Workers" %}
                 </a>
             {% else %}
                 <a class="btn pull-right" href="?" style="margin-right: 2.5em;">
@@ -116,7 +116,7 @@
                     {% if show_inactive %}
                     <p>
                         {% blocktrans %}
-                        You may not Un-Archive any Mobile Workers until you Archive or delete existing Mobile Workers or
+                        You may not Reactivate any Mobile Workers until you Deactivate or delete existing Mobile Workers or
                         confirm your project's billing information.
                         {% endblocktrans %}
                     </p>
@@ -221,8 +221,8 @@
                             <a href="#" data-bind="click: show_more_columns">{% trans "More..." %}</a>
                         </th>
                         {% if can_edit_user_archive %}
-                            <th class="help_popover" data-help-key="Archive User">
-                                <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
+                            <th class="help_popover" data-help-key="Deactivate User">
+                                <a href="#">{% trans "Deactivate" %} <i class="icon icon-question-sign"></i></a>
                             </th>
                         {% endif %}
                     </tr>
@@ -250,7 +250,7 @@
                                     {% if show_inactive and not can_add_extra_users %}
                                     <p>
                                         {% blocktrans %}
-                                        You may not Un-Archive this Mobile Worker until you
+                                        You may not Reactivate this Mobile Worker until you
                                         <a href="{{ change_plan_url }}">upgrade</a> your project's plan.
                                         {% endblocktrans %}
                                      </p>
@@ -258,8 +258,8 @@
                                 </div>
                                 <div class="modal-footer">
                                     <a href="#" class="btn btn-warning"
-                                       data-unsuccessful-text="{% if show_inactive %}Un-Archive{% else %}Archive{% endif %} unsuccessful. Try Again?"
-                                       data-loading-text="{% if show_inactive %}Re-Activating User...{% else %}Archiving User...{% endif %}"
+                                       data-unsuccessful-text="{% if show_inactive %}Reactivation{% else %}Deactivation{% endif %} unsuccessful. Try Again?"
+                                       data-loading-text="{% if show_inactive %}Reactivating User...{% else %}Deactivating User...{% endif %}"
                                        data-bind="text: archive_action_text, click: function (data, event) { $parent.take_user_action(archive_action_url, event.currentTarget, $index) }"></a>
                                     <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
                                 </div>
@@ -274,9 +274,9 @@
                         <th data-bind="attr: {colspan: colspan()
                             {% if show_case_sharing %}+1{% endif %}}">
                             {% if show_inactive %}
-                                {% trans "Re-Activated / Un-Archived Users" %}
+                                {% trans "Reactivated Users" %}
                             {% else %}
-                                {% trans "Archived Users" %}
+                                {% trans "Deactivated Users" %}
                             {% endif %}
                         </th>
                     </tr>

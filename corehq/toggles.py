@@ -99,6 +99,11 @@ IS_DEVELOPER = StaticToggle(
     'Is developer'
 )
 
+PATHWAYS_PREVIEW = StaticToggle(
+    'pathways_preview',
+    'Is Pathways preview'
+)
+
 CUSTOM_PRODUCT_DATA = StaticToggle(
     'custom_product_data',
     'Custom Product Data',
