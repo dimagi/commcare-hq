@@ -38,9 +38,8 @@ class DatespanFilter(BaseReportFilter):
     @property
     def report_labels(self):
         return simplejson.dumps({
-                    'year_to_date': _('Year to Date'), 'last_month': _('Last Month'),
-                    'last_quarter': _('Last Quarter'), 'last_two_quarters': _('Last Two Quarters'),
-                    'last_three_quarters': _('Last Three Quarters'), 'last_year': _('Last Year'),
-                    'last_two_years': _('Last Two Years'), 'last_three_years': _('Last Three Years'),
-                    'last_four_years': _('Last Four Years')
+                    'last_7_days': _('Last 7 Days'),
+                    'last_month': _('Last Month'),
+                    'last_30_days': _('Last 30 Days'),
+                    'last_quarter': _('Last Quarter')
                 })
