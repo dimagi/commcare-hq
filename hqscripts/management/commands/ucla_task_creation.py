@@ -42,7 +42,7 @@ class Command(BaseCommand):
         for question in questions:
             for option in question.options:
 
-                hidden_value_path = question.value + "-" + option.value
+                hidden_value_path = question.value + "_" + option.value
                 hidden_value_text = option.label
 
                 # Create new hidden values for each question option if they don't already exist:
