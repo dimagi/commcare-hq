@@ -2644,12 +2644,23 @@ def download_bulk_app_translations(request, domain, app_id):
 
             # Populate form sheet
             # We can probably use this page: https://confluence.dimagi.com/display/commcarepublic/Bulk+Translation
-            # Actually we can't because its js :(
-            # Here is where it happens:
-            # submodules/formdesigner/src/js/controller.js:759
-            #
-            # form.get_questions(app.langs) might be good
-            # Yeargh, it doesn't return the labels for all questions though
+            # Actually we can't because its js :(   submodules/formdesigner/src/js/controller.js:759
+
+            # Assumption time:
+            #   Every default-<lang> cell will be filled
+            #   languages will be in the same order as other sheets (this is contrary to the example spreadsheet)
+
+            # Note that if a translation is not present, then the default language's
+            # label will be put in that cell.
+
+            questions_by_lang = {lang:form.get_questions([lang]) for lang in app.langs}
+            rows[form_string] = []
+            for i, question in enumerate(form.get_questions(app.langs)):
+                row = (question['value'].replace("/data/", ""),) +\
+                      tuple(questions_by_lang[l][i]['label'] for l in app.langs)
+                rows[form_string].append(row)
+
+            #TODO: Get media
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
