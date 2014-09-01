@@ -9,13 +9,8 @@ from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.hqadmin.reports import (
-    FormSubmissionsReport,
-    ActiveRealProjectSpacesReport,
     RealProjectSpacesReport,
-    RealProjectSpacesPlansReport,
-    UserReport,
     CommConnectProjectSpacesReport,
-    RealSMSMessages,
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -1223,13 +1218,8 @@ class AdminReportsTab(UITab):
                     'url': reverse('admin_report_dispatcher',
                                    args=(report.slug,)),
                 } for report in [
-                    FormSubmissionsReport,
-                    ActiveRealProjectSpacesReport,
                     RealProjectSpacesReport,
-                    RealProjectSpacesPlansReport,
-                    UserReport,
                     CommConnectProjectSpacesReport,
-                    RealSMSMessages,
                 ]
             ]),
         ]

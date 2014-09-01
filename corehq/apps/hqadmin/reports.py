@@ -179,7 +179,7 @@ INDICATOR_DATA = {
     "incoming_sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
-        "chart_title": "Total Projects Using Incoming SMS",
+        "chart_title": "Total Projects That Have Used Incoming SMS",
         "params_es_dict": {
             "direction": ["i"],
         },
@@ -196,7 +196,7 @@ INDICATOR_DATA = {
     "sms_only_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_only_domains",
-        "chart_title": "Total SMS Only Projects",
+        "chart_title": "Total Projects Using Only SMS",
         "date_field_opts": [
             {
                 "name": "Date Created",
@@ -219,7 +219,7 @@ INDICATOR_DATA = {
     "total_outgoing_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_sms",
-        "chart_title": "Total Outgoing SMS",
+        "chart_title": "Total SMS Sent By A Project",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -236,7 +236,7 @@ INDICATOR_DATA = {
     "total_incoming_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_sms",
-        "chart_title": "Total Incoming SMS",
+        "chart_title": "Total SMS Received By A Project",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -253,7 +253,7 @@ INDICATOR_DATA = {
     "total_outgoing_client_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_client_sms",
-        "chart_title": "Total Outgoing Client SMS",
+        "chart_title": "Total SMS Sent To A Client",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -271,7 +271,7 @@ INDICATOR_DATA = {
     "total_incoming_client_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_client_sms",
-        "chart_title": "Total Incoming Client SMS",
+        "chart_title": "Total SMS Sent From A Client",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -318,7 +318,7 @@ INDICATOR_DATA = {
     "total_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_clients",
-        "chart_title": "Total Clients",
+        "chart_title": "Total Mobile Workers",
         "histogram_type": "mobile_clients",
         "interval": "week",
         "xaxis_label": "# workers",
@@ -326,7 +326,7 @@ INDICATOR_DATA = {
     "active_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_clients",
-        "chart_title": "Active Mobile Clients",
+        "chart_title": "Active Mobile Workers",
         "hide_cumulative_charts": True,
         "params_es_dict": {
             "couch_recipient_doc_type": ["commcarecase"],
@@ -599,21 +599,16 @@ class RealProjectSpacesReport(GlobalAdminReports):
     indicators = [
         'domain_count',
         'domain_self_started_count',
-    ]
-
-
-class ActiveRealProjectSpacesReport(GlobalAdminReports):
-    slug = 'active_real_project_spaces'
-    name = ugettext_noop('Active Project Spaces')
-    indicators = [
         'active_domain_count',
         'active_self_started_domain_count',
+        'users',
+        'users_mobile',
+        'users_web',
+        'active_users_mobile',
+        'forms',
+        'forms_mobile',
+        'forms_web',
     ]
-
-class RealProjectSpacesPlansReport(GlobalAdminReports):
-    slug = 'real_project_spaces_plans'
-    name = ugettext_noop('Real Project Spaces - Plans')
-    indicators = []
 
     @property
     def headers(self):
@@ -653,26 +648,6 @@ class RealProjectSpacesPlansReport(GlobalAdminReports):
         ]
 
 
-class FormSubmissionsReport(GlobalAdminReports):
-    slug = 'form_submissions'
-    name = _('Form Submissions')
-    indicators = [
-        'forms',
-        'forms_mobile',
-        'forms_web',
-    ]
-
-
-class UserReport(GlobalAdminReports):
-    slug = 'user_report'
-    name = _('User Report')
-    indicators = [
-        'users',
-        'users_mobile',
-        'users_web',
-        'active_users_mobile',
-    ]
-
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('CommConnect Project Spaces')
@@ -683,16 +658,6 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'sms_only_domain_count',
         'active_commconnect_domain_count',
         'active_dimagi_owned_gateways',
-    ]
-
-    @property
-    def use_real_project_spaces(self):
-        return False
-
-class RealSMSMessages(GlobalAdminReports):
-    slug = 'real_sms_messages'
-    name = ugettext_noop('Real SMS Messages')
-    indicators = [
         'total_outgoing_sms',
         'total_incoming_sms',
         'total_outgoing_client_sms',
