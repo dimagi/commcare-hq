@@ -23,20 +23,6 @@ class Command(BaseCommand):
             "additional_properties": []
         }
 
-        # Hmmm... questions might need to be in this form:
-        # "questions": [
-        #   {
-        #       "id": "CHW1_transportation_cm_cityride_activities",
-        #        "options": [
-        #           {"value": "help_complete_application", "hidden value": "Help patient complete Metro reduced fare pass for disability application"}
-        #        ]
-        #   }
-        # ]
-        # This means:
-        #   - Create hiddenvalues/subcase spawning for each option of question "CHW1_transportation_cm_cityride_activities"
-        #   - For each option in options:
-        #       - Instead of having the corresponding hidden value have the default value, it should have a special value
-
         form = Form.get_form(conf["form_id"])
 
         # Get the questions specified in conf
