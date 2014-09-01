@@ -648,6 +648,13 @@ class RealProjectSpacesReport(GlobalAdminReports):
         ]
 
 
+class RealCasesReport(GlobalAdminReports):
+    slug = 'real_cases'
+    name = _('Real Cases')
+    indicators = [
+    ]
+
+
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('CommConnect Project Spaces')
