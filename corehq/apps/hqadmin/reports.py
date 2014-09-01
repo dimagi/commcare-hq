@@ -179,7 +179,7 @@ INDICATOR_DATA = {
     "incoming_sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
-        "chart_title": "Total Projects Using Incoming SMS",
+        "chart_title": "Total Projects That Have Used Incoming SMS",
         "params_es_dict": {
             "direction": ["i"],
         },
@@ -196,7 +196,7 @@ INDICATOR_DATA = {
     "sms_only_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_only_domains",
-        "chart_title": "Total SMS Only Projects",
+        "chart_title": "Total Projects Using Only SMS",
         "date_field_opts": [
             {
                 "name": "Date Created",
@@ -219,7 +219,7 @@ INDICATOR_DATA = {
     "total_outgoing_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_sms",
-        "chart_title": "Total Outgoing SMS",
+        "chart_title": "Total SMS Sent By A Project",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -236,7 +236,7 @@ INDICATOR_DATA = {
     "total_incoming_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_sms",
-        "chart_title": "Total Incoming SMS",
+        "chart_title": "Total SMS Received By A Project",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -253,7 +253,7 @@ INDICATOR_DATA = {
     "total_outgoing_client_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_client_sms",
-        "chart_title": "Total Outgoing Client SMS",
+        "chart_title": "Total SMS Sent To A Client",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -271,7 +271,7 @@ INDICATOR_DATA = {
     "total_incoming_client_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_client_sms",
-        "chart_title": "Total Incoming Client SMS",
+        "chart_title": "Total SMS Sent From A Client",
         "date_field_opts": [
             {
                 "name": "Date Sent",
@@ -318,7 +318,7 @@ INDICATOR_DATA = {
     "total_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_clients",
-        "chart_title": "Total Clients",
+        "chart_title": "Total Mobile Workers",
         "histogram_type": "mobile_clients",
         "interval": "week",
         "xaxis_label": "# workers",
@@ -326,7 +326,7 @@ INDICATOR_DATA = {
     "active_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_clients",
-        "chart_title": "Active Mobile Clients",
+        "chart_title": "Active Mobile Workers",
         "hide_cumulative_charts": True,
         "params_es_dict": {
             "couch_recipient_doc_type": ["commcarecase"],
