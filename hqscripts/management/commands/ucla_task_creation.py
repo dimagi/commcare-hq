@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
 )
 from corehq.apps.reports.formdetails.readable import FormQuestion
+from lxml import etree
 
 
 class Command(BaseCommand):
@@ -25,13 +26,17 @@ class Command(BaseCommand):
 
         form = Form.get_form(conf["form_id"])
 
+        source = form.source.encode("utf8", "replace") # Is this ok?
+        parser = etree.XMLParser(remove_blank_text=True)
+        xform_root = etree.fromstring(source, parser)
+
         # Get the questions specified in conf
         question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
         question_ids = {"/data/" + q for q in conf["questions"]}.intersection(question_dict.keys())
         questions = [question_dict[k] for k in question_ids]
 
         # Get the existing subcases
-        existing_subcases = {c.name:c for c in form.actions.subcases}
+        existing_subcases = {c.case_name:c for c in form.actions.subcases}
 
         for question in questions:
             for option in question.options:
@@ -57,7 +62,36 @@ class Command(BaseCommand):
                     #   form.add_stuff_to_xform(xform)
 
                     # corehq/apps/app_manager/views.py:1397 This might be another route (see save_xform)
-                    pass
+
+
+                    # Add data element
+
+                    data_node = xform_root[0][1][0][0]
+                    ns = "{%s}"%data_node.nsmap[None]
+                    tag = hidden_value_path.replace("/data/", "")
+
+                    if data_node.find(ns+tag) == None:
+                        data_node.append(etree.Element(ns+tag))
+                    else:
+                        self.stdout.write("data element " + hidden_value_path + " already exists, skipping.")
+                    #print(etree.tostring(xform_root, pretty_print=True))
+                    #import ipdb; ipdb.set_trace()
+
+                    # Add bind
+
+                    #itext_node = xform_root.find("{http://www.w3.org/1999/xhtml}head/{http://www.w3.org/2002/xforms}model/{http://www.w3.org/2002/xforms}itext")
+                    #itext_node.addprevious()
+
+                    # <bind nodeset="/data/CHW1_transportation_cm_cityride_outside_LA_criteria1-label" calculate="&quot;Determine if patient might qualify for City Ride in other LA County cities under Dial A Ride and faciliate application process.&quot;"/>
+                    new_bind = etree.Element(
+                        "bind",
+                        attrib={
+                            'nodeset': hidden_value_path,
+                            'calculate': '"'+hidden_value_text+'"',
+                        }
+                    )
+
+
 
                 else:
                     self.stdout.write("Node " + hidden_value_path + " already exists, skipping.")
@@ -67,6 +101,7 @@ class Command(BaseCommand):
                 # corehq/apps/app_manager/views.py:1540
 
                 if hidden_value_path not in existing_subcases:
+                    '''
                     action = OpenSubCaseAction(
                         condition=FormActionCondition(
                             type='if',
@@ -91,10 +126,11 @@ class Command(BaseCommand):
                         )
                     )
                     form.actions.subcases.append(action)
+                    '''
                 else:
                     self.stdout.write("OpenSubCaseAction " + hidden_value_path + " already exists, skipping.")
         self.stdout.write("Saving modified app...")
 
-        form.get_app().save()
+        #form.get_app().save()
 
         self.stdout.write('command finished')
