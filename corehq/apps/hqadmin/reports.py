@@ -700,6 +700,17 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'active_mobile_workers',
         'total_clients',
         'active_clients',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False
+
+
+class CommTrackProjectSpacesReport(GlobalAdminReports):
+    slug = 'commtrack_project_spaces'
+    name = ugettext_noop('CommTrack Project Spaces')
+    indicators = [
         'commtrack_total_incoming_sms',
         'commtrack_total_outgoing_sms',
     ]
