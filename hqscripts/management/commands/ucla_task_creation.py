@@ -4,6 +4,7 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
     OpenSubCaseAction,
 )
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.reports.formdetails.readable import FormQuestion
 from lxml import etree
 
@@ -41,67 +42,34 @@ class Command(BaseCommand):
         for question in questions:
             for option in question.options:
 
-                # Create new hidden values for each question option if they don't already exist:
-
                 hidden_value_path = question.value + "-" + option.value
                 hidden_value_text = option.label
 
-                # ex: /data/CHW1_transportation_cm_metro_reduced_activities-help_complete_application
-                #     "Help patient complete Metro reduced fare pass for disability application"
+                # Create new hidden values for each question option if they don't already exist:
 
                 if hidden_value_path not in question_dict:
-                    # TODO: Create a new hidden value
-
-                    # How do I do this?
-                    # Idea:
-                    # Get the XForm with
-                    #   xform = form.wrapped_xform()
-                    # Modify the XForm
-                    #   (how?)
-                    # Save the XForm with
-                    #   form.add_stuff_to_xform(xform)
-
-                    # corehq/apps/app_manager/views.py:1397 This might be another route (see save_xform)
-
-
                     # Add data element
-
                     data_node = xform_root[0][1][0][0]
-                    ns = "{%s}"%data_node.nsmap[None]
+                    ns = "{%s}" % data_node.nsmap[None]
                     tag = hidden_value_path.replace("/data/", "")
-
-                    if data_node.find(ns+tag) == None:
-                        data_node.append(etree.Element(ns+tag))
-                    else:
-                        self.stdout.write("data element " + hidden_value_path + " already exists, skipping.")
-                    #print(etree.tostring(xform_root, pretty_print=True))
-                    #import ipdb; ipdb.set_trace()
+                    #TODO: Am I supposed to be adding the namespace like this?
+                    data_node.append(etree.Element(ns+tag))
 
                     # Add bind
-
-                    #itext_node = xform_root.find("{http://www.w3.org/1999/xhtml}head/{http://www.w3.org/2002/xforms}model/{http://www.w3.org/2002/xforms}itext")
-                    #itext_node.addprevious()
-
-                    # <bind nodeset="/data/CHW1_transportation_cm_cityride_outside_LA_criteria1-label" calculate="&quot;Determine if patient might qualify for City Ride in other LA County cities under Dial A Ride and faciliate application process.&quot;"/>
-                    new_bind = etree.Element(
-                        "bind",
-                        attrib={
-                            'nodeset': hidden_value_path,
-                            'calculate': '"'+hidden_value_text+'"',
-                        }
-                    )
-
-
+                    ns = "{%s}" % xform_root.nsmap[None]
+                    itext_node = xform_root[0][1].find(ns+"itext")
+                    bind_node = etree.Element(ns+"bind")
+                    # Setting attributes like this instead of with a dict enforces order
+                    bind_node.attrib["nodeset"] = hidden_value_path
+                    bind_node.attrib["calculate"] = '"'+hidden_value_text+'"'
+                    itext_node.addprevious(bind_node)
 
                 else:
                     self.stdout.write("Node " + hidden_value_path + " already exists, skipping.")
 
                 # Create FormActions for opening subcases
 
-                # corehq/apps/app_manager/views.py:1540
-
                 if hidden_value_path not in existing_subcases:
-                    '''
                     action = OpenSubCaseAction(
                         condition=FormActionCondition(
                             type='if',
@@ -126,11 +94,16 @@ class Command(BaseCommand):
                         )
                     )
                     form.actions.subcases.append(action)
-                    '''
                 else:
                     self.stdout.write("OpenSubCaseAction " + hidden_value_path + " already exists, skipping.")
         self.stdout.write("Saving modified app...")
 
-        #form.get_app().save()
+        app = form.get_app()
+        # Save the xform modifications
+        # TODO: It is possible that I am not preserving the old indentation style of form.source. Does this matter?
+        save_xform(app, form, etree.tostring(xform_root, pretty_print=True))
+        # save the action modifications
+        app.save()
 
+        print form.source
         self.stdout.write('command finished')
