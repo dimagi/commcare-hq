@@ -1,4 +1,5 @@
 import logging
+import traceback
 from django.contrib.auth.models import User
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
@@ -14,6 +15,31 @@ from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
 
 
+def retry(retry_max):
+    def wrap(f):
+        def wrapped_f(*args, **kwargs):
+            retry_count = 0
+            fail = False
+            result = None
+            while retry_count < retry_max:
+                try:
+                    result = f(*args, **kwargs)
+                    fail = False
+                    break
+                except Exception:
+                    retry_count += 1
+                    fail = True
+                    logging.error('%d/%d tries failed' % (retry_count, retry_max))
+                    logging.error(traceback.format_exc())
+            if fail:
+                logging.error(f.__name__ + ": number of tries exceeds limit")
+                logging.error("args: %s, kwargs: %s" % (args, kwargs))
+            return result
+        return wrapped_f
+    return wrap
+
+
+@retry(5)
 def sync_ilsgateway_product(domain, ilsgateway_product):
     product = Product.get_by_code(domain, ilsgateway_product.sms_code)
     product_dict = {
@@ -32,6 +58,7 @@ def sync_ilsgateway_product(domain, ilsgateway_product):
     return product
 
 
+@retry(5)
 def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
     user = WebUser.get_by_username(ilsgateway_webuser.email.lower())
     user_dict = {
@@ -75,7 +102,7 @@ def add_location(user, location_id):
         commtrack_user.clear_locations()
         commtrack_user.add_location(loc, create_sp_if_missing=True)
 
-
+@retry(5)
 def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
     username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
     username = "%s@%s.commcarehq.org" % (username_part, domain)
@@ -148,6 +175,7 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
     return user
 
 
+@retry(5)
 def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
     location = Location.view('commtrack/locations_by_code',
                              key=[domain, ilsgateway_location.code.lower()],

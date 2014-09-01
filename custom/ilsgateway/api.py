@@ -21,6 +21,8 @@ class Product(object):
             is_active=json_rep['is_active']
         )
 
+    def __repr__(self):
+        return str(self.__dict__)
 
 class ILSUser(object):
 
@@ -56,6 +58,9 @@ class ILSUser(object):
             supply_point=json_rep['supply_point']
         )
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 
 class SMSUser(object):
     def __init__(self, id, name, role, is_active, supply_point, email, phone_numbers, backend):
@@ -82,6 +87,9 @@ class SMSUser(object):
             backend=json_rep['backend']
         )
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 
 class Location(object):
     def __init__(self, id, name, type, parent, latitude, longitude, code, groups):
@@ -106,6 +114,9 @@ class Location(object):
             code=json_rep['code'],
             groups=json_rep['groups']
         )
+
+    def __repr__(self):
+        return str(self.__dict__)
 
 
 class ILSGatewayEndpoint(EndpointMixin):
