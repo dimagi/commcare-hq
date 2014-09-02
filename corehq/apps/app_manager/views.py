@@ -564,7 +564,14 @@ def get_app_view_context(request, app):
         },
     })
     context.update({
-        'bulk_upload_form': get_bulk_upload_form(context),
+        'bulk_upload_form': get_bulk_upload_form(
+            context,
+            context_key="bulk_upload"
+        ),
+        'bulk_app_translation_form': get_bulk_upload_form(
+            context,
+            context_key="bulk_app_translation_upload"
+        )
     })
     return context
 
@@ -2584,6 +2591,30 @@ def upload_translations(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
+def _expected_bulk_app_sheet_structure(app):
+    '''
+    Returns a dictionary representing the expected structure of bulk ap translation
+    excel file uploads.
+
+    The dictionary will be in the form:
+    {
+        "sheet name": {
+            "columns":[
+                "column name 1",
+                "column name 2",
+                ...
+            ],
+        },
+        "second sheet name": {
+            ...
+        },
+        ...
+    }
+
+    :param app:
+    :return:
+    '''
+
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
 
@@ -2633,6 +2664,8 @@ def download_bulk_app_translations(request, domain, app_id):
 
             # TODO: These details will probably not be in the same order that
             # they appear on HQ. Is that bad?
+            # see https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js#L446-446
+            #     https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
 
             # TODO: two case details can have the same name...
 
@@ -2703,9 +2736,30 @@ def upload_bulk_app_translations(request, domain, app_id):
     #   out of order sheets (doesn't even really matter)
     #   unknown case properties
     # Unmentioned errors that make sense to me:
+    #   Repeated sheets
+    #   Repeated questions
     #   Unknown question
     #   Missing column in sheet
     #   (could be many others for sheet1)
+
+    workbook = WorkbookJSONReader(request.file)
+
+    #expected_sheets = _expected_bulk_app_sheet_structure(app)
+    #found_sheets = set()
+    import ipdb; ipdb.set_trace()
+    for sheet in workbook.worksheets:
+        expected_columns = expected_sheets.get(sheet['name'], None)
+        if expected_columns == None:
+            pass
+            # Don't process this sheet, send message about unexpected sheet
+
+
+        # If sheet is an unexpected sheet
+        # error: Sheet "<expected sheet>" was either out of order or missing
+
+        # validate columns
+        # (if a key column is missing, do not process sheet, otherwise fill in all the translations we can)
+
 
 
 common_module_validations = [

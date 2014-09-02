@@ -79,7 +79,7 @@
             {% endif %}
             {# Should the following div also be in the above conditional block? #}
             <div id="bulk-app-translations-tab" class="tab-pane">
-                {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload %}
+                {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form %}
             </div>
         </div>
     </div>
