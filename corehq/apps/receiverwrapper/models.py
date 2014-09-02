@@ -55,30 +55,79 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
 
 DELETED = "-Deleted"
 
+FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
-def get_generator_class(repeater_cls, format):
-    print repeater_cls, format
-    return get_generator_class._repeater_format_map[repeater_cls][format]['generator_cls']
+class GeneratorCollectionByRepeater():
 
+    def __init__(self, repeater_class):
+        self.repeater_class = repeater_class
+        self.default_format = ''
+        self.format_generator_map = defaultdict(dict)
 
-def get_all_formats_in_repeater(repeater_cls):
-    return get_generator_class._repeater_format_map[repeater_cls]
+    def add_new_format(self, format_name, format_label, generator_class, is_default=False):
+        if self.default_format and is_default:
+            raise Exception("default format already exists for this repeater")
+        elif is_default:
+            self.default_format = format_name
+        self.format_generator_map[format_name] = FormatInfo(
+            name=format_name,
+            label=format_label,
+            generator_class=generator_class
+        )
 
-get_generator_class._repeater_format_map = defaultdict(dict)
+    @memoized
+    def get_default_format(self):
+        return self.default_format
+
+    def get_default_generator(self):
+        raise self.format_generator_map[self.default_format].generator_class
+
+    def get_all_formats(self, for_domain=None):
+        if for_domain:
+            return [(name, format.label) for name, format in self.format_generator_map.iteritems()
+                    if format.generator_class.enabled_for_domain(for_domain)]
+        else:
+            return [(name, format.label) for name, format in self.format_generator_map.iteritems()]
+
+    def get_generator_by_format(self, format):
+        return self.format_generator_map[format].generator_class
 
 
 class RegisterGeneratorDecorator(object):
 
-    def __init__(self, repeater_cls, format, label, is_default=False):
-        self.format = format
-        self.repeater_cls = repeater_cls
-        self.label = label
+    repeater_generator_collection_map = defaultdict(dict)
 
-    def __call__(self, klass):
-        get_generator_class._repeater_format_map[self.repeater_cls][self.format] = {
-            'label': self.label,
-            'generator_cls': klass
-        }
+    def __init__(self, repeater_cls, format_name, format_label, is_default=False):
+        self.format_name = format_name
+        self.format_label = format_label
+        self.repeater_cls = repeater_cls
+        self.label = format_label
+        self.is_default = is_default
+
+    def __call__(self, generator_class):
+        RegisterGeneratorDecorator.repeater_generator_collection_map[self.repeater_cls] = GeneratorCollectionByRepeater(self.repeater_cls)
+        RegisterGeneratorDecorator.repeater_generator_collection_map[self.repeater_cls].add_new_format(
+            self.format_name,
+            self.format_label,
+            generator_class,
+            is_default=self.is_default
+        )
+
+    @classmethod
+    def generator_class_by_repeater_format(cls, repeater_class, format_name):
+        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        return generator_collection.get_generator_by_format(format_name)
+
+    @classmethod
+    def all_formats_by_repeater(cls, repeater_class, for_domain=None):
+        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        return generator_collection.get_all_formats(for_domain=None)
+
+    @classmethod
+    def default_format_by_repeater(cls, repeater_class):
+        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        return generator_collection.get_default_format()
+
 
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
