@@ -89,6 +89,11 @@ def static(url):
 
 
 @register.simple_tag
+def cachebuster(url):
+    return resource_versions.get(url, "")
+
+
+@register.simple_tag
 def new_static(url, **kwargs):
     """Caching must explicitly be defined on tags with any of the extensions
     that could be compressed by django compressor. The static tag above will

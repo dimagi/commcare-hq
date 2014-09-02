@@ -18,6 +18,18 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 
+# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
+# this to select various versions of Vellum source on the form designer page.
+# Acceptable values:
+# None - production mode
+# "dev" - use raw vellum source (submodules/formdesigner/src)
+# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
+VELLUM_DEBUG = None
+
+# enables all plugins, including ones that haven't been released on production
+# yet
+VELLUM_PRERELEASE = False
+
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -79,9 +91,14 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-)
+STATICFILES_DIRS = ()
+
+# bleh, why did this submodule have to be removed?
+# deploy fails if this item is present and the path does not exist
+_formdesigner_path = os.path.join(FILEPATH, 'submodules', 'formdesigner')
+if os.path.exists(_formdesigner_path):
+    STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
+del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
