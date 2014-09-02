@@ -2742,24 +2742,70 @@ def upload_bulk_app_translations(request, domain, app_id):
     #   Missing column in sheet
     #   (could be many others for sheet1)
 
+
+    app = get_app(domain, app_id)
+    expected_sheets = _expected_bulk_app_sheet_structure(app)
+    processed_sheets = set()
+
     workbook = WorkbookJSONReader(request.file)
 
-    #expected_sheets = _expected_bulk_app_sheet_structure(app)
-    #found_sheets = set()
-    import ipdb; ipdb.set_trace()
     for sheet in workbook.worksheets:
-        expected_columns = expected_sheets.get(sheet['name'], None)
+
+        # CHECK FOR REPEAT SHEET
+        if sheet.worksheet.title in processed_sheets:
+            continue
+            # Don't process this sheet, send message about repeat sheet
+
+        # CHECK FOR BAD SHEET NAME
+        expected_columns = expected_sheets.get(sheet.worksheet.title, None)
         if expected_columns == None:
-            pass
+            continue
             # Don't process this sheet, send message about unexpected sheet
 
+        # CHECK FOR MISSING KEY COLUMN
+        if sheet.worksheet.title == "Modules and Forms":
+            pass
+            # TODO: It is unclear what the key columns on this sheet are
+            #       the sheet_name could identify the module/form
+            #       the unique_id could identify the module/form
+            #       the Type is really superfluous I think
+        else:
+            if expected_columns[0] not in sheet.headers:
+                continue
+                # Don't process this sheet, send message about missing key column
+        #TODO: the first sheet has multiple key columns, so fix this for that.
 
-        # If sheet is an unexpected sheet
-        # error: Sheet "<expected sheet>" was either out of order or missing
+        processed_sheets.add(sheet.worksheet.title)
 
-        # validate columns
-        # (if a key column is missing, do not process sheet, otherwise fill in all the translations we can)
+        # CHECK FOR MISSING COLUMNS
+        missing_cols = set(expected_columns) - set(sheet.headers)
+        # Process sheet, but warn that the <missing_cols> are missing and will not be updated for any items
 
+        # CHECK FOR EXTRA COLUMNS
+        extra_cols = set(sheet.headers) - set(expected_columns)
+        # Process sheet, but warn that <extra_cols> are unrecognized and are being ignored
+
+        # NOTE: At the moment there is no missing row detection. This could be added if we want though
+        #      (it is not that bad if a user leaves out a row)
+
+        for row in sheet:
+
+            if sheet.headers[0] == "case_property":
+                # It's a module sheet
+                module_index = int(sheet.worksheet.title.replace("module", ""))
+                module = app.modules[module_index]
+
+                # How do we update details? Do we have to change them on long and on short?
+
+            else:
+                # It's a form sheet
+                mod_text, form_text = sheet.worksheet.title.split("_")
+                module_index = int(mod_text.replace("module", ""))
+                form_index = int(form_text.replace("form", ""))
+                form = app.modules[module_index].forms[form_index]
+
+                # How do we update translations? Where are they stored?
+                # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
 
 
 common_module_validations = [
