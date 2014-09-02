@@ -2,6 +2,7 @@ import time
 from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -76,8 +77,19 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
             .size(0))
 
 
-def get_active_domain_stats_data(params, datespan, interval='month',
-        datefield='received_on'):
+def domains_matching_plan(software_plan_edition, start, end):
+    matching_subscriptions = Subscription.objects.filter(
+        plan_version__plan__edition=software_plan_edition,
+    )  # TODO - date_start in [start, end] or date_end in [start, end]
+
+    return {
+        subscription.subscriber.domain
+        for subscription in matching_subscriptions
+    }
+
+
+def get_active_domain_stats_data(datespan, interval='month',
+        datefield='received_on', software_plan_edition=None):
     """
     Returns list of timestamps and how many domains were active in the 30 days
     before the timestamp
@@ -89,7 +101,12 @@ def get_active_domain_stats_data(params, datespan, interval='month',
         t = timestamp
         f = timestamp - relativedelta(days=30)
         form_query = (FormES()
-            .in_domains(real_domains)
+            .in_domains(
+                real_domains if software_plan_edition is None else (
+                    real_domains & domains_matching_plan(
+                        software_plan_edition, f, t)
+                )
+            )
             .submitted(gte=f, lte=t)
             .terms_facet('domains', 'domain')
             .size(0))

@@ -29,6 +29,18 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "active_community_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_community_domain_count",
+        "chart_title": "Active Community Project Spaces",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "params_es_dict": {
+            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
+        },
+        "xaxis_label": "# domains",
+    },
     "active_self_started_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_self_started_domains",
@@ -600,6 +612,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'domain_count',
         'domain_self_started_count',
         'active_domain_count',
+        'active_community_domain_count',
         'active_self_started_domain_count',
         'users',
         'users_mobile',
