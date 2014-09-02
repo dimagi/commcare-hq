@@ -41,7 +41,7 @@ class Command(BaseCommand):
 
             # Get the questions specified in conf
             question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
-            question_ids = {"/data/" + q for q in conf["questions"]}.intersection(question_dict.keys())
+            question_ids = {"/data/" + q for q in form_conf["questions"]}.intersection(question_dict.keys())
             questions = [question_dict[k] for k in question_ids]
 
             # Get the existing subcases
@@ -115,5 +115,5 @@ class Command(BaseCommand):
             # save the action modifications
             app.save()
 
-            print form.source
+            self.stdout.write(form.source)
         self.stdout.write('command finished')
