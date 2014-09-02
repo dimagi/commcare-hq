@@ -2641,7 +2641,7 @@ def download_bulk_app_translations(request, domain, app_id):
                 field_name += " (ID Mapping Text)"
 
             # Add a row for this case detail
-            rows[module_string].append((detail.field,) + tuple(detail.header.get(lang, "") for lang in app.langs))
+            rows[module_string].append((field_name,) + tuple(detail.header.get(lang, "") for lang in app.langs))
 
             # Add a row for any mapping pairs
             for mapping in detail.enum:
@@ -2649,10 +2649,6 @@ def download_bulk_app_translations(request, domain, app_id):
                     (mapping.key + " (ID Mapping Value)",) +
                     tuple(mapping.value.get(lang, "") for lang in app.langs)
                 )
-
-            # Add advanced logic here for the different types (ID Mapping) and repeat names
-            # https://confluence.dimagi.com/display/commcarepublic/Case+List+and+Case+Detail+View+Configuration
-
 
         for form_index, form in enumerate(module.forms):
             form_string = module_string + "_form" + str(form_index+1)
