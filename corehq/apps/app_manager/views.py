@@ -2628,7 +2628,7 @@ def download_bulk_app_translations(request, domain, app_id):
         case_detail_properties = {c.field: c for c in module.case_details.long.columns}
         # Get the union of these two dictionaries
         all_properties = dict(case_list_properties.items() + case_detail_properties.items())
-
+        #import ipdb; ipdb.set_trace()
         for _, detail in all_properties.items():
 
             # TODO: These details will probably not be in the same order that
@@ -2680,7 +2680,9 @@ def download_bulk_app_translations(request, domain, app_id):
 
             questions_by_lang = {lang:form.get_questions([lang]) for lang in app.langs}
             rows[form_string] = []
+            import ipdb; ipdb.set_trace()
             for i, question in enumerate(form.get_questions(app.langs)):
+
                 row = (question['value'].replace("/data/", ""),) +\
                       tuple(questions_by_lang[l][i]['label'] for l in app.langs)
                 rows[form_string].append(row)
@@ -2696,7 +2698,14 @@ def download_bulk_app_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    pass
+    # Spec requests that upload be processed even if there are errors
+    # Spec requests that errors be given for:
+    #   out of order sheets (doesn't even really matter)
+    #   unknown case properties
+    # Unmentioned errors that make sense to me:
+    #   Unknown question
+    #   Missing column in sheet
+    #   (could be many others for sheet1)
 
 
 common_module_validations = [
