@@ -285,11 +285,6 @@ class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapRep
         return ret
 
 
-
-
-
-
-
 class DemoMapReport(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
     it uses a static dataset
