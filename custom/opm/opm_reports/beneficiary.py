@@ -221,6 +221,7 @@ class OPMCaseRow(object):
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
         self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
+        self.bank_branch_name = self.case_property('bank_branch_name', EMPTY_FIELD)
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
@@ -642,6 +643,7 @@ class Beneficiary(OPMCaseRow):
         ('husband_name', _("Husband Name"), True),
         ('awc_name', _("AWC Name"), True),
         ('bank_name', _("Bank Name"), True),
+        ('bank_branch_name', _("Bank Branch Name"), True),
         ('ifs_code', _("IFS Code"), True),
         ('account_number', _("Bank Account Number"), True),
         ('block_name', _("Block Name"), True),
