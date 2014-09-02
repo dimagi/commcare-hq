@@ -13,7 +13,7 @@ from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
-from corehq.util.translation import localize
+from dimagi.utils.translation import localize
 
 from .constants import *
 

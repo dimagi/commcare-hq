@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.util.translation import localize
+from dimagi.utils.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 

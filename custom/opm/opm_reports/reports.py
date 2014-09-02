@@ -39,7 +39,7 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.util.translation import localize
+from dimagi.utils.translation import localize
 
 from custom.opm import BaseMixin, normal_format, format_percent
 from ..opm_tasks.models import OpmReportSnapshot
