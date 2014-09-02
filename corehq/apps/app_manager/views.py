@@ -2595,12 +2595,15 @@ def download_bulk_app_translations(request, domain, app_id):
         return tuple(item if item != None else "" for item in row)
 
     app = get_app(domain, app_id)
+    # These lists are used for constructing the sheet headers
     languages_list = tuple('default_'+l for l in app.langs)
     audio_lang_list = tuple('audio_'+l for l in app.langs)
     image_lang_list = tuple('image_'+l for l in app.langs)
     video_lang_list = tuple('video_'+l for l in app.langs)
 
+    # keys are the names of sheets, values are lists of tuples representing rows
     rows = {}
+
     # Add headers for the first sheet
     headers = [("Modules_and_forms", ('Type', 'sheet_name')+tuple(languages_list)+('icon_filepath', 'audio_filepath', 'unique_id')),]
     rows["Modules_and_forms"] = []
@@ -2618,11 +2621,37 @@ def download_bulk_app_translations(request, domain, app_id):
 
         # Populate module sheet
         rows[module_string] = []
-        for detail in module.case_details.long.columns:
+
+        # module.case_details.short is all properties with "List" checked
+        case_list_properties = {c.field: c for c in module.case_details.short.columns}
+        # module.case_details.long is all properties with "Detail" checked
+        case_detail_properties = {c.field: c for c in module.case_details.long.columns}
+        # Get the union of these two dictionaries
+        all_properties = dict(case_list_properties.items() + case_detail_properties.items())
+
+        for _, detail in all_properties.items():
+
+            # TODO: These details will probably not be in the same order that
+            # they appear on HQ. Is that bad?
+
+            # TODO: two case details can have the same name...
+
+            field_name = detail.field
+            if len(detail.enum) > 0:
+                field_name += " (ID Mapping Text)"
+
+            # Add a row for this case detail
             rows[module_string].append((detail.field,) + tuple(detail.header.get(lang, "") for lang in app.langs))
+
+            # Add a row for any mapping pairs
+            for mapping in detail.enum:
+                rows[module_string].append(
+                    (mapping.key + " (ID Mapping Value)",) +
+                    tuple(mapping.value.get(lang, "") for lang in app.langs)
+                )
+
             # Add advanced logic here for the different types (ID Mapping) and repeat names
             # https://confluence.dimagi.com/display/commcarepublic/Case+List+and+Case+Detail+View+Configuration
-            # NOTE: might be possible for something to be in short but not in long. How do we get the same ordering that the webpage uses?
 
 
         for form_index, form in enumerate(module.forms):
