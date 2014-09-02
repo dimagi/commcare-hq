@@ -280,7 +280,7 @@ def production():
     class Servers(object):
         db = ['hqdb0.internal.commcarehq.org']
         celery = ['hqcelery1.internal.commcarehq.org']
-        touch = ['hqtouch0.internal.commcarehq.org']
+        touch = ['hqtouch1.internal.commcarehq.org']
         django = ['hqdjango3.internal.commcarehq.org',
                   'hqdjango4.internal.commcarehq.org',
                   'hqdjango5.internal.commcarehq.org']
