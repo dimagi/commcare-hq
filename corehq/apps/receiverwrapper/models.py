@@ -137,12 +137,16 @@ class Repeater(Document, UnicodeMixIn):
     format = StringProperty()
 
     @memoized
+    def format_or_default_format(self):
+        return self.format or RegisterGeneratorDecorator.default_format_by_repeater(self.__class__)
+
+    @memoized
     def get_payload_generator(self, payload_format):
-        gen = get_generator_class(self.__class__, payload_format)
+        gen = RegisterGeneratorDecorator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format)
+        generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record)
 
     def register(self, payload, next_check=None):
@@ -277,7 +281,7 @@ class ShortFormRepeater(Repeater):
 @register_repeater_type
 class AppStructureRepeater(Repeater):
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format)
+        generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, repeater=self)
 
 

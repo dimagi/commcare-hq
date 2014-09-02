@@ -1,4 +1,4 @@
-from corehq.apps.receiverwrapper.models import FormRepeater, get_all_formats_in_repeater
+from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGeneratorDecorator
 
 from django import forms
 from django.conf import settings
@@ -25,7 +25,7 @@ class FormRepeaterForm(GenericRepeaterForm):
         self.domain = kwargs.pop('domain')
         super(FormRepeaterForm, self).__init__(*args, **kwargs)
 
-        self.formats = get_repeater_formats(FormRepeater, self.domain)
+        self.formats = RegisterGeneratorDecorator.all_formats_by_repeater(FormRepeater, for_domain=self.domain)
 
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
@@ -40,12 +40,3 @@ class FormRepeaterForm(GenericRepeaterForm):
             cleaned_data['format'] = self.formats[0][0]
 
         return cleaned_data
-
-
-def get_repeater_formats(repeater, domain):
-    formats = []
-    for format_name, details in get_all_formats_in_repeater(repeater).iteritems():
-        generator_cls = details['generator_cls']
-        if generator_cls.enabled_for_domain(domain):
-            formats.append((format_name, format_name))
-    return formats
