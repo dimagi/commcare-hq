@@ -7,7 +7,7 @@ class DataTablesColumn(object):
 
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
-                 expected=None, prop_name=None, visible=True):
+                 expected=None, prop_name=None, visible=True, data_slug=None):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -20,6 +20,7 @@ class DataTablesColumn(object):
         if isinstance(expected, int):
             expected = "%d" % expected
         self.expected = expected
+        self.data_slug = data_slug
 
     @property
     def render_html(self):
@@ -50,6 +51,8 @@ class DataTablesColumn(object):
             aoColumns["sWidth"] = '10px'
         if not self.visible:
             aoColumns["bVisible"] = self.visible
+        if self.data_slug:
+            aoColumns['mDataProp'] = self.data_slug
         return aoColumns
 
 
