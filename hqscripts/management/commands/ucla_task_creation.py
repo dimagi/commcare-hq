@@ -64,6 +64,7 @@ class Command(BaseCommand):
                         data_node.append(etree.Element(ns+tag))
 
                         # Add bind
+                        # TODO: Looks like XForm has a add_bind method. Look into it.
                         ns = "{%s}" % xform_root.nsmap[None]
                         itext_node = xform_root[0][1].find(ns+"itext")
                         bind_node = etree.Element(ns+"bind")
