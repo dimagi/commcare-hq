@@ -63,6 +63,7 @@ branches:
   - fix-timeout # Nick P 8/26
   - caselistmixin-refactor # Noah 8/14
   - ucla-task-creation # Noah 9/3
+  - revert-4236-revert-4197-vellum-requirejs # Daniel 9/3
 submodules:
   submodules/couchlog-src:
     branches:
