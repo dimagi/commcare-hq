@@ -2,9 +2,9 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
 {% endblock %}
 
 {% block main_column %}
-    {% include "hqwebapp/partials/bulk_upload.html" %}
+    {% include "locations/manage/partials/bulk_upload.html" %}
 {% endblock %}
