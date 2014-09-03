@@ -57,11 +57,15 @@ def daterange(interval, start_date, end_date):
         cur_date += step
 
 
-def get_real_project_spaces():
+def get_real_project_spaces(is_commtrack=False, is_commcommconnect=False):
     """
     Returns a set of names of real domains
     """
     real_domain_query = DomainES().real_domains().fields(['name'])
+    if is_commtrack:
+        real_domain_query = real_domain_query.commtrack_domains()
+    if is_commcommconnect:
+        real_domain_query = real_domain_query.commconnect_domains()
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
 
@@ -250,39 +254,14 @@ def get_mobile_workers_data(params, datespan, interval='month',
     return format_return_data(histo_data, users_before_date, datespan)
 
 
-def get_commtrack_real_sms_messages_data(params, datespan, interval='month',
-        datefield='date'):
-    """
-    Returns SMS sent in timespan.
-    Returned based on date SMS was sent
-    """
-    real_domains = get_real_project_spaces()
-    sms_after_date = (SMSES()
-            .filter({"terms": params})
-            .to_commcare_user_or_case()
-            .in_domains(real_domains)
-            .received(gte=datespan.startdate, lte=datespan.enddate)
-            .date_histogram('date', datefield, interval)
-            .size(0))
-
-    histo_data = sms_after_date.run().facet('date', 'entries')
-
-    sms_before_date = (SMSES()
-            .in_domains(real_domains)
-            .to_commcare_user_or_case()
-            .received(lt=datespan.startdate)
-            .size(0)).run().total
-
-    return format_return_data(histo_data, sms_before_date, datespan)
-
-
 def get_real_sms_messages_data(params, datespan, interval='month',
-        datefield='date'):
+        datefield='date', is_commtrack=False):
     """
     Returns SMS sent in timespan.
     Returned based on date SMS was sent
     """
-    real_domains = get_real_project_spaces()
+    real_domains = get_real_project_spaces(is_commtrack=is_commtrack)
+
     sms_after_date = (SMSES()
             .filter({"terms": params})
             .in_domains(real_domains)
@@ -290,12 +269,20 @@ def get_real_sms_messages_data(params, datespan, interval='month',
             .date_histogram('date', datefield, interval)
             .size(0))
 
+    if is_commtrack:
+        sms_after_date = sms_after_date.to_commcare_user_or_case()
+
     histo_data = sms_after_date.run().facet('date', 'entries')
 
     sms_before_date = (SMSES()
             .in_domains(real_domains)
             .received(lt=datespan.startdate)
-            .size(0)).run().total
+            .size(0))
+
+    if is_commtrack:
+        sms_before_date = sms_before_date.to_commcare_user_or_case()
+
+    sms_before_date = sms_before_date.run().total
 
     return format_return_data(histo_data, sms_before_date, datespan)
 
