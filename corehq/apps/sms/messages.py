@@ -1,5 +1,5 @@
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.util.translation import localize
+from dimagi.utils.translation import localize
 from django.utils.translation import ugettext as _, ugettext_noop
 
 MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
