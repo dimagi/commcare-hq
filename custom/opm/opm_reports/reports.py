@@ -654,36 +654,38 @@ class CaseReportMixin(object):
         self.extra_row_objects = self.extra_row_objects + row_objects
 
 
-def join_lists(a, b):
-    def zip_fn((x, y)):
-        if isinstance(x, int):
-            return x + y
-        return x
-    return map(zip_fn, zip(a, b))
-
-
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
+
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
         # Consolidate rows with the same account number
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == 'account_number':
-                account_num = i
-        rows = OrderedDict()
+        accounts = OrderedDict()
         for row in raw_rows:
-            account_number = row[account_num]
-            existing_row = rows.get(account_number)
-            if existing_row is None:
-                rows[account_number] = row
+            account_number = row[self.column_index('account_number')]
+            existing_row = accounts.get(account_number, [])
+            accounts[account_number] = existing_row + [row]
+        return map(self.join_rows, accounts.values())
+
+    def join_rows(self, rows):
+        def zip_fn((i, values)):
+            if isinstance(values[0], int):
+                return sum(values)
+            elif i == self.column_index('case_id'):
+                return "<p>{}</p>".format("</p><p>".join(set(values)))
             else:
-                rows[account_number] = join_lists(existing_row, row)
-        return rows.values()
+                return sorted(values)[-1]
+        return map(zip_fn, enumerate(zip(*rows)))
 
 
 class MetReport(CaseReportMixin, BaseReport):
