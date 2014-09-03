@@ -654,7 +654,8 @@ class Beneficiary(OPMCaseRow):
         ('child_cash', _("Child Followup Form"), True),
         ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
-        ('owner_id', _("Owner ID"), False)
+        ('case_id', _('Case ID'), True),
+        ('owner_id', _("Owner ID"), False),
     ]
 
     def __init__(self, case, report, child_index=1):
