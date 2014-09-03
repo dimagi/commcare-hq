@@ -32,6 +32,7 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -926,11 +927,10 @@ def stats_data(request):
         return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
-        params.update(params_es)
         stats_data = get_active_domain_stats_data(
-            params,
             request.datespan,
             interval=interval,
+            software_plan_edition=params_es.get('software_plan_edition', None)
         )
     elif histo_type == "domains":
         params.update(params_es)
