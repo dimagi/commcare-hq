@@ -10,12 +10,12 @@ $(function() {
 });
 
 function CommtrackSettingsViewModel() {
-    this.openlmis_config = ko.observable();
+    this.source_config = ko.observable();
 
     this.json_payload = ko.observable();
 
     this.load = function(data) {
-        this.openlmis_config(new OpenLMISConfigModel(data.openlmis_config));
+        this.source_config(new SourceConfigModel(data.source_config));
     };
 
     var settings = this;
@@ -27,12 +27,12 @@ function CommtrackSettingsViewModel() {
 
     this.to_json = function() {
         return {
-            openlmis_config: this.openlmis_config().to_json()
+            source_config: this.source_config().to_json()
         };
     };
 }
 
-function OpenLMISConfigModel(data) {
+function SourceConfigModel(data) {
     this.enabled = ko.observable(data.enabled);
     this.url = ko.observable(data.url);
     this.username = ko.observable(data.username);

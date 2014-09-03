@@ -296,6 +296,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
 
@@ -965,6 +966,7 @@ COUCHDB_APPS = [
     'trialconnect',
     'accounting',
     'succeed',
+    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -1022,6 +1024,7 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+    'custom.ilsgateway.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
