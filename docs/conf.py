@@ -13,17 +13,13 @@
 
 import sys, os
 
+sys.path.insert(0, os.path.abspath('..'))
 from ..manage import _set_source_root, _set_source_root_parent
 
 _set_source_root_parent('submodules')
 _set_source_root(os.path.join('corehq', 'ex-submodules'))
 _set_source_root(os.path.join('custom', '_legacy'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
