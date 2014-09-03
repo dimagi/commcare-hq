@@ -64,6 +64,7 @@ branches:
   - fix-timeout # Nick P 8/26
   - ilsgateway-integration  # czue/lwysomi 8/27 - this one might stick around a while
   - caselistmixin-refactor # Noah 8/14
+  - ucla-task-creation # Noah 9/3
 submodules:
   submodules/couchlog-src:
     branches:
