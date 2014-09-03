@@ -43,11 +43,11 @@
 trunk: master
 name: autostaging
 branches:
-  - ucla-task-creation # Noah 9/3
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-to-deactivate  # cz 7/30
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
+  - schedule+ucla-task-creation # Noah 9/3
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -65,6 +65,7 @@ branches:
   - fix-timeout # Nick P 8/26
   - ilsgateway-integration  # czue/lwysomi 8/27 - this one might stick around a while
   - caselistmixin-refactor # Noah 8/14
+  - ucla-task-creation # Noah 9/3
 submodules:
   submodules/couchlog-src:
     branches:
