@@ -21,7 +21,7 @@
             $("input#product-data-input").val(JSON.stringify(data));
         }
 
-        customDataEditor = uiElement.map_list('{{ product.get_id }}', '{% trans 'Product Data' %}');
+        customDataEditor = uiElement.map_list('{{ product.get_id }}', "{% trans 'Product Data' %}");
         customDataEditor.val({{ custom_product_data|JSON }});
         customDataEditor.on('change', handleChange);
 
