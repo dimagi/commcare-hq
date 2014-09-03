@@ -303,7 +303,7 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
-
+    'custom.care_pathways',
     'bootstrap3_crispy',
 )
 
@@ -1126,7 +1126,9 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow'
+        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.care_pathways.models.GeographyFluffPillow',
+        'custom.care_pathways.models.FarmerRecordFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1230,7 +1232,9 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'pathways-india-mis': 'custom.care_pathways',
+    'pathways-tanzania': 'custom.care_pathways',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

@@ -311,6 +311,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         initial = {
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
+            'call_center_enabled': self.domain_object.call_center_config.enabled,
+            'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
+            'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled
         }
         if self.request.method == 'POST':
@@ -325,6 +328,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             return DomainGlobalSettingsForm(
                 self.request.POST,
                 self.request.FILES,
+                domain=self.domain_object.name,
                 can_use_custom_logo=self.can_use_custom_logo
             )
 
@@ -345,9 +349,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
                 'is_test': self.domain_object.is_test,
-                'call_center_enabled': self.domain_object.call_center_config.enabled,
-                'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
-                'call_center_case_type': self.domain_object.call_center_config.case_type,
                 'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
 
@@ -358,7 +359,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 initial=initial
             )
         return DomainGlobalSettingsForm(
-            initial=initial, can_use_custom_logo=self.can_use_custom_logo
+            initial=initial,
+            domain=self.domain_object.name,
+            can_use_custom_logo=self.can_use_custom_logo
         )
 
     @property

@@ -221,6 +221,7 @@ class OPMCaseRow(object):
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
         self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
+        self.bank_branch_name = self.case_property('bank_branch_name', EMPTY_FIELD)
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
@@ -460,18 +461,6 @@ class OPMCaseRow(object):
             return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
 
     @property
-    def live_delivery(self):
-        # NOTE: this can be flagged several months after the actual delivery date
-        # since that is in a question in the form but could be reported several months
-        # after. This is known and expected behavior.
-        for form in self.filtered_forms(DELIVERY_XMLNS, months_before=1):
-            outcome = form.form.get('mother_preg_outcome')
-            if outcome == '1':
-                return True
-            elif outcome in ['2', '3']:
-                return False
-
-    @property
     def weight_grade_normal(self):
         if self.block == "wazirganj":
             if self.child_age in [24, 36]:
@@ -654,6 +643,7 @@ class Beneficiary(OPMCaseRow):
         ('husband_name', _("Husband Name"), True),
         ('awc_name', _("AWC Name"), True),
         ('bank_name', _("Bank Name"), True),
+        ('bank_branch_name', _("Bank Branch Name"), True),
         ('ifs_code', _("IFS Code"), True),
         ('account_number', _("Bank Account Number"), True),
         ('block_name', _("Block Name"), True),
@@ -661,7 +651,6 @@ class Beneficiary(OPMCaseRow):
         ('child_count', _("Number of Children"), True),
         ('bp1_cash', _("Birth Preparedness Form 1"), True),
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
-        ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
         ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
@@ -673,11 +662,10 @@ class Beneficiary(OPMCaseRow):
         self.child_count = 0 if self.status == "pregnant" else 1
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
-        self.delivery_cash = MONTH_AMT if self.live_delivery else 0
         self.child_cash = MONTH_AMT if self.child_followup else 0
         self.total = min(
             MONTH_AMT,
-            self.bp1_cash + self.bp2_cash + self.delivery_cash + self.child_cash
+            self.bp1_cash + self.bp2_cash + self.child_cash
         )
         self.total += self.year_end_bonus_cash
         # Show only cases that require payment

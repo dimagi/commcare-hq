@@ -17,9 +17,9 @@
 
     var _post = function (elem, url, options) {
         var options = options || {};
-        var success = options.success || '{% trans "Sync Successful" %}';
-        var error = options.error || '{% trans "Error!" %}';
-        $(elem).addClass("disabled").html('{% trans "Syncing..." %}');
+        var success = options.success || "{% trans "Sync Successful" %}";
+        var error = options.error || "{% trans "Error!" %}";
+        $(elem).addClass("disabled").html("{% trans "Syncing..." %}");
         $.ajax({
             type: 'POST',
             url: url,

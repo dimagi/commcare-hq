@@ -540,10 +540,12 @@ class CaseReportMixin(object):
     is_rendered_as_email = False
 
     @property
-    def is_open(self):
-        is_open = self.request_params.get('is_open', None)
-        if is_open is not None:
-            return is_open == 'open'
+    def display_open_cases_only(self):
+        return self.request_params.get('is_open') == 'open'
+
+    @property
+    def display_closed_cases_only(self):
+        return self.request_params.get('is_open') == 'closed'
 
     def get_rows(self, datespan):
         def get_awc_filter(awcs):
@@ -551,13 +553,14 @@ class CaseReportMixin(object):
             awc_filters = []
             def make_filter(term):
                 return es_filters.term("awc_name.#value", term)
+
             for awc in awcs:
                 awc_terms = filter(None, awc.lower().split())
                 if len(awc_terms) == 1:
                     awc_filters.append(make_filter(awc_terms[0]))
                 elif len(awc_terms) > 1:
-                    awc_filters.append(es_filters.AND(
-                        make_filter(term) for term in awc_terms))
+                    awc_filters.append(es_filters.AND(*(make_filter(term) for term in awc_terms)))
+
             return es_filters.OR(*awc_filters)
 
         def get_gp_filter(gp):
@@ -575,12 +578,12 @@ class CaseReportMixin(object):
                 .term("type.exact", self.default_case_type)
         query.index = 'report_cases'
 
-        if self.is_open:
+        if self.display_open_cases_only:
             query = query.filter(es_filters.OR(
                 case_es.is_closed(False),
                 case_es.closed_range(gte=self.datespan.enddate_utc)
             ))
-        elif not self.is_open:
+        elif self.display_closed_cases_only:
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
         if self.awcs:

@@ -4,7 +4,8 @@ from functools import wraps
 import json
 
 # Django imports
-from django.http import Http404, HttpResponse
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
 
 # Tastypie imports
@@ -86,7 +87,11 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
-        response = dummy(request, **kwargs)
+        try:
+            response = dummy(request, **kwargs)
+        except PermissionDenied:
+            response = HttpResponseForbidden()
+
         if response == PASSED_AUTH:
             return True
         else:
