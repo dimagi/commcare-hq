@@ -2660,6 +2660,7 @@ def _ucla_form_modifier(form, question_ids):
                 bind_node.attrib["calculate"] = '"'+hidden_value_text+'"'
                 itext_node.addprevious(bind_node)
 
+                message += "Node " + hidden_value_path + " created!\n"
             else:
                 message += "Node " + hidden_value_path + " already exists, skipping.\n"
 
@@ -2692,6 +2693,7 @@ def _ucla_form_modifier(form, question_ids):
                     )
                 )
                 form.actions.subcases.append(action)
+                message += "OpenSubCaseAction " + hidden_value_path + " created!\n"
             else:
                 message += "OpenSubCaseAction " + hidden_value_path + " already exists, skipping.\n"
 
