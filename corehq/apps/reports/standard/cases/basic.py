@@ -192,11 +192,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
 
 class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
-
     # note that this class is not true to the spirit of ReportDataSource; the whole
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
+    fields = ['corehq.apps.reports.filters.users.CaseListReportMobileWorkerFilter'] + CaseListMixin.fields[1:]
     name = ugettext_noop('Case List')
     slug = 'case_list'
 
