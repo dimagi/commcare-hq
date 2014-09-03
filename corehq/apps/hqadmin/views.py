@@ -67,6 +67,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_active_dimagi_owned_gateway_projects,
     get_domain_stats_data,
     get_total_clients_data,
+    commtrack_form_submissions,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -892,6 +893,10 @@ def stats_data(request):
         request.datespan.enddate += timedelta(days=1)
 
     params, __ = parse_args_for_es(request, prefix='es_')
+
+    if histo_type == "commtrack_forms":
+        params.update(params_es)
+        return json_response(commtrack_form_submissions(params, request.datespan, interval=interval))
 
     if histo_type == "active_dimagi_gateways":
         params.update(params_es)

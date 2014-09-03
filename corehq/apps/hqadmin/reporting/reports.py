@@ -388,6 +388,31 @@ def get_domain_stats_data(params, datespan, interval='week',
 
     domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
 
-    return format_return_data(histo_data['facets']['histo']['entries'], 
-                              domains_before_date['hits']['total'], 
+    return format_return_data(histo_data['facets']['histo']['entries'],
+                              domains_before_date['hits']['total'],
                               datespan)
+
+
+def commtrack_form_submissions(params, datespan, interval='week',
+        datefield='received_on'):
+    real_domains = get_real_project_spaces(is_commtrack=True)
+    mobile_workers = [a['_id'] for a in UserES().fields([]).mobile_users().run().raw_hits]
+
+    forms_after_date = (FormES()
+            .in_domains(real_domains)
+            .submitted(gte=datespan.startdate, lte=datespan.enddate)
+            .date_histogram('date', datefield, interval)
+            .user_id(mobile_workers)
+            .size(0))
+
+    histo_data = forms_after_date.run().facet('date', 'entries')
+
+    forms_before_date = (FormES()
+            .in_domains(real_domains)
+            .submitted(lt=datespan.startdate)
+            .user_id(mobile_workers)
+            .size(0))
+
+    forms_before_date = forms_before_date.run().total
+
+    return format_return_data(histo_data, forms_before_date, datespan)

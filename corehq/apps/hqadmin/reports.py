@@ -369,6 +369,20 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# SMS",
     },
+    "commtrack_forms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commtrack_forms",
+        "chart_title": "Total CommTrack Form Submissions",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "histogram_type": "commtrack_forms",
+        "interval": "week",
+        "xaxis_label": "# forms",
+    },
 }
 
 
@@ -713,6 +727,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     indicators = [
         'commtrack_total_incoming_sms',
         'commtrack_total_outgoing_sms',
+        'commtrack_forms',
     ]
 
     @property
