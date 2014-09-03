@@ -26,6 +26,7 @@ def get_es(timeout=30):
 ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
+    "active_cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
@@ -46,11 +47,15 @@ ADD_TO_ES_FILTER = {
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
+    "active_cases": [
+        {"term": {"closed": False}},
+    ],
 }
 
 DATE_FIELDS = {
     "forms": "received_on",
     "cases": "opened_on",
+    "active_cases": "modified_on",
     "users": "created_on",
     "sms": 'date',
     "tc_sms": 'date',
@@ -127,12 +132,39 @@ def get_user_type_filters(histo_type, user_type_mobile):
     return result
 
 
+def get_case_owner_filters():
+    result = {'terms': {}}
+
+    from corehq.apps.users.models import CouchUser
+    mobile_user_ids = [
+        mobile_user._id for mobile_user in CouchUser.all()
+        if mobile_user.doc_type == "CommCareUser"
+    ]
+
+    def all_groups():
+        from corehq.apps.groups.models import Group
+        from corehq.apps.domain.models import Domain
+        for domain in Domain.get_all():
+            for group in Group.by_domain(domain.name):
+                yield group
+    group_ids = [
+        group._id for group in all_groups()
+    ]
+
+    result['terms']['owner_id'] = mobile_user_ids + group_ids
+    return result
+
+
 def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
     user_type_filters = (
         get_user_type_filters(histo_type, user_type_mobile)
         if user_type_mobile is not None else None
     )
 
+    case_owner_filters = (
+        get_case_owner_filters()
+        if histo_type == 'active_cases' else None
+    )
 
     def _histo_data(domains, histo_type, start_date, end_date, user_type_filters):
         return dict([
@@ -144,6 +176,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
                  end_date,
                  interval=interval,
                  user_type_filters=user_type_filters,
+                 case_owner_filters=case_owner_filters,
              ))
             for d in domains
         ])
@@ -166,7 +199,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
                 past_30_days = _histo_data(
                     [domain_name_data],
                     histo_type,
-                    (timestamp - relativedelta(days=30)).isoformat(),
+                    (timestamp - relativedelta(days=(90 if histo_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
                     timestamp.isoformat(),
                     user_type_filters=user_type_filters,
                 )
@@ -224,7 +257,7 @@ def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobi
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_filters=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None, user_type_filters=None, case_owner_filters=None):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -251,6 +284,9 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
     if user_type_filters is not None:
         q["facets"]["histo"]["facet_filter"]["and"].append(user_type_filters)
+
+    if case_owner_filters is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(case_owner_filters)
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff

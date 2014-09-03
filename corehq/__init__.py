@@ -3,6 +3,7 @@ from corehq.apps.hqadmin.reports import (
     AdminAppReport,
     AdminUserReport,
     RealProjectSpacesReport,
+    RealCasesReport,
     CommConnectProjectSpacesReport,
 )
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
@@ -267,6 +268,7 @@ ADMIN_REPORTS = (
         AdminAppReport,
         PillowErrorsReport,
         RealProjectSpacesReport,
+        RealCasesReport,
         CommConnectProjectSpacesReport,
     )),
 )

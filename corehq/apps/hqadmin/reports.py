@@ -145,6 +145,16 @@ INDICATOR_DATA = {
         },
         "xaxis_label": "# users",
     },
+    "active_cases": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_cases",
+        "chart_title": "Active Cases (last 90 days)",
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_cases",
+        "interval": "month",
+        "is_cumulative": False,
+        "xaxis_label": "# cases",
+    },
     "sms_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_domains",
@@ -646,6 +656,14 @@ class RealProjectSpacesReport(GlobalAdminReports):
                 ).count(),
             ]
         ]
+
+
+class RealCasesReport(GlobalAdminReports):
+    slug = 'real_cases'
+    name = _('Real Cases')
+    indicators = [
+        'active_cases',
+    ]
 
 
 class CommConnectProjectSpacesReport(GlobalAdminReports):
