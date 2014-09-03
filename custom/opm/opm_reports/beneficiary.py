@@ -453,9 +453,6 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            if not self.is_vhnd_last_six_months:
-                return True
-
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             forms = self.filtered_forms(CHILDREN_FORMS)
             return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
