@@ -171,7 +171,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None, is_test=False):
 
 @task
 def store_billable(msg):
-    if not SmsBillable.objects.filter(log_id=msg._id).exists():
+    if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
         for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
             SmsBillable.create(msg)
 
