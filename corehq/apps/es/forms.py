@@ -17,6 +17,7 @@ class FormES(HQESQuery):
             submitted,
             completed,
             in_domains,
+            user_id,
         ] + super(FormES, self).builtin_filters
 
     def user_facet(self):
@@ -41,3 +42,7 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 def in_domains(domains):
     return filters.term('domain', list(domains))
+
+
+def user_id(user_ids):
+    return filters.term('form.meta.userID', list(user_ids))

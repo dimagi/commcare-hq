@@ -357,6 +357,54 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# workers",
     },
+    "commtrack_total_outgoing_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commtrack_total_outgoing_sms",
+        "chart_title": "Total Outgoing CommTrack SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["o"],
+        },
+        "histogram_type": "commtrack_sms",
+        "interval": "week",
+        "xaxis_label": "# SMS",
+    },
+    "commtrack_total_incoming_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commtrack_total_incoming_sms",
+        "chart_title": "Total Incoming CommTrack SMS",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "params_es_dict": {
+            "direction": ["i"],
+        },
+        "histogram_type": "commtrack_sms",
+        "interval": "week",
+        "xaxis_label": "# SMS",
+    },
+    "commtrack_forms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commtrack_forms",
+        "chart_title": "Total CommTrack Form Submissions",
+        "date_field_opts": [
+            {
+                "name": "Date Sent",
+                "value": "date",
+            },
+        ],
+        "histogram_type": "commtrack_forms",
+        "interval": "week",
+        "xaxis_label": "# forms",
+    },
 }
 
 
@@ -697,6 +745,20 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'active_mobile_workers',
         'total_clients',
         'active_clients',
+    ]
+
+    @property
+    def use_real_project_spaces(self):
+        return False
+
+
+class CommTrackProjectSpacesReport(GlobalAdminReports):
+    slug = 'commtrack_project_spaces'
+    name = ugettext_noop('CommTrack Project Spaces')
+    indicators = [
+        'commtrack_total_incoming_sms',
+        'commtrack_total_outgoing_sms',
+        'commtrack_forms',
     ]
 
     @property

@@ -14,6 +14,7 @@ class SMSES(HQESQuery):
             to_commcare_case,
             to_web_user,
             to_couch_user,
+            to_commcare_user_or_case,
             received,
             in_domains,
         ] + super(SMSES, self).builtin_filters
@@ -41,6 +42,10 @@ def to_web_user():
 
 def to_couch_user():
     return filters.term("couch_recipient_doc_type", "couchuser")
+
+
+def to_commcare_user_or_case():
+    return filters.OR(to_commcare_user(), to_commcare_case())
 
 
 def received(gt=None, gte=None, lt=None, lte=None):

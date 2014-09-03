@@ -67,7 +67,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_active_commconnect_domain_stats_data,
     get_active_dimagi_owned_gateway_projects,
     get_domain_stats_data,
-    get_total_clients_data
+    get_total_clients_data,
+    commtrack_form_submissions,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -894,6 +895,10 @@ def stats_data(request):
 
     params, __ = parse_args_for_es(request, prefix='es_')
 
+    if histo_type == "commtrack_forms":
+        params.update(params_es)
+        return json_response(commtrack_form_submissions(params, request.datespan, interval=interval))
+
     if histo_type == "active_dimagi_gateways":
         params.update(params_es)
         return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
@@ -913,6 +918,10 @@ def stats_data(request):
     if histo_type == "real_sms_messages":
         params.update(params_es)
         return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval))
+
+    if histo_type == "commtrack_sms":
+        params.update(params_es)
+        return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval, is_commtrack=True))
 
     if histo_type == "active_commconnect_domains":
         params.update(params_es)

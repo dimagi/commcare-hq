@@ -20,6 +20,7 @@ def format_return_data(shown_data, initial_value, datespan):
         'enddate': datespan.enddate_key_utc,
     }, datespan.startdate, datespan.enddate)
 
+
 def add_blank_data(stat_data, start, end):
     histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
     if not histo_data:
@@ -57,11 +58,15 @@ def daterange(interval, start_date, end_date):
         cur_date += step
 
 
-def get_real_project_spaces():
+def get_real_project_spaces(is_commtrack=False, is_commcommconnect=False):
     """
     Returns a set of names of real domains
     """
     real_domain_query = DomainES().real_domains().fields(['name'])
+    if is_commtrack:
+        real_domain_query = real_domain_query.commtrack_domains()
+    if is_commcommconnect:
+        real_domain_query = real_domain_query.commconnect_domains()
     real_domain_query_results = real_domain_query.run().raw_hits
     return {x['fields']['name'] for x in real_domain_query_results}
 
@@ -267,12 +272,13 @@ def get_mobile_workers_data(params, datespan, interval='month',
 
 
 def get_real_sms_messages_data(params, datespan, interval='month',
-        datefield='date'):
+        datefield='date', is_commtrack=False):
     """
     Returns SMS sent in timespan.
     Returned based on date SMS was sent
     """
-    real_domains = get_real_project_spaces()
+    real_domains = get_real_project_spaces(is_commtrack=is_commtrack)
+
     sms_after_date = (SMSES()
             .filter({"terms": params})
             .in_domains(real_domains)
@@ -280,12 +286,20 @@ def get_real_sms_messages_data(params, datespan, interval='month',
             .date_histogram('date', datefield, interval)
             .size(0))
 
+    if is_commtrack:
+        sms_after_date = sms_after_date.to_commcare_user_or_case()
+
     histo_data = sms_after_date.run().facet('date', 'entries')
 
     sms_before_date = (SMSES()
             .in_domains(real_domains)
             .received(lt=datespan.startdate)
-            .size(0)).run().total
+            .size(0))
+
+    if is_commtrack:
+        sms_before_date = sms_before_date.to_commcare_user_or_case()
+
+    sms_before_date = sms_before_date.run().total
 
     return format_return_data(histo_data, sms_before_date, datespan)
 
@@ -391,6 +405,31 @@ def get_domain_stats_data(params, datespan, interval='week',
 
     domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
 
-    return format_return_data(histo_data['facets']['histo']['entries'], 
-                              domains_before_date['hits']['total'], 
+    return format_return_data(histo_data['facets']['histo']['entries'],
+                              domains_before_date['hits']['total'],
                               datespan)
+
+
+def commtrack_form_submissions(params, datespan, interval='week',
+        datefield='received_on'):
+    real_domains = get_real_project_spaces(is_commtrack=True)
+    mobile_workers = [a['_id'] for a in UserES().fields([]).mobile_users().run().raw_hits]
+
+    forms_after_date = (FormES()
+            .in_domains(real_domains)
+            .submitted(gte=datespan.startdate, lte=datespan.enddate)
+            .date_histogram('date', datefield, interval)
+            .user_id(mobile_workers)
+            .size(0))
+
+    histo_data = forms_after_date.run().facet('date', 'entries')
+
+    forms_before_date = (FormES()
+            .in_domains(real_domains)
+            .submitted(lt=datespan.startdate)
+            .user_id(mobile_workers)
+            .size(0))
+
+    forms_before_date = forms_before_date.run().total
+
+    return format_return_data(histo_data, forms_before_date, datespan)
