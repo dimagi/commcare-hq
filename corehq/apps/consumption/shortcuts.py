@@ -5,6 +5,11 @@ from dimagi.utils.couch.cache import cache_core
 
 
 def get_default_monthly_consumption(domain, product_id, location_type, case_id):
+    """
+    Return the most specific consumption value for the passed
+    parameters.
+    """
+
     keys = [
         [domain, product_id, {}, case_id],
         [domain, product_id, location_type, None],
@@ -25,6 +30,20 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         return Decimal(results['value'])
     else:
         return None
+
+
+def get_domain_monthly_consumption_data(domain):
+    """
+    Get all default consumption rows for this domain.
+    """
+    results = cache_core.cached_view(
+        DefaultConsumption.get_db(),
+        'consumption/consumption_index',
+        startkey=[domain],
+        endkey=[domain, {}],
+        reduce=False,
+    )
+    return results
 
 
 def get_default_consumption(domain, product_id, location_type, case_id):
