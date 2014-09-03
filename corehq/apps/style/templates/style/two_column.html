@@ -6,10 +6,10 @@
     {% block page_breadcrumbs %}{% endblock %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-2">
+        <div id="hq-sidebar" class="col-md-2 col-hq-sidebar">
             {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
         </div>
-        <div class="col-md-10">
+        <div id="hq-content" class="col-md-10">
             <div class="page-header">
                 <h1>{% block page_title %}{% endblock %}</h1>
             </div>
