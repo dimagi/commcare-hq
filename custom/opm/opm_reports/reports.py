@@ -682,7 +682,7 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
             if isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
-                return "<p>{}</p>".format("</p><p>".join(set(values)))
+                return "<p>{}</p>".format("</p><p>".join(set(v for v in values if v is not None)))
             else:
                 return sorted(values)[-1]
         return map(zip_fn, enumerate(zip(*rows)))
