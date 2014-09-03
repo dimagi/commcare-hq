@@ -28,7 +28,7 @@
 // TOOLBAR IN NAVBAR
 // ----------
 .navbar .btn-toolbar {
-    margin: 0;
+    margin: 0 !important;
 }
 
 
@@ -100,5 +100,54 @@
                 top: 30px;
             }
         }
+    }
+}
+
+.navbar .btn-project {
+    @media (max-width: 768px) {
+        font-size: 0 !important;
+        height: 32px;
+        display: inline-flex;
+    }
+}
+
+.navbar .btn-project i {
+    @media (max-width: 768px) {
+        font-size: 14px;
+        margin-top: 4px;
+        margin-right: 2px;
+    }
+}
+
+.navbar .btn-primary {
+    @media (max-width: 768px) {
+        font-size: 0 !important;
+        height: 32px;
+        display: inline-flex;
+    }
+}
+
+.navbar .btn-primary i {
+    @media (max-width: 768px) {
+        font-size: 14px;
+        visibility: visible !important;
+        margin-top: 4px;
+        margin-right: 2px;
+    }
+}
+
+.navbar-collapse {
+    @media (max-width: 768px) {
+        height: auto !important;
+    }
+}
+
+button.navbar-toggle {
+    margin-top: 14px;
+}
+
+.navbar .btn-primary i {
+    @media (min-width: 768px) {
+        visibility: hidden !important;
     }
 }

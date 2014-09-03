@@ -30,6 +30,7 @@
         {% endblock %}
 
         {% block head %}
+            <link rel="stylesheet" type="text/css" href="{% static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}">
         {% endblock %}
     
         {% block page_imports %}
@@ -43,36 +44,42 @@
         {% endif %}
     </head>
     <body>
-        <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+        <div>
             {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
-            <header>
-                {% block header-section %}
-                <div class="navbar">
-                    <div class="navbar-inner">
-                        <hgroup class="brand">
-                            <h1><a href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
-                        </hgroup>
-                    {% if request.user.is_authenticated %}
-                        <nav id="hq-navigation-bar">
-                            {% block tabs %}
-                                {% format_main_menu %}
-                            {% endblock %}
-                            {% include 'hqwebapp/partials/global_navigation_bar.html' %}
-                        </nav>
-                    {% else %}
-                        {% block extra_tabs %}
-                        {% endblock %}
-                        <nav>
-                            <div class="btn-toolbar pull-right">
-                                <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
-                            </div>
-                        </nav>
-                    {% endif %}
+             <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    {% block header-section %}
+                     <div class="navbar-header" style="float: left">
+                        <button type="button" class="navbar-toggle collapsed">
+                            <span class="sr-only"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a>
                     </div>
+                    <div class="navbar-collapse collapse" style="float: left">
+                        {% if request.user.is_authenticated %}
+                                {% block tabs %}
+                                    {% format_main_menu %}
+                                {% endblock %}
+                            </div>
+                            {% include 'hqwebapp/partials/global_navigation_bar.html' %}
+                        {% else %}
+                            {% block extra_tabs %}
+                            {% endblock %}
+                            </div>
+                            <div class="btn-toolbar pull-right">
+                                <a href="{% url "login" %}" class="btn btn-primary">
+                                    <i class="icon-user"></i>
+                                    {% trans 'Sign In' %}
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% format_subtab_menu %}
+                    {% endblock header-section %}
                 </div>
-                {% format_subtab_menu %}
-                {% endblock header-section %}
-            </header>
+            </nav>
             {% endwith %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
@@ -540,6 +547,12 @@
                         $alertBox.hide();
                     }
                 );
+            });
+        </script>
+        <script>
+            $(".navbar-toggle").on("click", null, null, function() {
+                if($(".navbar-collapse").hasClass("in")) $(".navbar-collapse").removeClass("in");
+                else $(".navbar-collapse").addClass("in");
             });
         </script>
     </body>
