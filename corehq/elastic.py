@@ -6,6 +6,7 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -30,6 +31,7 @@ ES_URLS = {
     "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
     "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
+    "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
 }
 
 ADD_TO_ES_FILTER = {
@@ -284,6 +286,14 @@ def stream_es_query(chunksize=100, **kwargs):
         if not res["hits"]["hits"]:
             return
         for hit in res["hits"]["hits"]:
+            yield hit
+
+
+def stream_esquery(esquery, chunksize=100):
+    size = esquery._size if esquery._size is not None else SIZE_LIMIT
+    start = esquery._start if esquery._start is not None else 0
+    for chunk_start in range(start, start + size, chunksize):
+        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
             yield hit
 
 

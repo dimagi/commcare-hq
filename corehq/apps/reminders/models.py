@@ -260,6 +260,25 @@ def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
     r.retire()
 
+def get_case_ids(domain):
+    """
+    Had to add this because this query kept intermittently raising
+    "NoMoreData: Can't parse headers" exceptions.
+    """
+    max_tries = 5
+    for i in range(max_tries):
+        try:
+            result = CommCareCase.view('hqcase/types_by_domain',
+                reduce=False,
+                startkey=[domain],
+                endkey=[domain, {}],
+                include_docs=False,
+            ).all()
+            return [entry["id"] for entry in result]
+        except Exception:
+            if i == (max_tries - 1):
+                raise
+
 class CaseReminderHandler(Document):
     """
     A CaseReminderHandler defines the rules and schedule which govern how messages 
@@ -995,13 +1014,7 @@ class CaseReminderHandler(Document):
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
-                case_id_result = CommCareCase.view('hqcase/types_by_domain',
-                    reduce=False,
-                    startkey=[self.domain],
-                    endkey=[self.domain, {}],
-                    include_docs=False,
-                ).all()
-                case_ids = [entry["id"] for entry in case_id_result]
+                case_ids = get_case_ids(self.domain)
                 try:
                     client = get_redis_client()
                     client.set("reminder-rule-processing-current-%s" % self._id,
@@ -1015,13 +1028,14 @@ class CaseReminderHandler(Document):
                 self.set_rule_checkpoint(3)
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True)
+                    use_critical_section=True, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True)
+                max_threads=5, use_critical_section=True,
+                print_stack_interval=60)
 
     @classmethod
     def get_handlers(cls, domain, case_type=None, ids_only=False):

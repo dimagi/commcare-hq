@@ -346,6 +346,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
     return render(request, template, context)
 
 
+@login_and_domain_required
 def location_export(request, domain):
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'

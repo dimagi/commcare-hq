@@ -284,13 +284,55 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Delete your custom logo and use the standard one.")
     )
+    call_center_enabled = BooleanField(
+        label=_("Call Center Application"),
+        required=False,
+        help_text=_("Call Center mode is a CommCareHQ module for managing "
+                    "call center workflows. It is still under "
+                    "active development. Do not enable for your domain unless "
+                    "you're actively piloting it.")
+    )
+    call_center_case_owner = ChoiceField(
+        label=_("Call Center Case Owner"),
+        initial=None,
+        required=False,
+        help_text=_("Select the person who will be listed as the owner "
+                    "of all cases created for call center users.")
+    )
+    call_center_case_type = CharField(
+        label=_("Call Center Case Type"),
+        required=False,
+        help_text=_("Enter the case type to be used for FLWs in call center apps")
+    )
 
     def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
+
+        if domain:
+            if not CALLCENTER.enabled(domain):
+                self.fields['call_center_enabled'].widget = forms.HiddenInput()
+                self.fields['call_center_case_owner'].widget = forms.HiddenInput()
+                self.fields['call_center_case_type'].widget = forms.HiddenInput()
+            else:
+                groups = Group.get_case_sharing_groups(domain)
+                users = CommCareUser.by_domain(domain)
+
+                call_center_user_choices = [
+                    (user._id, user.raw_username + ' [user]') for user in users
+                ]
+                call_center_group_choices = [
+                    (group._id, group.name + ' [group]') for group in groups
+                ]
+
+                self.fields["call_center_case_owner"].choices = \
+                    [('', '')] + \
+                    call_center_user_choices + \
+                    call_center_group_choices
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -315,6 +357,12 @@ class DomainGlobalSettingsForm(forms.Form):
                         domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
                 elif self.cleaned_data['delete_logo']:
                     domain.delete_attachment(LOGO_ATTACHMENT)
+
+            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+            if domain.call_center_config.enabled:
+                domain.internal.using_call_center = True
+                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
             global_tz = self.cleaned_data['default_timezone']
             domain.default_timezone = global_tz
@@ -374,26 +422,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         choices=[]
     )
-    call_center_enabled = BooleanField(
-        label=_("Call Center Application"),
-        required=False,
-        help_text=_("Call Center mode is a CommCareHQ module for managing "
-                    "call center workflows. It is still under "
-                    "active development. Do not enable for your domain unless "
-                    "you're actively piloting it.")
-    )
-    call_center_case_owner = ChoiceField(
-        label=_("Call Center Case Owner"),
-        initial=None,
-        required=False,
-        help_text=_("Select the person who will be listed as the owner "
-                    "of all cases created for call center users.")
-    )
-    call_center_case_type = CharField(
-        label=_("Call Center Case Type"),
-        required=False,
-        help_text=_("Enter the case type to be used for FLWs in call center apps")
-    )
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
         required=False,
@@ -432,13 +460,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
-        domain = kwargs.pop('domain', None)
+        domain = kwargs.get('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
-
-        if not CALLCENTER.enabled(domain):
-            self.fields['call_center_enabled'].widget = forms.HiddenInput()
-            self.fields['call_center_case_owner'].widget = forms.HiddenInput()
-            self.fields['call_center_case_type'].widget = forms.HiddenInput()
 
         if not (user and user.is_staff):
             self.fields['restrict_superusers'].widget = forms.HiddenInput()
@@ -460,15 +483,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
             self.fields["sms_case_registration_user_id"].choices = domain_user_choices
 
-            call_center_user_choices = [(user._id, user.raw_username + ' [user]')
-                                         for user in users]
-            call_center_group_choices = [(group._id, group.name + ' [group]')
-                                         for group in groups]
-
-            self.fields["call_center_case_owner"].choices = \
-                [('', '')] + \
-                call_center_user_choices + \
-                call_center_group_choices
 
     def _validate_sms_registration_field(self, field_name, error_msg):
         value = self.cleaned_data.get(field_name)
@@ -504,11 +518,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
-            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-            if domain.call_center_config.enabled:
-                domain.internal.using_call_center = True
-                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
@@ -959,7 +968,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=_("Contact email"))
+    contact_email = forms.EmailField(label=_("Contact email"))
     organization = forms.CharField(label=_("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")

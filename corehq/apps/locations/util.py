@@ -1,6 +1,5 @@
-from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.commtrack.models import Product, SupplyPointCase
-from corehq.apps.locations.models import Location, root_locations, CustomProperty
+from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
@@ -10,6 +9,7 @@ from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 import re
 from unidecode import unidecode
+
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -44,11 +44,14 @@ def load_locs_json(domain, selected_loc_id=None):
 
     return loc_json
 
+
 def location_hierarchy_config(domain):
     return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types]
 
+
 def defined_location_types(domain):
     return [k for k, v in location_hierarchy_config(domain)]
+
 
 def parent_child(domain):
     """
@@ -57,97 +60,38 @@ def parent_child(domain):
     """
     return map_reduce(lambda (k, v): [(p, k) for p in v], data=dict(location_hierarchy_config(domain)).iteritems())
 
+
 def allowed_child_types(domain, parent):
     parent_type = parent.location_type if parent else None
     return parent_child(domain).get(parent_type, [])
 
-# hard-coded for now
+
 def location_custom_properties(domain, loc_type):
-    def _village_classes(domain):
-        # todo: meh.
-        if is_psi_domain(domain):
-            return [
-                _('Town'),
-                _('A'),
-                _('B'),
-                _('C'),
-                _('D'),
-                _('E'),
-            ]
-        else:
-            return [
-                _('Village'),
-                _('City'),
-                _('Town'),
-                _('Hamlet'),
-            ]
-    hardcoded = {
-        'outlet': [
-            CustomProperty(
-                name='outlet_type',
-                datatype='Choice',
-                label='Outlet Type',
-                required=True,
-                choices={'mode': 'static', 'args': [
-                        'CHC',
-                        'PHC',
-                        'SC',
-                        'MBBS',
-                        'Pediatrician',
-                        'AYUSH',
-                        'Medical Store / Chemist',
-                        'RP',
-                        'Asha',
-                        'AWW',
-                        'NGO',
-                        'CBO',
-                        'SHG',
-                        'Pan Store',
-                        'General Store',
-                        'Other',
-                    ]},
-            ),
-            CustomProperty(
-                name='outlet_type_other',
-                label='Outlet Type (Other)',
-            ),
-            CustomProperty(
-                name='address',
-                label='Address',
-            ),
-            CustomProperty(
-                name='landmark',
-                label='Landmark',
-            ),
-            CustomProperty(
-                name='contact_name',
-                label='Contact Name',
-            ),
-            CustomProperty(
-                name='contact_phone',
-                label='Contact Phone',
-            ),
-        ],
-        'village': [
-            CustomProperty(
-                name='village_size',
-                datatype='Integer',
-                label='Village Size',
-            ),
-            CustomProperty(
-                name='village_class',
-                datatype='Choice',
-                label='Village Class',
-                choices={'mode': 'static', 'args': _village_classes(domain)},
-            ),
-        ],
-    }
+    """
+    This was originally used to add custom properties to specific
+    location types based on domain or simply location type.
 
-    try:
-        properties = hardcoded[loc_type]
-    except KeyError:
-        properties = []
+    It is no longer used, and perhaps will be properly deleted
+    when there is a real way to deal with custom location properties.
 
+    But for now, an example of what you could return from here is below.
+
+    properties = [
+        CustomProperty(
+            name='village_size',
+            datatype='Integer',
+            label='Village Size',
+        ),
+        CustomProperty(
+            name='village_class',
+            datatype='Choice',
+            label='Village Class',
+            choices={'mode': 'static', 'args': _village_classes(domain)},
+        ),
+    ]
+    """
+
+    properties = []
     return properties
 
 
@@ -179,6 +123,7 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
         raise ValueError('invalid scope type')
 
     return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
+
 
 def property_uniqueness(domain, loc, prop_name, val, scope='global'):
     def normalize(val):
@@ -220,6 +165,8 @@ def get_default_column_data(domain, location_types):
     if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
         products = Product.by_domain(domain)
 
+        supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)
+
         for loc_type in location_types:
             loc = get_loc_config(domain)[loc_type]
             if not loc.administrative:
@@ -230,14 +177,19 @@ def get_default_column_data(domain, location_types):
 
                 locations = Location.filter_by_type(domain, loc_type)
                 for loc in locations:
-                    sp = SupplyPointCase.get_or_create_by_location(loc)
+                    if loc._id in supply_point_map:
+                        sp_id = supply_point_map[loc._id]
+                    else:
+                        # this only happens if the supply point case did
+                        # not already exist
+                        sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
 
                     data['values'][loc._id] = [
                         get_default_monthly_consumption(
                             domain,
                             p._id,
                             loc_type,
-                            sp._id
+                            sp_id
                         ) or '' for p in products
                     ]
             else:

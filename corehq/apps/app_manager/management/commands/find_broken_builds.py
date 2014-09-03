@@ -5,7 +5,26 @@ from django.core.management.base import CommandError
 from corehq.apps.app_manager import suite_xml
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.xform import XForm
 from dimagi.utils.couch.database import iter_docs
+
+
+def premature_auto_gps(build):
+    app = Application.wrap(build)
+    if app.build_version >= '2.14':
+        return
+
+    for module in app.get_modules():
+        for form in module.get_forms():
+            try:
+                built_source = app.fetch_attachment(
+                    'files/modules-{}/forms-{}.xml'.format(module.id, form.id))
+            except ResourceNotFound:
+                continue
+            if form.get_auto_gps_capture():
+                return 'auto gps error'
+            elif XForm(built_source).model_node.find("{orx}pollsensor"):
+                return 'auto gps error'
 
 
 def form_filter_error(build):
@@ -45,7 +64,8 @@ def broken_suite_files(build):
 
 CHECK_FUNCTIONS = {
     'broken_suite_files': broken_suite_files,
-    'form_filter_error': form_filter_error
+    'form_filter_error': form_filter_error,
+    'premature_auto_gps': premature_auto_gps,
 }
 
 

@@ -113,25 +113,31 @@ class UnknownUsersPillow(BulkPillow):
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
-    def get_fields(self, changes_or_emitted_dict):
-        if 'doc' in changes_or_emitted_dict:
-            doc = changes_or_emitted_dict['doc']
-            form_meta = doc.get('form', {}).get('meta', {})
-            domain = doc.get('domain')
-            user_id = form_meta.get('userID')
-            username = form_meta.get('username')
-            xform_id = doc.get('_id')
-        else:
-            domain = changes_or_emitted_dict['key'][1]
-            user_id = changes_or_emitted_dict['value']['user_id']
-            username = changes_or_emitted_dict['value']['username']
-            xform_id = changes_or_emitted_dict['id']
-        if user_id in WEIRD_USER_IDS:
-            user_id = None
+    def get_fields_from_emitted_dict(self, emitted_dict):
+        domain = emitted_dict['key'][1]
+        user_id = emitted_dict['value']['user_id']
+        username = emitted_dict['value']['username']
+        xform_id = emitted_dict['id']
+        return user_id, username, domain, xform_id
+
+    def get_fields_from_doc(self, doc):
+        form_meta = doc.get('form', {}).get('meta', {})
+        domain = doc.get('domain')
+        user_id = form_meta.get('userID')
+        username = form_meta.get('username')
+        xform_id = doc.get('_id')
         return user_id, username, domain, xform_id
 
     def change_trigger(self, changes_dict):
-        user_id, username, domain, xform_id = self.get_fields(changes_dict)
+        if 'key' in changes_dict:
+            user_id, username, domain, xform_id = self.get_fields_from_emitted_dict(changes_dict)
+        else:
+            doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
+            user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+
+        if user_id in WEIRD_USER_IDS:
+            user_id = None
+
         es_path = USER_INDEX + "/user/"
         if (user_id and not self.user_db.doc_exist(user_id)
                 and not self.es.head(es_path + user_id)):

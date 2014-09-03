@@ -42,7 +42,7 @@ class Commandes(fluff.Calculator):
     def total(self, form):
         products = form.form['products']
         for product in products:
-            if 'productName' in product:
+            if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
                 yield {
                     'date': product['receivedMonthInner'],
                     'value': product['amountOrdered'],
@@ -54,7 +54,7 @@ class Recus(fluff.Calculator):
     def total(self, form):
         products = form.form['products']
         for product in products:
-            if 'productName' in product:
+            if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
                 yield {
                     'date': product['receivedMonthInner'],
                     'value': product['amountReceived'],

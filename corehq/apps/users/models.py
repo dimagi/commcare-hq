@@ -1619,8 +1619,28 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.save()
         self.save()
 
-    def get_group_fixture(self):
-        return group_fixture(self.get_case_sharing_groups(), self)
+    def get_group_fixture(self, last_sync=None):
+        def _should_sync_groups(groups, last_sync):
+            """
+            Determine if we need to sync the groups fixture by checking
+            the modified date on all groups compared to the
+            last sync.
+            """
+            if not last_sync or not last_sync.date:
+                return True
+
+            for group in groups:
+                if not group.last_modified or group.last_modified >= last_sync.date:
+                    return True
+
+            return False
+
+        groups = self.get_case_sharing_groups()
+
+        if _should_sync_groups(groups, last_sync):
+            return group_fixture(groups, self)
+        else:
+            return None
 
     @memoized
     def get_case_sharing_groups(self):
@@ -1942,6 +1962,13 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
                 yield web_user
+
+    @classmethod
+    def get_dimagi_emails_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            if user_doc['email'].endswith('@dimagi.com'):
+                yield user_doc['email']
 
 
 class FakeUser(WebUser):

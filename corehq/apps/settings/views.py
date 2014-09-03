@@ -1,5 +1,5 @@
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.style.decorators import use_bootstrap_3
+from corehq.apps.style.decorators import preview_boostrap3
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -17,6 +17,9 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+
+import corehq.apps.style.utils as style_utils
+
 
 @login_and_domain_required
 def default(request, domain):
@@ -85,11 +88,18 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
 
-    @method_decorator(use_bootstrap_3())
+    @method_decorator(preview_boostrap3())
     def dispatch(self, request, *args, **kwargs):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def template_name(self):
+        template = {
+            style_utils.BOOTSTRAP_2: 'settings/edit_my_account.b2.html',
+            style_utils.BOOTSTRAP_3: 'settings/edit_my_account.html',
+        }[style_utils.bootstrap_version(self.request)]
+        return template
 
     @property
     @memoized

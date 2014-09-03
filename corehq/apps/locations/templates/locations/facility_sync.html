@@ -15,9 +15,10 @@
     $(function () {
         var _post = function (elem, url, options) {
             var options = options || {};
-            var success = options.success || '{% trans "Sync Successful" %}';
-            var error = options.error || '{% trans "Error!" %}';
-            $(elem).prop('disabled', true).html('{% trans "Syncing..." %}');
+            var success = options.success || "{% trans "Sync Successful" %}";
+            var error = options.error || "{% trans "Error!" %}";
+            $(elem).prop('disabled', true).html("{% trans "Syncing..." %}");
+
             $.ajax({
                 type: 'POST',
                 url: url,
@@ -31,7 +32,7 @@
         };
         $("#sync_lmis").click(function() {
             var url = '{% url sync_url domain %}';
-            var successMessage = '{% trans "Sync started" %}';
+            var successMessage = "{% trans "Sync started" %}";
             _post(this, url, {success: successMessage});
         });
     });

@@ -37,11 +37,6 @@ class DatePropFilter(BaseSingleOptionFilter):
             ('date_next_attempt', 'Date of Next Attempt'),
         ]
 
-    @property
-    @memoized
-    def selected(self):
-        return super(DatePropFilter, self).selected or 'date_created'
-
 
 class AttemptsFilter(CheckboxFilter):
     slug = 'filter_attempts'
