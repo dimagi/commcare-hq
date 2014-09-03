@@ -121,4 +121,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
+
+    url(r'ucla-task-creation/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
+        'ucla_task_creation', name='ucla_task_creation')
 )

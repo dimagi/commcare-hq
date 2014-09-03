@@ -33,3 +33,9 @@ class CopyApplicationForm(forms.Form):
         if domain is None:
             raise forms.ValidationError("A valid project space is required.")
         return domain_name
+
+class UclaTaskCreationForm(forms.Form):
+    question_ids = forms.CharField(
+        widget=forms.Textarea,
+        label="Enter Question ids, one per line"
+    )

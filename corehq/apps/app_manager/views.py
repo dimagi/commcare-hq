@@ -28,7 +28,7 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 
-from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager.forms import CopyApplicationForm, UclaTaskCreationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
@@ -66,6 +66,7 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_proper
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.reports.formdetails.readable import FormQuestion
 from corehq.apps.translations import system_text as st_trans
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
@@ -101,8 +102,10 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     Form,
+    FormActionCondition,
     FormActions,
     Module,
+    OpenSubCaseAction,
     ParentSelect,
     SavedAppBuild,
     get_app,
@@ -2573,11 +2576,132 @@ def upload_translations(request, domain, app_id):
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
+@require_deploy_apps
+def ucla_task_creation(request, domain, app_id, module_id, form_id):
+    '''
+    This view is meant to be a run as a one-off script to support a specific
+    app that Jeremy is writing. Running this script subsequent times on the
+    same form will not have adverse affects.
+    :param request:
+    :param domain:
+    :param app_id:
+    :param module_id:
+    :param form_id:
+    :return:
+    '''
+    if request.method == 'POST':
+
+        html_form = UclaTaskCreationForm(request.POST)
+        if html_form.is_valid():
+
+            questions = html_form.cleaned_data['question_ids'].split()
+            form = get_app(domain, app_id).modules[int(module_id)].forms[int(form_id)]
+            # Make changes to the form
+            message = _ucla_form_modifier(form, questions)
+            return HttpResponse(message, content_type="text/plain")
+
+        return HttpResponse("Soemthing was wrong with the form you submitted. Your CloudCare form is unchanged.", content_type="text/plain")
+
+    elif request.method == 'GET':
+        html_form = UclaTaskCreationForm()
+        response = HttpResponse()
+        response.write('<form action="'+reverse('ucla_task_creation', args=(domain, app_id, module_id, form_id))+'" method="post">')
+        response.write(html_form.as_p())
+        response.write('<p><input type="submit" value="Process Form"></p>')
+        response.write("</form>")
+        return response
+    else:
+        return HttpResponse("GET or POST only.", content_type="text/plain")
 
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
      _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
 ]
+
+def _ucla_form_modifier(form, question_ids):
+
+    message = ""
+
+    source = form.source.encode("utf8", "replace") # Is this ok?
+    parser = etree.XMLParser(remove_blank_text=True)
+    xform_root = etree.fromstring(source, parser)
+
+    # Get the questions specified in question_ids
+    question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
+    question_ids = {"/data/" + q for q in question_ids}.intersection(question_dict.keys())
+    questions = [question_dict[k] for k in question_ids]
+
+    # Get the existing subcases
+    existing_subcases = {c.case_name:c for c in form.actions.subcases}
+
+    for question in questions:
+        for option in question.options:
+
+            hidden_value_path = question.value + "_" + option.value
+            hidden_value_text = option.label
+
+            # Create new hidden values for each question option if they don't already exist:
+
+            if hidden_value_path not in question_dict:
+                # Add data element
+                data_node = xform_root[0][1][0][0]
+                ns = "{%s}" % data_node.nsmap[None]
+                tag = hidden_value_path.replace("/data/", "")
+                #TODO: Am I supposed to be adding the namespace like this?
+                data_node.append(etree.Element(ns+tag))
+
+                # Add bind
+                # TODO: Looks like XForm has a add_bind method. Look into it.
+                ns = "{%s}" % xform_root.nsmap[None]
+                itext_node = xform_root[0][1].find(ns+"itext")
+                bind_node = etree.Element(ns+"bind")
+                # Setting attributes like this instead of with a dict enforces order
+                bind_node.attrib["nodeset"] = hidden_value_path
+                bind_node.attrib["calculate"] = '"'+hidden_value_text+'"'
+                itext_node.addprevious(bind_node)
+
+            else:
+                message += "Node " + hidden_value_path + " already exists, skipping.\n"
+
+            # Create FormActions for opening subcases
+
+            if hidden_value_path not in existing_subcases:
+                action = OpenSubCaseAction(
+                    condition=FormActionCondition(
+                        type='if',
+                        question=question.value,
+                        operator='selected',
+                        answer=option.label,
+                    ),
+                    case_name=hidden_value_path,
+                    case_type='task',
+                    # TODO: Determine if this puts the case properties in the expected order.
+                    case_properties={
+                        'task_responsible': '/data/task_responsible',
+                        'task_due': '/data/task_due',
+                        'owner_id': '/data/owner_id',
+                        'task_risk_factor': '/data/task_risk_factor',
+                        'study_id': '/data/study_id',
+                        'patient_name': '/data/patient_name'
+                    },
+                    close_condition=FormActionCondition(
+                        answer=None,
+                        operator=None,
+                        question=None,
+                        type='never'
+                    )
+                )
+                form.actions.subcases.append(action)
+            else:
+                message += "OpenSubCaseAction " + hidden_value_path + " already exists, skipping.\n"
+
+    app = form.get_app()
+    # Save the xform modifications
+    save_xform(app, form, etree.tostring(xform_root, pretty_print=True))
+    # save the action modifications
+    app.save()
+    message += "Form saved.\n"
+    return message
 
 
 FN = 'fn'
