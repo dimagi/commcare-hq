@@ -7,18 +7,20 @@ class Command(BaseCommand):
     help = "Deletes the contents of a domain"
     args = '<domain>'
 
-    make_option('--simulate',
-                action='store_true',
-                dest='simulate',
-                default=False,
-                help='Don\'t delete anything, print what would be deleted.'),
+    option_list = BaseCommand.option_list + (
+        make_option('--simulate',
+                    action='store_true',
+                    dest='simulate',
+                    default=False,
+                    help='Don\'t delete anything, print what would be deleted.'),
+    )
 
     def handle(self, *args, **options):
         if len(args) != 1:
             raise CommandError('Usage is delete_domain %s' % self.args)
 
         sourcedb = get_db()
-        domain = args[1].strip()
+        domain = args[0].strip()
         simulate = options['simulate']
 
         if simulate:
@@ -46,23 +48,26 @@ class Command(BaseCommand):
             if not simulate:
                 print "Deleting domain doc"
                 domain_doc = Domain.wrap(result['doc'])
-                sourcedb.delte_doc(domain_doc) #TODO: Attachements are deleted by this as well, right?
+                sourcedb.delte_doc(domain_doc, empty_on_delete=True) #TODO: Attachements are deleted by this as well, right?
         else:
             print "Domain doc not found for domain %s." % domain
 
     def delete_docs(self, sourcedb, domain, simulate, startkey, endkey):
         # TODO: What will happen to documents in multiple domains?
 
-        doc_ids = [ result["id"] for result in sourcedb.view("domain/docs",
+        # TODO: Getting full docs instead of ids might slow things down?
+        docs = [result for result in sourcedb.view("domain/docs",
                                                     startkey=startkey,
                                                     endkey=endkey,
                                                     reduce=False
                                                 )]
-        total = len(doc_ids)
+        total = len(docs)
         print "Found %s matching documents in domain: %s" % (total, domain)
 
         try:
-            sourcedb.delete_docs(doc_ids) #TODO: Attachements are deleted by this as well, right?
+            if not simulate:
+                sourcedb.delete_docs(docs, empty_on_delete=True) #TODO: Attachements are deleted by this as well, right?
+                print "Deleted %s documents!" % (total,)
         except Exception, e:
             print "Delete failed! Error is: %s" % e
 
