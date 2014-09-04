@@ -4,7 +4,7 @@ from corehq.apps.commtrack.models import Product
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
-    TableDataFormat, DictDataFormat, format_data
+    TableDataFormat, DictDataFormat, format_data, calculate_total_row
 from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
@@ -160,6 +160,65 @@ class DispDesProducts(BaseSqlData):
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
             ]
+
+
+class TauxDeRuptures(BaseSqlData):
+    slug = 'taux_de_ruptures'
+    title = 'Taux de ruptures de stock total'
+    table_name = 'fluff_IntraHealthFluff'
+    col_names = ['stock_total']
+    have_groups = False
+    custom_total_calculate = True
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def filters(self):
+        filter = super(TauxDeRuptures, self).filters
+        filter.append("stock_total = 0")
+        return filter
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_("Stock total"), CountColumn('stock_total')))
+        return columns
+
+    def calculate_total_row(self, rows):
+        converture_data_rows = total = ConventureData(self.config).rows
+        total = converture_data_rows[0][2]["html"] if converture_data_rows else 0
+
+        for row in rows:
+            row.append(dict(sort_key=1L if any([x["sort_key"] for x in row[1:]]) else 0L,
+                            html=1L if any([x["sort_key"] for x in row[1:]]) else 0L))
+
+        total_row = list(calculate_total_row(rows))
+
+        taux_rapture_row = ["(%s/%s) %s" % (x, total, self.percent_fn(total, x)) for x in total_row]
+
+        if total_row:
+            total_row[0] = 'Total'
+
+        if taux_rapture_row:
+            taux_rapture_row[0] = 'Taux rupture'
+
+        rows.append(total_row)
+
+        return taux_rapture_row
+
 
 class FicheData(BaseSqlData):
     title = ''

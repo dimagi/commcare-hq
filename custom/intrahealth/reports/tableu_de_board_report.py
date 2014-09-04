@@ -56,6 +56,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
                 self.model = data_provider
                 headers = self.headers
                 rows = self.rows
+            if isinstance(data_provider, TauxDeRuptures):
+                headers.add_column(DataTablesColumn("Au moins 1 produit"))
             if data_provider.show_total:
                 if data_provider.custom_total_calculate:
                     total_row = data_provider.calculate_total_row(rows)
@@ -150,6 +152,7 @@ class TableuDeBoardReport(MultiReport):
         if 'district_id' in config:
             return [
                 ConventureData(config=config),
+                TauxDeRuptures(config=config),
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
                 NombreData(config=config)
@@ -158,6 +161,7 @@ class TableuDeBoardReport(MultiReport):
             return [
                 ConventureData(config=config),
                 DispDesProducts(config=config),
+                TauxDeRuptures(config=config),
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
                 NombreData(config=config)
