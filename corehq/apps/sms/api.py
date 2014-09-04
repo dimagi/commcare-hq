@@ -118,7 +118,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return queue_outgoing_sms(msg, onerror=onerror)
 
-def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None, is_test=False):
+def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
     backend = MobileBackend.load_by_name(domain, backend_name)
     msg = SMSLog(
@@ -133,7 +133,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
-    return queue_outgoing_sms(msg, onerror=onerror, is_test=is_test)
+    return queue_outgoing_sms(msg, onerror=onerror)
 
 def enqueue_directly(msg):
     try:
@@ -144,12 +144,8 @@ def enqueue_directly(msg):
         # shortly.
         pass
 
-def queue_outgoing_sms(msg, onerror=lambda: None, is_test=False):
-    if is_test:
-        msg.save()
-        store_billable(msg)
-        return msg
-    elif settings.SMS_QUEUE_ENABLED:
+def queue_outgoing_sms(msg, onerror=lambda: None):
+    if settings.SMS_QUEUE_ENABLED:
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
