@@ -110,7 +110,7 @@ def get_subscription_stats_data(params, datespan, interval='month',
     ]
 
 
-def get_active_domain_stats_data(datespan, interval='month',
+def get_active_domain_stats_data(params, datespan, interval='month',
         datefield='received_on', software_plan_edition=None):
     """
     Returns list of timestamps and how many domains were active in the 30 days
