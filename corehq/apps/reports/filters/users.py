@@ -452,11 +452,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         }
 
     @classmethod
-    def for_group(cls, group_id):
-        # TODO: Break this into two methods: for_reporting_group and for_sharing_group
-        # NOTE NOTE NOTE!: It looks like its possible for this group_id to come from a url:
-        #                  see corehq.apps.reports.standard.ProjectReportParametersMixin#group_ids
-        #                  So it could be a reporting group and it could be a sharing group I think
+    def for_reporting_group(cls, group_id):
         return {
             cls.slug: 'g__%s' % group_id
         }
