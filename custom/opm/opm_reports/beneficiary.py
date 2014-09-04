@@ -215,8 +215,11 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
-        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
-        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
+        if self.report.rendered_as == u'print':
+            self.name = self.case_property('name', EMPTY_FIELD)
+        else:
+            url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+            self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
         self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
