@@ -84,6 +84,16 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "subscriptions": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "subscriptions",
+        "chart_title": "Subscriptions",
+        "hide_cumulative_charts": True,
+        "histogram_type": "subscriptions",
+        "interval": "month",
+        "is_cumulative": False,
+        "xaxis_label": "# domains on subscription",
+    },
     "forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms",
@@ -679,6 +689,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
+        'subscriptions',
     ]
 
     @property

@@ -1,6 +1,7 @@
 import time
 from copy import deepcopy
 from dateutil.relativedelta import relativedelta
+from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.es.cases import CaseES
@@ -13,19 +14,20 @@ from corehq.elastic import es_query, ES_URLS
 
 
 def format_return_data(shown_data, initial_value, datespan):
-    return add_blank_data({
-        'histo_data': {"All Domains": shown_data},
+    return {
+        'histo_data': {
+            "All Domains": add_blank_data(
+                shown_data, datespan.startdate, datespan.enddate),
+        },
         'initial_values': {"All Domains": initial_value},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
-    }, datespan.startdate, datespan.enddate)
+    }
 
 
-def add_blank_data(stat_data, start, end):
-    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
+def add_blank_data(histo_data, start, end):
     if not histo_data:
-        new_stat_data = deepcopy(stat_data)
-        new_stat_data["histo_data"]["All Domains"] = [
+        return [
             {
                 "count": 0,
                 "time": timestamp,
@@ -34,8 +36,7 @@ def add_blank_data(stat_data, start, end):
                 for date in [start, end]
             ]
         ]
-        return new_stat_data
-    return stat_data
+    return histo_data
 
 
 def daterange(interval, start_date, end_date):
@@ -84,13 +85,29 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
 
 def domains_matching_plan(software_plan_edition, start, end):
     matching_subscriptions = Subscription.objects.filter(
+        ((Q(date_start__gte=start) & Q(date_start__lte=end))
+            | (Q(date_end__gte=start) & Q(date_end__lte=end))),
         plan_version__plan__edition=software_plan_edition,
-    )  # TODO - date_start in [start, end] or date_end in [start, end]
+    )
 
     return {
         subscription.subscriber.domain
         for subscription in matching_subscriptions
     }
+
+
+def get_subscription_stats_data(params, datespan, interval='month',
+        software_plan_edition=None):
+    real_domains = get_real_project_spaces()
+    return [
+        {
+            "count": len(real_domains & domains_matching_plan(
+                software_plan_edition, timestamp, timestamp)),
+            "time": int(1000 * time.mktime(timestamp.timetuple())),
+        } for timestamp in daterange(
+            interval, datespan.startdate, datespan.enddate
+        )
+    ]
 
 
 def get_active_domain_stats_data(datespan, interval='month',
