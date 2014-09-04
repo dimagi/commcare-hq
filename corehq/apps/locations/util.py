@@ -6,10 +6,9 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
-from corehq.apps.consumption.shortcuts import get_domain_monthly_consumption_data
+from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 import re
 from unidecode import unidecode
-from decimal import Decimal
 
 
 def load_locs_json(domain, selected_loc_id=None):
@@ -157,47 +156,6 @@ def get_custom_property_names(domain, loc_type, common_types):
     return [prop.name for prop in location_custom_properties(domain, loc_type) if prop.name not in common_types]
 
 
-def hashable_key(key):
-    """
-    Convert the key from couch into something hasable.
-    Mostly, just need to make it a tuple and remove the special
-    {} value.
-    """
-    return tuple('{}' if item == {} else item for item in key)
-
-
-def build_consumption_dict(domain):
-    """
-    Takes raw rows from couch and builds a dict to 
-    look up consumption values from.
-    """
-    raw_rows = get_domain_monthly_consumption_data(domain)
-
-    return dict(
-        (hashable_key(row['key']), Decimal(row['value']))
-        for row in raw_rows if row['value']
-    )
-
-
-def get_loaded_default_consumption(consumption_dict, domain, product_id, location_type, case_id):
-    """
-    Recreates the couch view logic to access the most specific
-    consumption value available for the passed options
-    """
-    keys = [
-        tuple([domain, product_id, '{}', case_id]),
-        tuple([domain, product_id, location_type, None]),
-        tuple([domain, product_id, None, None]),
-        tuple([domain, None, None, case_id]),
-    ]
-
-    for key in keys:
-        if key in consumption_dict:
-            return consumption_dict[key]
-
-    return None
-
-
 def get_default_column_data(domain, location_types):
     data = {
         'headers': {},
@@ -232,7 +190,7 @@ def get_default_column_data(domain, location_types):
                         sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
 
                     data['values'][loc._id] = [
-                        get_loaded_default_consumption(
+                        get_loaded_default_monthly_consumption(
                             consumption_dict,
                             domain,
                             p._id,
