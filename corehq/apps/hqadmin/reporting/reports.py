@@ -1,6 +1,7 @@
 import time
 from copy import deepcopy
 from dateutil.relativedelta import relativedelta
+from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.es.cases import CaseES
@@ -84,8 +85,10 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
 
 def domains_matching_plan(software_plan_edition, start, end):
     matching_subscriptions = Subscription.objects.filter(
+        ((Q(date_start__gte=start) & Q(date_start__lte=end))
+            | (Q(date_end__gte=start) & Q(date_end__lte=end))),
         plan_version__plan__edition=software_plan_edition,
-    )  # TODO - date_start in [start, end] or date_end in [start, end]
+    )
 
     return {
         subscription.subscriber.domain
