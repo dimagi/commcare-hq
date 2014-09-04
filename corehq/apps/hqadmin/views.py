@@ -69,6 +69,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_domain_stats_data,
     get_total_clients_data,
     commtrack_form_submissions,
+    get_subscription_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -934,6 +935,15 @@ def stats_data(request):
     if histo_type == "sms_domains":
         params.update(params_es)
         return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
+
+    if histo_type == "subscriptions":
+        params.update(params_es)
+        return json_response(get_subscription_stats_data(
+            params,
+            request.datespan,
+            interval=interval,
+            software_plan_edition=params_es.get('software_plan_edition', None),
+        ))
 
     if histo_type == "active_domains":
         stats_data = get_active_domain_stats_data(
