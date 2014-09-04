@@ -376,38 +376,20 @@ def get_commconnect_domain_stats_data(params, datespan, interval='month',
 
 def get_domain_stats_data(params, datespan, interval='week',
         datefield="date_created"):
-    q = {
-        "query": {"bool": {"must":
-                                  [{"match": {'doc_type': "Domain"}},
-                                   {"term": {"is_snapshot": False}}]}},
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            datefield: {
-                                "from": datespan.startdate_display,
-                                "to": datespan.enddate_display,
-                            }}}]}}}}
 
-    histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
+    domains_after_date = (DomainES()
+            .created(gte=datespan.startdate, lte=datespan.enddate)
+            .date_histogram('date', datefield, interval)
+            .size(0))
 
-    del q["facets"]
-    q["filter"] = {
-        "and": [
-            {"range": {datefield: {"lt": datespan.startdate_display}}},
-        ],
-    }
+    histo_data = domains_after_date.run().facet('date', 'entries')
 
-    domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
+    domains_before_date = (DomainES()
+            .real_domains()
+            .created(lt=datespan.startdate)
+            .size(0)).run().total
 
-    return format_return_data(histo_data['facets']['histo']['entries'],
-                              domains_before_date['hits']['total'],
-                              datespan)
+    return format_return_data(histo_data, domains_before_date, datespan)
 
 
 def commtrack_form_submissions(params, datespan, interval='week',
