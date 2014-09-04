@@ -215,7 +215,7 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
-        if self.report.rendered_as == u'print':
+        if getattr(self.report, 'rendered_as', None) == u'print':
             self.name = self.case_property('name', EMPTY_FIELD)
         else:
             url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
