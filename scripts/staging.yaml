@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - jsonobject-string-conversions
   - archive-products+archive-to-deactivate # tw 8/14
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
