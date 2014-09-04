@@ -2788,33 +2788,46 @@ def upload_bulk_app_translations(request, domain, app_id):
         # NOTE: At the moment there is no missing row detection. This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        for row in sheet:
 
-            if sheet.headers[0] == "case_property":
-                # It's a module sheet
-                module_index = int(sheet.worksheet.title.replace("module", ""))
-                module = app.modules[module_index]
+        if sheet.worksheet.title == "Modules_and_forms":
+            # It's the first sheet
+            pass
 
-                # How do we update details? Do we have to change them on long and on short?
+        elif sheet.headers[0] == "case_property":
+            # It's a module sheet
+            module_index = int(sheet.worksheet.title.replace("module", "")) - 1
+            module = app.modules[module_index]
 
-            else:
-                # It's a form sheet
-                mod_text, form_text = sheet.worksheet.title.split("_")
-                module_index = int(mod_text.replace("module", ""))
-                form_index = int(form_text.replace("form", ""))
-                form = app.modules[module_index].forms[form_index]
+            # How do we update details? Do we have to change them on long and on short?
 
-                # How do we update translations? Where are they stored?
-                # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
+            for row in sheet:
+                pass
 
-                import ipdb; ipdb.set_trace()
+        else:
+            # It's a form sheet
+            mod_text, form_text = sheet.worksheet.title.split("_")
+            module_index = int(mod_text.replace("module", "")) - 1
+            form_index = int(form_text.replace("form", "")) - 1
+            form = app.modules[module_index].forms[form_index]
+            xform = form.wrapped_xform()
 
-                # Get itext node - XForm.itext  (might need to create one if does not exist)
-                # For each lang:
-                #   get translation block or create if dne
-                #   For each translation:
-                #       get text node with id = ? or create if dne
-                #       put the right value into it
+            # How do we update translations? Where are they stored?
+            # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
+
+            import ipdb; ipdb.set_trace()
+
+            # Get itext node - XForm.itext  (might need to create one if does not exist)
+            # For each lang:
+            #   get translation block or create if dne
+            #   For each translation:
+            #       get text node with id = ? or create if dne
+            #       put the right value into it
+
+            itext = xform.itext_node
+            for row in sheet:
+                print row
+
+
 
 
 common_module_validations = [
