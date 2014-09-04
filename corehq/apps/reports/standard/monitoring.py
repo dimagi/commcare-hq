@@ -1145,7 +1145,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 url_args = EMWF.for_user(owner_id)
             else:
                 assert type == 'group'
-                url_args = EMWF.for_group(owner_id)
+                url_args = EMWF.for_reporting_group(owner_id)
 
             start_date, end_date = dates_for_linked_reports()
             url_args.update({
