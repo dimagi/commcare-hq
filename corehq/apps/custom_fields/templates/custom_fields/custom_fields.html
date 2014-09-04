@@ -21,44 +21,74 @@
 {% endblock %}
 
 {% block main_column %}
-    {# {% crispy custom_fields_form %} #}
-    <form id="custom-fields-form" action="." method="POST" data-bind="submit: submitFields">
+    <form id="custom-fields-form"
+          action="."
+          method="POST"
+          data-bind="submit: submitFields"
+          class="form form-horizontal">
         {% csrf_token %}
-        <table class="table table-striped">
-            <caption><h3>{{ view.page_name }}</h3></caption>
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>{% trans "Key" %}</th>
-                    <th>{% trans "Field Label" %}</th>
-                    <th>{% trans "Required" %}</th>
-                    <th>{% trans "Delete" %}</th>
-                </tr>
-            </thead>
-            <tbody data-bind="sortable: data_fields">
-                <tr>
-                    <td class="sortable-handle">
-                        <i class="icon-resize-vertical"></i>
-                    </td>
-                    <td>
-                        <input type="text" data-bind="value: slug"/>
-                    </td>
-                    <td>
-                        <input type="text" data-bind="value: label"/>
-                    </td>
-                    <td>
-                        <input type="checkbox" data-bind="checked: is_required"/>
-                    </td>
-                    <td>
-                        <button type="button" class="close" data-bind="click: $root.removeField">&times;</button>
-                    </td>
-                </tr>
-            </tbody>
-            <tr><td></td><td></td><td></td><td>
-                <button class="pull-right" data-bind="click: addField">Add a Field</button>
-            </td></tr>
-        </table>
+        <fieldset>
+            <legend>
+                {{ view.page_name }}
+            </legend>
 
-        <p><input id="save-custom-fields" class="pull-right btn btn-primary" type="submit" value="Save Fields"></p>
+            {% if custom_fields_form.data_fields.errors %}
+                {% for error in custom_fields_form.data_fields.errors %}
+                    <div class="alert alert-error">
+                        {{ error }}
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div class="control-group">
+                <label class="control-label">User Fields</label>
+                <div class="controls">
+                    <p>
+                        <button class="btn btn-success"
+                                data-bind="click: addField"
+                                type="button">
+                            <i class="icon-plus"></i>
+                            Add a Field
+                        </button>
+                    </p>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{% trans "Key" %}</th>
+                                <th>{% trans "Field Label" %}</th>
+                                <th>{% trans "Required" %}</th>
+                                <th>{% trans "Delete" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="sortable: data_fields">
+                            <tr>
+                                <td class="sortable-handle">
+                                    <i class="icon-resize-vertical"></i>
+                                </td>
+                                <td>
+                                    <input class="input-block-level" type="text" data-bind="value: slug"/>
+                                </td>
+                                <td>
+                                    <input class="input-block-level" type="text" data-bind="value: label"/>
+                                </td>
+                                <td>
+                                    <input type="checkbox" data-bind="checked: is_required"/>
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-danger"
+                                            data-bind="click: $root.removeField">
+                                        <i class="icon-remove"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions"><button id="save-custom-fields" class="btn btn-primary" type="submit">Save Fields</button></div>
     </form>
 {% endblock %}
