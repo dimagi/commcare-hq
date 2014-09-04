@@ -2591,29 +2591,44 @@ def upload_translations(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
-def _expected_bulk_app_sheet_structure(app):
+def _expected_bulk_app_sheet_headers(app):
     '''
-    Returns a dictionary representing the expected structure of bulk ap translation
+    Returns lists representing the expected structure of bulk app translation
     excel file uploads.
 
-    The dictionary will be in the form:
-    {
-        "sheet name": {
-            "columns":[
-                "column name 1",
-                "column name 2",
-                ...
-            ],
-        },
-        "second sheet name": {
-            ...
-        },
+    The list will be in the form:
+    [
+        ["sheetname", ["column name1", "column name 2"]],
+        ["sheet2 name", [...]],
         ...
-    }
-
+    ]
     :param app:
     :return:
     '''
+    languages_list = ['default_'+l for l in app.langs]
+    audio_lang_list = ['audio_'+l for l in app.langs]
+    image_lang_list = ['image_'+l for l in app.langs]
+    video_lang_list = ['video_'+l for l in app.langs]
+
+    headers = []
+
+    # Add headers for the first sheet
+    headers.append(["Modules_and_forms", ['Type', 'sheet_name']+languages_list+['icon_filepath', 'audio_filepath', 'unique_id']])
+
+    for mod_index, module in enumerate(app.modules):
+
+        module_string = "module"+str(mod_index+1)
+        headers.append([module_string, ['case_property']+languages_list])
+
+        for form_index, form in enumerate(module.forms):
+            form_string = module_string + "_form" + str(form_index+1)
+            headers.append([form_string, ["label"]+
+                                         languages_list+
+                                         audio_lang_list+
+                                         image_lang_list+
+                                         video_lang_list
+            ])
+    return headers
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
@@ -2626,25 +2641,15 @@ def download_bulk_app_translations(request, domain, app_id):
         return tuple(item if item != None else "" for item in row)
 
     app = get_app(domain, app_id)
-    # These lists are used for constructing the sheet headers
-    languages_list = tuple('default_'+l for l in app.langs)
-    audio_lang_list = tuple('audio_'+l for l in app.langs)
-    image_lang_list = tuple('image_'+l for l in app.langs)
-    video_lang_list = tuple('video_'+l for l in app.langs)
+    headers = _expected_bulk_app_sheet_headers(app)
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {}
 
-    # Add headers for the first sheet
-    headers = [("Modules_and_forms", ('Type', 'sheet_name')+tuple(languages_list)+('icon_filepath', 'audio_filepath', 'unique_id')),]
-    rows["Modules_and_forms"] = []
-
     for mod_index, module in enumerate(app.modules):
-        module_string = "module"+str(mod_index+1)
+        module_string = "module"+str(mod_index+1) #TODO: This is duplicated logic from the above function which I don't love.
 
-        # Add module to the first sheet and add a sheet for the module
-        module_sheet_header = (module_string, ('case_property',)+languages_list)
-        headers.append(module_sheet_header)
+        # Add module to the first sheet
         row_data = cleaned_row(("Module", module_string)+\
                                 tuple(module.name.get(lang, "") for lang in app.langs)+\
                                 (module.media_image, module.media_image, module.unique_id))
@@ -2663,7 +2668,7 @@ def download_bulk_app_translations(request, domain, app_id):
         for _, detail in all_properties.items():
 
             # TODO: These details will probably not be in the same order that
-            # they appear on HQ. Is that bad?
+            #       they appear on HQ. Is that bad?
             # see https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js#L446-446
             #     https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
 
@@ -2686,13 +2691,6 @@ def download_bulk_app_translations(request, domain, app_id):
         for form_index, form in enumerate(module.forms):
             form_string = module_string + "_form" + str(form_index+1)
 
-            # Add sheet for the form
-            form_sheet_header = (form_string, ('label',)+languages_list
-                                                       +audio_lang_list
-                                                       +image_lang_list
-                                                       +video_lang_list)
-            headers.append(form_sheet_header)
-
             # Add row for this form to the first sheet
             # This next line is same logic as above :(
             first_sheet_row = cleaned_row(("Form", form_string)+\
@@ -2713,7 +2711,7 @@ def download_bulk_app_translations(request, domain, app_id):
 
             questions_by_lang = {lang:form.get_questions([lang]) for lang in app.langs}
             rows[form_string] = []
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             for i, question in enumerate(form.get_questions(app.langs)):
 
                 row = (question['value'].replace("/data/", ""),) +\
@@ -2721,6 +2719,7 @@ def download_bulk_app_translations(request, domain, app_id):
                 rows[form_string].append(row)
 
             #TODO: Get media
+            # Ah ha! These media references are hiding in the itext
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
@@ -2744,7 +2743,8 @@ def upload_bulk_app_translations(request, domain, app_id):
 
 
     app = get_app(domain, app_id)
-    expected_sheets = _expected_bulk_app_sheet_structure(app)
+    headers = _expected_bulk_app_sheet_headers(app)
+    expected_sheets = {h[0]:h[1] for h in headers}
     processed_sheets = set()
 
     workbook = WorkbookJSONReader(request.file)
@@ -2806,6 +2806,15 @@ def upload_bulk_app_translations(request, domain, app_id):
 
                 # How do we update translations? Where are they stored?
                 # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
+
+                import ipdb; ipdb.set_trace()
+
+                # Get itext node - XForm.itext  (might need to create one if does not exist)
+                # For each lang:
+                #   get translation block or create if dne
+                #   For each translation:
+                #       get text node with id = ? or create if dne
+                #       put the right value into it
 
 
 common_module_validations = [
