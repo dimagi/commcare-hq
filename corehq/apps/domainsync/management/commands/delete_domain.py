@@ -14,7 +14,7 @@ NUM_PROCESSES = 8
 # nice to reduce the code reuse.
 
 class Command(BaseCommand):
-    help = "Deletes the contents of a domain"
+    help = "Deletes the contents of a domain. WARNING!!! It will also delete all admin users associated with this domain!!!"
     args = '<domain>'
 
     option_list = BaseCommand.option_list + (
