@@ -462,14 +462,6 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         }
 
 
-class CaseListReportMobileWorkerFilter(ExpandedMobileWorkerFilter):
-    @property
-    def filter_context(self):
-        context = super(CaseListReportMobileWorkerFilter, self).filter_context
-        url = reverse('emwf_options_with_share_groups', args=[self.domain])
-        context.update({'endpoint': url})
-        return context
-
 class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
     show_all_filter = True
 
