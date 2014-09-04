@@ -64,7 +64,9 @@ class Command(BaseCommand):
             print "Domain doc not found for domain %s." % domain
 
     def delete_docs(self, sourcedb, domain, simulate, startkey, endkey):
-        # TODO: What will happen to documents in multiple domains?
+
+        # WARNING: Documents with multiple domains (like WebUsers) will die
+        # a terrible and fiery death.
 
         doc_ids = [ result["id"] for result in sourcedb.view("domain/docs",
                                                     startkey=startkey,
