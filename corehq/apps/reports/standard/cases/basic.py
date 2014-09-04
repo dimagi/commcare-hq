@@ -142,7 +142,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         # Get group ids for each group that was specified
         selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
         selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
-        #TODO: It is impossible to get this to show cases owned by a reporting (only) group. Is this desired?
 
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\

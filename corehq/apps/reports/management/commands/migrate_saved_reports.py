@@ -30,9 +30,6 @@ def migrate(config, db):
         users += indy_users
         groups += indy_groups
         users = ["u__%s" % u_id for u_id in users]
-        #TODO: I believe that it was impossible to specify case sharing groups
-        #      before, therefore I think these groups must be reporting groups
-        #      Ethan, can you confirm that groups here are always reporting groups?
         groups = ["g__%s" % g_id for g_id in groups]
         ufilters = ["t__%s" % t_id for t_id in ufilters]
         config["filters"]["emw"] = config["filters"].get("emw", []) +  users + groups + ufilters
