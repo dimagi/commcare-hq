@@ -14,19 +14,20 @@ from corehq.elastic import es_query, ES_URLS
 
 
 def format_return_data(shown_data, initial_value, datespan):
-    return add_blank_data({
-        'histo_data': {"All Domains": shown_data},
+    return {
+        'histo_data': {
+            "All Domains": add_blank_data(
+                shown_data, datespan.startdate, datespan.enddate),
+        },
         'initial_values': {"All Domains": initial_value},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
-    }, datespan.startdate, datespan.enddate)
+    }
 
 
-def add_blank_data(stat_data, start, end):
-    histo_data = stat_data.get("histo_data", {}).get("All Domains", [])
+def add_blank_data(histo_data, start, end):
     if not histo_data:
-        new_stat_data = deepcopy(stat_data)
-        new_stat_data["histo_data"]["All Domains"] = [
+        return [
             {
                 "count": 0,
                 "time": timestamp,
@@ -35,8 +36,7 @@ def add_blank_data(stat_data, start, end):
                 for date in [start, end]
             ]
         ]
-        return new_stat_data
-    return stat_data
+    return histo_data
 
 
 def daterange(interval, start_date, end_date):
