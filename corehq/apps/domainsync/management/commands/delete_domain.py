@@ -27,15 +27,14 @@ class Command(BaseCommand):
         domain_doc = Domain.get_by_name(domain)
         if domain_doc is None:
             # If this block not entered, domain will be deleted in delete_docs
-            self.delete_domain(sourcedb, domain)
+            self.delete_domain(sourcedb, domain, simulate)
 
 
         startkey = [domain]
         endkey = [domain, {}]
         self.delete_docs(sourcedb, domain, simulate, startkey, endkey)
 
-    def delete_domain(self, sourcedb, domain):
-        print "Deleting domain doc"
+    def delete_domain(self, sourcedb, domain, simulate):
         result = sourcedb.view(
             "domain/domains",
             key=domain,
@@ -44,8 +43,10 @@ class Command(BaseCommand):
         ).first()
 
         if result and 'doc' in result:
-            domain_doc = Domain.wrap(result['doc'])
-            sourcedb.delte_doc(domain_doc) #TODO: Attachements are deleted by this as well, right?
+            if not simulate:
+                print "Deleting domain doc"
+                domain_doc = Domain.wrap(result['doc'])
+                sourcedb.delte_doc(domain_doc) #TODO: Attachements are deleted by this as well, right?
         else:
             print "Domain doc not found for domain %s." % domain
 
