@@ -8,56 +8,30 @@ from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
+from dimagi.utils.decorators.memoized import memoized
+
 from .models import CustomFieldsDefinition, CustomField
 
 
-class CustomFieldsForm(forms.Form):
-    name = forms.CharField(label="Field Name")
-    is_required = forms.BooleanField(label="Required")
+class CustomDataFieldsForm(forms.Form):
+    data_fields = forms.CharField(widget=forms.HiddenInput)
 
-    def __init__(self, *args, **kwargs):
-        self.helper = FormHelper()
-        self.helper.form_id = 'custom-fields-form'
-        # self.helper.form_class = 'form-horizontal'
-        self.helper.form_method = 'post'
-        # self.helper.template = 'bootstrap/table_inline_formset.html'
-        # crispy_forms/templates/bootstrap/table_inline_formset.html
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                CustomFieldsView.page_name,
-                crispy.Fieldset(
-                    crispy.Row(
-                        crispy.HTML('<span class="sortable-handle">'
-                                      '<i class="icon-resize-vertical"></i>'
-                                    '</span>'),
-                        crispy.Field('name', data_bind='value: name'),
-                        crispy.Field('is_required', data_bind='checked: is_required'),
-                        css_class="form-inline",
-                    ),
-                    data_bind="sortable: customFields",
-                    css_class="controls-row",
-                ),
-            ),
-                    # <td>
-                        # <select data-bind="
-                            # options: $root.available_versions,
-                            # value: version
-                        # ">
-                        # </select>
-                    # </td>
-                    # <td>
-                        # <input type="text" data-bind="value: label">
-                    # </td>
-                    # <td>
-                        # <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only" />
-                    # </td>
-                    # <td>
-                        # <button type="button" class="close" data-bind="click: $root.removeVersion">&times;</button>
-                    # </td>
-            FormActions(crispy.ButtonHolder(crispy.Submit('save', 'Save Fields',
-                css_id='save-custom-fields')))
-        )
-        super(CustomFieldsForm, self).__init__(*args, **kwargs)
+    def clean_data_fields(self):
+        raw_data_fields = json.loads(self.cleaned_data['data_fields'])
+        errors = []
+        data_fields = []
+        for raw_data_field in raw_data_fields:
+            data_field_form = CustomDataFieldForm(raw_data_field)
+            data_field_form.is_valid()
+            data_fields.append(data_field_form.cleaned_data)
+            errors.append(data_field_form.errors)
+        return data_fields
+
+
+class CustomDataFieldForm(forms.Form):
+    label = forms.CharField()
+    slug = forms.CharField()
+    is_required = forms.BooleanField()
 
 
 class CustomFieldsMixin(object):
@@ -80,11 +54,14 @@ class CustomFieldsMixin(object):
                 {"slug": "gender", "label": "Gender", "is_required": False},
             ]
 
-    def save_custom_fields(self, fields):
+    def save_custom_fields(self):
         definition = self.get_definition() or CustomFieldsDefinition()
         definition.doc_type = 'UserFields'
         definition.domain = self.domain
-        definition.fields = [self.get_field(field) for field in json.loads(fields)]
+        definition.fields = [
+            self.get_field(field)
+            for field in self.form.cleaned_data['data_fields']
+        ]
         definition.save()
 
     def get_field(self, field):
@@ -100,15 +77,12 @@ class CustomFieldsMixin(object):
             "custom_fields": self.get_custom_fields(),
         }
 
-    def post(self, request, *args, **kwargs):
-        self.save_custom_fields(self.request.POST.get('customFields', u'[]'))
-        return self.get(request, success=True, *args, **kwargs)
+    @property
+    @memoized
+    def form(self):
+        return CustomDataFieldsForm(self.request.POST)
 
-    # def post(self, request, *args, **kwargs):
-        # form = self.form_class(data=self.request.POST)
-        # if form.is_valid():
-            # print "valid form!!"
-        # else:
-            # print "invalid form :("
-        # messages.success(self.request, _('Fields added successfully'))
-        # return self.get(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            self.save_custom_fields()
+        return self.get(request, success=True, *args, **kwargs)

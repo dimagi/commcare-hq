@@ -8,25 +8,25 @@ function CustomField (field) {
 
 function CustomFieldsModel () {
     var self = this;
-    self.customFields = ko.observableArray([]);
+    self.data_fields = ko.observableArray([]);
 
     self.addField = function () {
-        self.customFields.push(new CustomField('', false));
+        self.data_fields.push(new CustomField('', false));
     }
 
     self.removeField = function(field) {
-        self.customFields.remove(field)
+        self.data_fields.remove(field)
     }
 
     self.init = function (initialFields) {
         _.each(initialFields, function (field) {
-            self.customFields.push(new CustomField(field));
+            self.data_fields.push(new CustomField(field));
         });
     }
 
     self.serialize = function () {
         var fields = [];
-        _.each(self.customFields(), function (field) {
+        _.each(self.data_fields(), function (field) {
             fields.push({
                 'slug': field.slug(),
                 'label': field.label(),
@@ -37,15 +37,15 @@ function CustomFieldsModel () {
     }
 
     self.submitFields = function (fieldsForm) {
-        var customFieldsForm = $("<form>")
+        var customDataFieldsForm = $("<form>")
             .attr("method", "post")
             .attr("action", fieldsForm.action);
         $('<input type="hidden">')
-            .attr('name', 'customFields')
+            .attr('name', 'data_fields')
             .attr('value', JSON.stringify(self.serialize()))
-            .appendTo(customFieldsForm);
-        customFieldsForm.appendTo("body");
-        customFieldsForm.submit();
+            .appendTo(customDataFieldsForm);
+        customDataFieldsForm.appendTo("body");
+        customDataFieldsForm.submit();
     }
 
 }
