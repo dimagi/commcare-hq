@@ -1,8 +1,12 @@
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RegisterGeneratorDecorator
-from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
+import json
 
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
+    AppStructureRepeater, RegisterGenerator
+
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
+
+from dimagi.utils.parsing import json_format_datetime
 
 
 class BasePayloadGenerator(object):
@@ -18,26 +22,26 @@ class BasePayloadGenerator(object):
         raise NotImplementedError()
 
 
-@RegisterGeneratorDecorator(FormRepeater, 'form_xml', 'Default XML', is_default=True)
+@RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         return self.repeater._payload_doc(repeat_record).get_xml()
 
 
-@RegisterGeneratorDecorator(CaseRepeater, 'case_xml', 'Default XML', is_default=True)
+@RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         return self.repeater._payload_doc(repeat_record).to_xml(self.repeater.version or V2)
 
 
-@RegisterGeneratorDecorator(AppStructureRepeater, "app_structure_xml", "Default XML", is_default=True)
+@RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         # This is the id of the application, currently all we forward
         return repeat_record.payload_id
 
 
-@RegisterGeneratorDecorator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
+@RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record):
         form = self.repeater._payload_doc(repeat_record)

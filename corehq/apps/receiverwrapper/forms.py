@@ -1,8 +1,6 @@
-from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGeneratorDecorator
+from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator
 
 from django import forms
-from django.conf import settings
-from dimagi.utils.modules import to_function
 
 
 class GenericRepeaterForm(forms.Form):
@@ -25,7 +23,7 @@ class FormRepeaterForm(GenericRepeaterForm):
         self.domain = kwargs.pop('domain')
         super(FormRepeaterForm, self).__init__(*args, **kwargs)
 
-        self.formats = RegisterGeneratorDecorator.all_formats_by_repeater(FormRepeater, for_domain=self.domain)
+        self.formats = RegisterGenerator.all_formats_by_repeater(FormRepeater, for_domain=self.domain)
 
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(

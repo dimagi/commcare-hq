@@ -57,7 +57,8 @@ DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
-class GeneratorCollectionByRepeater():
+
+class GeneratorCollection():
 
     def __init__(self, repeater_class):
         self.repeater_class = repeater_class
@@ -65,7 +66,7 @@ class GeneratorCollectionByRepeater():
         self.format_generator_map = defaultdict(dict)
 
     def add_new_format(self, format_name, format_label, generator_class, is_default=False):
-        if self.default_format and is_default:
+        if is_default and self.default_format:
             raise Exception("default format already exists for this repeater")
         elif is_default:
             self.default_format = format_name
@@ -75,7 +76,6 @@ class GeneratorCollectionByRepeater():
             generator_class=generator_class
         )
 
-    @memoized
     def get_default_format(self):
         return self.default_format
 
@@ -83,19 +83,16 @@ class GeneratorCollectionByRepeater():
         raise self.format_generator_map[self.default_format].generator_class
 
     def get_all_formats(self, for_domain=None):
-        if for_domain:
-            return [(name, format.label) for name, format in self.format_generator_map.iteritems()
-                    if format.generator_class.enabled_for_domain(for_domain)]
-        else:
-            return [(name, format.label) for name, format in self.format_generator_map.iteritems()]
+        return [(name, format.label) for name, format in self.format_generator_map.iteritems()
+                if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
         return self.format_generator_map[format].generator_class
 
 
-class RegisterGeneratorDecorator(object):
+class RegisterGenerator(object):
 
-    repeater_generator_collection_map = defaultdict(dict)
+    generators = {}
 
     def __init__(self, repeater_cls, format_name, format_label, is_default=False):
         self.format_name = format_name
@@ -105,8 +102,8 @@ class RegisterGeneratorDecorator(object):
         self.is_default = is_default
 
     def __call__(self, generator_class):
-        RegisterGeneratorDecorator.repeater_generator_collection_map[self.repeater_cls] = GeneratorCollectionByRepeater(self.repeater_cls)
-        RegisterGeneratorDecorator.repeater_generator_collection_map[self.repeater_cls].add_new_format(
+        RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
+        RegisterGenerator.generators[self.repeater_cls].add_new_format(
             self.format_name,
             self.format_label,
             generator_class,
@@ -115,17 +112,17 @@ class RegisterGeneratorDecorator(object):
 
     @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):
-        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        generator_collection = cls.generators[repeater_class]
         return generator_collection.get_generator_by_format(format_name)
 
     @classmethod
     def all_formats_by_repeater(cls, repeater_class, for_domain=None):
-        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        generator_collection = cls.generators[repeater_class]
         return generator_collection.get_all_formats(for_domain=None)
 
     @classmethod
     def default_format_by_repeater(cls, repeater_class):
-        generator_collection = cls.repeater_generator_collection_map[repeater_class]
+        generator_collection = cls.generators[repeater_class]
         return generator_collection.get_default_format()
 
 
@@ -136,13 +133,11 @@ class Repeater(Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    @memoized
     def format_or_default_format(self):
-        return self.format or RegisterGeneratorDecorator.default_format_by_repeater(self.__class__)
+        return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
-    @memoized
     def get_payload_generator(self, payload_format):
-        gen = RegisterGeneratorDecorator.generator_class_by_repeater_format(self.__class__, payload_format)
+        gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
     def get_payload(self, repeat_record):
