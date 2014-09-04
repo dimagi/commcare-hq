@@ -138,9 +138,9 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
         return [export_sheet_name, table]
 
 class TableuDeBoardReport(MultiReport):
-    title = "Tableu De Bord"
+    title = "Tableau De Bord"
     fields = [DatespanFilter, LocationFilter]
-    name = "Tableu De Bord"
+    name = "Tableau De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
     exportable = True

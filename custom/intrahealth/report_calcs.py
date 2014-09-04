@@ -190,3 +190,14 @@ class RecapPassage(fluff.Calculator):
                     "group_by": [product['product_name']]
                 }
 
+    @fluff.date_emitter
+    def loss_amt(self, form):
+        for product in form.form['products']:
+            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product\
+                    and product['loss_amt']:
+                yield {
+                    'date': real_date(form),
+                    "value": int(product['loss_amt']),
+                    "group_by": [product['product_name']]
+                }
+

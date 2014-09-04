@@ -268,7 +268,7 @@ class RecapPassageData(BaseSqlData):
     title = ''
     table_name = 'fluff_RecapPassageFluff'
     datatables = True
-    show_total = True
+    show_total = False
     fix_left_col = True
     have_groups = False
 
@@ -307,7 +307,8 @@ class RecapPassageData(BaseSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('product_billed_consumption', alias='bconsumption')),
             DatabaseColumn(_("Reelle"), SumColumn('product_actual_consumption', alias='aconsumption')),
             DatabaseColumn("Stock Total", AliasColumn('stock_total')),
-            DatabaseColumn("PPS Restant", SumColumn('product_pps_restant'))
+            DatabaseColumn("PPS Restant", SumColumn('product_pps_restant')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('product_loss_amt'))
         ]
 
 class ConsommationData(BaseSqlData):
