@@ -88,7 +88,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}{{ block.super }}
+{% block main_column %}
     {% for indicator, data in indicator_data.items %}
         {% if indicator in indicators %}
             <h2>{{ data.chart_title }}</h2>
