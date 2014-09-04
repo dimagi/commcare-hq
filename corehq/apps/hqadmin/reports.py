@@ -84,69 +84,14 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
-    "community_subscriptions": {
+    "subscriptions": {
         "ajax_view": "admin_reports_stats_data",
-        "chart_name": "community_subscriptions",
-        "chart_title": "Community Projects",
+        "chart_name": "subscriptions",
+        "chart_title": "Subscriptions",
         "hide_cumulative_charts": True,
         "histogram_type": "subscriptions",
         "interval": "month",
         "is_cumulative": False,
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
-        },
-        "xaxis_label": "# domains on subscription",
-    },
-    "standard_subscriptions": {
-        "ajax_view": "admin_reports_stats_data",
-        "chart_name": "standard_subscriptions",
-        "chart_title": "Standard Projects",
-        "hide_cumulative_charts": True,
-        "histogram_type": "subscriptions",
-        "interval": "month",
-        "is_cumulative": False,
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.STANDARD,
-        },
-        "xaxis_label": "# domains on subscription",
-    },
-    "pro_subscriptions": {
-        "ajax_view": "admin_reports_stats_data",
-        "chart_name": "pro_subscriptions",
-        "chart_title": "Pro Projects",
-        "hide_cumulative_charts": True,
-        "histogram_type": "subscriptions",
-        "interval": "month",
-        "is_cumulative": False,
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.PRO,
-        },
-        "xaxis_label": "# domains on subscription",
-    },
-    "advanced_subscriptions": {
-        "ajax_view": "admin_reports_stats_data",
-        "chart_name": "advanced_subscriptions",
-        "chart_title": "Advanced Projects",
-        "hide_cumulative_charts": True,
-        "histogram_type": "subscriptions",
-        "interval": "month",
-        "is_cumulative": False,
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.ADVANCED,
-        },
-        "xaxis_label": "# domains on subscription",
-    },
-    "enterprise_subscriptions": {
-        "ajax_view": "admin_reports_stats_data",
-        "chart_name": "enterprise_subscriptions",
-        "chart_title": "Enterprise Projects",
-        "hide_cumulative_charts": True,
-        "histogram_type": "subscriptions",
-        "interval": "month",
-        "is_cumulative": False,
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.ENTERPRISE,
-        },
         "xaxis_label": "# domains on subscription",
     },
     "forms": {
@@ -744,11 +689,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
-        'community_subscriptions',
-        'standard_subscriptions',
-        'pro_subscriptions',
-        'advanced_subscriptions',
-        'enterprise_subscriptions',
+        'subscriptions',
     ]
 
     @property

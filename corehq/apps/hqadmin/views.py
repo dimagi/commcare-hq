@@ -938,12 +938,27 @@ def stats_data(request):
 
     if histo_type == "subscriptions":
         params.update(params_es)
-        return json_response(get_subscription_stats_data(
-            params,
-            request.datespan,
-            interval=interval,
-            software_plan_edition=params_es.get('software_plan_edition', None),
-        ))
+        return json_response({
+            'histo_data': {
+                software_plan_edition_tuple[0]: add_blank_data(
+                    get_subscription_stats_data(
+                        params,
+                        request.datespan,
+                        interval=interval,
+                        software_plan_edition=software_plan_edition_tuple[0],
+                    ),
+                    request.datespan.startdate,
+                    request.datespan.enddate
+                )
+                for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+            },
+            'initial_values': {
+                software_plan_edition_tuple[0]: 0
+                for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+            },
+            'startdate': request.datespan.startdate_key_utc,
+            'enddate': request.datespan.enddate_key_utc,
+        })
 
     if histo_type == "active_domains":
         stats_data = get_active_domain_stats_data(

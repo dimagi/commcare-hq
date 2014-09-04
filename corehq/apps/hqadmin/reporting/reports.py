@@ -99,16 +99,15 @@ def domains_matching_plan(software_plan_edition, start, end):
 def get_subscription_stats_data(params, datespan, interval='month',
         software_plan_edition=None):
     real_domains = get_real_project_spaces()
-    histo_data = [
+    return [
         {
             "count": len(real_domains & domains_matching_plan(
                 software_plan_edition, timestamp, timestamp)),
-            "time": 1000 * time.mktime(timestamp.timetuple()),
+            "time": int(1000 * time.mktime(timestamp.timetuple())),
         } for timestamp in daterange(
             interval, datespan.startdate, datespan.enddate
         )
     ]
-    return format_return_data(histo_data, 0, datespan)
 
 
 def get_active_domain_stats_data(datespan, interval='month',
