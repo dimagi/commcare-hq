@@ -4,6 +4,12 @@ from django import forms
 
 
 class GenericRepeaterForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
+        super(GenericRepeaterForm, self).__init__(*args, **kwargs)
+
     url = forms.URLField(
         required=True,
         label='URL to forward to',
@@ -20,10 +26,8 @@ class FormRepeaterForm(GenericRepeaterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
+        self.repeater_class = FormRepeater
         super(FormRepeaterForm, self).__init__(*args, **kwargs)
-
-        self.formats = RegisterGenerator.all_formats_by_repeater(FormRepeater, for_domain=self.domain)
 
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
