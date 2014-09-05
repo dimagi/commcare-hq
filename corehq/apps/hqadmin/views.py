@@ -958,6 +958,7 @@ def stats_data(request):
         })
 
     if histo_type == "active_domains":
+        params.update(params_es)
         stats_data = get_active_domain_stats_data(
             params,
             request.datespan,
