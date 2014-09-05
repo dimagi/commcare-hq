@@ -692,43 +692,6 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'subscriptions',
     ]
 
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn(_("# Community Projects")),
-            DataTablesColumn(_("# Standard Projects")),
-            DataTablesColumn(_("# Pro Projects")),
-            DataTablesColumn(_("# Advanced Projects")),
-            DataTablesColumn(_("# Enterprise Projects")),
-        )
-
-    @property
-    def rows(self):
-        return [
-            [
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.STANDARD,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.PRO,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.ADVANCED,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE,
-                    is_active=True,
-                ).count(),
-            ]
-        ]
-
 
 class RealCasesReport(GlobalAdminReports):
     slug = 'real_cases'
