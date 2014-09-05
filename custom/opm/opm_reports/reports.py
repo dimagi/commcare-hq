@@ -12,7 +12,6 @@ import logging
 import simplejson
 import re
 from dateutil import parser
-from decimal import Decimal
 
 from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
@@ -35,7 +34,6 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
-from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -337,7 +335,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     report_template_path = "opm/report.html"
     printable = True
     exportable = True
-    exportable_all = True
+    exportable_all = False
     export_format_override = "csv"
     block = ''
     load_snapshot = True
@@ -515,13 +513,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         self.use_datatables = False
         self.override_template = "opm/print_report.html"
         return HttpResponse(self._async_context()['report'])
-
-    @property
-    @request_cache("export")
-    def export_response(self):
-        export_all_rows_task.delay(self.__class__, self.__getstate__())
-
-        return HttpResponse()
 
     @property
     @memoized
