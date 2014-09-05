@@ -44,7 +44,7 @@
         {% endif %}
     </head>
     <body>
-        <div>
+        <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
              <nav class="navbar navbar-default" role="navigation">
                 <div class="container-fluid">
@@ -554,6 +554,13 @@
                 if($(".navbar-collapse").hasClass("in")) $(".navbar-collapse").removeClass("in");
                 else $(".navbar-collapse").addClass("in");
             });
+
+            $("#menu-toggle").click(function(e) {
+                e.preventDefault();
+                $("#wrapper").toggleClass("toggled");
+            });
+
+
         </script>
     </body>
 </html>

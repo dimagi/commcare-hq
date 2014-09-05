@@ -82,7 +82,7 @@
         }
 
         #wrapper.toggled #page-content-wrapper {
-            position: absolute;
+            position: relative;
             margin-right: -290px;
         }
 
@@ -149,8 +149,16 @@
                 {% format_sidebar %}
             {% endblock %}
         </div>
+        <div>
+            <a href="#menu-toggle" class="btn btn-default btn-lg" id="menu-toggle" style="
+                position: absolute;
+                z-index: 1;
+                top: 50%;
+            "> > </a>
+        </div>
         <div id="page-content-wrapper" class="hq-content span10 {% block column_style %}{% endblock %} ">
             {% block main_column %}{% endblock %}
         </div>
     </div>
+
 {% endblock content %}
