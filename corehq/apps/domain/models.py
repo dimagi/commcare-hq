@@ -25,15 +25,23 @@ from django_countries.countries import COUNTRIES
 
 
 lang_lookup = defaultdict(str)
+country_lookup = dict()
 
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 
+
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
+
+
+def populate_country_lookup():
+    global country_lookup
+    country_lookup = {x[1].lower(): x[0] for x in COUNTRIES}
+
 
 class DomainMigrations(DocumentSchema):
     has_migrated_permissions = BooleanProperty(default=False)
@@ -173,6 +181,7 @@ class DayTimeWindow(DocumentSchema):
     # For times, None means there's no lower/upper bound
     start_time = TimeProperty()
     end_time = TimeProperty()
+
 
 class Domain(Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -334,13 +343,9 @@ class Domain(Document, SnapshotMixin):
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
 
         if 'deployment' in data and isinstance(data['deployment']['country'], basestring):
-            prev = data['deployment']['country']
-            new_country = []
-            for x in COUNTRIES:
-                if x[1].encode(encoding="UTF-8").lower() == prev.encode("UTF-8").lower():
-                    new_country.append(x[0])
-
-            data['deployment']['country'] = new_country
+            if not country_lookup: 
+                populate_country_lookup()
+            data['deployment']['country'] = [country_lookup[data['deployment']['country'].lower()]]
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
