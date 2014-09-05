@@ -62,7 +62,7 @@
                     data: url_params,
                     interval: visualizations[key].interval,
                     is_cumulative: visualizations[key].is_cumulative,
-                    params_es: visualizations[key].params_es
+                    get_request_params: visualizations[key].get_request_params
                 });
                 visualizations[key].viz.init();
             }

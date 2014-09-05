@@ -768,25 +768,27 @@ class GlobalAdminReports(AdminFacetedReport):
             indicator_data[key]["ajax_url"] = reverse(
                 indicator_data[key]["ajax_view"]
             )
-            indicator_data[key]["domain_params_es_dict"] = {}
-            if not ("params_es_dict" in indicator_data[key]):
-                indicator_data[key]["params_es_dict"] = {}
+            if not ("get_request_params" in indicator_data[key]):
+                indicator_data[key]["get_request_params"] = {}
+            get_request_params = indicator_data[key]["get_request_params"]
+            if not ("domain_params_es" in get_request_params):
+                get_request_params["domain_params_es"] = {}
+            domain_params_es = get_request_params["domain_params_es"]
             if self.use_real_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
+                domain_params_es.update({
                     "is_test": ["false"],
                 })
             if self.use_commtrack_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
+                domain_params_es.update({
                     "commtrack_enabled": ["true"],
                 })
             if self.use_commconnect_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
+                domain_params_es.update({
                     "commconnect_enabled": ["true"],
                 })
-            indicator_data[key]["domain_params_es"] = json.dumps(
-                indicator_data[key]["domain_params_es_dict"]
+            indicator_data[key]["get_request_params"] = json.dumps(
+                get_request_params
             )
-            indicator_data[key]["params_es"] = json.dumps(indicator_data[key]["params_es_dict"])
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
