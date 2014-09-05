@@ -1,9 +1,7 @@
 # coding=utf-8
-from django.template.defaultfilters import date
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
 from corehq.apps.commtrack.models import Product
-from corehq.util.translation import localize
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
@@ -11,7 +9,6 @@ from corehq.apps.reports.sqlreport import DataFormatter, \
 from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
-from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 
 PRODUCT_NAMES = {
@@ -462,11 +459,6 @@ class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
 
 
-def format_date(value):
-    with localize('fr'):
-        return date(force_to_datetime(value), 'd E')
-
-
 class DureeData(BaseSqlData):
     slug = 'duree'
     custom_total_calculate = True
@@ -481,9 +473,10 @@ class DureeData(BaseSqlData):
 
     @property
     def columns(self):
+        from custom.intrahealth import format_date_string
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name')),
-                   DatabaseColumn(_(u"La date prévue de livraison"), SimpleColumn('date_prevue_livraison'), format_fn=format_date),
-                   DatabaseColumn(_(u"La date réelle de livraison"), SimpleColumn('date_effective_livraison'), format_fn=format_date),
+                   DatabaseColumn(_(u"La date prévue de livraison"), SimpleColumn('date_prevue_livraison'), format_fn=format_date_string),
+                   DatabaseColumn(_(u"La date réelle de livraison"), SimpleColumn('date_effective_livraison'), format_fn=format_date_string),
                    DatabaseColumn(_(u"Retards de livraison (jours)"), SumColumn('duree_moyenne_livraison_total'))]
         return columns
 

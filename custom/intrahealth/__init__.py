@@ -1,12 +1,16 @@
 import re
+from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
+from corehq.util.translation import localize
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
+
+from django.utils.dateformat import format
 
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
@@ -97,6 +101,12 @@ def get_real_date(form):
     if 'real_date' in form.form:
         date = form.form['real_date']
     return date
+
+
+def format_date_string(value):
+    with localize('fr'):
+        return format(force_to_datetime(value), 'd E')
+
 
 class IsExistFormPropertyFilter(FormPropertyFilter):
 
