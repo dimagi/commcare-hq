@@ -342,6 +342,10 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     load_snapshot = True
 
     @property
+    def show_html(self):
+        return self.rendered_as not in ('print', 'export')
+
+    @property
     def fields(self):
         return [HierarchyFilter] + super(BaseReport, self).fields
 
@@ -674,7 +678,11 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
             if isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
-                return "<p>{}</p>".format("</p><p>".join(set(v for v in values if v is not None)))
+                unique_values = set(v for v in values if v is not None)
+                if self.show_html:
+                    return ''.join('<p>{}</p>'.format(v) for v in unique_values)
+                else:
+                    return ','.join(unique_values)
             else:
                 return sorted(values)[-1]
         return map(zip_fn, enumerate(zip(*rows)))
