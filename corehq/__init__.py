@@ -2,13 +2,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminAppReport,
     AdminUserReport,
-    FormSubmissionsReport,
-    ActiveRealProjectSpacesReport,
     RealProjectSpacesReport,
-    RealProjectSpacesPlansReport,
-    UserReport,
+    RealCasesReport,
     CommConnectProjectSpacesReport,
-    RealSMSMessages,
+    CommTrackProjectSpacesReport,
 )
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
@@ -271,13 +268,10 @@ ADMIN_REPORTS = (
         AdminUserReport,
         AdminAppReport,
         PillowErrorsReport,
-        ActiveRealProjectSpacesReport,
         RealProjectSpacesReport,
-        RealProjectSpacesPlansReport,
-        FormSubmissionsReport,
-        UserReport,
+        RealCasesReport,
         CommConnectProjectSpacesReport,
-        RealSMSMessages,
+        CommTrackProjectSpacesReport,
     )),
 )
 

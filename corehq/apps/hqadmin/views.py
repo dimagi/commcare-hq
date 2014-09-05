@@ -32,6 +32,7 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -69,6 +70,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_total_clients_data,
     get_active_countries_stats_data,
     get_countries_stats_data,
+    commtrack_form_submissions,
+    get_subscription_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -903,6 +906,10 @@ def stats_data(request):
         params.update(params_es)
         return json_response(get_active_countries_stats_data(params, request.datespan, interval=interval))
 
+    if histo_type == "commtrack_forms":
+        params.update(params_es)
+        return json_response(commtrack_form_submissions(params, request.datespan, interval=interval))
+
     if histo_type == "active_dimagi_gateways":
         params.update(params_es)
         return json_response(get_active_dimagi_owned_gateway_projects(params, request.datespan, interval=interval))
@@ -923,6 +930,10 @@ def stats_data(request):
         params.update(params_es)
         return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval))
 
+    if histo_type == "commtrack_sms":
+        params.update(params_es)
+        return json_response(get_real_sms_messages_data(params, request.datespan, interval=interval, is_commtrack=True))
+
     if histo_type == "active_commconnect_domains":
         params.update(params_es)
         return json_response(get_active_commconnect_domain_stats_data(params, request.datespan, interval=interval))
@@ -935,12 +946,35 @@ def stats_data(request):
         params.update(params_es)
         return json_response(get_commconnect_domain_stats_data(params, request.datespan, interval=interval))
 
-    if histo_type == "active_domains":
+    if histo_type == "subscriptions":
         params.update(params_es)
+        return json_response({
+            'histo_data': {
+                software_plan_edition_tuple[0]: add_blank_data(
+                    get_subscription_stats_data(
+                        params,
+                        request.datespan,
+                        interval=interval,
+                        software_plan_edition=software_plan_edition_tuple[0],
+                    ),
+                    request.datespan.startdate,
+                    request.datespan.enddate
+                )
+                for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+            },
+            'initial_values': {
+                software_plan_edition_tuple[0]: 0
+                for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+            },
+            'startdate': request.datespan.startdate_key_utc,
+            'enddate': request.datespan.enddate_key_utc,
+        })
+
+    if histo_type == "active_domains":
         stats_data = get_active_domain_stats_data(
-            params,
             request.datespan,
             interval=interval,
+            software_plan_edition=params_es.get('software_plan_edition', None)
         )
     elif histo_type == "domains":
         params.update(params_es)
@@ -974,11 +1008,12 @@ def stats_data(request):
             user_type_mobile=params_es.get("user_type_mobile"),
             is_cumulative=request.GET.get("is_cumulative", "True") == "True",
         )
-    return json_response(add_blank_data(
-        stats_data,
+    stats_data["histo_data"]["All Domains"] = add_blank_data(
+        stats_data["histo_data"]["All Domains"],
         request.datespan.startdate,
         request.datespan.enddate
-    ))
+    )
+    return json_response(stats_data)
 
 
 @require_superuser
