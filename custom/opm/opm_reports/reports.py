@@ -352,11 +352,11 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
-        if self.filter_data.get('awcs', []):
+        if self.filter_data.get('awc', []):
             subtitles.append("Awc's - %s" % ", ".join(self.awcs))
-        elif self.filter_data.get('gp', ''):
+        if self.filter_data.get('gp', []):
             subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
-        elif self.filter_data.get('blocks', []):
+        if self.filter_data.get('block', []):
             subtitles.append("Blocks - %s" % ", ".join(self.blocks))
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
