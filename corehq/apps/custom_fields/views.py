@@ -20,23 +20,31 @@ class CustomDataFieldsForm(forms.Form):
 
     def clean_data_fields(self):
         raw_data_fields = json.loads(self.cleaned_data['data_fields'])
-        errors = []
+        errors = set()
         data_fields = []
         for raw_data_field in raw_data_fields:
             data_field_form = CustomDataFieldForm(raw_data_field)
             data_field_form.is_valid()
             data_fields.append(data_field_form.cleaned_data)
             if data_field_form.errors:
-                errors.append(data_field_form.errors)
+                errors.update([error[0] for error in data_field_form.errors.values()])
         if errors:
-            # TODO use actual error message(s)
-            raise ValidationError(_("All fields are required"))
+            raise ValidationError('<br/>'.join(errors))
         return data_fields
 
 
 class CustomDataFieldForm(forms.Form):
-    label = forms.CharField(required=True)
-    slug = forms.CharField(required=True, validators=[validate_slug])
+    label = forms.CharField(
+        required=True,
+        error_messages={'required': _('All fields are required')}
+    )
+    slug = forms.SlugField(
+        required=True,
+        error_messages={
+            'required': _('All fields are required'),
+            'invalid': _('Key fields must consist only of letters, numbers, underscores or hyphens.')
+        }
+    )
     is_required = forms.BooleanField(required=False)
 
     def clean_label(self):
@@ -100,5 +108,4 @@ class CustomFieldsMixin(object):
             self.save_custom_fields()
             return self.get(request, success=True, *args, **kwargs)
         else:
-            errors = self.form.errors.get('data_fields')
             return self.get(request, *args, **kwargs)
