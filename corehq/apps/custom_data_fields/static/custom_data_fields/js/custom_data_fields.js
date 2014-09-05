@@ -1,4 +1,4 @@
-function CustomField (field) {
+function CustomDataField (field) {
     var self = this;
     self.slug = ko.observable(field.slug);
     self.label = ko.observable(field.label);
@@ -6,12 +6,12 @@ function CustomField (field) {
 }
 
 
-function CustomFieldsModel () {
+function CustomDataFieldsModel () {
     var self = this;
     self.data_fields = ko.observableArray([]);
 
     self.addField = function () {
-        self.data_fields.push(new CustomField('', false));
+        self.data_fields.push(new CustomDataField('', false));
     }
 
     self.removeField = function(field) {
@@ -20,7 +20,7 @@ function CustomFieldsModel () {
 
     self.init = function (initialFields) {
         _.each(initialFields, function (field) {
-            self.data_fields.push(new CustomField(field));
+            self.data_fields.push(new CustomDataField(field));
         });
     }
 

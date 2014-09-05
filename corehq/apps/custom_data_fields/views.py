@@ -12,7 +12,7 @@ from crispy_forms import layout as crispy
 
 from dimagi.utils.decorators.memoized import memoized
 
-from .models import CustomFieldsDefinition, CustomField
+from .models import CustomDataFieldsDefinition, CustomDataField
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -54,14 +54,14 @@ class CustomDataFieldForm(forms.Form):
         return self.cleaned_data['slug']
 
 
-class CustomFieldsMixin(object):
+class CustomDataFieldsMixin(object):
     urlname = None
-    template_name = "custom_fields/custom_fields.html"
+    template_name = "custom_data_fields/custom_data_fields.html"
     page_name = ugettext_noop("Edit Custom Fields")
     doc_type = None
 
     def get_definition(self):
-        return CustomFieldsDefinition.by_domain(self.domain, 'UserFields')
+        return CustomDataFieldsDefinition.by_domain(self.domain, self.field_type)
 
     def get_custom_fields(self):
         definition = self.get_definition()
@@ -71,8 +71,8 @@ class CustomFieldsMixin(object):
             return []
 
     def save_custom_fields(self):
-        definition = self.get_definition() or CustomFieldsDefinition()
-        definition.doc_type = 'UserFields'
+        definition = self.get_definition() or CustomDataFieldsDefinition()
+        definition.doc_type = self.field_type
         definition.domain = self.domain
         definition.fields = [
             self.get_field(field)
@@ -81,7 +81,7 @@ class CustomFieldsMixin(object):
         definition.save()
 
     def get_field(self, field):
-        return CustomField(
+        return CustomDataField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
