@@ -427,7 +427,6 @@ def get_domain_stats_data(params, params_es, datespan, interval='week',
     if params_es:
         domains_after_date = add_params_to_query(domains_after_date, params_es)
 
-    print domains_after_date.raw_query
     histo_data = domains_after_date.run().facet('date', 'entries')
 
     domains_before_date = (DomainES()
