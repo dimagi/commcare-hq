@@ -997,11 +997,12 @@ def stats_data(request):
             user_type_mobile=params_es.get("user_type_mobile"),
             is_cumulative=request.GET.get("is_cumulative", "True") == "True",
         )
-    stats_data["histo_data"]["All Domains"] = add_blank_data(
-        stats_data["histo_data"]["All Domains"],
-        request.datespan.startdate,
-        request.datespan.enddate
-    )
+    for k in stats_data['histo_data']:
+        stats_data['histo_data'][k] = add_blank_data(
+                stats_data["histo_data"][k],
+                request.datespan.startdate,
+                request.datespan.enddate
+        )
     return json_response(stats_data)
 
 
