@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
+from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -336,7 +337,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     printable = True
     exportable = True
     exportable_all = False
-    export_format_override = "csv"
+    export_format_override = Format.UNZIPPED_CSV
     block = ''
     load_snapshot = True
 
