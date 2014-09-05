@@ -36,22 +36,24 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_community_domain_count",
         "chart_title": "Active Community Project Spaces",
+        "get_request_params": {
+            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
+        },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
         "interval": "week",
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
-        },
         "xaxis_label": "# domains",
     },
     "active_self_started_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_self_started_domains",
         "chart_title": "Active Self Started Project Spaces",
-        "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "self_started": ["T"],
+        "get_request_params": {
+            "domain_params_es": {
+                "self_started": ["T"],
+            },
         },
+        "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
         "interval": "week",
         "xaxis_label": "# domains",

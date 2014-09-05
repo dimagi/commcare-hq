@@ -944,11 +944,12 @@ def stats_data(request):
         return json_response(get_all_subscriptions_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
+        params.update(domain_params_es)
         stats_data = get_active_domain_stats_data(
             params,
             request.datespan,
             interval=interval,
-            software_plan_edition=params_es.get('software_plan_edition', None)
+            software_plan_edition=get_request_params.get('software_plan_edition', None)
         )
     elif histo_type == "domains":
         stats_data = get_domain_stats_data(
