@@ -343,7 +343,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     @property
     def show_html(self):
-        return self.rendered_as not in ('print', 'export')
+        return getattr(self, 'rendered_as', 'html') not in ('print', 'export')
 
     @property
     def fields(self):
