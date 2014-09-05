@@ -1,3 +1,4 @@
+import re
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
@@ -18,6 +19,10 @@ COMMANDE_XMLNSES = (
     'http://openrosa.org/formdesigner/12b412390011cb9b13406030ab10447ffd99bdf8',
 )
 
+RAPTURE_XMLNSES = (
+    'http://openrosa.org/formdesigner/AD88DE3E-6AFC-48A5-8BEC-092419C1D45A',
+)
+
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
         TableuDeBoardReport,
@@ -26,6 +31,17 @@ CUSTOM_REPORTS = (
     )),
 )
 
+PRODUCT_MAPPING = {
+    "collier": "Collier",
+    "cu": "CU",
+    "depoprovera": "Depo-Provera",
+    "diu": "DIU",
+    "jadelle": "Jadelle",
+    "microgynon": "Microgynon/Lof.",
+    "microlut": "Microlut/Ovrette",
+    "preservatif_feminin": "Preservatif Feminin",
+    "preservatif_masculin": "Preservatif Masculin"
+}
 
 def get_products(form, property):
     products = []
@@ -35,6 +51,12 @@ def get_products(form, property):
                 products.append(product[property])
     return products
 
+def get_rupture_products(form):
+    result = []
+    for k, v in form.form.iteritems():
+        if re.match("^rupture.*hv$", k):
+            result.append(PRODUCT_MAPPING[k[8:-3]])
+    return result
 
 def _get_location(form):
     if 'location_id' in form.form:

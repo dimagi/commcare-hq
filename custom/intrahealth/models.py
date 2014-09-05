@@ -1,9 +1,11 @@
 import fluff
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter
+from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter
+    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter, RAPTURE_XMLNSES, \
+    get_rupture_products
 from custom.utils.utils import flat_field
 
 
@@ -87,7 +89,24 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
     product = report_calcs.RecapPassage()
 
+
+
+class TauxDeRuptureFluff(fluff.IndicatorDocument):
+    document_class = XFormInstance
+    document_filter = FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0])
+    domains = INTRAHEALTH_DOMAINS
+    save_direct_to_sql = True
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),)
+
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+    district_name = flat_field(lambda f: f.form['district'])
+    PPS_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
+
+    stock = report_calcs.RupturesDeStocks('pps_stocked_out')
+
 CouvertureFluffPillow = CouvertureFluff.pillow()
 RecapPassagePillow = RecapPassageFluff.pillow()
 IntraHealthFluffPillow = IntraHealthFluff.pillow()
 TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()
+TauxDeRuptureFluffPillow = TauxDeRuptureFluff.pillow()

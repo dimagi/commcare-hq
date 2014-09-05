@@ -451,3 +451,7 @@ class NombreData(BaseSqlData):
                         total_row.append('')
 
         return total_row
+
+
+class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
+    table_name = 'fluff_TauxDeRuptureFluff'

@@ -1,6 +1,7 @@
 import fluff
+import re
 from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_by_type
+from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING
 
 
 def form_date(form):
@@ -76,6 +77,25 @@ class PPSConsumption(fluff.Calculator):
                     'value': product[self.field],
                     'group_by': [product['product_name']]
                 }
+
+
+class RupturesDeStocks(fluff.Calculator):
+
+    def __init__(self, field='pps_stocked_out'):
+        super(RupturesDeStocks, self).__init__()
+        self.field = field
+
+    @fluff.date_emitter
+    def total(self, form):
+        for k, v in form.form.iteritems():
+            if re.match("^rupture.*hv$", k):
+                if 'date_rapportage' in form.form and form.form['date_rapportage']:
+                     yield {
+                        'date': form.form['date_rapportage'],
+                        'value': v,
+                        'group_by': [PRODUCT_MAPPING[k[8:-3]]]
+                    }
+
 
 class RecapPassage(fluff.Calculator):
 
