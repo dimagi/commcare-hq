@@ -459,6 +459,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
             rows.append(data)
+
         return rows
 
     @property
@@ -627,7 +628,9 @@ class CaseReportMixin(object):
         for row in self.row_objects + self.extra_row_objects:
             rows.append([getattr(row, method) for
                 method, header, visible in self.model.method_map])
-        return rows
+
+        sorted_rows = sorted(rows, key=lambda item: item[0])
+        return sorted_rows
 
     def filter(self, fn, filter_fields=None):
         # TODO test with snapshots.
