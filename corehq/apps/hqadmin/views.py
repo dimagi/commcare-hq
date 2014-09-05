@@ -885,6 +885,13 @@ def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
     datefield = request.GET.get("datefield")
+    get_request_params_json = request.GET.get("get_request_params", None)
+    get_request_params = (
+        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        if get_request_params_json is not None else {}
+    )
+    domain_params_es = get_request_params.get("domain_params_es", {})
+    additional_params_es = get_request_params.get("additional_params_es", {})
     params_es = request.GET.get("params_es", None)
     params_es = (json.loads(HTMLParser.HTMLParser().unescape(params_es))
                  if params_es is not None else {})
