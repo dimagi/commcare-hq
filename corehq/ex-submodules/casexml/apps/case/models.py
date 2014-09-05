@@ -1140,7 +1140,7 @@ class CommCareCaseGroup(Document):
             self.save()
 
     @classmethod
-    def get_all(cls, domain, limit=None, skip=None, include_docs=True):
+    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
         extra_kwargs = {}
         if limit is not None:
             extra_kwargs['limit'] = limit

@@ -1460,7 +1460,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_all(domain)
+        "samples": CommCareCaseGroup.get_by_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
