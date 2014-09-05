@@ -201,3 +201,12 @@ class RecapPassage(fluff.Calculator):
                     "group_by": [product['product_name']]
                 }
 
+
+class DureeMoyenneLivraison(fluff.Calculator):
+
+    @fluff.date_emitter
+    def total(self, form):
+        yield {
+            'date': form.form['mois_visite'],
+            'value': form.form['duree_moyenne_livraison']
+        }

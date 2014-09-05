@@ -45,7 +45,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
             headers = []
             rows = []
         else:
-            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData):
+            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData)\
+                    or isinstance(data_provider, DureeData):
                 columns = [c.data_tables_column for c in data_provider.columns]
                 headers = DataTablesHeader(*columns)
                 rows = data_provider.rows
@@ -166,5 +167,6 @@ class TableuDeBoardReport(MultiReport):
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
                 NombreData(config=config),
-                GestionDeLIPMTauxDeRuptures(config=config)
+                GestionDeLIPMTauxDeRuptures(config=config),
+                DureeData(config=config)
             ]

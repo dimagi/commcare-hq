@@ -23,6 +23,9 @@ RAPTURE_XMLNSES = (
     'http://openrosa.org/formdesigner/AD88DE3E-6AFC-48A5-8BEC-092419C1D45A',
 )
 
+LIVRAISON_XMLNSES = ("http://openrosa.org/formdesigner/182649A1-A3BB-4F56-988C-2C103DBAA6D7", )
+
+
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
         TableuDeBoardReport,

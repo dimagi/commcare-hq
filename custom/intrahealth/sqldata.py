@@ -1,6 +1,9 @@
+# coding=utf-8
+from django.template.defaultfilters import date
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
 from corehq.apps.commtrack.models import Product
+from corehq.util.translation import localize
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
@@ -8,6 +11,7 @@ from corehq.apps.reports.sqlreport import DataFormatter, \
 from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
+from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 
 PRODUCT_NAMES = {
@@ -198,7 +202,7 @@ class TauxDeRuptures(BaseSqlData):
         return columns
 
     def calculate_total_row(self, rows):
-        converture_data_rows = total = ConventureData(self.config).rows
+        converture_data_rows = ConventureData(self.config).rows
         total = converture_data_rows[0][2]["html"] if converture_data_rows else 0
 
         for row in rows:
@@ -456,3 +460,36 @@ class NombreData(BaseSqlData):
 
 class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
+
+
+def format_date(value):
+    with localize('fr'):
+        return date(force_to_datetime(value), 'd E')
+
+
+class DureeData(BaseSqlData):
+    slug = 'duree'
+    custom_total_calculate = True
+    title = u'Durée moyenne des retards de livraison'
+    table_name = 'fluff_LivraisonFluff'
+    have_groups = False
+    col_names = ['date_prevue_livraison', 'date_effective_livraison', 'duree_moyenne_livraison_total']
+
+    @property
+    def group_by(self):
+        return ['district_name', 'date_prevue_livraison', 'date_effective_livraison']
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("District"), SimpleColumn('district_name')),
+                   DatabaseColumn(_(u"La date prévue de livraison"), SimpleColumn('date_prevue_livraison'), format_fn=format_date),
+                   DatabaseColumn(_(u"La date réelle de livraison"), SimpleColumn('date_effective_livraison'), format_fn=format_date),
+                   DatabaseColumn(_(u"Retards de livraison (jours)"), SumColumn('duree_moyenne_livraison_total'))]
+        return columns
+
+    def calculate_total_row(self, rows):
+        total_row = list(calculate_total_row(rows))
+        if total_row and self.rows:
+            total_row[0] = 'Moyenne Region'
+            total_row[-1] = "%.2f" % (total_row[-1] / float(len(self.rows)))
+        return total_row
