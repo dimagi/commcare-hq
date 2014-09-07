@@ -75,8 +75,14 @@ from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+from corehq.apps.app_manager.xform import (
+    CaseError,
+    namespaces,
+    XForm,
+    XFormError,
+    XFormValidationError,
+    _make_elem,
+)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -2622,9 +2628,7 @@ def _ucla_form_modifier(form, question_ids):
 
     message = ""
 
-    source = form.source.encode("utf8", "replace") # Is this ok?
-    parser = etree.XMLParser(remove_blank_text=True)
-    xform_root = etree.fromstring(source, parser)
+    xform = form.wrapped_xform()
 
     # Get the questions specified in question_ids
     question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
@@ -2637,28 +2641,34 @@ def _ucla_form_modifier(form, question_ids):
     for question in questions:
         for option in question.options:
 
-            hidden_value_path = question.value + "_" + option.value
+            hidden_value_path = question.value + "-" + option.value
             hidden_value_text = option.label
 
             # Create new hidden values for each question option if they don't already exist:
 
             if hidden_value_path not in question_dict:
+
                 # Add data element
-                data_node = xform_root[0][1][0][0]
-                ns = "{%s}" % data_node.nsmap[None]
-                tag = hidden_value_path.replace("/data/", "")
-                #TODO: Am I supposed to be adding the namespace like this?
-                data_node.append(etree.Element(ns+tag))
+                tag = "{x}%s" % hidden_value_path.replace("/data/", "")
+                element = etree.Element(tag.format(**namespaces))
+                xform.data_node.append(element)
 
                 # Add bind
-                # TODO: Looks like XForm has a add_bind method. Look into it.
-                ns = "{%s}" % xform_root.nsmap[None]
-                itext_node = xform_root[0][1].find(ns+"itext")
-                bind_node = etree.Element(ns+"bind")
-                # Setting attributes like this instead of with a dict enforces order
-                bind_node.attrib["nodeset"] = hidden_value_path
-                bind_node.attrib["calculate"] = '"'+hidden_value_text+'"'
-                itext_node.addprevious(bind_node)
+
+                # I originally had the following:
+                #
+                #   xform.add_bind(
+                #        nodeset=hidden_value_path,
+                #       calculate='"'+hidden_value_text+'"'
+                #   )
+                #
+                # But unfortunately it adds this bind node after the itext,
+                # which looks a little weird.
+
+                xform.itext_node.addprevious(_make_elem("bind",{
+                    "nodeset": xform.resolve_path(hidden_value_path),
+                    "calculate": '"'+hidden_value_text+'"'
+                }))
 
                 message += "Node " + hidden_value_path + " created!\n"
             else:
@@ -2676,7 +2686,7 @@ def _ucla_form_modifier(form, question_ids):
                     ),
                     case_name=hidden_value_path,
                     case_type='task',
-                    # TODO: Determine if this puts the case properties in the expected order.
+                    # Note, the case properties will not necessarily be created in the order given.
                     case_properties={
                         'task_responsible': '/data/task_responsible',
                         'task_due': '/data/task_due',
@@ -2697,9 +2707,11 @@ def _ucla_form_modifier(form, question_ids):
             else:
                 message += "OpenSubCaseAction " + hidden_value_path + " already exists, skipping.\n"
 
+    # TODO: Add validation
     app = form.get_app()
     # Save the xform modifications
-    save_xform(app, form, etree.tostring(xform_root, pretty_print=True))
+    # TODO: Is xform.render() the right thing to do here?
+    save_xform(app, form, xform.render())
     # save the action modifications
     app.save()
     message += "Form saved.\n"
