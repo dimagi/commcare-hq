@@ -2624,6 +2624,7 @@ common_module_validations = [
      _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
 ]
 
+
 def _ucla_form_modifier(form, question_ids):
 
     message = ""
@@ -2654,17 +2655,6 @@ def _ucla_form_modifier(form, question_ids):
                 xform.data_node.append(element)
 
                 # Add bind
-
-                # I originally had the following:
-                #
-                #   xform.add_bind(
-                #        nodeset=hidden_value_path,
-                #       calculate='"'+hidden_value_text+'"'
-                #   )
-                #
-                # But unfortunately it adds this bind node after the itext,
-                # which looks a little weird.
-
                 xform.itext_node.addprevious(_make_elem("bind",{
                     "nodeset": xform.resolve_path(hidden_value_path),
                     "calculate": '"'+hidden_value_text+'"'
@@ -2707,10 +2697,8 @@ def _ucla_form_modifier(form, question_ids):
             else:
                 message += "OpenSubCaseAction " + hidden_value_path + " already exists, skipping.\n"
 
-    # TODO: Add validation
     app = form.get_app()
     # Save the xform modifications
-    # TODO: Is xform.render() the right thing to do here?
     save_xform(app, form, xform.render())
     # save the action modifications
     app.save()
