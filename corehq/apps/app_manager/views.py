@@ -2606,7 +2606,7 @@ def ucla_task_creation(request, domain, app_id, module_id, form_id):
             message = _ucla_form_modifier(form, questions)
             return HttpResponse(message, content_type="text/plain")
 
-        return HttpResponse("Soemthing was wrong with the form you submitted. Your CloudCare form is unchanged.", content_type="text/plain")
+        return HttpResponse("Soemthing was wrong with the form you submitted. Your CommCare form is unchanged.", content_type="text/plain")
 
     elif request.method == 'GET':
         html_form = UclaTaskCreationForm()
@@ -2672,7 +2672,7 @@ def _ucla_form_modifier(form, question_ids):
                         type='if',
                         question=question.value,
                         operator='selected',
-                        answer=option.label,
+                        answer=option.value,
                     ),
                     case_name=hidden_value_path,
                     case_type='task',
@@ -2699,7 +2699,7 @@ def _ucla_form_modifier(form, question_ids):
 
     app = form.get_app()
     # Save the xform modifications
-    save_xform(app, form, xform.render())
+    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     # save the action modifications
     app.save()
     message += "Form saved.\n"
