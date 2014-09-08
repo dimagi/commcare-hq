@@ -82,8 +82,10 @@ INDICATOR_DATA = {
                 "value": "date_created",
             },
         ],
-        "params_es_dict": {
-            "internal.self_started": ["T"],
+        "get_request_params": {
+            "domain_params_es": {
+                "internal.self_started": ["T"],
+            },
         },
         "histogram_type": "domains",
         "interval": "week",
