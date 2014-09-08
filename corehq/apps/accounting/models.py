@@ -1306,7 +1306,7 @@ class Invoice(models.Model):
                 "%s." %
                 (self.subscription.subscriber.domain, ', '.join(admins))
             )
-            contact_emails = [a.email for a in admins]
+            contact_emails = [a.username for a in admins]
         return contact_emails
 
 
