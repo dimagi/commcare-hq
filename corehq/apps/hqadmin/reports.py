@@ -792,24 +792,8 @@ class GlobalAdminReports(AdminFacetedReport):
             )
             if not ("get_request_params" in indicator_data[key]):
                 indicator_data[key]["get_request_params"] = {}
-            get_request_params = indicator_data[key]["get_request_params"]
-            if not ("domain_params_es" in get_request_params):
-                get_request_params["domain_params_es"] = {}
-            domain_params_es = get_request_params["domain_params_es"]
-            if self.use_real_project_spaces:
-                domain_params_es.update({
-                    "is_test": ["false"],
-                })
-            if self.use_commtrack_project_spaces:
-                domain_params_es.update({
-                    "commtrack_enabled": ["true"],
-                })
-            if self.use_commconnect_project_spaces:
-                domain_params_es.update({
-                    "commconnect_enabled": ["true"],
-                })
             indicator_data[key]["get_request_params"] = json.dumps(
-                get_request_params
+                indicator_data[key]["get_request_params"]
             )
         context.update({
             'indicator_data': indicator_data,
@@ -825,20 +809,6 @@ class GlobalAdminReports(AdminFacetedReport):
     @property
     def indicators(self):
         raise NotImplementedError
-
-    @property
-    def use_real_project_spaces(self):
-        return True
-
-
-    @property
-    def use_commconnect_project_spaces(self):
-        return False
-
-
-    @property
-    def use_commtrack_project_spaces(self):
-        return False
 
 
 class RealProjectSpacesReport(GlobalAdminReports):
@@ -889,10 +859,6 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'active_clients',
     ]
 
-    @property
-    def use_commconnect_project_spaces(self):
-        return True
-
 
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
@@ -902,7 +868,3 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'commtrack_total_outgoing_sms',
         'commtrack_forms',
     ]
-
-    @property
-    def use_commtrack_project_spaces(self):
-        return True
