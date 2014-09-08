@@ -997,8 +997,8 @@ def stats_data(request):
             histo_type,
             request.datespan,
             interval=interval,
-            user_type_mobile=params_es.get("user_type_mobile"),
-            is_cumulative=request.GET.get("is_cumulative", "True") == "True",
+            user_type_mobile=get_request_params.get("user_type_mobile"),
+            is_cumulative=get_request_params.get("is_cumulative", "True") == "True",
         )
     for k in stats_data['histo_data']:
         stats_data['histo_data'][k] = add_blank_data(

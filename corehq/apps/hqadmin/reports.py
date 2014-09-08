@@ -111,22 +111,22 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_mobile",
         "chart_title": "Forms Submitted by Mobile Workers",
-        "histogram_type": "forms",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": True,
         },
+        "histogram_type": "forms",
+        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_web",
         "chart_title": "Forms Submitted by Web Users",
-        "histogram_type": "forms",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": False,
         },
+        "histogram_type": "forms",
+        "interval": "week",
         "xaxis_label": "# forms",
     },
     "users": {
@@ -141,35 +141,35 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_mobile",
         "chart_title": "Mobile Users (submitted)",
-        "histogram_type": "users",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": True,
         },
+        "histogram_type": "users",
+        "interval": "week",
         "xaxis_label": "# users",
     },
     "users_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_web",
         "chart_title": "Web Users (submitted)",
-        "histogram_type": "users",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": False,
         },
+        "histogram_type": "users",
+        "interval": "week",
         "xaxis_label": "# users",
     },
     "active_users_mobile": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_users_mobile",
         "chart_title": "Active Mobile Users (last 30 days)",
+        "get_request_params": {
+            "user_type_mobile": True,
+        },
         "hide_cumulative_charts": True,
         "histogram_type": "users",
         "interval": "month",
         "is_cumulative": False,
-        "params_es_dict": {
-            "user_type_mobile": True,
-        },
         "xaxis_label": "# users",
     },
     "active_cases": {
