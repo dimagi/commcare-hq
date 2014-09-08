@@ -262,8 +262,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["o"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["o"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -279,8 +281,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -296,9 +300,11 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
-            "couch_recipient_doc_type": ["commcarecase"]
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -314,9 +320,11 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
-            "couch_recipient_doc_type": ["commcarecase"]
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",

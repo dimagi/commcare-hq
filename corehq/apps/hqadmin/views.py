@@ -923,7 +923,8 @@ def stats_data(request):
         return json_response(get_mobile_workers_data(params, params_es, request.datespan, interval=interval))
 
     if histo_type == "real_sms_messages":
-        return json_response(get_real_sms_messages_data(params, params_es, request.datespan, interval=interval))
+        return json_response(get_real_sms_messages_data(
+            params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "commtrack_sms":
         return json_response(get_real_sms_messages_data(params, params_es, request.datespan, interval=interval, is_commtrack=True))
