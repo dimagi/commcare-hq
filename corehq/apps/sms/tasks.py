@@ -241,7 +241,7 @@ def process_sms(message_id):
 def store_billable(msg):
     if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
         try:
-            msg.text.decode('iso-8859-1')
+            msg.text.encode('iso-8859-1')
             msg_length = 160
         except UnicodeEncodeError:
             # This string contains unicode characters, so the allowed
