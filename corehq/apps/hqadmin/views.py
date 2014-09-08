@@ -932,7 +932,13 @@ def stats_data(request):
             params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "commtrack_sms":
-        return json_response(get_real_sms_messages_data(params, params_es, request.datespan, interval=interval, is_commtrack=True))
+        return json_response(get_real_sms_messages_data(
+            params,
+            additional_params_es,
+            request.datespan,
+            interval=interval,
+            is_commtrack=True,
+        ))
 
     if histo_type == "active_commconnect_domains":
         return json_response(get_active_commconnect_domain_stats_data(params,

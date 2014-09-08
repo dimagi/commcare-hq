@@ -393,8 +393,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["o"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["o"],
+            },
         },
         "histogram_type": "commtrack_sms",
         "interval": "week",
@@ -410,8 +412,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
         },
         "histogram_type": "commtrack_sms",
         "interval": "week",
