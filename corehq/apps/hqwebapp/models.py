@@ -1217,8 +1217,8 @@ class AdminReportsTab(UITab):
             (_('CommCare Reports'), [
                 {
                     'title': report.name,
-                    'url': reverse('admin_report_dispatcher',
-                                   args=(report.slug,)),
+                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
+                                   args=(report.slug,)), report.default_params)
                 } for report in [
                     RealProjectSpacesReport,
                     RealCasesReport,

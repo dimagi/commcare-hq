@@ -3,7 +3,7 @@ from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -415,7 +415,31 @@ def get_commconnect_domain_stats_data(params, params_es, datespan,
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_domain_stats_data(params, params_es, datespan, interval='week',
+def get_all_subscriptions_stats_data(params, datespan, interval='month'):
+    return {
+        'histo_data': {
+            software_plan_edition_tuple[0]: add_blank_data(
+                get_subscription_stats_data(
+                    params,
+                    datespan,
+                    interval=interval,
+                    software_plan_edition=software_plan_edition_tuple[0],
+                ),
+                datespan.startdate,
+                datespan.enddate
+            )
+            for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+        },
+        'initial_values': {
+            software_plan_edition_tuple[0]: 0
+            for software_plan_edition_tuple in SoftwarePlanEdition.CHOICES
+        },
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
+def get_domain_stats_data(params, datespan, interval='week',
         datefield="date_created"):
 
     domains_after_date = (DomainES()
@@ -424,8 +448,6 @@ def get_domain_stats_data(params, params_es, datespan, interval='week',
             .size(0))
     if params:
         domains_after_date = add_params_to_query(domains_after_date, params)
-    if params_es:
-        domains_after_date = add_params_to_query(domains_after_date, params_es)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
@@ -434,8 +456,6 @@ def get_domain_stats_data(params, params_es, datespan, interval='week',
             .size(0))
     if params:
         domains_before_date = add_params_to_query(domains_before_date, params)
-    if params_es:
-        domains_before_date = add_params_to_query(domains_before_date, params_es)
     domains_before_date = domains_before_date.run().total
 
     return format_return_data(histo_data, domains_before_date, datespan)
