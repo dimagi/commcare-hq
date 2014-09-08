@@ -74,8 +74,14 @@ from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+from corehq.apps.app_manager.xform import (
+    CaseError,
+    namespaces,
+    XFormError,
+    XFormValidationError,
+    XForm,
+    WrappedNode
+)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -2644,7 +2650,7 @@ def download_bulk_app_translations(request, domain, app_id):
     headers = _expected_bulk_app_sheet_headers(app)
 
     # keys are the names of sheets, values are lists of tuples representing rows
-    rows = {}
+    rows = {"Modules_and_forms":[]}
 
     for mod_index, module in enumerate(app.modules):
         #This is duplicated logic from _expected_bulk_app_sheet_headers,  which I don't love.
@@ -2665,7 +2671,6 @@ def download_bulk_app_translations(request, domain, app_id):
         case_detail_properties = {c.field: c for c in module.case_details.long.columns}
         # Get the union of these two dictionaries
         all_properties = dict(case_list_properties.items() + case_detail_properties.items())
-        #import ipdb; ipdb.set_trace()
         for _, detail in all_properties.items():
 
             # TODO: These details will probably not be in the same order that
@@ -2712,7 +2717,6 @@ def download_bulk_app_translations(request, domain, app_id):
 
             questions_by_lang = {lang:form.get_questions([lang]) for lang in app.langs}
             rows[form_string] = []
-            #import ipdb; ipdb.set_trace()
             for i, question in enumerate(form.get_questions(app.langs)):
 
                 row = (question['value'].replace("/data/", ""),) +\
@@ -2726,6 +2730,35 @@ def download_bulk_app_translations(request, domain, app_id):
     data = [(k,v) for k,v in rows.iteritems()]
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
+
+
+def _make_text_nodes(id, itext, lang):
+    '''
+    Create a new <text id=':id'> node in the given itext node for the given
+    language and return it. Also create nodes for this id in all of the language
+    blocks in itext if they do not already exist.
+
+    According to the following page, it is bad practice to not replicate all
+    text ids accross all languages.
+    https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
+
+    :param itext:
+    :param lang:
+    :param langs:
+    :return:
+    '''
+
+    # Confirmed that order of text nodes doesn't matter
+
+    for lang_node in itext.findall("./{f}translation"):
+        text_node = lang_node.find("./{f}text[@id='%s-label']" % id)
+        if not text_node.exists():
+            print "Making a new one!"
+            e = etree.Element('{f}text'.format(**namespaces), {'id':id})
+            lang_node.xml.append()
+    return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
+    # TODO: Check namespacing
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -2755,14 +2788,14 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
+            messages.error(request, 'Sheet "%s" was repeated. Only the first occurence has been processed' % sheet.worksheet.title)
             continue
-            #TODO Don't process this sheet, send message about repeat sheet
 
         # CHECK FOR BAD SHEET NAME
         expected_columns = expected_sheets.get(sheet.worksheet.title, None)
         if expected_columns == None:
+            messages.error(request, 'Skipping sheet "%s", did not recognize title' % sheet.worksheet.title)
             continue
-            #TODO Don't process this sheet, send message about unexpected sheet
 
         # CHECK FOR MISSING KEY COLUMN
         if sheet.worksheet.title == "Modules and Forms":
@@ -2773,26 +2806,36 @@ def upload_bulk_app_translations(request, domain, app_id):
             #       the Type is really superfluous I think
         else:
             if expected_columns[0] not in sheet.headers:
+                messages.error('Skipping sheet "%s", could not find label or case_property column.' % sheet.worksheet.title)
                 continue
-                #TODO Don't process this sheet, send message about missing key column
 
         processed_sheets.add(sheet.worksheet.title)
 
         # CHECK FOR MISSING COLUMNS
         missing_cols = set(expected_columns) - set(sheet.headers)
-        #TODO Process sheet, but warn that the <missing_cols> are missing and will not be updated for any items
+        if len(missing_cols) > 0:
+            messages.warning(request,
+                             'Sheet "%s" has less columns than expected. '
+                             'Sheet will be processed but the following translations will be unchanged: %s'
+                             % (sheet.worksheet.title, " ,".join(missing_cols))
+            )
 
         # CHECK FOR EXTRA COLUMNS
         extra_cols = set(sheet.headers) - set(expected_columns)
-        #TODO Process sheet, but warn that <extra_cols> are unrecognized and are being ignored
+        if len(extra_cols) > 0:
+            messages.warning(request,
+                             'Sheet "%s" has unrecognized columns. '
+                             'Sheet will be processed but ignoring the following columns: %s'
+                             % (sheet.worksheet.title, " ,".join(extra_cols))
+            )
 
         # NOTE: At the moment there is no missing row detection. This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-
         if sheet.worksheet.title == "Modules_and_forms":
             # It's the first sheet
-            # TODO
+            # TODO: update module/form names
+            # TODO: update icon/audio filepaths (this isn't translation though...)
             pass
 
         elif sheet.headers[0] == "case_property":
@@ -2800,9 +2843,8 @@ def upload_bulk_app_translations(request, domain, app_id):
             module_index = int(sheet.worksheet.title.replace("module", "")) - 1
             module = app.modules[module_index]
 
-            # TODO How do we update details? Do we have to change them on long and on short?
-
             for row in rows:
+                # TODO How do we update details? Do we have to change them on long and on short?
                 pass
 
         else:
@@ -2812,50 +2854,54 @@ def upload_bulk_app_translations(request, domain, app_id):
             form_index = int(form_text.replace("form", "")) - 1
             form = app.modules[module_index].forms[form_index]
             xform = form.wrapped_xform()
+            itext = xform.itext_node
 
-            # How do we update translations? Where are they stored?
+            # What the xml should look like:
             # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
 
-
-
-            # Get itext node - XForm.itext
-            # For each lang:
-            #   get translation block (guaranteed to exist for each lang)
-            #   For each translation:
-            #       get text node with id = ? or create if dne
-            #       put the right value into it
-
-            itext = xform.itext_node
             for lang in app.langs:
                 translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
-
                 for row in rows:
                     question_id = row['label']
-                    translation = row['default_'+lang]
-                    question_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
+                    text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
 
-                    #import ipdb; ipdb.set_trace()
-                    if translation:
+                    # Create text node if it doesn't already exist and translations are to be updated
+                    not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'image', 'audio', 'video']])
+                    if text_node.exists() == False and len(not_none_translations) > 0:
+                        text_node = _make_text_nodes(question_id, itext, lang)
 
-                        # Create question node if it doesn't already exist
-                        if not question_node.exists():
-                            # TODO do this
-                            # Don't forget to wrap in a WrappedNode
-                            # Does order where I put it matter?
-                            pass
+                    # Add or remove translations
+                    for trans_type in ['default', 'image', 'audio', 'video']:
 
-                        # create a translation
-                        question_node.
+                        if trans_type == 'default':
+                            #attribute_path = 'not(@*)'
+                            attributes = None
+                            value_node = next(n for n in text_node.findall("./{f}value") if 'form' not in n.attrib)
+                        else:
+                            #attribute_path = "@form='%s'" % trans_type
+                            attributes = {'form': trans_type}
+                            value_node = text_node.find("./{f}value[@form='%s']" % trans_type)
+                        #value_node = text_node.find("./{f}value[%s]" % attribute_path)
 
-                    else:
-                        pass
-                        # delete a translation if it exists
+                        col_key = "%s_%s" % (trans_type, lang)
+                        new_translation = row[col_key]
+                        if new_translation:
+                            # create a value node if it doesn't already exist
+                            if not value_node.exists():
+                                e = etree.Element("{f}value".format(**namespaces), attributes)
+                                text_node.xml.add(e)
+                                value_node = WrappedNode(e)
+                            # Update the translation
+                            value_node.xml.text = new_translation
+                            #TODO: Validate media paths? do we need to stop bad paths from being inserted?
+                        elif col_key not in missing_cols:
+                            # Remove translations for blank cells, but not for deleted columns
+                            if value_node.exists():
+                                value_node.xml.getparent().remove(value_node.xml)
+            # Save the xform
+            save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
 
-                    #TODO media
-                # Get
-
-
-
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
