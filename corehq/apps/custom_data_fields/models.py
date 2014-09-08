@@ -3,10 +3,16 @@ from couchdbkit.ext.django.schema import (Document, StringProperty,
 from jsonobject import JsonObject
 
 
+CUSTOM_DATA_FIELD_PREFIX = "data-field-"
+
 class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
     label = StringProperty()
+
+    @property
+    def html_slug(self):
+        return "{}{}".format(CUSTOM_DATA_FIELD_PREFIX, self.slug)
 
 
 class CustomDataFieldsDefinition(Document):

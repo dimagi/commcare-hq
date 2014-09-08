@@ -1,0 +1,14 @@
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% for data_field in data_fields_model %}
+    <div class="control-group">
+        <label class="control-label" for="{{ data_field.slug }}">
+            {{ data_field.label }}
+        </label>
+        <div class="controls">
+            <input id="{{ data_field.slug }}" class="textInput" type="text" name="{{ data_field.slug }}" value="{{ data_field.value }}"/>
+        </div>
+    </div>
+{% endfor %}

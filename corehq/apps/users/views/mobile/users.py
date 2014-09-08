@@ -27,6 +27,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
+from corehq.apps.custom_data_fields.views import CustomDataEditor
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -67,6 +68,11 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     @memoized
+    def custom_data(self):
+        return CustomDataEditor("UserFields", self.domain, self.editable_user)
+
+    @property
+    @memoized
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
@@ -88,49 +94,6 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def reset_password_form(self):
         return SetPasswordForm(user="")
-
-    @property
-    def commtrack_user_roles(self):
-        # Copied this over from the original view. mwhite, is this the best place for this?
-        data_roles = dict((u['slug'], u) for u in [
-            {
-                'slug': 'commtrack_requester',
-                'name': _("CommTrack Requester"),
-                'description': _("Responsible for creating requisitions."),
-            },
-            {
-                'slug': 'commtrack_approver',
-                'name': _("CommTrack Approver"),
-                'description': _(
-                    "Responsible for approving requisitions, including "
-                    "updating or modifying quantities as needed. Will receive "
-                    "a notification when new requisitions are created."),
-            },
-            {
-                'slug': 'commtrack_supplier',
-                'name': _("CommTrack Supplier"),
-                'description': _(
-                    "Responsible for packing orders.  Will receive a "
-                    "notification when the approver indicates that "
-                    "requisitions are approved, so that he or she can start "
-                    "packing it."),
-            },
-            {
-                'slug': 'commtrack_receiver',
-                'name': _("CommTrack Receiver"),
-                'description': _(
-                    "Responsible for receiving orders.  Will receive a "
-                    "notification when the supplier indicates that requisitions "
-                    "are packed and are ready for pickup, so that he or she can "
-                    "come pick it up or better anticipate the delivery."),
-            }
-        ])
-
-        for k, v in self.custom_user_data.items():
-            if k in data_roles:
-                data_roles[k]['selected'] = (self.custom_user_data[k] == 'true')
-                del self.custom_user_data[k]
-        return data_roles
 
     @property
     @memoized
@@ -157,11 +120,6 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     @memoized
-    def custom_user_data(self):
-        return copy.copy(dict(self.editable_user.user_data))
-
-    @property
-    @memoized
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
@@ -176,14 +134,13 @@ class EditCommCareUserView(BaseFullEditUserView):
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
             'group_form': self.group_form,
-            'custom_user_data': self.custom_user_data,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
+            'data_fields_model': self.custom_data.template_fields,
         }
         if self.request.project.commtrack_enabled:
             context.update({
                 'commtrack': {
-                    'roles': self.commtrack_user_roles,
                     'update_form': self.update_commtrack_form,
                 },
             })
@@ -230,6 +187,16 @@ class EditCommCareUserView(BaseFullEditUserView):
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("CommTrack information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
+
+    def custom_user_is_valid(self):
+        custom_data_form = self.custom_data.init_form(self.request.POST)
+        if custom_data_form.is_valid():
+            self.custom_data.save_to_user()
+            return True
+        else:
+            messages.error(self.request, "custom failed")
+            return False
+
 
 
 class ListCommCareUsersView(BaseUserSettingsView):

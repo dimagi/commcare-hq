@@ -12,7 +12,7 @@ from crispy_forms import layout as crispy
 
 from dimagi.utils.decorators.memoized import memoized
 
-from .models import CustomDataFieldsDefinition, CustomDataField
+from .models import CustomDataFieldsDefinition, CustomDataField, CUSTOM_DATA_FIELD_PREFIX
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -59,6 +59,8 @@ class CustomDataFieldsMixin(object):
     template_name = "custom_data_fields/custom_data_fields.html"
     page_name = ugettext_noop("Edit Custom Fields")
     doc_type = None
+    field_type = None
+    form_label = None
 
     def get_definition(self):
         return CustomDataFieldsDefinition.by_domain(self.domain, self.field_type)
@@ -109,3 +111,53 @@ class CustomDataFieldsMixin(object):
             return self.get(request, success=True, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
+
+
+class CustomDataEditor(object):
+    def __init__(self, field_type, domain, user):
+        self.field_type = field_type
+        self.domain = domain
+        self.user = user
+        self.form = None
+
+    @property
+    @memoized
+    def model(self):
+        definition = CustomDataFieldsDefinition.by_domain(
+            self.domain,
+            self.field_type,
+        )
+        return definition or CustomDataFieldsDefinition()
+
+    @property
+    def template_fields(self):
+        return [
+            {
+                'slug': field.html_slug,
+                'label': field.label,
+                'value': self.user.user_data.get(field.slug, ''),
+            } for field in self.model.fields
+        ]
+        pass
+
+    def save_to_user(self):
+        if self.form:
+            self.user.user_data = self.form.cleaned_data
+
+    def init_form(self, post_dict):
+        def _make_field(field):
+            return forms.CharField(required=field.is_required)
+
+        fields = {
+            field.slug: _make_field(field) for field in self.model.fields
+        }
+        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+
+        fields = {
+            key[len(CUSTOM_DATA_FIELD_PREFIX):]: value
+            for key, value in post_dict.items()
+            if key.startswith(CUSTOM_DATA_FIELD_PREFIX)
+        }
+
+        self.form = CustomDataForm(fields)
+        return self.form
