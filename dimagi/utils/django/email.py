@@ -11,7 +11,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None):
+                    file_attachments=None, bcc=None):
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
@@ -20,7 +20,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
                                  [recipient], headers=from_header,
-                                 connection=connection, cc=cc)
+                                 connection=connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
             msg.attach(file["title"], file["file_obj"].getvalue(),
