@@ -2723,6 +2723,13 @@ def download_bulk_app_translations(request, domain, app_id):
                       tuple(questions_by_lang[l][i]['label'] for l in app.langs)
                 rows[form_string].append(row)
 
+                if question['type'] in ("MSelect", "Select"):
+                    for j, select in enumerate(question['options']):
+                        select_row = (row[0]+"-"+select['value'],) +\
+                            tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
+                        rows[form_string].append(select_row)
+
+
             #TODO: Get media
             # Ah ha! These media references are hiding in the itext
 
