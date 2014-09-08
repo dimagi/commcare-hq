@@ -36,22 +36,24 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_community_domain_count",
         "chart_title": "Active Community Project Spaces",
+        "get_request_params": {
+            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
+        },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
         "interval": "week",
-        "params_es_dict": {
-            "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
-        },
         "xaxis_label": "# domains",
     },
     "active_self_started_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_self_started_domains",
         "chart_title": "Active Self Started Project Spaces",
-        "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "self_started": ["T"],
+        "get_request_params": {
+            "domain_params_es": {
+                "self_started": ["T"],
+            },
         },
+        "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -80,8 +82,10 @@ INDICATOR_DATA = {
                 "value": "date_created",
             },
         ],
-        "params_es_dict": {
-            "internal.self_started": ["T"],
+        "get_request_params": {
+            "domain_params_es": {
+                "internal.self_started": ["T"],
+            },
         },
         "histogram_type": "domains",
         "interval": "week",
@@ -109,22 +113,22 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_mobile",
         "chart_title": "Forms Submitted by Mobile Workers",
-        "histogram_type": "forms",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": True,
         },
+        "histogram_type": "forms",
+        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms_web",
         "chart_title": "Forms Submitted by Web Users",
-        "histogram_type": "forms",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": False,
         },
+        "histogram_type": "forms",
+        "interval": "week",
         "xaxis_label": "# forms",
     },
     "users": {
@@ -139,35 +143,35 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_mobile",
         "chart_title": "Mobile Users (submitted)",
-        "histogram_type": "users",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": True,
         },
+        "histogram_type": "users",
+        "interval": "week",
         "xaxis_label": "# users",
     },
     "users_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_web",
         "chart_title": "Web Users (submitted)",
-        "histogram_type": "users",
-        "interval": "week",
-        "params_es_dict": {
+        "get_request_params": {
             "user_type_mobile": False,
         },
+        "histogram_type": "users",
+        "interval": "week",
         "xaxis_label": "# users",
     },
     "active_users_mobile": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_users_mobile",
         "chart_title": "Active Mobile Users (last 30 days)",
+        "get_request_params": {
+            "user_type_mobile": True,
+        },
         "hide_cumulative_charts": True,
         "histogram_type": "users",
         "interval": "month",
         "is_cumulative": False,
-        "params_es_dict": {
-            "user_type_mobile": True,
-        },
         "xaxis_label": "# users",
     },
     "active_cases": {
@@ -212,15 +216,17 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
         "chart_title": "Total Projects That Have Used Incoming SMS",
-        "params_es_dict": {
-            "direction": ["i"],
-        },
         "date_field_opts": [
             {
                 "name": "Date Created",
                 "value": "date_created",
             },
         ],
+        "get_request_params": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
+        },
         "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -258,8 +264,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["o"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["o"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -275,8 +283,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -292,9 +302,11 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
-            "couch_recipient_doc_type": ["commcarecase"]
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -310,9 +322,11 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
-            "couch_recipient_doc_type": ["commcarecase"]
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "real_sms_messages",
         "interval": "week",
@@ -330,10 +344,12 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
         "chart_title": "Active Mobile Workers",
-        "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "couch_recipient_doc_type": ["commcareuser"],
+        "get_request_data": {
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcareuser"],
+            },
         },
+        "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
         "interval": "week",
         "xaxis_label": "# workers",
@@ -360,8 +376,10 @@ INDICATOR_DATA = {
         "chart_name": "active_mobile_clients",
         "chart_title": "Active Mobile Workers",
         "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "couch_recipient_doc_type": ["commcarecase"],
+        "get_request_data": {
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "active_mobile_users",
         "interval": "week",
@@ -377,8 +395,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["o"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["o"],
+            },
         },
         "histogram_type": "commtrack_sms",
         "interval": "week",
@@ -394,8 +414,10 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "params_es_dict": {
-            "direction": ["i"],
+        "get_request_data": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
         },
         "histogram_type": "commtrack_sms",
         "interval": "week",
@@ -769,25 +791,11 @@ class GlobalAdminReports(AdminFacetedReport):
             indicator_data[key]["ajax_url"] = reverse(
                 indicator_data[key]["ajax_view"]
             )
-            indicator_data[key]["domain_params_es_dict"] = {}
-            if not ("params_es_dict" in indicator_data[key]):
-                indicator_data[key]["params_es_dict"] = {}
-            if self.use_real_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
-                    "is_test": ["false"],
-                })
-            if self.use_commtrack_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
-                    "commtrack_enabled": ["true"],
-                })
-            if self.use_commconnect_project_spaces:
-                indicator_data[key]["domain_params_es_dict"].update({
-                    "commconnect_enabled": ["true"],
-                })
-            indicator_data[key]["domain_params_es"] = json.dumps(
-                indicator_data[key]["domain_params_es_dict"]
+            if not ("get_request_params" in indicator_data[key]):
+                indicator_data[key]["get_request_params"] = {}
+            indicator_data[key]["get_request_params"] = json.dumps(
+                indicator_data[key]["get_request_params"]
             )
-            indicator_data[key]["params_es"] = json.dumps(indicator_data[key]["params_es_dict"])
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
@@ -802,20 +810,6 @@ class GlobalAdminReports(AdminFacetedReport):
     @property
     def indicators(self):
         raise NotImplementedError
-
-    @property
-    def use_real_project_spaces(self):
-        return True
-
-
-    @property
-    def use_commconnect_project_spaces(self):
-        return False
-
-
-    @property
-    def use_commtrack_project_spaces(self):
-        return False
 
 
 class RealProjectSpacesReport(GlobalAdminReports):
@@ -869,10 +863,6 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
         'active_clients',
     ]
 
-    @property
-    def use_commconnect_project_spaces(self):
-        return True
-
 
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
@@ -883,7 +873,3 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'commtrack_total_outgoing_sms',
         'commtrack_forms',
     ]
-
-    @property
-    def use_commtrack_project_spaces(self):
-        return True
