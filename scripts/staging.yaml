@@ -66,6 +66,7 @@ branches:
   - outputrefs # Simon 9/6
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
+  - refactoring-admin-reports # Nick P 9/8
 submodules:
   submodules/couchlog-src:
     branches:
