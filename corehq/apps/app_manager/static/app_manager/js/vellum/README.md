@@ -1,8 +1,7 @@
 Vellum
 ======
 
-[![Build Status](https://travis-ci.org/mwhite/Vellum.svg?branch=master)](https://travis-ci.org/mwhite/Vellum)
-[![Build Status](https://drone.io/github.com/mwhite/Vellum/status.png)](https://drone.io/github.com/mwhite/Vellum/latest)
+[![Build Status](https://travis-ci.org/dimagi/Vellum.svg?branch=master)](https://travis-ci.org/dimagi/Vellum)
 
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
@@ -15,13 +14,12 @@ project](https://www.commcarehq.org/exchange/325775003aa58cfcefbc75cfdf132e4d/in
 Usage
 -----
 
-Download and extract the latest optimized build from
-[here](https://drone.io/github.com/mwhite/Vellum/files).
+Checkout the source from [GitHub](https://github.com/dimagi/Vellum)
 
-```
-$ cd path/to/vellum
-$ wget https://drone.io/github.com/mwhite/Vellum/files/vellum.tar.gz
-$ tar -xzf vellum.tar.gz
+Optionally, build an optimized version
+
+```sh
+$ make # artifacts will be in _build dir and also vellum.tar.gz
 ```
 
 Then load it on a page using [RequireJS](http://requirejs.org), optionally with
@@ -109,6 +107,8 @@ $ make madge
 ![](deps.png)
 
 ### Testing on Heroku
+
+NOTE: this is outdated, and may not work anymore
 
 This repo can be deployed to Heroku using
 [heroku-buildpack-vellum](http://github.com/mwhite/heroku-buildpack-vellum),
