@@ -240,5 +240,12 @@ def process_sms(message_id):
 @task
 def store_billable(msg):
     if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
-        for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
+        try:
+            msg.text.decode('ascii')
+            msg_length = 160
+        except UnicodeEncodeError:
+            # This string contains unicode characters, so the allowed
+            # per-sms message length is shortened
+            msg_length = 70
+        for _ in range(int(math.ceil(float(len(msg.text)) / msg_length))):
             SmsBillable.create(msg)
