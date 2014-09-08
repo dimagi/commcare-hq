@@ -337,12 +337,13 @@ def process_incoming(msg, delay=True):
                 was_handled = False
 
             if was_handled:
-                create_billable_for_sms(msg)
                 break
     else:
         if not process_sms_registration(msg):
             import verify
             verify.process_verification(msg.phone_number, msg)
+            
+    create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
