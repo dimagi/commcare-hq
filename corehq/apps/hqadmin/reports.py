@@ -214,15 +214,17 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
         "chart_title": "Total Projects That Have Used Incoming SMS",
-        "params_es_dict": {
-            "direction": ["i"],
-        },
         "date_field_opts": [
             {
                 "name": "Date Created",
                 "value": "date_created",
             },
         ],
+        "get_request_params": {
+            "additional_params_es": {
+                "direction": ["i"],
+            },
+        },
         "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",

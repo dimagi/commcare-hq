@@ -936,8 +936,12 @@ def stats_data(request):
         return json_response(get_sms_only_domain_stats_data(params, request.datespan, interval=interval))
 
     if histo_type == "sms_domains":
-        return json_response(get_commconnect_domain_stats_data(params,
-            params_es, request.datespan, interval=interval))
+        return json_response(get_commconnect_domain_stats_data(
+            params,
+            additional_params_es,
+            request.datespan,
+            interval=interval,
+        ))
 
     if histo_type == "subscriptions":
         params.update(params_es)
