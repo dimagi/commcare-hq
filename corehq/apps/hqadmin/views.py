@@ -892,48 +892,42 @@ def stats_data(request):
     )
     domain_params_es = get_request_params.get("domain_params_es", {})
     additional_params_es = get_request_params.get("additional_params_es", {})
-    params_es = request.GET.get("params_es", None)
-    params_es = (json.loads(HTMLParser.HTMLParser().unescape(params_es))
-                 if params_es is not None else {})
-    domain_params_es = request.GET.get("domain_params_es", None)
-    domain_params_es = (json.loads(HTMLParser.HTMLParser().unescape(params_es))
-                 if domain_params_es is not None else {})
     individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
         request.datespan.enddate += timedelta(days=1)
 
-    params, __ = parse_args_for_es(request, prefix='es_')
-    params.update(domain_params_es)
+    domain_params, __ = parse_args_for_es(request, prefix='es_')
+    domain_params.update(domain_params_es)
 
     if histo_type == "commtrack_forms":
-        return json_response(commtrack_form_submissions(params, params_es, request.datespan, interval=interval))
+        return json_response(commtrack_form_submissions(domain_params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "active_dimagi_gateways":
-        return json_response(get_active_dimagi_owned_gateway_projects(params,
-            params_es, request.datespan, interval=interval))
+        return json_response(get_active_dimagi_owned_gateway_projects(domain_params,
+            additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "mobile_clients":
-        return json_response(get_total_clients_data(params, params_es, request.datespan, interval=interval))
+        return json_response(get_total_clients_data(domain_params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "active_mobile_users":
         return json_response(get_active_mobile_users_data(
-            params,
+            domain_params,
             additional_params_es,
             request.datespan,
             interval=interval,
         ))
 
     if histo_type == "mobile_workers":
-        return json_response(get_mobile_workers_data(params, params_es, request.datespan, interval=interval))
+        return json_response(get_mobile_workers_data(domain_params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "real_sms_messages":
         return json_response(get_real_sms_messages_data(
-            params, additional_params_es, request.datespan, interval=interval))
+            domain_params, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "commtrack_sms":
         return json_response(get_real_sms_messages_data(
-            params,
+            domain_params,
             additional_params_es,
             request.datespan,
             interval=interval,
@@ -941,43 +935,40 @@ def stats_data(request):
         ))
 
     if histo_type == "active_commconnect_domains":
-        return json_response(get_active_commconnect_domain_stats_data(params,
-            params_es, request.datespan, interval=interval))
+        return json_response(get_active_commconnect_domain_stats_data(domain_params,
+            additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "sms_only_domains":
-        return json_response(get_sms_only_domain_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_sms_only_domain_stats_data(domain_params, request.datespan, interval=interval))
 
     if histo_type == "sms_domains":
         return json_response(get_commconnect_domain_stats_data(
-            params,
+            domain_params,
             additional_params_es,
             request.datespan,
             interval=interval,
         ))
 
     if histo_type == "subscriptions":
-        params.update(params_es)
-        return json_response(get_all_subscriptions_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_all_subscriptions_stats_data(domain_params, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
-        params.update(domain_params_es)
         stats_data = get_active_domain_stats_data(
-            params,
+            domain_params,
             request.datespan,
             interval=interval,
             software_plan_edition=get_request_params.get('software_plan_edition', None)
         )
     elif histo_type == "domains":
         stats_data = get_domain_stats_data(
-            params, 
-            params_es, 
+            domain_params,
             request.datespan,
             interval=interval,
             datefield=datefield,
         )
     else:
-        if params:
-            domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
+        if domain_params:
+            domain_results = es_domain_query(domain_params, fields=["name"], size=99999, show_stats=False)
             domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
 
             if len(domains) <= individual_domain_limit:
