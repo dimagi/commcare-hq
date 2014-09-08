@@ -917,7 +917,12 @@ def stats_data(request):
         return json_response(get_total_clients_data(params, params_es, request.datespan, interval=interval))
 
     if histo_type == "active_mobile_users":
-        return json_response(get_active_mobile_users_data(params, params_es, request.datespan, interval=interval))
+        return json_response(get_active_mobile_users_data(
+            params,
+            additional_params_es,
+            request.datespan,
+            interval=interval,
+        ))
 
     if histo_type == "mobile_workers":
         return json_response(get_mobile_workers_data(params, params_es, request.datespan, interval=interval))

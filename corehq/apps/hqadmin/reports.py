@@ -342,10 +342,12 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
         "chart_title": "Active Mobile Workers",
-        "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "couch_recipient_doc_type": ["commcareuser"],
+        "get_request_data": {
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcareuser"],
+            },
         },
+        "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
         "interval": "week",
         "xaxis_label": "# workers",
@@ -372,8 +374,10 @@ INDICATOR_DATA = {
         "chart_name": "active_mobile_clients",
         "chart_title": "Active Mobile Workers",
         "hide_cumulative_charts": True,
-        "params_es_dict": {
-            "couch_recipient_doc_type": ["commcarecase"],
+        "get_request_data": {
+            "additional_params_es": {
+                "couch_recipient_doc_type": ["commcarecase"],
+            },
         },
         "histogram_type": "active_mobile_users",
         "interval": "week",
