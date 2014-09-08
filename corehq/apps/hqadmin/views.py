@@ -903,12 +903,10 @@ def stats_data(request):
     domain_params.update(domain_params_es)
 
     if histo_type == "countries":
-        params.update(params_es)
-        return json_response(get_countries_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_countries_stats_data(domain_params, request.datespan, interval=interval))
 
     if histo_type == "active_countries":
-        params.update(params_es)
-        return json_response(get_active_countries_stats_data(params, request.datespan, interval=interval))
+        return json_response(get_active_countries_stats_data(domain_params, request.datespan, interval=interval))
 
     if histo_type == "commtrack_forms":
         return json_response(commtrack_form_submissions(domain_params, additional_params_es, request.datespan, interval=interval))

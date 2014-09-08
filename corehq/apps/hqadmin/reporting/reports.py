@@ -98,7 +98,7 @@ def get_active_countries_stats_data(params, datespan, interval='month',
     Returns list of timestamps and how many countries were active in the 30 days
     before the timestamp
     """
-    real_domains = get_real_project_spaces()
+    real_domains = get_real_project_spaces(facets=params)
 
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
@@ -266,11 +266,12 @@ def get_countries_stats_data(params, datespan, interval='month',
     """
     Returns list of timestamps and how many countries have been created
     """
+    real_domains = get_real_project_spaces(facets=params)
 
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         countries = (DomainES()
-                .real_domains()
+                .in_domains(real_domains)
                 .created(lte=timestamp)
                 .terms_facet('countries', 'country'))
 
