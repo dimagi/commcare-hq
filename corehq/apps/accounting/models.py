@@ -1296,11 +1296,17 @@ class Invoice(models.Model):
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
         if not contact_emails:
+            admins = WebUser.get_admins_by_domain(
+                self.subscription.subscriber.domain
+            )
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
-                "email to for the domain: %s" %
-                self.subscription.subscriber.domain)
+                "email to for the domain %s. Sending to domain admins instead: "
+                "%s." %
+                (self.subscription.subscriber.domain, ', '.join(admins))
+            )
+            contact_emails = [a.email for a in admins]
         return contact_emails
 
 
