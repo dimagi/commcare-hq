@@ -4,7 +4,7 @@ workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = 'gevent'
 keepalive = 60
 timeout = 900
-max_requests = 600
+max_requests = 240
 # defaults to 30 sec, setting to 5 minutes to fight `GreenletExit`s
 graceful_timeout = 5*60
 # cryptically, setting forwarded_allow_ips (to the ip of the hqproxy0)

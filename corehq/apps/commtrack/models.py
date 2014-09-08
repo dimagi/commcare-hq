@@ -331,7 +331,7 @@ class CommtrackRequisitionConfig(DocumentSchema):
     def get_sorted_actions(self):
         def _action_key(a):
             # intentionally fails hard if misconfigured.
-            const.ORDERED_REQUISITION_ACTIONS.index(a.action)
+            return const.ORDERED_REQUISITION_ACTIONS.index(a.action)
 
         return sorted(self.actions, key=_action_key)
 

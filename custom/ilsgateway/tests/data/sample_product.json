@@ -1,0 +1,7 @@
+{
+    "name": "Condoms",
+    "units": "each",
+    "sms_code": "cond",
+    "description": "Condoms",
+    "is_active": true
+}

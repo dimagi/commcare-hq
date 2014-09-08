@@ -18,7 +18,7 @@ For more information on a specific command, run
 **bootstrap**
     Bootstrap a domain and user who owns it.
     Usage::
-        $ ./manage.py bootstrap [options] <domain> <email> <password>
+    $ ./manage.py bootstrap [options] <domain> <email> <password>
 
 **clean_pyc**
     Removes all python bytecode (.pyc) compiled files from the project.
@@ -26,12 +26,12 @@ For more information on a specific command, run
 **copy_domain**
     Copies the contents of a domain to another database.
     Usage:: 
-        $ ./manage.py copy_domain [options] <sourcedb> <domain>
+    $ ./manage.py copy_domain [options] <sourcedb> <domain>
 
 **ptop_fast_reindex_fluff**
     Fast reindex of fluff docs.
     Usage::
-        $ ./manage.py ptop_fast_reindex_fluff [options] <domain> <pillow_class>
+    $ ./manage.py ptop_fast_reindex_fluff [options] <domain> <pillow_class>
 
 **run_ptop**
     Run the pillowtop management command to scan all _changes feeds
@@ -47,7 +47,7 @@ For more information on a specific command, run
 **test**
     Runs the test suite for the specified applications, or the entire site if no apps are specified.
     Usage::
-        $ ./manage.py test [options] [appname ...]
+    $ ./manage.py test [options] [appname ...]
 
 
 ----------------------------------------------------------------
