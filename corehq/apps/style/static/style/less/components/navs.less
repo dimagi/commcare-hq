@@ -41,6 +41,126 @@
     }
 }
 
+  #wrapper {
+      height: 100%;
+      padding-left: 0;
+      -webkit-transition: all 0.5s ease;
+      -moz-transition: all 0.5s ease;
+      -o-transition: all 0.5s ease;
+      transition: all 0.5s ease;
+  }
+
+  #menu-toggle {
+      position: fixed;
+      z-index: 1;
+      top: 50%;
+      &:before { content: "\e079"; }
+  }
+
+  #wrapper.toggled {
+      padding-left: 290px;
+
+      #menu-toggle {
+          position: fixed;
+          z-index: 1;
+          top: 50%;
+          &:before { content: "\e080"; }
+      }
+  }
+
+  #sidebar-wrapper {
+      z-index: 1000;
+      position: relative;
+      width: 0;
+      margin-left: -290px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      word-break: normal;
+      background-color: #f4f4f4 !important;
+      -webkit-transition: all 0.5s ease;
+      -moz-transition: all 0.5s ease;
+      -o-transition: all 0.5s ease;
+      transition: all 0.5s ease;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+      width: 290px;
+  }
+
+  #page-content-wrapper {
+      width: 100%;
+      padding: 15px;
+  }
+
+  #wrapper.toggled #page-content-wrapper {
+      position: relative;
+      margin-right: -290px;
+  }
+
+  /* Sidebar Styles */
+
+  .sidebar-nav {
+      top: 0;
+      width: 290px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+  }
+
+  .sidebar-nav li a:active,
+  .sidebar-nav li a:focus {
+      text-decoration: none;
+  }
+
+  .sidebar-nav > .sidebar-brand {
+      height: 65px;
+      font-size: 18px;
+      line-height: 60px;
+  }
+
+  .sidebar-nav > .sidebar-brand a {
+      color: #999999;
+  }
+
+  .sidebar-nav > .sidebar-brand a:hover {
+      color: #fff;
+      background: none;
+  }
+
+  @media (min-width: 768px) {
+
+      #menu-toggle {
+        display: none;
+      }
+
+      #wrapper {
+          padding-left: 290px;
+      }
+
+      #wrapper.toggled {
+          padding-left: 0;
+      }
+
+      #sidebar-wrapper {
+          width: 290px;
+      }
+
+      #wrapper.toggled #sidebar-wrapper {
+          width: 0;
+      }
+
+      #page-content-wrapper {
+          padding: 20px;
+      }
+
+      #wrapper.toggled #page-content-wrapper {
+          position: relative;
+          margin-right: 0;
+      }
+
+  }
+
+
 // hq-content
 
 .hq-content > .nav-tabs {

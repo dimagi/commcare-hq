@@ -42,107 +42,7 @@
 {% endblock %}
 
 {% block content %}
-    <style>
-        #wrapper {
-            height: 100%;
-            padding-left: 0;
-            -webkit-transition: all 0.5s ease;
-            -moz-transition: all 0.5s ease;
-            -o-transition: all 0.5s ease;
-            transition: all 0.5s ease;
-        }
 
-        #wrapper.toggled {
-            padding-left: 290px;
-        }
-
-        #sidebar-wrapper {
-            z-index: 1000;
-            position: relative;
-            width: 0;
-            height: 100%;
-            margin-left: -290px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            word-break: normal;
-            background-color: #f4f4f4 !important;
-            -webkit-transition: all 0.5s ease;
-            -moz-transition: all 0.5s ease;
-            -o-transition: all 0.5s ease;
-            transition: all 0.5s ease;
-        }
-
-        #wrapper.toggled #sidebar-wrapper {
-            width: 290px;
-        }
-
-        #page-content-wrapper {
-            width: 100%;
-            padding: 15px;
-        }
-
-        #wrapper.toggled #page-content-wrapper {
-            position: relative;
-            margin-right: -290px;
-        }
-
-        /* Sidebar Styles */
-
-        .sidebar-nav {
-            top: 0;
-            width: 290px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        .sidebar-nav li a:active,
-        .sidebar-nav li a:focus {
-            text-decoration: none;
-        }
-
-        .sidebar-nav > .sidebar-brand {
-            height: 65px;
-            font-size: 18px;
-            line-height: 60px;
-        }
-
-        .sidebar-nav > .sidebar-brand a {
-            color: #999999;
-        }
-
-        .sidebar-nav > .sidebar-brand a:hover {
-            color: #fff;
-            background: none;
-        }
-
-        @media (min-width: 768px) {
-            #wrapper {
-                padding-left: 290px;
-            }
-
-            #wrapper.toggled {
-                padding-left: 0;
-            }
-
-            #sidebar-wrapper {
-                width: 290px;
-            }
-
-            #wrapper.toggled #sidebar-wrapper {
-                width: 0;
-            }
-
-            #page-content-wrapper {
-                padding: 20px;
-            }
-
-            #wrapper.toggled #page-content-wrapper {
-                position: relative;
-                margin-right: 0;
-            }
-        }
-    </style>
     <div id="wrapper" class="row-fluid">
         <div id="sidebar-wrapper" class="sidebar span2">
             {% block sidebar %}
@@ -150,11 +50,7 @@
             {% endblock %}
         </div>
         <div>
-            <a href="#menu-toggle" class="btn btn-default btn-lg" id="menu-toggle" style="
-                position: absolute;
-                z-index: 1;
-                top: 50%;
-            "> > </a>
+            <a href="#menu-toggle" class="btn btn-default btn-lg glyphicon" id="menu-toggle"></a>
         </div>
         <div id="page-content-wrapper" class="hq-content span10 {% block column_style %}{% endblock %} ">
             {% block main_column %}{% endblock %}
