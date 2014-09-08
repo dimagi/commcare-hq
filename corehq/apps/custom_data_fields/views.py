@@ -114,11 +114,11 @@ class CustomDataFieldsMixin(object):
 
 
 class CustomDataEditor(object):
-    def __init__(self, field_type, domain, user):
+    def __init__(self, field_type, domain, user, post_dict=None):
         self.field_type = field_type
         self.domain = domain
         self.user = user
-        self.form = None
+        self.form = self.init_form(post_dict)
 
     @property
     @memoized
@@ -129,22 +129,11 @@ class CustomDataEditor(object):
         )
         return definition or CustomDataFieldsDefinition()
 
-    @property
-    def template_fields(self):
-        return [
-            {
-                'slug': field.html_slug,
-                'label': field.label,
-                'value': self.user.user_data.get(field.slug, ''),
-            } for field in self.model.fields
-        ]
-        pass
-
     def save_to_user(self):
         if self.form:
             self.user.user_data = self.form.cleaned_data
 
-    def init_form(self, post_dict):
+    def init_form(self, post_dict=None):
         def _make_field(field):
             return forms.CharField(required=field.is_required)
 
@@ -152,12 +141,16 @@ class CustomDataEditor(object):
             field.slug: _make_field(field) for field in self.model.fields
         }
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm.helper = FormHelper()
+        CustomDataForm.helper.form_tag = False
 
-        fields = {
-            key[len(CUSTOM_DATA_FIELD_PREFIX):]: value
-            for key, value in post_dict.items()
-            if key.startswith(CUSTOM_DATA_FIELD_PREFIX)
-        }
+        if post_dict:
+            fields = post_dict
+        else:
+            fields = {
+                "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
+                for k, v in self.user.user_data.items()
+            }
 
-        self.form = CustomDataForm(fields)
+        self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
         return self.form

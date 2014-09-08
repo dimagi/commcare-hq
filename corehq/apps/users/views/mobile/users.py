@@ -69,7 +69,12 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def custom_data(self):
-        return CustomDataEditor("UserFields", self.domain, self.editable_user)
+        return CustomDataEditor(
+            "UserFields",
+            self.domain,
+            self.editable_user,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
 
     @property
     @memoized
@@ -136,7 +141,7 @@ class EditCommCareUserView(BaseFullEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
-            'data_fields_model': self.custom_data.template_fields,
+            'data_fields_form': self.custom_data.form,
         }
         if self.request.project.commtrack_enabled:
             context.update({
@@ -189,14 +194,12 @@ class EditCommCareUserView(BaseFullEditUserView):
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
-        custom_data_form = self.custom_data.init_form(self.request.POST)
+        custom_data_form = self.custom_data.form
         if custom_data_form.is_valid():
             self.custom_data.save_to_user()
             return True
         else:
-            messages.error(self.request, "custom failed")
             return False
-
 
 
 class ListCommCareUsersView(BaseUserSettingsView):
