@@ -639,6 +639,7 @@ class GlobalAdminReports(AdminFacetedReport):
     es_facet_mapping = FACET_MAPPING
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    default_params = ''
 
     def get_name_or_link(self, d, internal_settings=False):
         if not getattr(self, 'show_name', None):
@@ -820,6 +821,7 @@ class GlobalAdminReports(AdminFacetedReport):
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
     name = ugettext_noop('Real Project Spaces')
+    default_params = 'es_is_test=false&'
     indicators = [
         'domain_count',
         'domain_self_started_count',
@@ -840,6 +842,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
 class RealCasesReport(GlobalAdminReports):
     slug = 'real_cases'
     name = _('Real Cases')
+    default_params = 'es_is_test=false&'
     indicators = [
         'active_cases',
     ]
@@ -848,6 +851,7 @@ class RealCasesReport(GlobalAdminReports):
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('CommConnect Project Spaces')
+    default_params = 'es_is_test=false&es_commconnect_enabled=T&'
     indicators = [
         'sms_domain_count',
         'commconnect_domain_count',
@@ -873,6 +877,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
     name = ugettext_noop('CommTrack Project Spaces')
+    default_params = 'es_is_test=false&es_commtrack_enabled=T&'
     indicators = [
         'commtrack_total_incoming_sms',
         'commtrack_total_outgoing_sms',
