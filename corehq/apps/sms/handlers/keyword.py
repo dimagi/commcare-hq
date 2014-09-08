@@ -376,17 +376,21 @@ def keyword_uses_form_that_requires_case(survey_keyword):
                 return True
     return False
 
-def get_case_by_external_id(domain, external_id):
-    case = None
-    try:
-        case = CommCareCase.view("hqcase/by_domain_external_id",
-            key=[domain, external_id],
-            include_docs=True,
-            reduce=False,
-        ).one()
-    except MultipleResultsFound:
-        pass
-    return case
+def get_case_by_external_id(domain, external_id, user):
+    cases = CommCareCase.view("hqcase/by_domain_external_id",
+        key=[domain, external_id],
+        include_docs=True,
+        reduce=False,
+    ).all()
+
+    def filter_fcn(case):
+        return not case.closed and user_can_access_case(user, case)
+    cases = filter(filter_fcn, cases)
+
+    if len(cases) == 1:
+        return (cases[0], 1)
+    else:
+        return (None, len(cases))
 
 def user_is_owner(user, case):
     return case.owner_id == user._id
@@ -432,10 +436,13 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         if keyword_uses_form_that_requires_case(survey_keyword):
             if len(args) > 1:
                 external_id = args[1]
-                case = get_case_by_external_id(verified_number.domain,
-                    external_id)
-                if case is None or not user_can_access_case(sender, case):
+                case, matches = get_case_by_external_id(verified_number.domain,
+                    external_id, sender)
+                if matches == 0:
                     send_keyword_response(verified_number, MSG_CASE_NOT_FOUND)
+                    return
+                elif matches > 1:
+                    send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND)
                     return
             else:
                 send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID)
