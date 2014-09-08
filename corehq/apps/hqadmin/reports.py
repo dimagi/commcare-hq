@@ -366,7 +366,7 @@ INDICATOR_DATA = {
     "total_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_clients",
-        "chart_title": "Total Mobile Workers",
+        "chart_title": "Total Mobile Clients",
         "histogram_type": "mobile_clients",
         "interval": "week",
         "xaxis_label": "# workers",
@@ -374,7 +374,7 @@ INDICATOR_DATA = {
     "active_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_clients",
-        "chart_title": "Active Mobile Workers",
+        "chart_title": "Active Mobile Clients",
         "hide_cumulative_charts": True,
         "get_request_data": {
             "additional_params_es": {
