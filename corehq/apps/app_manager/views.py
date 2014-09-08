@@ -2647,7 +2647,8 @@ def download_bulk_app_translations(request, domain, app_id):
     rows = {}
 
     for mod_index, module in enumerate(app.modules):
-        module_string = "module"+str(mod_index+1) #TODO: This is duplicated logic from the above function which I don't love.
+        #This is duplicated logic from _expected_bulk_app_sheet_headers,  which I don't love.
+        module_string = "module"+str(mod_index+1)
 
         # Add module to the first sheet
         row_data = cleaned_row(("Module", module_string)+\
@@ -2750,17 +2751,18 @@ def upload_bulk_app_translations(request, domain, app_id):
     workbook = WorkbookJSONReader(request.file)
 
     for sheet in workbook.worksheets:
+        rows = [row for row in sheet]
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
             continue
-            # Don't process this sheet, send message about repeat sheet
+            #TODO Don't process this sheet, send message about repeat sheet
 
         # CHECK FOR BAD SHEET NAME
         expected_columns = expected_sheets.get(sheet.worksheet.title, None)
         if expected_columns == None:
             continue
-            # Don't process this sheet, send message about unexpected sheet
+            #TODO Don't process this sheet, send message about unexpected sheet
 
         # CHECK FOR MISSING KEY COLUMN
         if sheet.worksheet.title == "Modules and Forms":
@@ -2772,18 +2774,17 @@ def upload_bulk_app_translations(request, domain, app_id):
         else:
             if expected_columns[0] not in sheet.headers:
                 continue
-                # Don't process this sheet, send message about missing key column
-        #TODO: the first sheet has multiple key columns, so fix this for that.
+                #TODO Don't process this sheet, send message about missing key column
 
         processed_sheets.add(sheet.worksheet.title)
 
         # CHECK FOR MISSING COLUMNS
         missing_cols = set(expected_columns) - set(sheet.headers)
-        # Process sheet, but warn that the <missing_cols> are missing and will not be updated for any items
+        #TODO Process sheet, but warn that the <missing_cols> are missing and will not be updated for any items
 
         # CHECK FOR EXTRA COLUMNS
         extra_cols = set(sheet.headers) - set(expected_columns)
-        # Process sheet, but warn that <extra_cols> are unrecognized and are being ignored
+        #TODO Process sheet, but warn that <extra_cols> are unrecognized and are being ignored
 
         # NOTE: At the moment there is no missing row detection. This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
@@ -2791,6 +2792,7 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         if sheet.worksheet.title == "Modules_and_forms":
             # It's the first sheet
+            # TODO
             pass
 
         elif sheet.headers[0] == "case_property":
@@ -2798,9 +2800,9 @@ def upload_bulk_app_translations(request, domain, app_id):
             module_index = int(sheet.worksheet.title.replace("module", "")) - 1
             module = app.modules[module_index]
 
-            # How do we update details? Do we have to change them on long and on short?
+            # TODO How do we update details? Do we have to change them on long and on short?
 
-            for row in sheet:
+            for row in rows:
                 pass
 
         else:
@@ -2814,18 +2816,43 @@ def upload_bulk_app_translations(request, domain, app_id):
             # How do we update translations? Where are they stored?
             # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
 
-            import ipdb; ipdb.set_trace()
 
-            # Get itext node - XForm.itext  (might need to create one if does not exist)
+
+            # Get itext node - XForm.itext
             # For each lang:
-            #   get translation block or create if dne
+            #   get translation block (guaranteed to exist for each lang)
             #   For each translation:
             #       get text node with id = ? or create if dne
             #       put the right value into it
 
             itext = xform.itext_node
-            for row in sheet:
-                print row
+            for lang in app.langs:
+                translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
+
+                for row in rows:
+                    question_id = row['label']
+                    translation = row['default_'+lang]
+                    question_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
+
+                    #import ipdb; ipdb.set_trace()
+                    if translation:
+
+                        # Create question node if it doesn't already exist
+                        if not question_node.exists():
+                            # TODO do this
+                            # Don't forget to wrap in a WrappedNode
+                            # Does order where I put it matter?
+                            pass
+
+                        # create a translation
+                        question_node.
+
+                    else:
+                        pass
+                        # delete a translation if it exists
+
+                    #TODO media
+                # Get
 
 
 
