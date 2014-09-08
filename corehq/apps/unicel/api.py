@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import SMSBackend
 from urllib2 import urlopen
@@ -81,8 +81,6 @@ class UnicelBackend(SMSBackend):
                 timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         except Exception:
             data = None
-
-        create_billable_for_sms(message, UnicelBackend.get_api_id(), delay=delay, response=data)
 
         return data
 

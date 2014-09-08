@@ -156,13 +156,6 @@ def close_task(domain, subcase_guid, submitting_user_id):
     }
     submit_xml(domain, "sms/xml/close_task.xml", context)
 
-def create_billable_for_sms(msg, backend_api, delay=True, **kwargs):
-    try:
-        from corehq.apps.sms.api import store_billable
-        store_billable.delay(msg)
-    except Exception as e:
-        logging.error("%s backend contacted, but errors in creating billable for incoming message. Error: %s" %
-                      (backend_api, e))
 
 def get_available_backends():
     result = {}
