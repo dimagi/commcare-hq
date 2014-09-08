@@ -695,6 +695,7 @@ class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
+    fix_left_col = True
     model = ConditionsMet
     exportable = False
 
@@ -725,6 +726,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.override_template = "opm/met_print_report.html"
         return HttpResponse(self._async_context()['report'])
 
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=9, width=700)
 
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
