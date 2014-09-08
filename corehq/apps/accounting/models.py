@@ -1622,7 +1622,7 @@ class CreditLine(models.Model):
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None,
                               payment_record=None, related_credit=None,
-                              reason=None):
+                              reason=None, web_user=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -1647,6 +1647,7 @@ class CreditLine(models.Model):
             line_item=line_item,
             invoice=invoice,
             related_credit=related_credit,
+            web_user=web_user,
         )
         credit_adjustment.save()
         self.balance += amount
@@ -1689,7 +1690,7 @@ class CreditLine(models.Model):
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None):
+                   note=None, reason=None, web_user=None):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -1740,7 +1741,7 @@ class CreditLine(models.Model):
                                           payment_record=payment_record,
                                           invoice=invoice, line_item=line_item,
                                           related_credit=related_credit,
-                                          reason=reason)
+                                          reason=reason, web_user=web_user)
         return credit_line
 
     @classmethod
