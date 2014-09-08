@@ -111,6 +111,7 @@ DOMAIN_FACETS = [
     "area",
     "case_sharing",
     "commtrack_enabled",
+    "commconnect_enabled",
     "customer_type",
     "deployment.city.exact",
     "deployment.country.exact",
@@ -181,6 +182,7 @@ FACET_MAPPING = [
         {"facet": "internal.using_adm", "name": "ADM", "expanded": False },
         {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False },
         {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False },
+        {"facet": "commconnect_enabled", "name": "CommConnect", "expanded": False },
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False },
     ]),
     ("Plans", False, [

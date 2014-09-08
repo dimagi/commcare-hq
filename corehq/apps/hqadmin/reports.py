@@ -17,6 +17,9 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
 from corehq.toggles import IS_DEVELOPER
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
 
 
 INDICATOR_DATA = {
@@ -195,9 +198,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commconnect_domains",
         "chart_title": "Total CommConnect Enabled Domains",
-        "params_es_dict": {
-            "commconnect_enabled": ["T"],
-        },
         "date_field_opts": [
             {
                 "name": "Date Created",
@@ -649,28 +649,162 @@ class AdminAppReport(AdminFacetedReport):
             ]
 
 
-class GlobalAdminReports(AdminReport):
+class GlobalAdminReports(AdminFacetedReport):
+    from corehq.apps.reports.standard.domains import DOMAIN_FACETS, FACET_MAPPING
     base_template = "hqadmin/indicator_report.html"
     section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
+
+    def get_name_or_link(self, d, internal_settings=False):
+        if not getattr(self, 'show_name', None):
+            reverse_str = "domain_homepage" if not internal_settings else "domain_internal_settings"
+            return mark_safe('<a href="%s">%s</a>' % \
+                   (reverse(reverse_str, args=[d['name']]), d.get('hr_name') or d['name']))
+        else:
+            return d['name']
+
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn("Project", prop_name="name.exact"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
+            DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
+            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_active_cc_users",
+                help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
+            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Mobile Workers (Submitted Form)"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_users_submitted_form"),
+            DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
+                help_text=_("The number of *currently open* cases created or updated in the last 60 days")),
+            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
+                help_text=_("The number of *currently open* cases created or updated in the last 120 days")),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_inactive_cases",
+                help_text=_("The number of open cases not created or updated in the last 120 days")),
+            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
+            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
+            DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
+            DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
+            DataTablesColumn(_("Notes"), prop_name="internal.notes"),
+            DataTablesColumn(_("Services"), prop_name="internal.services"),
+            DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
+            DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
+            DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
+            DataTablesColumn(_("Date Last Updated"), prop_name="cp_last_updated",
+                help_text=_("The time when these indicators were last calculated")),
+            DataTablesColumn(_("Sector"), prop_name="internal.area.exact"),
+            DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
+            DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started")
+        )
+        return headers
+
+
+    @property
+    def rows(self):
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def get_from_stat_facets(prop, what_to_get):
+            return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
+
+        CALCS_ROW_INDEX = {
+            4: "cp_n_active_cc_users",
+            5: "cp_n_cc_users",
+            6: "cp_n_users_submitted_form",
+            7: "cp_n_60_day_cases",
+            8: "cp_n_active_cases",
+            9: "cp_n_inactive_cases",
+            10: "cp_n_cases",
+            11: "cp_n_forms",
+            14: "cp_n_web_users",
+        }
+        def stat_row(name, what_to_get, type='float'):
+            row = [name]
+            for index in range(1, len(self.headers)):
+                if index in CALCS_ROW_INDEX:
+                    val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
+                    row.append('%.2f' % float(val) if val and type=='float' else val or "Not yet calculated")
+                else:
+                    row.append('---')
+            return row
+
+        self.total_row = stat_row(_('Total'), 'total', type='int')
+        self.statistics_rows = [
+            stat_row(_('Mean'), 'mean'),
+            stat_row(_('STD'), 'std_deviation'),
+        ]
+
+        def format_date(dstr, default):
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+
+        def format_bool(val):
+            if isinstance(val, bool):
+                return u"{}".format(val)
+            return _('No info')
+
+        for dom in domains:
+            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                yield [
+                    self.get_name_or_link(dom, internal_settings=True),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('country') or _('No country'),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_users_submitted_form", _("Not yet calculated")),
+                    dom.get("cp_n_60_day_cases", _("Not yet calculated")),
+                    dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_inactive_cases", _("Not yet calculated")),
+                    dom.get("cp_n_cases", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_last_form"), _("No forms")),
+                    dom.get("cp_n_web_users", _("Not yet calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('services') or _('No info'),
+                    dom.get('internal', {}).get('project_state') or _('No info'),
+                    format_bool(dom.get('internal', {}).get('using_adm')),
+                    format_bool(dom.get('internal', {}).get('using_call_center')),
+                    format_date(dom.get("cp_last_updated"), _("No Info")),
+                    dom.get('internal', {}).get('area') or _('No info'),
+                    dom.get('internal', {}).get('sub_area') or _('No info'),
+                    format_bool(dom.get('internal', {}).get('self_started')),
+                ]
 
     @property
     def template_context(self):
-        context = super(AdminReport, self).template_context
+        context = super(GlobalAdminReports, self).template_context
         indicator_data = copy.deepcopy(INDICATOR_DATA)
         from django.core.urlresolvers import reverse
         for key in self.indicators:
             indicator_data[key]["ajax_url"] = reverse(
                 indicator_data[key]["ajax_view"]
             )
+            indicator_data[key]["domain_params_es_dict"] = {}
             if not ("params_es_dict" in indicator_data[key]):
                 indicator_data[key]["params_es_dict"] = {}
             if self.use_real_project_spaces:
-                indicator_data[key]["params_es_dict"].update({
+                indicator_data[key]["domain_params_es_dict"].update({
                     "is_test": ["false"],
                 })
-            indicator_data[key]["params_es"] = json.dumps(
-                indicator_data[key]["params_es_dict"]
+            if self.use_commtrack_project_spaces:
+                indicator_data[key]["domain_params_es_dict"].update({
+                    "commtrack_enabled": ["true"],
+                })
+            if self.use_commconnect_project_spaces:
+                indicator_data[key]["domain_params_es_dict"].update({
+                    "commconnect_enabled": ["true"],
+                })
+            indicator_data[key]["domain_params_es"] = json.dumps(
+                indicator_data[key]["domain_params_es_dict"]
             )
+            indicator_data[key]["params_es"] = json.dumps(indicator_data[key]["params_es_dict"])
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
@@ -689,6 +823,16 @@ class GlobalAdminReports(AdminReport):
     @property
     def use_real_project_spaces(self):
         return True
+
+
+    @property
+    def use_commconnect_project_spaces(self):
+        return False
+
+
+    @property
+    def use_commtrack_project_spaces(self):
+        return False
 
 
 class RealProjectSpacesReport(GlobalAdminReports):
@@ -711,43 +855,6 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms_web',
         'subscriptions',
     ]
-
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn(_("# Community Projects")),
-            DataTablesColumn(_("# Standard Projects")),
-            DataTablesColumn(_("# Pro Projects")),
-            DataTablesColumn(_("# Advanced Projects")),
-            DataTablesColumn(_("# Enterprise Projects")),
-        )
-
-    @property
-    def rows(self):
-        return [
-            [
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.STANDARD,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.PRO,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.ADVANCED,
-                    is_active=True,
-                ).count(),
-                Subscription.objects.filter(
-                    plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE,
-                    is_active=True,
-                ).count(),
-            ]
-        ]
 
 
 class RealCasesReport(GlobalAdminReports):
@@ -779,8 +886,8 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     ]
 
     @property
-    def use_real_project_spaces(self):
-        return False
+    def use_commconnect_project_spaces(self):
+        return True
 
 
 class CommTrackProjectSpacesReport(GlobalAdminReports):
@@ -793,5 +900,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     ]
 
     @property
-    def use_real_project_spaces(self):
-        return False
+    def use_commtrack_project_spaces(self):
+        return True
