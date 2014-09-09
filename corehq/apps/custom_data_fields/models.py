@@ -10,10 +10,6 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
 
-    @property
-    def html_slug(self):
-        return "{}{}".format(CUSTOM_DATA_FIELD_PREFIX, self.slug)
-
 
 class CustomDataFieldsDefinition(Document):
     """
