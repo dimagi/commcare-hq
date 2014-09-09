@@ -1,5 +1,6 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
+    AdminDomainStatsReport,
     AdminAppReport,
     AdminUserReport,
     RealProjectSpacesReport,
@@ -254,7 +255,7 @@ APPSTORE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.domains import OrgDomainStatsReport, AdminDomainStatsReport
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 
 BASIC_REPORTS = (
     (_('Project Stats'), (
