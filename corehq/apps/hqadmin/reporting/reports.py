@@ -467,7 +467,7 @@ def get_all_subscriptions_stats_data(domains, datespan, interval):
     }
 
 
-def get_domain_stats_data(domains, datespan, interval='week',
+def get_domain_stats_data(domains, datespan, interval,
         datefield="date_created"):
 
     domains_after_date = (DomainES()
@@ -519,6 +519,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_mobile_users": get_active_mobile_users_data,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
+    "domains": get_domain_stats_data,
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,

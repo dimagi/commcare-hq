@@ -918,40 +918,32 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "domains":
-        stats_data = get_domain_stats_data(
-            domains,
-            request.datespan,
-            interval=interval,
-            datefield=datefield,
-        )
-    else:
-        if domain_params:
-            if len(domains) <= individual_domain_limit:
-                domain_info = [{"names": [d], "display_name": d} for d in domains]
-            elif len(domains) < ES_MAX_CLAUSE_COUNT:
-                domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-            else:
-                domain_info = [{
-                    "names": None,
-                    "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-                }]
+    if domain_params:
+        if len(domains) <= individual_domain_limit:
+            domain_info = [{"names": [d], "display_name": d} for d in domains]
+        elif len(domains) < ES_MAX_CLAUSE_COUNT:
+            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
         else:
-            domain_info = [{"names": None, "display_name": _("All Domains")}]
+            domain_info = [{
+                "names": None,
+                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
+            }]
+    else:
+        domain_info = [{"names": None, "display_name": _("All Domains")}]
 
-        stats_data = get_general_stats_data(
-            domain_info,
-            histo_type,
-            request.datespan,
-            interval=interval,
-            user_type_mobile=get_request_params.get("user_type_mobile"),
-            is_cumulative=get_request_params.get("is_cumulative", "True") == "True",
-        )
+    stats_data = get_general_stats_data(
+        domain_info,
+        histo_type,
+        request.datespan,
+        interval=interval,
+        user_type_mobile=get_request_params.get("user_type_mobile"),
+        is_cumulative=get_request_params.get("is_cumulative", "True") == "True",
+    )
     for k in stats_data['histo_data']:
         stats_data['histo_data'][k] = add_blank_data(
-                stats_data["histo_data"][k],
-                request.datespan.startdate,
-                request.datespan.enddate
+            stats_data["histo_data"][k],
+            request.datespan.startdate,
+            request.datespan.enddate
         )
     return json_response(stats_data)
 
