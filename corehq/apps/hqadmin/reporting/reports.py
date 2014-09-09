@@ -514,3 +514,18 @@ def commtrack_form_submissions(domains, params_es, datespan, interval='week',
     forms_before_date = forms_before_date.run().total
 
     return format_return_data(histo_data, forms_before_date, datespan)
+
+
+HISTO_TYPE_TO_FUNC = {
+}
+
+
+def get_stats_data(histo_type, domain_params, datespan, interval, **kwargs):
+    if histo_type in HISTO_TYPE_TO_FUNC:
+        return HISTO_TYPE_TO_FUNC[histo_type](
+            domain_params,
+            datespan,
+            interval,
+            **kwargs
+        )
+    return None

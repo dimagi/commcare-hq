@@ -72,6 +72,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     commtrack_form_submissions,
     get_all_subscriptions_stats_data,
     get_real_project_spaces,
+    get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -894,6 +895,8 @@ def stats_data(request):
         if get_request_params_json is not None else {}
     )
     domain_params_es = get_request_params.get("domain_params_es", {})
+    if "domain_params_es" in get_request_params:
+        del get_request_params["domain_params_es"]
     additional_params_es = get_request_params.get("additional_params_es", {})
     individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
@@ -904,6 +907,16 @@ def stats_data(request):
     domain_params.update(domain_params_es)
 
     domains = get_real_project_spaces(facets=domain_params)
+
+    stats_data = get_stats_data(
+        histo_type,
+        domains,
+        request.datespan,
+        interval,
+        **get_request_params
+    )
+    if stats_data is not None:
+        return json_response(stats_data)
 
     if histo_type == "countries":
         return json_response(get_countries_stats_data(domains, request.datespan, interval=interval))
