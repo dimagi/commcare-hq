@@ -2715,19 +2715,25 @@ def download_bulk_app_translations(request, domain, app_id):
             # Note that if a translation is not present, then the default language's
             # label will be put in that cell.
 
-            questions_by_lang = {lang:form.get_questions([lang]) for lang in app.langs}
+            # TODO: This formatting is a mess
+
+            questions_by_lang = {
+                lang: form.get_questions([lang], include_triggers=True, include_groups=True)
+                for lang in app.langs
+            }
             rows[form_string] = []
-            for i, question in enumerate(form.get_questions(app.langs)):
 
-                row = (question['value'].replace("/data/", ""),) +\
-                      tuple(questions_by_lang[l][i]['label'] for l in app.langs)
-                rows[form_string].append(row)
+            for i, question in enumerate(form.get_questions(app.langs, include_triggers=True, include_groups=True)):
+                if question['type'] != 'DataBindOnly': # Skip hidden values
+                    row = (question['value'].split("/")[-1],) +\
+                          tuple(questions_by_lang[l][i]['label'] for l in app.langs)
+                    rows[form_string].append(row)
 
-                if question['type'] in ("MSelect", "Select"):
-                    for j, select in enumerate(question['options']):
-                        select_row = (row[0]+"-"+select['value'],) +\
-                            tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
-                        rows[form_string].append(select_row)
+                    if question['type'] in ("MSelect", "Select"):
+                        for j, select in enumerate(question['options']):
+                            select_row = (row[0]+"-"+select['value'],) +\
+                                tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
+                            rows[form_string].append(select_row)
 
 
             #TODO: Get media
@@ -2764,7 +2770,6 @@ def _make_text_nodes(id, itext, lang):
             e = etree.Element('{f}text'.format(**namespaces), {'id':id})
             lang_node.xml.append()
     return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
-    # TODO: Check namespacing
 
 
 @no_conflict_require_POST
@@ -2907,6 +2912,7 @@ def upload_bulk_app_translations(request, domain, app_id):
                                 value_node.xml.getparent().remove(value_node.xml)
             # Save the xform
             save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
+            app.save()
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
