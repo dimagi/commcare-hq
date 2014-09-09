@@ -71,6 +71,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_countries_stats_data,
     commtrack_form_submissions,
     get_all_subscriptions_stats_data,
+    get_real_project_spaces,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -902,40 +903,42 @@ def stats_data(request):
     domain_params, __ = parse_args_for_es(request, prefix='es_')
     domain_params.update(domain_params_es)
 
+    domains = get_real_project_spaces(facets=domain_params)
+
     if histo_type == "countries":
-        return json_response(get_countries_stats_data(domain_params, request.datespan, interval=interval))
+        return json_response(get_countries_stats_data(domains, request.datespan, interval=interval))
 
     if histo_type == "active_countries":
-        return json_response(get_active_countries_stats_data(domain_params, request.datespan, interval=interval))
+        return json_response(get_active_countries_stats_data(domains, request.datespan, interval=interval))
 
     if histo_type == "commtrack_forms":
-        return json_response(commtrack_form_submissions(domain_params, additional_params_es, request.datespan, interval=interval))
+        return json_response(commtrack_form_submissions(domains, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "active_dimagi_gateways":
-        return json_response(get_active_dimagi_owned_gateway_projects(domain_params,
+        return json_response(get_active_dimagi_owned_gateway_projects(domains,
             additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "mobile_clients":
-        return json_response(get_total_clients_data(domain_params, additional_params_es, request.datespan, interval=interval))
+        return json_response(get_total_clients_data(domains, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "active_mobile_users":
         return json_response(get_active_mobile_users_data(
-            domain_params,
+            domains,
             additional_params_es,
             request.datespan,
             interval=interval,
         ))
 
     if histo_type == "mobile_workers":
-        return json_response(get_mobile_workers_data(domain_params, additional_params_es, request.datespan, interval=interval))
+        return json_response(get_mobile_workers_data(domains, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "real_sms_messages":
         return json_response(get_real_sms_messages_data(
-            domain_params, additional_params_es, request.datespan, interval=interval))
+            domains, additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "commtrack_sms":
         return json_response(get_real_sms_messages_data(
-            domain_params,
+            domains,
             additional_params_es,
             request.datespan,
             interval=interval,
@@ -943,7 +946,7 @@ def stats_data(request):
         ))
 
     if histo_type == "active_commconnect_domains":
-        return json_response(get_active_commconnect_domain_stats_data(domain_params,
+        return json_response(get_active_commconnect_domain_stats_data(domains,
             additional_params_es, request.datespan, interval=interval))
 
     if histo_type == "sms_only_domains":
@@ -958,11 +961,11 @@ def stats_data(request):
         ))
 
     if histo_type == "subscriptions":
-        return json_response(get_all_subscriptions_stats_data(domain_params, request.datespan, interval=interval))
+        return json_response(get_all_subscriptions_stats_data(domains, request.datespan, interval=interval))
 
     if histo_type == "active_domains":
         stats_data = get_active_domain_stats_data(
-            domain_params,
+            domains,
             request.datespan,
             interval=interval,
             software_plan_edition=get_request_params.get('software_plan_edition', None)
@@ -976,9 +979,6 @@ def stats_data(request):
         )
     else:
         if domain_params:
-            domain_results = es_domain_query(domain_params, fields=["name"], size=99999, show_stats=False)
-            domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
-
             if len(domains) <= individual_domain_limit:
                 domain_info = [{"names": [d], "display_name": d} for d in domains]
             elif len(domains) < ES_MAX_CLAUSE_COUNT:
