@@ -237,6 +237,7 @@ class CommCareAccountForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
                 'Create new Mobile Worker account',
@@ -256,14 +257,6 @@ class CommCareAccountForm(forms.Form):
                     Div(HTML("Please enter number, including international code, in digits only."),
                         css_class="controls"),
                     css_class="control-group"
-                )
-            ),
-            FormActions(
-                ButtonHolder(
-                    Submit(
-                        'create', 'Create Mobile Worker',
-                        css_id='submit_mobile_worker',
-                    )
                 )
             )
         )

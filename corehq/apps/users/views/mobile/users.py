@@ -597,6 +597,16 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
 
     @property
     @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            "UserFields",
+            self.domain,
+            required_only=True,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
+    @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
             form = CommCareAccountForm(self.request.POST)
@@ -609,6 +619,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return {
             'form': self.new_commcare_user_form,
             'only_numeric': self.password_format == 'n',
+            'data_fields_form': self.custom_data.form,
         }
 
     def dispatch(self, request, *args, **kwargs):
@@ -617,7 +628,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return super(CreateCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid():
+        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
             password = self.new_commcare_user_form.cleaned_data['password']
             phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
@@ -627,7 +638,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
                 username,
                 password,
                 phone_number=phone_number,
-                device_id="Generated from HQ"
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
             )
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))

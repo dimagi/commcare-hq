@@ -114,10 +114,12 @@ class CustomDataFieldsMixin(object):
 
 
 class CustomDataEditor(object):
-    def __init__(self, field_type, domain, existing_custom_data, post_dict=None):
+    def __init__(self, field_type, domain, existing_custom_data=None,
+            post_dict=None, required_only=False):
         self.field_type = field_type
         self.domain = domain
         self.existing_custom_data = existing_custom_data
+        self.required_only = required_only
         self.form = self.init_form(post_dict)
 
     @property
@@ -141,18 +143,22 @@ class CustomDataEditor(object):
 
         fields = {
             field.slug: _make_field(field) for field in self.model.fields
+            if not self.required_only or field.is_required
         }
+
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
 
         if post_dict:
             fields = post_dict
-        else:
+        elif self.existing_custom_data is not None:
             fields = {
                 "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
                 for k, v in self.existing_custom_data.items()
             }
+        else:
+            fields = None
 
         self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
         return self.form
