@@ -8,13 +8,13 @@ function CustomDataField (field) {
 
 function CustomDataFieldsModel () {
     var self = this;
-    self.data_fields = ko.observableArray([]);
+    self.data_fields = ko.observableArray();
 
     self.addField = function () {
         self.data_fields.push(new CustomDataField('', false));
     }
 
-    self.removeField = function(field) {
+    self.removeField = function (field) {
         self.data_fields.remove(field)
     }
 
@@ -26,12 +26,21 @@ function CustomDataFieldsModel () {
 
     self.serialize = function () {
         var fields = [];
+        var fieldsToRemove = [];
         _.each(self.data_fields(), function (field) {
-            fields.push({
-                'slug': field.slug(),
-                'label': field.label(),
-                'is_required': field.is_required(),
-            });
+            if(field.slug() && field.label()) {
+                fields.push({
+                    'slug': field.slug(),
+                    'label': field.label(),
+                    'is_required': field.is_required(),
+                });
+            } else {
+                fieldsToRemove.push(field);
+            }
+        });
+
+        _.each(fieldsToRemove, function (field) {
+            self.removeField(field);
         });
         return fields;
     }
