@@ -265,7 +265,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
             },
@@ -284,7 +284,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
             },
@@ -303,7 +303,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
                 "couch_recipient_doc_type": ["commcarecase"],
@@ -323,7 +323,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
                 "couch_recipient_doc_type": ["commcarecase"],
@@ -345,7 +345,7 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
         "chart_title": "Active Mobile Workers",
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcareuser"],
             },
@@ -377,7 +377,7 @@ INDICATOR_DATA = {
         "chart_name": "active_mobile_clients",
         "chart_title": "Active Mobile Clients",
         "hide_cumulative_charts": True,
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcarecase"],
             },
@@ -414,7 +414,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
             },
@@ -433,7 +433,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
             },
