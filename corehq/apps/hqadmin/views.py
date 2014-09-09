@@ -906,15 +906,13 @@ def stats_data(request):
 
     domains = get_real_project_spaces(facets=domain_params)
 
-    stats_data = get_stats_data(
+    return json_response(get_stats_data(
         histo_type,
         domains,
         request.datespan,
         interval,
         **get_request_params
-    )
-    if stats_data is not None:
-        return json_response(stats_data)
+    ))
 
 
 @require_superuser

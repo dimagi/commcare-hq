@@ -13,6 +13,10 @@ from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import ES_MAX_CLAUSE_COUNT, get_general_stats_data
 
 
+class HistoTypeNotFound(Exception):
+    pass
+
+
 def add_params_to_query(query, params):
     if params:
         for k in params:
@@ -513,6 +517,11 @@ def commtrack_form_submissions(domains, datespan, interval,
     return format_return_data(histo_data, forms_before_date, datespan)
 
 
+def get_active_cases_stats(domains, datespan, interval, **kwargs):
+    return get_other_stats("active_cases", domains, datespan, interval,
+                           **kwargs)
+
+
 def get_case_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("cases", domains, datespan, interval, **kwargs)
 
@@ -560,6 +569,7 @@ def get_other_stats(histo_type, domains, datespan, interval,
 
 
 HISTO_TYPE_TO_FUNC = {
+    "active_cases": get_active_cases_stats,
     "active_commconnect_domains": get_active_commconnect_domain_stats_data,
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
@@ -588,4 +598,4 @@ def get_stats_data(histo_type, domain_params, datespan, interval, **kwargs):
             interval,
             **kwargs
         )
-    return None
+    raise HistoTypeNotFound(histo_type)
