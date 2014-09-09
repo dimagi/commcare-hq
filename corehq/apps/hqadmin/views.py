@@ -918,9 +918,6 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "mobile_clients":
-        return json_response(get_total_clients_data(domains, additional_params_es, request.datespan, interval=interval))
-
     if histo_type == "active_mobile_users":
         return json_response(get_active_mobile_users_data(
             domains,

@@ -263,8 +263,7 @@ def get_countries_stats_data(domains, datespan, interval,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_total_clients_data(domains, params_es, datespan, interval='month',
-        datefield='opened_on'):
+def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
     """
     Returns cases that have used SMS.
     Returned based on date case is opened
@@ -521,6 +520,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
+    "mobile_clients": get_total_clients_data,
 }
 
 
