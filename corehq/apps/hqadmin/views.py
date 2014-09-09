@@ -918,15 +918,6 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "commtrack_sms":
-        return json_response(get_real_sms_messages_data(
-            domains,
-            additional_params_es,
-            request.datespan,
-            interval=interval,
-            is_commtrack=True,
-        ))
-
     if histo_type == "active_commconnect_domains":
         return json_response(get_active_commconnect_domain_stats_data(domains,
             additional_params_es, request.datespan, interval=interval))

@@ -418,8 +418,9 @@ INDICATOR_DATA = {
             "additional_params_es": {
                 "direction": ["o"],
             },
+            "is_commtrack": True,
         },
-        "histogram_type": "commtrack_sms",
+        "histogram_type": "real_sms_messages",
         "interval": "week",
         "xaxis_label": "# SMS",
     },
@@ -437,8 +438,9 @@ INDICATOR_DATA = {
             "additional_params_es": {
                 "direction": ["i"],
             },
+            "is_commtrack": True,
         },
-        "histogram_type": "commtrack_sms",
+        "histogram_type": "real_sms_messages",
         "interval": "week",
         "xaxis_label": "# SMS",
     },
