@@ -28,7 +28,7 @@ function CustomDataFieldsModel () {
         var fields = [];
         var fieldsToRemove = [];
         _.each(self.data_fields(), function (field) {
-            if(field.slug() && field.label()) {
+            if(field.slug() || field.label()) {
                 fields.push({
                     'slug': field.slug(),
                     'label': field.label(),

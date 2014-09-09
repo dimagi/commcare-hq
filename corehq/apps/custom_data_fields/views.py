@@ -18,6 +18,15 @@ from .models import CustomDataFieldsDefinition, CustomDataField, CUSTOM_DATA_FIE
 class CustomDataFieldsForm(forms.Form):
     data_fields = forms.CharField(widget=forms.HiddenInput)
 
+    def verify_no_duplicates(self, data_fields):
+        errors = set()
+        slugs = [field['slug'].lower() for field in data_fields]
+        for slug in slugs:
+            if slugs.count(slug) > 1:
+                errors.add(_("Key '{}' was duplicated, key names must be unique.".format(slug)))
+
+        return errors
+
     def clean_data_fields(self):
         raw_data_fields = json.loads(self.cleaned_data['data_fields'])
         errors = set()
@@ -28,8 +37,12 @@ class CustomDataFieldsForm(forms.Form):
             data_fields.append(data_field_form.cleaned_data)
             if data_field_form.errors:
                 errors.update([error[0] for error in data_field_form.errors.values()])
+
+        errors.update(self.verify_no_duplicates(data_fields))
+
         if errors:
-            raise ValidationError('<br/>'.join(errors))
+            raise ValidationError('<br/>'.join(sorted(errors)))
+
         return data_fields
 
 
