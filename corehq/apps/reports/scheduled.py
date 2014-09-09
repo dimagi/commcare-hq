@@ -1,5 +1,5 @@
 from calendar import monthrange
-import datetime
+from datetime import datetime
 from corehq.apps.reports.models import ReportNotification
 
 
