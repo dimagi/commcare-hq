@@ -920,7 +920,7 @@ def stats_data(request):
 
     if histo_type == "domains":
         stats_data = get_domain_stats_data(
-            domain_params,
+            domains,
             request.datespan,
             interval=interval,
             datefield=datefield,

@@ -467,25 +467,20 @@ def get_all_subscriptions_stats_data(domains, datespan, interval):
     }
 
 
-def get_domain_stats_data(domain_params, datespan, interval='week',
+def get_domain_stats_data(domains, datespan, interval='week',
         datefield="date_created"):
 
     domains_after_date = (DomainES()
+            .in_domains(domains)
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if domain_params:
-        domains_after_date = add_params_to_query(domains_after_date,
-                                                 domain_params)
-
     histo_data = domains_after_date.run().facet('date', 'entries')
 
     domains_before_date = (DomainES()
+            .in_domains(domains)
             .created(lt=datespan.startdate)
             .size(0))
-    if domain_params:
-        domains_before_date = add_params_to_query(domains_before_date,
-                                                  domain_params)
     domains_before_date = domains_before_date.run().total
 
     return format_return_data(histo_data, domains_before_date, datespan)
