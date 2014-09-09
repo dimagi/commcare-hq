@@ -342,10 +342,14 @@ class Domain(Document, SnapshotMixin):
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
 
-        if 'deployment' in data and isinstance(data['deployment']['country'], basestring):
+        country = data['deployment']['country']
+        if 'deployment' in data and isinstance(country, basestring):
             if not country_lookup: 
                 populate_country_lookup()
-            data['deployment']['country'] = [country_lookup[data['deployment']['country'].lower()]]
+            if country in country_lookup.keys():
+                data['deployment']['country'] = [country_lookup[country.lower()]]
+            else:
+                data['deployment']['country'] = []
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
