@@ -132,6 +132,7 @@ class CustomDataEditor(object):
     def save_to_user(self):
         if self.form:
             self.user.user_data = self.form.cleaned_data
+            self.user.save()
 
     def init_form(self, post_dict=None):
         def _make_field(field):
