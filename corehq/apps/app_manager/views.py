@@ -2636,6 +2636,29 @@ def _expected_bulk_app_sheet_headers(app):
             ])
     return headers
 
+def _get_translation(id, lang, form, media=None):
+    '''
+    Returns the label (or media path) for the given question in the given language
+    :param id: The identifier for the question, i.e. "question1" or "my_multiselect-item6"
+    :param lang:
+    :param form: XForm object
+    :param media: "audio", "video", "image", or None. Returns the approprite media path if provided.
+    :return: The lable, media path, or "" if no translation is found
+    '''
+    node_id = "%s-label" % id
+    xpath = "./{f}translation[@lang='%s']/{f}text[@id='%s']/{f}value" % (lang, node_id)
+
+    if media:
+        xpath += "[@form='%s']" % media
+        value_node = form.itext_node.find(xpath)
+        return value_node.xml.text if value_node.exists() else ""
+    else:
+        try:
+            value_node = next(n for n in form.itext.findall(xpath) if 'form' not in n.attrib)
+            return value_node.xml.text
+        except StopIteration:
+            return ""
+
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
 
@@ -2696,6 +2719,7 @@ def download_bulk_app_translations(request, domain, app_id):
 
         for form_index, form in enumerate(module.forms):
             form_string = module_string + "_form" + str(form_index+1)
+            xform = form.wrapped_xform()
 
             # Add row for this form to the first sheet
             # This next line is same logic as above :(
@@ -2704,40 +2728,41 @@ def download_bulk_app_translations(request, domain, app_id):
                                             (form.media_image, form.media_image, form.unique_id))
             rows["Modules_and_forms"].append(first_sheet_row)
 
-            # Populate form sheet
-            # We can probably use this page: https://confluence.dimagi.com/display/commcarepublic/Bulk+Translation
-            # Actually we can't because its js :(   submodules/formdesigner/src/js/controller.js:759
-
-            # Assumption time:
-            #   Every default-<lang> cell will be filled
-            #   languages will be in the same order as other sheets (this is contrary to the example spreadsheet)
-
-            # Note that if a translation is not present, then the default language's
-            # label will be put in that cell.
-
             # TODO: This formatting is a mess
 
-            questions_by_lang = {
-                lang: form.get_questions([lang], include_triggers=True, include_groups=True)
+            questions_by_lang = {lang: form.get_questions(
+                [lang], include_triggers=True, include_groups=True)
                 for lang in app.langs
             }
             rows[form_string] = []
 
             for i, question in enumerate(form.get_questions(app.langs, include_triggers=True, include_groups=True)):
-                if question['type'] != 'DataBindOnly': # Skip hidden values
-                    row = (question['value'].split("/")[-1],) +\
-                          tuple(questions_by_lang[l][i]['label'] for l in app.langs)
+
+                # Skip hidden values
+                if question['type'] != 'DataBindOnly':
+
+                    # Add row for this question
+                    id = question['value'].split("/")[-1]
+                    labels = tuple(questions_by_lang[l][i]['label'] for l in app.langs)
+                    media_paths = []
+                    for media in ['image', 'audio', 'video']:
+                        for lang in app.langs:
+                            media_paths.append(_get_translation(id, lang, xform, media=media))
+                    row = (id,) + labels + tuple(media_paths)
                     rows[form_string].append(row)
 
+                    # Add rows for this question's options
                     if question['type'] in ("MSelect", "Select"):
                         for j, select in enumerate(question['options']):
-                            select_row = (row[0]+"-"+select['value'],) +\
-                                tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
-                            rows[form_string].append(select_row)
-
-
-            #TODO: Get media
-            # Ah ha! These media references are hiding in the itext
+                            id = row[0]+"-"+select['value']
+                            labels = tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
+                            # TODO: Figure out how to get rid of this repeated media logic
+                            media_paths = []
+                            for media in ['image', 'audio', 'video']:
+                                for lang in app.langs:
+                                    media_paths.append(_get_translation(id, lang, xform, media=media))
+                            row = (id,) + labels + tuple(media_paths)
+                            rows[form_string].append(row)
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
