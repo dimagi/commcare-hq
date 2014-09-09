@@ -1,5 +1,4 @@
 import time
-from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
@@ -10,7 +9,6 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.elastic import es_query, ES_URLS
 
 
 def add_params_to_query(query, params):
@@ -66,15 +64,11 @@ def daterange(interval, start_date, end_date):
         cur_date += step
 
 
-def get_real_project_spaces(is_commtrack=False, is_commcommconnect=False, facets=None):
+def get_real_project_spaces(facets=None):
     """
     Returns a set of names of real domains
     """
     real_domain_query = DomainES().fields(['name'])
-    if is_commtrack:
-        real_domain_query = real_domain_query.commtrack_domains()
-    if is_commcommconnect:
-        real_domain_query = real_domain_query.commconnect_domains()
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
     real_domain_query_results = real_domain_query.run().raw_hits
@@ -92,20 +86,18 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
             .size(0))
 
 
-def get_active_countries_stats_data(params, datespan, interval='month',
+def get_active_countries_stats_data(domains, datespan, interval='month',
         datefield='received_on'):
     """
-    Returns list of timestamps and how many countries were active in the 30 days
-    before the timestamp
+    Returns list of timestamps and how many countries were active in the 30
+    days before the timestamp
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
         form_query = (FormES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .submitted(gte=f, lte=t)
             .terms_facet('domains', 'domain')
             .size(0))
@@ -137,12 +129,11 @@ def domains_matching_plan(software_plan_edition, start, end):
     }
 
 
-def get_subscription_stats_data(params, datespan, interval='month',
+def get_subscription_stats_data(domains, datespan, interval='month',
         software_plan_edition=None):
-    real_domains = get_real_project_spaces()
     return [
         {
-            "count": len(real_domains & domains_matching_plan(
+            "count": len(domains & domains_matching_plan(
                 software_plan_edition, timestamp, timestamp)),
             "time": int(1000 * time.mktime(timestamp.timetuple())),
         } for timestamp in daterange(
@@ -151,22 +142,20 @@ def get_subscription_stats_data(params, datespan, interval='month',
     ]
 
 
-def get_active_domain_stats_data(params, datespan, interval='month',
+def get_active_domain_stats_data(domains, datespan, interval='month',
         datefield='received_on', software_plan_edition=None):
     """
     Returns list of timestamps and how many domains were active in the 30 days
     before the timestamp
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
         form_query = (FormES()
             .in_domains(
-                real_domains if software_plan_edition is None else (
-                    real_domains & domains_matching_plan(
+                domains if software_plan_edition is None else (
+                    domains & domains_matching_plan(
                         software_plan_edition, f, t)
                 )
             )
@@ -174,8 +163,8 @@ def get_active_domain_stats_data(params, datespan, interval='month',
             .terms_facet('domains', 'domain')
             .size(0))
 
-        domains = form_query.run().facet('domains', "terms")
-        c = len(domains)
+        d = form_query.run().facet('domains', "terms")
+        c = len(d)
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
@@ -183,21 +172,18 @@ def get_active_domain_stats_data(params, datespan, interval='month',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_mobile_users_data(params, params_es, datespan, interval='month',
-        datefield='date'):
+def get_active_mobile_users_data(domains, params_es, datespan,
+        interval='month', datefield='date'):
     """
     Returns list of timestamps and how many users of SMS were active in the
     30 days before the timestamp
     """
-
-    real_domains = get_real_project_spaces(facets=params)
-
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
         sms_query = get_sms_query(f, t, 'users', 'couch_recipient',
-                real_domains)
+                domains)
         if params_es:
             sms_query = add_params_to_query(sms_query, params_es)
         users = sms_query.run().facet('users', "terms")
@@ -209,21 +195,19 @@ def get_active_mobile_users_data(params, params_es, datespan, interval='month',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_commconnect_domain_stats_data(params, params_es, datespan,
+def get_active_commconnect_domain_stats_data(domains, params_es, datespan,
         interval='month', datefield='date'):
     """
     Returns list of timestamps and how many commconnect domains were active in
     the 30 days before the timestamp
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'domains', 'domain', real_domains)
-        domains = sms_query.run()
-        c = len(domains.facet('domains', 'terms'))
+        sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
+        d = sms_query.run()
+        c = len(d.facet('domains', 'terms'))
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
@@ -231,14 +215,12 @@ def get_active_commconnect_domain_stats_data(params, params_es, datespan,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_dimagi_owned_gateway_projects(params, params_es, datespan,
+def get_active_dimagi_owned_gateway_projects(domains, params_es, datespan,
         interval='month', datefield='date'):
     """
     Returns list of timestamps and how many domains used a Dimagi owned gateway
     in the past thrity days before each timestamp
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     dimagi_owned_backend = SMSBackend.view(
         "sms/global_backends",
         reduce=False
@@ -251,9 +233,9 @@ def get_active_dimagi_owned_gateway_projects(params, params_es, datespan,
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'domains', 'domain', real_domains)
-        domains = sms_query.filter(backend_filter).run()
-        c = len(domains.facet('domains', 'terms'))
+        sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
+        d = sms_query.filter(backend_filter).run()
+        c = len(d.facet('domains', 'terms'))
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
@@ -261,17 +243,15 @@ def get_active_dimagi_owned_gateway_projects(params, params_es, datespan,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_countries_stats_data(params, datespan, interval='month',
+def get_countries_stats_data(domains, datespan, interval='month',
         datefield='created_on'):
     """
     Returns list of timestamps and how many countries have been created
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         countries = (DomainES()
-                .in_domains(real_domains)
+                .in_domains(domains)
                 .created(lte=timestamp)
                 .terms_facet('countries', 'country'))
 
@@ -283,24 +263,22 @@ def get_countries_stats_data(params, datespan, interval='month',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_total_clients_data(params, params_es, datespan, interval='month',
+def get_total_clients_data(domains, params_es, datespan, interval='month',
         datefield='opened_on'):
     """
     Returns cases that have used SMS.
     Returned based on date case is opened
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     sms_cases = (SMSES()
             .to_commcare_case()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .terms_facet('cases', 'couch_recipient', size=100000)
             .size(0))
 
     cases = [u['term'] for u in sms_cases.run().facet('cases', 'terms')]
 
     cases_after_date = (CaseES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .filter({"ids": {"values": cases}})
             .opened_range(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
@@ -309,7 +287,7 @@ def get_total_clients_data(params, params_es, datespan, interval='month',
     histo_data = cases_after_date.run().facet('date', 'entries')
 
     cases_before_date = (CaseES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .filter({"ids": {"values": cases}})
             .opened_range(lt=datespan.startdate)
             .size(0)).run().total
@@ -317,24 +295,22 @@ def get_total_clients_data(params, params_es, datespan, interval='month',
     return format_return_data(histo_data, cases_before_date, datespan)
 
 
-def get_mobile_workers_data(params, params_es,datespan, interval='month',
+def get_mobile_workers_data(domains, params_es, datespan, interval='month',
         datefield='created_on'):
     """
     Returns mobile workers that have used SMS.
     Returned based on date mobile worker is created
     """
-    real_domains = get_real_project_spaces(facets=params)
-
     sms_users = (SMSES()
             .to_commcare_user()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .terms_facet('users', 'couch_recipient', 100000)
             .size(0))
 
     users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
 
     users_after_date = (UserES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
             .created(gte=datespan.startdate, lte=datespan.enddate)
@@ -344,7 +320,7 @@ def get_mobile_workers_data(params, params_es,datespan, interval='month',
     histo_data = users_after_date.run().facet('date', 'entries')
 
     users_before_date = (UserES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
             .created(lt=datespan.startdate)
@@ -353,30 +329,26 @@ def get_mobile_workers_data(params, params_es,datespan, interval='month',
     return format_return_data(histo_data, users_before_date, datespan)
 
 
-def get_real_sms_messages_data(params, params_es, datespan, interval='month',
+def get_real_sms_messages_data(domains, params_es, datespan, interval='month',
         datefield='date', is_commtrack=False):
     """
     Returns SMS sent in timespan.
     Returned based on date SMS was sent
     """
-    real_domains = get_real_project_spaces(is_commtrack=is_commtrack,
-            facets=params)
-
     sms_after_date = (SMSES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .received(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
     if params_es:
         sms_after_date = add_params_to_query(sms_after_date, params_es)
-
     if is_commtrack:
         sms_after_date = sms_after_date.to_commcare_user_or_case()
 
     histo_data = sms_after_date.run().facet('date', 'entries')
 
     sms_before_date = (SMSES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .received(lt=datespan.startdate)
             .size(0))
 
@@ -390,7 +362,7 @@ def get_real_sms_messages_data(params, params_es, datespan, interval='month',
     return format_return_data(histo_data, sms_before_date, datespan)
 
 
-def get_sms_only_domain_stats_data(params, datespan, interval='month',
+def get_sms_only_domain_stats_data(domain_params, datespan, interval='month',
         datefield='date_created'):
     """
     Returns domains that have only used SMS and not forms.
@@ -411,29 +383,29 @@ def get_sms_only_domain_stats_data(params, datespan, interval='month',
     sms_only_domains = sms_domains - form_domains
 
     domains_after_date = (DomainES()
-            .real_domains()
             .filter({"terms": {"name": list(sms_only_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if params:
-        domains_after_date = add_params_to_query(domains_after_date, params)
+    if domain_params:
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
     domains_before_date = (DomainES()
-            .real_domains()
             .filter({"terms": {"name": list(sms_only_domains)}})
             .created(lt=datespan.startdate)
             .size(0))
-    if params:
-        domains_before_date = add_params_to_query(domains_before_date, params)
+    if domain_params:
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
 
     domains_before_date = domains_before_date.run().total
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_commconnect_domain_stats_data(params, params_es, datespan, 
+def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
         interval='month', datefield='date_created'):
     """
     Returns domains that have used SMS.
@@ -453,8 +425,9 @@ def get_commconnect_domain_stats_data(params, params_es, datespan,
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if params:
-        domains_after_date = add_params_to_query(domains_after_date, params)
+    if domain_params:
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
@@ -462,19 +435,20 @@ def get_commconnect_domain_stats_data(params, params_es, datespan,
             .filter({"terms": {"name": list(sms_domains)}})
             .created(lt=datespan.startdate)
             .size(0))
-    if params:
-        domains_before_date = add_params_to_query(domains_before_date, params)
+    if domain_params:
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
 
     domains_before_date = domains_before_date.run().total
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_all_subscriptions_stats_data(params, datespan, interval='month'):
+def get_all_subscriptions_stats_data(domains, datespan, interval='month'):
     return {
         'histo_data': {
             software_plan_edition_tuple[0]: add_blank_data(
                 get_subscription_stats_data(
-                    params,
+                    domains,
                     datespan,
                     interval=interval,
                     software_plan_edition=software_plan_edition_tuple[0],
@@ -493,35 +467,37 @@ def get_all_subscriptions_stats_data(params, datespan, interval='month'):
     }
 
 
-def get_domain_stats_data(params, datespan, interval='week',
+def get_domain_stats_data(domain_params, datespan, interval='week',
         datefield="date_created"):
 
     domains_after_date = (DomainES()
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if params:
-        domains_after_date = add_params_to_query(domains_after_date, params)
+    if domain_params:
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
     domains_before_date = (DomainES()
             .created(lt=datespan.startdate)
             .size(0))
-    if params:
-        domains_before_date = add_params_to_query(domains_before_date, params)
+    if domain_params:
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
     domains_before_date = domains_before_date.run().total
 
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def commtrack_form_submissions(params, params_es, datespan, interval='week',
+def commtrack_form_submissions(domains, params_es, datespan, interval='week',
         datefield='received_on'):
-    real_domains = get_real_project_spaces(is_commtrack=True, facets=params)
-    mobile_workers = [a['_id'] for a in UserES().fields([]).mobile_users().run().raw_hits]
+    mobile_workers = [a['_id'] for a in
+            UserES().fields([]).mobile_users().run().raw_hits]
 
     forms_after_date = (FormES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .submitted(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .user_id(mobile_workers)
@@ -530,7 +506,7 @@ def commtrack_form_submissions(params, params_es, datespan, interval='week',
     histo_data = forms_after_date.run().facet('date', 'entries')
 
     forms_before_date = (FormES()
-            .in_domains(real_domains)
+            .in_domains(domains)
             .submitted(lt=datespan.startdate)
             .user_id(mobile_workers)
             .size(0))

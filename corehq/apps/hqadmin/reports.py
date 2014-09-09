@@ -265,7 +265,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
             },
@@ -284,7 +284,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
             },
@@ -303,9 +303,9 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
-                "direction": ["i"],
+                "direction": ["o"],
                 "couch_recipient_doc_type": ["commcarecase"],
             },
         },
@@ -323,7 +323,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
                 "couch_recipient_doc_type": ["commcarecase"],
@@ -345,7 +345,7 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
         "chart_title": "Active Mobile Workers",
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcareuser"],
             },
@@ -377,7 +377,7 @@ INDICATOR_DATA = {
         "chart_name": "active_mobile_clients",
         "chart_title": "Active Mobile Clients",
         "hide_cumulative_charts": True,
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcarecase"],
             },
@@ -414,7 +414,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
             },
@@ -433,7 +433,7 @@ INDICATOR_DATA = {
                 "value": "date",
             },
         ],
-        "get_request_data": {
+        "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
             },
@@ -457,6 +457,8 @@ INDICATOR_DATA = {
         "xaxis_label": "# forms",
     },
 }
+
+ES_PREFIX = "es_"
 
 DOMAIN_FACETS = [
     "cp_is_active",
@@ -510,47 +512,47 @@ DOMAIN_FACETS = [
 
 FACET_MAPPING = [
     ("Activity", True, [
-        {"facet": "is_test", "name": "Test Project", "expanded": True },
-        {"facet": "cp_is_active", "name": "Active", "expanded": True },
-        # {"facet": "deployment.date", "name": "Deployment Date", "expanded": False },
-        {"facet": "internal.project_state", "name": "Scale", "expanded": False },
+        {"facet": "is_test", "name": "Test Project", "expanded": True},
+        {"facet": "cp_is_active", "name": "Active", "expanded": True},
+        # {"facet": "deployment.date", "name": "Deployment Date", "expanded": False},
+        {"facet": "internal.project_state", "name": "Scale", "expanded": False},
     ]),
     ("Location", True, [
-        {"facet": "deployment.country.exact", "name": "Country", "expanded": True },
-        {"facet": "deployment.region.exact", "name": "Region", "expanded": False },
-        {"facet": "deployment.city.exact", "name": "City", "expanded": False },
-        {"facet": "internal.workshop_region.exact", "name": "Workshop Region", "expanded": False },
+        {"facet": "deployment.country.exact", "name": "Country", "expanded": True},
+        {"facet": "deployment.region.exact", "name": "Region", "expanded": False},
+        {"facet": "deployment.city.exact", "name": "City", "expanded": False},
+        {"facet": "internal.workshop_region.exact", "name": "Workshop Region", "expanded": False},
     ]),
     ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Sector", "expanded": True },
-        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True },
-        {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True },
-        {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True },
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True},
+        {"facet": "internal.phone_model.exact", "name": "Phone Model", "expanded": True},
+        {"facet": "internal.project_manager", "name": "Project Manager", "expanded": True},
     ]),
     ("Self Starters", False, [
-        {"facet": "internal.self_started", "name": "Self Started", "expanded": True },
-        {"facet": "cp_has_app", "name": "Has App", "expanded": False },
+        {"facet": "internal.self_started", "name": "Self Started", "expanded": True},
+        {"facet": "cp_has_app", "name": "Has App", "expanded": False},
     ]),
     ("Advanced Features", False, [
         # {"facet": "", "name": "Reminders", "expanded": True },
-        {"facet": "case_sharing", "name": "Case Sharing", "expanded": False },
-        {"facet": "internal.using_adm", "name": "ADM", "expanded": False },
-        {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False },
-        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False },
-        {"facet": "commconnect_enabled", "name": "CommConnect", "expanded": False },
-        {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False },
+        {"facet": "case_sharing", "name": "Case Sharing", "expanded": False},
+        {"facet": "internal.using_adm", "name": "ADM", "expanded": False},
+        {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False},
+        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False},
+        {"facet": "commconnect_enabled", "name": "CommConnect", "expanded": False},
+        {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
     ]),
     ("Plans", False, [
-        {"facet": "project_type", "name": "Project Type", "expanded": False },
-        {"facet": "customer_type", "name": "Customer Type", "expanded": False },
-        {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False },
-        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False },
-        {"facet": "internal.services", "name": "Services", "expanded": False },
-        {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False },
+        {"facet": "project_type", "name": "Project Type", "expanded": False},
+        {"facet": "customer_type", "name": "Customer Type", "expanded": False},
+        {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False},
+        {"facet": "internal.commcare_edition", "name": "CommCare Pricing Edition", "expanded": False},
+        {"facet": "internal.services", "name": "Services", "expanded": False},
+        {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False},
     ]),
     ("Eula", False, [
-        {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True },
-        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False },
+        {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True},
+        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False},
     ]),
 ]
 
@@ -559,9 +561,10 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = "hqadmin/faceted_report.html"
 
+
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
     default_sort = None
-    es_prefix = "es_" # facet keywords in the url will be prefixed with this
+    es_prefix = "es_"  # facet keywords in the url will be prefixed with this
     asynchronous = False
     ajax_pagination = True
     exportable = True
@@ -611,22 +614,22 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         if params is None:
             params = {}
         terms = ['search']
-        q = {"query": {"match_all":{}}}
+        q = {"query": {"match_all": {}}}
 
         search_query = params.get('search', "")
         if search_query:
             q['query'] = {
                 "bool": {
                     "must": {
-                        "match" : {
-                            "_all" : {
-                                "query" : search_query,
-                                "operator" : "and", }}}}}
+                        "match": {
+                            "_all": {
+                                "query": search_query,
+                                "operator": "and", }}}}}
 
         q["facets"] = {}
 
         q["sort"] = self.get_sorting_block()
-        start_at=self.pagination.start
+        start_at = self.pagination.start
         size = size if size is not None else self.pagination.count
         return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size, facet_size=25)
 
@@ -646,11 +649,11 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
 
     @property
     def export_table(self):
-        self.pagination.count = 1000000 # terrible hack to get the export to return all rows
+        self.pagination.count = 1000000  # terrible hack to get the export to return all rows
         self.show_name = True
         return super(AdminFacetedReport, self).export_table
 
-ES_PREFIX = "es_"
+
 class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
     es_facet_list = DOMAIN_FACETS
@@ -715,7 +718,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
         )
         return headers
 
-
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
@@ -734,6 +736,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             11: "cp_n_forms",
             14: "cp_n_web_users",
         }
+
         def stat_row(name, what_to_get, type='float'):
             row = [name]
             for index in range(1, len(self.headers)):
@@ -760,7 +763,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
@@ -798,7 +801,7 @@ class AdminUserReport(AdminFacetedReport):
     es_url = USER_INDEX + '/user/_search'
 
     es_facet_list = [
-        "is_active", # this is NOT "has submitted a form in the last 30 days"
+        "is_active",  # this is NOT "has submitted a form in the last 30 days"
         "is_staff",
         "is_superuser",
         "domain",
@@ -807,11 +810,11 @@ class AdminUserReport(AdminFacetedReport):
 
     es_facet_mapping = [
         ("", True, [
-            {"facet": "is_active", "name": "Can Log In?", "expanded": True },
-            {"facet": "is_superuser", "name": "SuperUser?", "expanded": True },
-            {"facet": "is_staff", "name": "Staff?", "expanded": True },
-            {"facet": "domain", "name": "Domain", "expanded": True },
-            {"facet": "doc_type", "name": "User Type", "expanded": True },
+            {"facet": "is_active", "name": "Can Log In?", "expanded": True},
+            {"facet": "is_superuser", "name": "SuperUser?", "expanded": True},
+            {"facet": "is_staff", "name": "Staff?", "expanded": True},
+            {"facet": "domain", "name": "Domain", "expanded": True},
+            {"facet": "doc_type", "name": "User Type", "expanded": True},
         ]),
     ]
 
@@ -850,10 +853,12 @@ class AdminUserReport(AdminFacetedReport):
                 u.get('is_superuser'),
             ]
 
+
 def create_mapping_from_list(l, name="", expand_outer=False, expand_inner=False, name_change_fn=None):
     name_change_fn = name_change_fn or (lambda x: x)
-    facets = [{"facet": item, "name": name_change_fn(item), "expanded": expand_inner } for item in sorted(l)]
+    facets = [{"facet": item, "name": name_change_fn(item), "expanded": expand_inner} for item in sorted(l)]
     return (name, expand_outer, facets)
+
 
 class AdminAppReport(AdminFacetedReport):
     slug = "app_list"
@@ -867,7 +872,7 @@ class AdminAppReport(AdminFacetedReport):
                            "admin_password", "built_on", ]
     profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
     calculated_properties_mapping = ("Calculations", True,
-                                     [{"facet": "cp_is_active", "name": "Active", "expanded": True }])
+                                     [{"facet": "cp_is_active", "name": "Active", "expanded": True}])
 
     @property
     def properties(self):
@@ -953,6 +958,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'active_self_started_domain_count',
         'active_countries',
         'countries',
+        'active_cases',
         'users',
         'users_mobile',
         'users_web',
@@ -961,15 +967,6 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms_mobile',
         'forms_web',
         'subscriptions',
-    ]
-
-
-class RealCasesReport(GlobalAdminReports):
-    slug = 'real_cases'
-    name = _('Real Cases')
-    default_params = 'es_is_test=false&'
-    indicators = [
-        'active_cases',
     ]
 
 
