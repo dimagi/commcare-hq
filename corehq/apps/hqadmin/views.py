@@ -920,7 +920,7 @@ def stats_data(request):
 
     if histo_type == "sms_domains":
         return json_response(get_commconnect_domain_stats_data(
-            domain_params,
+            domains,
             additional_params_es,
             request.datespan,
             interval=interval,

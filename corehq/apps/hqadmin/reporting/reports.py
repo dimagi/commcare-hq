@@ -408,13 +408,14 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
+def get_commconnect_domain_stats_data(domains, params_es, datespan,
         interval='month', datefield='date_created'):
     """
     Returns domains that have used SMS.
     Returned based on date domain is created
     """
     sms = (SMSES()
+           .in_domains(domains)
            .terms_facet('domains', 'domain')
            .size(0))
 
@@ -424,23 +425,19 @@ def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
     sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
 
     domains_after_date = (DomainES()
+            .in_domains(domains)
             .filter({"terms": {"name": list(sms_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if domain_params:
-        domains_after_date = add_params_to_query(domains_after_date,
-                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
     domains_before_date = (DomainES()
+            .in_domains(domains)
             .filter({"terms": {"name": list(sms_domains)}})
             .created(lt=datespan.startdate)
             .size(0))
-    if domain_params:
-        domains_before_date = add_params_to_query(domains_before_date,
-                                                  domain_params)
 
     domains_before_date = domains_before_date.run().total
     return format_return_data(histo_data, domains_before_date, datespan)
