@@ -195,8 +195,8 @@ def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_commconnect_domain_stats_data(domains, params_es, datespan,
-        interval='month', datefield='date'):
+def get_active_commconnect_domain_stats_data(domains, datespan, interval,
+        datefield='date'):
     """
     Returns list of timestamps and how many commconnect domains were active in
     the 30 days before the timestamp
@@ -522,6 +522,7 @@ def commtrack_form_submissions(domains, datespan, interval,
 
 
 HISTO_TYPE_TO_FUNC = {
+    "active_commconnect_domains": get_active_commconnect_domain_stats_data,
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_mobile_users": get_active_mobile_users_data,
