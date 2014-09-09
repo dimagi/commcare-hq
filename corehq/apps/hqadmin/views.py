@@ -918,9 +918,6 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "mobile_workers":
-        return json_response(get_mobile_workers_data(domains, additional_params_es, request.datespan, interval=interval))
-
     if histo_type == "real_sms_messages":
         return json_response(get_real_sms_messages_data(
             domains, additional_params_es, request.datespan, interval=interval))

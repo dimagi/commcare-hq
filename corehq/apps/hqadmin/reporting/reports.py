@@ -294,7 +294,7 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
     return format_return_data(histo_data, cases_before_date, datespan)
 
 
-def get_mobile_workers_data(domains, params_es, datespan, interval='month',
+def get_mobile_workers_data(domains, datespan, interval,
         datefield='created_on'):
     """
     Returns mobile workers that have used SMS.
@@ -522,6 +522,7 @@ HISTO_TYPE_TO_FUNC = {
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
     "mobile_clients": get_total_clients_data,
+    "mobile_workers": get_mobile_workers_data,
 }
 
 
