@@ -305,7 +305,7 @@ INDICATOR_DATA = {
         ],
         "get_request_params": {
             "additional_params_es": {
-                "direction": ["i"],
+                "direction": ["o"],
                 "couch_recipient_doc_type": ["commcarecase"],
             },
         },
