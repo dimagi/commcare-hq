@@ -408,8 +408,8 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_commconnect_domain_stats_data(domains, params_es, datespan,
-        interval='month', datefield='date_created'):
+def get_commconnect_domain_stats_data(domains, datespan, interval,
+        datefield='date_created', additional_params_es={}):
     """
     Returns domains that have used SMS.
     Returned based on date domain is created
@@ -419,8 +419,8 @@ def get_commconnect_domain_stats_data(domains, params_es, datespan,
            .terms_facet('domains', 'domain')
            .size(0))
 
-    if params_es:
-        sms = add_params_to_query(sms, params_es)
+    if additional_params_es:
+        sms = add_params_to_query(sms, additional_params_es)
 
     sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
 
@@ -527,6 +527,7 @@ HISTO_TYPE_TO_FUNC = {
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,
+    "sms_domains": get_commconnect_domain_stats_data,
     "sms_only_domains": get_sms_only_domain_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
 }
