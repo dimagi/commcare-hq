@@ -215,8 +215,8 @@ def get_active_commconnect_domain_stats_data(domains, params_es, datespan,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_dimagi_owned_gateway_projects(domains, params_es, datespan,
-        interval='month', datefield='date'):
+def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
+        datefield='date'):
     """
     Returns list of timestamps and how many domains used a Dimagi owned gateway
     in the past thrity days before each timestamp
@@ -518,6 +518,7 @@ def commtrack_form_submissions(domains, datespan, interval,
 
 HISTO_TYPE_TO_FUNC = {
     "active_countries": get_active_countries_stats_data,
+    "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
 }
