@@ -898,7 +898,6 @@ def stats_data(request):
     if "domain_params_es" in get_request_params:
         del get_request_params["domain_params_es"]
     additional_params_es = get_request_params.get("additional_params_es", {})
-    individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
         request.datespan.enddate += timedelta(days=1)
@@ -917,36 +916,6 @@ def stats_data(request):
     )
     if stats_data is not None:
         return json_response(stats_data)
-
-    if len(domains) <= individual_domain_limit:
-        domain_info = [{"names": [d], "display_name": d} for d in domains]
-    elif len(domains) < ES_MAX_CLAUSE_COUNT:
-        domain_info = [{"names": [d for d in domains],
-                        "display_name": _("Domains Matching Filter")}]
-    else:
-        domain_info = [{
-            "names": None,
-            "display_name": _(
-                "All Domains (NOT applying filters. > %s projects)"
-                % ES_MAX_CLAUSE_COUNT
-            )
-        }]
-
-    stats_data = get_general_stats_data(
-        domain_info,
-        histo_type,
-        request.datespan,
-        interval=interval,
-        user_type_mobile=get_request_params.get("user_type_mobile"),
-        is_cumulative=get_request_params.get("is_cumulative", "True") == "True",
-    )
-    for k in stats_data['histo_data']:
-        stats_data['histo_data'][k] = add_blank_data(
-            stats_data["histo_data"][k],
-            request.datespan.startdate,
-            request.datespan.enddate
-        )
-    return json_response(stats_data)
 
 
 @require_superuser

@@ -1,6 +1,7 @@
 import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
+from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.es.cases import CaseES
@@ -9,6 +10,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.elastic import ES_MAX_CLAUSE_COUNT, get_general_stats_data
 
 
 def add_params_to_query(query, params):
@@ -511,21 +513,70 @@ def commtrack_form_submissions(domains, datespan, interval,
     return format_return_data(histo_data, forms_before_date, datespan)
 
 
+def get_case_stats(domains, datespan, interval, **kwargs):
+    return get_other_stats("cases", domains, datespan, interval, **kwargs)
+
+
+def get_form_stats(domains, datespan, interval, **kwargs):
+    return get_other_stats("forms", domains, datespan, interval, **kwargs)
+
+
+def get_user_stats(domains, datespan, interval, **kwargs):
+    return get_other_stats("users", domains, datespan, interval, **kwargs)
+
+
+def get_other_stats(histo_type, domains, datespan, interval,
+        individual_domain_limit=16, is_cumulative="True",
+        user_type_mobile=None):
+    if len(domains) <= individual_domain_limit:
+        domain_info = [{"names": [d], "display_name": d} for d in domains]
+    elif len(domains) < ES_MAX_CLAUSE_COUNT:
+        domain_info = [{"names": [d for d in domains],
+                        "display_name": _("Domains Matching Filter")}]
+    else:
+        domain_info = [{
+            "names": None,
+            "display_name": _(
+                "All Domains (NOT applying filters. > %s projects)"
+                % ES_MAX_CLAUSE_COUNT
+            )
+        }]
+
+    stats_data = get_general_stats_data(
+        domain_info,
+        histo_type,
+        datespan,
+        interval=interval,
+        user_type_mobile=user_type_mobile,
+        is_cumulative=is_cumulative == "True",
+    )
+    for k in stats_data['histo_data']:
+        stats_data['histo_data'][k] = add_blank_data(
+            stats_data["histo_data"][k],
+            datespan.startdate,
+            datespan.enddate
+        )
+    return stats_data
+
+
 HISTO_TYPE_TO_FUNC = {
     "active_commconnect_domains": get_active_commconnect_domain_stats_data,
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_domains": get_active_domain_stats_data,
     "active_mobile_users": get_active_mobile_users_data,
+    "cases": get_case_stats,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
     "domains": get_domain_stats_data,
+    "forms": get_form_stats,
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,
     "sms_domains": get_commconnect_domain_stats_data,
     "sms_only_domains": get_sms_only_domain_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
+    "users": get_user_stats,
 }
 
 
