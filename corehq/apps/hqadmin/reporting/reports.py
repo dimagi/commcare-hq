@@ -328,8 +328,8 @@ def get_mobile_workers_data(domains, datespan, interval,
     return format_return_data(histo_data, users_before_date, datespan)
 
 
-def get_real_sms_messages_data(domains, params_es, datespan, interval='month',
-        datefield='date', is_commtrack=False):
+def get_real_sms_messages_data(domains, datespan, interval,
+        datefield='date', is_commtrack=False, additional_params_es={}):
     """
     Returns SMS sent in timespan.
     Returned based on date SMS was sent
@@ -339,8 +339,11 @@ def get_real_sms_messages_data(domains, params_es, datespan, interval='month',
             .received(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    if params_es:
-        sms_after_date = add_params_to_query(sms_after_date, params_es)
+    if additional_params_es:
+        sms_after_date = add_params_to_query(
+            sms_after_date,
+            additional_params_es
+        )
     if is_commtrack:
         sms_after_date = sms_after_date.to_commcare_user_or_case()
 
@@ -351,8 +354,11 @@ def get_real_sms_messages_data(domains, params_es, datespan, interval='month',
             .received(lt=datespan.startdate)
             .size(0))
 
-    if params_es:
-        sms_before_date = add_params_to_query(sms_before_date, params_es)
+    if additional_params_es:
+        sms_before_date = add_params_to_query(
+            sms_before_date,
+            additional_params_es
+        )
     if is_commtrack:
         sms_before_date = sms_before_date.to_commcare_user_or_case()
 
@@ -523,6 +529,7 @@ HISTO_TYPE_TO_FUNC = {
     "countries": get_countries_stats_data,
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
+    "real_sms_messages": get_real_sms_messages_data,
 }
 
 
