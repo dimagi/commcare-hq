@@ -182,7 +182,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         elif ('adjust_credit' in self.request.POST
               and self.credit_form.is_valid()):
             try:
-                if self.credit_form.adjust_credit():
+                if self.credit_form.adjust_credit(web_user=request.user.username):
                     messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
@@ -355,7 +355,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                                "Could not update subscription due to: %s" % e)
             return HttpResponseRedirect(self.page_url)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            if self.credit_form.adjust_credit():
+            if self.credit_form.adjust_credit(web_user=request.user.username):
                 return HttpResponseRedirect(self.page_url)
         elif ('cancel_subscription' in self.request.POST
               and self.cancel_form.is_valid()):

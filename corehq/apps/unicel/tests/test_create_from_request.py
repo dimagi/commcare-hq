@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from django.db import DatabaseError
 from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.sms.models import SMSLog, INCOMING
@@ -15,18 +16,18 @@ class IncomingPostTest(TestCase):
         all_logs = SMSLog.by_domain_asc(self.domain).all()
         for log in all_logs:
             log.delete()
-        self.user = 'username'
+        self.user = 'username-unicel'
         self.password = 'password'
         self.number = 5555551234
-        self.couch_user = WebUser.create(self.domain, self.user, self.password)
+        try:
+            self.couch_user = WebUser.create(self.domain, self.user, self.password)
+        except WebUser.Inconsistent:
+            self.couch_user = WebUser.get_by_username(self.user)
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
         self.dcs = '8'
         self.message_ascii = 'It Works'
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
-
-    def tearDown(self):
-        self.couch_user.delete()
 
     def testDateFormats(self):
         """

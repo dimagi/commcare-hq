@@ -46,33 +46,11 @@
                 <span class="caret"></span>
             </a>
         {% endif %}
-        <ul class="dropdown-menu" role="menu">
-            {% if domain %}
-            <li>
-                <a href="{% url "domain_settings_default" domain %}">
-                    {% trans 'Project Settings' %}
-                </a>
-            </li>
-            <li class="divider"></li>
-            {% endif %}
-{#            Todo update template tag for domains_for_user #}
-{#            {% if domains_for_user %}#}
-{#                {% for d in domains_for_user %}#}
-{#                    <li><a href="{% url 'domain_homepage' d.name %}">{{ d.name }}</a></li>#}
-{#                {% endfor %}#}
-{#                <li class="divider"></li>#}
-{#            {% endif %}#}
-            <li>
-                <a href="{% url 'registration_domain' %}">
-                    {% trans 'Add Project' %}
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'appstore' %}">
-                    {% trans 'CommCare Exchange' %}
-                </a>
-            </li>
-        </ul>
+        {% if domain %}
+            {% domains_for_user request domain %}
+        {% else %}
+            {% domains_for_user request %}
+        {% endif %}
     </li>
     {% endif %}
     <li>
@@ -85,27 +63,28 @@
             <span class="caret"></span>
         </a>
         <ul class="dropdown-menu" role="menu">
-            <li>
-                <h2>
+            <li class="dropdown-header">
                 {% if user.first_name %}
                     {{ user.first_name }} {{ user.last_name }}
                 {% else %}
                     {{ user.username }}
                 {% endif %}
-                </h2>
             </li>
             {% with request.couch_user.role_label.strip as role %}{% if role %}
-                <li>
+                <li class="dropdown-header">
                     {{ role }}
                 </li>
             {% endif %}{% endwith %}
             <li>
                 <a href="{% url "my_account_settings" %}">
-                    {% trans 'My Account Settings' %}
+                    <i class="fa fa-cog"></i> {% trans 'Account Settings' %}
                 </a>
             </li>
             <li class="divider"></li>
-            <li><a href="{% url "logout" %}">{% trans 'Sign Out' %}</a></li>
+            <li>
+                <a href="{% url "logout" %}">
+                    <i class="fa fa-sign-out"></i> {% trans 'Sign Out' %}
+                </a>
         </ul>
     </li>
 

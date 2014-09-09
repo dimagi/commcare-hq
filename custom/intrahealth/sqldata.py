@@ -1,10 +1,11 @@
+# coding=utf-8
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
 from corehq.apps.commtrack.models import Product
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
-    TableDataFormat, DictDataFormat, format_data
+    TableDataFormat, DictDataFormat, format_data, calculate_total_row
 from sqlagg.filters import EQ, NOTEQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
@@ -14,6 +15,7 @@ PRODUCT_NAMES = {
     u'diu': [u"diu"],
     u'jadelle': [u"jadelle"],
     u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
+    u'd\xe9po-provera': [u"d\xe9po-provera", u"depo-provera"],
     u'microlut/ovrette': [u"microlut/ovrette"],
     u'microgynon/lof.': [u"microgynon/lof."],
     u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
@@ -120,7 +122,7 @@ class DispDesProducts(BaseSqlData):
                 return True, names.index(row)+1
             else:
                 for idx, val in enumerate(names):
-                    if unicode(row).lower() in PRODUCT_NAMES[val]:
+                    if unicode(row).lower() in PRODUCT_NAMES.get(val, []):
                         return True, idx+1
             return False, 0
 
@@ -160,6 +162,65 @@ class DispDesProducts(BaseSqlData):
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
             ]
+
+
+class TauxDeRuptures(BaseSqlData):
+    slug = 'taux_de_ruptures'
+    title = 'Taux de ruptures de stock total'
+    table_name = 'fluff_IntraHealthFluff'
+    col_names = ['stock_total']
+    have_groups = False
+    custom_total_calculate = True
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def filters(self):
+        filter = super(TauxDeRuptures, self).filters
+        filter.append("stock_total = 0")
+        return filter
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_("Stock total"), CountColumn('stock_total')))
+        return columns
+
+    def calculate_total_row(self, rows):
+        converture_data_rows = ConventureData(self.config).rows
+        total = converture_data_rows[0][2]["html"] if converture_data_rows else 0
+
+        for row in rows:
+            row.append(dict(sort_key=1L if any([x["sort_key"] for x in row[1:]]) else 0L,
+                            html=1L if any([x["sort_key"] for x in row[1:]]) else 0L))
+
+        total_row = list(calculate_total_row(rows))
+
+        taux_rapture_row = ["(%s/%s) %s" % (x, total, self.percent_fn(total, x)) for x in total_row]
+
+        if total_row:
+            total_row[0] = 'Total'
+
+        if taux_rapture_row:
+            taux_rapture_row[0] = 'Taux rupture'
+
+        rows.append(total_row)
+
+        return taux_rapture_row
+
 
 class FicheData(BaseSqlData):
     title = ''
@@ -209,7 +270,7 @@ class RecapPassageData(BaseSqlData):
     title = ''
     table_name = 'fluff_RecapPassageFluff'
     datatables = True
-    show_total = True
+    show_total = False
     fix_left_col = True
     have_groups = False
 
@@ -248,7 +309,8 @@ class RecapPassageData(BaseSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('product_billed_consumption', alias='bconsumption')),
             DatabaseColumn(_("Reelle"), SumColumn('product_actual_consumption', alias='aconsumption')),
             DatabaseColumn("Stock Total", AliasColumn('stock_total')),
-            DatabaseColumn("PPS Restant", SumColumn('product_pps_restant'))
+            DatabaseColumn("PPS Restant", SumColumn('product_pps_restant')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('product_loss_amt'))
         ]
 
 class ConsommationData(BaseSqlData):
@@ -391,4 +453,37 @@ class NombreData(BaseSqlData):
                     else:
                         total_row.append('')
 
+        return total_row
+
+
+class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
+    table_name = 'fluff_TauxDeRuptureFluff'
+
+
+class DureeData(BaseSqlData):
+    slug = 'duree'
+    custom_total_calculate = True
+    title = u'Durée moyenne des retards de livraison'
+    table_name = 'fluff_LivraisonFluff'
+    have_groups = False
+    col_names = ['date_prevue_livraison', 'date_effective_livraison', 'duree_moyenne_livraison_total']
+
+    @property
+    def group_by(self):
+        return ['district_name', 'date_prevue_livraison', 'date_effective_livraison']
+
+    @property
+    def columns(self):
+        from custom.intrahealth import format_date_string
+        columns = [DatabaseColumn(_("District"), SimpleColumn('district_name')),
+                   DatabaseColumn(_(u"La date prévue de livraison"), SimpleColumn('date_prevue_livraison'), format_fn=format_date_string),
+                   DatabaseColumn(_(u"La date réelle de livraison"), SimpleColumn('date_effective_livraison'), format_fn=format_date_string),
+                   DatabaseColumn(_(u"Retards de livraison (jours)"), SumColumn('duree_moyenne_livraison_total'))]
+        return columns
+
+    def calculate_total_row(self, rows):
+        total_row = list(calculate_total_row(rows))
+        if total_row and self.rows:
+            total_row[0] = 'Moyenne Region'
+            total_row[-1] = "%.2f" % (total_row[-1] / float(len(self.rows)))
         return total_row

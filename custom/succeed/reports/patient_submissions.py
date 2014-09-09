@@ -131,6 +131,7 @@ class PatientSubmissionReport(PatientDetailsReport):
             return format_date(date_string, INTERACTION_OUTPUT_DATE_FORMAT, localize=True)
         else:
             return EMPTY_FIELD
+
     @property
     def report_context(self):
         ret = super(PatientSubmissionReport, self).report_context

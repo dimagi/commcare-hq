@@ -25,7 +25,7 @@ function (doc) {
                         if ((cur_muac < 125.0 && cur_muac >= 115.0) || (cur_muac >= 11.5 && cur_muac < 12.5)) {
                             last_muac_indicators["moderate_muac_wasting"] = case_id;
                         }
-                        if (cur_muac < 11.5) {
+                        if (cur_muac < 11.5 || (cur_muac > 49.0 && cur_muac < 115.0)) {
                             last_muac_indicators["severe_muac_wasting"] = case_id;
                         }
                     } catch (e) {

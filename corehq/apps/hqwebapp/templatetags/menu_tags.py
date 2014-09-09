@@ -65,7 +65,11 @@ class MainMenuNode(template.Node):
         # other blocks
         context.dicts[0]['active_tab'] = active_tab
 
-        return mark_safe(render_to_string("hqwebapp/partials/main_menu.html", {
+        template = {
+            style_utils.BOOTSTRAP_2: 'hqwebapp/partials/main_menu.html',
+            style_utils.BOOTSTRAP_3: 'style/includes/menu_main.html',
+        }[style_utils.bootstrap_version(request)]
+        return mark_safe(render_to_string(template, {
             'tabs': visible_tabs,
         }))
 

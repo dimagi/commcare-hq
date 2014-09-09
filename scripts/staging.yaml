@@ -44,15 +44,14 @@ trunk: master
 name: autostaging
 branches:
   - archive-products+archive-to-deactivate # tw 8/14
-  - archive-to-deactivate  # cz 7/30
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
+  - schedule+ucla-task-creation # Noah 9/3
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
-  - vellum-requirejs # Daniel 6/12
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
@@ -62,9 +61,12 @@ branches:
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
-  - ilsgateway-integration  # czue/lwysomi 8/27 - this one might stick around a while
   - caselistmixin-refactor # Noah 8/14
   - ucla-task-creation # Noah 9/3
+  - outputrefs # Simon 9/6
+  - custom_user_data # tw+es 9/9
+  - lwyszomi:better_date_filters_improvment
+  - lwyszomi:uservoice-pending-invitations
 submodules:
   submodules/couchlog-src:
     branches:
@@ -84,7 +86,6 @@ submodules:
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
-      - update-jars # Noah 8/26
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
