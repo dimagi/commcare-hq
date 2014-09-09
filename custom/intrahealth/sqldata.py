@@ -15,6 +15,7 @@ PRODUCT_NAMES = {
     u'diu': [u"diu"],
     u'jadelle': [u"jadelle"],
     u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
+    u'd\xe9po-provera': [u"d\xe9po-provera", u"depo-provera"],
     u'microlut/ovrette': [u"microlut/ovrette"],
     u'microgynon/lof.': [u"microgynon/lof."],
     u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
@@ -121,7 +122,7 @@ class DispDesProducts(BaseSqlData):
                 return True, names.index(row)+1
             else:
                 for idx, val in enumerate(names):
-                    if unicode(row).lower() in PRODUCT_NAMES[val]:
+                    if unicode(row).lower() in PRODUCT_NAMES.get(val, []):
                         return True, idx+1
             return False, 0
 

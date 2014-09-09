@@ -71,6 +71,8 @@ def _get_location(form):
         loc = Location.get(loc_id)
     else:
         user_id = form['auth_context']['user_id']
+        if not user_id:
+            return None
         user = CommTrackUser.get(user_id)
         loc = user.location
     return loc
@@ -90,6 +92,8 @@ def get_location_id_by_type(form, type):
 
 def get_location_by_type(form, type):
     loc = _get_location(form)
+    if not loc:
+        return None
 
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
@@ -104,6 +108,8 @@ def get_real_date(form):
 
 
 def format_date_string(value):
+    if not value:
+        return value
     with localize('fr'):
         return format(force_to_datetime(value), 'd E')
 
