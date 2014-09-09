@@ -121,7 +121,7 @@ class DispDesProducts(BaseSqlData):
                 return True, names.index(row)+1
             else:
                 for idx, val in enumerate(names):
-                    if unicode(row).lower() in PRODUCT_NAMES[val]:
+                    if unicode(row).lower() in PRODUCT_NAMES.get(val, []):
                         return True, idx+1
             return False, 0
 

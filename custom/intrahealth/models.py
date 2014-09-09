@@ -93,7 +93,10 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
 class TauxDeRuptureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0])
+    document_filter = ANDFilter([
+        FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
+        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district')
+    ])
     domains = INTRAHEALTH_DOMAINS
     save_direct_to_sql = True
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),)
