@@ -919,7 +919,7 @@ def stats_data(request):
         return json_response(stats_data)
 
     if histo_type == "sms_only_domains":
-        return json_response(get_sms_only_domain_stats_data(domain_params, request.datespan, interval=interval))
+        return json_response(get_sms_only_domain_stats_data(domains, request.datespan, interval=interval))
 
     if histo_type == "sms_domains":
         return json_response(get_commconnect_domain_stats_data(
