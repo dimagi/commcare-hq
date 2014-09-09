@@ -4,7 +4,6 @@ from corehq.apps.hqadmin.reports import (
     AdminAppReport,
     AdminUserReport,
     RealProjectSpacesReport,
-    RealCasesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
 )
@@ -270,7 +269,6 @@ ADMIN_REPORTS = (
         AdminAppReport,
         PillowErrorsReport,
         RealProjectSpacesReport,
-        RealCasesReport,
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
     )),

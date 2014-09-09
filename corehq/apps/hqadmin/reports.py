@@ -953,6 +953,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'active_self_started_domain_count',
         'active_countries',
         'countries',
+        'active_cases',
         'users',
         'users_mobile',
         'users_web',
@@ -961,15 +962,6 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms_mobile',
         'forms_web',
         'subscriptions',
-    ]
-
-
-class RealCasesReport(GlobalAdminReports):
-    slug = 'real_cases'
-    name = _('Real Cases')
-    default_params = 'es_is_test=false&'
-    indicators = [
-        'active_cases',
     ]
 
 
