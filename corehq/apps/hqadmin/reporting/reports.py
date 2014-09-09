@@ -243,7 +243,7 @@ def get_active_dimagi_owned_gateway_projects(domains, params_es, datespan,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_countries_stats_data(domains, datespan, interval='month',
+def get_countries_stats_data(domains, datespan, interval,
         datefield='created_on'):
     """
     Returns list of timestamps and how many countries have been created
@@ -517,6 +517,7 @@ def commtrack_form_submissions(domains, params_es, datespan, interval='week',
 
 
 HISTO_TYPE_TO_FUNC = {
+    "countries": get_countries_stats_data,
 }
 
 

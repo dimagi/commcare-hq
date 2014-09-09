@@ -918,9 +918,6 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "countries":
-        return json_response(get_countries_stats_data(domains, request.datespan, interval=interval))
-
     if histo_type == "active_countries":
         return json_response(get_active_countries_stats_data(domains, request.datespan, interval=interval))
 
