@@ -66,7 +66,6 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_proper
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.reports.formdetails.readable import FormQuestion
 from corehq.apps.translations import system_text as st_trans
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
@@ -77,11 +76,9 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import (
     CaseError,
-    namespaces,
     XForm,
     XFormError,
     XFormValidationError,
-    _make_elem,
 )
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
@@ -108,10 +105,8 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     Form,
-    FormActionCondition,
     FormActions,
     Module,
-    OpenSubCaseAction,
     ParentSelect,
     SavedAppBuild,
     get_app,
