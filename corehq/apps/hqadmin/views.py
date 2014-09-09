@@ -929,14 +929,7 @@ def stats_data(request):
             interval=interval,
         ))
 
-    if histo_type == "active_domains":
-        stats_data = get_active_domain_stats_data(
-            domains,
-            request.datespan,
-            interval=interval,
-            software_plan_edition=get_request_params.get('software_plan_edition', None)
-        )
-    elif histo_type == "domains":
+    if histo_type == "domains":
         stats_data = get_domain_stats_data(
             domain_params,
             request.datespan,

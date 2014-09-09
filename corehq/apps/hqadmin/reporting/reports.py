@@ -142,7 +142,7 @@ def get_subscription_stats_data(domains, datespan, interval,
     ]
 
 
-def get_active_domain_stats_data(domains, datespan, interval='month',
+def get_active_domain_stats_data(domains, datespan, interval,
         datefield='received_on', software_plan_edition=None):
     """
     Returns list of timestamps and how many domains were active in the 30 days
@@ -525,6 +525,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_commconnect_domains": get_active_commconnect_domain_stats_data,
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
+    "active_domains": get_active_domain_stats_data,
     "active_mobile_users": get_active_mobile_users_data,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
