@@ -918,9 +918,6 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if histo_type == "active_countries":
-        return json_response(get_active_countries_stats_data(domains, request.datespan, interval=interval))
-
     if histo_type == "commtrack_forms":
         return json_response(commtrack_form_submissions(domains, additional_params_es, request.datespan, interval=interval))
 

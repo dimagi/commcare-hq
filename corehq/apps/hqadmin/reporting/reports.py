@@ -86,7 +86,7 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
             .size(0))
 
 
-def get_active_countries_stats_data(domains, datespan, interval='month',
+def get_active_countries_stats_data(domains, datespan, interval,
         datefield='received_on'):
     """
     Returns list of timestamps and how many countries were active in the 30
@@ -517,6 +517,7 @@ def commtrack_form_submissions(domains, params_es, datespan, interval='week',
 
 
 HISTO_TYPE_TO_FUNC = {
+    "active_countries": get_active_countries_stats_data,
     "countries": get_countries_stats_data,
 }
 
