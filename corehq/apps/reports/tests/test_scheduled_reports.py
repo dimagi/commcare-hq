@@ -22,6 +22,7 @@ class GuessReportingMinuteTest(SimpleTestCase):
         for minute in (6, 15, 29, 36, 45, 59):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
+
 class ScheduledReportTest(TestCase):
 
     def setUp(self):
@@ -34,6 +35,17 @@ class ScheduledReportTest(TestCase):
 
     def _check(self, period, as_of, count):
         self.assertEqual(count, len(list(get_scheduled_reports(period, as_of))))
+
+    def testDefaultValue(self):
+        now = datetime.utcnow()
+        ReportNotification(hour=now.hour, minute=(now.minute / 30) * 30, interval='daily').save()
+        if now.minute % 30 <= 5:
+            self._check('daily', None, 1)
+        else:
+            self.assertRaises(
+                ValueError,
+                lambda: list(get_scheduled_reports('daily', None))
+            )
 
     def testDailyReportEmptyMinute(self):
         ReportNotification(hour=12, minute=None, interval='daily').save()
