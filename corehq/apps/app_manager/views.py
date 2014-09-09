@@ -2643,7 +2643,7 @@ def _get_translation(id, lang, form, media=None):
     :param lang:
     :param form: XForm object
     :param media: "audio", "video", "image", or None. Returns the approprite media path if provided.
-    :return: The lable, media path, or "" if no translation is found
+    :return: The label, media path, or "" if no translation is found
     '''
     node_id = "%s-label" % id
     xpath = "./{f}translation[@lang='%s']/{f}text[@id='%s']/{f}value" % (lang, node_id)
@@ -2696,12 +2696,16 @@ def download_bulk_app_translations(request, domain, app_id):
         all_properties = dict(case_list_properties.items() + case_detail_properties.items())
         for _, detail in all_properties.items():
 
-            # TODO: These details will probably not be in the same order that
-            #       they appear on HQ. Is that bad?
-            # see https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js#L446-446
-            #     https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
+            # TODO: Resolve case detail ordering issue
+            # The details will not appear in the same order as on HQ unless we
+            # do a LCS merge on them. This will probably be a lot of code.
+            # Do we care about the ordering?
+            # Links about how to merge:
+            #   https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js#L446-446
+            #   https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
 
-            # TODO: two case details can have the same name...
+            # TODO: Two case details can have the same name...
+            # What should I do about this...
 
             field_name = detail.field
             if len(detail.enum) > 0:
@@ -2944,7 +2948,6 @@ def upload_bulk_app_translations(request, domain, app_id):
                                 value_node = WrappedNode(e)
                             # Update the translation
                             value_node.xml.text = new_translation
-                            #TODO: Validate media paths? do we need to stop bad paths from being inserted?
 
             # Save the xform
             save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
