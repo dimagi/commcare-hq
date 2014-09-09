@@ -72,7 +72,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         return CustomDataEditor(
             "UserFields",
             self.domain,
-            self.editable_user,
+            self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
@@ -194,9 +194,9 @@ class EditCommCareUserView(BaseFullEditUserView):
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
-        custom_data_form = self.custom_data.form
-        if custom_data_form.is_valid():
-            self.custom_data.save_to_user()
+        if self.custom_data.is_valid():
+            self.editable_user.user_data = self.custom_data.get_data_to_save()
+            self.editable_user.save()
             return True
         else:
             return False

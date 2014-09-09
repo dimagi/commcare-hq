@@ -114,10 +114,10 @@ class CustomDataFieldsMixin(object):
 
 
 class CustomDataEditor(object):
-    def __init__(self, field_type, domain, user, post_dict=None):
+    def __init__(self, field_type, domain, existing_custom_data, post_dict=None):
         self.field_type = field_type
         self.domain = domain
-        self.user = user
+        self.existing_custom_data = existing_custom_data
         self.form = self.init_form(post_dict)
 
     @property
@@ -129,10 +129,11 @@ class CustomDataEditor(object):
         )
         return definition or CustomDataFieldsDefinition()
 
-    def save_to_user(self):
-        if self.form:
-            self.user.user_data = self.form.cleaned_data
-            self.user.save()
+    def is_valid(self):
+        return self.form.is_valid()
+
+    def get_data_to_save(self):
+        return self.form.cleaned_data
 
     def init_form(self, post_dict=None):
         def _make_field(field):
@@ -150,7 +151,7 @@ class CustomDataEditor(object):
         else:
             fields = {
                 "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
-                for k, v in self.user.user_data.items()
+                for k, v in self.existing_custom_data.items()
             }
 
         self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
