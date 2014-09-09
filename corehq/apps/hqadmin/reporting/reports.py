@@ -129,7 +129,7 @@ def domains_matching_plan(software_plan_edition, start, end):
     }
 
 
-def get_subscription_stats_data(domains, datespan, interval='month',
+def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
     return [
         {
@@ -448,14 +448,14 @@ def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def get_all_subscriptions_stats_data(domains, datespan, interval='month'):
+def get_all_subscriptions_stats_data(domains, datespan, interval):
     return {
         'histo_data': {
             software_plan_edition_tuple[0]: add_blank_data(
                 get_subscription_stats_data(
                     domains,
                     datespan,
-                    interval=interval,
+                    interval,
                     software_plan_edition=software_plan_edition_tuple[0],
                 ),
                 datespan.startdate,
@@ -531,6 +531,7 @@ HISTO_TYPE_TO_FUNC = {
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,
+    "subscriptions": get_all_subscriptions_stats_data,
 }
 
 

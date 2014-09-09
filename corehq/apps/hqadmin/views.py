@@ -929,9 +929,6 @@ def stats_data(request):
             interval=interval,
         ))
 
-    if histo_type == "subscriptions":
-        return json_response(get_all_subscriptions_stats_data(domains, request.datespan, interval=interval))
-
     if histo_type == "active_domains":
         stats_data = get_active_domain_stats_data(
             domains,
