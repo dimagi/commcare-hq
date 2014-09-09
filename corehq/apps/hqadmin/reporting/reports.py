@@ -530,6 +530,7 @@ HISTO_TYPE_TO_FUNC = {
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,
+    "sms_only_domains": get_sms_only_domain_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
 }
 
