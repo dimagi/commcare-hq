@@ -15,8 +15,8 @@
 {{ block.super }}
     <script>
         var customDataFieldsModel = new CustomDataFieldsModel();
-        ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
         customDataFieldsModel.init({{ custom_fields|JSON }});
+        ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
     </script>
 {% endblock %}
 
