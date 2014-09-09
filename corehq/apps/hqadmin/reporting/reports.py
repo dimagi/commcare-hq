@@ -1,5 +1,4 @@
 import time
-from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
@@ -10,7 +9,6 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.elastic import es_query, ES_URLS
 
 
 def add_params_to_query(query, params):
@@ -91,8 +89,8 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
 def get_active_countries_stats_data(domains, datespan, interval='month',
         datefield='received_on'):
     """
-    Returns list of timestamps and how many countries were active in the 30 days
-    before the timestamp
+    Returns list of timestamps and how many countries were active in the 30
+    days before the timestamp
     """
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
@@ -174,8 +172,8 @@ def get_active_domain_stats_data(domains, datespan, interval='month',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_mobile_users_data(domains, params_es, datespan, interval='month',
-        datefield='date'):
+def get_active_mobile_users_data(domains, params_es, datespan,
+        interval='month', datefield='date'):
     """
     Returns list of timestamps and how many users of SMS were active in the
     30 days before the timestamp
@@ -297,7 +295,7 @@ def get_total_clients_data(domains, params_es, datespan, interval='month',
     return format_return_data(histo_data, cases_before_date, datespan)
 
 
-def get_mobile_workers_data(domains, params_es,datespan, interval='month',
+def get_mobile_workers_data(domains, params_es, datespan, interval='month',
         datefield='created_on'):
     """
     Returns mobile workers that have used SMS.
@@ -390,7 +388,8 @@ def get_sms_only_domain_stats_data(domain_params, datespan, interval='month',
             .date_histogram('date', datefield, interval)
             .size(0))
     if domain_params:
-        domains_after_date = add_params_to_query(domains_after_date, domain_params)
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
@@ -399,7 +398,8 @@ def get_sms_only_domain_stats_data(domain_params, datespan, interval='month',
             .created(lt=datespan.startdate)
             .size(0))
     if domain_params:
-        domains_before_date = add_params_to_query(domains_before_date, domain_params)
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
 
     domains_before_date = domains_before_date.run().total
     return format_return_data(histo_data, domains_before_date, datespan)
@@ -426,7 +426,8 @@ def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
             .date_histogram('date', datefield, interval)
             .size(0))
     if domain_params:
-        domains_after_date = add_params_to_query(domains_after_date, domain_params)
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
@@ -435,7 +436,8 @@ def get_commconnect_domain_stats_data(domain_params, params_es, datespan,
             .created(lt=datespan.startdate)
             .size(0))
     if domain_params:
-        domains_before_date = add_params_to_query(domains_before_date, domain_params)
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
 
     domains_before_date = domains_before_date.run().total
     return format_return_data(histo_data, domains_before_date, datespan)
@@ -473,7 +475,8 @@ def get_domain_stats_data(domain_params, datespan, interval='week',
             .date_histogram('date', datefield, interval)
             .size(0))
     if domain_params:
-        domains_after_date = add_params_to_query(domains_after_date, domain_params)
+        domains_after_date = add_params_to_query(domains_after_date,
+                                                 domain_params)
 
     histo_data = domains_after_date.run().facet('date', 'entries')
 
@@ -481,7 +484,8 @@ def get_domain_stats_data(domain_params, datespan, interval='week',
             .created(lt=datespan.startdate)
             .size(0))
     if domain_params:
-        domains_before_date = add_params_to_query(domains_before_date, domain_params)
+        domains_before_date = add_params_to_query(domains_before_date,
+                                                  domain_params)
     domains_before_date = domains_before_date.run().total
 
     return format_return_data(histo_data, domains_before_date, datespan)
@@ -489,7 +493,8 @@ def get_domain_stats_data(domain_params, datespan, interval='week',
 
 def commtrack_form_submissions(domains, params_es, datespan, interval='week',
         datefield='received_on'):
-    mobile_workers = [a['_id'] for a in UserES().fields([]).mobile_users().run().raw_hits]
+    mobile_workers = [a['_id'] for a in
+            UserES().fields([]).mobile_users().run().raw_hits]
 
     forms_after_date = (FormES()
             .in_domains(domains)
