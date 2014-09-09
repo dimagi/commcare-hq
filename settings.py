@@ -298,6 +298,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
