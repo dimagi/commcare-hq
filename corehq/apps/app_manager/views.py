@@ -2771,6 +2771,15 @@ def _make_text_nodes(id, itext, lang):
             lang_node.xml.append()
     return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
 
+def _get_col_key(translation_type, language):
+    '''
+    Returns the name of the column in the bulk app translation spreadsheet given
+    the translation type and language
+    :param translation_type: What is being translated, i.e. 'default' or 'image'
+    :param language:
+    :return:
+    '''
+    return "%s_%s" % (translation_type, language)
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -2895,8 +2904,13 @@ def upload_bulk_app_translations(request, domain, app_id):
                             value_node = text_node.find("./{f}value[@form='%s']" % trans_type)
                         #value_node = text_node.find("./{f}value[%s]" % attribute_path)
 
-                        col_key = "%s_%s" % (trans_type, lang)
+                        col_key = _get_col_key(trans_type, lang)
                         new_translation = row[col_key]
+                        if not new_translation and col_key not in missing_cols:
+                            # If the cell corresponding to the label for this question in this language is empty, use the default language's label
+                            # NOTE: This won't help us if we're on the default language right now
+                            new_translation = row[_get_col_key(trans_type, app.langs[0])]
+
                         if new_translation:
                             # create a value node if it doesn't already exist
                             if not value_node.exists():
@@ -2906,10 +2920,7 @@ def upload_bulk_app_translations(request, domain, app_id):
                             # Update the translation
                             value_node.xml.text = new_translation
                             #TODO: Validate media paths? do we need to stop bad paths from being inserted?
-                        elif col_key not in missing_cols:
-                            # Remove translations for blank cells, but not for deleted columns
-                            if value_node.exists():
-                                value_node.xml.getparent().remove(value_node.xml)
+
             # Save the xform
             save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
             app.save()
