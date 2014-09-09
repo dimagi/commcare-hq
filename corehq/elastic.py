@@ -155,7 +155,7 @@ def get_case_owner_filters():
     return result
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
+def get_general_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
     user_type_filters = (
         get_user_type_filters(histo_type, user_type_mobile)
         if user_type_mobile is not None else None

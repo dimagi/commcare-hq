@@ -83,7 +83,7 @@ from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import get_stats_data, parse_args_for_es, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import get_general_stats_data, parse_args_for_es, ES_MAX_CLAUSE_COUNT
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
@@ -991,7 +991,7 @@ def stats_data(request):
         else:
             domain_info = [{"names": None, "display_name": _("All Domains")}]
 
-        stats_data = get_stats_data(
+        stats_data = get_general_stats_data(
             domain_info,
             histo_type,
             request.datespan,
