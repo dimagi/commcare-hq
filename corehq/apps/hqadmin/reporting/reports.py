@@ -491,7 +491,7 @@ def get_domain_stats_data(domain_params, datespan, interval='week',
     return format_return_data(histo_data, domains_before_date, datespan)
 
 
-def commtrack_form_submissions(domains, params_es, datespan, interval='week',
+def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
     mobile_workers = [a['_id'] for a in
             UserES().fields([]).mobile_users().run().raw_hits]
@@ -518,6 +518,7 @@ def commtrack_form_submissions(domains, params_es, datespan, interval='week',
 
 HISTO_TYPE_TO_FUNC = {
     "active_countries": get_active_countries_stats_data,
+    "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
 }
 
