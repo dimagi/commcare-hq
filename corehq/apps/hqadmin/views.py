@@ -918,18 +918,19 @@ def stats_data(request):
     if stats_data is not None:
         return json_response(stats_data)
 
-    if domain_params:
-        if len(domains) <= individual_domain_limit:
-            domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) < ES_MAX_CLAUSE_COUNT:
-            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-        else:
-            domain_info = [{
-                "names": None,
-                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-            }]
+    if len(domains) <= individual_domain_limit:
+        domain_info = [{"names": [d], "display_name": d} for d in domains]
+    elif len(domains) < ES_MAX_CLAUSE_COUNT:
+        domain_info = [{"names": [d for d in domains],
+                        "display_name": _("Domains Matching Filter")}]
     else:
-        domain_info = [{"names": None, "display_name": _("All Domains")}]
+        domain_info = [{
+            "names": None,
+            "display_name": _(
+                "All Domains (NOT applying filters. > %s projects)"
+                % ES_MAX_CLAUSE_COUNT
+            )
+        }]
 
     stats_data = get_general_stats_data(
         domain_info,
