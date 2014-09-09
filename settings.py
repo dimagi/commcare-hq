@@ -288,6 +288,7 @@ HQ_APPS = (
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
