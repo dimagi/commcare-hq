@@ -67,6 +67,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_active_dimagi_owned_gateway_projects,
     get_domain_stats_data,
     get_total_clients_data,
+    get_active_countries_stats_data,
+    get_countries_stats_data,
     commtrack_form_submissions,
     get_all_subscriptions_stats_data,
 )
@@ -899,6 +901,12 @@ def stats_data(request):
 
     domain_params, __ = parse_args_for_es(request, prefix='es_')
     domain_params.update(domain_params_es)
+
+    if histo_type == "countries":
+        return json_response(get_countries_stats_data(domain_params, request.datespan, interval=interval))
+
+    if histo_type == "active_countries":
+        return json_response(get_active_countries_stats_data(domain_params, request.datespan, interval=interval))
 
     if histo_type == "commtrack_forms":
         return json_response(commtrack_form_submissions(domain_params, additional_params_es, request.datespan, interval=interval))

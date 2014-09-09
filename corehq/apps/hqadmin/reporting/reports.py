@@ -92,6 +92,38 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains):
             .size(0))
 
 
+def get_active_countries_stats_data(params, datespan, interval='month',
+        datefield='received_on'):
+    """
+    Returns list of timestamps and how many countries were active in the 30 days
+    before the timestamp
+    """
+    real_domains = get_real_project_spaces(facets=params)
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        form_query = (FormES()
+            .in_domains(real_domains)
+            .submitted(gte=f, lte=t)
+            .terms_facet('domains', 'domain')
+            .size(0))
+
+        domains = form_query.run().facet('domains', "terms")
+        domains = [x['term'] for x in domains]
+        countries = (DomainES()
+                .in_domains(domains)
+                .terms_facet('countries', 'country'))
+
+        c = len(countries.run().facet('countries', 'terms'))
+        if c > 0:
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
+
+    return format_return_data(histo_data, 0, datespan)
+
+
 def domains_matching_plan(software_plan_edition, start, end):
     matching_subscriptions = Subscription.objects.filter(
         ((Q(date_start__gte=start) & Q(date_start__lte=end))
@@ -222,6 +254,28 @@ def get_active_dimagi_owned_gateway_projects(params, params_es, datespan,
         sms_query = get_sms_query(f, t, 'domains', 'domain', real_domains)
         domains = sms_query.filter(backend_filter).run()
         c = len(domains.facet('domains', 'terms'))
+        if c > 0:
+            histo_data.append({"count": c, "time": 1000 *
+                time.mktime(timestamp.timetuple())})
+
+    return format_return_data(histo_data, 0, datespan)
+
+
+def get_countries_stats_data(params, datespan, interval='month',
+        datefield='created_on'):
+    """
+    Returns list of timestamps and how many countries have been created
+    """
+    real_domains = get_real_project_spaces(facets=params)
+
+    histo_data = []
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        countries = (DomainES()
+                .in_domains(real_domains)
+                .created(lte=timestamp)
+                .terms_facet('countries', 'country'))
+
+        c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
