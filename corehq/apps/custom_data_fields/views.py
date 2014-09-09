@@ -139,7 +139,7 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         def _make_field(field):
-            return forms.CharField(required=field.is_required)
+            return forms.CharField(label=field.label, required=field.is_required)
 
         fields = {
             field.slug: _make_field(field) for field in self.model.fields
