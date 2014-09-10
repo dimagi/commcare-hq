@@ -522,14 +522,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     """
 
     @property
-    def known_supply_point_types(self):
-        return set(spt.name for spt in self.supply_point_types)
-
-    @property
-    def supply_point_categories(self):
-        return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
-
-    @property
     def requisitions_enabled(self):
         return self.requisition_config.enabled
 

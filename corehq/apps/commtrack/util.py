@@ -115,7 +115,6 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             LocationType(name='village', allowed_parents=['block'], administrative=True),
             LocationType(name='outlet', allowed_parents=['village']),
         ],
-        supply_point_types=[],
     )
     if requisitions_enabled:
         c.requisition_config = get_default_requisition_config()
