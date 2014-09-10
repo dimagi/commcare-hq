@@ -7,3 +7,6 @@ class InvalidMetaBlockException(InvalidDataException):
 
 class InvalidFormUpdateException(InvalidDataException):
     pass
+
+class InvalidCaseUpdateException(InvalidDataException):
+    pass
