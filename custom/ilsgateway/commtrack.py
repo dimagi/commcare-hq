@@ -2,6 +2,8 @@ from functools import partial
 import logging
 import traceback
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
@@ -61,7 +63,14 @@ def sync_ilsgateway_product(domain, ilsgateway_product):
 
 @retry(5)
 def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
-    user = WebUser.get_by_username(ilsgateway_webuser.email.lower())
+    username = ilsgateway_webuser.email.lower()
+    if not username:
+        try:
+            validate_email(ilsgateway_webuser.username)
+            username = ilsgateway_webuser.username
+        except ValidationError:
+            return None
+    user = WebUser.get_by_username(username)
     user_dict = {
         'first_name': ilsgateway_webuser.first_name,
         'last_name': ilsgateway_webuser.last_name,
@@ -82,7 +91,7 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
 
     if user is None:
         try:
-            user = WebUser.create(domain=None, username=ilsgateway_webuser.email.lower(),
+            user = WebUser.create(domain=None, username=username,
                                   password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
             user.add_domain_membership(domain, role_id=role_id, location_id=location_id)
             user.save()
@@ -249,7 +258,7 @@ def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
 def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
     save_checkpoint(checkpoint, "webuser", limit, offset, kwargs.get('date', None))
     for user in endpoint.get_webusers(**kwargs):
-        if user.email:
+        if user.email or user.username:
             if not user.is_superuser:
                 setattr(user, 'role_id', UserRole.get_read_only_role_by_domain(project).get_id)
             sync_ilsgateway_webuser(project, user)
