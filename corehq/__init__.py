@@ -267,6 +267,7 @@ ADMIN_REPORTS = (
 from corehq.apps.hqwebapp.models import *
 
 TABS = (
+    DashboardTab,
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,
