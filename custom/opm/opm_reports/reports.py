@@ -12,12 +12,12 @@ import logging
 import simplejson
 import re
 from dateutil import parser
-from decimal import Decimal
 
 from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
+from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -35,7 +35,6 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
-from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -337,10 +336,14 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     report_template_path = "opm/report.html"
     printable = True
     exportable = True
-    exportable_all = True
-    export_format_override = "csv"
+    exportable_all = False
+    export_format_override = Format.UNZIPPED_CSV
     block = ''
     load_snapshot = True
+
+    @property
+    def show_html(self):
+        return getattr(self, 'rendered_as', 'html') not in ('print', 'export')
 
     @property
     def fields(self):
@@ -349,11 +352,11 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     @property
     def report_subtitles(self):
         subtitles = ["For filters:",]
-        if self.filter_data.get('awcs', []):
+        if self.filter_data.get('awc', []):
             subtitles.append("Awc's - %s" % ", ".join(self.awcs))
-        elif self.filter_data.get('gp', ''):
+        if self.filter_data.get('gp', []):
             subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
-        elif self.filter_data.get('blocks', []):
+        if self.filter_data.get('block', []):
             subtitles.append("Blocks - %s" % ", ".join(self.blocks))
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
@@ -456,6 +459,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
             rows.append(data)
+
         return rows
 
     @property
@@ -515,13 +519,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         self.use_datatables = False
         self.override_template = "opm/print_report.html"
         return HttpResponse(self._async_context()['report'])
-
-    @property
-    @request_cache("export")
-    def export_response(self):
-        export_all_rows_task.delay(self.__class__, self.__getstate__())
-
-        return HttpResponse()
 
     @property
     @memoized
@@ -631,7 +628,9 @@ class CaseReportMixin(object):
         for row in self.row_objects + self.extra_row_objects:
             rows.append([getattr(row, method) for
                 method, header, visible in self.model.method_map])
-        return rows
+
+        sorted_rows = sorted(rows, key=lambda item: item[0])
+        return sorted_rows
 
     def filter(self, fn, filter_fields=None):
         # TODO test with snapshots.
@@ -654,36 +653,42 @@ class CaseReportMixin(object):
         self.extra_row_objects = self.extra_row_objects + row_objects
 
 
-def join_lists(a, b):
-    def zip_fn((x, y)):
-        if isinstance(x, int):
-            return x + y
-        return x
-    return map(zip_fn, zip(a, b))
-
-
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     name = "Beneficiary Payment Report"
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
+
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
         # Consolidate rows with the same account number
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == 'account_number':
-                account_num = i
-        rows = OrderedDict()
+        accounts = OrderedDict()
         for row in raw_rows:
-            account_number = row[account_num]
-            existing_row = rows.get(account_number)
-            if existing_row is None:
-                rows[account_number] = row
+            account_number = row[self.column_index('account_number')]
+            existing_row = accounts.get(account_number, [])
+            accounts[account_number] = existing_row + [row]
+        return map(self.join_rows, accounts.values())
+
+    def join_rows(self, rows):
+        def zip_fn((i, values)):
+            if isinstance(values[0], int):
+                return sum(values)
+            elif i == self.column_index('case_id'):
+                unique_values = set(v for v in values if v is not None)
+                if self.show_html:
+                    return ''.join('<p>{}</p>'.format(v) for v in unique_values)
+                else:
+                    return ','.join(unique_values)
             else:
-                rows[account_number] = join_lists(existing_row, row)
-        return rows.values()
+                return sorted(values)[-1]
+        return map(zip_fn, enumerate(zip(*rows)))
 
 
 class MetReport(CaseReportMixin, BaseReport):

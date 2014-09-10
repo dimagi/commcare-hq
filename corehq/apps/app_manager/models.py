@@ -370,6 +370,15 @@ class AdvancedFormActions(DocumentSchema):
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
 
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in [a for a in self.open_cases if a.parent_tag]:
+            if not parent_case_type:
+                yield action
+            else:
+                parent = self.actions_meta_by_tag[action.parent_tag]['action']
+                if parent.case_type == parent_case_type:
+                    yield parent
+
     def get_case_tags(self):
         for action in self.get_all_actions():
             yield action.case_tag

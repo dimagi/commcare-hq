@@ -395,10 +395,10 @@ function ValueOrNoneUI(opts) {
         }
     };
     self.enterInput = function (data, event) {
-        self.setHasValue(true, event);
         if (self.allowed()) {
             self.hasFocus(true);
         }
+        self.setHasValue(true, event);
     };
     self.exitInput = function (data, event) {
         self.setHasValue(false, event);

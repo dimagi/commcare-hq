@@ -215,8 +215,12 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
-        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
-        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
+        name = self.case_property('name', EMPTY_FIELD)
+        if getattr(self.report,  'show_html', True):
+            url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+            self.name = "<a href='%s'>%s</a>" % (url, name)
+        else:
+            self.name = name
         self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
@@ -453,9 +457,6 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            if not self.is_vhnd_last_six_months:
-                return True
-
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             forms = self.filtered_forms(CHILDREN_FORMS)
             return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
@@ -654,7 +655,8 @@ class Beneficiary(OPMCaseRow):
         ('child_cash', _("Child Followup Form"), True),
         ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
-        ('owner_id', _("Owner ID"), False)
+        ('case_id', _('Case ID'), True),
+        ('owner_id', _("Owner ID"), False),
     ]
 
     def __init__(self, case, report, child_index=1):

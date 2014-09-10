@@ -62,11 +62,13 @@
     </ul>
     {% if edit and allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
-        <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
+        <p>
+        <i class="icon-share"></i> {% trans "Copy form to: " %}
         <select name='to_module_id'>{% for mod in app.get_modules %}
             <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-        {% endfor %}</select>
-        <button class='btn btn-primary' type="submit">Copy</button>
+            {% endfor %}</select>
+        <button class='btn btn-primary' type="submit">{% trans "Copy" %}</button>
+        </p>
     </form>
     {% endif %}
 </div>

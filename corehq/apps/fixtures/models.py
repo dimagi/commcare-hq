@@ -1,3 +1,4 @@
+from decimal import Decimal
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
@@ -250,7 +251,9 @@ class FixtureDataItem(Document):
                     xField = ElementTree.SubElement(xData, field.field_name)
                     xField.text = field_with_attr.field_value or ""
                     for attribute in field_with_attr.properties:
-                        xField.attrib[attribute] = field_with_attr.properties[attribute]
+                        val = field_with_attr.properties[attribute]
+                        xField.attrib[attribute] = unicode(val) if isinstance(val, Decimal) else val
+
         return xData
 
     def get_groups(self, wrap=True):
