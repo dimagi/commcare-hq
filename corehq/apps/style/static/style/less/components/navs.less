@@ -3,6 +3,11 @@
 
 // NAV LIST Extensions
 // --------
+.nav-list {
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+  margin-bottom: 0;
+}
 
 .nav-list .nav-header {
     font-size: @baseFontSize - 1;
@@ -35,6 +40,116 @@
         background-color: @blue;
     }
 }
+
+  #wrapper {
+      height: 100%;
+      padding-left: 0;
+  }
+
+  #menu-toggle {
+      position: fixed;
+      z-index: 1;
+      top: 50%;
+      &:before { content: ">"; }
+  }
+
+  #wrapper.toggled {
+      padding-left: 290px;
+
+      #menu-toggle {
+          &:before { content: "<"; }
+      }
+  }
+
+  #sidebar-wrapper {
+      height: 100%;
+      z-index: 1000;
+      position: relative;
+      width: 0;
+      margin-left: -290px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      word-break: normal;
+      background-color: #f4f4f4 !important
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+      width: 290px;
+  }
+
+  #page-content-wrapper {
+      width: 100%;
+      padding: 15px;
+  }
+
+  #wrapper.toggled #page-content-wrapper {
+      position: relative;
+      margin-right: -290px;
+  }
+
+  /* Sidebar Styles */
+
+  .sidebar-nav {
+      top: 0;
+      width: 290px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+  }
+
+  .sidebar-nav li a:active,
+  .sidebar-nav li a:focus {
+      text-decoration: none;
+  }
+
+  .sidebar-nav > .sidebar-brand {
+      height: 65px;
+      font-size: 18px;
+      line-height: 60px;
+  }
+
+  .sidebar-nav > .sidebar-brand a {
+      color: #999999;
+  }
+
+  .sidebar-nav > .sidebar-brand a:hover {
+      color: #fff;
+      background: none;
+  }
+
+  @media (orientation:landscape) {
+
+      #menu-toggle {
+        display: none;
+      }
+
+      #wrapper {
+          padding-left: 290px;
+      }
+
+      #wrapper.toggled {
+          padding-left: 0;
+      }
+
+      #sidebar-wrapper {
+          width: 290px;
+      }
+
+      #wrapper.toggled #sidebar-wrapper {
+          width: 0;
+      }
+
+      #page-content-wrapper {
+          padding: 20px;
+      }
+
+      #wrapper.toggled #page-content-wrapper {
+          position: relative;
+          margin-right: 0;
+      }
+
+  }
+
 
 // hq-content
 

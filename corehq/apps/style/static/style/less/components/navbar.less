@@ -28,7 +28,7 @@
 // TOOLBAR IN NAVBAR
 // ----------
 .navbar .btn-toolbar {
-    margin: 0;
+    margin: 0 !important;
 }
 
 
@@ -102,3 +102,77 @@
         }
     }
 }
+
+.navbar .btn-project {
+    @media (orientation:portrait) {
+        font-size: 0 !important;
+        height: 18px;
+        display: inline-flex;
+    }
+}
+
+.navbar .btn-project i {
+    @media (orientation:portrait) {
+        font-size: 14px;
+        margin-top: 4px !important;
+        margin-right: 2px;
+    }
+}
+
+.navbar .btn-primary {
+    @media (orientation:portrait) {
+        font-size: 0 !important;
+        display: inline-flex;
+        height: 18px;
+    }
+}
+
+.navbar .btn-primary i {
+    @media (orientation:portrait) {
+        font-size: 14px;
+        margin-top: 4px !important;
+        margin-right: 2px;
+    }
+}
+
+.navbar-collapse {
+    @media (orientation:landscape) {
+        height: auto !important;
+    }
+}
+
+.navbar-collapse.in{
+    @media (orientation:portrait) {
+        overflow: visible;
+    }
+}
+
+.navbar-collapse{
+    @media (orientation:landscape) {
+        overflow: visible;
+    }
+}
+
+.navbar .btn-primary i {
+    @media (orientation:landscape) {
+        display: none !important;
+    }
+}
+
+
+.navbar .btn-navbar {
+    @media (orientation:landscape) {
+        display: none !important;
+    }
+}
+
+.navbar .btn-navbar {
+    @media (orientation:portrait) {
+        display: inline-block !important;
+    }
+}
+
+.navbar .brand {
+  margin-top: 12px;
+}
+

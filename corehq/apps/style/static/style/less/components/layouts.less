@@ -6,13 +6,9 @@
 
     // sticky footer
     min-height: 100%;
-    height: auto !important;
+//    height: auto !important;
     height: 100%;
-    @clearFooterHeight: @footerHeight + @gridGutterWidth/4;
-    margin-bottom: -@footerHeight;
-    .clearfix();
-    .clear-height(@clearFooterHeight);
-}
+    }
 .hq-container-fluid .sidebar {
     nav {
         padding: @gridGutterWidth 0;
@@ -23,9 +19,9 @@
         padding-left: @gridGutterWidth;
     }
 }
-.hq-double-col {
-    #gradient > .horizontal-two-column-color(@sideNavigationBackground, @white, (@fluidGridColumnWidth*2+@fluidGridGutterWidth));
-}
+//.hq-double-col {
+//    #gradient > .horizontal-two-column-color(@sideNavigationBackground, @white, (@fluidGridColumnWidth*2+@fluidGridGutterWidth));
+//}
 
 .old-style {
     #gradient > .vertical(#ffffff, #ffffff);
@@ -86,4 +82,19 @@
 
 #report-content {
     clear: both;
+}
+
+.questions {
+    @media (max-width: 654px) {
+        float: left
+    }
+
+    @media (min-width: 654px) {
+        float: right
+    }
+}
+
+.container{
+    max-width: 940px;
+    width: auto;
 }

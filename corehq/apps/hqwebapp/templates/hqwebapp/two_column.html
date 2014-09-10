@@ -42,14 +42,19 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row-fluid">
-        <div class="sidebar span2">
+
+    <div id="wrapper" class="row-fluid">
+        <div id="sidebar-wrapper" class="sidebar span2">
             {% block sidebar %}
-            {% format_sidebar %}
+                {% format_sidebar %}
             {% endblock %}
         </div>
-        <div class="hq-content span10 {% block column_style %}{% endblock %} ">
+        <div>
+            <a href="#menu-toggle" class="btn btn-default btn-lg" id="menu-toggle"></a>
+        </div>
+        <div id="page-content-wrapper" class="hq-content span10 {% block column_style %}{% endblock %} ">
             {% block main_column %}{% endblock %}
         </div>
     </div>
+
 {% endblock content %}
