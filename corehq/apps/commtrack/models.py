@@ -487,40 +487,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
         )
 
-
-    """
-    @property
-    def keywords(self):
-        return self._keywords(self.actions, multi)
-
-    # TODO clean all this up
-    def stock_keywords(self):
-        return self.keywords()
-    def requisition_keywords(self):
-        return self._keywords(self.requisition_config.actions if self.requisitions_enabled else [], False)
-
-    def all_keywords(self, multi=False):
-        return self._keywords(self.all_actions(), multi)
-
-    def _by_name(self, action_list):
-        return dict((action_config.action_name, action_config) for action_config in action_list)
-
-    @property
-    def actions_by_name(self):
-        return self._by_name(self.actions)
-
-    @property
-    def all_actions_by_name(self):
-        return self._by_name(self.all_actions())
-
-    @property
-    def all_actions_by_type(self):
-        return dict((action_config.action_type, action_config) for action_config in self.all_actions())
-
-    def get_action_by_type(self, action_type):
-        return self.all_actions_by_type[action_type]
-    """
-
     @property
     def requisitions_enabled(self):
         return self.requisition_config.enabled
