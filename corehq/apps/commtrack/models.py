@@ -779,7 +779,7 @@ class SupplyPointCase(CommCareCase):
         app_label = "commtrack"
 
     def open_requisitions(self):
-        return RequisitionCase.open_for_location(self.domain, self.location_[-1])
+        return RequisitionCase.open_for_location(self.domain, self.location_id)
 
     @property
     @memoized
