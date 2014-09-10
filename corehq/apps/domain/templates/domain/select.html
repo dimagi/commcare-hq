@@ -5,7 +5,7 @@
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
 {% block login-content %}
-<div class="row">
+<div>
     <div class="page-header">
         <h1>{% trans "Dashboard" %}</h1>
     </div>
@@ -36,7 +36,7 @@
         {% list_my_orgs request %}
     {% endif %}
     </div>
-    <div class="span4">
+    <div class="span4 questions">
         <aside class="well">
             <h3>{% trans "Have a new idea?" %}</h3>
             <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
