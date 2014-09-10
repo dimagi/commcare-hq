@@ -1,7 +1,6 @@
-import logging
 from urllib import urlencode
 from urllib2 import urlopen
-from corehq.apps.sms.util import create_billable_for_sms, clean_phone_number
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 from corehq.apps.tropo.forms import TropoBackendForm
@@ -41,8 +40,5 @@ class TropoBackend(SMSBackend):
         })
         url = "https://api.tropo.com/1.0/sessions?%s" % params
         response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-
-        create_billable_for_sms(msg, TropoBackend.get_api_id(), delay=delay, response=response)
-
         return response
 

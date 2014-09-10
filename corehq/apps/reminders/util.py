@@ -71,7 +71,7 @@ def get_sample_list(domain):
     from casexml.apps.case.models import CommCareCaseGroup
     
     sample_list = []
-    for sample in CommCareCaseGroup.get_all(domain):
+    for sample in CommCareCaseGroup.get_by_domain(domain):
         sample_list.append({"code" : sample._id, "name" : sample.name})
     return sample_list
 
