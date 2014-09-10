@@ -1,7 +1,7 @@
 <nav>
 {% for section_title, navs in sections %}
-    <h2>{{ section_title }}</h2>
-    <ul class="nav">
+    <h2 class="text-hq-nav-header">{{ section_title }}</h2>
+    <ul class="nav nav-hq-sidebar">
         {% for nav in navs %}
             <li {% if nav.is_active and not nav.subpage %}class="active"{% endif %}>
                 <a href="{{ nav.url }}">

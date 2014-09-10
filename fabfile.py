@@ -280,7 +280,7 @@ def production():
     class Servers(object):
         db = ['hqdb0.internal.commcarehq.org']
         celery = ['hqcelery1.internal.commcarehq.org']
-        touch = ['hqtouch0.internal.commcarehq.org']
+        touch = ['hqtouch1.internal.commcarehq.org']
         django = ['hqdjango3.internal.commcarehq.org',
                   'hqdjango4.internal.commcarehq.org',
                   'hqdjango5.internal.commcarehq.org']
@@ -757,8 +757,12 @@ def hotfix_deploy():
 def deploy():
     """deploy code to remote host by checking out the latest via git"""
     _require_target()
-    if not console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) or \
-       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+    user_confirm = (
+        console.confirm("Hey girl, you sure you didn't mean to run AWESOME DEPLOY?", default=False) and
+        console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) and
+        console.confirm('Did you run "fab {env.environment} preindex_views"?'.format(env=env), default=False)
+    )
+    if not user_confirm:
         utils.abort('Deployment aborted.')
 
     run('echo ping!')  # workaround for delayed console response
@@ -1138,6 +1142,7 @@ def set_celery_supervisorconf():
     if env.reminder_case_update_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_saved_exports_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 

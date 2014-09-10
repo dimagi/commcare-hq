@@ -144,10 +144,11 @@ class UpdateUserPermissionForm(forms.Form):
 
         return is_update_successful
 
+
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
     last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=75, required=False)
+    email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
         initial=None,

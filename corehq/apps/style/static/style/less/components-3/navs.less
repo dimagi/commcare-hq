@@ -1,0 +1,30 @@
+.col-hq-sidebar {
+  background-color: #f4f4f4;
+  padding: 0;
+}
+
+.nav-hq-sidebar {
+  &.nav > li {
+    a {
+      padding: 3px 20px;
+    }
+    > a:hover {
+      background-color: #dbdbdb;
+    }
+    &.active {
+      a, a:link, a:visited, a:hover {
+        background-color: @brand-primary;
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+// ///////// BEGIN TEMPORARY BOOTSTRAP TRANSITION STYLES /////////
+.nav-hq-sidebar {
+  font-size: 13px;
+}
+// ///////// END TEMPORARY BOOTSTRAP TRANSITION STYLES /////////
+
+
+

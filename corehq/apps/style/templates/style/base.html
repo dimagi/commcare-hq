@@ -25,6 +25,14 @@
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/style.less' %}" />
         {% endcompress %}
         {% compress css %}
         {% block stylesheets %}{% endblock stylesheets %}
@@ -42,7 +50,8 @@
         {% endif %}
     </head>
     <body>
-        <div class="navbar navbar-default navbar-static-top">
+        <div id="hq-navigation"
+             class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
             <div class="container-fluid">
                 <div class="navbar-header">
                     <a href="{% url "homepage" %}" class="navbar-brand">
@@ -54,7 +63,7 @@
                         {% format_main_menu %}
                     {% endblock %}
                     {% if request.user.is_authenticated %}
-                        {% include 'style/includes/navigation_global.html' %}
+                        {% include 'hqwebapp/partials/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
@@ -63,7 +72,9 @@
         </div>
         {% block content %}{% endblock content %}
         <footer>
-            <nav class="navbar navbar-inverse navbar-fixed-bottom" role="navigation">
+            <nav id="hq-footer"
+                 role="navigation"
+                 class="navbar navbar-inverse navbar-fixed-bottom navbar-hq-footer">
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <a href="http://www.commcarehq.org/">
@@ -74,7 +85,7 @@
                                  alt="Powered by Dimagi, Inc." />
                         </a>
                     </div>
-                    <p class="text-align-center pull-left">
+                    <p class="text-align-center pull-left text-hq-copyright">
                         {% blocktrans %}
                             <a href="http://www.commcarehq.org/">CommCare HQ</a>
                             is copyright &copy;
@@ -88,24 +99,27 @@
                         <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                         &nbsp;|&nbsp;
                         <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                        &nbsp;|&nbsp;
+                        <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
                     </p>
                     <div class="btn-toolbar pull-right">
                         <button type="button"
-                                class="btn btn-warning"
+                                class="btn btn-footer-highlight"
                                 data-toggle="modal"
                                 data-target="#modalReportIssue">
+                            <i class="fa fa-comment"></i>&nbsp;
                             {% trans 'Report an Issue' %}
                         </button>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
                            target="_blank"
-                           class="btn btn-default">
-                            <i class="fa fa-info-sign"></i>
+                           class="btn btn-footer">
+                            <i class="fa fa-info-circle"></i>&nbsp;
                             {% trans 'CommCare Help Site' %}
                         </a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}"
                            target="_blank"
-                           class="btn btn-default">
-                            <i class="fa fa-envelope"></i>
+                           class="btn btn-footer">
+                            <i class="fa fa-envelope"></i>&nbsp;
                             {% trans 'Mailing List' %}
                         </a>
                     </div>
@@ -125,6 +139,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
         {% endcompress %}

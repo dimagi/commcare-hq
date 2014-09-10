@@ -46,24 +46,26 @@ branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
   - schedule # SK 7/17
-  - submissions-by-form+commconnect-reports  # Nick P / Ethan / J$ 8/25
-  - submissions-by-form  # Ethan 8/25
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
-  - vellum-requirejs # Daniel 6/12
   - admin-reports # Nick P 8/13
-  - archive-products+archive-to-deactivate # tw 8/14
-  - archive-to-deactivate  # cz 7/30
 #  - subscription-no-contact-info # bb 8/4
 #  - cachecomparisons  # SK 8/11
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
-  - vellum-requirejs+bootstrap3-stylin  # bb 8/20
-  - bootstrap3-stylin  # bb 8/20
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
+  - subscription-no-contact-info # bb 8/4
+  - fix-timeout # Nick P 8/26
+  - caselistmixin-refactor # Noah 8/14
+  - outputrefs # SK 9/6
+  - custom_user_data # tw+Ethan 9/9
+  - lwyszomi:better_date_filters_improvment
+  - lwyszomi:uservoice-pending-invitations
+  - lwyszomi:b3-mobile-layout
+  - lwyszomi:ilsgateway-bugs
 submodules:
   submodules/couchlog-src:
     branches:
@@ -83,7 +85,6 @@ submodules:
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
-      - update-jars # Noah 8/26
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status

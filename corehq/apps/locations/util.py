@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
-from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 import re
 from unidecode import unidecode
 
@@ -165,6 +165,13 @@ def get_default_column_data(domain, location_types):
     if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
         products = Product.by_domain(domain)
 
+        supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)
+
+        consumption_dict = build_consumption_dict(domain)
+
+        if not consumption_dict:
+            return data
+
         for loc_type in location_types:
             loc = get_loc_config(domain)[loc_type]
             if not loc.administrative:
@@ -175,14 +182,20 @@ def get_default_column_data(domain, location_types):
 
                 locations = Location.filter_by_type(domain, loc_type)
                 for loc in locations:
-                    sp = SupplyPointCase.get_or_create_by_location(loc)
+                    if loc._id in supply_point_map:
+                        sp_id = supply_point_map[loc._id]
+                    else:
+                        # this only happens if the supply point case did
+                        # not already exist
+                        sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
 
                     data['values'][loc._id] = [
-                        get_default_monthly_consumption(
+                        get_loaded_default_monthly_consumption(
+                            consumption_dict,
                             domain,
                             p._id,
                             loc_type,
-                            sp._id
+                            sp_id
                         ) or '' for p in products
                     ]
             else:
@@ -190,13 +203,19 @@ def get_default_column_data(domain, location_types):
     return data
 
 
-def dump_locations(response, domain):
+def dump_locations(response, domain, include_consumption=False):
     file = StringIO()
     writer = Excel2007ExportWriter()
 
     location_types = defined_location_types(domain)
 
-    defaults = get_default_column_data(domain, location_types)
+    if include_consumption:
+        defaults = get_default_column_data(domain, location_types)
+    else:
+        defaults = {
+            'headers': {},
+            'values': {}
+        }
 
     common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
     writer.open(

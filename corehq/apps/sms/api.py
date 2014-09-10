@@ -4,7 +4,7 @@ from celery.task import task
 import math
 
 from dimagi.utils.modules import to_function
-from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list, clean_text
+from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.smsbillables.models import SmsBillable
@@ -160,16 +160,7 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg, onerror=onerror)
-        if msg_sent:
-            store_billable.delay(msg)
         return msg_sent
-
-
-@task
-def store_billable(msg):
-    if not SmsBillable.objects.filter(log_id=msg._id).exists():
-        for _ in range(int(math.ceil(float(len(msg.text)) / 160))):
-            SmsBillable.create(msg)
 
 
 def send_message_via_backend(msg, backend=None, orig_phone_number=None,
@@ -208,6 +199,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None,
         except Exception:
             pass
         msg.save()
+        create_billable_for_sms(msg)
         return True
     except Exception:
         onerror()
@@ -329,7 +321,6 @@ def process_incoming(msg, delay=True):
                 'Attempted to simulate incoming sms from phone number not ' \
                 'verified with this domain'
             )
-    create_billable_for_sms(msg, msg.backend_api, delay=delay)
 
     if v is not None and v.verified:
         for h in settings.SMS_HANDLERS:
@@ -351,4 +342,16 @@ def process_incoming(msg, delay=True):
         if not process_sms_registration(msg):
             import verify
             verify.process_verification(msg.phone_number, msg)
+            
+    create_billable_for_sms(msg)
 
+
+def create_billable_for_sms(msg, delay=True):
+    try:
+        from corehq.apps.sms.tasks import store_billable
+        if delay:
+            store_billable.delay(msg)
+        else:
+            store_billable(msg)
+    except Exception as e:
+        logging.error("[BILLING] Errors Creating SMS Billable: %s" % e)

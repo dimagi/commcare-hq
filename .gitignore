@@ -35,6 +35,8 @@ dump.rdb
 **/less/*.css
 /staticmedia*
 
+submodules/vellum/Vellum
+
 ptop*.txt
 ptop*.json
 

@@ -11,16 +11,12 @@ import fluff
 
 from . import case_calcs, user_calcs
 
-
-def flat_field(fn):
-    def getter(item):
-        return unicode(fn(item) or "")
-    return fluff.FlatField(getter)
-
-
 # OpmCaseFluff and OpmUserFluff are unusual in that they store only
 # flat information about a specific case or user - no aggregation will
 # be performed
+from custom.utils.utils import flat_field
+
+
 class OpmCaseFluff(fluff.IndicatorDocument):
     def case_property(property):
         """
