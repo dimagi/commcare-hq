@@ -278,8 +278,8 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (hasattr(self.request, 'couch_user')
-            and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
+        return (self.couch_user
+                and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
 
 
 class ReportsTab(UITab):
