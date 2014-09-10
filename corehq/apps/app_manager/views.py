@@ -2827,9 +2827,155 @@ def _has_at_least_one_translation(row, prefix, langs):
     return bool(filter(None, [row[prefix+'_'+l] for l in langs]))
 
 
-# TODO: Split up this bad boy
-#       Easy split whould be one method that checks validity, one that processes
-#       Module sheets, and one that process form sheets
+def _process_modules_and_forms_sheet(rows, app):
+    """
+    Modify the translations and media references for the modules and forms in
+    the given app as per the data provided in rows.
+    :param rows:
+    :param app:
+    :return: None, modifies the given app/forms/modules in place.
+    """
+    for row in rows:
+        identifying_text = row.get('sheet_name', '').split('_')
+
+        if len(identifying_text) not in (1, 2):
+            messages.error('Invalid sheet_name "%s", skipping row.' % row.get('sheet_name', ''))
+            continue
+
+        module_index = int(identifying_text[0].replace("module", "")) - 1
+        document = app.modules[module_index]
+        if len(identifying_text) == 2:
+            form_index = int(identifying_text[1].replace("form", "")) - 1
+            document = document.forms[form_index]
+
+        if _has_at_least_one_translation(row, 'default', app.langs):
+            for lang in app.langs:
+                translation = row['default_%s' % lang]
+                if translation:
+                    document.name[lang] = row['default_%s' % lang]
+                else:
+                    document.name.pop(lang, None)
+
+        image = row.get('icon_filepath', None)
+        audio = row.get('audio_filepath', None)
+        if image == '':
+            image = None
+        if audio == '':
+            audio = None
+        document.media_image = image
+        document.media_audio = audio
+    app.save()
+
+def _update_case_list_translations(sheet, rows, app):
+    """
+    Modify the translations of a module case list display properties given
+    a sheet of translation data.
+
+    :param sheet:
+    :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
+    :param app:
+    :return: None. Modifies app/module in place.
+    """
+    module_index = int(sheet.worksheet.title.replace("module", "")) - 1
+    module = app.modules[module_index]
+
+    # TODO: wtf will happen with repeated details here
+    col_maps = [
+        {c.field:c for c in module.case_details.short.columns},
+        {c.field:c for c in module.case_details.long.columns},
+    ]
+
+    for row in rows:
+
+        ok_to_delete_translations = _has_at_least_one_translation(row, 'default', app.langs)
+        if ok_to_delete_translations:
+            for lang in app.langs:
+                translation = row['default_%s' % lang]
+
+                for col_map in col_maps:
+                    if row['case_property'] in col_map:
+                        headers = col_map[row['case_property']]['header']
+                        if translation:
+                            # Note: On HQ it is possible to set a header to the empty string.
+                            #       But, empty excel cells are given to us as empty strings.
+                            #       So, I'm making the decision to interpret this as "remove
+                            #       translation", not "set to empty string"
+                            headers[lang] = translation
+                        else:
+                            headers.pop(lang, None)
+        else:
+            raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
+            # I presume that at least one translation must be present
+    app.save()
+
+
+def _update_form_translations(sheet, rows, missing_cols, app):
+    """
+    Modify the translations of a form given a sheet of translation data.
+
+    :param sheet: a WorksheetJSONReader
+    :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
+    :param missing_cols:
+    :param app:
+    :return: None. Modifies app/form in place.
+    """
+    mod_text, form_text = sheet.worksheet.title.split("_")
+    module_index = int(mod_text.replace("module", "")) - 1
+    form_index = int(form_text.replace("form", "")) - 1
+    form = app.modules[module_index].forms[form_index]
+    try:
+        xform = form.wrapped_xform()
+    except AttributeError, e:
+        # This Form doesn't have an xform yet. It is empty.
+        # Tell the user this?
+        return
+    itext = xform.itext_node
+
+    for lang in app.langs:
+        translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
+        for row in rows:
+            question_id = row['label']
+            text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
+
+            # Create text node if it doesn't already exist and translations are to be updated
+            not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'image', 'audio', 'video']])
+            if text_node.exists() == False and len(not_none_translations) > 0:
+                text_node = _make_text_nodes(question_id, itext, lang)
+
+            # Add or remove translations
+            for trans_type in ['default', 'image', 'audio', 'video']:
+
+                if trans_type == 'default':
+                    #attribute_path = 'not(@*)'
+                    attributes = None
+                    value_node = next(n for n in text_node.findall("./{f}value") if 'form' not in n.attrib)
+                else:
+                    #attribute_path = "@form='%s'" % trans_type
+                    attributes = {'form': trans_type}
+                    value_node = text_node.find("./{f}value[@form='%s']" % trans_type)
+                #value_node = text_node.find("./{f}value[%s]" % attribute_path)
+
+                col_key = _get_col_key(trans_type, lang)
+                new_translation = row[col_key]
+                if not new_translation and col_key not in missing_cols:
+                    # If the cell corresponding to the label for this question in this language is empty, use the default language's label
+                    # NOTE: This won't help us if we're on the default language right now
+                    new_translation = row[_get_col_key(trans_type, app.langs[0])]
+
+                if new_translation:
+                    # create a value node if it doesn't already exist
+                    if not value_node.exists():
+                        e = etree.Element("{f}value".format(**namespaces), attributes)
+                        text_node.xml.add(e)
+                        value_node = WrappedNode(e)
+                    # Update the translation
+                    value_node.xml.text = new_translation
+
+    # Save the xform
+    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
+    app.save()
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
@@ -2906,133 +3052,13 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         if sheet.worksheet.title == "Modules_and_forms":
             # It's the first sheet
-            # TODO: update module/form names
-            # TODO: update icon/audio filepaths (this isn't translation though...)
-
-            for row in rows:
-                identifying_text = row.get('sheet_name', '').split('_')
-
-                if len(identifying_text) not in (1, 2):
-                    messages.error('Invalid sheet_name "%s", skipping row.' % row.get('sheet_name', ''))
-                    continue
-
-                module_index = int(identifying_text[0].replace("module", "")) - 1
-                document = app.modules[module_index]
-                if len(identifying_text) == 2:
-                    form_index = int(identifying_text[1].replace("form", "")) - 1
-                    document = document.forms[form_index]
-
-                if _has_at_least_one_translation(row, 'default', app.langs):
-                    for lang in app.langs:
-                        translation = row['default_%s' % lang]
-                        if translation:
-                            document.name[lang] = row['default_%s' % lang]
-                        else:
-                            document.name.pop(lang, None)
-
-                image = row.get('icon_filepath', None)
-                audio = row.get('audio_filepath', None)
-                if image == '':
-                    image = None
-                if audio == '':
-                    audio = None
-                document.media_image = image
-                document.media_audio = audio
-
+            _process_modules_and_forms_sheet(rows, app)
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
-            module_index = int(sheet.worksheet.title.replace("module", "")) - 1
-            module = app.modules[module_index]
-
-            # TODO: wtf will happen with repeated details here
-            col_maps = [
-                {c.field:c for c in module.case_details.short.columns},
-                {c.field:c for c in module.case_details.long.columns},
-            ]
-
-            for row in rows:
-
-                ok_to_delete_translations = _has_at_least_one_translation(row, 'default', app.langs)
-                if ok_to_delete_translations:
-                    #import ipdb; ipdb.set_trace()
-                    for lang in app.langs:
-                        translation = row['default_%s' % lang]
-
-                        for col_map in col_maps:
-                            if row['case_property'] in col_map:
-                                headers = col_map[row['case_property']]['header']
-                                if translation:
-                                    # Note: On HQ it is possible to set a header to the empty string.
-                                    #       But, empty excel cells are given to us as empty strings.
-                                    #       So, I'm making the decision to interpret this as "remove
-                                    #       translation", not "set to empty string"
-                                    headers[lang] = translation
-                                else:
-                                    headers.pop(lang, None)
-                else:
-                    raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
-                    # I presume that at least one translation must be present
-
+            _update_case_list_translations(sheet, rows, app)
         else:
             # It's a form sheet
-            mod_text, form_text = sheet.worksheet.title.split("_")
-            module_index = int(mod_text.replace("module", "")) - 1
-            form_index = int(form_text.replace("form", "")) - 1
-            form = app.modules[module_index].forms[form_index]
-            try:
-                xform = form.wrapped_xform()
-            except AttributeError, e:
-                # This Form doesn't have an xform yet. It is empty.
-                # Tell the user this?
-                continue
-            itext = xform.itext_node
-
-            # What the xml should look like:
-            # https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
-
-            for lang in app.langs:
-                translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
-                for row in rows:
-                    question_id = row['label']
-                    text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
-
-                    # Create text node if it doesn't already exist and translations are to be updated
-                    not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'image', 'audio', 'video']])
-                    if text_node.exists() == False and len(not_none_translations) > 0:
-                        text_node = _make_text_nodes(question_id, itext, lang)
-
-                    # Add or remove translations
-                    for trans_type in ['default', 'image', 'audio', 'video']:
-
-                        if trans_type == 'default':
-                            #attribute_path = 'not(@*)'
-                            attributes = None
-                            value_node = next(n for n in text_node.findall("./{f}value") if 'form' not in n.attrib)
-                        else:
-                            #attribute_path = "@form='%s'" % trans_type
-                            attributes = {'form': trans_type}
-                            value_node = text_node.find("./{f}value[@form='%s']" % trans_type)
-                        #value_node = text_node.find("./{f}value[%s]" % attribute_path)
-
-                        col_key = _get_col_key(trans_type, lang)
-                        new_translation = row[col_key]
-                        if not new_translation and col_key not in missing_cols:
-                            # If the cell corresponding to the label for this question in this language is empty, use the default language's label
-                            # NOTE: This won't help us if we're on the default language right now
-                            new_translation = row[_get_col_key(trans_type, app.langs[0])]
-
-                        if new_translation:
-                            # create a value node if it doesn't already exist
-                            if not value_node.exists():
-                                e = etree.Element("{f}value".format(**namespaces), attributes)
-                                text_node.xml.add(e)
-                                value_node = WrappedNode(e)
-                            # Update the translation
-                            value_node.xml.text = new_translation
-
-            # Save the xform
-            save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
-            app.save()
+            _update_form_translations(sheet, rows, missing_cols, app)
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
