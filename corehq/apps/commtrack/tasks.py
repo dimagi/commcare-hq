@@ -20,21 +20,6 @@ def import_locations_async(domain, file_ref_id):
 
 
 @task
-def import_stock_reports_async(download_id, domain, file_ref_id):
-    """
-    Same idea but for stock reports
-    """
-    download_ref = DownloadBase.get(file_ref_id)
-    with open(download_ref.get_filename(), 'rb') as f:
-        try:
-            results = import_stock_reports(domain, f)
-        except Exception, e:
-            results = "ERROR: %s" % e
-    ref = expose_download(results, 60*60*3, mimetype='text/csv')
-    cache.set(download_id, ref)
-
-
-@task
 def import_products_async(domain, file_ref_id):
     importer = SingleExcelImporter(import_products_async, file_ref_id)
     results = list(import_products(domain, importer))
