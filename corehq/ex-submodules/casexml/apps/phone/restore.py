@@ -132,7 +132,7 @@ class RestoreConfig(object):
                         if self.stock_settings.default_product_list \
                         else section_product_map[section_id]
 
-                    consumption_entries = filter(None, [
+                    consumption_entries = filter(lambda e: e is not None, [
                         consumption_entry(commtrack_case._id, p, section_id)
                         for p in consumption_product_ids
                     ])
