@@ -2866,6 +2866,7 @@ def _process_modules_and_forms_sheet(rows, app):
         document.media_audio = audio
     app.save()
 
+
 def _update_case_list_translations(sheet, rows, app):
     """
     Modify the translations of a module case list display properties given
@@ -2904,7 +2905,7 @@ def _update_case_list_translations(sheet, rows, app):
                         else:
                             headers.pop(lang, None)
         else:
-            raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
+            messages.error("You must provide at least one translation of the case propert '%s'" % row['case_property'])
             # I presume that at least one translation must be present
     app.save()
 
@@ -2946,14 +2947,11 @@ def _update_form_translations(sheet, rows, missing_cols, app):
             for trans_type in ['default', 'image', 'audio', 'video']:
 
                 if trans_type == 'default':
-                    #attribute_path = 'not(@*)'
                     attributes = None
                     value_node = next(n for n in text_node.findall("./{f}value") if 'form' not in n.attrib)
                 else:
-                    #attribute_path = "@form='%s'" % trans_type
                     attributes = {'form': trans_type}
                     value_node = text_node.find("./{f}value[@form='%s']" % trans_type)
-                #value_node = text_node.find("./{f}value[%s]" % attribute_path)
 
                 col_key = _get_col_key(trans_type, lang)
                 new_translation = row[col_key]
@@ -2971,7 +2969,6 @@ def _update_form_translations(sheet, rows, missing_cols, app):
                     # Update the translation
                     value_node.xml.text = new_translation
 
-    # Save the xform
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     app.save()
 
