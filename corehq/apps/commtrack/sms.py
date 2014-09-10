@@ -237,18 +237,6 @@ class StockReportParser(object):
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
 
-    # TODO determine if this is needed for anything, fix or delete
-    def requisition_bulk_action(self, action, args):
-        if args:
-            raise SMSError('extra arguments at end')
-
-        yield stockreport.BulkRequisitionResponse(
-            domain=self.domain,
-            action_type=action.action_type,
-            action_name=action.action_name,
-            location_id=self.location.location_[-1],
-        )
-
     def transaction_factory(self, baseclass):
         return lambda **kwargs: baseclass(
             domain=self.domain.name,
