@@ -394,4 +394,4 @@ def _get_location_from_form(form):
     return form.form['location']
 
 def _get_location_from_sp(sp):
-    return sp.location_[-1]
+    return sp.location_id
