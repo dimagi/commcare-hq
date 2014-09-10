@@ -89,9 +89,15 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
             logging.error(e)
     else:
         if domain not in user.get_domains():
-            user.add_domain_membership(domain, role_id=role_id, location_id=location_id)
+            user.add_domain_membership(domain, role_id=role_id, location_id=location_id,
+                                       is_admin=ilsgateway_webuser.is_superuser)
             user.save()
-
+        else:
+            dm = user.get_domain_membership(domain)
+            dm.role_id = role_id
+            dm.location_id = location_id
+            dm.is_admin = ilsgateway_webuser.is_superuser
+            user.save()
     return user
 
 
