@@ -65,7 +65,7 @@ get_none_or_value = lambda _object, _attribute: getattr(_object, _attribute) if 
 
 
 @periodic_task(
-    run_every=crontab(minute=1, hour=0),
+    run_every=crontab(minute=1, hour="*/6"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def new_update_case_properties():
