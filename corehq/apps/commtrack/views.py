@@ -3,10 +3,9 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required, \
+from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
     cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
@@ -18,14 +17,11 @@ from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from soil.util import expose_download, get_download_context
-import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
-    recalculate_domain_consumption_task
+from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
-import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 import copy
@@ -524,7 +520,6 @@ def charts(request, domain, template="commtrack/charts.html"):
         "response_data": response_data,
     }
     return render(request, template, ctxt)
-
 
 @login_and_domain_required
 def api_query_supply_point(request, domain):
