@@ -50,6 +50,7 @@ def attach_locations(xform, cases):
         case = cases[0]
         if case.location_ is not None:
             # should probably store this in computed_
+            xform.location_id = case.location_id
             xform.location_ = list(case.location_)
 
 
