@@ -372,7 +372,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except (UserUploadError, CouchUser.Inconsistent) as e:
-                    status_row['flag'] = '%s' % e
+                    status_row['flag'] = unicode(e)
 
             ret["rows"].append(status_row)
     finally:

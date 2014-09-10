@@ -1,12 +1,10 @@
-from calendar import monthrange
 from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
-import os
-from tempfile import NamedTemporaryFile
 import uuid
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from corehq.apps.reports.scheduled import get_scheduled_reports
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group
 from dimagi.utils.couch.database import get_db
@@ -96,44 +94,22 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
 
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
+
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def daily_reports():
-    # this should get called every half hour by celery
-    reps = ReportNotification.view("reportconfig/all_notifications",
-                                   startkey=["daily", datetime.utcnow().hour, datetime.utcnow().minute],
-                                   endkey=["daily", datetime.utcnow().hour, datetime.utcnow().minute, {}],
-                                   reduce=False,
-                                   include_docs=True).all()
-    for rep in reps:
+    for rep in get_scheduled_reports('daily'):
         send_report.delay(rep._id)
+
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def weekly_reports():
-    # this should get called every half hour by celery
-    now = datetime.utcnow()
-    reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["weekly", now.hour, now.minute, now.weekday()],
-                                   reduce=False,
-                                   include_docs=True).all()
-    for rep in reps:
+    for rep in get_scheduled_reports('weekly'):
         send_report.delay(rep._id)
+
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def monthly_reports():
-    now = datetime.utcnow()
-    reps = ReportNotification.view("reportconfig/all_notifications",
-                                   key=["monthly", now.hour, now.minute, now.day],
-                                   reduce=False,
-                                   include_docs=True).all()
-
-    if now.day == monthrange(now.year, now.month)[1]:
-        for day in range(now.day + 1, 31):
-            reps.append(ReportNotification.view("reportconfig/all_notifications",
-                                   key=["monthly", now.hour, day],
-                                   reduce=False,
-                                   include_docs=True).all())
-
-    for rep in reps:
+    for rep in get_scheduled_reports('monthly'):
         send_report.delay(rep._id)
 
 

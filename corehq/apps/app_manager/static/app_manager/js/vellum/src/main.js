@@ -4,6 +4,12 @@ require.config({
         vellum: "."
     },
     bundles: {
+        "global-deps": [
+            "jquery", 
+            "jquery-ui", 
+            "jquery.bootstrap", 
+            "css/css!../lib/jquery-ui/redmond/jquery-ui-1.8.14.custom"
+        ], 
         "local-deps": [
             "underscore", 
             "jquery.jstree", 
@@ -26,12 +32,6 @@ require.config({
             "vellum/uploader", 
             "vellum/window", 
             "vellum/polyfills"
-        ], 
-        "global-deps": [
-            "jquery", 
-            "jquery-ui", 
-            "jquery.bootstrap", 
-            "css/css!../lib/jquery-ui/redmond/jquery-ui-1.8.14.custom"
         ]
     }
 });

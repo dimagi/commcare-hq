@@ -1061,15 +1061,15 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        cc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
+        bcc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
         if self.account.dimagi_contact is not None:
-            cc.append(self.account.dimagi_contact)
+            bcc.append(self.account.dimagi_contact)
         for email in emails:
             send_HTML_email(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
-                cc=cc,
+                bcc=bcc,
             )
             logger.info(
                 "[BILLING] Sent %(days_left)s-day subscription reminder "
@@ -1296,11 +1296,17 @@ class Invoice(models.Model):
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
         if not contact_emails:
+            admins = WebUser.get_admins_by_domain(
+                self.subscription.subscriber.domain
+            )
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
-                "email to for the domain: %s" %
-                self.subscription.subscriber.domain)
+                "email to for the domain %s. Sending to domain admins instead: "
+                "%s." %
+                (self.subscription.subscriber.domain, ', '.join(admins))
+            )
+            contact_emails = [a.email if a.email else a.username for a in admins]
         return contact_emails
 
 
@@ -1622,7 +1628,7 @@ class CreditLine(models.Model):
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None,
                               payment_record=None, related_credit=None,
-                              reason=None):
+                              reason=None, web_user=None):
         note = note or ""
         if line_item is not None and invoice is not None:
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -1647,6 +1653,7 @@ class CreditLine(models.Model):
             line_item=line_item,
             invoice=invoice,
             related_credit=related_credit,
+            web_user=web_user,
         )
         credit_adjustment.save()
         self.balance += amount
@@ -1689,7 +1696,7 @@ class CreditLine(models.Model):
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None):
+                   note=None, reason=None, web_user=None):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -1740,7 +1747,7 @@ class CreditLine(models.Model):
                                           payment_record=payment_record,
                                           invoice=invoice, line_item=line_item,
                                           related_credit=related_credit,
-                                          reason=reason)
+                                          reason=reason, web_user=web_user)
         return credit_line
 
     @classmethod

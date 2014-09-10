@@ -10,10 +10,12 @@ Where staging.yaml looks as follows:
     branches:
       - feature1
       - feature2
+      - forkowner:feature3 # branch from fork of repository
     submodules:
       submodules/module1:
         branches:
           - feature1
+          - forkowner:feature2 # branch from fork of repository
       submodules/module2:
         trunk: develop
         branches:
@@ -62,12 +64,33 @@ class BranchConfig(jsonobject.JsonObject):
 
 def fetch_remote(base_config, name="origin"):
     jobs = []
-    for path in set(path for path, _ in base_config.span_configs()):
+    seen = set()
+    fetched = set()
+    for path, config in base_config.span_configs():
+        if path in seen:
+            continue
+        seen.add(path)
         git = get_git(path)
         print "  [{cwd}] fetching {name}".format(cwd=path, name=name)
         jobs.append(gevent.spawn(git.fetch, name))
+        for branch in (b for b in config.branches if ":" in b):
+            remote, branch = branch.split(":", 1)
+            if remote not in git.remote().split():
+                url = remote_url(git, remote)
+                print("  [{path}] adding remote: {remote} -> {url}"
+                      .format(**locals()))
+                git.remote("add", remote, url)
+            print "  [{path}] fetching {remote} {branch}".format(**locals())
+            jobs.append(gevent.spawn(git.fetch, remote, branch))
+            fetched.add(remote)
     gevent.joinall(jobs)
-    print "fetched {}".format(name)
+    print "fetched {}".format(", ".join(['origin'] + sorted(fetched)))
+
+
+def remote_url(git, remote, original="origin"):
+    origin_url = sh.grep(git.remote("-v"), original).split()[1]
+    repo_name = origin_url.rsplit("/", 1)[1]
+    return "https://github.com/{}/{}".format(remote, repo_name)
 
 
 def has_ref(git, ref):
@@ -84,9 +107,12 @@ def has_local(git, branch):
     return has_ref(git, "refs/heads/{}".format(branch))
 
 
-def has_remote(git, branch, remote="origin"):
-    """Return true if the named remote branch exists"""
-    return has_ref(git, "refs/remotes/{}/{}".format(remote, branch))
+def has_remote(git, ref):
+    """Return true if the named remote branch exists
+
+    :param ref: Remote ref (example: origin/branch-name)
+    """
+    return has_ref(git, "refs/remotes/{}".format(ref))
 
 
 def origin(branch):
@@ -104,7 +130,7 @@ def sync_local_copies(config):
         git = get_git(path)
         with OriginalBranch(git):
             for branch in [config.trunk] + config.branches:
-                if not has_local(git, branch):
+                if ":" in branch or not has_local(git, branch):
                     continue
                 git.checkout(branch)
                 unpushed = _count_commits('origin/{0}..{0}'.format(branch))
@@ -147,15 +173,20 @@ def rebuild_staging(config, print_details=True, push=True):
             git = get_git(path)
             git.checkout('-B', config.name, origin(config.trunk), '--no-track')
             for branch in config.branches:
-                if not has_local(git, branch):
-                    if not has_remote(git, branch):
+                remote = ":" in branch
+                if remote or not has_local(git, branch):
+                    if remote:
+                        remote_branch = branch.replace(":", "/", 1)
+                    else:
+                        remote_branch = origin(branch)
+                    if not has_remote(git, remote_branch):
                         not_found.append((path, branch))
                         print "  [{cwd}] {branch} NOT FOUND".format(
                             cwd=format_cwd(path),
                             branch=branch,
                         )
                         continue
-                    branch = origin(branch)
+                    branch = remote_branch
                 print "  [{cwd}] Merging {branch} into {name}".format(
                     cwd=path,
                     branch=branch,
@@ -165,7 +196,10 @@ def rebuild_staging(config, print_details=True, push=True):
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
                     merge_conflicts.append((path, branch, config.name))
-                    git.merge("--abort")
+                    try:
+                        git.merge("--abort")
+                    except sh.ErrorReturnCode_128:
+                        pass
                     print "FAIL"
                 else:
                     print "ok"
@@ -254,7 +288,7 @@ class DisableGitHooks(object):
             sh.mv(self.hidden_path, self.path)
 
 
-if __name__ == '__main__':
+def main():
     from sys import stdin
     import yaml
     config = yaml.load(stdin)
@@ -274,3 +308,7 @@ if __name__ == '__main__':
             sync_local_copies(config)
         if 'rebuild' in args:
             rebuild_staging(config, push=do_push)
+
+
+if __name__ == '__main__':
+    main()
