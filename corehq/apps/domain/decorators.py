@@ -259,6 +259,8 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
+cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+
 def require_previewer(view_func):
     def shim(request, *args, **kwargs):
         if not hasattr(request, 'couch_user') or not request.couch_user.is_previewer():

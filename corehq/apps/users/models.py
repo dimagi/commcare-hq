@@ -3,13 +3,11 @@ couch models go here
 """
 from __future__ import absolute_import
 from datetime import datetime
-import logging
 import re
 
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -1163,7 +1161,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
-                first_name=first_name, last_name=last_name
+                first_name=first_name, last_name=last_name, **kwargs
             )
 
         if uuid:
@@ -1964,6 +1962,13 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
                 yield web_user
+
+    @classmethod
+    def get_dimagi_emails_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            if user_doc['email'].endswith('@dimagi.com'):
+                yield user_doc['email']
 
 
 class FakeUser(WebUser):

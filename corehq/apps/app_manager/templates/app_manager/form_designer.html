@@ -3,53 +3,30 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block underscore %}
-    <script src="{% static 'formdesigner/src/js/lib/underscore-1.5.2.js' %}"></script>
-{% endblock %}
-
-{% block head %}
-    {{ block.super }}
-    <link href="{% static 'formdesigner/dist/vellum.min.css' %}" rel="stylesheet" />
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'formdesigner/dist/vellum.min.js' %}"></script>
-
-    {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
+<script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
+{% if not vellum_debug %}
+<link href="{% static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% elif vellum_debug == "dev-min" %}
+<link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        $(function () {
 
-            $("#edit").hide();
-            $('footer').addClass('fixed-footer');
-
-            var formSrc = {{ form.source|to_javascript_string }};
-            formdesigner.launch({
-                rootElement: $("#formdesigner"),
-                staticPrefix: '/static/formdesigner/src/',
+        var VELLUM_OPTIONS = {
+            {% if vellum_prerelease %}
+            {# use the default set of plugins otherwise #}
+            {# non-optional plugins don't need to be listed #}
+            plugins: ['itemset'],
+            {% endif %}
+            core: {
+                form: {{ form.source|to_javascript_string }},
+                formName: "{{ form.name|trans:app.langs|escapejs }}",
+                saveType: 'patch',
                 saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
                 patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
-                multimediaConfig: {
-                    uploadUrls: {
-                        image: '{% url "hqmedia_uploader_image" domain app.id %}',
-                        audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
-                        video: '{% url "hqmedia_uploader_video" domain app.id %}'
-                    },
-                    swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
-                    objectMap: {{ multimedia_object_map|JSON }},
-                    uploadControllerClass: HQMediaFileUploadController
-                },
-                windowConfig: {
-                    bottomOffset: $('footer').outerHeight(),
-                    leftOffset: function () {
-                        return $('.sidebar').outerWidth() + 2;
-                    },
-                    topOffset: function () {
-                        return $('header').outerHeight() + $('.hq-page-header-container').outerHeight();
-                    }
-                },
                 allowedDataNodeReferences: [
                     "meta/deviceID",
                     "meta/instanceID",
@@ -58,18 +35,70 @@
                     "meta/timeStart",
                     "meta/timeEnd"
                 ],
-                saveType: 'patch',
-                form: formSrc,
-                langs: {{ app.langs|JSON }},
-                formName: "{{ form.name|trans:app.langs|escapejs }}",
-                displayLanguage: {{ lang|JSON }},
+                onFormSave: function (data) {
+                    COMMCAREHQ.app_manager.updateDOM(data.update);
+                },
                 sessionid: {{ sessionid|JSON }}
-            });
-            formdesigner.on('form-saved', function (args) {
-                var response = args.response;
-                COMMCAREHQ.app_manager.updateDOM(response.update);
+            },
+            javaRosa: {
+                langs: {{ app.langs|JSON }},
+                displayLanguage: {{ lang|JSON }},
+            },
+            uploader: {
+                uploadUrls: {
+                    image: '{% url "hqmedia_uploader_image" domain app.id %}',
+                    audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
+                    video: '{% url "hqmedia_uploader_video" domain app.id %}'
+                },
+                objectMap: {{ multimedia_object_map|JSON }},
+                sessionid: {{ sessionid|JSON }}
+            },
+            windowManager: {
+                bottomOffset: $('footer').outerHeight(),
+                leftOffset: function () {
+                    return $('.sidebar').outerWidth() + 2;
+                },
+                topOffset: function () {
+                    return $('header').outerHeight() + 
+                        $('.hq-page-header-container').outerHeight();
+                }
+            }
+        };
+
+        define("jquery", [], function () { return window.jQuery; });
+        define("jquery-ui", ["jquery"], function () {});
+        define("jquery.bootstrap", ["jquery"], function () {});
+
+        require.config({
+            {% comment %} 
+            to use non-built files in HQ:
+                * clone Vellum into submodules/formdesigner
+                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+            {% endcomment %}
+            {% if not vellum_debug %}
+            baseUrl: "{% static 'app_manager/js/vellum/src' %}",
+            {% elif vellum_debug == "dev-min" %}
+            baseUrl: "{% static 'formdesigner/_build/src' %}",
+            {% else %}
+            baseUrl: "{% static 'formdesigner/src' %}",
+            {% endif %}
+            // handle very bad connections
+            waitSeconds: 60,
+            urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
+            paths: {
+                'jquery.vellum': 'main'
+            }
+        });
+
+        require(["jquery", "jquery.vellum"], function ($) {
+            $(function () {
+                $("#edit").hide();
+                $('footer').addClass('fixed-footer');
+
+                $('#formdesigner').vellum(VELLUM_OPTIONS);
             });
         });
+
     </script>
 {% endblock %}
 
@@ -126,14 +155,14 @@
             forward_keys: ['j', 'down'],
             back_keys: ['k', 'up'],
             element_list_generator: gen_change_question_elements,
-            start_fn: function() { $('#fd-question-changer').addClass('open') },
-            stop_fn: function() { $('#fd-question-changer').removeClass('open') },
+            start_fn: function() { $('.fd-question-changer').addClass('open') },
+            stop_fn: function() { $('.fd-question-changer').removeClass('open') },
             reset_index: true,
             regen_list_on_leave: true
         });
 
         function gen_tools_elements() {
-            return $('#fd-form-actions li a');
+            return $('.fd-form-actions li a');
         }
         var tools_navigator = new KeyboardNavigator();
         tools_navigator.init({
@@ -144,21 +173,21 @@
             forward_keys: ['j', 'down'],
             back_keys: ['k', 'up'],
             element_list_generator: gen_tools_elements,
-            start_fn: function() { $('#fd-form-actions .btn-group').addClass('open') },
-            stop_fn: function() { $('#fd-form-actions .btn-group').removeClass('open') },
+            start_fn: function() { $('.fd-form-actions .btn-group').addClass('open') },
+            stop_fn: function() { $('.fd-form-actions .btn-group').removeClass('open') },
             reset_index: true,
             regen_list_on_leave: true
         });
 
         function handle_properties_shortcut() {
-            $('#fd-props-content').find('input[type="text"]').first().focus();
+            $('.fd-props-content').find('input[type="text"]').first().focus();
             return false;
         }
 
         KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
             {
                 shortcut: nav_key + "+s",
-                handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
+                handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
                 desc: "Save Form"
             },
             {
@@ -183,7 +212,7 @@
             },
             {
                 shortcut: nav_key + "+c",
-                handler: KS.gen_click_fn("#fd-button-copy"),
+                handler: KS.gen_click_fn(".fd-button-copy"),
                 desc: "Make Copy of Selected Node"
             }
         ]);

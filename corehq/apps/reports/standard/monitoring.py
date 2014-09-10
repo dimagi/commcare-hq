@@ -8,11 +8,12 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -363,6 +364,22 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         ).first()
         return data['value'] if data else 0
 
+    @memoized
+    def forms_per_user(self, app_id, xmlns):
+        # todo: this seems to not work properly
+        # needs extensive QA before being used
+        query = (FormES()
+                 .domain(self.domain)
+                 .xmlns(xmlns)
+                 .submitted(gt=self.datespan.startdate_utc,
+                            lte=self.datespan.enddate_utc)
+                 .size(0)
+                 .user_facet())
+        if app_id and app_id != MISSING_APP_ID:
+            query = query.app(app_id)
+        res = query.run()
+        return res.facets.user.counts_by_term()
+
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
@@ -569,7 +586,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(ExpandedMobileWorkerFilter.for_user(user.user_id))
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 

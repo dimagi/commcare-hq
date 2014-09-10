@@ -35,14 +35,21 @@ The backbone app consists of several ``Backbone.View``\ s subclasses. What follo
     Renders the table displaying the currently selected case's properties.
 
 ``cloudCare.AppView``
-    AppView holds the module and form list views. It is also responsible for inserting the actual form html that the touchforms process generates into the DOM (see its ``_playForm`` method). AppView also inserts ``cloudCare.CaseMainView``\ s as necessary.
+    AppView holds the module and form list views.
+    It is also responsible for inserting the form html into the DOM.
+    This html is constructed using JSON returned by the touchforms process and several js libs
+    found in the ``/touchforms/formplayer/static/formplayer/script/`` directory. This is kicked off by the AppView's ``_playForm`` method.
+    AppView also inserts ``cloudCare.CaseMainView``\ s as necessary.
 
 ``cloudCare.AppMainView``
     AppMainView (not to be confused with AppView) holds all of the other views and is the entry point for the application. Most of the applications event handling is set up inside AppMainView's ``initialize`` method. The AppMainView has a router. Event handlers are set on this router to modify the state of the backbone application when the browser's back button is used, or when the user enters a link to a certain part of the app (like a particular form) directly.
 
 Touchforms
 ----------
-The backbone app is not responsible for rendering the form. This is done instead by our XForms player, touchforms. touchforms runs as a separate process on our servers, and sends html to the backbone application to be inserted into the DOM. Touchforms is written in jython, and serves as a wrapper around the JavaRosa that powers our mobile applications.
+The backbone app is not responsible for processing the XFrom.
+This is done instead by our XForms player, touchforms.
+Touchforms runs as a separate process on our servers, and sends JSON to the backbone application representing the structure of the XForm.
+Touchforms is written in jython, and serves as a wrapper around the JavaRosa that powers our mobile applications.
 
 Offline Cloudcare
 -----------------

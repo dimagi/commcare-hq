@@ -102,24 +102,25 @@ class DomainInvoiceFactory(object):
             self.domain.name, created_by=self.__class__.__name__,
             created_by_invoicing=True)[0]
         if account.date_confirmed_extra_charges is None:
-            subject = "[%s] Invoice Generation Issue" % self.domain.name
-            email_content = render_to_string(
-                'accounting/invoice_error_email.html', {
-                    'project': self.domain.name,
-                    'error_msg': "This project is incurring charges on their "
-                                 "Community subscription, but they haven't "
-                                 "agreed to the charges yet. Someone should "
-                                 "follow up with this project to see if everything "
-                                 "is configured correctly or if communication "
-                                 "needs to happen between Dimagi and the project's"
-                                 "admins. For now, the invoices generated are "
-                                 "marked as Do Not Invoice.",
-                }
-            )
-            send_HTML_email(
-                subject, settings.BILLING_EMAIL, email_content,
-                email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
-            )
+            if self.domain.is_active:
+                subject = "[%s] Invoice Generation Issue" % self.domain.name
+                email_content = render_to_string(
+                    'accounting/invoice_error_email.html', {
+                        'project': self.domain.name,
+                        'error_msg': "This project is incurring charges on their "
+                                     "Community subscription, but they haven't "
+                                     "agreed to the charges yet. Someone should "
+                                     "follow up with this project to see if everything "
+                                     "is configured correctly or if communication "
+                                     "needs to happen between Dimagi and the project's"
+                                     "admins. For now, the invoices generated are "
+                                     "marked as Do Not Invoice.",
+                    }
+                )
+                send_HTML_email(
+                    subject, settings.BILLING_EMAIL, email_content,
+                    email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
+                )
             do_not_invoice = True
         if not BillingContactInfo.objects.filter(account=account).exists():
             # No contact information exists for this account.

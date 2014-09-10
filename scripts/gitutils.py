@@ -20,7 +20,10 @@ class OriginalBranch(object):
         return self.original_branch
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.git.checkout(self.original_branch)
+        try:
+            self.git.checkout(self.original_branch)
+        except Exception as err:
+            print "cannot checkout '{}': {}".format(self.original_branch, err)
 
 
 def git_current_branch(git=None):

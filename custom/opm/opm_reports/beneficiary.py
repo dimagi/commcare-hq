@@ -70,9 +70,13 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
-        if report.is_rendered_as_email:
+
+    @property
+    def readable_status(self):
+        if self.report.is_rendered_as_email:
             with localize('hin'):
-                self.status = _(self.status)
+                return _(self.status)
+        return self.status
 
     def child_xpath(self, template):
         return template.format(num=self.child_index)
@@ -211,12 +215,17 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
-        url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
-        self.name = "<a href='%s'>%s</a>" % (url, self.case_property('name', EMPTY_FIELD))
+        name = self.case_property('name', EMPTY_FIELD)
+        if getattr(self.report,  'show_html', True):
+            url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
+            self.name = "<a href='%s'>%s</a>" % (url, name)
+        else:
+            self.name = name
         self.awc_name = self.case_property('awc_name', EMPTY_FIELD)
         self.block_name = self.case_property('block_name', EMPTY_FIELD)
         self.husband_name = self.case_property('husband_name', EMPTY_FIELD)
         self.bank_name = self.case_property('bank_name', EMPTY_FIELD)
+        self.bank_branch_name = self.case_property('bank_branch_name', EMPTY_FIELD)
         self.ifs_code = self.case_property('ifsc', EMPTY_FIELD)
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
@@ -448,24 +457,9 @@ class OPMCaseRow(object):
     @property
     def child_breastfed(self):
         if self.child_age == 6 and self.block == 'atri':
-            if not self.is_vhnd_last_six_months:
-                return True
-
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             forms = self.filtered_forms(CHILDREN_FORMS)
             return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
-
-    @property
-    def live_delivery(self):
-        # NOTE: this can be flagged several months after the actual delivery date
-        # since that is in a question in the form but could be reported several months
-        # after. This is known and expected behavior.
-        for form in self.filtered_forms(DELIVERY_XMLNS, months_before=1):
-            outcome = form.form.get('mother_preg_outcome')
-            if outcome == '1':
-                return True
-            elif outcome in ['2', '3']:
-                return False
 
     @property
     def weight_grade_normal(self):
@@ -587,7 +581,7 @@ class ConditionsMet(OPMCaseRow):
         ('awc_name', _("AWC Name"), True),
         ('block_name', _("Block Name"), True),
         ('husband_name', _("Husband Name"), True),
-        ('status', _("Current status"), True),
+        ('readable_status', _("Current status"), True),
         ('preg_month_display', _('Pregnancy Month'), True),
         ('child_name', _("Child Name"), True),
         ('child_age_display', _("Child Age"), True),
@@ -650,6 +644,7 @@ class Beneficiary(OPMCaseRow):
         ('husband_name', _("Husband Name"), True),
         ('awc_name', _("AWC Name"), True),
         ('bank_name', _("Bank Name"), True),
+        ('bank_branch_name', _("Bank Branch Name"), True),
         ('ifs_code', _("IFS Code"), True),
         ('account_number', _("Bank Account Number"), True),
         ('block_name', _("Block Name"), True),
@@ -657,11 +652,11 @@ class Beneficiary(OPMCaseRow):
         ('child_count', _("Number of Children"), True),
         ('bp1_cash', _("Birth Preparedness Form 1"), True),
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
-        ('delivery_cash', _("Delivery Form"), True),
         ('child_cash', _("Child Followup Form"), True),
-        ('year_end_bonus_cash', _("Birth Spacing Bonus"), True),
+        ('year_end_bonus_cash', _("Bonus Payment"), True),
         ('total', _("Amount to be paid to beneficiary"), True),
-        ('owner_id', _("Owner ID"), False)
+        ('case_id', _('Case ID'), True),
+        ('owner_id', _("Owner ID"), False),
     ]
 
     def __init__(self, case, report, child_index=1):
@@ -669,11 +664,10 @@ class Beneficiary(OPMCaseRow):
         self.child_count = 0 if self.status == "pregnant" else 1
         self.bp1_cash = MONTH_AMT if self.bp1 else 0
         self.bp2_cash = MONTH_AMT if self.bp2 else 0
-        self.delivery_cash = MONTH_AMT if self.live_delivery else 0
         self.child_cash = MONTH_AMT if self.child_followup else 0
         self.total = min(
             MONTH_AMT,
-            self.bp1_cash + self.bp2_cash + self.delivery_cash + self.child_cash
+            self.bp1_cash + self.bp2_cash + self.child_cash
         )
         self.total += self.year_end_bonus_cash
         # Show only cases that require payment

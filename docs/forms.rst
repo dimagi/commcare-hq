@@ -1,17 +1,19 @@
 Forms in HQ
-==========
+===========
 
 Best practice principles:
 
 - Use as little hardcoded HTML as possible.
 - Submit and validate forms asynchronously to your class-based-view's `post` method.
-- Be consistent with style across HQ. We are currently using
-`Bootstrap 2.3's horizontal forms <http://bootstrapdocs.com/v2.3.1/docs/base-css.html#forms>`
-across HQ.
+- Be consistent with style across HQ. We are currently using `Bootstrap 2.3's
+  horizontal forms <bootstrap_forms>`_ across HQ.
 - Use `django.forms`.
 - Use `crispy forms <http://django-crispy-forms.readthedocs.org/en/latest/>` for field layout.
 
+.. _bootstrap_forms: http://bootstrapdocs.com/v2.3.1/docs/base-css.html#forms
+
 .. _async_form_example:
+
 An Example Complex Asynchronous Form With Partial Fields
 --------------------------------------------------------
 

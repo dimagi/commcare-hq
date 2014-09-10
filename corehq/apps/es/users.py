@@ -24,7 +24,7 @@ def domain(domain):
         filters.term("domain_memberships.domain.exact", domain)
     )
 
-def username(self, username):
+def username(username):
     return filters.term("username.exact", username)
 
 def web_users():

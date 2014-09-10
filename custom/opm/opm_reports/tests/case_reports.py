@@ -83,6 +83,7 @@ class OPMCase(CommCareCase):
 
     def __init__(self, forms=None, **kwargs):
         super(OPMCase, self).__init__(**kwargs)
+        self._id = "z640804p375ps5u2yx7"
         self._fake_forms = forms if forms is not None else []
 
     def get_forms(self):

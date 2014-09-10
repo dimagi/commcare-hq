@@ -226,6 +226,7 @@ class SmsBillable(models.Model):
             phone_number=phone_number,
             direction=direction,
             date_sent=message_log.date,
+            domain=message_log.domain,
         )
 
         # Fetch gateway_fee

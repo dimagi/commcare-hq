@@ -67,7 +67,7 @@ class LocationImportTest(CommTrackTest):
         result = import_location(self.domain.name, 'district', data)
 
         self.assertTrue(
-            'Parent with id banana does not exist' in result['message'],
+            'Parent with site code banana does not exist' in result['message'],
             result['message']
         )
 

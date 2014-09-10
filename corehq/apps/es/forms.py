@@ -18,6 +18,9 @@ class FormES(HQESQuery):
             completed,
         ] + super(FormES, self).builtin_filters
 
+    def user_facet(self):
+        return self.terms_facet('form.meta.userID', 'user')
+
 
 def xmlns(xmlns):
     return filters.term('xmlns.exact', xmlns)

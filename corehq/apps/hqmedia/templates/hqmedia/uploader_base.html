@@ -19,7 +19,7 @@
                     fileFilters: {{ uploader.supported_files|JSON }},
                     uploadURL: '{{ uploader.destination }}',
                     processingURL: '{{ uploader.processing_url }}',
-                    swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
+                    swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
                     isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
                     {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
                     {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}

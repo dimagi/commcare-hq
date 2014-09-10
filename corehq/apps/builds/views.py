@@ -5,6 +5,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from corehq.util.view_utils import json_error
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.couch.database import get_db
 
@@ -18,6 +19,7 @@ import requests
 import requests.exceptions
 
 
+@json_error
 @require_api_user
 def post(request):
     artifacts       = request.FILES.get('artifacts')
