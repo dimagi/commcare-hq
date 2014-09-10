@@ -26,32 +26,6 @@ def set_error_bulk(rows, msg, override=False):
     for row in rows:
         set_error(row, msg, override)
 
-def import_stock_reports(domain, f):
-    """bulk import entry point"""
-    reader = csv.DictReader(f)
-    data = list(reader)
-
-    try:
-        data_cols = validate_headers(domain, set(reader.fieldnames))
-    except Exception, e:
-        raise RuntimeError(str(e))
-
-    for row in data:
-        validate_row(row, domain, data_cols)
-
-    # abort if any location codes are invalid
-    if any(not row.get('loc') for row in data):
-        set_error_bulk(data, 'SKIPPED because some rows could not be assigned to a valid location')
-    
-    else:
-
-        rows_by_loc = map_reduce(lambda row: [(row['loc']._id,)], data=data, include_docs=True)
-        for loc, rows in rows_by_loc.iteritems():
-            process_loc(domain, loc, rows, data_cols)
-
-    return annotate_csv(data, reader.fieldnames)
-
-
 def import_products(domain, importer):
     messages = []
     to_save = []
