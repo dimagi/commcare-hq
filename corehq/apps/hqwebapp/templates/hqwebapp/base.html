@@ -45,41 +45,45 @@
     <body>
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
-            <div class="navbar">
-                <div class="navbar-inner">
-                    <div class="container-fluid">
-                        {% block header-section %}
-                        {% if request.user.is_authenticated %}
-                                {% include 'hqwebapp/partials/global_navigation_bar.html' %}
-                            {% else %}
-                                <div class="btn-toolbar pull-right">
-                                    <a href="{% url "login" %}" class="btn btn-primary">
-                                        <i class="icon-user"></i>
-                                        {% trans 'Sign In' %}
+                <header>
+                    {% block header-section %}
+                        <div class="navbar">
+                            <div class="navbar-inner">
+                                <div class="container-fluid">
+
+                                    {% if request.user.is_authenticated %}
+                                            {% include 'hqwebapp/partials/global_navigation_bar.html' %}
+                                        {% else %}
+                                            <div class="btn-toolbar pull-right">
+                                                <a href="{% url "login" %}" class="btn btn-primary">
+                                                    <i class="icon-user"></i>
+                                                    {% trans 'Sign In' %}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-collapse">
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
+                                        <span class="icon-bar"></span>
                                     </a>
+                                    <a class="brand" href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a>
+                                    <div class="navbar-collapse collapse" style="float: left">
+                                        {% if request.user.is_authenticated %}
+                                                {% block tabs %}
+                                                    {% format_main_menu %}
+                                                {% endblock %}
+                                        {% else %}
+                                            {% block extra_tabs %}
+                                            {% endblock %}
+                                        {% endif %}
+                                    </div>
+
                                 </div>
-                            {% endif %}
-                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-collapse">
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </a>
-                        <a class="brand" href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a>
-                        <div class="navbar-collapse collapse" style="float: left">
-                            {% if request.user.is_authenticated %}
-                                    {% block tabs %}
-                                        {% format_main_menu %}
-                                    {% endblock %}
-                            {% else %}
-                                {% block extra_tabs %}
-                                {% endblock %}
-                            {% endif %}
+                            </div>
                         </div>
                         {% format_subtab_menu %}
-                        {% endblock header-section %}
-                    </div>
-                </div>
-            </div>
+                    {% endblock header-section %}
+                </header>
             {% endwith %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
