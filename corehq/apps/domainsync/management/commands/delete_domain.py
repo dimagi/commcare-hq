@@ -3,6 +3,7 @@ from optparse import make_option
 from multiprocessing import Process, Queue
 
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.six.moves import input
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.config import DocumentTransform
@@ -26,8 +27,15 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+
         if len(args) != 1:
             raise CommandError('Usage is delete_domain %s' % self.args)
+
+        confirmation = input("This command will delete the contents of the domain INCLUDING all admin users associated with it. If you have "
+              "added yourself to this domain, your account will be deleted!!! Continue anyway? (yes/no)")
+
+        if confirmation != "yes":
+            raise CommandError("Deleting domain cancelled.")
 
         sourcedb = get_db()
         domain = args[0].strip()
