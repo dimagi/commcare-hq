@@ -2553,7 +2553,6 @@ def download_translations(request, domain, app_id):
     rows = [add_default(fillrow(row)) for row in rows]
 
     data = (("translations", tuple(rows)),)
-    #import ipdb; ipdb.set_trace()
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
 
@@ -2843,10 +2842,10 @@ def _process_modules_and_forms_sheet(rows, app):
             continue
 
         module_index = int(identifying_text[0].replace("module", "")) - 1
-        document = app.modules[module_index]
+        document = app.get_module(module_index)
         if len(identifying_text) == 2:
             form_index = int(identifying_text[1].replace("form", "")) - 1
-            document = document.forms[form_index]
+            document = document.get_form(form_index)
 
         if _has_at_least_one_translation(row, 'default', app.langs):
             for lang in app.langs:
@@ -2878,7 +2877,7 @@ def _update_case_list_translations(sheet, rows, app):
     :return: None. Modifies app/module in place.
     """
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
-    module = app.modules[module_index]
+    module = app.get_module(module_index)
 
     # TODO: wtf will happen with repeated details here
     col_maps = [
@@ -2923,10 +2922,10 @@ def _update_form_translations(sheet, rows, missing_cols, app):
     mod_text, form_text = sheet.worksheet.title.split("_")
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
-    form = app.modules[module_index].forms[form_index]
-    try:
+    form = app.get_module(module_index).get_form(form_index)
+    if form.source:
         xform = form.wrapped_xform()
-    except AttributeError, e:
+    else:
         # This Form doesn't have an xform yet. It is empty.
         # Tell the user this?
         return
@@ -3058,6 +3057,7 @@ def upload_bulk_app_translations(request, domain, app_id):
             _update_form_translations(sheet, rows, missing_cols, app)
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
 
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
