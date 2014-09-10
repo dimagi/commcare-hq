@@ -8,7 +8,6 @@ from corehq.apps.commtrack.views import (
     ILSConfigView)
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
-    url(r'^debug/bootstrap/$', 'bootstrap'),
     url(r'^debug/charts/$', 'charts'),
     url(r'^debug/location_dump/$', 'location_dump'),
 

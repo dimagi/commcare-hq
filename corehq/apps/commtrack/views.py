@@ -462,23 +462,6 @@ class EditProductView(NewProductView):
         return reverse(self.urlname, args=[self.domain, self.product_id])
 
 
-@require_superuser
-def bootstrap(request, domain):
-    if request.method == "POST":
-        D = Domain.get_by_name(domain)
-
-        if D.commtrack_enabled:
-            return HttpResponse('already configured', 'text/plain')
-        else:
-            psi_one_time_setup(D)
-            return HttpResponse('set up successfully', 'text/plain')
-
-    return render(request, 'commtrack/debug/bootstrap.html', {
-        'domain': domain,
-        }
-    )
-
-
 def _async_in_progress(request, domain, download_id):
     messages.success(request,
         'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
