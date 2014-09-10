@@ -397,7 +397,6 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
 
     domains_after_date = (DomainES()
             .in_domains(sms_only_domains)
-            .filter({"terms": {"name": list(sms_only_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
@@ -406,7 +405,6 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
 
     domains_before_date = (DomainES()
             .in_domains(sms_only_domains)
-            .filter({"terms": {"name": list(sms_only_domains)}})
             .created(lt=datespan.startdate)
             .size(0))
 
@@ -432,7 +430,6 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
 
     domains_after_date = (DomainES()
             .in_domains(sms_domains)
-            .filter({"terms": {"name": list(sms_domains)}})
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
@@ -441,7 +438,6 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
 
     domains_before_date = (DomainES()
             .in_domains(sms_domains)
-            .filter({"terms": {"name": list(sms_domains)}})
             .created(lt=datespan.startdate)
             .size(0))
 
