@@ -2810,6 +2810,9 @@ def _get_col_key(translation_type, language):
     '''
     return "%s_%s" % (translation_type, language)
 
+# TODO: Split up this bad boy
+#       Easy split whould be one method that checks validity, one that processes
+#       Module sheets, and one that process form sheets
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
@@ -2834,6 +2837,7 @@ def upload_bulk_app_translations(request, domain, app_id):
     workbook = WorkbookJSONReader(request.file)
 
     for sheet in workbook.worksheets:
+        # sheet.__iter__ can only be called once, so cache the result
         rows = [row for row in sheet]
 
         # CHECK FOR REPEAT SHEET
@@ -2893,9 +2897,33 @@ def upload_bulk_app_translations(request, domain, app_id):
             module_index = int(sheet.worksheet.title.replace("module", "")) - 1
             module = app.modules[module_index]
 
+            # TODO: wtf will happen with repeated details here
+            col_maps = [
+                {c.field:c for c in module.case_details.short.columns},
+                {c.field:c for c in module.case_details.long.columns},
+            ]
+
             for row in rows:
-                # TODO How do we update details? Do we have to change them on long and on short?
-                pass
+
+                ok_to_delete_translations = bool(filter(None, [row['default_'+l] for l in app.langs]))
+                if ok_to_delete_translations:
+                    #import ipdb; ipdb.set_trace()
+                    for lang in app.langs:
+                        translation = row['default_%s' % lang]
+
+                        for col_map in col_maps:
+                            headers = col_map[row['case_property']]['header']
+                            if translation:
+                                # Note: On HQ it is possible to set a header to the empty string.
+                                #       But, empty excel cells are given to us as empty strings.
+                                #       So, I'm making the decision to interpret this as "remove
+                                #       translation", not "set to empty string"
+                                headers[lang] = translation
+                            else:
+                                del headers[lang]
+                else:
+                    raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
+                    # I presume that at least one translation must be present
 
         else:
             # It's a form sheet
