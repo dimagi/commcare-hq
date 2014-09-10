@@ -525,19 +525,6 @@ def charts(request, domain, template="commtrack/charts.html"):
     }
     return render(request, template, ctxt)
 
-@require_superuser
-def location_dump(request, domain):
-    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
-    
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
-
-    w = csv.writer(resp)
-    w.writerow(['UUID', 'Location Type', 'SMS Code'])
-    for raw in iter_docs(Location.get_db(), loc_ids):
-        loc = Location.wrap(raw)
-        w.writerow([loc._id, loc.location_type, loc.site_code])
-    return resp
 
 @login_and_domain_required
 def api_query_supply_point(request, domain):
