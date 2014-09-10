@@ -2760,15 +2760,15 @@ def download_bulk_app_translations(request, domain, app_id):
                     # Add rows for this question's options
                     if question['type'] in ("MSelect", "Select"):
                         for j, select in enumerate(question['options']):
-                            id = row[0]+"-"+select['value']
+                            select_id = row[0]+"-"+select['value']
                             labels = tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
                             # TODO: Figure out how to get rid of this repeated media logic
                             media_paths = []
                             for media in ['image', 'audio', 'video']:
                                 for lang in app.langs:
                                     media_paths.append(_get_translation(id, lang, xform, media=media))
-                            row = (id,) + labels + tuple(media_paths)
-                            rows[form_string].append(row)
+                            select_row = (select_id,) + labels + tuple(media_paths)
+                            rows[form_string].append(select_row)
 
     temp = StringIO()
     data = [(k,v) for k,v in rows.iteritems()]
@@ -2792,14 +2792,13 @@ def _make_text_nodes(id, itext, lang):
     :return:
     '''
 
-    # Confirmed that order of text nodes doesn't matter
+    # TODO: This might never be needed. It might be the case that the text nodes are always there
 
     for lang_node in itext.findall("./{f}translation"):
         text_node = lang_node.find("./{f}text[@id='%s-label']" % id)
         if not text_node.exists():
-            print "Making a new one!"
             e = etree.Element('{f}text'.format(**namespaces), {'id':id})
-            lang_node.xml.append()
+            lang_node.xml.append(e)
     return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
 
 def _get_col_key(translation_type, language):
@@ -2914,15 +2913,16 @@ def upload_bulk_app_translations(request, domain, app_id):
                         translation = row['default_%s' % lang]
 
                         for col_map in col_maps:
-                            headers = col_map[row['case_property']]['header']
-                            if translation:
-                                # Note: On HQ it is possible to set a header to the empty string.
-                                #       But, empty excel cells are given to us as empty strings.
-                                #       So, I'm making the decision to interpret this as "remove
-                                #       translation", not "set to empty string"
-                                headers[lang] = translation
-                            else:
-                                del headers[lang]
+                            if row['case_property'] in col_map:
+                                headers = col_map[row['case_property']]['header']
+                                if translation:
+                                    # Note: On HQ it is possible to set a header to the empty string.
+                                    #       But, empty excel cells are given to us as empty strings.
+                                    #       So, I'm making the decision to interpret this as "remove
+                                    #       translation", not "set to empty string"
+                                    headers[lang] = translation
+                                else:
+                                    del headers[lang]
                 else:
                     raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
                     # I presume that at least one translation must be present
