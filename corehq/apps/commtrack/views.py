@@ -458,14 +458,6 @@ class EditProductView(NewProductView):
         return reverse(self.urlname, args=[self.domain, self.product_id])
 
 
-def _async_in_progress(request, domain, download_id):
-    messages.success(request,
-        'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
-        (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
-        extra_tags="html")
-    return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
-
-
 @login_and_domain_required
 def api_query_supply_point(request, domain):
     id = request.GET.get('id')
