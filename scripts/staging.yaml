@@ -67,6 +67,8 @@ branches:
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
+  - lwyszomi:ilsgateway-bugs
+  - lwyszomi:b3-mobile-layout
 submodules:
   submodules/couchlog-src:
     branches:
