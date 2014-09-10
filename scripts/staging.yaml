@@ -43,10 +43,8 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products+archive-to-deactivate # tw 8/14
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
-  - schedule+ucla-task-creation # Noah 9/3
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -68,7 +66,6 @@ branches:
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
   - lwyszomi:ilsgateway-bugs
-  - lwyszomi:b3-mobile-layout
 submodules:
   submodules/couchlog-src:
     branches:
