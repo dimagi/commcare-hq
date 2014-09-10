@@ -2684,7 +2684,7 @@ def download_bulk_app_translations(request, domain, app_id):
         # Add module to the first sheet
         row_data = cleaned_row(("Module", module_string)+\
                                 tuple(module.name.get(lang, "") for lang in app.langs)+\
-                                (module.media_image, module.media_image, module.unique_id))
+                                (module.media_image, module.media_audio, module.unique_id))
         rows["Modules_and_forms"].append(row_data)
 
         # Populate module sheet
@@ -2731,7 +2731,7 @@ def download_bulk_app_translations(request, domain, app_id):
             # This next line is same logic as above :(
             first_sheet_row = cleaned_row(("Form", form_string)+\
                                             tuple(form.name.get(lang, "") for lang in app.langs)+\
-                                            (form.media_image, form.media_image, form.unique_id))
+                                            (form.media_image, form.media_audio, form.unique_id))
             rows["Modules_and_forms"].append(first_sheet_row)
 
             # TODO: This formatting is a mess
@@ -2777,29 +2777,27 @@ def download_bulk_app_translations(request, domain, app_id):
 
 
 def _make_text_nodes(id, itext, lang):
-    '''
+    """
     Create a new <text id=':id'> node in the given itext node for the given
     language and return it. Also create nodes for this id in all of the language
     blocks in itext if they do not already exist.
 
     According to the following page, it is bad practice to not replicate all
-    text ids accross all languages.
+    text ids across all languages.
     https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
 
     :param itext:
     :param lang:
     :param langs:
     :return:
-    '''
-
-    # TODO: This might never be needed. It might be the case that the text nodes are always there
-
+    """
     for lang_node in itext.findall("./{f}translation"):
         text_node = lang_node.find("./{f}text[@id='%s-label']" % id)
         if not text_node.exists():
             e = etree.Element('{f}text'.format(**namespaces), {'id':id})
             lang_node.xml.append(e)
     return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
+
 
 def _get_col_key(translation_type, language):
     '''
@@ -2810,6 +2808,24 @@ def _get_col_key(translation_type, language):
     :return:
     '''
     return "%s_%s" % (translation_type, language)
+
+
+def _has_at_least_one_translation(row, prefix, langs):
+    '''
+    Returns true if the given row has at least one translation.
+
+    >>> _has_at_least_one_translation({'default_en': 'Name', 'case_property': 'name'}, 'default', ['en', 'fra'])
+    true
+    >>> _has_at_least_one_translation({'case_property': 'name'}, 'default', ['en', 'fra'])
+    false
+
+    :param row:
+    :param prefix:
+    :param langs:
+    :return:
+    '''
+    return bool(filter(None, [row[prefix+'_'+l] for l in langs]))
+
 
 # TODO: Split up this bad boy
 #       Easy split whould be one method that checks validity, one that processes
@@ -2854,11 +2870,12 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         # CHECK FOR MISSING KEY COLUMN
         if sheet.worksheet.title == "Modules and Forms":
-            pass
             # TODO: It is unclear what the key columns on this sheet are
-            #       the sheet_name could identify the module/form
+            #       the sheet_name could identify the module/form (going with this for now)
             #       the unique_id could identify the module/form
             #       the Type is really superfluous I think
+            if expected_columns[1] not in sheet.headers:
+                messages.error('Skipping sheet "%s", could not find "%s" column' % (sheet.worksheet.title, expected_columns[1]))
         else:
             if expected_columns[0] not in sheet.headers:
                 messages.error('Skipping sheet "%s", could not find label or case_property column.' % sheet.worksheet.title)
@@ -2891,7 +2908,36 @@ def upload_bulk_app_translations(request, domain, app_id):
             # It's the first sheet
             # TODO: update module/form names
             # TODO: update icon/audio filepaths (this isn't translation though...)
-            pass
+
+            for row in rows:
+                identifying_text = row.get('sheet_name', '').split('_')
+
+                if len(identifying_text) not in (1, 2):
+                    messages.error('Invalid sheet_name "%s", skipping row.' % row.get('sheet_name', ''))
+                    continue
+
+                module_index = int(identifying_text[0].replace("module", "")) - 1
+                document = app.modules[module_index]
+                if len(identifying_text) == 2:
+                    form_index = int(identifying_text[1].replace("form", "")) - 1
+                    document = document.forms[form_index]
+
+                if _has_at_least_one_translation(row, 'default', app.langs):
+                    for lang in app.langs:
+                        translation = row['default_%s' % lang]
+                        if translation:
+                            document.name[lang] = row['default_%s' % lang]
+                        else:
+                            document.name.pop(lang, None)
+
+                image = row.get('icon_filepath', None)
+                audio = row.get('audio_filepath', None)
+                if image == '':
+                    image = None
+                if audio == '':
+                    audio = None
+                document.media_image = image
+                document.media_audio = audio
 
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
@@ -2906,7 +2952,7 @@ def upload_bulk_app_translations(request, domain, app_id):
 
             for row in rows:
 
-                ok_to_delete_translations = bool(filter(None, [row['default_'+l] for l in app.langs]))
+                ok_to_delete_translations = _has_at_least_one_translation(row, 'default', app.langs)
                 if ok_to_delete_translations:
                     #import ipdb; ipdb.set_trace()
                     for lang in app.langs:
@@ -2922,7 +2968,7 @@ def upload_bulk_app_translations(request, domain, app_id):
                                     #       translation", not "set to empty string"
                                     headers[lang] = translation
                                 else:
-                                    del headers[lang]
+                                    headers.pop(lang, None)
                 else:
                     raise AppEditingError("You must provide at least one translation of the case propert '%s'" % row['case_property'])
                     # I presume that at least one translation must be present
@@ -2933,7 +2979,12 @@ def upload_bulk_app_translations(request, domain, app_id):
             module_index = int(mod_text.replace("module", "")) - 1
             form_index = int(form_text.replace("form", "")) - 1
             form = app.modules[module_index].forms[form_index]
-            xform = form.wrapped_xform()
+            try:
+                xform = form.wrapped_xform()
+            except AttributeError, e:
+                # This Form doesn't have an xform yet. It is empty.
+                # Tell the user this?
+                continue
             itext = xform.itext_node
 
             # What the xml should look like:
