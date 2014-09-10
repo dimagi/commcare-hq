@@ -615,11 +615,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         return meta, stream
 
-    # this is only used by CommTrack SupplyPointCase cases and should go in
-    # that class
-    def bind_to_location(self, loc):
-        self.location_ = loc.path
-
     @classmethod
     def from_case_update(cls, case_update, xformdoc):
         """

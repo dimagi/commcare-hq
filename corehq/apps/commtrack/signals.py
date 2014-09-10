@@ -38,7 +38,7 @@ def attach_locations(xform, cases):
                     loc_id = getattr(case, 'location_id', None)
                     if loc_id:
                         loc = Location.get(loc_id)
-                        case.bind_to_location(loc)
+                        case.location_ = loc.path
                 elif case.type == const.REQUISITION_CASE_TYPE:
                     req = RequisitionCase.wrap(case._doc)
                     prod = req.get_product_case()
