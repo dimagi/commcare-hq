@@ -63,12 +63,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "domains",
         "chart_title": "Total Project Spaces",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "histogram_type": "domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -77,12 +71,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "self_started_domains",
         "chart_title": "Self-Started Project Spaces",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "get_request_params": {
             "domain_params_es": {
                 "internal.self_started": ["T"],
@@ -189,12 +177,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_domains",
         "chart_title": "Total Projects That Have Used SMS",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "histogram_type": "sms_domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -203,12 +185,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commconnect_domains",
         "chart_title": "Total CommConnect Enabled Domains",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "histogram_type": "domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -217,12 +193,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "incoming_sms_domains",
         "chart_title": "Total Projects That Have Used Incoming SMS",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
@@ -236,12 +206,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "sms_only_domains",
         "chart_title": "Total Projects Using Only SMS",
-        "date_field_opts": [
-            {
-                "name": "Date Created",
-                "value": "date_created",
-            },
-        ],
         "histogram_type": "sms_only_domains",
         "interval": "week",
         "xaxis_label": "# domains",
@@ -259,12 +223,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_sms",
         "chart_title": "Total SMS Sent By A Project",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
@@ -278,12 +236,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_sms",
         "chart_title": "Total SMS Received By A Project",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
@@ -297,12 +249,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_outgoing_client_sms",
         "chart_title": "Total SMS Sent To A Client",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
@@ -317,12 +263,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "total_incoming_client_sms",
         "chart_title": "Total SMS Sent From A Client",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
@@ -408,18 +348,13 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_total_outgoing_sms",
         "chart_title": "Total Outgoing CommTrack SMS",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["o"],
             },
+            "is_commtrack": True,
         },
-        "histogram_type": "commtrack_sms",
+        "histogram_type": "real_sms_messages",
         "interval": "week",
         "xaxis_label": "# SMS",
     },
@@ -427,18 +362,13 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_total_incoming_sms",
         "chart_title": "Total Incoming CommTrack SMS",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "get_request_params": {
             "additional_params_es": {
                 "direction": ["i"],
             },
+            "is_commtrack": True,
         },
-        "histogram_type": "commtrack_sms",
+        "histogram_type": "real_sms_messages",
         "interval": "week",
         "xaxis_label": "# SMS",
     },
@@ -446,12 +376,6 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commtrack_forms",
         "chart_title": "Total CommTrack Form Submissions",
-        "date_field_opts": [
-            {
-                "name": "Date Sent",
-                "value": "date",
-            },
-        ],
         "histogram_type": "commtrack_forms",
         "interval": "week",
         "xaxis_label": "# forms",
