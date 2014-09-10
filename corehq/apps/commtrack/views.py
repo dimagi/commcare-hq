@@ -478,21 +478,6 @@ def bootstrap(request, domain):
         }
     )
 
-@require_superuser
-def historical_import(request, domain):
-    if request.method == "POST":
-        file_ref = expose_download(request.FILES['history'].read(),
-                                   expiry=1*60*60)
-        download_id = uuid.uuid4().hex
-        import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
-        return _async_in_progress(request, domain, download_id)
-
-    return HttpResponse("""
-<form method="post" action="" enctype="multipart/form-data">
-  <div><input type="file" name="history" /></div>
-  <div><button type="submit">Import historical stock reports</button></div>
-</form>
-""")
 
 def _async_in_progress(request, domain, download_id):
     messages.success(request,
