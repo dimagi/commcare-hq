@@ -1,3 +1,4 @@
+from functools import partial
 import logging
 import traceback
 from django.contrib.auth.models import User
@@ -9,7 +10,7 @@ from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
     CommtrackActionConfig
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import MigrationCheckpoint
+from custom.ilsgateway.models import ILSMigrationCheckpoint
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -233,12 +234,20 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
     return location
 
 
-def products_sync(domain, endpoint, **kwargs):
+def save_checkpoint(checkpoint, api, limit, offset, date):
+    checkpoint.limit = limit
+    checkpoint.offset = offset
+    checkpoint.api = api
+    checkpoint.date = date
+    checkpoint.save()
+
+def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
+    save_checkpoint(checkpoint, "product", limit, offset, kwargs.get('date', None))
     for product in endpoint.get_products(**kwargs):
         sync_ilsgateway_product(domain, product)
 
-
-def webusers_sync(project, endpoint, **kwargs):
+def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
+    save_checkpoint(checkpoint, "webuser", limit, offset, kwargs.get('date', None))
     for user in endpoint.get_webusers(**kwargs):
         if user.email:
             if not user.is_superuser:
@@ -246,35 +255,35 @@ def webusers_sync(project, endpoint, **kwargs):
             sync_ilsgateway_webuser(project, user)
 
 
-def smsusers_sync(project, endpoint, **kwargs):
+def smsusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
     has_next = True
-    next_url = None
+    next_url = "limit=%d&offset=%d" % (limit, offset)
     while has_next:
-        next_url_params = next_url.split('?')[1] if next_url else None
-        meta, users = endpoint.get_smsusers(next_url_params=next_url_params, **kwargs)
+        meta, users = endpoint.get_smsusers(next_url_params=next_url, **kwargs)
+        save_checkpoint(checkpoint, "smsuser", meta['limit'], meta['offset'], kwargs.get('date', None))
         for user in users:
             sync_ilsgateway_smsuser(project, user)
 
         if not meta.get('next', False):
             has_next = False
         else:
-            next_url = meta['next']
+            next_url = meta['next'].split('?')[1] if meta['next'] else None
 
 
-def locations_sync(project, endpoint, **kwargs):
-    for location_type in ['facility', 'district', 'region']:
-        has_next = True
-        next_url = None
-        while has_next:
-            next_url_params = next_url.split('?')[1] if next_url else None
-            meta, locations = endpoint.get_locations(type=location_type, next_url_params=next_url_params, **kwargs)
-            for location in locations:
-                sync_ilsgateway_location(project, endpoint, location)
+def locations_sync(project, endpoint, checkpoint, location_type, limit, offset, **kwargs):
+    has_next = True
+    next_url = "loc_type=%s&limit=%d&offset=%d" % (location_type, limit, offset)
+    while has_next:
+        meta, locations = endpoint.get_locations(type=location_type, next_url_params=next_url, **kwargs)
+        save_checkpoint(checkpoint, 'location_%s' % location_type.lower(), meta['limit'], meta['offset'],
+                        kwargs.get('date', None))
+        for location in locations:
+            sync_ilsgateway_location(project, endpoint, location)
 
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next']
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1] if meta['next'] else None
 
 
 def commtrack_settings_sync(project):
@@ -299,24 +308,44 @@ def commtrack_settings_sync(project):
 
 
 def bootstrap_domain(ilsgateway_config):
+
+
     domain = ilsgateway_config.domain
     start_date = datetime.today()
     endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
     try:
-        checkpoint = MigrationCheckpoint.objects.get(domain=domain)
+        checkpoint = ILSMigrationCheckpoint.objects.get(domain=domain)
+        api = checkpoint.api
         date = checkpoint.date
-    except MigrationCheckpoint.DoesNotExist:
-        checkpoint = MigrationCheckpoint()
+        limit = checkpoint.limit
+        offset = checkpoint.offset
+    except ILSMigrationCheckpoint.DoesNotExist:
+        checkpoint = ILSMigrationCheckpoint()
         checkpoint.domain = domain
+        api = 'product'
         date = None
+        limit = 1000
+        offset = 0
         commtrack_settings_sync(domain)
+
+    apis = [
+        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
+        ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, 'facility', date=date)),
+        ('location_district', partial(locations_sync, domain, endpoint, checkpoint, 'district', date=date)),
+        ('location_region', partial(locations_sync, domain, endpoint, checkpoint, 'region', date=date)),
+        ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date)),
+        ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date))
+    ]
+
     try:
-        products_sync(domain, endpoint, date=date)
-        locations_sync(domain, endpoint, date=date)
-        webusers_sync(domain, endpoint, date=date)
-        smsusers_sync(domain, endpoint, date=date)
-        
-        checkpoint.date = start_date
-        checkpoint.save()
+        i = 0
+        while apis[i][0] != api:
+            i += 1
+        for api in apis[i:]:
+            api[1](limit=limit, offset=offset)
+            limit = 1000
+            offset = 0
+
+        save_checkpoint(checkpoint, 'product', 1000, 0, start_date)
     except ConnectionError as e:
         logging.error(e)

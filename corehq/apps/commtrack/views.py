@@ -32,7 +32,7 @@ import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
-from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.models import ILSGatewayConfig, ILSMigrationCheckpoint
 from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 
 
@@ -732,7 +732,7 @@ class ILSConfigView(BaseCommTrackManageView):
     urlname = 'ils_config'
     sync_urlname = 'sync_ilsgateway'
     page_title = ugettext_noop("ILSGateway")
-    template_name = 'locations/facility_sync.html'
+    template_name = 'commtrack/ilsconfig.html'
     source = 'ilsgateway'
 
     @cls_require_superuser_or_developer
@@ -741,7 +741,12 @@ class ILSConfigView(BaseCommTrackManageView):
 
     @property
     def page_context(self):
+        try:
+            checkpoint = ILSMigrationCheckpoint.objects.get(domain=self.domain)
+        except ILSMigrationCheckpoint.DoesNotExist:
+            checkpoint = None
         return {
+            'checkpoint': checkpoint,
             'settings': self.settings_context,
             'source': self.source,
             'sync_url': self.sync_urlname,
