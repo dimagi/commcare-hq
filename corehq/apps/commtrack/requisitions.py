@@ -127,6 +127,7 @@ def create_requisition(user_id, product_stock_case, transaction):
     submit_case_blocks(req.to_xml(), req.domain, req.username,
                        req.user_id)
     case = RequisitionCase.get(req.id)
+    case.location_id = product_stock_case.location_id
     case.location_ = product_stock_case.location_
     return case
 
