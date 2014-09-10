@@ -104,50 +104,75 @@
 }
 
 .navbar .btn-project {
-    @media (max-width: 768px) {
+    @media (orientation:portrait) {
         font-size: 0 !important;
-        height: 32px;
+        height: 18px;
         display: inline-flex;
     }
 }
 
 .navbar .btn-project i {
-    @media (max-width: 768px) {
+    @media (orientation:portrait) {
         font-size: 14px;
-        margin-top: 4px;
+        margin-top: 4px !important;
         margin-right: 2px;
     }
 }
 
 .navbar .btn-primary {
-    @media (max-width: 768px) {
+    @media (orientation:portrait) {
         font-size: 0 !important;
-        height: 32px;
         display: inline-flex;
+        height: 18px;
     }
 }
 
 .navbar .btn-primary i {
-    @media (max-width: 768px) {
+    @media (orientation:portrait) {
         font-size: 14px;
-        visibility: visible !important;
-        margin-top: 4px;
+        margin-top: 4px !important;
         margin-right: 2px;
     }
 }
 
 .navbar-collapse {
-    @media (max-width: 768px) {
+    @media (orientation:landscape) {
         height: auto !important;
     }
 }
 
-button.navbar-toggle {
-    margin-top: 14px;
+.navbar-collapse.in{
+    @media (orientation:portrait) {
+        overflow: visible;
+    }
+}
+
+.navbar-collapse{
+    @media (orientation:landscape) {
+        overflow: visible;
+    }
 }
 
 .navbar .btn-primary i {
-    @media (min-width: 768px) {
-        visibility: hidden !important;
+    @media (orientation:landscape) {
+        display: none !important;
     }
 }
+
+
+.navbar .btn-navbar {
+    @media (orientation:landscape) {
+        display: none !important;
+    }
+}
+
+.navbar .btn-navbar {
+    @media (orientation:portrait) {
+        display: inline-block !important;
+    }
+}
+
+.navbar .brand {
+  margin-top: 12px;
+}
+
