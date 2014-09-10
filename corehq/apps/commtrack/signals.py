@@ -39,12 +39,6 @@ def attach_locations(xform, cases):
                     if loc_id:
                         loc = Location.get(loc_id)
                         case.location_ = loc.path
-                elif case.type == const.REQUISITION_CASE_TYPE:
-                    req = RequisitionCase.wrap(case._doc)
-                    prod = req.get_product_case()
-                    if prod and prod.location_ and prod.location_ != case.location_:
-                        case.location_ = prod.location_
-                        case.save()
 
             if loc and found_loc and loc != found_loc:
                 raise Exception(

@@ -273,7 +273,6 @@ class StockRequisitionTest(SMSTests):
             self.assertEqual(self.user._id, req_case.approved_by)
             self.assertIsNotNone(req_case.approved_on)
             self.assertTrue(isinstance(req_case.approved_on, datetime))
-            self.assertEqual(req_case.product_id, req_case.get_product_case().product)
 
     def testSimpleFulfill(self):
         amounts = {
