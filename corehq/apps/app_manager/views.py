@@ -74,8 +74,12 @@ from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+from corehq.apps.app_manager.xform import (
+    CaseError,
+    XForm,
+    XFormError,
+    XFormValidationError,
+)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions

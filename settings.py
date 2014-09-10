@@ -316,6 +316,7 @@ HQ_APPS = (
     'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
