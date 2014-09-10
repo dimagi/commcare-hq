@@ -884,6 +884,8 @@ def stats_data(request):
         k: get_request_params[k]
         for k in get_request_params if k != "domain_params_es"
     }
+    if datefield is not None:
+        stats_kwargs['datefield'] = datefield
 
     domain_params_es = get_request_params.get("domain_params_es", {})
 
