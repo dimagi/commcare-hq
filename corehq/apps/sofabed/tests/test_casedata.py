@@ -9,8 +9,9 @@ from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 TEST_DOMAIN = 'test'
 
+
 class CaseDataTests(TestCase):
-    
+
     def setUp(self):
         delete_all_xforms()
         delete_all_cases()
@@ -19,9 +20,17 @@ class CaseDataTests(TestCase):
         self.date_modified = datetime.now() - timedelta(hours=1)
         self.date_modified = self.date_modified.replace(microsecond=0)
         post_case_blocks([
-            CaseBlock(create=True, case_id=self.case_id, owner_id="owner", user_id='user',
-                      case_type='c_type', case_name='c_name', external_id='external_id',
-                      date_modified=self.date_modified, version=V2, update={'foo': 'bar'}
+            CaseBlock(
+                create=True,
+                case_id=self.case_id,
+                owner_id="owner",
+                user_id='user',
+                case_type='c_type',
+                case_name='c_name',
+                external_id='external_id',
+                date_modified=self.date_modified,
+                version=V2,
+                update={'foo': 'bar'}
             ).as_xml(format_datetime=None)
         ], {'domain': TEST_DOMAIN})
 
@@ -53,8 +62,13 @@ class CaseDataTests(TestCase):
     def test_update(self):
         date_modified = datetime.now().replace(microsecond=0)
         post_case_blocks([
-            CaseBlock(close=True, case_id=self.case_id, user_id='user2', date_modified=date_modified,
-                      version=V2).as_xml(format_datetime=None)
+            CaseBlock(
+                close=True,
+                case_id=self.case_id,
+                user_id='user2',
+                date_modified=date_modified,
+                version=V2
+            ).as_xml(format_datetime=None)
         ], {'domain': TEST_DOMAIN})
 
         instance = CommCareCase.get(self.case_id)
