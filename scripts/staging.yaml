@@ -60,11 +60,11 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
   - caselistmixin-refactor # Noah 8/14
-  - ucla-task-creation # Noah 9/3
   - outputrefs # SK 9/6
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
+  - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
 submodules:
   submodules/couchlog-src:
