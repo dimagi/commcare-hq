@@ -56,21 +56,6 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.hqadmin.reporting.reports import (
-    add_blank_data,
-    get_sms_only_domain_stats_data,
-    get_commconnect_domain_stats_data,
-    get_active_domain_stats_data,
-    get_active_mobile_users_data,
-    get_mobile_workers_data,
-    get_real_sms_messages_data,
-    get_active_commconnect_domain_stats_data,
-    get_active_dimagi_owned_gateway_projects,
-    get_domain_stats_data,
-    get_total_clients_data,
-    get_active_countries_stats_data,
-    get_countries_stats_data,
-    commtrack_form_submissions,
-    get_all_subscriptions_stats_data,
     get_real_project_spaces,
     get_stats_data,
 )
@@ -84,7 +69,7 @@ from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import get_general_stats_data, parse_args_for_es, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import parse_args_for_es
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
