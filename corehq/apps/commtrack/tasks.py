@@ -1,10 +1,7 @@
 from celery.task import task
-from django.core.cache import cache
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from soil import DownloadBase
 from corehq.apps.locations.bulk import import_locations
-from corehq.apps.commtrack.bulk import import_stock_reports, import_products
-from soil.util import expose_download
+from corehq.apps.commtrack.bulk import import_products
 from dimagi.utils.excel_importer import SingleExcelImporter, MultiExcelImporter
 
 
