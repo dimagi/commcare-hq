@@ -39,6 +39,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     asynchronous = False
     ajax_pagination = True
     base_template = 'reports/base_template.html'
+    needs_filters = False
 
     fields = (
         'corehq.apps.reports.filters.dates.DatespanFilter',

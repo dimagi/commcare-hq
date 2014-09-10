@@ -232,10 +232,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         else:
             # Resend current question
             for session_id in reminder.xforms_session_ids:
-                session = XFormsSession.view("smsforms/sessions_by_touchforms_id",
-                                             startkey=[session_id],
-                                             endkey=[session_id, {}],
-                                             include_docs=True).one()
+                session = XFormsSession.by_session_id(session_id)
                 if session.end_time is None:
                     vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
                                              key=session.connection_id,

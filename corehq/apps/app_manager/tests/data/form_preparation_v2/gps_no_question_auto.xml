@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:vellum="http://commcarehq.org/xforms/vellum" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <h:head>
+        <h:title>New Form</h:title>
+        <model>
+            <instance>
+                <data xmlns="http://openrosa.org/formdesigner/D0EA1FD6-8B4D-4EE2-BE0A-7471976EE7BC" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="6" name="New Form">
+                    <text />
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID />
+                        <orx:timeStart />
+                        <orx:timeEnd />
+                        <orx:username />
+                        <orx:userID />
+                        <orx:instanceID />
+                        <cc:appVersion />
+                        <cc:location/>
+                    </orx:meta>
+                </data>
+            </instance>
+            <instance id="commcaresession" src="jr://instance/session" />
+            <bind nodeset="/data/text" type="xsd:string" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="text-label">
+                        <value>Text</value>
+                    </text>
+                </translation>
+            </itext>
+            <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid" />
+            <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()" />
+            <bind nodeset="/data/meta/timeStart" type="xsd:dateTime" />
+            <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()" />
+            <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime" />
+            <setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username" />
+            <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid" />
+            <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()" />
+            <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion" />
+            <orx:pollsensor event="xforms-ready" ref="/data/meta/location"/>
+            <bind nodeset="/data/meta/location" type="geopoint"/>
+        </model>
+    </h:head>
+    <h:body>
+        <input ref="/data/text">
+            <label ref="jr:itext('text-label')" />
+        </input>
+    </h:body>
+</h:html>

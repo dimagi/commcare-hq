@@ -18,8 +18,13 @@ target = "https://{user}:{password}@commcarehq.cloudant.com/{db_name}".format(
 print json.dumps({
     "source": "performance_db",
     "target": target,
+    "http_connections": 4,
+    "worker_processes": 2,
     "filter": "domain/all_docs",
-    "query_params": {"domain": "esoergel"}
+    "query_params": {"domain": "bigdomain"},
+
+    # toggle this last param and send a new request to interrupt the replication
+    "cancel": True,
 })
 '`
 

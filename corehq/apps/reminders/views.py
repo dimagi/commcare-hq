@@ -645,11 +645,16 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
             for module in app.get_modules():
-                if not module.case_type == self.case_type:
-                    continue
-                for form in module.get_forms():
-                    for subcase in form.actions.subcases:
-                        subcase_properties.extend(subcase.case_properties.keys())
+                if module.module_type == 'basic':
+                    if not module.case_type == self.case_type:
+                        continue
+                    for form in module.get_forms():
+                        for subcase in form.actions.subcases:
+                            subcase_properties.extend(subcase.case_properties.keys())
+                elif module.module_type == 'advanced':
+                    for form in module.get_forms():
+                        for subcase in form.actions.get_open_subcase_actions(self.case_type):
+                            subcase_properties.extend(subcase.case_properties.keys())
         subcase_properties = self._filter_by_term(set(subcase_properties))
         return self._format_response(subcase_properties)
 
@@ -1460,7 +1465,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_all(domain)
+        "samples": CommCareCaseGroup.get_by_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 

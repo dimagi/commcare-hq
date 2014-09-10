@@ -45,7 +45,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
             headers = []
             rows = []
         else:
-            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData):
+            if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData)\
+                    or isinstance(data_provider, DureeData):
                 columns = [c.data_tables_column for c in data_provider.columns]
                 headers = DataTablesHeader(*columns)
                 rows = data_provider.rows
@@ -56,6 +57,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
                 self.model = data_provider
                 headers = self.headers
                 rows = self.rows
+            if isinstance(data_provider, TauxDeRuptures):
+                headers.add_column(DataTablesColumn("Au moins 1 produit"))
             if data_provider.show_total:
                 if data_provider.custom_total_calculate:
                     total_row = data_provider.calculate_total_row(rows)
@@ -136,9 +139,9 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
         return [export_sheet_name, table]
 
 class TableuDeBoardReport(MultiReport):
-    title = "Tableu De Bord"
+    title = "Tableau De Bord"
     fields = [DatespanFilter, LocationFilter]
-    name = "Tableu De Bord"
+    name = "Tableau De Bord"
     slug = 'tableu_de_board'
     default_rows = 10
     exportable = True
@@ -150,15 +153,20 @@ class TableuDeBoardReport(MultiReport):
         if 'district_id' in config:
             return [
                 ConventureData(config=config),
+                TauxDeRuptures(config=config),
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
-                NombreData(config=config)
+                NombreData(config=config),
+                GestionDeLIPMTauxDeRuptures(config=config)
             ]
         else:
             return [
                 ConventureData(config=config),
                 DispDesProducts(config=config),
+                TauxDeRuptures(config=config),
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
-                NombreData(config=config)
+                NombreData(config=config),
+                GestionDeLIPMTauxDeRuptures(config=config),
+                DureeData(config=config)
             ]

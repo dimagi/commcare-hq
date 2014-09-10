@@ -1,3 +1,4 @@
+import math
 import pytz
 import logging
 from datetime import datetime, timedelta
@@ -6,10 +7,10 @@ from time import sleep
 from redis_cache.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
-from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-                                 store_billable)
+from corehq.apps.sms.api import send_message_via_backend, process_incoming
 from django.conf import settings
 from corehq.apps.domain.models import Domain
+from corehq.apps.smsbillables.models import SmsBillable
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
 from threading import Thread
@@ -38,8 +39,6 @@ def handle_successful_processing_attempt(msg):
     if msg.direction == OUTGOING:
         msg.date = utcnow
     msg.save()
-    if msg.direction == OUTGOING:
-        store_billable.delay(msg)
 
 def delay_processing(msg, minutes):
     msg.datetime_to_process += timedelta(minutes=minutes)
@@ -237,3 +236,16 @@ def process_sms(message_id):
         if requeue:
             process_sms.delay(message_id)
 
+
+@task
+def store_billable(msg):
+    if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
+        try:
+            msg.text.encode('iso-8859-1')
+            msg_length = 160
+        except UnicodeEncodeError:
+            # This string contains unicode characters, so the allowed
+            # per-sms message length is shortened
+            msg_length = 70
+        for _ in range(int(math.ceil(float(len(msg.text)) / msg_length))):
+            SmsBillable.create(msg)

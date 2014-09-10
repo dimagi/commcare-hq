@@ -1,34 +1,32 @@
-{% extends 'settings/base_template.html' %}
-{# This is for editing information for the currently logged in WebUser #}
-
-{% load crispy_forms_tags %}
+{% extends 'style/base_section.html' %}
+{% load crispy_forms_tags_b3 %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
-            $('#id_language').combobox({
-                placeholder: "{% trans 'Select a language...' %}"
-            });
-        });
+    $('input').on("input", null, null, function() {
+        $(":submit").prop("disabled", false);
+    })
     </script>
 {% endblock %}
 
-{% block main_column %}
-    <form class="form form-horizontal" name="user_information" method="post">
-        <fieldset>
-            <legend>{% trans 'My Information' %}</legend>
-            <div class="control-group">
-                <label class="control-label">{% trans 'Username' %}</label>
-                <div class="controls">
-                    <span class="input-xlarge uneditable-input">{{ request.couch_user.html_username|safe }}</span>
-                </div>
+{% block page_content %}
+{% crispy_b3 form form.new_helper 'bootstrap3_transitional' %}
+<form class="form form-horizontal"
+      name="user_information"
+      method="post">
+    <fieldset>
+        <legend>{% trans 'My Information' %}</legend>
+        <div class="form-horizontal-group">
+            <label class="control-label">{% trans 'Username' %}</label>
+            <div class="controls">
+                <span class="input-xlarge uneditable-input">{{ request.couch_user.html_username|safe }}</span>
             </div>
-            {% crispy form %}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
-            </div>
-        </fieldset>
-    </form>
-{% endblock %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" disabled>{% trans 'Update Information' %}</button>
+        </div>
+    </fieldset>
+</form>
+{% endblock page_content %}

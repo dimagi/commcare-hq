@@ -100,7 +100,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for group in CommCareCaseGroup.get_all(
+        for group in CommCareCaseGroup.get_by_domain(
                 self.domain,
                 limit=self.limit,
                 skip=self.skip
