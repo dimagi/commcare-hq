@@ -104,7 +104,7 @@ class ScheduledReportTest(TestCase):
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
         self._check('monthly', datetime(2014, 10, 31, 12, 30), 0)  # half hour shouldn't count
 
-    def testMonthlyReportEmptyMinute(self):
+    def testMonthlyReportWithMinute(self):
         ReportNotification(hour=12, minute=0, day=31, interval='monthly').save()
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
         self._check('monthly', datetime(2014, 10, 31, 12, 30), 0)
@@ -117,3 +117,28 @@ class ScheduledReportTest(TestCase):
     def testMonthlyReportOtherDaysDontCount(self):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
         self._check('monthly', datetime(2014, 10, 30, 12, 0), 0)
+
+    def testMonthlyReportOnTheEndOfTheMonthEmptyMinute(self):
+        ReportNotification(hour=12, minute=None, day=30, interval='monthly').save()
+        ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
+        self._check('monthly', datetime(2014, 11, 30, 12, 0), 2)
+
+    def testMonthlyReportOnTheEndOfTheMonthWithMinute(self):
+        ReportNotification(hour=12, minute=0, day=30, interval='monthly').save()
+        ReportNotification(hour=12, minute=0, day=31, interval='monthly').save()
+        self._check('monthly', datetime(2014, 11, 30, 12, 0), 2)
+
+    def testMonthlyReportOnTheEndOfTheMonthWithMinuteHalfHour(self):
+        ReportNotification(hour=12, minute=30, day=30, interval='monthly').save()
+        ReportNotification(hour=12, minute=30, day=31, interval='monthly').save()
+        self._check('monthly', datetime(2014, 11, 30, 12, 30), 2)
+
+    def testMonthlyReportBeforeTheEndOfTheMonth(self):
+        ReportNotification(hour=12, minute=None, day=30, interval='monthly').save()
+        ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
+        self._check('monthly', datetime(2014, 10, 30, 12, 0), 1)
+
+    def testMonthlyReportOnTheEndOfTheMonthDaysAfter31DontCount(self):
+        ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
+        ReportNotification(hour=12, minute=None, day=32, interval='monthly').save()
+        self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
