@@ -894,9 +894,13 @@ def stats_data(request):
         json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
+
+    stats_kwargs = {
+        k: get_request_params[k]
+        for k in get_request_params if k != "domain_params_es"
+    }
+
     domain_params_es = get_request_params.get("domain_params_es", {})
-    if "domain_params_es" in get_request_params:
-        del get_request_params["domain_params_es"]
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
         request.datespan.enddate += timedelta(days=1)
@@ -911,7 +915,7 @@ def stats_data(request):
         domains,
         request.datespan,
         interval,
-        **get_request_params
+        **stats_kwargs
     ))
 
 
