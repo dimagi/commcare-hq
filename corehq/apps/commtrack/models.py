@@ -342,11 +342,6 @@ class CommtrackRequisitionConfig(DocumentSchema):
         return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
 
-class SupplyPointType(DocumentSchema):
-    name = StringProperty()
-    categories = StringListProperty()
-
-
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
@@ -413,7 +408,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     multiaction_keyword_ = StringProperty()
 
     location_types = SchemaListProperty(LocationType)
-    supply_point_types = SchemaListProperty(SupplyPointType)
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
