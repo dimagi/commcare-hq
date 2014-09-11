@@ -338,7 +338,7 @@ INDICATOR_DATA = {
     "countries": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "countries",
-        "chart_title": "Countries",
+        "chart_title": "Total Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "countries",
         "interval": "week",
