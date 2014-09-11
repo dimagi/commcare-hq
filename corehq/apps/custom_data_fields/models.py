@@ -15,16 +15,16 @@ class CustomDataFieldsDefinition(Document):
     """
     Per-project user-defined fields such as custom user data.
     """
-    doc_type = StringProperty()
+    field_type = StringProperty()
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
 
     @classmethod
-    def by_domain(cls, domain, doc_type):
+    def by_domain(cls, domain, field_type):
         return cls.view(
-            'custom_data_fields/by_doc_type',
-            key=[domain, doc_type],
+            'custom_data_fields/by_field_type',
+            key=[domain, field_type],
             include_docs=True,
             reduce=False,
-        ).first()
+        ).one()

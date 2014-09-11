@@ -71,7 +71,6 @@ class CustomDataFieldsMixin(object):
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
     page_name = ugettext_noop("Edit Custom Fields")
-    doc_type = None
     field_type = None
     form_label = None
 
@@ -87,7 +86,7 @@ class CustomDataFieldsMixin(object):
 
     def save_custom_fields(self):
         definition = self.get_definition() or CustomDataFieldsDefinition()
-        definition.doc_type = self.field_type
+        definition.field_type = self.field_type
         definition.domain = self.domain
         definition.fields = [
             self.get_field(field)
