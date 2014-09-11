@@ -78,11 +78,13 @@ def get_user_type_filters(histo_type, user_type_mobile):
         return "CommCareUser" if user_type_mobile else "WebUser"
 
     def get_user_ids():
-        from corehq.apps.users.models import CouchUser
-        return {
-            mobile_user._id for mobile_user in CouchUser.all()
-            if mobile_user.doc_type == user_doc_type()
-        }
+        from corehq.apps.es.users import UserES
+        query = UserES()
+        if user_type_mobile:
+            query = query.mobile_users()
+        else:
+            query = query.web_users()
+        return {doc_id for doc_id in query.run().doc_ids}
 
     result = {'terms': {}}
     if histo_type == 'forms':
