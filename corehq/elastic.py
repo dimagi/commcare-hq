@@ -74,9 +74,6 @@ def run_query(url, q):
 
 
 def get_user_type_filters(histo_type, user_type_mobile):
-    def user_doc_type():
-        return "CommCareUser" if user_type_mobile else "WebUser"
-
     def get_user_ids():
         from corehq.apps.es.users import UserES
         query = UserES()
