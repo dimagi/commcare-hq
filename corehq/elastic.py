@@ -106,20 +106,15 @@ def get_user_type_filters(histo_type, user_type_mobile):
             )
         }
 
-        from corehq.apps.sms.models import INCOMING
-        from corehq.apps.es.es_query import ESQuery
-        sms_query = (
-            ESQuery('sms')
-            .fields(['couch_recipient'])
-            .term('couch_recipient_doc_type', user_doc_type())
-            .term('direction', INCOMING)
-            .size(LARGE_NUMBER)
-        )
+        from corehq.apps.es.sms import SMSES
         real_sms_users = {
-            query_result.get('fields', {}).get('couch_recipient', '')
-            for query_result in stream_esquery(
-                sms_query,
-                chunksize=ES_QUERY_CHUNKSIZE['sms']
+            user_count['term'] for user_count in (
+                SMSES()
+                .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                .incoming_messages()
+                .size(0)
+                .run()
+                .facets.user.result
             )
         }
 
