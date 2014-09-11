@@ -61,7 +61,6 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
   - caselistmixin-refactor # Noah 8/14
-  - outputrefs # SK 9/6
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
