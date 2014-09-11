@@ -1,4 +1,4 @@
-DOMAIN_INDEX="hqdomains_g331kr4sf35784sue52ec425d8dt7b98"
+DOMAIN_INDEX="hqdomains_1c93edaa7146fbe2bfe2d7f11062b624"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
@@ -137,6 +137,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
                                                          'type': 'string'},
                                             'goal_time_period': {'type': 'long'},
                                             'goal_followup_rate': {'type': 'double'},
+                                            'commconnect_domain': {'type': 'boolean'},
+                                            'commconnect_domain': {'type': 'boolean'},
                                             'initiative': {'fields': {'exact': {'index': 'not_analyzed',
                                                                                 'type': 'string'},
                                                                       'initiative': {'index': 'analyzed',
