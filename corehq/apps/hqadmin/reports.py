@@ -70,7 +70,7 @@ INDICATOR_DATA = {
     "domain_self_started_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "self_started_domains",
-        "chart_title": "Self-Started Project Spaces",
+        "chart_title": "Total Self-Started Project Spaces",
         "get_request_params": {
             "domain_params_es": {
                 "internal.self_started": ["T"],
@@ -93,7 +93,7 @@ INDICATOR_DATA = {
     "forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "forms",
-        "chart_title": "All Forms",
+        "chart_title": "Forms Submitted by All Users",
         "histogram_type": "forms",
         "interval": "week",
         "xaxis_label": "# forms",
@@ -131,7 +131,7 @@ INDICATOR_DATA = {
     "users_mobile": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_mobile",
-        "chart_title": "Mobile Users (submitted)",
+        "chart_title": "Mobile Users Who Have Submitted a Form",
         "get_request_params": {
             "user_type_mobile": True,
         },
@@ -142,7 +142,7 @@ INDICATOR_DATA = {
     "users_web": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users_web",
-        "chart_title": "Web Users (submitted)",
+        "chart_title": "Web Users Who Have Submitted A Form",
         "get_request_params": {
             "user_type_mobile": False,
         },
@@ -884,8 +884,8 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'active_domain_count',
         'active_community_domain_count',
         'active_self_started_domain_count',
-        'active_countries',
         'countries',
+        'active_countries',
         'active_cases',
         'users',
         'users_mobile',
@@ -903,10 +903,10 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommConnect Project Spaces')
     default_params = 'es_is_test=false&es_commconnect_enabled=T&'
     indicators = [
-        'sms_domain_count',
         'commconnect_domain_count',
-        'incoming_sms_domain_count',
+        'sms_domain_count',
         'sms_only_domain_count',
+        'incoming_sms_domain_count',
         'active_commconnect_domain_count',
         'active_dimagi_owned_gateways',
         'total_outgoing_sms',
@@ -925,7 +925,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommTrack Project Spaces')
     default_params = 'es_is_test=false&es_commtrack_enabled=T&'
     indicators = [
-        'commtrack_total_incoming_sms',
         'commtrack_total_outgoing_sms',
+        'commtrack_total_incoming_sms',
         'commtrack_forms',
     ]
