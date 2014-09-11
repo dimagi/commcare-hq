@@ -71,7 +71,8 @@
                     $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
                     $('.alert')[0].innerHTML = name + " was successfully saved";
                     $('.alert').show();
-                    $(id).find(':button').removeAttr('disabled');
+                    $(id).find(':button').enableButton();
+                    $('#editGroupSettings').modal('hide')
                 }
             }
 
@@ -84,7 +85,8 @@
                     $('.alert').removeClass('alert-success alert-info').addClass('alert-error');
                     $('.alert')[0].innerHTML = name + " was not successfully saved";
                     $('.alert').show();
-                    $(id).find(':button').removeAttr('disabled');
+                    $(id).find(':button').enableButton();
+                    $('#editGroupSettings').modal('hide')
                 }
             }
 
@@ -102,7 +104,7 @@
                     return false;
                 });
                 $('#edit-group-settings').submit(function() {
-                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).find(':button').disableButton();
                     $(this).ajaxSubmit({
                         success: edit_settings_succ,
                         error: edit_settings_fail
