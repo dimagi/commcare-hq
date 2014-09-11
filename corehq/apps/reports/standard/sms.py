@@ -126,6 +126,10 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
 
     def get_recipient_info(self, message, contact_cache):
         recipient_id = message.couch_recipient
+
+        if recipient_id in contact_cache:
+            return contact_cache[recipient_id]
+
         doc = None
         if recipient_id not in [None, ""]:
             try:
@@ -137,10 +141,11 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 pass
 
         if doc:
-            doc_info = get_doc_info(doc.to_json(), self.domain,
-                contact_cache)
+            doc_info = get_doc_info(doc.to_json(), self.domain)
         else:
             doc_info = None
+
+        contact_cache[recipient_id] = doc_info
 
         return doc_info
 
