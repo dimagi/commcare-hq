@@ -1115,7 +1115,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
