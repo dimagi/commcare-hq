@@ -9,8 +9,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         user = args[0].strip()
         print "Deleting user %s" % user
-        try:
-            WebUser.get_by_name(user).delete()
-            print "Operation completed"
-        except Exception, e:
-            raise CommandError("Delete failed! Error is: %s" % e)
+        WebUser.get_by_name(user).delete()
+        print "Operation completed"

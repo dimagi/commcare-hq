@@ -9,8 +9,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print "Deleting domain"
         domain = args[0].strip()
-        try:
-            Domain.get_by_name(domain).delete()
-            print "Operation completed"
-        except Exception, e:
-            raise CommandError("Delete failed! Error is: %s" % e)
+        Domain.get_by_name(domain).delete()
+        print "Operation completed"
