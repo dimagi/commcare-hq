@@ -74,15 +74,14 @@ def run_query(url, q):
 
 
 def get_user_type_filters(histo_type, user_type_mobile):
-    def user_doc_type():
-        return "CommCareUser" if user_type_mobile else "WebUser"
-
     def get_user_ids():
-        from corehq.apps.users.models import CouchUser
-        return {
-            mobile_user._id for mobile_user in CouchUser.all()
-            if mobile_user.doc_type == user_doc_type()
-        }
+        from corehq.apps.es.users import UserES
+        query = UserES()
+        if user_type_mobile:
+            query = query.mobile_users()
+        else:
+            query = query.web_users()
+        return {doc_id for doc_id in query.run().doc_ids}
 
     result = {'terms': {}}
     if histo_type == 'forms':
@@ -92,34 +91,27 @@ def get_user_type_filters(histo_type, user_type_mobile):
     elif histo_type == 'users':
         existing_users = get_user_ids()
 
-        from corehq.apps.es.es_query import ESQuery
+        from corehq.apps.es.forms import FormES
         LARGE_NUMBER = 1000 * 1000 * 10
-        form_query = (
-            ESQuery('forms')
-            .fields(['form.meta.userID'])
-            .size(LARGE_NUMBER)
-        )
         real_form_users = {
-            query_result.get('fields', {}).get('form.meta.userID', '')
-            for query_result in stream_esquery(
-                form_query,
-                chunksize=ES_QUERY_CHUNKSIZE['forms']
+            user_count['term'] for user_count in (
+                FormES()
+                .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                .size(0)
+                .run()
+                .facets.user.result
             )
         }
 
-        from corehq.apps.sms.models import INCOMING
-        sms_query = (
-            ESQuery('sms')
-            .fields(['couch_recipient'])
-            .term('couch_recipient_doc_type', user_doc_type())
-            .term('direction', INCOMING)
-            .size(LARGE_NUMBER)
-        )
+        from corehq.apps.es.sms import SMSES
         real_sms_users = {
-            query_result.get('fields', {}).get('couch_recipient', '')
-            for query_result in stream_esquery(
-                sms_query,
-                chunksize=ES_QUERY_CHUNKSIZE['sms']
+            user_count['term'] for user_count in (
+                SMSES()
+                .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                .incoming_messages()
+                .size(0)
+                .run()
+                .facets.user.result
             )
         }
 
@@ -227,7 +219,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         user_type_filters
     )
 
-    def _total_until_date(histo_type, doms=None):
+    def _total_until_date(histo_type, user_type_filters, doms=None):
         query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
         q = {
             "query": query,
@@ -239,9 +231,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
         if user_type_mobile is not None:
-            q["filter"]["and"].append(
-                get_user_type_filters(histo_type, user_type_mobile)
-            )
+            q["filter"]["and"].append(user_type_filters)
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
@@ -249,7 +239,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         'histo_data': histo_data,
         'initial_values': (
             dict([(dom["display_name"],
-                 _total_until_date(histo_type, dom["names"])) for dom in domains])
+                 _total_until_date(histo_type, user_type_filters, dom["names"])) for dom in domains])
             if is_cumulative else {"All Domains": 0}
         ),
         'startdate': datespan.startdate_key_utc,
