@@ -14,6 +14,7 @@ class UserES(HQESQuery):
             domain,
             created,
             mobile_users,
+            web_users,
             in_domains,
         ] + super(UserES, self).builtin_filters
 
