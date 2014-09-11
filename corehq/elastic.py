@@ -225,7 +225,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         user_type_filters
     )
 
-    def _total_until_date(histo_type, doms=None):
+    def _total_until_date(histo_type, user_type_filters, doms=None):
         query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
         q = {
             "query": query,
@@ -237,9 +237,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
         if user_type_mobile is not None:
-            q["filter"]["and"].append(
-                get_user_type_filters(histo_type, user_type_mobile)
-            )
+            q["filter"]["and"].append(user_type_filters)
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
@@ -247,7 +245,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day", user_t
         'histo_data': histo_data,
         'initial_values': (
             dict([(dom["display_name"],
-                 _total_until_date(histo_type, dom["names"])) for dom in domains])
+                 _total_until_date(histo_type, user_type_filters, dom["names"])) for dom in domains])
             if is_cumulative else {"All Domains": 0}
         ),
         'startdate': datespan.startdate_key_utc,
