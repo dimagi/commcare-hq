@@ -6,6 +6,7 @@ from corehq.apps.reports_core.filters import DatespanFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.filters import DateFilterValue
+from django.utils.translation import ugettext as _
 
 
 def _build_date_filter(spec):
