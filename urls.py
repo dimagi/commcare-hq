@@ -59,6 +59,7 @@ domain_specific = patterns('',
     (r'^fri/', include('custom.fri.urls')),
     (r'^', include('custom.m4change.urls')),
     (r'^', include('custom.uth.urls')),
+    (r'^dashboard/', include('corehq.apps.dashboard.urls')),
 )
 
 urlpatterns = patterns('',
