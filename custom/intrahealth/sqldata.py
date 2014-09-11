@@ -63,6 +63,11 @@ class ConventureData(BaseSqlData):
     table_name = 'fluff_CouvertureFluff'
 
     @property
+    def filters(self):
+        filters = super(ConventureData, self).filters
+        return filters[1:]
+
+    @property
     def group_by(self):
         if 'region_id' in self.config:
             return ['region_id']
