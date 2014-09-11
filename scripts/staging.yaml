@@ -67,6 +67,7 @@ branches:
   # - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - staticfiles-fix
 submodules:
   submodules/couchlog-src:
     branches:
