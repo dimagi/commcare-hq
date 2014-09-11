@@ -24,7 +24,7 @@ class FormDataPillow(SQLPillow):
         doc = self.document_class.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
         try:
-            FormData.create_or_update_from_instance(doc)
+            FormData.create_or_update_from_xforminstance(doc)
         except InvalidDataException, e:
             # this is a less severe class of errors
             logger.info("FormDataPillow: bad update in form listener for line: %s\n%s" % (doc_dict, e))
