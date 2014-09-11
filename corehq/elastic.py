@@ -92,22 +92,20 @@ def get_user_type_filters(histo_type, user_type_mobile):
     elif histo_type == 'users':
         existing_users = get_user_ids()
 
-        from corehq.apps.es.es_query import ESQuery
+        from corehq.apps.es.forms import FormES
         LARGE_NUMBER = 1000 * 1000 * 10
-        form_query = (
-            ESQuery('forms')
-            .fields(['form.meta.userID'])
-            .size(LARGE_NUMBER)
-        )
         real_form_users = {
-            query_result.get('fields', {}).get('form.meta.userID', '')
-            for query_result in stream_esquery(
-                form_query,
-                chunksize=ES_QUERY_CHUNKSIZE['forms']
+            user_count['term'] for user_count in (
+                FormES()
+                .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                .size(0)
+                .run()
+                .facets.user.result
             )
         }
 
         from corehq.apps.sms.models import INCOMING
+        from corehq.apps.es.es_query import ESQuery
         sms_query = (
             ESQuery('sms')
             .fields(['couch_recipient'])
