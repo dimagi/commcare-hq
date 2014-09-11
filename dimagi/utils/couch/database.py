@@ -54,6 +54,13 @@ def iter_docs(database, ids, chunksize=100):
             if doc_dict:
                 yield doc_dict
 
+
+def iter_bulk_delete(database, ids, chunksize=100):
+    for doc_ids in chunked(ids, chunksize):
+        doc_dicts = [doc.get('doc') for doc in get_docs(database, keys=doc_ids) if doc.get('doc')]
+        database.bulk_delete(doc_dicts)
+
+
 def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
     return 'cloudant' in settings.COUCH_SERVER_ROOT
