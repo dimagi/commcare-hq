@@ -209,7 +209,7 @@
     <h3>{% trans "Group Data" %}</h3>
     <form id="group-data-form" class="form form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
         <input name="group-data" id="group-data" type="hidden" value='{{ group.metadata|JSON }}'></input>
-        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Information" %}</button></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button></div>
     </form>
 {% endblock %}
 
