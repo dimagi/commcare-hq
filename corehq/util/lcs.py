@@ -15,9 +15,12 @@ class LCSCache(object):
         key = str(i)+' '+str(j)
         self.d[key] = val
 
-def lcsMerge(X, Y):
+def lcsMerge(X, Y, equality_func=None):
     # Duplicated from here:
     # https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
+    if equality_func == None:
+        equality_func = lambda x, y: x == y
+
     cache = LCSCache()
     def recLcsMerge(i, j):
         recur = recLcsMerge
@@ -35,7 +38,7 @@ def lcsMerge(X, Y):
         elif j == 0:
             val = recur(i-1, j)
             val['merge'].append({'x':True, 'y': False, 'token': X[i - 1]})
-        elif X[i-1] == Y[j-1]:
+        elif equality_func(X[i-1], Y[j-1]):
             val = recur(i - 1, j - 1);
             val['lcs_length'] = val['lcs_length'] + 1
             val['merge'].append({'x': True, 'y': True, 'token': X[i - 1]})
