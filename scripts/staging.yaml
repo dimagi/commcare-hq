@@ -68,6 +68,7 @@ branches:
   # - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
   - perf-improvements # Nick P 9/11
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
 submodules:
   submodules/couchlog-src:
     branches:
