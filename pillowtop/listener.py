@@ -1,3 +1,4 @@
+from functools import wraps
 import json
 import logging
 from psycopg2._psycopg import InterfaceError
@@ -911,34 +912,47 @@ class LogstashMonitoringPillow(NetworkPillow):
             return super(NetworkPillow, self).processor(change)
 
 
-class SQLPillowMixIn(object):
-
-    @db.transaction.commit_on_success
-    def change_transport(self, doc_dict, retry=True):
+def retry_on_connection_failure(fn):
+    @wraps(fn)
+    def _inner(*args, **kwargs):
+        retry = kwargs.pop('retry', True)
         try:
-            self.process_sql(doc_dict)
-        except Exception, e:
-            if isinstance(e, db.utils.DatabaseError):
-                # we have to do this manually to avoid issues with
-                # open transactions and already closed connections
-                db.transaction.rollback()
-                # re raise the exception for additional error handling
-                raise
-            elif isinstance(e, InterfaceError):
-                # force closing the connection to prevent Django from trying to reuse it.
-                # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
-                db.connection.close()
-                if retry:
-                    self.change_transport(doc_dict, retry=False)
-                else:
-                    # re raise the exception for additional error handling
-                    raise
+            fn(*args, **kwargs)
+        except db.utils.DatabaseError:
+            # we have to do this manually to avoid issues with
+            # open transactions and already closed connections
+            db.transaction.rollback()
+            # re raise the exception for additional error handling
+            raise
+        except InterfaceError:
+            # force closing the connection to prevent Django from trying to reuse it.
+            # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
+            db.connection.close()
+            if retry:
+                _inner(retry=False, *args, **kwargs)
             else:
                 # re raise the exception for additional error handling
                 raise
 
-    def process_sql(self, doc_dict):
+    return _inner
+
+
+class SQLPillowMixIn(object):
+
+    def change_trigger(self, changes_dict):
+        if changes_dict.get('deleted', False):
+            self.change_transport({'_id': changes_dict['id']}, delete=True)
+            return None
+        return super(SQLPillowMixIn, self).change_trigger(changes_dict)
+
+    @db.transaction.commit_on_success
+    @retry_on_connection_failure
+    def change_transport(self, doc_dict, delete=False):
+        self.process_sql(doc_dict, delete)
+
+    def process_sql(self, doc_dict, delete=False):
         pass
+
 
 class SQLPillow(SQLPillowMixIn, BasicPillow):
     pass
