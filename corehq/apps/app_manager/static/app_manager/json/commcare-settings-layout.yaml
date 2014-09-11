@@ -60,6 +60,7 @@
     - properties.cc-show-incomplete
     - properties.cc-resize-images
     - hq.auto_gps_capture
+    - hq.fuzzy_search_enabled
 
 - title: 'Advanced'
   id: app-settings-advanced

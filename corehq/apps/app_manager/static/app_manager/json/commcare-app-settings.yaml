@@ -156,3 +156,12 @@
   widget: bool
   default: false
   since: '2.14'
+
+- id: fuzzy_search_enabled
+  name: "Fuzzy Search"
+  description: "Whether searches on the phone will match similar strings. IE: 'Jhon' will match 'John'"
+  values: ["yes", "no"]
+  value_names: ["Yes", "No"]
+  default: "yes"
+  values_txt: "Whether searches can match similar strings"
+  since: "2.15"

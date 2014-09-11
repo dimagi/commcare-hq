@@ -2787,6 +2787,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    fuzzy_search_enabled = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -2801,6 +2802,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
+        if 'fuzzy_search_enabled' not in data:
+            data['fuzzy_search_enabled'] = False
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
