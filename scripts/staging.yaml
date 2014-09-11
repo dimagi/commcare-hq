@@ -66,6 +66,7 @@ branches:
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
+  - perf-improvements # Nick P 9/11
 submodules:
   submodules/couchlog-src:
     branches:
