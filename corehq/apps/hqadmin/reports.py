@@ -67,6 +67,14 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "commtrack_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "domains",
+        "chart_title": "Total CommTrack Project Spaces",
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
     "domain_self_started_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "self_started_domains",
@@ -929,6 +937,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommTrack Project Spaces')
     default_params = 'es_is_test=false&es_internal.commtrack_domain=true'
     indicators = [
+        'commtrack_domain_count',
         'commtrack_total_outgoing_sms',
         'commtrack_total_incoming_sms',
         'commtrack_forms',
