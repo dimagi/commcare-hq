@@ -876,7 +876,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
 
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
-    name = ugettext_noop('Real Project Spaces')
+    name = ugettext_noop('All Project Spaces')
     default_params = 'es_is_test=false&'
     indicators = [
         'domain_count',
