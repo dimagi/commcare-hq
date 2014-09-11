@@ -9,6 +9,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import INCOMING, OUTGOING, CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
@@ -17,7 +18,7 @@ from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil
 
-class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+class CallLogReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
     """
@@ -58,7 +59,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
         result = []
         
         # Store the results of lookups for faster loading
-        username_map = {} 
+        contact_cache = {}
         form_map = {}
         xforms_sessions = {}
         
@@ -73,23 +74,8 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
         
         for call in data:
-            recipient_id = call.couch_recipient
-            if recipient_id in [None, ""]:
-                username = "-"
-            elif recipient_id in username_map:
-                username = username_map.get(recipient_id)
-            else:
-                username = "-"
-                try:
-                    if call.couch_recipient_doc_type == "CommCareCase":
-                        username = CommCareCase.get(recipient_id).name
-                    else:
-                        username = CouchUser.get_by_user_id(recipient_id).username
-                except Exception:
-                    pass
-               
-                username_map[recipient_id] = username
-            
+            doc_info = self.get_recipient_info(call, contact_cache)
+
             form_unique_id = call.form_unique_id
             if form_unique_id in [None, ""]:
                 form_name = "-"
@@ -116,7 +102,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             row = [
                 call.xforms_session_id,
                 self._fmt_timestamp(timestamp),
-                self._fmt(username),
+                self._fmt_contact_link(call, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction,"-")),
                 self._fmt(form_name),
@@ -160,18 +146,6 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             final_result.append(final_row)
 
         return final_result
-    
-    def _fmt(self, val):
-        if val is None:
-            return format_datatables_data("-", "-")
-        else:
-            return format_datatables_data(val, val)
-    
-    def _fmt_timestamp(self, timestamp):
-        return self.table_cell(
-            timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-        )
     
     def _fmt_submission_link(self, submission_id):
         url = reverse("render_form_data", args=[self.domain, submission_id])
