@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from itertools import imap
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -99,18 +100,18 @@ class Group(UndoableDocument):
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active)]
 
+    @memoized
     def get_users(self, is_active=True, only_commcare=False):
-        users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
-        users = [user for user in users if not user.is_deleted()]
-        if only_commcare is True:
-            users = [
-                user for user in users
-                if user.__class__ == CommCareUser().__class__
-            ]
-        if is_active is True:
-            return [user for user in users if user.is_active]
-        else:
-            return users
+        def is_relevant_user(user):
+            if user.is_deleted():
+                return False
+            if only_commcare and user.__class__ != CommCareUser().__class__:
+                return False
+            if is_active and not user.is_active:
+                return False
+            return True
+        users = imap(CouchUser, iter_docs(self.get_db(), self.users))
+        return filter(is_relevant_user, users)
 
     @memoized
     def get_static_user_ids(self, is_active=True):
