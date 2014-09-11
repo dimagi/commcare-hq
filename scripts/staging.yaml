@@ -45,6 +45,7 @@ name: autostaging
 branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
+  - master+schedule # Nick P 9/11
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
