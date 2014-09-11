@@ -9,8 +9,6 @@ MISSING_APP_ID = '_MISSING_APP_ID'
 
 
 class BaseDataIndex(models.Model):
-    id_property = None
-
     @classmethod
     def get_instance_id(cls, item):
         raise NotImplementedError()
@@ -30,7 +28,7 @@ class BaseDataIndex(models.Model):
         Create or update an object in the database from an CommCareCase
         """
         try:
-            val = cls.objects.get(**{cls.id_property: cls.get_instance_id(instance)})
+            val = cls.objects.get(pk=cls.get_instance_id(instance))
         except cls.DoesNotExist:
             val = cls.from_instance(instance)
             val.save()
@@ -42,7 +40,7 @@ class BaseDataIndex(models.Model):
         return val
 
     def __unicode__(self):
-        return "%s: %s" % (self.__class__.__name__, getattr(self, self.id_property))
+        return "%s: %s" % (self.__class__.__name__, self.pk)
 
     class Meta:
         abstract = True
@@ -51,9 +49,8 @@ class BaseDataIndex(models.Model):
 class FormData(BaseDataIndex):
     """
     Data about a form submission.
+    See XFormInstance class
     """
-    id_property = 'instance_id'
-
     doc_type = models.CharField(max_length=255, db_index=True)
     domain = models.CharField(max_length=255, db_index=True)
     received_on = models.DateTimeField(db_index=True)
@@ -145,10 +142,9 @@ class FormData(BaseDataIndex):
 
 class CaseData(BaseDataIndex):
     """
-    Data about a CommCareCase
+    Data about a CommCareCase.
+    See CommCareCase class
     """
-    id_property = 'case_id'
-
     case_id = models.CharField(unique=True, primary_key=True, max_length=255)
     doc_type = models.CharField(max_length=255, db_index=True)
     domain = models.CharField(max_length=255, db_index=True)
@@ -163,7 +159,7 @@ class CaseData(BaseDataIndex):
     modified_on = models.DateTimeField(db_index=True)
     modified_by = models.CharField(max_length=255, db_index=True, null=True)
     server_modified_on = models.DateTimeField(db_index=True)
-    name = models.CharField(max_length=512)
+    name = models.CharField(max_length=512, null=True)
     external_id = models.CharField(max_length=512, null=True)
 
     @classmethod
@@ -174,10 +170,10 @@ class CaseData(BaseDataIndex):
         """
         Update this object based on a CommCareCase doc
         """
+        is_new = not self.case_id
         case_id = self.get_instance_id(case)
 
         if self.case_id and self.case_id != case_id:
-            # we never allow updates to change the instance ID
             raise InvalidCaseUpdateException(
                 "Tried to update CaseData %s with different "
                 "case id %s!" % (self.case_id, case_id)
@@ -200,12 +196,15 @@ class CaseData(BaseDataIndex):
         self.name = case.name
         self.external_id = case.external_id
 
-        CaseActionData.objects.filter(case_id=case_id).delete()
-        actions = [CaseActionData.from_instance(action, i) for i, action in enumerate(case.actions)]
-        self.actions = actions
+        if not is_new:
+            CaseActionData.objects.filter(case_id=case_id).delete()
+            CaseIndexData.objects.filter(case_id=case_id).delete()
+
+        self.actions = [CaseActionData.from_instance(action, i) for i, action in enumerate(case.actions)]
+        self.indices = [CaseIndexData.from_instance(index) for index in case.indices]
 
     def matches_exact(self, case):
-        return (
+        basic_match = (
             self.modified_on == case.modified_on and
             self.modified_by == case.user_id and
             self.closed == case.closed and
@@ -224,13 +223,27 @@ class CaseData(BaseDataIndex):
             self.external_id == case.external_id
         )
 
+        if not basic_match:
+            return False
+
+        this_actions = self.actions.all()
+        if not len(case.actions) == len(this_actions):
+            return False
+
+        for i, action in enumerate(case.actions):
+            if not this_actions[i].matches_exact(action, i):
+                return False
+
+        return True
+
     class Meta:
         ordering = ['opened_on']
 
 
 class CaseActionData(models.Model):
     """
-    Data about a CommCareCase action
+    Data about a CommCareCase action.
+    See CommCareCaseAction class
     """
     case = models.ForeignKey(CaseData, related_name='actions')
     index = models.IntegerField()
@@ -243,7 +256,10 @@ class CaseActionData(models.Model):
     sync_log_id = models.CharField(max_length=255, null=True)
 
     def __unicode__(self):
-        return 'CaseAction: %s(%s)' % (self.case_id, self.index)
+        return "CaseAction: {xform}: {type} - {date} ({server_date})".format(
+            xform=self.xform_id, type=self.action_type,
+            date=self.date, server_date=self.server_date
+        )
 
     @classmethod
     def from_instance(cls, action, index):
@@ -258,5 +274,44 @@ class CaseActionData(models.Model):
         ret.sync_log_id = action.sync_log_id
         return ret
 
+    def matches_exact(self, action, index):
+        return (
+            self.index == index and
+            self.date == action.date and
+            self.server_date == action.server_date and
+            self.xform_id == action.xform_id and
+            self.action_type == action.action_type and
+            self.user_id == action.user_id and
+            self.xform_xmlns == action.xform_xmlns and
+            self.sync_log_id == action.sync_log_id
+        )
+
     class Meta:
-        ordering = ['date']
+        ordering = ['index']
+        unique_together = ("case", "index")
+
+
+class CaseIndexData(models.Model):
+    """
+    Data about a CommCareCase Index.
+    See CommCareCaseIndex class
+    """
+    case = models.ForeignKey(CaseData, related_name='indices')
+    identifier = models.CharField(max_length=255, db_index=True)
+    referenced_type = models.CharField(max_length=255, db_index=True)
+    referenced_id = models.CharField(max_length=255, db_index=True)
+
+    def __unicode__(self):
+        return "CaseIndex: %(identifier)s ref: (type: %(ref_type)s, id: %(ref_id)s)" % {
+            "identifier": self.identifier,
+            "ref_type": self.referenced_type,
+            "ref_id": self.referenced_id
+        }
+
+    @classmethod
+    def from_instance(cls, index):
+        ret = cls()
+        ret.identifier = index.identifier
+        ret.referenced_type = index.referenced_type
+        ret.referenced_id = index.referenced_id
+        return ret

@@ -24,7 +24,7 @@ class Migration(SchemaMigration):
             ('modified_on', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('modified_by', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, db_index=True)),
             ('server_modified_on', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=512, null=True)),
             ('external_id', self.gf('django.db.models.fields.CharField')(max_length=512, null=True)),
         ))
         db.send_create_signal(u'sofabed', ['CaseData'])
@@ -44,19 +44,38 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'sofabed', ['CaseActionData'])
 
+        # Adding unique constraint on 'CaseActionData', fields ['case', 'index']
+        db.create_unique(u'sofabed_caseactiondata', ['case_id', 'index'])
+
+        # Adding model 'CaseIndexData'
+        db.create_table(u'sofabed_caseindexdata', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('case', self.gf('django.db.models.fields.related.ForeignKey')(related_name='indices', to=orm['sofabed.CaseData'])),
+            ('identifier', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
+            ('referenced_type', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
+            ('referenced_id', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
+        ))
+        db.send_create_signal(u'sofabed', ['CaseIndexData'])
+
 
     def backwards(self, orm):
         
+        # Removing unique constraint on 'CaseActionData', fields ['case', 'index']
+        db.delete_unique(u'sofabed_caseactiondata', ['case_id', 'index'])
+
         # Deleting model 'CaseData'
         db.delete_table(u'sofabed_casedata')
 
         # Deleting model 'CaseActionData'
         db.delete_table(u'sofabed_caseactiondata')
 
+        # Deleting model 'CaseIndexData'
+        db.delete_table(u'sofabed_caseindexdata')
+
 
     models = {
         u'sofabed.caseactiondata': {
-            'Meta': {'ordering': "['date']", 'object_name': 'CaseActionData'},
+            'Meta': {'ordering': "['index']", 'unique_together': "(('case', 'index'),)", 'object_name': 'CaseActionData'},
             'action_type': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
             'case': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'actions'", 'to': u"orm['sofabed.CaseData']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
@@ -79,13 +98,21 @@ class Migration(SchemaMigration):
             'external_id': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True'}),
             'modified_by': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'}),
             'modified_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True'}),
             'opened_by': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'opened_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
             'owner_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'server_modified_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
             'type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'version': ('django.db.models.fields.CharField', [], {'max_length': '10', 'db_index': 'True'})
+        },
+        u'sofabed.caseindexdata': {
+            'Meta': {'object_name': 'CaseIndexData'},
+            'case': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'indices'", 'to': u"orm['sofabed.CaseData']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'referenced_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'referenced_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'})
         },
         u'sofabed.formdata': {
             'Meta': {'object_name': 'FormData'},
