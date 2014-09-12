@@ -131,7 +131,8 @@ def configurable_reports(project):
                 'get_url': get_url,
             })
 
-        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Configurable Reports'), sorted([_make_report_class(config) for config in configs],
+                                                 key=lambda report: report.name))
 
 def make_dynamic_report(report_config, keyprefix):
     """create a report class the descends from a generic report class but has specific parameters set"""
