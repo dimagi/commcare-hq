@@ -93,7 +93,7 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
         try:
             user = WebUser.create(domain=None, username=username,
                                   password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
-            user.add_domain_membership(domain, role_id=role_id, location_id=location_id)
+            user.add_domain_membership(domain, is_admin=ilsgateway_webuser.is_superuser, role_id=role_id, location_id=location_id)
             user.save()
         except Exception as e:
             logging.error(e)
