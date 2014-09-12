@@ -64,6 +64,8 @@ class ConventureData(BaseSqlData):
 
     @property
     def filters(self):
+        #We have to filter data by real_date_repeat not date(first position in filters list).
+        #Filtering is done directly in columns method(CountUniqueColumn).
         filters = super(ConventureData, self).filters
         return filters[1:]
 
