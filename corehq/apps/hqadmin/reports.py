@@ -932,4 +932,6 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'commtrack_total_outgoing_sms',
         'commtrack_total_incoming_sms',
         'commtrack_forms',
+        'users_mobile',
+        'active_users_mobile',
     ]
