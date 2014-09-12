@@ -4,7 +4,6 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
-from jsonobject.exceptions import WrappingAttributeError
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
 from corehq.apps.domain.decorators import domain_admin_required
@@ -14,13 +13,7 @@ from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm
 
 @domain_admin_required
 def edit_report(request, domain, report_id):
-    try:
-        config = ReportConfiguration.get(report_id)
-        assert config.domain == domain
-        assert config.doc_type == 'ReportConfiguration'
-    except (ResourceNotFound, WrappingAttributeError, AssertionError):
-        raise Http404()
-
+    config = ReportConfiguration.get_or_404(report_id, domain)
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():

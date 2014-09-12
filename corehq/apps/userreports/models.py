@@ -1,5 +1,8 @@
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from django.http import Http404
+from jsonobject.exceptions import WrappingAttributeError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
@@ -105,3 +108,12 @@ class ReportConfiguration(Document):
         ids = [res['id'] for res in cls.view('userreports/report_configs_by_domain', reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
+
+    @classmethod
+    def get_or_404(cls, doc_id, domain):
+        try:
+            config = cls.get(doc_id)
+            assert config.domain == domain
+            assert config.doc_type == cls.doc_type
+        except (ResourceNotFound, WrappingAttributeError, AssertionError):
+            raise Http404()

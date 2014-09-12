@@ -19,7 +19,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def spec(self):
-        return ReportConfiguration.get(self.report_config_id)
+        return ReportConfiguration.get_or_404(self.report_config_id, self.domain)
 
     @property
     @memoized
