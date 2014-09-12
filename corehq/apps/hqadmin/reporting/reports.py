@@ -161,13 +161,13 @@ def get_active_domain_stats_data(domains, datespan, interval,
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
+        domains_in_interval = (
+            domains
+            if software_plan_edition is None else
+            (domains & domains_matching_plan(software_plan_edition, f, t))
+        )
         form_query = (FormES()
-            .in_domains(
-                domains if software_plan_edition is None else (
-                    domains & domains_matching_plan(
-                        software_plan_edition, f, t)
-                )
-            )
+            .in_domains(domains_in_interval)
             .submitted(gte=f, lte=t)
             .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
             .size(0))
