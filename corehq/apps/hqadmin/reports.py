@@ -163,7 +163,7 @@ INDICATOR_DATA = {
         "chart_name": "commtrack_users_web",
         "chart_title": "CommTrack Web Users",
         "get_request_params": {
-            "do_not_require_submissions": True,
+            "require_submissions": False,
             "user_type_mobile": False,
         },
         "histogram_type": "users",
