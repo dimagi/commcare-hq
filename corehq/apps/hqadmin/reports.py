@@ -158,6 +158,18 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# users",
     },
+    "commtrack_users_web": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "commtrack_users_web",
+        "chart_title": "CommTrack Web Users",
+        "get_request_params": {
+            "do_not_require_submissions": True,
+            "user_type_mobile": False,
+        },
+        "histogram_type": "users",
+        "interval": "week",
+        "xaxis_label": "# users",
+    },
     "active_users_mobile": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_users_mobile",
@@ -943,4 +955,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'commtrack_forms',
         'users_mobile',
         'active_users_mobile',
+        'commtrack_users_web',
     ]
