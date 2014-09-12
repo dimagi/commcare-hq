@@ -73,7 +73,8 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_user_type_filters(histo_type, user_type_mobile):
+def get_user_type_filters(histo_type, user_type_mobile,
+        do_not_require_submissions):
     def get_user_ids():
         from corehq.apps.es.users import UserES
         query = UserES()
@@ -91,33 +92,36 @@ def get_user_type_filters(histo_type, user_type_mobile):
     elif histo_type == 'users':
         existing_users = get_user_ids()
 
-        from corehq.apps.es.forms import FormES
-        LARGE_NUMBER = 1000 * 1000 * 10
-        real_form_users = {
-            user_count['term'] for user_count in (
-                FormES()
-                .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
-                .size(0)
-                .run()
-                .facets.user.result
-            )
-        }
+        if do_not_require_submissions:
+            from corehq.apps.es.forms import FormES
+            LARGE_NUMBER = 1000 * 1000 * 10
+            real_form_users = {
+                user_count['term'] for user_count in (
+                    FormES()
+                    .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
 
-        from corehq.apps.es.sms import SMSES
-        real_sms_users = {
-            user_count['term'] for user_count in (
-                SMSES()
-                .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
-                .incoming_messages()
-                .size(0)
-                .run()
-                .facets.user.result
-            )
-        }
+            from corehq.apps.es.sms import SMSES
+            real_sms_users = {
+                user_count['term'] for user_count in (
+                    SMSES()
+                    .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                    .incoming_messages()
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
 
-        filtered_real_users = (
-            existing_users & (real_form_users | real_sms_users)
-        )
+            filtered_real_users = (
+                existing_users & (real_form_users | real_sms_users)
+            )
+        else:
+            filtered_real_users = existing_users
         result['terms']['_id'] = [
             user_id for user_id in filtered_real_users
         ]
@@ -147,9 +151,15 @@ def get_case_owner_filters():
     return result
 
 
-def get_general_stats_data(domains, histo_type, datespan, interval="day", user_type_mobile=None, is_cumulative=True):
+def get_general_stats_data(domains, histo_type, datespan, interval="day",
+        user_type_mobile=None, is_cumulative=True,
+        do_not_require_submissions=False):
     user_type_filters = (
-        get_user_type_filters(histo_type, user_type_mobile)
+        get_user_type_filters(
+            histo_type,
+            user_type_mobile,
+            do_not_require_submissions,
+        )
         if user_type_mobile is not None else None
     )
 
