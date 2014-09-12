@@ -313,7 +313,7 @@ def get_mobile_workers_data(domains, datespan, interval,
     sms_users = (SMSES()
             .to_commcare_user()
             .in_domains(domains)
-            .terms_facet('users', 'couch_recipient', 100000)
+            .terms_facet('users', 'couch_recipient', LARGE_ES_NUMBER)
             .size(0))
 
     users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
