@@ -63,7 +63,10 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('userreports/indicator_configs_by_domain', key=domain, reduce=False, include_docs=True).all()
+        return sorted(
+            cls.view('userreports/indicator_configs_by_domain', key=domain, reduce=False, include_docs=True),
+            key=lambda config: config.display_name
+        )
 
     @classmethod
     def all(cls):
@@ -92,7 +95,10 @@ class ReportConfiguration(Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True).all()
+        return sorted(
+            cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True),
+            key=lambda report: report.display_name,
+        )
 
     @classmethod
     def all(cls):
