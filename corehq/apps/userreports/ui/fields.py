@@ -18,6 +18,11 @@ class ReportDataSourceField(forms.ChoiceField):
 
 class JsonField(forms.CharField):
     widget = JsonWidget
+    expected_type = None
+
+    def __init__(self, expected_type=None, *args, **kwargs):
+        self.expected_type = expected_type
+        super(JsonField, self).__init__(*args, **kwargs)
 
     def prepare_value(self, value):
         if isinstance(value, basestring):
@@ -31,9 +36,12 @@ class JsonField(forms.CharField):
     def validate(self, value):
         super(JsonField, self).validate(value)
         try:
-            json.loads(value)
+            value = json.loads(value)
         except ValueError:
             raise forms.ValidationError(_('Please enter valid JSON.'))
+        if self.expected_type and not isinstance(value, self.expected_type):
+            raise forms.ValidationError(_(u'Expected {} but was {}'.format(self.expected_type, type(value))))
+
 
     def clean(self, value):
         return json.loads(super(JsonField, self).clean(value))
