@@ -1,1 +1,6 @@
 {% extends "reports_core/base_template_new.html" %}
+{% load i18n %}
+{% block main_column %}
+    <a class="btn btn-primary pull-right" href="{% url 'edit_configurable_report' domain report.report_config_id %}">{% trans "Edit Report" %}</a>
+    {{ block.super }}
+{% endblock %}
