@@ -43,10 +43,9 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products+archive-to-deactivate # tw 8/14
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
-  - schedule+ucla-task-creation # Noah 9/3
+  - master+schedule # Nick P 9/11
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -62,11 +61,13 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
   - caselistmixin-refactor # Noah 8/14
-  - ucla-task-creation # Noah 9/3
-  - outputrefs # Simon 9/6
+  - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
-  - refactoring-admin-reports # Nick P 9/8
+  # - lwyszomi:b3-mobile-layout
+  - lwyszomi:ilsgateway-bugs
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - staticfiles-fix
 submodules:
   submodules/couchlog-src:
     branches:

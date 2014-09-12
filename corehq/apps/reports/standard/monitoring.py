@@ -192,13 +192,13 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of active cases.")
+                help_text=_("The number of cases created or modified in the last 120 days.")
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
             )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days).") % landmark.days
+                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
@@ -1158,7 +1158,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 url_args = EMWF.for_user(owner_id)
             else:
                 assert type == 'group'
-                url_args = EMWF.for_group(owner_id)
+                url_args = EMWF.for_reporting_group(owner_id)
 
             start_date, end_date = dates_for_linked_reports()
             url_args.update({

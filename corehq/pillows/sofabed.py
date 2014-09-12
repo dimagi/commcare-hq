@@ -13,10 +13,16 @@ class FormDataPillow(SQLPillow):
     couch_filter = 'couchforms/xforms'
     include_docs = False
 
-    def process_sql(self, doc_dict):
+    def process_sql(self, doc_dict, delete=False):
+        if delete:
+            try:
+                FormData.objects.get(instance_id=doc_dict['_id']).delete()
+            except FormData.DoesNotExist:
+                pass
+            return
+
         doc = self.document_class.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
-
         try:
             FormData.create_or_update_from_xforminstance(doc)
         except InvalidDataException, e:
