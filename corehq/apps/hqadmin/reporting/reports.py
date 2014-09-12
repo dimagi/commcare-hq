@@ -171,9 +171,17 @@ def get_active_domain_stats_data(domains, datespan, interval,
             .submitted(gte=f, lte=t)
             .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
             .size(0))
+        domains_submitted_forms = form_query.run().facet('domains', "terms")
 
-        d = form_query.run().facet('domains', "terms")
-        c = len(d)
+        sms_query = (SMSES()
+            .in_domains(domains_in_interval)
+            .received(gte=f, lte=t)
+            .terms_facet('domains', 'domain')
+            .size(0))
+        domains_submitted_SMS = sms_query.run().facet('domains', "terms")
+
+        c = len({term_and_count['term'] for term_and_count in (
+            domains_submitted_forms + domains_submitted_SMS)})
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
