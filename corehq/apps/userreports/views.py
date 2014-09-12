@@ -9,11 +9,12 @@ from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfigu
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
+from corehq.util.couch import get_document_or_404
 
 
 @domain_admin_required
 def edit_report(request, domain, report_id):
-    config = ReportConfiguration.get_or_404(report_id, domain)
+    config = get_document_or_404(ReportConfiguration, domain, report_id)
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
@@ -38,13 +39,7 @@ def edit_report(request, domain, report_id):
 
 @domain_admin_required
 def edit_data_source(request, domain, config_id):
-    try:
-        config = IndicatorConfiguration.get(config_id)
-        assert config.domain == domain
-        assert config.doc_type == 'IndicatorConfiguration'
-    except (ResourceNotFound, WrappingAttributeError, AssertionError):
-        raise Http404()
-
+    config = get_document_or_404(IndicatorConfiguration, domain, config_id)
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(config, request.POST)
         if form.is_valid():

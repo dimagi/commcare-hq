@@ -4,6 +4,7 @@ from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportFilterFactory
+from corehq.util.couch import get_document_or_404
 from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.web import json_request
@@ -19,7 +20,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def spec(self):
-        return ReportConfiguration.get_or_404(self.report_config_id, self.domain)
+        return get_document_or_404(ReportConfiguration, self.domain, self.report_config_id)
 
     @property
     @memoized

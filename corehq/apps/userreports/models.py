@@ -108,12 +108,3 @@ class ReportConfiguration(Document):
         ids = [res['id'] for res in cls.view('userreports/report_configs_by_domain', reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
-
-    @classmethod
-    def get_or_404(cls, doc_id, domain):
-        try:
-            config = cls.get(doc_id)
-            assert config.domain == domain
-            assert config.doc_type == cls.doc_type
-        except (ResourceNotFound, WrappingAttributeError, AssertionError):
-            raise Http404()
