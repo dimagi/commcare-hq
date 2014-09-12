@@ -555,6 +555,9 @@ def get_other_stats(histo_type, domains, datespan, interval,
         user_type_mobile=user_type_mobile,
         is_cumulative=is_cumulative == "True",
     )
+    if not stats_data['histo_data']:
+        stats_data['histo_data'][''] = []
+        stats_data['initial_values'] = {'': 0}
     for k in stats_data['histo_data']:
         stats_data['histo_data'][k] = add_blank_data(
             stats_data["histo_data"][k],
