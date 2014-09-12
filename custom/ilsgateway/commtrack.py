@@ -120,8 +120,11 @@ def add_location(user, location_id):
 
 @retry(5)
 def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
+    domain_part = "%s.commcarehq.org" % domain
     username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
-    username = "%s@%s.commcarehq.org" % (username_part, domain)
+    username = "%s@%s" % (username_part[:(128 - len(domain_part))], domain_part)
+    #sanity check
+    assert len(username) <= 128
     user = CouchUser.get_by_username(username)
     splitted_value = ilsgateway_smsuser.name.split(' ', 1)
     first_name = last_name = ''
