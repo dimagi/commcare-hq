@@ -179,7 +179,8 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 form_query.run().facet('domains', "terms")
             }
         if add_sms_domains:
-            sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
+            sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
+                .incoming_messages())
             active_domains |= {
                 term_and_count['term'] for term_and_count in
                 sms_query.run().facet('domains', "terms")
