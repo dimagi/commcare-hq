@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.definitions import RawIndicatorSpec
+from corehq.apps.userreports.specs import RawIndicatorSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
