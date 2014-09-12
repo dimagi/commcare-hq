@@ -54,11 +54,11 @@ class ReportFactory(object):
     def from_spec(cls, spec):
         # todo: validation and what not
         return ConfigurableReportDataSource(
-            domain=spec['domain'],
-            table_id=spec['table_id'],
-            filters=[ReportFilter.wrap(f) for f in spec['filters']],
-            aggregation_columns=spec['aggregation_columns'],
-            columns=[ReportColumn.wrap(colspec) for colspec in spec['columns']],
+            domain=spec.domain,
+            table_id=spec.table_id,
+            filters=[ReportFilter.wrap(f) for f in spec.filters],
+            aggregation_columns=spec.aggregation_columns,
+            columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
         )
 
 

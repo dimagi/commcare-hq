@@ -6,6 +6,7 @@ from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 from fluff.filters import ANDFilter
 
 
@@ -51,6 +52,15 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
             [doc_id_indicator] + [IndicatorFactory.from_spec(indicator) for indicator in self.configured_indicators]
         )
 
+    def get_columns(self):
+        return self.indicators.get_columns()
+
+    def get_values(self, item):
+        if self.filter.filter(item):
+            return self.indicators.get_values(item)
+        else:
+            return []
+
     @classmethod
     def by_domain(cls, domain):
         return cls.view('userreports/indicator_configs_by_domain', key=domain, reduce=False, include_docs=True).all()
@@ -61,25 +71,24 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 
-    def get_columns(self):
-        return self.indicators.get_columns()
-
-    def get_values(self, item):
-        if self.filter.filter(item):
-            return self.indicators.get_values(item)
-        else:
-            return []
-
 
 class ReportConfiguration(Document):
     domain = StringProperty(required=True)
     config_id = StringProperty(required=True)
-    table_id = StringProperty(required=True)  # todo: validate that we want this here as opposed to getting it from the config
     display_name = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
     filters = ListProperty()
     columns = ListProperty()
+
+    @property
+    @memoized
+    def config(self):
+        return IndicatorConfiguration.get(self.config_id)
+
+    @property
+    def table_id(self):
+        return self.config.table_id
 
     @classmethod
     def by_domain(cls, domain):
