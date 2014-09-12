@@ -950,6 +950,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     default_params = 'es_is_test=false&es_internal.commtrack_domain=true'
     indicators = [
         'commtrack_domain_count',
+        'active_domain_count',
         'commtrack_total_outgoing_sms',
         'commtrack_total_incoming_sms',
         'commtrack_forms',
