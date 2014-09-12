@@ -171,7 +171,7 @@ class DispDesProducts(BaseSqlData):
 
 class TauxDeRuptures(BaseSqlData):
     slug = 'taux_de_ruptures'
-    title = 'Taux de ruptures de stock total'
+    title = u'Disponibilité des Produits - Taux des Ruptures de Stock'
     table_name = 'fluff_IntraHealthFluff'
     col_names = ['stock_total']
     have_groups = False
@@ -463,6 +463,7 @@ class NombreData(BaseSqlData):
 
 class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
+    title = u'Gestion de l`IPM - Taux des Ruptures de Stock'
 
 
 class DureeData(BaseSqlData):
