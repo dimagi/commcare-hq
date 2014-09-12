@@ -95,6 +95,6 @@ submodules:
       # Danny 8/12. If there's weird errors or issues in saving forms
       # or saving apps, just remove this
       - faster-lazy-attachments
-  submodules/pillowtop:
+  submodules/pillowtop-src:
     branches:
       - request_timeout  # Ethan 9/12
