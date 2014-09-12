@@ -625,7 +625,7 @@ class ChangeSubscriptionForm(forms.Form):
 
 class CreditForm(forms.Form):
     amount = forms.DecimalField(label="Amount (USD)")
-    note = forms.CharField(required=False)
+    note = forms.CharField(required=True)
     rate_type = forms.ChoiceField(
         label=_("Rate Type"),
         choices=(
@@ -680,7 +680,7 @@ class CreditForm(forms.Form):
             ))
         return amount
 
-    def adjust_credit(self):
+    def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
         product_type = (self.cleaned_data['product_type']
@@ -694,6 +694,7 @@ class CreditForm(forms.Form):
             feature_type=feature_type,
             product_type=product_type,
             note=note,
+            web_user=web_user,
         )
         return True
 

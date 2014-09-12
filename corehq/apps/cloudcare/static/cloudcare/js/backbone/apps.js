@@ -609,6 +609,23 @@ cloudCare.AppView = Backbone.View.extend({
                     self.showModule(selectedModule);
                     cloudCare.dispatch.trigger("form:submitted");
                     showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
+                },
+                error: function (resp, status, message) {
+                    if (message) {
+                        message = "Save failed. Details: " + message;
+                    } else {
+                        message = "Unknown error: " + status + " " + resp.status;
+                        if (resp.status === 0) {
+                            message = (message
+                                + ". This can happen if you loaded CloudCare "
+                                + "from a different address than the server "
+                                + "address (" + submitUrl + ")");
+                        }
+                    }
+                    data.onerror({message: message});
+                    // TODO change submit button text to something other than
+                    // "Submitting..." and prevent "All changes saved!" message
+                    // banner at top of the form.
                 }
             });
         };

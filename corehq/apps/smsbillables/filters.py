@@ -6,7 +6,7 @@ from corehq.apps.accounting.filters import (
 from django.utils.translation import ugettext_noop as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.sms.models import DIRECTION_CHOICES
-from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria
+from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsBillable
 
 
 class DateSentFilter(DateRangeFilter):
@@ -34,10 +34,8 @@ class DomainFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return clean_options(
-            [
-                (domain.name, domain.name)
-                for domain in Domain.get_all()
-            ]
+            [(b, b) for b in SmsBillable.objects.values_list(
+                'domain', flat=True).distinct()]
         )
 
 

@@ -6,6 +6,7 @@ be aware of. Save time and create consistency.
 
 
 .. _paginated_crud:
+
 Paginated CRUD View
 -------------------
 
@@ -377,6 +378,7 @@ You implement the following method (note that a return is not expected):
 Add a button like this to your template:
 
 .. code-block:: html
+
     <button type="button"
             class="btn refresh-list-confirm"
             data-loading-text="Making Default...">

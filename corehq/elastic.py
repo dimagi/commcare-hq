@@ -211,8 +211,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     This is a flat wrapper for es_query.
 
     To sort, specify the path to the relevant field
-    and the order ("asc" or "desc")
+    and the order ("asc" or "desc"), or provide a list of tuples to sort by
+    multiple fields.
     eg: sort_by=form.meta.timeStart, order="asc"
+    eg: sort_by=[(form.meta.timeStart, "asc"), ("name", "desc")]
     """
     if index not in ES_URLS:
         msg = "%s is not a valid ES index.  Available options are: %s" % (
@@ -251,9 +253,17 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         es_filters.extend(filters)
     es_filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
     if sort_by:
-        assert(order in ["asc", "desc"]),\
-            'To sort, you must specify the order as "asc" or "desc"'
-        query["sort"] = [{sort_by: {"order": order}}]
+        if isinstance(sort_by, list):
+            assert(order == None),\
+                'order must be None if sort_by is a list. Usage: sort_by=[("name", "asc"),("dob", "desc")]'
+        else:
+            sort_by = [(sort_by, order)]
+        sort = []
+        for sort_key, sort_order in sort_by:
+            assert(sort_order in ['asc', 'desc']),\
+                'Sort order must be "asc" or "desc"'
+            sort.append({sort_key: {'order': sort_order}})
+        query['sort'] = sort
 
     # make query
     res = es_query(

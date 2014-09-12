@@ -48,6 +48,7 @@ from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
+from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -368,6 +369,15 @@ class AdvancedFormActions(DocumentSchema):
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
+
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in [a for a in self.open_cases if a.parent_tag]:
+            if not parent_case_type:
+                yield action
+            else:
+                parent = self.actions_meta_by_tag[action.parent_tag]['action']
+                if parent.case_type == parent_case_type:
+                    yield parent
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -2588,7 +2598,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception('Unexpected error building app')
+
+            # this is much less useful/actionable without a URL
+            # so make sure to include the request
+            logging.error('Unexpected error building app', exc_info=True,
+                          extra={'request': view_utils.get_request()})
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 

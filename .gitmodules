@@ -37,9 +37,6 @@
 [submodule "submodules/python-digest"]
 	path = submodules/python-digest
 	url = git://github.com/dimagi/python-digest.git
-[submodule "submodules/formdesigner"]
-	path = submodules/formdesigner
-	url = git://github.com/dimagi/Vellum.git
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
@@ -73,6 +70,9 @@
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git
+[submodule "corehq/apps/hqmedia/static/hqmedia/MediaUploader"]
+	path = corehq/apps/hqmedia/static/hqmedia/MediaUploader
+	url = git://github.com/dimagi/MediaUploader.git
 [submodule "corehq/apps/style/static/style/lib/bootstrap-3.2.0"]
 	path = corehq/apps/style/static/style/lib/bootstrap-3.2.0
 	url = https://github.com/twbs/bootstrap.git

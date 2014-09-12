@@ -12,6 +12,12 @@
                 placeholder: "{% trans 'Select a language...' %}"
             });
         });
+
+        $('form[name="user_information"]').on("change", null, null, function() {
+            $(":submit").prop("disabled", false);
+        }).on("input", null, null, function() {
+            $(":submit").prop("disabled", false);
+        })
     </script>
 {% endblock %}
 
@@ -27,7 +33,7 @@
             </div>
             {% crispy form %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
+                <button type="submit" class="btn btn-primary" disabled>{% trans 'Update Information' %}</button>
             </div>
         </fieldset>
     </form>
