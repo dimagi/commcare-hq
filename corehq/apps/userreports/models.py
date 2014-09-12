@@ -78,8 +78,8 @@ class ReportConfiguration(Document):
     display_name = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
-    configured_filters = ListProperty()
-    configured_columns = ListProperty()
+    filters = ListProperty()
+    columns = ListProperty()
 
     @classmethod
     def by_domain(cls, domain):
