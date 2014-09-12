@@ -67,6 +67,14 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "commtrack_domain_count": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "domains",
+        "chart_title": "Total CommTrack Project Spaces",
+        "histogram_type": "domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
     "domain_self_started_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "self_started_domains",
@@ -391,8 +399,6 @@ DOMAIN_FACETS = [
     "project_type",
     "area",
     "case_sharing",
-    "commtrack_enabled",
-    "commconnect_enabled",
     "customer_type",
     "deployment.city.exact",
     "deployment.country.exact",
@@ -417,6 +423,8 @@ DOMAIN_FACETS = [
     "internal.platform",
     "internal.project_manager",
     "internal.phone_model.exact",
+    "internal.commtrack_domain",
+    "internal.commconnect_domain",
 
     "is_approved",
     "is_public",
@@ -462,8 +470,8 @@ FACET_MAPPING = [
         {"facet": "case_sharing", "name": "Case Sharing", "expanded": False},
         {"facet": "internal.using_adm", "name": "ADM", "expanded": False},
         {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False},
-        {"facet": "commtrack_enabled", "name": "CommTrack", "expanded": False},
-        {"facet": "commconnect_enabled", "name": "CommConnect", "expanded": False},
+        {"facet": "internal.commtrack_domain", "name": "CommTrack", "expanded": False},
+        {"facet": "internal.commconnect_domain", "name": "CommConnect", "expanded": False},
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
     ]),
     ("Plans", False, [
@@ -641,6 +649,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="is_active"),
+            DataTablesColumn(_("CommConnect?"), prop_name="internal.commconnect_domain"),
+            DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
         )
         return headers
 
@@ -717,6 +727,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
                     format_bool(dom.get('is_active') or _('No info')),
+                    format_bool(dom.get('internal', {}).get('commconnect_domain')),
+                    format_bool(dom.get('internal', {}).get('commtrack_domain')),
                 ]
 
 
@@ -901,7 +913,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('CommConnect Project Spaces')
-    default_params = 'es_is_test=false&es_commconnect_enabled=T&'
+    default_params = 'es_is_test=false&es_internal.commconnect_domain=true'
     indicators = [
         'commconnect_domain_count',
         'sms_domain_count',
@@ -923,9 +935,12 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
     name = ugettext_noop('CommTrack Project Spaces')
-    default_params = 'es_is_test=false&es_commtrack_enabled=T&'
+    default_params = 'es_is_test=false&es_internal.commtrack_domain=true'
     indicators = [
+        'commtrack_domain_count',
         'commtrack_total_outgoing_sms',
         'commtrack_total_incoming_sms',
         'commtrack_forms',
+        'users_mobile',
+        'active_users_mobile',
     ]
