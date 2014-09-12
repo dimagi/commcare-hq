@@ -532,7 +532,7 @@ def get_user_stats(domains, datespan, interval, **kwargs):
 
 def get_other_stats(histo_type, domains, datespan, interval,
         individual_domain_limit=16, is_cumulative="True",
-        user_type_mobile=None):
+        user_type_mobile=None, require_submissions=True):
     if len(domains) <= individual_domain_limit:
         domain_info = [{"names": [d], "display_name": d} for d in domains]
     elif len(domains) < ES_MAX_CLAUSE_COUNT:
@@ -554,6 +554,7 @@ def get_other_stats(histo_type, domains, datespan, interval,
         interval=interval,
         user_type_mobile=user_type_mobile,
         is_cumulative=is_cumulative == "True",
+        require_submissions=require_submissions,
     )
     if not stats_data['histo_data']:
         stats_data['histo_data'][''] = []
