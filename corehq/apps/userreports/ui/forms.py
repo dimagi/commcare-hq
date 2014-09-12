@@ -39,3 +39,19 @@ class ConfigurableReportEditForm(DocumentFormBase):
     def __init__(self, domain, instance=None, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
+
+
+DOC_TYPE_CHOICES = (
+    ('CommCareCase', 'cases'),
+    ('XFormInstance', 'forms')
+)
+
+
+class ConfigurableDataSourceEditForm(DocumentFormBase):
+
+    table_id = forms.CharField()
+    referenced_doc_type = forms.ChoiceField(choices=DOC_TYPE_CHOICES)
+    display_name = forms.CharField()
+    description = forms.CharField(required=False)
+    configured_filter = JsonField(expected_type=dict)
+    configured_indicators = JsonField(expected_type=list)

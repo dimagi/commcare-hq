@@ -10,6 +10,12 @@
             <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.display_name }}</a>
         </li>
 {% endfor %}
+        <li class="nav-header">{% trans "Edit Data Sources" %}</li>
+{% for data_source in data_sources %}
+        <li>
+            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
+        </li>
+{% endfor %}
 </ul>
 </nav>
 {% endblock %}
