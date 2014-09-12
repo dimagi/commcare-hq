@@ -1,5 +1,6 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.conf import settings
 from pillow_retry.models import PillowError, Stub
 from django.test import TestCase
 from pillow_retry.tasks import process_pillow_retry
@@ -91,6 +92,19 @@ class PillowRetryTestCase(TestCase):
         with self.assertRaises(PillowError.DoesNotExist):
             #  if processing is successful the record will be deleted
             PillowError.objects.get(id=error.id)
+
+    def test_bulk_reset(self):
+        for i in range(0, 5):
+            error = create_error({'id': i}, attempts=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
+            error.save()
+
+        errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
+        self.assertEqual(len(errors), 0)
+
+        PillowError.bulk_reset_attempts(datetime.utcnow())
+
+        errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
+        self.assertEqual(len(errors), 5)
 
 
 class FakePillow(BasicPillow):
