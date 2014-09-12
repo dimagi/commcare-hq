@@ -4,8 +4,9 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from jsonobject.exceptions import WrappingAttributeError
 from corehq.apps.userreports.reports.view import ConfigurableReport
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm
@@ -15,7 +16,9 @@ from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm
 def edit_report(request, domain, report_id):
     try:
         config = ReportConfiguration.get(report_id)
-    except ResourceNotFound:
+        assert config.domain == domain
+        assert config.doc_type == 'ReportConfiguration'
+    except (ResourceNotFound, WrappingAttributeError, AssertionError):
         raise Http404()
 
     if request.method == 'POST':
@@ -40,8 +43,16 @@ def edit_report(request, domain, report_id):
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[domain, config._id]))
     else:
         form = ConfigurableReportEditForm(domain, config)
-    return render(request, "userreports/edit_report_config.html", {
+    context = _shared_context(domain)
+    context.update({
         'domain': domain,
         'form': form,
-        'reports': ReportConfiguration.by_domain(domain)
     })
+    return render(request, "userreports/edit_report_config.html", context)
+
+
+def _shared_context(domain):
+    return {
+        'reports': ReportConfiguration.by_domain(domain),
+        'data_sources': IndicatorConfiguration.by_domain(domain),
+    }
