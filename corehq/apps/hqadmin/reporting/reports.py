@@ -152,7 +152,8 @@ def get_subscription_stats_data(domains, datespan, interval,
 
 
 def get_active_domain_stats_data(domains, datespan, interval,
-        datefield='received_on', software_plan_edition=None):
+        datefield='received_on', software_plan_edition=None,
+        add_form_domains=True, add_sms_domains=True):
     """
     Returns list of timestamps and how many domains were active in the 30 days
     before the timestamp
@@ -166,22 +167,28 @@ def get_active_domain_stats_data(domains, datespan, interval,
             if software_plan_edition is None else
             (domains & domains_matching_plan(software_plan_edition, f, t))
         )
-        form_query = (FormES()
-            .in_domains(domains_in_interval)
-            .submitted(gte=f, lte=t)
-            .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
-            .size(0))
-        domains_submitted_forms = form_query.run().facet('domains', "terms")
-
-        sms_query = (SMSES()
-            .in_domains(domains_in_interval)
-            .received(gte=f, lte=t)
-            .terms_facet('domains', 'domain')
-            .size(0))
-        domains_submitted_SMS = sms_query.run().facet('domains', "terms")
-
-        c = len({term_and_count['term'] for term_and_count in (
-            domains_submitted_forms + domains_submitted_SMS)})
+        active_domains = set()
+        if add_form_domains:
+            form_query = (FormES()
+                .in_domains(domains_in_interval)
+                .submitted(gte=f, lte=t)
+                .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+                .size(0))
+            active_domains |= {
+                term_and_count['term'] for term_and_count in
+                form_query.run().facet('domains', "terms")
+            }
+        if add_sms_domains:
+            sms_query = (SMSES()
+                .in_domains(domains_in_interval)
+                .received(gte=f, lte=t)
+                .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+                .size(0))
+            active_domains |= {
+                term_and_count['term'] for term_and_count in
+                sms_query.run().facet('domains', "terms")
+            }
+        c = len(active_domains)
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
