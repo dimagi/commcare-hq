@@ -1,5 +1,6 @@
 import json
 from django import forms
+from django.utils.translation import ugettext as _
 from corehq.apps.userreports.models import IndicatorConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
 
@@ -20,7 +21,10 @@ class JsonField(forms.CharField):
 
     def prepare_value(self, value):
         if isinstance(value, basestring):
-            return json.loads(value)
+            try:
+                return json.loads(value)
+            except ValueError:
+                return value
         else:
             return value
 
@@ -28,8 +32,8 @@ class JsonField(forms.CharField):
         super(JsonField, self).validate(value)
         try:
             json.loads(value)
-        except:
-            raise
+        except ValueError:
+            raise forms.ValidationError(_('Please enter valid JSON.'))
 
     def clean(self, value):
         return json.loads(super(JsonField, self).clean(value))
