@@ -1,4 +1,4 @@
-DOMAIN_INDEX="hqdomains_1c93edaa7146fbe2bfe2d7f11062b624"
+DOMAIN_INDEX="hqdomains_782d82a150cfb12e27ba91684f92e2b0"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
@@ -215,6 +215,7 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
                 'snapshot_time': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                   'type': 'date'},
                 'sub_area': {'type': 'string'},
+                'subscription': {'type': 'string'},
                 'survey_management_enabled': {'type': 'boolean'},
                 'tags': {'type': 'string'},
                 'title': {'fields': {'exact': {'index': 'not_analyzed',
