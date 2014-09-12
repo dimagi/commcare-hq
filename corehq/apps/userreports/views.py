@@ -24,15 +24,7 @@ def edit_report(request, domain, report_id):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
-            for attr in (
-                'config_id',
-                'display_name',
-                'description',
-                'aggregation_columns',
-                'filters',
-                'columns'
-            ):
-                setattr(config, attr, form.cleaned_data[attr])
+            config = form.save(commit=False)
             try:
                 ReportFactory.from_spec(config)
             except Exception, e:
