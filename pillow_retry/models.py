@@ -94,6 +94,19 @@ class PillowError(models.Model):
             return query
 
     @classmethod
+    def bulk_reset_attempts(cls, last_attempt_lt, attempts_gte=None):
+        if attempts_gte is None:
+            attempts_gte = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+
+        qs = PillowError.objects.filter(
+            date_last_attempt__lt=last_attempt_lt,
+            current_attempt__gte=attempts_gte
+        ).update(
+            current_attempt=0,
+            date_next_attempt=datetime.utcnow()
+        )
+
+    @classmethod
     def get_pillows(cls):
         results = PillowError.objects.values('pillow').annotate(count=Count('pillow'))
         return (p['pillow'] for p in results)
