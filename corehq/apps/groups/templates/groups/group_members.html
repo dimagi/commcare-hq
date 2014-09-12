@@ -138,7 +138,7 @@
 {% else %}
 <div class="row-fluid">
     <div class="span12">
-        <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count group.users|length as num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
+        <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> {% trans "Edit Settings" %}</a>
             <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
