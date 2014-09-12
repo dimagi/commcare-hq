@@ -747,8 +747,15 @@ class Subscription(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        """
+        Overloaded to update pillow with subscription information
+        """
         super(Subscription, self).save(*args, **kwargs)
-        Domain.get_by_name(self.subscriber.domain).save()
+        try:
+            Domain.get_by_name(self.subscriber.domain).save()
+        except Exception as e:
+            # Subscriber can have a null domain value
+            pass
 
     @property
     def allowed_attr_changes(self):
