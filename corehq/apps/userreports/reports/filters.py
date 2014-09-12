@@ -31,3 +31,18 @@ class DateFilterValue(FilterValue):
             'startdate': self.value.startdate,
             'enddate': self.value.enddate,
         }
+
+
+class ChoiceListFilterValue(FilterValue):
+
+    def __init__(self, filter, value):
+        assert filter.type == 'choice_list'
+        super(ChoiceListFilterValue, self).__init__(filter, value)
+
+    def to_sql_filter(self):
+        return "{} = :value".format(self.filter.field)
+
+    def to_sql_values(self):
+        return {
+            'value': self.value.value,
+        }

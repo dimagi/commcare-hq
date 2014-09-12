@@ -2,24 +2,37 @@ from jsonobject import JsonObject, StringProperty
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.reports_core.filters import DatespanFilter
+from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.reports.filters import DateFilterValue
+from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec
 
 
 def _build_date_filter(spec):
-    # todo: flesh out / clean up
+    wrapped = FilterSpec.wrap(spec)
     return DatespanFilter(
-        name=spec['slug'],
-        required=spec.get('required', False),
+        name=wrapped.slug,
+        label=wrapped.get_display(),
+        required=wrapped.required,
+    )
+
+
+def _build_choice_list_filter(spec):
+    wrapped = ChoiceListFilterSpec.wrap(spec)
+    return ChoiceListFilter(
+        name=wrapped.slug,
+        label=wrapped.display,
+        required=wrapped.required,
+        choices=[Choice(fc.value, fc.get_display()) for fc in wrapped.choices]
     )
 
 
 class ReportFilterFactory(object):
     constructor_map = {
         'date': _build_date_filter,
+        'choice_list': _build_choice_list_filter,
     }
 
     @classmethod
@@ -56,9 +69,9 @@ class ReportFilter(JsonObject):
     display = StringProperty()
 
     def create_filter_value(self, value):
-        # todo: this intentionally only supports dates for now
         return {
-            'date': DateFilterValue
+            'date': DateFilterValue,
+            'choice_list': ChoiceListFilterValue,
         }[self.type](self, value)
 
 
@@ -76,3 +89,4 @@ class ReportColumn(JsonObject):
         }
         return DatabaseColumn(self.display, sqlagg_column_map[self.aggregation](self.field),
                               sortable=False, data_slug=self.field)
+
