@@ -19,7 +19,6 @@ class FilterValueException(FilterException):
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
-
 class BaseFilter(object):
     """
     Base object for filters. These objects deal with data only are not concerned with being
@@ -115,3 +114,31 @@ class DatespanFilter(BaseFilter):
         return {
             'timezone': None
         }
+
+
+Choice = namedtuple('Choice', ['value', 'display'])
+
+
+class ChoiceListFilter(BaseFilter):
+    """
+    Filter for a list of choices. Each choice should be a Choice object as per above.
+    """
+
+    def __init__(self, name, required=True, label='Choice List Filter',
+                 template='reports_core/filters/choice_list_filter.html',
+                 css_id=None, choices=None):
+        params = [
+            FilterParam(name, True),
+        ]
+        super(ChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.label = label
+        self.template = template
+        self.css_id = css_id or self.name
+        self.choices = choices or []
+
+    def value(self, **kwargs):
+        choice = kwargs[self.name]
+        return [choice_obj for choice_obj in self.choices if choice_obj.value == choice][0]
+
+    def default_value(self):
+        return self.choices[0]
