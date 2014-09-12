@@ -4,12 +4,17 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
     <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
+            var help_text = {
+                "Delete Program": "{{ delete_help_text }}",
+            };
+
             $('#program-list').asyncProgramProductList({
                 total: 10,
                 start_page: 1,
@@ -60,12 +65,43 @@
                     <tr>
                         <th>{% trans "Program" %}</th>
                         <th>{% trans "Code" %}</th>
+                        <th class="help_popover" data-help-key="Delete Program">
+                            <a href="#">{% trans "Delete" %} <i class="icon icon-question-sign"></i></a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: data_list">
                     <tr>
                         <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
                         <td data-bind="text: code"></td>
+                        <td>
+                            <div data-bind="visible: !is_default">
+                                <a data-bind="attr: {href: '#'+_id}" class="btn"
+                                   data-toggle="modal">{% trans "Delete Program" %}</a>
+
+                                <div class="modal hide fade" data-bind="attr: {id: _id}">
+                                    <div class="modal-header">
+                                        <a class="close" data-dismiss="modal">&times;</a>
+                                        <h4>
+                                            {% trans "Are you sure you want to" %}
+                                            <strong>{% trans "Delete " %}</strong>
+                                            '<span data-bind="text: name"></span>'?</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>{% trans "This will delete the program. All of the programs products will be assigned to the default program instead." %}</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="#" class="btn btn-warning"
+                                           data-unsuccessful-text="Delete unsuccessful. Try Again?"
+                                           data-loading-text="Deleting Program..."
+                                           data-bind="click: function (data, event) { $parent.take_archive_action(delete_url, event.currentTarget, $index) }">
+                                           {% trans "Delete" %}
+                                        </a>
+                                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>

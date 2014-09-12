@@ -177,6 +177,18 @@ class DefaultConsumptionView(BaseCommTrackManageView):
             )
         return self.get(request, *args, **kwargs)
 
+@require_POST
+@domain_admin_required
+def delete_program(request, domain, prog_id):
+    program = Program.get(prog_id)
+    program.archive()
+    return HttpResponse(json.dumps(dict(
+        success=True,
+        message=_("Program '{program_name}' has successfully been {action}.").format(
+            program_name=program.name,
+            action="archived",
+        )
+    )))
 
 @require_POST
 @domain_admin_required
@@ -690,7 +702,9 @@ class FetchProgramListView(ProgramListView):
         programs = Program.by_domain(self.domain)
         for p in programs:
             info = p._doc
+            info['is_default'] = info.pop('default')
             info['edit_url'] = reverse('commtrack_program_edit', kwargs={'domain': self.domain, 'prog_id': p._id})
+            info['delete_url'] = reverse('delete_program', kwargs={'domain': self.domain, 'prog_id': p._id})
             data.append(info)
         return data
 

@@ -66,18 +66,19 @@ def make_product(domain, name, code, program_id):
     p.save()
     return p
 
-def make_program(domain, name, code):
+def make_program(domain, name, code, default=False):
     p = Program()
     p.domain = domain
     p.name = name
     p.code = code.lower()
+    p.default = default
     p.save()
     return p
 
 def get_or_make_def_program(domain):
     program = [p for p in Program.by_domain(domain) if p.name == "Default"]
     if len(program) == 0:
-        return make_program(domain, 'Default', 'def')
+        return make_program(domain, 'Default', 'def', default=True)
     else:
         return program[0]
 
@@ -132,7 +133,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
 
     c.save()
 
-    program = make_program(domain.name, 'Default', 'def')
+    program = make_program(domain.name, 'Default', 'def', default=True)
     make_product(domain.name, 'Sample Product 1', 'pp', program.get_id)
     make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
     make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
