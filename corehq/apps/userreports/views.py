@@ -43,4 +43,5 @@ def edit_report(request, domain, report_id):
     return render(request, "userreports/edit_report_config.html", {
         'domain': domain,
         'form': form,
+        'reports': ReportConfiguration.by_domain(domain)
     })
