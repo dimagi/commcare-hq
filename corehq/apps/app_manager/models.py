@@ -2802,17 +2802,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
 
-        #import ipdb; ipdb.set_trace()
-        #Should this be here or after the super call (with data replaced by self of course)
-        # if 'fuzzy_search_enabled' not in data.get('profile',{}):
-        #     data['profile'] = data.get('profile',{})
-        #     data['profile']['fuzzy_search_enabled'] = 'no'
-        #     print "Set fuzzy search to no"
-
         self = super(Application, cls).wrap(data)
 
-        if 'fuzzy_search_enabled' not in self.profile['properties']:
-            self.profile['properties']['fuzzy_search_enabled'] = 'no'
+        if 'properties' in self.profile\
+                and 'fuzzy_search_enabled' not in self.profile['properties']:
+            self.profile['properties']['fuzzy_search_enabled'] = u'no'
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
@@ -2966,8 +2960,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             elif setting_id not in self__profile.get(setting_type, {}):
                 if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
                     setting_value = setting['default']
-                # One option would be to put a second statement here like:
-                #elif setting_id == 'fuzzy wuzzy' and whatever: setting_value = foo (but how do they ever get set?)
                 else:
                     setting_value = None
             else:
@@ -2987,10 +2979,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
             profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
-
-        #import ipdb; ipdb.set_trace()
-        print "In create profile..."
-        print app_profile['properties']['fuzzy_search_enabled']
 
         return render_to_string(template, {
             'is_odk': is_odk,
