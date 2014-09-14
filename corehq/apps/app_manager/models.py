@@ -1271,6 +1271,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_type=True,
                 needs_case_detail=True
             ))
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
 
