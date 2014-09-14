@@ -2804,11 +2804,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         #import ipdb; ipdb.set_trace()
         #Should this be here or after the super call (with data replaced by self of course)
-        if 'fuzzy_search_enabled' not in data.get('profile',{}):
-            data['profile'] = data.get('profile',{})
-            data['profile']['fuzzy_search_enabled'] = 'no'
+        # if 'fuzzy_search_enabled' not in data.get('profile',{}):
+        #     data['profile'] = data.get('profile',{})
+        #     data['profile']['fuzzy_search_enabled'] = 'no'
+        #     print "Set fuzzy search to no"
 
         self = super(Application, cls).wrap(data)
+
+        if 'fuzzy_search_enabled' not in self.profile['properties']:
+            self.profile['properties']['fuzzy_search_enabled'] = 'no'
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
