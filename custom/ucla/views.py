@@ -65,6 +65,8 @@ def _ucla_form_modifier(form, question_ids):
     # Get the existing subcases
     existing_subcases = {c.case_name:c for c in form.actions.subcases}
 
+    message += "Found %s questions.\n" % len(questions)
+
     for question in questions:
         for option in question.options:
 
