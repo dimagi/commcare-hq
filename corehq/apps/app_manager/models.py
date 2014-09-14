@@ -2804,9 +2804,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         #import ipdb; ipdb.set_trace()
         #Should this be here or after the super call (with data replaced by self of course)
-        if 'fuzzy_search_enabled' not in data.get('profile',{}).get('properties', {}):
-            data['profile'] = data.get('profile',{}).get('properties',{})
-            data['profile']['properties']['fuzzy_search_enabled'] = 'no'
+        if 'fuzzy_search_enabled' not in data.get('profile',{}):
+            data['profile'] = data.get('profile',{})
+            data['profile']['fuzzy_search_enabled'] = 'no'
 
         self = super(Application, cls).wrap(data)
 
