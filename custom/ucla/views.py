@@ -74,7 +74,7 @@ def _ucla_form_modifier(form, question_ids):
 
             # Create new hidden values for each question option if they don't already exist:
 
-            if hidden_value_path not in question_dict:
+            if hidden_value_tag not in question_dict:
 
                 # Add data element
                 tag = "{x}%s" % hidden_value_tag
