@@ -10,7 +10,11 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.elastic import ES_MAX_CLAUSE_COUNT, get_general_stats_data
+from corehq.elastic import (
+    ES_MAX_CLAUSE_COUNT,
+    get_general_stats_data,
+    get_user_ids,
+)
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -152,7 +156,9 @@ def get_subscription_stats_data(domains, datespan, interval,
 
 
 def get_active_domain_stats_data(domains, datespan, interval,
-        datefield='received_on', software_plan_edition=None):
+        datefield='received_on', software_plan_edition=None,
+        add_form_domains=True, add_sms_domains=True,
+        restrict_to_mobile_submissions=False):
     """
     Returns list of timestamps and how many domains were active in the 30 days
     before the timestamp
@@ -161,19 +167,32 @@ def get_active_domain_stats_data(domains, datespan, interval,
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        form_query = (FormES()
-            .in_domains(
-                domains if software_plan_edition is None else (
-                    domains & domains_matching_plan(
-                        software_plan_edition, f, t)
-                )
-            )
-            .submitted(gte=f, lte=t)
-            .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
-            .size(0))
-
-        d = form_query.run().facet('domains', "terms")
-        c = len(d)
+        domains_in_interval = (
+            domains
+            if software_plan_edition is None else
+            (domains & domains_matching_plan(software_plan_edition, f, t))
+        )
+        active_domains = set()
+        if add_form_domains:
+            form_query = (FormES()
+                .in_domains(domains_in_interval)
+                .submitted(gte=f, lte=t)
+                .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+                .size(0))
+            if restrict_to_mobile_submissions:
+                form_query = form_query.user_id(get_user_ids(True))
+            active_domains |= {
+                term_and_count['term'] for term_and_count in
+                form_query.run().facet('domains', "terms")
+            }
+        if add_sms_domains:
+            sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
+                .incoming_messages())
+            active_domains |= {
+                term_and_count['term'] for term_and_count in
+                sms_query.run().facet('domains', "terms")
+            }
+        c = len(active_domains)
         if c > 0:
             histo_data.append({"count": c, "time": 1000 *
                 time.mktime(timestamp.timetuple())})
