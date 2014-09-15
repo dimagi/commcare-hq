@@ -45,6 +45,7 @@ name: autostaging
 branches:
   - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
+  - master+schedule # Nick P 9/11
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -60,12 +61,12 @@ branches:
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
   - caselistmixin-refactor # Noah 8/14
-  - outputrefs # SK 9/6
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
-  - lwyszomi:b3-mobile-layout
+  # - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
 submodules:
   submodules/couchlog-src:
     branches:
@@ -93,3 +94,6 @@ submodules:
       # Danny 8/12. If there's weird errors or issues in saving forms
       # or saving apps, just remove this
       - faster-lazy-attachments
+  # submodules/pillowtop-src:
+    # branches:
+      # - request_timeout  # Ethan 9/12

@@ -277,6 +277,16 @@ class IndicatorAdminTab(UITab):
         return self.couch_user.can_edit_data() and self.domain in indicator_enabled_projects
 
 
+class DashboardTab(UITab):
+    title = ugettext_noop("Dashboard")
+    view = 'corehq.apps.dashboard.views.dashboard_default'
+
+    @property
+    def is_viewable(self):
+        return (self.couch_user
+                and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
+
+
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.saved_reports"
