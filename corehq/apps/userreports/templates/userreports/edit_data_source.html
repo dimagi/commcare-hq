@@ -1,0 +1,9 @@
+{% extends "userreports/userreports_base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags_b3 %}
+{% block main_column %}
+    {% crispy_b3 form %}
+<form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}">
+    <input type="submit" value="{% trans 'Rebuild Data Source'%}" class="btn btn-primary disable-on-submit"></form>
+</form>
+{% endblock %}

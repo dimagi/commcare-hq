@@ -1,11 +1,12 @@
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
@@ -59,8 +60,19 @@ def edit_data_source(request, domain, config_id):
     context.update({
         'domain': domain,
         'form': form,
+        'data_source': config,
     })
-    return render(request, "userreports/edit_report_config.html", context)
+    return render(request, "userreports/edit_data_source.html", context)
+
+
+@domain_admin_required
+@require_POST
+def rebuild_data_source(request, domain, config_id):
+    config = get_document_or_404(IndicatorConfiguration, domain, config_id)
+    messages.success(request,
+                     _('Table "{}" is now being rebuilt. Data should start showing up soon'.format(config.display_name)))
+    rebuild_indicators.delay(config_id)
+    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
 
 def _shared_context(domain):
