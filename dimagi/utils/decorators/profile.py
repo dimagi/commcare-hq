@@ -1,6 +1,6 @@
 import hotshot
 import os
-import time
+from datetime import datetime
 from django.conf import settings
 
 try:
@@ -32,7 +32,7 @@ def profile(log_file):
             # Add a timestamp to the profile output when the callable
             # is actually called.
             (base, ext) = os.path.splitext(log_file)
-            base = base + "-" + time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+            base = base + "-" + datetime.now().strftime("%Y%m%dT%H%M%S%f")
             final_log_file = base + ext
 
             prof = hotshot.Profile(final_log_file)
