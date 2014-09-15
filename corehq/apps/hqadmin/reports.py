@@ -428,6 +428,19 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# forms",
     },
+    "active_supply_points": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_cases",
+        "chart_title": "Active Supply Points (last 90 days)",
+        "hide_cumulative_charts": True,
+        "get_request_params": {
+            "supply_points": True
+        },
+        "histogram_type": "active_cases",
+        "interval": "month",
+        "is_cumulative": False,
+        "xaxis_label": "# cases",
+    },
 }
 
 ES_PREFIX = "es_"
@@ -987,4 +1000,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'users_mobile',
         'active_users_mobile',
         'commtrack_users_web',
+        'active_supply_points',
     ]
