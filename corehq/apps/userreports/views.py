@@ -43,6 +43,15 @@ def _edit_report_shared(request, domain, config):
 @domain_admin_required
 def edit_data_source(request, domain, config_id):
     config = get_document_or_404(IndicatorConfiguration, domain, config_id)
+    return _edit_data_source_shared(request, domain, config)
+
+
+@domain_admin_required
+def create_data_source(request, domain):
+    return _edit_data_source_shared(request, domain, IndicatorConfiguration(domain=domain))
+
+
+def _edit_data_source_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(config, request.POST)
         if form.is_valid():

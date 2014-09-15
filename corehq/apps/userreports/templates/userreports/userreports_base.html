@@ -22,6 +22,12 @@
             <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
         </li>
 {% endfor %}
+        <li>
+            <a href="{% url 'create_configurable_data_source' domain %}">
+                <i class="icon-plus icon-blue"></i>
+                <span class="muted">{% trans "Add data source" %}</span>
+            </a>
+        </li>
 </ul>
 </nav>
 {% endblock %}
