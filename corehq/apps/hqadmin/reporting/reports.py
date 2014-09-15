@@ -10,7 +10,11 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.elastic import ES_MAX_CLAUSE_COUNT, get_general_stats_data
+from corehq.elastic import (
+    ES_MAX_CLAUSE_COUNT,
+    get_general_stats_data,
+    get_user_ids,
+)
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -153,7 +157,8 @@ def get_subscription_stats_data(domains, datespan, interval,
 
 def get_active_domain_stats_data(domains, datespan, interval,
         datefield='received_on', software_plan_edition=None,
-        add_form_domains=True, add_sms_domains=True):
+        add_form_domains=True, add_sms_domains=True,
+        restrict_to_mobile_submissions=False):
     """
     Returns list of timestamps and how many domains were active in the 30 days
     before the timestamp
@@ -174,6 +179,8 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 .submitted(gte=f, lte=t)
                 .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
                 .size(0))
+            if restrict_to_mobile_submissions:
+                form_query = form_query.user_id(get_user_ids(True))
             active_domains |= {
                 term_and_count['term'] for term_and_count in
                 form_query.run().facet('domains', "terms")

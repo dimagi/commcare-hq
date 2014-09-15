@@ -36,9 +36,10 @@ INDICATOR_DATA = {
     "active_domain_count_forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domain_count_forms",
-        "chart_title": "Active Project Spaces (via Mobile or Cloudcare Submission)",
+        "chart_title": "Active Project Spaces (via Mobile Worker)",
         "get_request_params": {
             "add_sms_domains": False,
+            "restrict_to_mobile_submissions": True,
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
