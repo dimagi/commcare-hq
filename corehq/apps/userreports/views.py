@@ -4,8 +4,10 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from corehq import Session
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
+from corehq.apps.userreports.sql import get_indicator_table
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -71,6 +73,21 @@ def rebuild_data_source(request, domain, config_id):
                      _('Table "{}" is now being rebuilt. Data should start showing up soon'.format(config.display_name)))
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
+
+@domain_admin_required
+def preview_data_source(request, domain, config_id):
+    config = get_document_or_404(IndicatorConfiguration, domain, config_id)
+    table = get_indicator_table(config)
+
+    q = Session.query(table)
+    context = _shared_context(domain)
+    context.update({
+        'data_source': config,
+        'columns': q.column_descriptions,
+        'data': q[:20],
+    })
+    return render(request, "userreports/preview_data.html", context)
 
 
 def _shared_context(domain):
