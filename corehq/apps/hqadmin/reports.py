@@ -33,6 +33,30 @@ INDICATOR_DATA = {
         "interval": "week",
         "xaxis_label": "# domains",
     },
+    "active_domain_count_forms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_domain_count_forms",
+        "chart_title": "Active Project Spaces (via Mobile or Cloudcare Submission)",
+        "get_request_params": {
+            "add_sms_domains": False,
+        },
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
+    "active_domain_count_sms": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "active_domain_count_sms",
+        "chart_title": "Active Project Spaces (via SMS)",
+        "get_request_params": {
+            "add_form_domains": False,
+        },
+        "hide_cumulative_charts": True,
+        "histogram_type": "active_domains",
+        "interval": "week",
+        "xaxis_label": "# domains",
+    },
     "active_community_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_community_domain_count",
@@ -951,6 +975,8 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     indicators = [
         'commtrack_domain_count',
         'active_domain_count',
+        'active_domain_count_forms',
+        'active_domain_count_sms',
         'commtrack_total_outgoing_sms',
         'commtrack_total_incoming_sms',
         'commtrack_forms',
