@@ -772,8 +772,6 @@ class SupplyPointCase(CommCareCase):
     specific to supply points.
     """
 
-    # TODO move location_ property from CommCareCase
-
     class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"

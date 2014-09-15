@@ -113,6 +113,11 @@ class Location(CachedCouchDocumentMixin, Document):
         return root_locations(domain)
 
     @classmethod
+    def all_locations(cls, domain):
+        return all_locations(domain)
+
+
+    @classmethod
     def get_in_domain(cls, domain, id):
         if id:
             try:
