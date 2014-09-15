@@ -83,11 +83,9 @@ class Program(Document):
         return super(Program, self).save(*args, **kwargs)
 
     @classmethod
-    def by_domain(cls, domain, wrap=True, include_archived=False):
+    def by_domain(cls, domain, wrap=True):
         """
         Gets all programs in a domain.
-
-        By default this filters out any archived programs.
         """
         kwargs = dict(
             view_name='commtrack/programs',
@@ -96,53 +94,21 @@ class Program(Document):
             include_docs=True
         )
         if wrap:
-            programs = Program.view(**kwargs)
-            if not include_archived:
-                return filter(lambda p: not p.is_archived, programs)
-            else:
-                return programs
+            return Program.view(**kwargs)
         else:
-            if not include_archived:
-                return [
-                    row["doc"] for row in Program.view(
-                        wrap_doc=False,
-                        **kwargs
-                    ) if not row["doc"].get('is_archived', False)
-                ]
-            else:
-                return [
-                    row["doc"] for row in Program.view(
-                        wrap_doc=False,
-                        **kwargs
-                    )
-                ]
+            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
 
     @classmethod
     def default_for_domain(cls, domain, wrap=True):
-        programs = cls.by_domain(domain, wrap=wrap, include_archived=True)
+        programs = cls.by_domain(domain, wrap=wrap)
         for p in programs:
             if (wrap and p.default) or (not wrap and p.get('default', False)):
                 return p
 
-    @classmethod
-    def archived_by_domain(cls, domain, wrap=True):
-        programs = cls.by_domain(domain, wrap=wrap, include_archived=True)
-        if wrap:
-            return filter(lambda p: p.is_archived, programs)
-        else:
-            return [p for p in programs if p.get('is_archived', False)]
-
-    def archive(self):
-        """
-        Mark a program as archived. This will cause it (and its data)
-        to not show up in default Couch views. We also have to move
-        all of its products to the default program.
-        """
-        # you cannot archive the default program
+    def delete(self):
+        # you cannot delete the default program
         if self.default:
             return
-
-        self.is_archived = True
 
         default = Program.default_for_domain(self.domain)
 
@@ -166,7 +132,7 @@ class Program(Document):
 
         Product.get_db().bulk_save(to_save)
 
-        self.save()
+        return super(Program, self).delete()
 
     def unarchive(self):
         """
