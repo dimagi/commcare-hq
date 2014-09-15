@@ -223,26 +223,6 @@ def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_commconnect_domain_stats_data(domains, datespan, interval,
-        datefield='date'):
-    """
-    Returns list of timestamps and how many commconnect domains were active in
-    the 30 days before the timestamp
-    """
-    histo_data = []
-    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
-        t = timestamp
-        f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
-        d = sms_query.run()
-        c = len(d.facet('domains', 'terms'))
-        if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
-
-    return format_return_data(histo_data, 0, datespan)
-
-
 def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
         datefield='date'):
     """
@@ -593,7 +573,6 @@ def get_other_stats(histo_type, domains, datespan, interval,
 
 HISTO_TYPE_TO_FUNC = {
     "active_cases": get_active_cases_stats,
-    "active_commconnect_domains": get_active_commconnect_domain_stats_data,
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_domains": get_active_domain_stats_data,

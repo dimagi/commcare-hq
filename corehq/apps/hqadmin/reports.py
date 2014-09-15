@@ -259,8 +259,11 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_commconnect_domains",
         "chart_title": "Active CommConnect Project Spaces",
+        "get_request_params": {
+            "add_form_domains": False,
+        },
         "hide_cumulative_charts": True,
-        "histogram_type": "active_commconnect_domains",
+        "histogram_type": "active_domains",
         "interval": "week",
         "xaxis_label": "# domains",
     },
