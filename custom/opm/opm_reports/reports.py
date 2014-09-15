@@ -900,7 +900,14 @@ class HealthStatusReport(BaseReport):
             }
             es_filters["bool"]["must"].append(awc_term)
         elif self.gp:
-            es_filters["bool"]["must"].append({"term": {"user_data.gp": self.gp.lower()}})
+            gps_lower = [gp.lower() for gp in self.gp]
+            gp_term = {
+                "or":
+                    [{"and": [{"term": {"user_data.gp": term}} for term in re.split('\s', gp)
+                                if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
+                    } for gp in gps_lower]
+            }
+            es_filters["bool"]["must"].append(gp_term)
 
         elif self.blocks:
             block_lower = [block.lower() for block in self.blocks]
