@@ -16,23 +16,32 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
+from django_countries.countries import COUNTRIES
 
 
 lang_lookup = defaultdict(str)
+country_lookup = dict()
 
 DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 
+
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
+
+
+def populate_country_lookup():
+    global country_lookup
+    country_lookup = {x[1].lower(): x[0] for x in COUNTRIES}
+
 
 class DomainMigrations(DocumentSchema):
     has_migrated_permissions = BooleanProperty(default=False)
@@ -89,7 +98,7 @@ class UpdatableSchema():
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
     city = StringProperty()
-    country = StringProperty()
+    country = StringListProperty()
     region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     description = StringProperty()
     public = BooleanProperty(default=False)
@@ -135,6 +144,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     phone_model = StringProperty()
     goal_time_period = IntegerProperty()
     goal_followup_rate = DecimalProperty()
+    commconnect_domain = BooleanProperty()
+    commtrack_domain = BooleanProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -172,6 +183,7 @@ class DayTimeWindow(DocumentSchema):
     # For times, None means there's no lower/upper bound
     start_time = TimeProperty()
     end_time = TimeProperty()
+
 
 class Domain(Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -331,6 +343,15 @@ class Domain(Document, SnapshotMixin):
 
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
+
+        country = data['deployment']['country']
+        if 'deployment' in data and isinstance(country, basestring):
+            if not country_lookup: 
+                populate_country_lookup()
+            if country in country_lookup.keys():
+                data['deployment']['country'] = [country_lookup[country.lower()]]
+            else:
+                data['deployment']['country'] = []
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
@@ -854,10 +875,13 @@ class Domain(Document, SnapshotMixin):
 
     def delete(self):
         # delete all associated objects
-        db = get_db()
-        related_docs = db.view('domain/related_to_domain', startkey=[self.name], endkey=[self.name, {}], include_docs=True)
-        for doc in related_docs:
-            db.delete_doc(doc['doc'])
+        db = self.get_db()
+        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
+            startkey=[self.name],
+            endkey=[self.name, {}],
+            include_docs=False,
+        )]
+        iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
 
     def all_media(self, from_apps=None): #todo add documentation or refactor

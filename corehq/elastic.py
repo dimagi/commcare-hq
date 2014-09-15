@@ -11,6 +11,7 @@ from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from settings import ES_QUERY_CHUNKSIZE
 
 
 def get_es(timeout=30):
@@ -25,6 +26,7 @@ def get_es(timeout=30):
 ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
+    "active_cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
@@ -41,15 +43,19 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
     "users": [
-        {"term": {"doc_type": "CommCareUser"}},
+        #{"term": {"doc_type": "CommCareUser"}}, # TODO check nothing broken
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
+    ],
+    "active_cases": [
+        {"term": {"closed": False}},
     ],
 }
 
 DATE_FIELDS = {
     "forms": "received_on",
     "cases": "opened_on",
+    "active_cases": "modified_on",
     "users": "created_on",
     "sms": 'date',
     "tc_sms": 'date',
@@ -67,12 +73,179 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day"):
-    histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
-                        for d in domains])
+def get_user_ids(user_type_mobile):
+    """
+    Returns the set of mobile user IDs if user_type_mobile is True,
+    else returns the set of web user IDs.
+    """
+    from corehq.apps.es.users import UserES
+    query = UserES()
+    if user_type_mobile:
+        query = query.mobile_users()
+    else:
+        query = query.web_users()
+    return {doc_id for doc_id in query.run().doc_ids}
 
-    def _total_until_date(histo_type, doms=None):
+
+def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
+    result = {'terms': {}}
+    if histo_type == 'forms':
+        result['terms']["form.meta.userID"] = [
+            user_id for user_id in get_user_ids(user_type_mobile)
+        ]
+    elif histo_type == 'users':
+        existing_users = get_user_ids(user_type_mobile)
+
+        if require_submissions:
+            from corehq.apps.es.forms import FormES
+            LARGE_NUMBER = 1000 * 1000 * 10
+            real_form_users = {
+                user_count['term'] for user_count in (
+                    FormES()
+                    .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
+
+            from corehq.apps.es.sms import SMSES
+            real_sms_users = {
+                user_count['term'] for user_count in (
+                    SMSES()
+                    .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                    .incoming_messages()
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
+
+            filtered_real_users = (
+                existing_users & (real_form_users | real_sms_users)
+            )
+        else:
+            filtered_real_users = existing_users
+        result['terms']['_id'] = [
+            user_id for user_id in filtered_real_users
+        ]
+    return result
+
+
+def get_case_owner_filters():
+    result = {'terms': {}}
+
+    from corehq.apps.users.models import CouchUser
+    mobile_user_ids = [
+        mobile_user._id for mobile_user in CouchUser.all()
+        if mobile_user.doc_type == "CommCareUser"
+    ]
+
+    def all_groups():
+        from corehq.apps.groups.models import Group
+        from corehq.apps.domain.models import Domain
+        for domain in Domain.get_all():
+            for group in Group.by_domain(domain.name):
+                yield group
+    group_ids = [
+        group._id for group in all_groups()
+    ]
+
+    result['terms']['owner_id'] = mobile_user_ids + group_ids
+    return result
+
+
+def get_general_stats_data(domains, histo_type, datespan, interval="day",
+        user_type_mobile=None, is_cumulative=True,
+        require_submissions=True, supply_points=False):
+    user_type_filters = (
+        get_user_type_filters(
+            histo_type,
+            user_type_mobile,
+            require_submissions,
+        )
+        if user_type_mobile is not None else None
+    )
+
+    case_owner_filters = (
+        get_case_owner_filters()
+        if histo_type == 'active_cases' else None
+    )
+
+    case_type_filters = (
+            {'terms': {'type': ['supply-point']}}
+            if supply_points else None
+    )
+
+    def _histo_data(domains, histo_type, start_date, end_date,
+            user_type_filters, case_owner_filters=None, case_type_filters=None):
+        return dict([
+            (d['display_name'],
+             es_histogram(
+                 histo_type,
+                 d["names"],
+                 start_date,
+                 end_date,
+                 interval=interval,
+                 user_type_filters=user_type_filters,
+                 case_owner_filters=case_owner_filters,
+                 case_type_filters=case_type_filters,
+             ))
+            for d in domains
+        ])
+
+    def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
+            interval, user_type_filters, case_owner_filters, case_type_filters):
+        import time
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
+        from corehq.apps.hqadmin.reporting.reports import daterange
+        timestamps = daterange(
+            interval,
+            datetime.strptime(start_date, "%Y-%m-%d").date(),
+            datetime.strptime(end_date, "%Y-%m-%d").date(),
+        )
+        histo_data = {}
+        for domain_name_data in domains:
+            display_name = domain_name_data['display_name']
+            domain_data = []
+            for timestamp in timestamps:
+                past_30_days = _histo_data(
+                    [domain_name_data],
+                    histo_type,
+                    (timestamp - relativedelta(days=(90 if histo_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
+                    timestamp.isoformat(),
+                    user_type_filters=user_type_filters,
+                    case_owner_filters=case_owner_filters,
+                    case_type_filters=case_type_filters,
+                )
+                domain_data.append({
+                    'time': 1000 * time.mktime(timestamp.timetuple()),
+                    'count': sum(point['count'] for point in past_30_days[display_name]),
+                })
+            histo_data.update({
+                display_name: domain_data
+            })
+        return histo_data
+
+    histo_data = _histo_data(
+        domains,
+        histo_type,
+        datespan.startdate_display,
+        datespan.enddate_display,
+        user_type_filters
+    ) if is_cumulative else _histo_data_non_cumulative(
+        domains,
+        histo_type,
+        datespan.startdate_display,
+        datespan.enddate_display,
+        interval,
+        user_type_filters,
+        case_owner_filters,
+        case_type_filters,
+    )
+
+    def _total_until_date(histo_type, user_type_filters, doms=None):
         query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
         q = {
             "query": query,
@@ -83,19 +256,26 @@ def get_stats_data(domains, histo_type, datespan, interval="day"):
             },
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
+        if user_type_mobile is not None:
+            q["filter"]["and"].append(user_type_filters)
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
     return {
         'histo_data': histo_data,
-        'initial_values': dict([(dom["display_name"],
-                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
+        'initial_values': (
+            dict([(dom["display_name"],
+                 _total_until_date(histo_type, user_type_filters, dom["names"])) for dom in domains])
+            if is_cumulative else {"All Domains": 0}
+        ),
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None,
+        interval="day", q=None, user_type_filters=None, case_owner_filters=None,
+        case_type_filters=None):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -119,6 +299,15 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
                             }}}]}}},
         "size": 0
     })
+
+    if user_type_filters is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(user_type_filters)
+
+    if case_owner_filters is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(case_owner_filters)
+
+    if case_type_filters is not None:
+        q["facets"]["histo"]["facet_filter"]["and"].append(case_type_filters)
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
@@ -211,8 +400,10 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
     This is a flat wrapper for es_query.
 
     To sort, specify the path to the relevant field
-    and the order ("asc" or "desc")
+    and the order ("asc" or "desc"), or provide a list of tuples to sort by
+    multiple fields.
     eg: sort_by=form.meta.timeStart, order="asc"
+    eg: sort_by=[(form.meta.timeStart, "asc"), ("name", "desc")]
     """
     if index not in ES_URLS:
         msg = "%s is not a valid ES index.  Available options are: %s" % (
@@ -251,9 +442,17 @@ def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
         es_filters.extend(filters)
     es_filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
     if sort_by:
-        assert(order in ["asc", "desc"]),\
-            'To sort, you must specify the order as "asc" or "desc"'
-        query["sort"] = [{sort_by: {"order": order}}]
+        if isinstance(sort_by, list):
+            assert(order == None),\
+                'order must be None if sort_by is a list. Usage: sort_by=[("name", "asc"),("dob", "desc")]'
+        else:
+            sort_by = [(sort_by, order)]
+        sort = []
+        for sort_key, sort_order in sort_by:
+            assert(sort_order in ['asc', 'desc']),\
+                'Sort order must be "asc" or "desc"'
+            sort.append({sort_key: {'order': sort_order}})
+        query['sort'] = sort
 
     # make query
     res = es_query(
@@ -289,12 +488,16 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
-def stream_esquery(esquery, chunksize=100):
+def stream_esquery(esquery, chunksize=SIZE_LIMIT):
     size = esquery._size if esquery._size is not None else SIZE_LIMIT
     start = esquery._start if esquery._start is not None else 0
     for chunk_start in range(start, start + size, chunksize):
-        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
-            yield hit
+        es_query_set = esquery.size(chunksize).start(chunk_start).run()
+        if not es_query_set.raw_hits:
+            break
+        else:
+            for hit in es_query_set.raw_hits:
+                yield hit
 
 
 def parse_args_for_es(request, prefix=None):

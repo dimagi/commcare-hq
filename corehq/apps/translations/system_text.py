@@ -383,7 +383,6 @@ CCODK_DEFAULT = [
     ('verify.checking', u'Verifying Resources'),
     (   'verify.progress ',
         u' Verifying resources. ${0} resources verified of ${1} total'),
-    ('modules.m0', u'pregenancy'),
     (   'install.barcode',
         u'Welcome to CommCare! Please choose an installation method below '),
     ('install.manual', u'Please enter the URL'),

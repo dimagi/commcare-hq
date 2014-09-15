@@ -543,7 +543,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
 class DomainDeploymentForm(forms.Form):
     city = CharField(label=ugettext_noop("City"), required=False)
-    country = CharField(label=ugettext_noop("Country"), required=False)
+    country = forms.MultipleChoiceField(label=ugettext_noop("Country"),
+            choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
@@ -597,6 +598,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
+    commconnect_domain = BooleanField(label=ugettext_noop("Commconnect domain?"), required=False)
+    commtrack_domain = BooleanField(label=ugettext_noop("Commtrack domain?"), required=False)
 
     def save(self, domain):
         kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -620,6 +623,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             phone_model=self.cleaned_data['phone_model'],
             goal_time_period=self.cleaned_data['goal_time_period'],
             goal_followup_rate=self.cleaned_data['goal_followup_rate'],
+            commconnect_domain=self.cleaned_data['commconnect_domain'],
+            commtrack_domain=self.cleaned_data['commtrack_domain'],
             **kw
         )
 

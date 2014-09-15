@@ -28,6 +28,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     url(r'^stats_data/$', 'stats_data', name="admin_stats_data"),
+    url(r'^admin_reports_stats_data/$', 'admin_reports_stats_data', name="admin_reports_stats_data"),
     url(r'^loadtest/$', 'loadtest', name="loadtest_report"),
     url(r'^reset_pillow_checkpoint/$', 'reset_pillow_checkpoint', name="reset_pillow_checkpoint"),
 

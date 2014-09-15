@@ -1,5 +1,12 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.reports import AdminUserReport, AdminAppReport
+from corehq.apps.hqadmin.reports import (
+    AdminDomainStatsReport,
+    AdminAppReport,
+    AdminUserReport,
+    RealProjectSpacesReport,
+    CommConnectProjectSpacesReport,
+    CommTrackProjectSpacesReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -247,7 +254,7 @@ APPSTORE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.domains import OrgDomainStatsReport, AdminDomainStatsReport
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 
 BASIC_REPORTS = (
     (_('Project Stats'), (
@@ -260,13 +267,17 @@ ADMIN_REPORTS = (
         AdminDomainStatsReport,
         AdminUserReport,
         AdminAppReport,
-        PillowErrorsReport
+        PillowErrorsReport,
+        RealProjectSpacesReport,
+        CommConnectProjectSpacesReport,
+        CommTrackProjectSpacesReport,
     )),
 )
 
 from corehq.apps.hqwebapp.models import *
 
 TABS = (
+    DashboardTab,
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,

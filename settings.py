@@ -288,6 +288,7 @@ HQ_APPS = (
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -674,6 +675,11 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+
+ES_QUERY_CHUNKSIZE = {
+    'forms': 10000,
+    'sms': 10000,
+}
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -1115,7 +1121,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',

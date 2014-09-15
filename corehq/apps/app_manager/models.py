@@ -1398,6 +1398,11 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
