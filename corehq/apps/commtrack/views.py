@@ -181,12 +181,11 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 @domain_admin_required
 def delete_program(request, domain, prog_id):
     program = Program.get(prog_id)
-    program.archive()
+    program.delete()
     return HttpResponse(json.dumps(dict(
         success=True,
-        message=_("Program '{program_name}' has successfully been {action}.").format(
+        message=_("Program '{program_name}' has successfully been deleted.").format(
             program_name=program.name,
-            action="archived",
         )
     )))
 

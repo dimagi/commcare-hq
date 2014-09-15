@@ -11,10 +11,6 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
-            var help_text = {
-                "Delete Program": "{{ delete_help_text }}",
-            };
-
             $('#program-list').asyncProgramProductList({
                 total: 10,
                 start_page: 1,
@@ -65,9 +61,7 @@
                     <tr>
                         <th>{% trans "Program" %}</th>
                         <th>{% trans "Code" %}</th>
-                        <th class="help_popover" data-help-key="Delete Program">
-                            <a href="#">{% trans "Delete" %} <i class="icon icon-question-sign"></i></a>
-                        </th>
+                        <th>{% trans "Delete" %}</th>
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: data_list">
@@ -75,9 +69,15 @@
                         <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
                         <td data-bind="text: code"></td>
                         <td>
+                            <div data-bind="visible: is_default">
+                                {% trans "This program is the default and cannot be deleted." %}
+                            </div>
                             <div data-bind="visible: !is_default">
-                                <a data-bind="attr: {href: '#'+_id}" class="btn"
-                                   data-toggle="modal">{% trans "Delete Program" %}</a>
+                                <a data-bind="attr: {href: '#'+_id}" class="btn btn-danger"
+                                   data-toggle="modal">
+                                   <i class="icon-trash icon-white"></i>
+                                   {% trans "Delete Program" %}
+                               </a>
 
                                 <div class="modal hide fade" data-bind="attr: {id: _id}">
                                     <div class="modal-header">
