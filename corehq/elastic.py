@@ -73,23 +73,28 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
-    def get_user_ids():
-        from corehq.apps.es.users import UserES
-        query = UserES()
-        if user_type_mobile:
-            query = query.mobile_users()
-        else:
-            query = query.web_users()
-        return {doc_id for doc_id in query.run().doc_ids}
+def get_user_ids(user_type_mobile):
+    """
+    Returns the set of mobile user IDs if user_type_mobile is True,
+    else returns the set of web user IDs.
+    """
+    from corehq.apps.es.users import UserES
+    query = UserES()
+    if user_type_mobile:
+        query = query.mobile_users()
+    else:
+        query = query.web_users()
+    return {doc_id for doc_id in query.run().doc_ids}
 
+
+def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
     result = {'terms': {}}
     if histo_type == 'forms':
         result['terms']["form.meta.userID"] = [
-            user_id for user_id in get_user_ids()
+            user_id for user_id in get_user_ids(user_type_mobile)
         ]
     elif histo_type == 'users':
-        existing_users = get_user_ids()
+        existing_users = get_user_ids(user_type_mobile)
 
         if require_submissions:
             from corehq.apps.es.forms import FormES
