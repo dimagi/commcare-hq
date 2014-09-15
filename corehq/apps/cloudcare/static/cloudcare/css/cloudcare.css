@@ -10,3 +10,8 @@
 nav#sessions > ul > li.nav-header {
     color: #6c6c6c;
 }
+
+#case-crumbs > .breadcrumb > .active {
+    font-weight: 600;
+    color: inherit;
+}
