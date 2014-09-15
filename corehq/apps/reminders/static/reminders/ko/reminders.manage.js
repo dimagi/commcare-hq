@@ -28,9 +28,6 @@ var ManageRemindersViewModel = function (
     self.isStartReminderCaseProperty = ko.computed(function () {
         return self.start_reminder_on() === self.choices.START_REMINDER_ON_CASE_PROPERTY;
     });
-    self.isStartReminderCaseDate = ko.computed(function () {
-        return self.start_reminder_on() === self.choices.START_REMINDER_ON_CASE_DATE;
-    });
 
     self.start_match_type = ko.observable(initial.start_match_type);
     self.isStartMatchValueVisible = ko.computed(function () {
@@ -39,7 +36,11 @@ var ManageRemindersViewModel = function (
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
     self.isStartPropertyOffsetVisible = ko.computed(function () {
-        return self.start_property_offset_type() !== self.choices.START_PROPERTY_OFFSET_IMMEDIATE;
+        return self.start_property_offset_type() === self.choices.START_PROPERTY_OFFSET_DELAY;
+    });
+
+    self.isStartReminderCaseDate = ko.computed(function () {
+        return self.start_property_offset_type() === self.choices.START_REMINDER_ON_CASE_DATE;
     });
 
     self.recipient = ko.observable(initial.recipient);

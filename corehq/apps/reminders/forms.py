@@ -758,12 +758,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label=ugettext_noop("Send Reminder To"),
+        label=ugettext_noop("Send Reminder For"),
         required=False,
         choices=(
             (START_REMINDER_ALL_CASES, ugettext_noop("All Cases")),
             (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("Only Cases in Following State")),
-            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Cases Based on Date in Case")),
         ),
     )
     ## send options > start_reminder_on = case_date
@@ -786,6 +785,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         choices=(
             (START_PROPERTY_OFFSET_IMMEDIATE, ugettext_noop("Immediately")),
             (START_PROPERTY_OFFSET_DELAY, ugettext_noop("Delay By")),
+            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Date in Case")),
         )
     )
     # becomes start_offset
@@ -1074,8 +1074,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         data_bind="visible: isStartMatchValueVisible",
                     ),
                 ),
+                data_bind="visible: isStartReminderCaseProperty",
+            ),
+            crispy.Div(
                 BootstrapMultiField(
-                    _("Begin Sending"),
+                    _("Day of Reminder"),
                     InlineField(
                         'start_property_offset_type',
                         data_bind="value: start_property_offset_type",
@@ -1093,7 +1096,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         data_bind="visible: isStartPropertyOffsetVisible",
                     ),
                 ),
-                data_bind="visible: isStartReminderCaseProperty"
             ),
             crispy.Div(
                 crispy.Field(
