@@ -167,7 +167,8 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         if histo_type == 'active_cases' else None
     )
 
-    def _histo_data(domains, histo_type, start_date, end_date, user_type_filters):
+    def _histo_data(domains, histo_type, start_date, end_date,
+            user_type_filters, case_owner_filters=None):
         return dict([
             (d['display_name'],
              es_histogram(
@@ -182,7 +183,8 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
             for d in domains
         ])
 
-    def _histo_data_non_cumulative(domains, histo_type, start_date, end_date, interval, user_type_filters):
+    def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
+            interval, user_type_filters, case_owner_filters):
         import time
         from datetime import datetime
         from dateutil.relativedelta import relativedelta
@@ -203,6 +205,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                     (timestamp - relativedelta(days=(90 if histo_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
                     timestamp.isoformat(),
                     user_type_filters=user_type_filters,
+                    case_owner_filters=case_owner_filters,
                 )
                 domain_data.append({
                     'time': 1000 * time.mktime(timestamp.timetuple()),
@@ -225,7 +228,8 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         datespan.startdate_display,
         datespan.enddate_display,
         interval,
-        user_type_filters
+        user_type_filters,
+        case_owner_filters
     )
 
     def _total_until_date(histo_type, user_type_filters, doms=None):
