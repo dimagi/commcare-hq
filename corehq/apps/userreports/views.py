@@ -32,7 +32,6 @@ def edit_report(request, domain, report_id):
         form = ConfigurableReportEditForm(domain, config)
     context = _shared_context(domain)
     context.update({
-        'domain': domain,
         'form': form,
     })
     return render(request, "userreports/edit_report_config.html", context)
@@ -58,7 +57,6 @@ def edit_data_source(request, domain, config_id):
         form = ConfigurableDataSourceEditForm(config)
     context = _shared_context(domain)
     context.update({
-        'domain': domain,
         'form': form,
         'data_source': config,
     })
@@ -77,6 +75,7 @@ def rebuild_data_source(request, domain, config_id):
 
 def _shared_context(domain):
     return {
+        'domain': domain,
         'reports': ReportConfiguration.by_domain(domain),
         'data_sources': IndicatorConfiguration.by_domain(domain),
     }
