@@ -175,7 +175,7 @@ class TauxDeRuptures(BaseSqlData):
     slug = 'taux_de_ruptures'
     title = u'Disponibilité des Produits - Taux des Ruptures de Stock'
     table_name = 'fluff_IntraHealthFluff'
-    col_names = ['stock_total']
+    col_names = ['total_stock_total']
     have_groups = False
     custom_total_calculate = True
 
@@ -192,7 +192,7 @@ class TauxDeRuptures(BaseSqlData):
     @property
     def filters(self):
         filter = super(TauxDeRuptures, self).filters
-        filter.append("stock_total = 0")
+        filter.append("total_stock_total = 0")
         return filter
 
     @property
@@ -203,7 +203,7 @@ class TauxDeRuptures(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Stock total"), CountColumn('stock_total')))
+        columns.append(DatabaseColumn(_("Stock total"), CountColumn('total_stock_total')))
         return columns
 
     def calculate_total_row(self, rows):
