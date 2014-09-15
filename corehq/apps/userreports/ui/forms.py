@@ -58,6 +58,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
             raise ValidationError(_(u'Problem with report spec: {}').format(e))
         return cleaned_data
 
+
 DOC_TYPE_CHOICES = (
     ('CommCareCase', 'cases'),
     ('XFormInstance', 'forms')
@@ -72,3 +73,18 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     description = forms.CharField(required=False)
     configured_filter = JsonField(expected_type=dict)
     configured_indicators = JsonField(expected_type=list)
+
+    def clean(self):
+        cleaned_data = super(ConfigurableDataSourceEditForm, self).clean()
+        # only call additional validation if initial validation has passed for all fields
+        for field in self.fields:
+            if field not in cleaned_data:
+                return
+        try:
+            config = self.populate_instance(self.instance, cleaned_data)
+            # these two functions will do all the validation we need
+            config.filter
+            config.indicators
+        except Exception, e:
+            raise ValidationError(_(u'Problem with data source spec: {}').format(e))
+        return cleaned_data

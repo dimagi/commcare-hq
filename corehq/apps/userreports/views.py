@@ -29,7 +29,7 @@ def _edit_report_shared(request, domain, config):
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
             form.save(commit=True)
-            messages.success(request, _(u'Report {} saved!').format(config.display_name))
+            messages.success(request, _(u'Report "{}" saved!').format(config.display_name))
             return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
         form = ConfigurableReportEditForm(domain, config)
@@ -46,16 +46,8 @@ def edit_data_source(request, domain, config_id):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(config, request.POST)
         if form.is_valid():
-            config = form.save()
-            try:
-                # these two functions will do all the validation we need
-                config.filter
-                config.indicators
-            except Exception, e:
-                messages.error(request, _(u'Problem with data source spec: {}').format(e))
-            else:
-                config.save()
-                messages.success(request, _(u'Report {} saved!').format(config.display_name))
+            config = form.save(commit=True)
+            messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
     else:
         form = ConfigurableDataSourceEditForm(config)
     context = _shared_context(domain)
