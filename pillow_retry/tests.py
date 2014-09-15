@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 from django.conf import settings
 from pillow_retry.models import PillowError, Stub
 from django.test import TestCase
@@ -64,6 +65,20 @@ class PillowRetryTestCase(TestCase):
         new = PillowError.get_or_create({'id': id}, FakePillow1())
         self.assertIsNone(new.id)
         self.assertEqual(new.current_attempt, 0)
+
+    def test_get_or_create_meta(self):
+        id = '12335'
+        date = '2013-12-05T08:52:19Z'
+        meta = {
+            'domains': ['a' * 247, '123456789'],
+            'doc_type': 'something',
+            'date': date,
+        }
+        get = PillowError.get_or_create({'id': id}, FakePillow(), meta)
+        self.assertEqual(get.domains, 'a' * 247 + ',1234...')
+        self.assertEqual(get.doc_type, 'something')
+        self.assertEqual(get.doc_date, parse(date))
+        get.save()
 
     def test_get_errors_to_process(self):
         date = datetime.utcnow()

@@ -297,7 +297,8 @@ class BasicPillow(object):
                         self.change_transport(tr)
         except Exception, ex:
             if not is_retry_attempt:
-                error = PillowError.get_or_create(change, self)
+                meta = self.couch_db.show('domain/domain_date', change['id'])
+                error = PillowError.get_or_create(change, self, change_meta=meta)
                 error.add_attempt(ex, sys.exc_info()[2])
                 error.save()
                 pillow_logging.exception(

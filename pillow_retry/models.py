@@ -1,6 +1,7 @@
 import json
 import traceback
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 from django.conf import settings
 import math
 from django.db import models
@@ -33,6 +34,9 @@ class PillowError(models.Model):
     error_type = models.CharField(max_length=255, null=True)
     error_traceback = models.TextField(null=True)
     change = models.TextField(null=True)
+    domains = models.CharField(max_length=255, db_index=True, null=True)
+    doc_type = models.CharField(max_length=255, db_index=True, null=True)
+    doc_date = models.DateTimeField(null=True)
 
     @property
     def change_dict(self):
@@ -60,7 +64,7 @@ class PillowError(models.Model):
         self.date_next_attempt = datetime.utcnow()
 
     @classmethod
-    def get_or_create(cls, change, pillow):
+    def get_or_create(cls, change, pillow, change_meta=None):
         pillow_path = path_from_object(pillow)
 
         change.pop('doc', None)
@@ -77,6 +81,13 @@ class PillowError(models.Model):
                 date_next_attempt=now,
                 change=json.dumps(change)
             )
+
+            if change_meta:
+                date = parse(change_meta.get('date'))
+                domains = ','.join(change_meta.get('domains'))
+                error.domains = (domains[:252] + '...') if len(domains) > 255 else domains
+                error.doc_type = change_meta.get('doc_type')
+                error.doc_date = date
 
         return error
 
