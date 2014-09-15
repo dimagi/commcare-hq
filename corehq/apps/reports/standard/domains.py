@@ -378,5 +378,5 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info'),
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
-                    format_bool(dom.get('is_active') or _('No info')),
+                    format_bool(dom.get('cp_is_active') or _('No info')),
                 ]
