@@ -81,9 +81,8 @@ def process_cases_with_casedb(xform, case_db, config=None):
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
-        update_sync_log_with_checks(relevant_log, xform, cases,
-                                    case_id_blacklist=config.case_id_blacklist,
-                                    case_db=case_db)
+        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
+                                    case_id_blacklist=config.case_id_blacklist)
 
         if config.reconcile:
             relevant_log.reconcile_cases()
