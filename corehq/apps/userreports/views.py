@@ -5,12 +5,10 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
-from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
 from corehq.apps.userreports.sql import get_indicator_table
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
 from corehq.util.couch import get_document_or_404
 
@@ -18,12 +16,21 @@ from corehq.util.couch import get_document_or_404
 @domain_admin_required
 def edit_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
+    return _edit_report_shared(request, domain, config)
+
+
+@domain_admin_required
+def create_report(request, domain):
+    return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
+
+
+def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
             form.save(commit=True)
             messages.success(request, _(u'Report {} saved!').format(config.display_name))
-            return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[domain, config._id]))
+            return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
         form = ConfigurableReportEditForm(domain, config)
     context = _shared_context(domain)

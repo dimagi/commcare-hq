@@ -1,4 +1,3 @@
-import copy
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
@@ -6,7 +5,6 @@ from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
-forms.ModelForm
 
 
 class DocumentFormBase(forms.Form):
@@ -53,8 +51,8 @@ class ConfigurableReportEditForm(DocumentFormBase):
         for field in self.fields:
             if field not in cleaned_data:
                 return
-        config = self.populate_instance(copy.deepcopy(self.instance), cleaned_data)
         try:
+            config = self.populate_instance(self.instance, cleaned_data)
             ReportFactory.from_spec(config)
         except Exception, e:
             raise ValidationError(_(u'Problem with report spec: {}').format(e))
