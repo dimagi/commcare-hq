@@ -21,15 +21,9 @@ def edit_report(request, domain, report_id):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
-            config = form.save(commit=False)
-            try:
-                ReportFactory.from_spec(config)
-            except Exception, e:
-                messages.error(request, _(u'Problem with report spec: {}').format(e))
-            else:
-                config.save()
-                messages.success(request, _(u'Report {} saved!').format(config.display_name))
-                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[domain, config._id]))
+            form.save(commit=True)
+            messages.success(request, _(u'Report {} saved!').format(config.display_name))
+            return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[domain, config._id]))
     else:
         form = ConfigurableReportEditForm(domain, config)
     context = _shared_context(domain)

@@ -1,7 +1,10 @@
+import copy
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
+from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 forms.ModelForm
 
@@ -20,11 +23,15 @@ class DocumentFormBase(forms.Form):
         super(DocumentFormBase, self).__init__(initial=object_data, *args, **kwargs)
 
     def save(self, commit=False):
-        for field in self.fields:
-            setattr(self.instance, field, self.cleaned_data[field])
+        self.populate_instance(self.instance, self.cleaned_data)
         if commit:
             self.instance.save()
         return self.instance
+
+    def populate_instance(self, instance, cleaned_data):
+        for field in self.fields:
+            setattr(instance, field, cleaned_data[field])
+        return instance
 
 
 class ConfigurableReportEditForm(DocumentFormBase):
@@ -40,6 +47,18 @@ class ConfigurableReportEditForm(DocumentFormBase):
         super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
 
+    def clean(self):
+        cleaned_data = super(ConfigurableReportEditForm, self).clean()
+        # only call additional validation if initial validation has passed for all fields
+        for field in self.fields:
+            if field not in cleaned_data:
+                return
+        config = self.populate_instance(copy.deepcopy(self.instance), cleaned_data)
+        try:
+            ReportFactory.from_spec(config)
+        except Exception, e:
+            raise ValidationError(_(u'Problem with report spec: {}').format(e))
+        return cleaned_data
 
 DOC_TYPE_CHOICES = (
     ('CommCareCase', 'cases'),
