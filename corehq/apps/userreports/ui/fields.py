@@ -38,7 +38,7 @@ class JsonField(forms.CharField):
         try:
             value = json.loads(value)
         except ValueError:
-            raise forms.ValidationError(_('Please enter valid JSON.'))
+            raise forms.ValidationError(_(u'Please enter valid JSON. This is not valid: {}'.format(value)))
         if self.expected_type and not isinstance(value, self.expected_type):
             raise forms.ValidationError(_(u'Expected {} but was {}'.format(self.expected_type, type(value))))
 
