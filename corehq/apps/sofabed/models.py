@@ -20,7 +20,7 @@ class FormData(models.Model):
                                    max_length=255)
     time_start = models.DateTimeField()
     time_end = models.DateTimeField(db_index=True)
-    duration = models.IntegerField()
+    duration = models.BigIntegerField()
     device_id = models.CharField(max_length=255, null=True)
     user_id = models.CharField(max_length=255, null=True, db_index=True)
     username = models.CharField(max_length=255, null=True)
