@@ -136,8 +136,7 @@ def cloudcare_main(request, domain, urlPath):
 
         case = _get_case(domain, case_id) if case_id else None
         if parent_id is None and case is not None:
-            if 'indices' in case and 'parent' in case['indices']:
-                parent_id = case['indices']['parent']['case_id']
+            parent_id = case.get('indices',{}).get('parent', {}).get('case_id', None)
         parent = _get_case(domain, parent_id) if parent_id else None
 
         return {
@@ -298,13 +297,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 
     cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
 
-    # Filtering here for now because it's easy. There is probably a more
-    # "correct" place to do this (like with the get_filtered_cases() filter
-    # param perhaps).
     if parent_id:
-        # NOTE: c.parent returns only one parent. There could be more... uh oh.
         cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
-
 
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest

@@ -718,7 +718,6 @@ cloudCare.AppView = Backbone.View.extend({
                     var parent_module_index = 0;
                     var parent_module = null;
 
-                    // This is a weird way to get this. I could do it also by referencing the AppMainView which is globally on the window I think
                     while (parent_module === null) {
                         var possible_parent = self.moduleListView.getModuleView(parent_module_index).model;
                         if (possible_parent.get("unique_id") === parent_module_id) {
@@ -1085,7 +1084,6 @@ cloudCare.AppMainView = Backbone.View.extend({
                 var parentModel = self.appView.formListView.caseView.listView.caseMap[self._selectedParent].model;
                 cloudCare.dispatch.trigger("parent:selected", parentModel);
             }
-            // Perhaps this should be inside the above if block.
             self._selectedParent = null;
         }));
 
