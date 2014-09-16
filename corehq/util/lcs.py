@@ -34,7 +34,7 @@ def lcsMerge(X, Y, equality_func=None):
             }
         elif i == 0:
             val = recur(i, j-1)
-            val['merge'].append({"x":True, "y":True, "token": Y[j-1]})
+            val['merge'].append({"x":False, "y":True, "token": Y[j-1]})
         elif j == 0:
             val = recur(i-1, j)
             val['merge'].append({'x':True, 'y': False, 'token': X[i - 1]})
