@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import imap
 import hashlib
 import json
 import logging
@@ -13,6 +14,7 @@ from couchdbkit.ext.django.schema import (
 from django.core.cache import cache
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -589,9 +591,15 @@ class Domain(Document, SnapshotMixin):
 
     @classmethod
     def get_all(cls, include_docs=True):
-        # todo: this should use iter_docs
-        return Domain.view("domain/not_snapshots",
-                            include_docs=include_docs).all()
+        domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if not include_docs:
+            return domains
+        else:
+            return imap(cls, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+
+    @classmethod
+    def get_all_names(cls):
+        return [d['key'] for d in Domain.get_all(include_docs=False)]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
