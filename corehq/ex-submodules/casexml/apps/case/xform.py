@@ -40,13 +40,7 @@ def process_cases(xform, config=None):
     now = datetime.datetime.utcnow()
     for case in cases:
         case.server_modified_on = now
-    result = XFormInstance.get_db().bulk_save(
-        docs,
-        # this does not check for update conflicts
-        # but all of these docs should have been locked
-        # I don't know what it does in the case of a timeout
-        all_or_none=True,
-    )
+    result = XFormInstance.get_db().bulk_save(docs)
     for case in cases:
         case_post_save.send(CommCareCase, case=case)
     return cases

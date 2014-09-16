@@ -460,13 +460,7 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
-                            XFormInstance.get_db().bulk_save(
-                                docs,
-                                # this does not check for update conflicts
-                                # but all of these docs should have been locked
-                                # I don't know what it does in the case of a timeout
-                                all_or_none=True,
-                            )
+                            XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             raise
                         unfinished_submission_stub.saved = True
