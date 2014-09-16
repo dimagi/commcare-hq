@@ -8,6 +8,7 @@ from django import forms
 
 from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms import layout as crispy
 
 from dimagi.utils.decorators.memoized import memoized
@@ -157,10 +158,43 @@ class CustomDataEditor(object):
             field.slug: _make_field(field) for field in self.model.fields
             if not self.required_only or field.is_required
         }
+        field_names = fields.keys()
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
+
+        def FakeInput(val):
+            return HTML('<span class="input-xlarge uneditable-input">%s</span>' % val)
+        def Label(val):
+            return HTML('<label class="control-label">%s</label>' % val)
+
+        def _make_field_div(slug, val):
+            return Div(
+                Label(slug),
+                Div(
+                    FakeInput(val),
+                    css_class="controls",
+                ),
+                css_class="control-group",
+            )
+
+        help_div = [
+            _make_field_div(slug, val)
+            for slug, val in self.existing_custom_data.items()
+            if slug not in field_names
+        ]
+
+        CustomDataForm.helper.layout = Layout(
+            Fieldset(
+                _("Additional Information"),
+                *field_names
+            ),
+            Fieldset(
+                _("Uncatagorized Information") if len(help_div) else '',
+                *help_div
+            )
+        )
 
         if post_dict:
             fields = post_dict

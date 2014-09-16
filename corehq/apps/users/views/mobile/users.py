@@ -70,9 +70,9 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            "UserFields",
-            self.domain,
-            self.editable_user.user_data,
+            field_type="UserFields",
+            domain=self.domain,
+            existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
