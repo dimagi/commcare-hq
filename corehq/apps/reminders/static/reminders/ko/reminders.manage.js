@@ -35,6 +35,21 @@ var ManageRemindersViewModel = function (
     });
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
+    self.start_property_offset_type.subscribe(function(val) {
+        $("#id_event_timing").children("option").each(function(i) {
+            var j = $.parseJSON($(this).val());
+            if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
+               val === self.choices.START_PROPERTY_OFFSET_DELAY) {
+                $(this).show();
+            } else {
+                if(j.event_interpretation === "OFFSET") {
+                    $(this).hide();
+                } else {
+                    $(this).show()
+                }
+            }
+        });
+    });
     self.isStartPropertyOffsetVisible = ko.computed(function () {
         return self.start_property_offset_type() === self.choices.START_PROPERTY_OFFSET_DELAY;
     });
