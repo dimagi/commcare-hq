@@ -3351,6 +3351,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
+        if self.build_version < yaml_setting.get("since", "0"):
+            setting = yaml_setting.get("disabled_default", None)
+            if setting is not None:
+                return setting
         return yaml_setting.get("default")
 
     @property

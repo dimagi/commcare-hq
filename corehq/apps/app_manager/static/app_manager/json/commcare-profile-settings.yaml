@@ -270,6 +270,7 @@
   values: ["yes", "no"]
   value_names: ["Yes", "No"]
   default: "yes"
+  disabled_default: "no"
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
 
