@@ -46,6 +46,10 @@ class CaseError(XFormError):
     pass
 
 
+class ScheduleError(XFormError):
+    pass
+
+
 class XFormValidationError(XFormError):
     def __init__(self, fatal_error, version="1.0", validation_problems=None):
         self.fatal_error = fatal_error

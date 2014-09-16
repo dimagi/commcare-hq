@@ -7,7 +7,7 @@ import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.xpath import ProductInstanceXpath
@@ -813,6 +813,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                 has_schedule_columns:
             forms_due = []
             for form in module.get_forms():
+                if not (form.schedule and form.schedule.anchor):
+                    raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
+
                 fixture_id = self.id_strings.schedule_fixture(form)
                 anchor = form.schedule.anchor
 

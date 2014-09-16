@@ -1303,7 +1303,12 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
             module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
 
-    module.has_schedule = should_edit('has_schedule')
+    if isinstance(module, AdvancedModule):
+        module.has_schedule = should_edit('has_schedule')
+        if should_edit('has_schedule'):
+            for form in module.get_forms():
+                if not form.schedule:
+                    form.schedule = FormSchedule()
 
     _handle_media_edits(req, module, should_edit, resp)
 
