@@ -64,7 +64,6 @@ branches:
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
-  - lwyszomi:ilsgateway-bugs
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - caseindex # SK 9/16
 submodules:
