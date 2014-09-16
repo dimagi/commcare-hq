@@ -773,21 +773,27 @@ def _deploy_without_asking():
     try:
         execute(update_code)
         execute(update_virtualenv)
+
+        # handle static files
+        execute(version_static)
+        execute(_do_collectstatic)
         execute(_do_compress)
-        # softly update manifest (original keys remain)
+        # initial update of manifest to make sure we have no
+        # Offline Compression Issues as services restart
         execute(update_manifest, soft=True)
+
         execute(clear_services_dir)
         set_supervisor_config()
         if env.should_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
-        execute(_do_collectstatic)
         execute(do_update_django_locales)
-        execute(version_static)
         if env.should_migrate:
             execute(flip_es_aliases)
-        # hard update of manifest.json
+
+        # hard update of manifest.json since we're about to force restart
+        # all services
         execute(update_manifest)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
@@ -1063,9 +1069,9 @@ def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
     update_code()
+    _do_collectstatic()
     _do_compress()
     update_manifest(save=True)
-    _do_collectstatic()
 
 
 @task
