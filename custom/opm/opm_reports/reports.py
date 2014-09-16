@@ -698,18 +698,26 @@ class MetReport(CaseReportMixin, BaseReport):
     fix_left_col = True
     model = ConditionsMet
     exportable = False
+    fix_col_number = 9
+    fix_col_width = 800
 
     @property
     def headers(self):
         if not self.is_rendered_as_email:
             if self.snapshot is not None:
+                self.fix_col_number = 5
+                self.fix_col_width = 650
                 return DataTablesHeader(*[
                     DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
                 ])
+            self.fix_col_number = 9
+            self.fix_col_width = 800
             return DataTablesHeader(*[
                 DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
             ])
         else:
+            self.fix_col_number = 9
+            self.fix_col_width = 800
             with localize('hin'):
                 return DataTablesHeader(*[
                     DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
@@ -728,7 +736,7 @@ class MetReport(CaseReportMixin, BaseReport):
 
     @property
     def fixed_cols_spec(self):
-        return dict(num=9, width=700)
+        return dict(num=self.fix_col_number, width=self.fix_col_width)
 
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
