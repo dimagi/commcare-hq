@@ -9,6 +9,7 @@ class StockReport(models.Model):
     form_id = models.CharField(max_length=100, db_index=True)
     date = models.DateTimeField(db_index=True)
     type = models.CharField(max_length=20)  # currently "balance" or "transfer"
+    domain = models.CharField(max_length=255, null=True)
 
     # todo: there are properties like these that could be really useful for queries
     # and reports - should decide which ones we want to add if any.
