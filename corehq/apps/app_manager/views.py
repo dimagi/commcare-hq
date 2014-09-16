@@ -48,6 +48,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations.models import Translation
+from corehq.util.lcs import lcsMerge
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
@@ -2622,12 +2623,12 @@ def _expected_bulk_app_sheet_headers(app):
     # Add headers for the first sheet
     headers.append(["Modules_and_forms", ['Type', 'sheet_name']+languages_list+['icon_filepath', 'audio_filepath', 'unique_id']])
 
-    for mod_index, module in enumerate(app.modules):
+    for mod_index, module in enumerate(app.get_modules()):
 
         module_string = "module"+str(mod_index+1)
         headers.append([module_string, ['case_property']+languages_list])
 
-        for form_index, form in enumerate(module.forms):
+        for form_index, form in enumerate(module.get_forms()):
             form_string = module_string + "_form" + str(form_index+1)
             headers.append([form_string, ["label"]+
                                          languages_list+
@@ -2676,7 +2677,7 @@ def download_bulk_app_translations(request, domain, app_id):
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {"Modules_and_forms":[]}
 
-    for mod_index, module in enumerate(app.modules):
+    for mod_index, module in enumerate(app.get_modules()):
         #This is duplicated logic from _expected_bulk_app_sheet_headers,  which I don't love.
         module_string = "module"+str(mod_index+1)
 
@@ -2688,25 +2689,14 @@ def download_bulk_app_translations(request, domain, app_id):
 
         # Populate module sheet
         rows[module_string] = []
+        case_properties = lcsMerge(
+            list(module.case_details.short.get_columns()),
+            list(module.case_details.long.get_columns()),
+            lambda x, y: x.to_json() == y.to_json()
+        )
 
-        # module.case_details.short is all properties with "List" checked
-        case_list_properties = {c.field: c for c in module.case_details.short.columns}
-        # module.case_details.long is all properties with "Detail" checked
-        case_detail_properties = {c.field: c for c in module.case_details.long.columns}
-        # Get the union of these two dictionaries
-        all_properties = dict(case_list_properties.items() + case_detail_properties.items())
-        for _, detail in all_properties.items():
-
-            # TODO: Resolve case detail ordering issue
-            # The details will not appear in the same order as on HQ unless we
-            # do a LCS merge on them. This will probably be a lot of code.
-            # Do we care about the ordering?
-            # Links about how to merge:
-            #   https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js#L446-446
-            #   https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
-
-            # TODO: Two case details can have the same name...
-            # What should I do about this...
+        for property in case_properties:
+            detail = property['token']
 
             field_name = detail.field
             if len(detail.enum) > 0:
@@ -2722,7 +2712,7 @@ def download_bulk_app_translations(request, domain, app_id):
                     tuple(mapping.value.get(lang, "") for lang in app.langs)
                 )
 
-        for form_index, form in enumerate(module.forms):
+        for form_index, form in enumerate(module.get_forms()):
             form_string = module_string + "_form" + str(form_index+1)
             xform = form.wrapped_xform()
 
@@ -2761,7 +2751,7 @@ def download_bulk_app_translations(request, domain, app_id):
                         for j, select in enumerate(question['options']):
                             select_id = row[0]+"-"+select['value']
                             labels = tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
-                            # TODO: Figure out how to get rid of this repeated media logic
+                            # TODO: Get rid of this repeated media logic
                             media_paths = []
                             for media in ['image', 'audio', 'video']:
                                 for lang in app.langs:
@@ -2871,41 +2861,109 @@ def _update_case_list_translations(sheet, rows, app):
     Modify the translations of a module case list display properties given
     a sheet of translation data.
 
+    The properties in the sheet must be in the exact same order that they appear
+    in the bulk app translation download.
+
     :param sheet:
     :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
     :param app:
     :return: None. Modifies app/module in place.
     """
+
+    # The spreadsheet contains a list of case properties. These are in the same
+    # order as the bulk download and the HQ "Display Properties" page. This
+    # list is formed by merging two other lists. These lists also might contain
+    # DetailColumn instances in them that have exactly the same attributes
+    # (but are in different positions). Therefore, a little bit of work needs
+    # to be done to figure out which instance(s) in which list corresponds to
+    # each row in the sheet.
+
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
 
-    # TODO: wtf will happen with repeated details here
-    col_maps = [
-        {c.field:c for c in module.case_details.short.columns},
-        {c.field:c for c in module.case_details.long.columns},
-    ]
-
-    for row in rows:
-
-        ok_to_delete_translations = _has_at_least_one_translation(row, 'default', app.langs)
-        if ok_to_delete_translations:
-            for lang in app.langs:
-                translation = row['default_%s' % lang]
-
-                for col_map in col_maps:
-                    if row['case_property'] in col_map:
-                        headers = col_map[row['case_property']]['header']
-                        if translation:
-                            # Note: On HQ it is possible to set a header to the empty string.
-                            #       But, empty excel cells are given to us as empty strings.
-                            #       So, I'm making the decision to interpret this as "remove
-                            #       translation", not "set to empty string"
-                            headers[lang] = translation
-                        else:
-                            headers.pop(lang, None)
+    # It is easier to process the translations if mapping rows are nested under
+    # their respective DetailColumns
+    condensed_rows = []
+    i = 0
+    while i < len(rows):
+        if rows[i]['case_property'].endswith(" (ID Mapping Text)"):
+            # Cut off the id mapping text
+            rows[i]['case_property'] = rows[i]['case_property'].split(" ")[0]
+            # Construct a list of mapping rows
+            mappings = []
+            j = 1
+            while rows[i+j]['case_property'].endswith(" (ID Mapping Value)"):
+                rows[i+j]['case_property'] = rows[i+j]['case_property'].split(" ")[0] # Cut off the id mapping value part
+                mappings.append(rows[i+j])
+                j += 1
+            rows[i]['mappings'] = mappings
+            condensed_rows.append(rows[i])
+            i += j
         else:
-            messages.error("You must provide at least one translation of the case propert '%s'" % row['case_property'])
-            # I presume that at least one translation must be present
+            condensed_rows.append(rows[i])
+            i += 1
+
+    short_details = list(module.case_details.short.get_columns())
+    long_details = list(module.case_details.long.get_columns())
+    merged_case_properties = lcsMerge(
+            short_details,
+            long_details,
+            lambda x, y: x.to_json() == y.to_json()
+        )
+
+    # Build two lists, short_index_lookup and long_index_lookup with the
+    # following properties:
+    # short_index_lookup[i] is the index into module.case_properties.short of
+    # the DetailColumn corresponding to the DetailColumn at merged_case_properties[i].
+    # long_index_lookup is defined analogously.
+
+    short_index_lookup = []
+    long_index_lookup = []
+    last_short = 0
+    last_long = 0
+    for p in merged_case_properties:
+        if p['x']:
+            short_index_lookup.append(last_short)
+            last_short += 1
+        else:
+            short_index_lookup.append(None)
+        if p['y']:
+            long_index_lookup.append(last_long)
+            last_long += 1
+        else:
+            long_index_lookup.append(None)
+
+    # Update the translations
+    for i in range(len(merged_case_properties)):
+        row = condensed_rows[i]
+        detail_objs_to_modify = []
+        if short_index_lookup[i] != None:
+            detail_objs_to_modify.append(short_details[short_index_lookup[i]])
+        if long_index_lookup[i] != None:
+            detail_objs_to_modify.append(long_details[long_index_lookup[i]])
+
+        # The logic for updating a mapping and updating a MappingItem and a DetailColumn is almost the same.
+        # So, we smush the two together.
+        for index, translation_row in enumerate([row] + row.get("mappings", [])):
+            ok_to_delete_translations = _has_at_least_one_translation(translation_row, 'default', app.langs)
+            if ok_to_delete_translations:
+                for lang in app.langs:
+                    translation = translation_row['default_%s' % lang]
+                    for detail in detail_objs_to_modify:
+                        if index == 0:
+                            # For DetailColumns
+                            d = detail.header
+                        else:
+                            # For MappingItems
+                            d = detail['enum'][index-1].value
+
+                        if translation:
+                            d[lang] = translation
+                        else:
+                            d.pop(lang, None)
+            else:
+                messages.error("You must provide at least one translation of the case property '%s'"
+                               % translation_row['case_property'] + " (ID Mapping Value)" if index != 0 else "")
     app.save()
 
 
@@ -2976,17 +3034,6 @@ def _update_form_translations(sheet, rows, missing_cols, app):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    # Spec requests that upload be processed even if there are errors
-    # Spec requests that errors be given for:
-    #   out of order sheets (doesn't even really matter)
-    #   unknown case properties
-    # Unmentioned errors that make sense to me:
-    #   Repeated sheets
-    #   Repeated questions
-    #   Unknown question
-    #   Missing column in sheet
-    #   (could be many others for sheet1)
-
 
     app = get_app(domain, app_id)
     headers = _expected_bulk_app_sheet_headers(app)
@@ -3012,10 +3059,8 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         # CHECK FOR MISSING KEY COLUMN
         if sheet.worksheet.title == "Modules and Forms":
-            # TODO: It is unclear what the key columns on this sheet are
-            #       the sheet_name could identify the module/form (going with this for now)
-            #       the unique_id could identify the module/form
-            #       the Type is really superfluous I think
+            # Several columns on this sheet could be used to uniquely identify
+            # rows. Using sheet_name for now, but unique_id could also be used.
             if expected_columns[1] not in sheet.headers:
                 messages.error('Skipping sheet "%s", could not find "%s" column' % (sheet.worksheet.title, expected_columns[1]))
         else:
