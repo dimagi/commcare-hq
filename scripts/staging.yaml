@@ -53,7 +53,6 @@ branches:
   - logos # Nick P 5/28
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
-#  - cachecomparisons  # SK 8/11
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
@@ -67,6 +66,7 @@ branches:
   # - lwyszomi:b3-mobile-layout
   - lwyszomi:ilsgateway-bugs
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - caseindex # SK 9/16
 submodules:
   submodules/couchlog-src:
     branches:
