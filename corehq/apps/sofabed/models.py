@@ -315,3 +315,6 @@ class CaseIndexData(models.Model):
         ret.referenced_type = index.referenced_type
         ret.referenced_id = index.referenced_id
         return ret
+
+    class Meta:
+        ordering = ['identifier']
