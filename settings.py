@@ -289,6 +289,7 @@ HQ_APPS = (
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -317,6 +318,7 @@ HQ_APPS = (
     'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
@@ -1116,7 +1118,7 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',

@@ -81,6 +81,12 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "no parent select id" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            uses parent case selection but doesn't have a parent
+                            module specified.
+                        {% endif %}
                         {% if error.type == "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}

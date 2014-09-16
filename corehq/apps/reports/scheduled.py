@@ -1,5 +1,5 @@
 from calendar import monthrange
-import datetime
+from datetime import datetime
 from corehq.apps.reports.models import ReportNotification
 
 
@@ -33,10 +33,11 @@ def get_scheduled_reports(period, as_of=None):
                     'key': [period, as_of.hour, minute, as_of.day]
                 }
             if as_of.day == monthrange(as_of.year, as_of.month)[1]:
-                for day in range(as_of.day + 1, 31):
-                    yield {
-                        'key': [period, as_of.hour, day],
-                    }
+                for day in range(as_of.day + 1, 32):
+                    for minute in minutes:
+                        yield {
+                            'key': [period, as_of.hour, minute, day]
+                        }
 
     for keys in _keys(period, as_of):
         for report in ReportNotification.view("reportconfig/all_notifications",
