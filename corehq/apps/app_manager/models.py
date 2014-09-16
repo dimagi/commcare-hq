@@ -2801,12 +2801,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
-
         self = super(Application, cls).wrap(data)
-
-        if 'properties' in self.profile\
-                and 'fuzzy_search_enabled' not in self.profile['properties']:
-            self.profile['properties']['fuzzy_search_enabled'] = u'no'
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
