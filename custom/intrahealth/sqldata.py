@@ -251,6 +251,34 @@ class FicheData(BaseSqlData):
                 [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
 
+class PPSAvecDonnees(BaseSqlData):
+    slug = 'pps_avec_donnees'
+    title = 'PPS Avec Données'
+    table_name = 'fluff_IntraHealthFluff'
+    col_names = ['location_id']
+    have_groups = False
+
+    @property
+    def group_by(self):
+        group_by = []
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_(u"Données Soumises (1 si oui)"), CountUniqueColumn('location_id')))
+        return columns
+
 class DateSource(BaseSqlData):
     title = ''
     table_name = 'fluff_RecapPassageFluff'
