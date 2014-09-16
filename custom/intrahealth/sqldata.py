@@ -467,6 +467,12 @@ class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
     title = u'Gestion de l`IPM - Taux des Ruptures de Stock'
 
+    @property
+    def filters(self):
+        filter = super(TauxDeRuptures, self).filters
+        filter.append("total_stock_total = 1")
+        return filter
+
 
 class DureeData(BaseSqlData):
     slug = 'duree'

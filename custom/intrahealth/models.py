@@ -96,7 +96,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district')
+        IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
     ])
     domains = INTRAHEALTH_DOMAINS
     save_direct_to_sql = True
