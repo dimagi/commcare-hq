@@ -1,11 +1,16 @@
+from collections import defaultdict
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
+from django.db.models.aggregates import Count, Sum, Avg
+from sqlagg.base import TableNotFoundException, ColumnNotFoundException
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
+from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -232,3 +237,122 @@ class CallCenter(SqlIndicatorSet):
 
     def include_row(self, key, row):
         return not row['user_id'] == NO_CASE_TAG
+
+
+def iterate_queryset(queryset, mapper_fn):
+    """
+    Iterate over a queryset applying a function to each row.
+
+    :return: True if the queryset had any rows, False otherwise.
+
+    http://blog.etianen.com/blog/2013/06/08/django-querysets/
+    """
+    result_iterator = queryset.iterator()
+    try:
+        first = next(result_iterator)
+    except StopIteration:
+        return False
+    else:
+        from itertools import chain
+        for row in chain([first], result_iterator):
+            mapper_fn(row)
+
+        return True
+
+
+class CallCenterV2(object):
+    no_value = 0
+
+    def __init__(self, domain, user):
+        self.domain = domain
+        self.user = user
+        self.data = defaultdict(dict)
+
+    @property
+    def date_ranges(self):
+        today = date.today() + timedelta(days=1)  # set to midnight of current day
+        weekago = today - timedelta(days=7)
+        weekago2 = today - timedelta(days=14)
+        daysago30 = today - timedelta(days=30)
+        daysago60 = today - timedelta(days=60)
+        return [
+            ('week0', weekago, today),
+            ('week1', weekago2, weekago),
+            ('month0', daysago30, today),
+            ('month1', daysago60, daysago30),
+        ]
+
+    def date_filter(self, date_field, lower, upper):
+        return {
+            '{}__gt'.format(date_field): lower,
+            '{}__lte'.format(date_field): upper,
+        }
+
+    @property
+    @memoized
+    def case_types(self):
+        return CaseTypeMixin.get_case_types(self.domain)
+
+    def _add_data(self, results, indicator_name, key='user_id', value='count', transformer=None):
+        def __add(row):
+            val = transformer(row[value]) if transformer else row[value]
+            self.data[row[key]][indicator_name] = val
+
+        had_rows = iterate_queryset(results, __add)
+
+        if not had_rows:
+            # set values to 0 if there is no data
+            for user_id in self.data.keys():
+                self.data[user_id].setdefault(indicator_name, self.no_value)
+
+    def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
+        aggregation = Avg('duration') if indicator_type == TYPE_DURATION else Count('instance_id')
+
+        def millis_to_secs(x):
+            return x / 1000
+
+        transformer = millis_to_secs if indicator_type == TYPE_DURATION else None
+
+        results = FormData.objects \
+            .values('user_id') \
+            .filter(
+                xmlns=xmlns,
+                domain=self.domain.name,
+                doc_type='XFormInstance') \
+            .filter(**self.date_filter('time_end', lower, upper)) \
+            .annotate(count=aggregation)
+
+        self._add_data(
+            results,
+            '{}{}'.format(indicator_name, range_name.title()),
+            transformer=transformer)
+
+    def add_form_data(self, range_name, lower, upper):
+        results = FormData.objects \
+            .values('user_id')\
+            .filter(**self.date_filter('time_end', lower, upper)) \
+            .filter(
+                domain=self.domain.name,
+                doc_type='XFormInstance'
+            )\
+            .annotate(count=Count('instance_id'))
+
+        self._add_data(results, 'forms_submitted_{}'.format(range_name))
+        self._add_data(results, 'formsSubmitted{}'.format(range_name.title()))
+
+    def get_data(self):
+        for range_name, lower, upper in self.date_ranges:
+            self.add_form_data(range_name, lower, upper)
+
+            if self.domain.name in PER_DOMAIN_FORM_INDICATORS:
+                for custom in PER_DOMAIN_FORM_INDICATORS[self.domain.name]:
+                    self.add_custom_form_data(
+                        custom['slug'],
+                        range_name,
+                        custom['xmlns'],
+                        custom['type'],
+                        lower,
+                        upper
+                    )
+
+        return self.data
