@@ -8,6 +8,7 @@ install:
  - "sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib"
  - "pip install -e . --use-mirrors"
  - "pip install coverage coveralls --use-mirrors"
+ - "curl http://127.0.0.1:5984/"
 script:
 - "coverage run --parallel-mode `which django-admin.py` test --settings settings --traceback utils"
 - "coverage run --parallel-mode setup.py test"

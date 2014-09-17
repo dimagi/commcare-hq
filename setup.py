@@ -13,7 +13,7 @@ setup(
     test_loader='unittest2:TestLoader',
     install_requires=[
         'jsonobject-couchdbkit',
-        'django',
+        'django<1.7',
         'django_redis',
         'mock>=0.8.0',
         'openpyxl',

@@ -19,15 +19,9 @@ DATABASES = {
 
 
 ####### Couch Config ######
-COUCH_HTTPS = False # recommended production value is True if enabling https
-COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'dimagi_utils'
+COUCH_DATABASE = 'http://127.0.0.1:5984/dimagi_utils'
 
-COUCH_DATABASE = 'http://127.0.0.1:5984/dimagi_utils_test'
-
-COUCHDB_DATABASES = [(app, 'http://127.0.0.1:5984/dimagi_utils') for app in ['utils', 'couch']]
+COUCHDB_DATABASES = [(app, COUCH_DATABASE) for app in ['utils', 'couch']]
 
 
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
