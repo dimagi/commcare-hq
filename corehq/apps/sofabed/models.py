@@ -145,22 +145,22 @@ class CaseData(BaseDataIndex):
     Data about a CommCareCase.
     See CommCareCase class
     """
-    case_id = models.CharField(unique=True, primary_key=True, max_length=255)
-    doc_type = models.CharField(max_length=255, db_index=True)
-    domain = models.CharField(max_length=255, db_index=True)
-    version = models.CharField(max_length=10, db_index=True)
-    type = models.CharField(max_length=255, db_index=True, null=True)
+    case_id = models.CharField(unique=True, primary_key=True, max_length=128)
+    doc_type = models.CharField(max_length=128, db_index=True)
+    domain = models.CharField(max_length=128, db_index=True)
+    version = models.CharField(max_length=10, db_index=True, null=True)
+    type = models.CharField(max_length=128, db_index=True, null=True)
     closed = models.BooleanField(db_index=True)
-    owner_id = models.CharField(max_length=255, db_index=True, null=True)
-    opened_on = models.DateTimeField(db_index=True)
-    opened_by = models.CharField(max_length=255, db_index=True)
+    owner_id = models.CharField(max_length=128, db_index=True, null=True)
+    opened_on = models.DateTimeField(db_index=True, null=True)
+    opened_by = models.CharField(max_length=128, db_index=True, null=True)
     closed_on = models.DateTimeField(db_index=True, null=True)
-    closed_by = models.CharField(max_length=255, db_index=True, null=True)
+    closed_by = models.CharField(max_length=128, db_index=True, null=True)
     modified_on = models.DateTimeField(db_index=True)
-    modified_by = models.CharField(max_length=255, db_index=True, null=True)
-    server_modified_on = models.DateTimeField(db_index=True)
-    name = models.CharField(max_length=512, null=True)
-    external_id = models.CharField(max_length=512, null=True)
+    modified_by = models.CharField(max_length=128, db_index=True, null=True)
+    server_modified_on = models.DateTimeField(db_index=True, null=True)
+    name = models.CharField(max_length=128, null=True)
+    external_id = models.CharField(max_length=128, null=True)
 
     @classmethod
     def get_instance_id(cls, instance):
@@ -247,13 +247,13 @@ class CaseActionData(models.Model):
     """
     case = models.ForeignKey(CaseData, related_name='actions')
     index = models.IntegerField()
-    action_type = models.CharField(max_length=50, db_index=True)
-    user_id = models.CharField(max_length=255, db_index=True)
+    action_type = models.CharField(max_length=64, db_index=True)
+    user_id = models.CharField(max_length=128, db_index=True, null=True)
     date = models.DateTimeField(db_index=True)
     server_date = models.DateTimeField(null=True)
-    xform_id = models.CharField(max_length=255)
-    xform_xmlns = models.CharField(max_length=1000, null=True)
-    sync_log_id = models.CharField(max_length=255, null=True)
+    xform_id = models.CharField(max_length=128, null=True)
+    xform_xmlns = models.CharField(max_length=128, null=True)
+    sync_log_id = models.CharField(max_length=128, null=True)
 
     def __unicode__(self):
         return "CaseAction: {xform}: {type} - {date} ({server_date})".format(
@@ -297,9 +297,9 @@ class CaseIndexData(models.Model):
     See CommCareCaseIndex class
     """
     case = models.ForeignKey(CaseData, related_name='indices')
-    identifier = models.CharField(max_length=255, db_index=True)
-    referenced_type = models.CharField(max_length=255, db_index=True)
-    referenced_id = models.CharField(max_length=255, db_index=True)
+    identifier = models.CharField(max_length=64, db_index=True)
+    referenced_type = models.CharField(max_length=64, db_index=True)
+    referenced_id = models.CharField(max_length=128, db_index=True)
 
     def __unicode__(self):
         return "CaseIndex: %(identifier)s ref: (type: %(ref_type)s, id: %(ref_id)s)" % {
