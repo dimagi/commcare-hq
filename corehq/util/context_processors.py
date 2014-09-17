@@ -6,22 +6,18 @@ from corehq import toggles, privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.logging import notify_exception
+
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
 
 def base_template(request):
     """This sticks the base_template variable defined in the settings
        into the request context."""
-
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
-        'use_bootstrap_3': (
-            hasattr(request, 'use_bootstrap_3')
-            and request.use_bootstrap_3
-            and hasattr(request, 'user')
-            and toggles.BOOTSTRAP3_PREVIEW.enabled(request.user.username)
-        ),
     }
 
 

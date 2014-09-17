@@ -43,30 +43,29 @@
 trunk: master
 name: autostaging
 branches:
-#  - archive-products+explicit_case_processing # tw 8/14
+  - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny?
-  - auto-gps+schedule
-  - auto-gps
+  - master+schedule # Nick P 9/11
   - schedule # SK 7/17
-  - active_domain # Emord 8/15
-  - commconnect-reports
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
-  - vellum-requirejs # Daniel 6/12
-  - emwf-refactor  # Ethan 8/06
   - admin-reports # Nick P 8/13
-#  - archive-products+archive-to-deactivate # tw 8/14
-  - archive-to-deactivate  # cz 7/30
 #  - subscription-no-contact-info # bb 8/4
-#  - cachecomparisons  # SK 8/11
-  - opm  # Ethan 8/11
   - increase-es-timeout # Nick P 8/11
   - parent-child-select-revised # Noah 8/14
-#  - archive-products # tw 8/14
-  - vellum-requirejs+bootstrap3-stylin  # bb 8/20
-  - bootstrap3-stylin  # bb 8/20
+  - archive-products # tw 8/14
+  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
+  - subscription-no-contact-info # bb 8/4
+  - fix-timeout # Nick P 8/26
+  - caselistmixin-refactor # Noah 8/14
+  - custom_user_data # tw+Ethan 9/9
+  - lwyszomi:better_date_filters_improvment
+  - lwyszomi:uservoice-pending-invitations
+  # - lwyszomi:b3-mobile-layout
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - caseindex # SK 9/16
 submodules:
   submodules/couchlog-src:
     branches:
@@ -94,3 +93,6 @@ submodules:
       # Danny 8/12. If there's weird errors or issues in saving forms
       # or saving apps, just remove this
       - faster-lazy-attachments
+  # submodules/pillowtop-src:
+    # branches:
+      # - request_timeout  # Ethan 9/12

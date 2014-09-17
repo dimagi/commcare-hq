@@ -230,17 +230,15 @@ class ProjectReportsTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-        
+
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
              'icon': 'icon-tasks'}
         ])]
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            context)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            context)
+        project_reports = ProjectReportDispatcher.navigation_sections(context)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(context)
 
         return tools + project_reports + custom_reports
 
@@ -272,6 +270,16 @@ class IndicatorAdminTab(UITab):
     def is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
         return self.couch_user.can_edit_data() and self.domain in indicator_enabled_projects
+
+
+class DashboardTab(UITab):
+    title = ugettext_noop("Dashboard")
+    view = 'corehq.apps.dashboard.views.dashboard_default'
+
+    @property
+    def is_viewable(self):
+        return (self.couch_user
+                and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
 
 
 class ReportsTab(UITab):
@@ -343,6 +351,7 @@ class CommTrackSetupTab(UITab):
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
+            ILSConfigView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -436,6 +445,11 @@ class CommTrackSetupTab(UITab):
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
         ]])
+        if self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username)):
+            items[0][1].append({
+                'title': ILSConfigView.page_title,
+                'url': reverse(ILSConfigView.urlname, args=[self.domain]),
+            })
         return items
 
 

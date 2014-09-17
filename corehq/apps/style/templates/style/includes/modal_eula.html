@@ -1,0 +1,37 @@
+{% load i18n %}
+{% if request.couch_user and not request.couch_user.is_eula_signed %}
+    <div class="modal fade" id="modalEula">
+        <div class="modal-dialog">
+            <form id="eula-agree"
+                  action="{% url "agree_to_eula" %}"
+                  method="POST">
+                <input name="next" type="hidden" value="{{ request.path }}" />
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                        <h4 class="modal-title">{% trans "CommCare HQ End User License Agreement" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="panel panel-default fetched-data" style="height: 200px; overflow-y: scroll">{% trans "Loading Terms of Service..." %}</div>
+                        <div class="alert alert-warning">
+                            {% blocktrans %}
+                                To use CommCare HQ, please agree to our End User License Agreement.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Disagree' %}</button>
+                        <button type="submit" class="btn btn-primary">{% trans 'Agree' %}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% url "eula_basic" as eula_url %}
+    {% include 'style/includes/load_into_modal.html' with modal_id="modal-eula" load_from=eula_url %}
+    <script type="text/javascript">
+        $(window).load(function(){
+            $('#modalEula').modal('show');
+        });
+    </script>
+{% endif %}

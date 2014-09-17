@@ -100,7 +100,12 @@ class LocationImporter(object):
             )
         else:
             for loc in worksheet:
-                if loc['site_code'] and loc['site_code'] in self.seen_site_codes:
+                if 'site_code' in loc:
+                    # overwrite this value in the dict so we don't
+                    # ever accidentally use a randomly capitalized veersion
+                    loc['site_code'] = loc['site_code'].lower()
+
+                if 'site_code' in loc and loc['site_code'] in self.seen_site_codes:
                     self.results.append(_(
                         "Location {name} with site code {site_code} could not \
                         be imported due to duplicated site codes in the excel \
@@ -110,7 +115,7 @@ class LocationImporter(object):
                         site_code=loc['site_code']
                     ))
                 else:
-                    if loc['site_code']:
+                    if 'site_code' in loc:
                         self.seen_site_codes.add(loc['site_code'])
 
                     self.results.append(import_location(
@@ -208,7 +213,7 @@ def _process_parent_site_code(parent_site_code, domain, location_type, parent_ch
     if not parent_site_code:
         return None
 
-    parent_obj = Location.by_site_code(domain, parent_site_code)
+    parent_obj = Location.by_site_code(domain, parent_site_code.lower())
     if parent_obj:
         if invalid_location_type(location_type, parent_obj, parent_child_map):
             raise LocationImportError(
@@ -220,7 +225,7 @@ def _process_parent_site_code(parent_site_code, domain, location_type, parent_ch
         else:
             return parent_obj._id
     else:
-        raise LocationImportError(_('Parent with id {0} does not exist in this project').format(parent_site_code))
+        raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
 
 
 def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):

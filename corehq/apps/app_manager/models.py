@@ -48,6 +48,7 @@ from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
+from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -369,6 +370,15 @@ class AdvancedFormActions(DocumentSchema):
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
 
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in [a for a in self.open_cases if a.parent_tag]:
+            if not parent_case_type:
+                yield action
+            else:
+                parent = self.actions_meta_by_tag[action.parent_tag]['action']
+                if parent.case_type == parent_case_type:
+                    yield parent
+
     def get_case_tags(self):
         for action in self.get_all_actions():
             yield action.case_tag
@@ -510,6 +520,7 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -720,6 +731,13 @@ class FormBase(DocumentSchema):
     @property
     def has_fixtures(self):
         return 'src="jr://fixture/item-list:' in self.source
+
+    def get_auto_gps_capture(self):
+        app = self.get_app()
+        if app.build_version and app.enable_auto_gps:
+            return self.auto_gps_capture or app.auto_gps_capture
+        else:
+            return False
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -1380,6 +1398,11 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -2394,7 +2417,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # `LooseVersion`s are smart!
         # LooseVersion('2.12.0') > '2.2'
         # (even though '2.12.0' < '2.2')
-        return LooseVersion(self.build_spec.version)
+        if self.build_spec.version:
+            return LooseVersion(self.build_spec.version)
 
     def get_preview_build(self):
         preview = self.get_build()
@@ -2579,7 +2603,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception('Unexpected error building app')
+
+            # this is much less useful/actionable without a URL
+            # so make sure to include the request
+            logging.error('Unexpected error building app', exc_info=True,
+                          extra={'request': view_utils.get_request()})
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -2763,6 +2791,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

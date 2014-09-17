@@ -14,14 +14,19 @@ from django.conf import settings
 from corehq.apps.users.models import WebUser
 from custom.opm.opm_tasks import DEVELOPERS_EMAILS
 
-from ..opm_reports.reports import (BeneficiaryPaymentReport,
-                                   IncentivePaymentReport, MetReport, get_report, this_month_if_none)
+from ..opm_reports.reports import (
+    BeneficiaryPaymentReport,
+    IncentivePaymentReport,
+    MetReport,
+    get_report,
+    this_month_if_none
+)
 from ..opm_reports.constants import DOMAIN
 from .models import OpmReportSnapshot
 from dimagi.utils.django.email import send_HTML_email
 
 
-def prepare_snapshot(month, year, ReportClass, block=None, lang=None):
+def save_report(ReportClass, month=None, year=None, block=None, lang=None):
     existing = OpmReportSnapshot.by_month(month, year, ReportClass.__name__, block)
     assert existing is None, \
         "Existing report found for %s/%s at %s" % (month, year, existing._id)
@@ -35,24 +40,10 @@ def prepare_snapshot(month, year, ReportClass, block=None, lang=None):
         headers=report.headers,
         slugs=report.slugs,
         rows=report.rows,
-        visible_cols=report.visible_cols
-
+        visible_cols=report.visible_cols,
+        generated_on=datetime.datetime.utcnow(),
     )
     snapshot.save()
-    return snapshot
-
-
-def save_report(ReportClass, month=None, year=None):
-    """
-    Save a snapshot of the report.
-    Pass a month and year to save an arbitrary month.
-    """
-    month, year = this_month_if_none(month, year)
-    if ReportClass.__name__ == "MetReport":
-        for block in ['atri', 'wazirganj']:
-            snapshot = prepare_snapshot(month, year, ReportClass, block, 'en')
-    else:
-        snapshot = prepare_snapshot(month, year, ReportClass)
     return snapshot
 
 
@@ -65,8 +56,9 @@ def snapshot():
     tomorrow_date = now + datetime.timedelta(days=1)
     if tomorrow_date.month > now.month:
         save_ip_report.delay(IncentivePaymentReport, now.month, now.year)
-        save_bp_report.delay(BeneficiaryPaymentReport, now.month, now.year)
-        save_met_report.delay(MetReport, now.month, now.year)
+        for block in ['atri', 'wazirganj']:
+            save_bp_report.delay(BeneficiaryPaymentReport, now.month, now.year, block)
+            save_met_report.delay(MetReport, now.month, now.year, block)
 
 
 def get_admins_emails():
@@ -87,9 +79,9 @@ def send_emails(title, msg):
                         email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-def save(report, f, month, year):
+def save(report, f, month, year, block=None, lang=None):
     try:
-        snapshot = save_report(report, month, year)
+        snapshot = save_report(report, month, year, block, lang)
         title = "[commcarehq] {0} saving success.".format(report.__name__)
         msg = "Saving {0} to doc {1} was finished successfully".format(report.__name__, snapshot._id)
         send_emails(title, msg)
@@ -111,10 +103,10 @@ def save_ip_report(report, month, year):
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_bp_report(report, month, year):
-    save(report, save_bp_report, month, year)
+def save_bp_report(report, month, year, block):
+    save(report, save_bp_report, month, year, block, 'en')
 
 
 @task(default_retry_delay=240 * 60, max_retries=12)
-def save_met_report(report, month, year):
-    save(report, save_met_report, month, year)
+def save_met_report(report, month, year, block):
+    save(report, save_met_report, month, year, block, 'en')

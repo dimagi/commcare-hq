@@ -1,0 +1,16 @@
+{% extends "hqwebapp/partials/bulk_upload.html" %}
+{% load i18n %}
+
+{% block extra_option %}
+    {% if manage_consumption %}
+    <div class="controls">
+        <label for="include_consumption" class="checkbox">
+            <input class="checkboxinput"
+                   id="include_consumption"
+                   type="checkbox"
+                   data-bind="checked: include_consumption">
+            {% trans "Include consumption data (this can cause the download to take several minutes)." %}
+        </label>
+    </div>
+    {% endif %}
+{% endblock %}

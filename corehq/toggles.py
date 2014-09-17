@@ -99,6 +99,11 @@ IS_DEVELOPER = StaticToggle(
     'Is developer'
 )
 
+PATHWAYS_PREVIEW = StaticToggle(
+    'pathways_preview',
+    'Is Pathways preview'
+)
+
 CUSTOM_PRODUCT_DATA = StaticToggle(
     'custom_product_data',
     'Custom Product Data',
@@ -108,4 +113,9 @@ CUSTOM_PRODUCT_DATA = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
+)
+
+DASHBOARD_PREVIEW = StaticToggle(
+    'dashboard_preview',
+    'HQ Dashboard Preview'
 )

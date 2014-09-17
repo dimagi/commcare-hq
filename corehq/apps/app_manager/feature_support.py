@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion, Version
+from django.conf import settings
 
 
 class CommCareFeatureSupportMixin(object):
@@ -6,6 +7,8 @@ class CommCareFeatureSupportMixin(object):
     build_version = LooseVersion('')
 
     def _require_minimum_version(self, minimum_version):
+        if settings.UNIT_TESTING and self.build_version is None:
+            return False
         assert isinstance(self.build_version, Version)
         assert isinstance(minimum_version, (basestring, Version))
         return self.build_version >= minimum_version
@@ -53,3 +56,7 @@ class CommCareFeatureSupportMixin(object):
         # I wanted to record that dependency
         return (self.enable_local_resource
                 and self._require_minimum_version('2.12'))
+
+    @property
+    def enable_auto_gps(self):
+        return self._require_minimum_version('2.14')

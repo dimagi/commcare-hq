@@ -9,11 +9,7 @@
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
         {% compress css %}
-            {% if use_bootstrap_3 %}
-            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/bootstrap.less' %}"/>
-            {% else %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
-            {% endif %}
             {% block stylesheets %}
             {% endblock %}
         {% endcompress %}
@@ -21,7 +17,7 @@
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
-        {% block underscore %}<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>{% endblock %}
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
         {% block oldstyle_imports %}
@@ -38,64 +34,14 @@
         {% block page_imports %}
         {% endblock %}
 
-        {% if GOOGLE_ANALYTICS_ID %}
-            <script>
-                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-                })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-                ga('create', '{{ GOOGLE_ANALYTICS_ID }}', {
-                    'userId': '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}',
-                });
-                ga('set', 'dimension1', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}');
-                ga('set', 'dimension2', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}');
-                ga('send', 'pageview');
-
-            </script>
-        {% endif %}
-        {% if PINGDOM_ID %}
-        <script>
-            var _prum = [['id', '{{ PINGDOM_ID }}'],
-                ['mark', 'firstbyte', (new Date()).getTime()]];
-            (function() {
-                var s = document.getElementsByTagName('script')[0]
-                        , p = document.createElement('script');
-                p.async = 'async';
-                p.src = '//rum-static.pingdom.net/prum.min.js';
-                s.parentNode.insertBefore(p, s);
-            })();
-        </script>
-        {% endif %}
+        {% include 'style/includes/analytics_google.html' %}
+        {% include 'style/includes/analytics_pingdom.html' %}
         {% if less_debug %}
-            {% if use_bootstrap_3 %}
-            <script src="{% static 'style/lib/lessjs/less-1.7.3.min.js' %}"></script>
-            <script>less.watch();</script>
-            {% else %}
             <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
             <script>less.watch();</script>
-            {% endif %}
         {% endif %}
     </head>
     <body>
-        {% if use_bootstrap_3 %}
-        <div class="navbar navbar-default navbar-static-top">
-            <div class="navbar-header">
-                <a href="{% url "homepage" %}" class="navbar-brand">
-                    <img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
-                </a>
-            </div>
-            <nav class="collapse navbar-collapse" role="navigation">
-                {% block tabs_3 %}
-                    {% format_main_menu %}
-                {% endblock %}
-                <ul class="nav navbard-nav navbar-right">
-
-                </ul>
-            </nav>
-        </div>
-        <div class="container-fluid hq-container-sticky-footer">
-        {% else %}
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
             <header>
@@ -127,7 +73,6 @@
                 {% endblock header-section %}
             </header>
             {% endwith %}
-        {% endif %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
@@ -193,6 +138,8 @@
                             <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                             &nbsp;|&nbsp;
                             <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
                         </p>
                     </div>
                 </div>
@@ -386,11 +333,7 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        {% if use_bootstrap_3 %}
-        <script src="{% static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-        {% else %}
         <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
-        {% endif %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
         {% block js %}

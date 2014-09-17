@@ -79,7 +79,7 @@ class CareSAForm(XFormInstance):
             case.province
         ).first()
 
-        return fixture_item._id
+        return fixture_item._id if fixture_item else case.province
 
     @property
     @memoized

@@ -10,6 +10,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
 from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
+from couchexport.util import SerializableFunction
 
 from soil import DownloadBase
 
@@ -60,7 +61,8 @@ class BulkExport(object):
                     if self.export_objects[i].transform:
                         doc = self.export_objects[i].transform(doc)
                     table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                        include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
+                                          include_headers=isinstance(self, CustomBulkExport),
+                                          separator=self.separator)
                     if isinstance(self, CustomBulkExport):
                         table = self.export_objects[i].trim(table, doc)
                     table = self.export_objects[i].parse_tables(table)
@@ -133,7 +135,8 @@ class ApplicationBulkExport(BulkExport):
             return []
         self.export_objects = []
         for schema_index in export_tags:
-            self.export_objects.append(FakeSavedExportSchema(index=schema_index))
+            self.export_objects.append(FakeSavedExportSchema(index=schema_index,
+                                                             filter_function=SerializableFunction()))
 
     def generate_table_headers(self, schemas, checkpoints):
         headers = []

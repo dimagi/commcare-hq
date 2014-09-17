@@ -1,6 +1,7 @@
 from django.test import TestCase
 from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_monthly_consumption_for_domain,
-    set_default_consumption_for_product, set_default_consumption_for_supply_point
+    set_default_consumption_for_product, set_default_consumption_for_supply_point,
+    get_loaded_default_consumption, build_consumption_dict
 )
 from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
 from corehq.apps.consumption.const import DAYS_IN_MONTH
@@ -21,77 +22,94 @@ class ConsumptionTestBase(TestCase):
         self.assertEqual(0, _count_consumptions())
 
 
-class GetDefaultConsumptionTestCase(ConsumptionTestBase):
+class DefaultConsumptionBase(object):
     def testGetNoDefault(self):
-        self.assertEqual(None, get_default_consumption(domain, 'whatever', 'goes', 'here'))
+        self.assertEqual(None, self.consumption_method(domain, 'whatever', 'goes', 'here'))
 
     def testGetDomainOnly(self):
         _create_domain_consumption(5)
-        self.assertEqual(5, get_default_consumption(domain, 'whatever', 'goes', 'here'))
-        self.assertEqual(None, get_default_consumption('wrong', 'whatever', 'goes', 'here'))
+        self.assertEqual(5, self.consumption_method(domain, 'whatever', 'goes', 'here'))
+        self.assertEqual(None, self.consumption_method('wrong', 'whatever', 'goes', 'here'))
 
     def testGetForProduct(self):
         _create_product_consumption(5)
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'doesnt', 'matter'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', 'doesnt', 'matter'))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, 'doesnt', 'matter'))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'doesnt', 'matter'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', 'doesnt', 'matter'))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, 'doesnt', 'matter'))
 
         _create_domain_consumption(3)
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'doesnt', 'matter'))
-        self.assertEqual(3, get_default_consumption(domain, 'wrong', 'doesnt', 'matter'))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, 'doesnt', 'matter'))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'doesnt', 'matter'))
+        self.assertEqual(3, self.consumption_method(domain, 'wrong', 'doesnt', 'matter'))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, 'doesnt', 'matter'))
 
     def testGetForType(self):
         _create_type_consumption(5)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, 'useless'))
-        self.assertEqual(None, get_default_consumption(domain, product_id, 'wrong', 'useless'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', type_id, 'useless'))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, 'useless'))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, 'useless'))
+        self.assertEqual(None, self.consumption_method(domain, product_id, 'wrong', 'useless'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', type_id, 'useless'))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, 'useless'))
 
         _create_product_consumption(3)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, 'useless'))
-        self.assertEqual(3, get_default_consumption(domain, product_id, 'wrong', 'useless'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', type_id, 'useless'))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, 'useless'))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, 'useless'))
+        self.assertEqual(3, self.consumption_method(domain, product_id, 'wrong', 'useless'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', type_id, 'useless'))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, 'useless'))
 
         _create_domain_consumption(2)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, 'useless'))
-        self.assertEqual(3, get_default_consumption(domain, product_id, 'wrong', 'useless'))
-        self.assertEqual(2, get_default_consumption(domain, 'wrong', type_id, 'useless'))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, 'useless'))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, 'useless'))
+        self.assertEqual(3, self.consumption_method(domain, product_id, 'wrong', 'useless'))
+        self.assertEqual(2, self.consumption_method(domain, 'wrong', type_id, 'useless'))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, 'useless'))
 
     def testGetForId(self):
         _create_id_consumption(5)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, supply_point_id))
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'useless', supply_point_id))
-        self.assertEqual(None, get_default_consumption(domain, product_id, type_id, 'wrong'))
-        self.assertEqual(None, get_default_consumption(domain, product_id, 'wrong', 'wrong'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', type_id, supply_point_id))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
+        self.assertEqual(None, self.consumption_method(domain, product_id, type_id, 'wrong'))
+        self.assertEqual(None, self.consumption_method(domain, product_id, 'wrong', 'wrong'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', type_id, supply_point_id))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_type_consumption(4)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, supply_point_id))
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'useless', supply_point_id))
-        self.assertEqual(4, get_default_consumption(domain, product_id, type_id, 'wrong'))
-        self.assertEqual(None, get_default_consumption(domain, product_id, 'wrong', 'wrong'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', type_id, supply_point_id))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
+        self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
+        self.assertEqual(None, self.consumption_method(domain, product_id, 'wrong', 'wrong'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', type_id, supply_point_id))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_product_consumption(3)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, supply_point_id))
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'useless', supply_point_id))
-        self.assertEqual(4, get_default_consumption(domain, product_id, type_id, 'wrong'))
-        self.assertEqual(3, get_default_consumption(domain, product_id, 'wrong', 'wrong'))
-        self.assertEqual(None, get_default_consumption(domain, 'wrong', type_id, supply_point_id))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
+        self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
+        self.assertEqual(3, self.consumption_method(domain, product_id, 'wrong', 'wrong'))
+        self.assertEqual(None, self.consumption_method(domain, 'wrong', type_id, supply_point_id))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_domain_consumption(2)
-        self.assertEqual(5, get_default_consumption(domain, product_id, type_id, supply_point_id))
-        self.assertEqual(5, get_default_consumption(domain, product_id, 'useless', supply_point_id))
-        self.assertEqual(4, get_default_consumption(domain, product_id, type_id, 'wrong'))
-        self.assertEqual(3, get_default_consumption(domain, product_id, 'wrong', 'wrong'))
-        self.assertEqual(2, get_default_consumption(domain, 'wrong', type_id, supply_point_id))
-        self.assertEqual(None, get_default_consumption('wrong', product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
+        self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
+        self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
+        self.assertEqual(3, self.consumption_method(domain, product_id, 'wrong', 'wrong'))
+        self.assertEqual(2, self.consumption_method(domain, 'wrong', type_id, supply_point_id))
+        self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
+
+
+class GetDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase):
+    def setUp(self):
+        super(GetDefaultConsumptionTestCase, self).setUp()
+        self.consumption_method = get_default_consumption
+
+
+class GetLoadedDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase):
+    def wrapped_consumption_function(self, *args):
+        consumption_dict = build_consumption_dict(domain)
+        return get_loaded_default_consumption(consumption_dict, *args)
+
+
+    def setUp(self):
+        super(GetLoadedDefaultConsumptionTestCase, self).setUp()
+        self.consumption_method = self.wrapped_consumption_function
 
 
 class ConsumptionShortcutsTestCase(ConsumptionTestBase):

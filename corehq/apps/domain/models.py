@@ -16,7 +16,7 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -249,7 +249,7 @@ class Domain(Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     # Set to True to allow sending sms and all-label surveys to cases whose
     # phone number is duplicated with another contact
-    send_to_duplicated_case_numbers = BooleanProperty(default=False)
+    send_to_duplicated_case_numbers = BooleanProperty(default=True)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -854,10 +854,13 @@ class Domain(Document, SnapshotMixin):
 
     def delete(self):
         # delete all associated objects
-        db = get_db()
-        related_docs = db.view('domain/related_to_domain', startkey=[self.name], endkey=[self.name, {}], include_docs=True)
-        for doc in related_docs:
-            db.delete_doc(doc['doc'])
+        db = self.get_db()
+        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
+            startkey=[self.name],
+            endkey=[self.name, {}],
+            include_docs=False,
+        )]
+        iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
 
     def all_media(self, from_apps=None): #todo add documentation or refactor

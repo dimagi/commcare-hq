@@ -1,6 +1,8 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import json
+import urllib
+import urlparse
 
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -203,6 +205,10 @@ class Repeater(Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
+    def get_url(self, repeate_record):
+        # to be overridden
+        return self.url
+
     def get_headers(self, repeat_record):
         # to be overridden
         return {}
@@ -219,6 +225,15 @@ class FormRepeater(Repeater):
     @memoized
     def _payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
+
+    def get_url(self, repeat_record):
+        url = super(FormRepeater, self).get_url(repeat_record)
+        # adapted from http://stackoverflow.com/a/2506477/10840
+        url_parts = list(urlparse.urlparse(url))
+        query = urlparse.parse_qsl(url_parts[4])
+        query.append(("app_id", self._payload_doc(repeat_record).app_id))
+        url_parts[4] = urllib.urlencode(query)
+        return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         return {
@@ -317,7 +332,7 @@ class RepeatRecord(Document, LockableMixIn):
 
     @property
     def url(self):
-        return self.repeater.url
+        return self.repeater.get_url(self)
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
