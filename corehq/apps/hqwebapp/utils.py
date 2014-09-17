@@ -157,4 +157,5 @@ def get_bulk_upload_form(context, context_key="bulk_upload"):
     return BulkUploadForm(
         context[context_key]['plural_noun'],
         context[context_key].get('action'),
+        context_key + "_form"
     )
