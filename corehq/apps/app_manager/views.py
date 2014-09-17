@@ -553,10 +553,10 @@ def get_app_view_context(request, app):
 
     context.update({
         # TODO: Rename "bulk_upload" to "bulk_ui_translation_upload"
-        'bulk_upload': {
-            'action': reverse('upload_translations',
+        'bulk_ui_translation_upload': {
+            'action': reverse('upload_bulk_ui_translations',
                               args=(app.domain, app.get_id)),
-            'download_url': reverse('download_translations',
+            'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
             'adjective': _(u"U\u200BI translation"),
             'plural_noun': _(u"U\u200BI translations"),
@@ -571,9 +571,9 @@ def get_app_view_context(request, app):
         },
     })
     context.update({
-        'bulk_upload_form': get_bulk_upload_form(
+        'bulk_ui_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_upload"
+            context_key="bulk_ui_translation_upload"
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
@@ -2520,7 +2520,7 @@ def summary(request, domain, app_id, should_edit=True):
 
 
 @require_can_edit_apps
-def download_translations(request, domain, app_id):
+def download_bulk_ui_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     properties = tuple(["property"] + app.langs + ["default"])
     temp = StringIO()
@@ -2561,7 +2561,7 @@ def download_translations(request, domain, app_id):
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
-def upload_translations(request, domain, app_id):
+def upload_bulk_ui_translations(request, domain, app_id):
     success = False
     try:
         workbook = WorkbookJSONReader(request.file)
