@@ -552,7 +552,6 @@ def get_app_view_context(request, app):
         })
 
     context.update({
-        # TODO: Rename "bulk_upload" to "bulk_ui_translation_upload"
         'bulk_ui_translation_upload': {
             'action': reverse('upload_bulk_ui_translations',
                               args=(app.domain, app.get_id)),
@@ -3101,6 +3100,7 @@ def upload_bulk_app_translations(request, domain, app_id):
             # It's a form sheet
             _update_form_translations(sheet, rows, missing_cols, app)
 
+    messages.success(request, _("App Translations Updated!"))
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
