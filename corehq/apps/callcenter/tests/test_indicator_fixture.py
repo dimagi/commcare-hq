@@ -5,9 +5,9 @@ from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import AggregateColumn
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.reportfixtures.fixturegenerators import gen_fixture
-from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
-from corehq.apps.reportfixtures.tests.sql_fixture import load_data
+from corehq.apps.callcenter.fixturegenerators import gen_fixture
+from corehq.apps.callcenter.indicator_sets import SqlIndicatorSet
+from corehq.apps.callcenter.tests.sql_fixture import load_fixture_test_data
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
@@ -20,7 +20,7 @@ def _percentage(num, denom):
     return 0
 
 
-class CallCenter(SqlIndicatorSet):
+class TestIndicatorSet(SqlIndicatorSet):
     """
     Assumes SQL table with the following columns:
     * case (string): the case id
@@ -31,7 +31,7 @@ class CallCenter(SqlIndicatorSet):
     table_name = 'call_center'
 
     def __init__(self, domain, user, group=None, keys=None):
-        super(CallCenter, self).__init__(domain, user)
+        super(TestIndicatorSet, self).__init__(domain, user)
         self.group = group
         self.test_keys = keys
 
@@ -57,11 +57,17 @@ class CallCenter(SqlIndicatorSet):
 
     @property
     def columns(self):
-        cols = [DatabaseColumn("case", SimpleColumn('case'), format_fn=self.map_case, sortable=False)] if self.group_by else []
+        cols = [
+            DatabaseColumn("case", SimpleColumn('case'), format_fn=self.map_case, sortable=False)] \
+            if self.group_by else []
+
         return cols + [
             DatabaseColumn('casesUpdatedInLastWeek', SumColumn('cases_updated'), sortable=False),
             DatabaseColumn('casesUpdatedInWeekPrior', SumColumn('cases_updated',
-                                                                filters=[filters.GTE('date', '2weekago'), filters.LT('date', 'weekago')],
+                                                                filters=[
+                                                                    filters.GTE('date', '2weekago'),
+                                                                    filters.LT('date', 'weekago')
+                                                                ],
                                                                 alias='casesUpdatedInWeekPrior'),
                            sortable=False),
             AggregateColumn('averageDurationPerCase', _percentage,
@@ -76,7 +82,7 @@ class CallCenter(SqlIndicatorSet):
 class IndicatorFixtureTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        load_data()
+        load_fixture_test_data()
         cls.user = CommCareUser.create('qwerty', 'rudolph', '***')
         cls.config = dict(columns=['casesUpdatedInLastWeek', 'casesUpdatedInWeekPrior'])
 
@@ -85,7 +91,7 @@ class IndicatorFixtureTest(TestCase):
         cls.user.delete()
 
     def test_callcenter_group(self):
-        fixture = gen_fixture(self.user, CallCenter('domain', 'user', 'case'))
+        fixture = gen_fixture(self.user, TestIndicatorSet('domain', 'user', 'case'))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
@@ -99,7 +105,7 @@ class IndicatorFixtureTest(TestCase):
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
 
     def test_callcenter_no_group(self):
-        fixture = gen_fixture(self.user, CallCenter('domain', 'user'))
+        fixture = gen_fixture(self.user, TestIndicatorSet('domain', 'user'))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
@@ -111,7 +117,7 @@ class IndicatorFixtureTest(TestCase):
         """.format(userid=self.user.user_id), ElementTree.tostring(fixture))
 
     def test_callcenter_keys(self):
-        fixture = gen_fixture(self.user, CallCenter('domain', 'user', 'case', [['123'], ['456']]))
+        fixture = gen_fixture(self.user, TestIndicatorSet('domain', 'user', 'case', [['123'], ['456']]))
         check_xml_line_by_line(self, """
         <fixture id="indicators:call_center" user_id="{userid}">
             <indicators>
