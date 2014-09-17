@@ -50,12 +50,16 @@ function(doc) {
                 if (referrals.hasOwnProperty(r)) {
                     var referral_doc = referrals[r];
                     if (contained_in_indicator_value(referral_doc, "emergency") ||
-                        contained_in_indicator_value(referral_doc, "convenient") ||
+                        //contained_in_indicator_value(referral_doc, "convenient") ||
                         contained_in_indicator_value(referral_doc, "take_to_clinic") ||
                         contained_in_indicator_value(referral_doc, "immediate") ||
                         contained_in_indicator_value(referral_doc, "basic")) {
                         // This is an urgent referral
                         urgent_dates.push(new Date(referral_doc.timeEnd));
+			 //if for this visit a referal was issued and was a followup as well,
+			 if(referral_doc.condition_improved && referral_doc.condition_improved .value) {
+			    visit_dates.push(new Date(referral_doc.timeEnd));
+		         }
                     } else {
                         visit_dates.push(new Date(referral_doc.timeEnd));
                     }
