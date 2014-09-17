@@ -13,11 +13,8 @@ def indicators(user, version, last_sync):
     indicator_sets = []
     domain = user.project
     if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
-        indicator_sets.append(CallCenter(domain, user))
-
-    for set in indicator_sets:
         try:
-            fixtures.append(gen_fixture(user, set))
+            fixtures.append(gen_fixture(user, CallCenter(domain, user)))
         except Exception as e:  # blanket exception catching intended
             logger.exception('problem generating report fixtures for user {user}: {msg}'.format(
                 user=user._id, msg=str(e)))
