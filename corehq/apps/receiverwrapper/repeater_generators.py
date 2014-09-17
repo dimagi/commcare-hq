@@ -18,33 +18,33 @@ class BasePayloadGenerator(object):
     def enabled_for_domain(domain):
         return True
 
-    def get_payload(self, repeat_record):
+    def get_payload(self, repeat_record, payload_doc):
         raise NotImplementedError()
 
 
 @RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
-    def get_payload(self, repeat_record):
-        return self.repeater._payload_doc(repeat_record).get_xml()
+    def get_payload(self, repeat_record, payload_doc):
+        return payload_doc.get_xml()
 
 
 @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
-    def get_payload(self, repeat_record):
-        return self.repeater._payload_doc(repeat_record).to_xml(self.repeater.version or V2)
+    def get_payload(self, repeat_record, payload_doc):
+        return payload_doc.to_xml(self.repeater.version or V2)
 
 
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
-    def get_payload(self, repeat_record):
+    def get_payload(self, repeat_record, payload_doc):
         # This is the id of the application, currently all we forward
         return repeat_record.payload_id
 
 
 @RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
-    def get_payload(self, repeat_record):
-        form = self.repeater._payload_doc(repeat_record)
+    def get_payload(self, repeat_record, payload_doc):
+        form = payload_doc
         cases = CommCareCase.get_by_xform_id(form.get_id)
         return json.dumps({'form_id': form._id,
                            'received_on': json_format_datetime(form.received_on),

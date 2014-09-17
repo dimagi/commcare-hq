@@ -142,9 +142,12 @@ class Repeater(Document, UnicodeMixIn):
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
+    def payload_doc(self, repeat_record):
+        raise NotImplementedError
+
     def get_payload(self, repeat_record):
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record)
+        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         try:
@@ -223,7 +226,7 @@ class FormRepeater(Repeater):
     exclude_device_reports = BooleanProperty(default=False)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_url(self, repeat_record):
@@ -231,13 +234,13 @@ class FormRepeater(Repeater):
         # adapted from http://stackoverflow.com/a/2506477/10840
         url_parts = list(urlparse.urlparse(url))
         query = urlparse.parse_qsl(url_parts[4])
-        query.append(("app_id", self._payload_doc(repeat_record).app_id))
+        query.append(("app_id", self.payload_doc(repeat_record).app_id))
         url_parts[4] = urllib.urlencode(query)
         return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         return {
-            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
@@ -254,12 +257,12 @@ class CaseRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return CommCareCase.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
         return {
-            "server-modified-on": self._payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
+            "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
@@ -276,12 +279,12 @@ class ShortFormRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
         return {
-            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
