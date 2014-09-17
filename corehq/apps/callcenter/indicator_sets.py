@@ -5,7 +5,6 @@ from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, 
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlData, DictDataFormat, DataFormatter
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
