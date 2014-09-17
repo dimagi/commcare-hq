@@ -7,7 +7,6 @@
             {% if not app.is_remote_app %}
                 <li><a href="#translations-tab" data-toggle="tab">{% trans "CommCare Translations" %}</a></li>
             {% endif %}
-            {# Should the following tab also be in the above conditional block? #}
             <li><a href="#bulk-app-translations-tab" data-toggle="tab">{% trans "Bulk Application Translations" %}</a></li>
         </ul>
         <div class="tab-content">
@@ -77,7 +76,6 @@
                 </section>
             </div>
             {% endif %}
-            {# Should the following div also be in the above conditional block? #}
             <div id="bulk-app-translations-tab" class="tab-pane">
                 {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form %}
             </div>
