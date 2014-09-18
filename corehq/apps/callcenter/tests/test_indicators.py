@@ -1,7 +1,11 @@
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xml import V2
 from corehq.apps.callcenter.indicator_sets import CallCenter, AAROHI_MOTHER_FORM, CallCenterV2
 from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
@@ -28,6 +32,25 @@ class CallCenterTests(TestCase):
         cls.aarohi_domain, cls.aarohi_user = create_domain_and_user('aarohi', 'user2')
         load_custom_data(cls.aarohi_domain.name, cls.aarohi_user.user_id, xmlns=AAROHI_MOTHER_FORM)
 
+        # create one case of each type so that we get the indicators where there is no data for the period
+        submit_case_blocks(
+            CaseBlock(
+                create=True,
+                case_id='person1',
+                case_type='person',
+                user_id='user1',
+                version=V2,
+            ).as_string(), 'callcentertest')
+
+        submit_case_blocks(
+            CaseBlock(
+                create=True,
+                case_id='dog1',
+                case_type='dog',
+                user_id='user1',
+                version=V2,
+            ).as_string(), 'callcentertest')
+
     @classmethod
     def tearDownClass(cls):
         cls.cc_domain.delete()
@@ -41,8 +64,8 @@ class CallCenterTests(TestCase):
 
         mismatches = []
         for k, v in expected.items():
-            if user_data[k] != v:
-                mismatches.append('{}: {} != {}'.format(k, v, user_data[k]))
+            if user_data.get(k) != v:
+                mismatches.append('{}: {} != {}'.format(k, v, user_data.get(k)))
 
         if mismatches:
             self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(mismatches)))
@@ -51,22 +74,48 @@ class CallCenterTests(TestCase):
         expected = {
             'formsSubmittedWeek0': 2L,
             'formsSubmittedWeek1': 4L,
-            'formsSubmittedMonth0': 8L,
+            'formsSubmittedMonth0': 7L,
             # 'casesUpdatedMonth0': 2L,
             # 'casesUpdatedMonth1': 6L,
-            'totalCases': 9L,
-            'cases_total_week0': 9L,
-            'cases_total_week1': 8L,
-            'cases_total_month0': 9L,
-            'cases_total_month1': 6L,
-            'cases_total_person_week0': 4L,
-            'cases_total_person_week1': 3L,
-            'cases_total_person_month0': 4L,
-            'cases_total_person_month1': 1L,
-            'cases_total_dog_week0': 5L,
-            'cases_total_dog_week1': 5L,
-            'cases_total_dog_month0': 5L,
+            'totalCases': 5L,
+            'cases_total_week0': 4L,
+            'cases_total_week1': 4L,
+            'cases_total_month0': 6L,
+            'cases_total_month1': 5L,
+            'cases_total_person_week0': 1L,
+            'cases_total_person_week1': 1L,
+            'cases_total_person_month0': 3L,
+            'cases_total_person_month1': 0L,
+            'cases_total_dog_week0': 3L,
+            'cases_total_dog_week1': 3L,
+            'cases_total_dog_month0': 3L,
             'cases_total_dog_month1': 5L,
+
+            'cases_opened_week0': 0L,
+            'cases_opened_week1': 1L,
+            'cases_opened_month0': 3L,
+            'cases_opened_month1': 5L,
+            'cases_opened_person_week0': 0L,
+            'cases_opened_person_week1': 1L,
+            'cases_opened_person_month0': 3L,
+            'cases_opened_person_month1': 0L,
+            'cases_opened_dog_week0': 0L,
+            'cases_opened_dog_week1': 0L,
+            'cases_opened_dog_month0': 0L,
+            'cases_opened_dog_month1': 5L,
+
+            'cases_closed_week0': 0L,
+            'cases_closed_week1': 0L,
+            'cases_closed_month0': 2L,
+            'cases_closed_month1': 2L,
+            'cases_closed_person_week0': 0L,
+            'cases_closed_person_week1': 0L,
+            'cases_closed_person_month0': 2L,
+            'cases_closed_person_month1': 0L,
+            'cases_closed_dog_week0': 0L,
+            'cases_closed_dog_week1': 0L,
+            'cases_closed_dog_month0': 0L,
+            'cases_closed_dog_month1': 2L,
         }
 
         self._test_indicators(self.cc_domain, self.cc_user, expected)

@@ -29,9 +29,10 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     )
 
 
-def get_casedata(domain, days_ago, case_id, user_id, case_type):
+def get_casedata(domain, days_ago, case_id, user_id, case_type, close):
     now = datetime.now()
     date_ago = now - timedelta(days=days_ago)
+    print '=========', date_ago
     return CaseData(
         case_id=case_id,
         doc_type='CommCareCase',
@@ -39,7 +40,9 @@ def get_casedata(domain, days_ago, case_id, user_id, case_type):
         domain=domain,
         user_id=user_id,
         opened_on=date_ago,
-        modified_on=now
+        modified_on=now,
+        closed=close,
+        closed_on=(date_ago if close else None)
     )
     return case
 
@@ -57,15 +60,15 @@ def load_data(domain, user_id):
     ]
 
     case_data = [
-        get_casedata(domain, 0, '1', user_id, 'person'),
-        get_casedata(domain, 10, '2', user_id, 'person'),
-        get_casedata(domain, 29, '3', user_id, 'person'),
-        get_casedata(domain, 30, '4', user_id, 'person'),
-        get_casedata(domain, 31, '5', user_id, 'dog'),
-        get_casedata(domain, 45, '6', user_id, 'dog'),
-        get_casedata(domain, 55, '7', user_id, 'dog'),
-        get_casedata(domain, 56, '8', user_id, 'dog'),
-        get_casedata(domain, 59, '9', user_id, 'dog'),
+        get_casedata(domain, 0, '1', user_id, 'person', False),
+        get_casedata(domain, 10, '2', user_id, 'person', False),
+        get_casedata(domain, 29, '3', user_id, 'person', True),
+        get_casedata(domain, 30, '4', user_id, 'person', True),
+        get_casedata(domain, 31, '5', user_id, 'dog', True),
+        get_casedata(domain, 45, '6', user_id, 'dog', False),
+        get_casedata(domain, 55, '7', user_id, 'dog', False),
+        get_casedata(domain, 56, '8', user_id, 'dog', True),
+        get_casedata(domain, 59, '9', user_id, 'dog', False),
     ]
 
     FormData.objects.bulk_create(form_data)

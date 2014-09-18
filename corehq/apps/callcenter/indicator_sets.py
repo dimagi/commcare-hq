@@ -256,10 +256,11 @@ class CallCenterV2(object):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
+        self.cc_case_type = self.domain.call_center_config.case_type
 
     @property
     def date_ranges(self):
-        today = date.today() + timedelta(days=1)  # set to midnight of current day
+        today = date.today()
         weekago = today - timedelta(days=7)
         weekago2 = today - timedelta(days=14)
         daysago30 = today - timedelta(days=30)
@@ -273,7 +274,7 @@ class CallCenterV2(object):
 
     def date_filter(self, date_field, lower, upper):
         return {
-            '{}__gt'.format(date_field): lower,
+            '{}__gte'.format(date_field): lower,
             '{}__lte'.format(date_field): upper,
         }
 
@@ -285,7 +286,10 @@ class CallCenterV2(object):
     @property
     @memoized
     def case_types(self):
-        return CaseTypeMixin.get_case_types(self.domain.name)
+        case_types = set(CaseTypeMixin.get_case_types(self.domain.name))
+        case_types.remove(self.cc_case_type)
+        print '---------------------------------', case_types
+        return case_types
 
     @property
     @memoized
@@ -302,34 +306,12 @@ class CallCenterV2(object):
             self.data[user_id][indicator_name] = val
             seen_users.add(user_id)
 
+        # add data for user_ids with no data
         unseen_users = self.user_ids - seen_users
         for user_id in unseen_users:
             self.data[user_id].setdefault(indicator_name, self.no_value)
 
-    def add_case_total_legacy(self):
-        results = CaseData.objects \
-            .values('user_id') \
-            .exclude(type='ccCaseType') \
-            .filter(
-                domain=self.domain.name,
-                doc_type='CommCareCase',
-                closed=False) \
-            .annotate(count=Count('case_id'))
-
-        self._add_data(results, 'totalCases')
-
-    def add_case_total_data(self, range_name, lower, upper):
-        results = CaseData.objects \
-            .extra(select={"owner_id": "COALESCE(owner_id, user_id)"}) \
-            .values('owner_id', 'type') \
-            .exclude(type='ccCaseType') \
-            .filter(
-                domain=self.domain.name,
-                doc_type='CommCareCase',
-                opened_on__lte=upper) \
-            .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
-            .annotate(count=Count('case_id'))
-
+    def _add_case_data(self, results, indicator_prefix, range_name):
         def _update_data(data, owner_id, cnt):
             if owner_id in self.user_id_map:
                 for user_id in self.user_id_map[owner_id]:
@@ -340,7 +322,7 @@ class CallCenterV2(object):
         total_data = defaultdict(lambda: 0)
         type_data = defaultdict(lambda: defaultdict(lambda: 0))
         for result in results:
-            owner = result['owner_id']
+            owner = result['case_owner']
             count = result['count']
             case_type = result['type']
             _update_data(total_data, owner, count)
@@ -350,15 +332,104 @@ class CallCenterV2(object):
             rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
             self._add_data(FakeResultSet(rows), indicator_name)
 
-        _reformat_and_add(total_data, 'cases_total_{}'.format(range_name))
+        _reformat_and_add(total_data, '{}_{}'.format(indicator_prefix, range_name))
+
+        seen_types = set()
         for case_type, data in type_data.items():
-            _reformat_and_add(data, 'cases_total_{}_{}'.format(case_type, range_name))
+            _reformat_and_add(data, '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+            seen_types.add(case_type)
+
+        # add data for case types with no data
+        unseen_cases = self.case_types - seen_types
+        for case_type in unseen_cases:
+            self._add_data(FakeResultSet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+
+    def _base_case_query(self):
+        return CaseData.objects \
+            .extra(select={"case_owner": "COALESCE(owner_id, user_id)"}) \
+            .values('case_owner', 'type') \
+            .exclude(type=self.cc_case_type) \
+            .filter(
+                domain=self.domain.name,
+                doc_type='CommCareCase')
+
+    def add_case_total_legacy(self):
+        """
+        Count of cases per user that are currently open
+        """
+        results = CaseData.objects \
+            .values('user_id') \
+            .exclude(type=self.cc_case_type) \
+            .filter(
+                domain=self.domain.name,
+                doc_type='CommCareCase',
+                closed=False) \
+            .annotate(count=Count('case_id'))
+
+        self._add_data(results, 'totalCases')
+
+    def add_cases_total_data(self, range_name, lower, upper):
+        """
+        Adds the following indicators for each user. Includes cases where the user
+        is the owner or where the user is part of the group that owns the case.
+
+        count of cases where opened_on <= upper and (closed == False or closed_on >= lower)
+
+        cases_total_{period}
+        cases_total_{case_type}_{period}
+        """
+        results = self._base_case_query() \
+            .filter(opened_on__lte=upper) \
+            .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
+            .annotate(count=Count('case_id'))
+
+        self._add_case_data(results, 'cases_total', range_name)
+
+    def add_cases_opened_data(self, range_name, lower, upper):
+        """
+        Adds the following indicators for each user. Includes cases where the user
+        is the owner or where the user is part of the group that owns the case.
+
+        count of cases where lower <= opened_on <= upper
+
+        cases_opened_{period}
+        cases_opened_{case_type}_{period}
+        """
+        results = self._base_case_query() \
+            .filter(
+                opened_on__gte=lower,
+                opened_on__lte=upper
+            ).annotate(count=Count('case_id'))
+
+        self._add_case_data(results, 'cases_opened', range_name)
+
+    def add_cases_closed_data(self, range_name, lower, upper):
+        """
+        Includes cases where the user is the owner or where the user is
+        part of the group that owns the case.
+
+        count of cases where lower <= closed_on <= upper
+
+        cases_closed_{period}
+        cases_closed_{case_type}_{period}
+        """
+        results = self._base_case_query() \
+            .filter(
+                closed_on__gte=lower,
+                closed_on__lte=upper
+            ).annotate(count=Count('case_id'))
+
+        self._add_case_data(results, 'cases_closed', range_name)
 
     def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
+        """
+        For specific forms add the number of forms completed during the time period (lower to upper)
+        In some cases also add the average duration of the forms.
+        """
         aggregation = Avg('duration') if indicator_type == TYPE_DURATION else Count('instance_id')
 
         def millis_to_secs(x):
-            return x / 1000
+            return round(x / 1000)
 
         transformer = millis_to_secs if indicator_type == TYPE_DURATION else None
 
@@ -377,6 +448,9 @@ class CallCenterV2(object):
             transformer=transformer)
 
     def add_form_data(self, range_name, lower, upper):
+        """
+        Count of forms submitted by each user during the period (upper to lower)
+        """
         results = FormData.objects \
             .values('user_id')\
             .filter(**self.date_filter('time_end', lower, upper)) \
@@ -393,6 +467,7 @@ class CallCenterV2(object):
     def get_data(self):
         self.add_case_total_legacy()
         for range_name, lower, upper in self.date_ranges:
+            print range_name, lower, upper
             self.add_form_data(range_name, lower, upper)
 
             if self.domain.name in PER_DOMAIN_FORM_INDICATORS:
@@ -406,7 +481,9 @@ class CallCenterV2(object):
                         upper
                     )
 
-            self.add_case_total_data(range_name, lower, upper)
+            self.add_cases_total_data(range_name, lower, upper)
+            self.add_cases_opened_data(range_name, lower, upper)
+            self.add_cases_closed_data(range_name, lower, upper)
 
         for u, v in self.data.items():
             print u
