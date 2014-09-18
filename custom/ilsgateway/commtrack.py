@@ -74,9 +74,9 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
     user_dict = {
         'first_name': ilsgateway_webuser.first_name,
         'last_name': ilsgateway_webuser.last_name,
-        'is_staff': ilsgateway_webuser.is_staff,
+        'is_staff': False,
         'is_active': ilsgateway_webuser.is_active,
-        'is_superuser': ilsgateway_webuser.is_superuser,
+        'is_superuser': False,
         'last_login': force_to_datetime(ilsgateway_webuser.last_login),
         'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
         'password_hashed': True,
