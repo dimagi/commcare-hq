@@ -2,15 +2,17 @@ from collections import defaultdict
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
 from django.db.models.aggregates import Count, Sum, Avg
+from django.db.models.query_utils import Q
 from sqlagg.base import TableNotFoundException, ColumnNotFoundException
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -239,25 +241,12 @@ class CallCenter(SqlIndicatorSet):
         return not row['user_id'] == NO_CASE_TAG
 
 
-def iterate_queryset(queryset, mapper_fn):
-    """
-    Iterate over a queryset applying a function to each row.
+class FakeResultSet(object):
+    def __init__(self, results):
+        self.results = results
 
-    :return: True if the queryset had any rows, False otherwise.
-
-    http://blog.etianen.com/blog/2013/06/08/django-querysets/
-    """
-    result_iterator = queryset.iterator()
-    try:
-        first = next(result_iterator)
-    except StopIteration:
-        return False
-    else:
-        from itertools import chain
-        for row in chain([first], result_iterator):
-            mapper_fn(row)
-
-        return True
+    def iterator(self):
+        return (r for r in self.results)
 
 
 class CallCenterV2(object):
@@ -290,20 +279,80 @@ class CallCenterV2(object):
 
     @property
     @memoized
+    def user_ids(self):
+        return set(CommCareUser.ids_by_domain(self.domain.name))
+
+    @property
+    @memoized
     def case_types(self):
-        return CaseTypeMixin.get_case_types(self.domain)
+        return CaseTypeMixin.get_case_types(self.domain.name)
+
+    @property
+    @memoized
+    def user_id_map(self):
+        groups = Group.get_case_sharing_groups(self.domain.name)
+        return {group.get_id: group.users for group in groups}
 
     def _add_data(self, results, indicator_name, key='user_id', value='count', transformer=None):
-        def __add(row):
+        seen_users = set()
+
+        for row in results.iterator():
+            user_id = row[key]
             val = transformer(row[value]) if transformer else row[value]
-            self.data[row[key]][indicator_name] = val
+            self.data[user_id][indicator_name] = val
+            seen_users.add(user_id)
 
-        had_rows = iterate_queryset(results, __add)
+        unseen_users = self.user_ids - seen_users
+        for user_id in unseen_users:
+            self.data[user_id].setdefault(indicator_name, self.no_value)
 
-        if not had_rows:
-            # set values to 0 if there is no data
-            for user_id in self.data.keys():
-                self.data[user_id].setdefault(indicator_name, self.no_value)
+    def add_case_total_legacy(self):
+        results = CaseData.objects \
+            .values('user_id') \
+            .exclude(type='ccCaseType') \
+            .filter(
+                domain=self.domain.name,
+                doc_type='CommCareCase',
+                closed=False) \
+            .annotate(count=Count('case_id'))
+
+        self._add_data(results, 'totalCases')
+
+    def add_case_total_data(self, range_name, lower, upper):
+        results = CaseData.objects \
+            .extra(select={"owner_id": "COALESCE(owner_id, user_id)"}) \
+            .values('owner_id', 'type') \
+            .exclude(type='ccCaseType') \
+            .filter(
+                domain=self.domain.name,
+                doc_type='CommCareCase',
+                opened_on__lte=upper) \
+            .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
+            .annotate(count=Count('case_id'))
+
+        def _update_data(data, owner_id, cnt):
+            if owner_id in self.user_id_map:
+                for user_id in self.user_id_map[owner_id]:
+                    data[user_id] += cnt
+            else:
+                data[owner_id] += cnt
+
+        total_data = defaultdict(lambda: 0)
+        type_data = defaultdict(lambda: defaultdict(lambda: 0))
+        for result in results:
+            owner = result['owner_id']
+            count = result['count']
+            case_type = result['type']
+            _update_data(total_data, owner, count)
+            _update_data(type_data[case_type], owner, count)
+
+        def _reformat_and_add(data_dict, indicator_name):
+            rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
+            self._add_data(FakeResultSet(rows), indicator_name)
+
+        _reformat_and_add(total_data, 'cases_total_{}'.format(range_name))
+        for case_type, data in type_data.items():
+            _reformat_and_add(data, 'cases_total_{}_{}'.format(case_type, range_name))
 
     def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
         aggregation = Avg('duration') if indicator_type == TYPE_DURATION else Count('instance_id')
@@ -338,9 +387,11 @@ class CallCenterV2(object):
             .annotate(count=Count('instance_id'))
 
         self._add_data(results, 'forms_submitted_{}'.format(range_name))
+        #  maintained for backwards compatibility
         self._add_data(results, 'formsSubmitted{}'.format(range_name.title()))
 
     def get_data(self):
+        self.add_case_total_legacy()
         for range_name, lower, upper in self.date_ranges:
             self.add_form_data(range_name, lower, upper)
 
@@ -355,4 +406,10 @@ class CallCenterV2(object):
                         upper
                     )
 
+            self.add_case_total_data(range_name, lower, upper)
+
+        for u, v in self.data.items():
+            print u
+            for x, y in v.items():
+                print "    ", x, y
         return self.data

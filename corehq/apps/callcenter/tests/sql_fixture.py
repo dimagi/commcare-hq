@@ -5,7 +5,7 @@ from django.conf import settings
 from sqlalchemy.engine.url import make_url
 from datetime import date, timedelta, datetime
 from corehq.apps.callcenter.utils import get_case_mapping, get_case_ownership_mapping
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
 
 metadata = sqlalchemy.MetaData()
 
@@ -29,22 +29,22 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     )
 
 
-def create_call_center_tables(engine, domain):
-    case_table = get_table(get_case_mapping(domain))
-    case_ownership_table = get_table(get_case_ownership_mapping(domain))
-    case_table.drop(engine, checkfirst=True)
-    case_ownership_table.drop(engine, checkfirst=True)
-    metadata.create_all()
-
-    return case_table, case_ownership_table
+def get_casedata(domain, days_ago, case_id, user_id, case_type):
+    now = datetime.now()
+    date_ago = now - timedelta(days=days_ago)
+    return CaseData(
+        case_id=case_id,
+        doc_type='CommCareCase',
+        type=case_type,
+        domain=domain,
+        user_id=user_id,
+        opened_on=date_ago,
+        modified_on=now
+    )
+    return case
 
 
 def load_data(domain, user_id):
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
-
-    case_table, case_ownership_table = create_call_center_tables(engine, domain)
-
     form_data = [
         get_formdata(0, domain, user_id),
         get_formdata(3, domain, user_id),
@@ -56,56 +56,23 @@ def load_data(domain, user_id):
         get_formdata(15, domain, user_id),
     ]
 
-    def case_row(days_ago, case_id):
-        return {
-            "date": date.today() - timedelta(days=days_ago),
-            "user_id": user_id,
-            "case_type": 'person',
-            'action_type': 'update',
-            'case_id': case_id,
-            'action_count': 1
-        }
-
     case_data = [
-        case_row(0, '1'),
-        case_row(10, '2'),
-        case_row(29, '3'),
-        case_row(30, '4'),
-        case_row(31, '5'),
-        case_row(45, '6'),
-        case_row(55, '7'),
-        case_row(56, '8'),
-        case_row(59, '9'),
+        get_casedata(domain, 0, '1', user_id, 'person'),
+        get_casedata(domain, 10, '2', user_id, 'person'),
+        get_casedata(domain, 29, '3', user_id, 'person'),
+        get_casedata(domain, 30, '4', user_id, 'person'),
+        get_casedata(domain, 31, '5', user_id, 'dog'),
+        get_casedata(domain, 45, '6', user_id, 'dog'),
+        get_casedata(domain, 55, '7', user_id, 'dog'),
+        get_casedata(domain, 56, '8', user_id, 'dog'),
+        get_casedata(domain, 59, '9', user_id, 'dog'),
     ]
 
-    def get_ownership_row(case_type, open_cases):
-        return {'user_id': user_id, 'case_type': case_type, 'open_cases': open_cases, 'closed_cases': 0},
-
-    case_ownership_data = [
-        {'user_id': user_id, 'case_type': 'person', 'open_cases': 10, 'closed_cases': 3},
-        {'user_id': user_id, 'case_type': 'dog', 'open_cases': 2, 'closed_cases': 1}
-    ]
-
-    connection = engine.connect()
-    try:
-        connection.execute(case_table.delete())
-        connection.execute(case_ownership_table.delete())
-        connection.execute(case_table.insert(), case_data)
-        connection.execute(case_ownership_table.insert(), case_ownership_data)
-        FormData.objects.bulk_create(form_data)
-    finally:
-        connection.close()
-        engine.dispose()
+    FormData.objects.bulk_create(form_data)
+    CaseData.objects.bulk_create(case_data)
 
 
 def load_custom_data(domain, user_id, xmlns):
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
-
-    create_call_center_tables(engine, domain)
-
-    engine.dispose()
-
     form_data = [
         get_formdata(0, domain, user_id, xmlns=xmlns, duration=3),
         get_formdata(1, domain, user_id, xmlns=xmlns, duration=2),
