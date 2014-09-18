@@ -187,6 +187,7 @@ class CaseData(BaseDataIndex):
         self.type = case.type
         self.closed = case.closed
         self.owner_id = case.owner_id
+        self.user_id = case.user_id
         self.opened_on = case.opened_on
         self.opened_by = case.opened_by
         self.closed_on = case.closed_on
@@ -218,6 +219,7 @@ class CaseData(BaseDataIndex):
             self.version == case.version and
             self.type == case.type and
             self.owner_id == case.owner_id and
+            self.user_id == case.user_id and
             self.opened_on == case.opened_on and
             self.opened_by == case.opened_by and
             self.name == case.name and
