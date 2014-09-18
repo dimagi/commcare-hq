@@ -306,6 +306,11 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     women_having_4_anc_visits = project_indicators_report_calcs.Anc4VisitsCalculator()
     women_delivering_at_facility_cct = project_indicators_report_calcs.FacilityDeliveryCctCalculator()
     women_delivering_within_6_weeks_attending_pnc = project_indicators_report_calcs.PncAttendanceWithin6WeeksCalculator()
+    number_of_free_sims_given = project_indicators_report_calcs.NumberOfFreeSimsGivenCalculator()
+    mno_mtn = project_indicators_report_calcs.MnoCalculator('mtn')
+    mno_etisalat = project_indicators_report_calcs.MnoCalculator('etisalat')
+    mno_glo = project_indicators_report_calcs.MnoCalculator('glo')
+    mno_airtel = project_indicators_report_calcs.MnoCalculator('airtel')
 
 ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 

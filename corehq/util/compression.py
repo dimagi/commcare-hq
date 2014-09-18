@@ -1,4 +1,7 @@
 # http://rosettacode.org/wiki/LZW_compression#Python
+from cStringIO import StringIO
+
+
 def decompress(compressed):
     """Decompress a list of output ks to a string."""
 
@@ -7,7 +10,9 @@ def decompress(compressed):
     dictionary = dict((unichr(i), unichr(i)) for i in xrange(dict_size))
     # in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
 
-    w = result = compressed.pop(0)
+    result = StringIO()
+    w = compressed.pop(0)
+    result.write(w)
     for k in compressed:
         if k in dictionary:
             entry = dictionary[k]
@@ -15,11 +20,11 @@ def decompress(compressed):
             entry = w + w[0]
         else:
             raise ValueError('Bad compressed k: %s' % k)
-        result += entry
+        result.write(entry)
 
         # Add w+entry[0] to the dictionary.
         dictionary[dict_size] = w + entry[0]
         dict_size += 1
 
         w = entry
-    return result
+    return result.getvalue()

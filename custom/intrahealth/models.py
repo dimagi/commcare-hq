@@ -68,6 +68,7 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     actual_consumption = report_calcs.PPSConsumption()
     billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
     stock = report_calcs.PPSConsumption('old_stock_total')
+    total_stock = report_calcs.PPSConsumption('total_stock')
     quantity = report_calcs.PPSConsumption('display_total_stock')
     cmm = report_calcs.PPSConsumption('default_consumption')
 
@@ -95,7 +96,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district')
+        IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
     ])
     domains = INTRAHEALTH_DOMAINS
     save_direct_to_sql = True
@@ -106,7 +107,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     district_name = flat_field(lambda f: f.form['district'])
     PPS_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
 
-    stock = report_calcs.RupturesDeStocks('pps_stocked_out')
+    total_stock = report_calcs.RupturesDeStocks('pps_stocked_out')
 
 
 class LivraisonFluff(fluff.IndicatorDocument):

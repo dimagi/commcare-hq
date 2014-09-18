@@ -44,10 +44,11 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
             queue.extend(related(case_db, case))
 
     if relevant_deleted_case_ids:
-        logging.error('deleted cases included in footprint (restore): %s' % (
+        logging.info('deleted cases included in footprint (restore): %s' % (
             ', '.join(relevant_deleted_case_ids)
         ))
     return relevant_cases
+
 
 def get_footprint(initial_case_list, domain, strip_history=False):
     return get_related_cases(initial_case_list, domain, strip_history=strip_history, search_up=True)

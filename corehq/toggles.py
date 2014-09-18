@@ -114,3 +114,8 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
 )
+
+DASHBOARD_PREVIEW = StaticToggle(
+    'dashboard_preview',
+    'HQ Dashboard Preview'
+)
