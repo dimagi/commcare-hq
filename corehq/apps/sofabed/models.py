@@ -151,6 +151,7 @@ class CaseData(BaseDataIndex):
     version = models.CharField(max_length=10, db_index=True, null=True)
     type = models.CharField(max_length=128, db_index=True, null=True)
     closed = models.BooleanField(db_index=True)
+    user_id = models.CharField(max_length=128, db_index=True, null=True)
     owner_id = models.CharField(max_length=128, db_index=True, null=True)
     opened_on = models.DateTimeField(db_index=True, null=True)
     opened_by = models.CharField(max_length=128, db_index=True, null=True)
@@ -226,7 +227,7 @@ class CaseData(BaseDataIndex):
         if not basic_match:
             return False
 
-        this_actions = self.actions.all()
+        this_actions = self.actions.order_by('index').all()
         if not len(case.actions) == len(this_actions):
             return False
 
@@ -235,9 +236,6 @@ class CaseData(BaseDataIndex):
                 return False
 
         return True
-
-    class Meta:
-        ordering = ['opened_on']
 
 
 class CaseActionData(models.Model):
@@ -287,7 +285,6 @@ class CaseActionData(models.Model):
         )
 
     class Meta:
-        ordering = ['index']
         unique_together = ("case", "index")
 
 
@@ -315,6 +312,3 @@ class CaseIndexData(models.Model):
         ret.referenced_type = index.referenced_type
         ret.referenced_id = index.referenced_id
         return ret
-
-    class Meta:
-        ordering = ['identifier']
