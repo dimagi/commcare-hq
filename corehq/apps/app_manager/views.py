@@ -2698,18 +2698,19 @@ def download_bulk_app_translations(request, domain, app_id):
             detail = property['token']
 
             field_name = detail.field
-            if len(detail.enum) > 0:
+            if detail.format == "enum":
                 field_name += " (ID Mapping Text)"
 
             # Add a row for this case detail
             rows[module_string].append((field_name,) + tuple(detail.header.get(lang, "") for lang in app.langs))
 
             # Add a row for any mapping pairs
-            for mapping in detail.enum:
-                rows[module_string].append(
-                    (mapping.key + " (ID Mapping Value)",) +
-                    tuple(mapping.value.get(lang, "") for lang in app.langs)
-                )
+            if detail.format == "enum":
+                for mapping in detail.enum:
+                    rows[module_string].append(
+                        (mapping.key + " (ID Mapping Value)",) +
+                        tuple(mapping.value.get(lang, "") for lang in app.langs)
+                    )
 
         for form_index, form in enumerate(module.get_forms()):
             form_string = module_string + "_form" + str(form_index+1)
