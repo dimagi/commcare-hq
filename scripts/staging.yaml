@@ -54,18 +54,17 @@ branches:
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
   - increase-es-timeout # Nick P 8/11
-  - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
-  - caselistmixin-refactor # Noah 8/14
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - caseindex # SK 9/16
+  - bulk-app-translation # Noah 9/18
 submodules:
   submodules/couchlog-src:
     branches:
