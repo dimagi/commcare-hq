@@ -241,7 +241,7 @@ class CallCenter(SqlIndicatorSet):
         return not row['user_id'] == NO_CASE_TAG
 
 
-class FakeResultSet(object):
+class FakeQuerySet(object):
     def __init__(self, results):
         self.results = results
 
@@ -288,21 +288,35 @@ class CallCenterV2(object):
     def case_types(self):
         case_types = set(CaseTypeMixin.get_case_types(self.domain.name))
         case_types.remove(self.cc_case_type)
-        print '---------------------------------', case_types
         return case_types
 
     @property
     @memoized
-    def user_id_map(self):
+    def group_to_user_ids(self):
         groups = Group.get_case_sharing_groups(self.domain.name)
         return {group.get_id: group.users for group in groups}
 
-    def _add_data(self, results, indicator_name, key='user_id', value='count', transformer=None):
+    def _add_data(self, queryset, indicator_name, transformer=None):
+        """
+        Given a QuerySet containing rows containing 'user_id' and 'count' values for an indicator
+        add them to the data set. If any user ID's are missing from the QuerySet set the value
+        of the indicator for those users to a default value (self,no_value).
+
+        QuerySet expected to contain the following columns:
+        *  user_id:  ID of the user.
+        *  count:    The value of the indicator for the user.
+
+        :param queryset:        The QuerySet containing the calculated indicator data.
+        :param indicator_name:  The name of the indicator.
+        :param user_key:        The name of the column in the QuerySet that contains the user_id.
+        :param value_key:       The name of the column in the QuerySet that contains the value.
+        :param transformer:     Function to apply to each value before adding it to the dataset.
+        """
         seen_users = set()
 
-        for row in results.iterator():
-            user_id = row[key]
-            val = transformer(row[value]) if transformer else row[value]
+        for row in queryset.iterator():
+            user_id = row['user_id']
+            val = transformer(row['count']) if transformer else row['count']
             self.data[user_id][indicator_name] = val
             seen_users.add(user_id)
 
@@ -311,26 +325,40 @@ class CallCenterV2(object):
         for user_id in unseen_users:
             self.data[user_id].setdefault(indicator_name, self.no_value)
 
-    def _add_case_data(self, results, indicator_prefix, range_name):
-        def _update_data(data, owner_id, cnt):
-            if owner_id in self.user_id_map:
-                for user_id in self.user_id_map[owner_id]:
-                    data[user_id] += cnt
+    def _add_case_data(self, queryset, indicator_prefix, range_name):
+        """
+        Given a QuerySet containing data for case based indicators generate the 'total' and
+        'by_case' indicators before adding them to the dataset.
+
+        QuerySet expected to contain the following columns:
+        *  case_owner:  ID of the case owner - User or Group.
+        *  type:        The case type.
+        *  count:       The value of the indicator for the owner and the case type.
+
+        If the value in the 'case_owner' column of the QuerySet is a Group then attribute that
+        indicator value to each user in the group (adding it to any existing value that the user has).
+
+        Also include default values for any case_types that are missing from the QuerySet
+        """
+        def _update_dataset(dataset, owner_id, cnt):
+            if owner_id in self.group_to_user_ids:
+                for user_id in self.group_to_user_ids[owner_id]:
+                    dataset[user_id] += cnt
             else:
-                data[owner_id] += cnt
+                dataset[owner_id] += cnt
 
         total_data = defaultdict(lambda: 0)
         type_data = defaultdict(lambda: defaultdict(lambda: 0))
-        for result in results:
+        for result in queryset:
             owner = result['case_owner']
             count = result['count']
             case_type = result['type']
-            _update_data(total_data, owner, count)
-            _update_data(type_data[case_type], owner, count)
+            _update_dataset(total_data, owner, count)
+            _update_dataset(type_data[case_type], owner, count)
 
         def _reformat_and_add(data_dict, indicator_name):
             rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
-            self._add_data(FakeResultSet(rows), indicator_name)
+            self._add_data(FakeQuerySet(rows), indicator_name)
 
         _reformat_and_add(total_data, '{}_{}'.format(indicator_prefix, range_name))
 
@@ -342,7 +370,7 @@ class CallCenterV2(object):
         # add data for case types with no data
         unseen_cases = self.case_types - seen_types
         for case_type in unseen_cases:
-            self._add_data(FakeResultSet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+            self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
     def _base_case_query(self):
         return CaseData.objects \
@@ -355,7 +383,7 @@ class CallCenterV2(object):
 
     def add_case_total_legacy(self):
         """
-        Count of cases per user that are currently open
+        Count of cases per user that are currently open (legacy indicator).
         """
         results = CaseData.objects \
             .values('user_id') \
@@ -370,10 +398,7 @@ class CallCenterV2(object):
 
     def add_cases_total_data(self, range_name, lower, upper):
         """
-        Adds the following indicators for each user. Includes cases where the user
-        is the owner or where the user is part of the group that owns the case.
-
-        count of cases where opened_on <= upper and (closed == False or closed_on >= lower)
+        Count of cases where opened_on <= upper and (closed == False or closed_on >= lower)
 
         cases_total_{period}
         cases_total_{case_type}_{period}
@@ -387,10 +412,7 @@ class CallCenterV2(object):
 
     def add_cases_opened_data(self, range_name, lower, upper):
         """
-        Adds the following indicators for each user. Includes cases where the user
-        is the owner or where the user is part of the group that owns the case.
-
-        count of cases where lower <= opened_on <= upper
+        Count of cases where lower <= opened_on <= upper
 
         cases_opened_{period}
         cases_opened_{case_type}_{period}
@@ -405,10 +427,7 @@ class CallCenterV2(object):
 
     def add_cases_closed_data(self, range_name, lower, upper):
         """
-        Includes cases where the user is the owner or where the user is
-        part of the group that owns the case.
-
-        count of cases where lower <= closed_on <= upper
+        Count of cases where lower <= closed_on <= upper
 
         cases_closed_{period}
         cases_closed_{case_type}_{period}
@@ -464,23 +483,22 @@ class CallCenterV2(object):
         #  maintained for backwards compatibility
         self._add_data(results, 'formsSubmitted{}'.format(range_name.title()))
 
+        if self.domain.name in PER_DOMAIN_FORM_INDICATORS:
+            for custom in PER_DOMAIN_FORM_INDICATORS[self.domain.name]:
+                self.add_custom_form_data(
+                    custom['slug'],
+                    range_name,
+                    custom['xmlns'],
+                    custom['type'],
+                    lower,
+                    upper
+                )
+
     def get_data(self):
         self.add_case_total_legacy()
         for range_name, lower, upper in self.date_ranges:
             print range_name, lower, upper
             self.add_form_data(range_name, lower, upper)
-
-            if self.domain.name in PER_DOMAIN_FORM_INDICATORS:
-                for custom in PER_DOMAIN_FORM_INDICATORS[self.domain.name]:
-                    self.add_custom_form_data(
-                        custom['slug'],
-                        range_name,
-                        custom['xmlns'],
-                        custom['type'],
-                        lower,
-                        upper
-                    )
-
             self.add_cases_total_data(range_name, lower, upper)
             self.add_cases_opened_data(range_name, lower, upper)
             self.add_cases_closed_data(range_name, lower, upper)
