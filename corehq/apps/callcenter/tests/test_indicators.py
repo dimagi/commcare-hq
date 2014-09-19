@@ -75,9 +75,13 @@ class CallCenterTests(TestCase):
             'formsSubmittedWeek0': 2L,
             'formsSubmittedWeek1': 4L,
             'formsSubmittedMonth0': 7L,
-            # 'casesUpdatedMonth0': 2L,
-            # 'casesUpdatedMonth1': 6L,
             'totalCases': 5L,
+
+            'casesUpdatedWeek0': 0L,
+            'casesUpdatedWeek1': 1L,
+            'casesUpdatedMonth0': 3L,
+            'casesUpdatedMonth1': 5L,
+
             'cases_total_week0': 4L,
             'cases_total_week1': 4L,
             'cases_total_month0': 6L,
@@ -116,6 +120,19 @@ class CallCenterTests(TestCase):
             'cases_closed_dog_week1': 0L,
             'cases_closed_dog_month0': 0L,
             'cases_closed_dog_month1': 2L,
+            
+            'cases_active_week0': 0L,
+            'cases_active_week1': 1L,
+            'cases_active_month0': 3L,
+            'cases_active_month1': 5L,
+            'cases_active_person_week0': 0L,
+            'cases_active_person_week1': 1L,
+            'cases_active_person_month0': 3L,
+            'cases_active_person_month1': 0L,
+            'cases_active_dog_week0': 0L,
+            'cases_active_dog_week1': 0L,
+            'cases_active_dog_month0': 0L,
+            'cases_active_dog_month1': 5L,
         }
 
         self._test_indicators(self.cc_domain, self.cc_user, expected)

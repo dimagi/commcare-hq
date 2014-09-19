@@ -325,7 +325,7 @@ class CallCenterV2(object):
         for user_id in unseen_users:
             self.data[user_id].setdefault(indicator_name, self.no_value)
 
-    def _add_case_data(self, queryset, indicator_prefix, range_name):
+    def _add_case_data(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
         Given a QuerySet containing data for case based indicators generate the 'total' and
         'by_case' indicators before adding them to the dataset.
@@ -356,11 +356,17 @@ class CallCenterV2(object):
             _update_dataset(total_data, owner, count)
             _update_dataset(type_data[case_type], owner, count)
 
-        def _reformat_and_add(data_dict, indicator_name):
+        def _reformat_and_add(data_dict, indicator_name, legacy_name=None):
             rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
             self._add_data(FakeQuerySet(rows), indicator_name)
+            if legacy_name:
+                self._add_data(FakeQuerySet(rows), legacy_name)
 
-        _reformat_and_add(total_data, '{}_{}'.format(indicator_prefix, range_name))
+        _reformat_and_add(
+            total_data,
+            '{}_{}'.format(indicator_prefix, range_name),
+            legacy_name='{}{}'.format(legacy_prefix, range_name.title()) if legacy_prefix else None
+        )
 
         seen_types = set()
         for case_type, data in type_data.items():
@@ -374,7 +380,7 @@ class CallCenterV2(object):
 
     def _base_case_query(self):
         return CaseData.objects \
-            .extra(select={"case_owner": "COALESCE(owner_id, user_id)"}) \
+            .extra(select={"case_owner": "COALESCE(owner_id, sofabed_casedata.user_id)"}) \
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
@@ -440,6 +446,21 @@ class CallCenterV2(object):
 
         self._add_case_data(results, 'cases_closed', range_name)
 
+    def add_cases_active_data(self, range_name, lower, upper):
+        """
+        Count of cases where lower <= case_action.date <= upper
+
+        cases_active_{period}
+        cases_active_{case_type}_{period}
+        """
+        results = self._base_case_query() \
+            .filter(
+                actions__date__gte=lower,
+                actions__date__lte=upper
+            ).annotate(count=Count('case_id', distinct=True))
+
+        self._add_case_data(results, 'cases_active', range_name, legacy_prefix='casesUpdated')
+
     def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
         """
         For specific forms add the number of forms completed during the time period (lower to upper)
@@ -502,6 +523,7 @@ class CallCenterV2(object):
             self.add_cases_total_data(range_name, lower, upper)
             self.add_cases_opened_data(range_name, lower, upper)
             self.add_cases_closed_data(range_name, lower, upper)
+            self.add_cases_active_data(range_name, lower, upper)
 
         for u, v in self.data.items():
             print u

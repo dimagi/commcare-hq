@@ -32,7 +32,6 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
 def get_casedata(domain, days_ago, case_id, user_id, case_type, close):
     now = datetime.now()
     date_ago = now - timedelta(days=days_ago)
-    print '=========', date_ago
     return CaseData(
         case_id=case_id,
         doc_type='CommCareCase',
@@ -45,6 +44,15 @@ def get_casedata(domain, days_ago, case_id, user_id, case_type, close):
         closed_on=(date_ago if close else None)
     )
     return case
+
+
+def add_case_action(case):
+    case.actions.create(
+        index=1,
+        action_type='update',
+        date=case.opened_on,
+        user_id=case.user_id,
+    )
 
 
 def load_data(domain, user_id):
@@ -73,6 +81,9 @@ def load_data(domain, user_id):
 
     FormData.objects.bulk_create(form_data)
     CaseData.objects.bulk_create(case_data)
+
+    for case in case_data:
+        add_case_action(case)
 
 
 def load_custom_data(domain, user_id, xmlns):
