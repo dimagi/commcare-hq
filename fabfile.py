@@ -166,7 +166,7 @@ def _set_apache_user():
 
 @roles('lb')
 def setup_apache_dirs():
-    sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
+    sudo('mkdir -p %(services)s/apache' % env)
 
 
 @roles(ROLES_ALL_SRC)
@@ -175,9 +175,9 @@ def setup_dirs():
     create uploaded media, log, etc. directories (if needed) and make writable
 
     """
-    sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
-    sudo('chmod a+w %(log_dir)s' % env, user=env.sudo_user)
-    sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
+    sudo('mkdir -p %(log_dir)s' % env)
+    sudo('chmod a+w %(log_dir)s' % env)
+    sudo('mkdir -p %(services)s/supervisor' % env)
 
 
 
@@ -483,7 +483,7 @@ def install_packages():
         packages = f.readlines()
 
     sudo("%s %s" % (installer_command,
-                    " ".join(map(lambda x: x.strip('\n\r'), packages))))
+                    " ".join(map(lambda x: x.strip('\n\r'), packages))), user='root')
 
 
 @task
@@ -498,8 +498,8 @@ def upgrade_packages():
     """
     _require_target()
     if what_os() == 'ubuntu':
-        sudo("apt-get update", shell=False)
-        sudo("apt-get upgrade -y", shell=False)
+        sudo("apt-get update", shell=False, user='root')
+        sudo("apt-get upgrade -y", shell=False, user='root')
     else:
         return
 
@@ -538,8 +538,8 @@ def setup_server():
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
-    sudo("easy_install -U pip", user=env.sudo_user)
-    sudo("pip install -U virtualenv", user=env.sudo_user)
+    sudo("easy_install -U pip")
+    sudo("pip install -U virtualenv")
     upgrade_packages()
     execute(create_pg_user)
     execute(create_pg_db)
@@ -568,7 +568,7 @@ def bootstrap():
     Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
     """
     _require_target()
-    sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
+    sudo('mkdir -p %(root)s' % env, shell=False)
     clone_repo()
 
     update_code()
@@ -595,7 +595,7 @@ def unbootstrap():
 
     with settings(warn_only=True):
         sudo(('rm -rf %(virtualenv_root)s %(virtualenv_root_preindex)s'
-              '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
+              '%(code_root)s %(code_root_preindex)s') % env)
 
 
 @roles(ROLES_ALL_SRC)
@@ -605,8 +605,8 @@ def create_virtualenvs():
             provided_by=('staging', 'production', 'india'))
 
     args = '--distribute --no-site-packages'
-    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user, shell=True)
-    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), shell=True)
 
 
 @roles(ROLES_ALL_SRC)
@@ -614,12 +614,12 @@ def clone_repo():
     """clone a new copy of the git repository"""
     with settings(warn_only=True):
         with cd(env.root):
-            exists_results = sudo('ls -d %(code_root)s' % env, user=env.sudo_user)
+            exists_results = sudo('ls -d %(code_root)s' % env)
             if exists_results.strip() != env['code_root']:
-                sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
+                sudo('git clone %(code_repo)s %(code_root)s' % env)
 
             if not files.exists(env.code_root_preindex):
-                sudo('git clone %(code_repo)s %(code_root_preindex)s' % env, user=env.sudo_user)
+                sudo('git clone %(code_repo)s %(code_root_preindex)s' % env)
 
 
 @task
@@ -647,14 +647,14 @@ def remove_submodule_source(path):
 @parallel
 def _remove_submodule_source_main(path):
     with cd(env.code_root):
-        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+        sudo('rm -rf submodules/%s' % path)
 
 
 @roles(ROLES_DB_ONLY)
 @parallel
 def _remove_submodule_source_preindex(path):
     with cd(env.code_root_preindex):
-        sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
+        sudo('rm -rf submodules/%s' % path)
 
 
 @task
@@ -677,7 +677,7 @@ def preindex_views():
             '%(code_root_preindex)s/manage.py preindex_everything '
             '8 %(user)s" --mail | at -t `date -d "5 seconds" '
             '+%%m%%d%%H%%M.%%S`'
-        ) % env, user=env.sudo_user)
+        ) % env)
         version_static(preindex=True)
 
 
@@ -690,17 +690,17 @@ def update_code(preindex=False):
         root_to_use = env.code_root
 
     with cd(root_to_use):
-        sudo('git remote prune origin', user=env.sudo_user)
-        sudo('git fetch', user=env.sudo_user)
-        sudo("git submodule foreach 'git fetch'", user=env.sudo_user)
-        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git reset --hard origin/%(code_branch)s' % env, user=env.sudo_user)
-        sudo('git submodule sync', user=env.sudo_user)
-        sudo('git submodule update --init --recursive', user=env.sudo_user)
+        sudo('git remote prune origin')
+        sudo('git fetch')
+        sudo("git submodule foreach 'git fetch'")
+        sudo('git checkout %(code_branch)s' % env)
+        sudo('git reset --hard origin/%(code_branch)s' % env)
+        sudo('git submodule sync')
+        sudo('git submodule update --init --recursive')
         # remove all untracked files, including submodules
-        sudo("git clean -ffd", user=env.sudo_user)
+        sudo("git clean -ffd")
         # remove all .pyc files in the project
-        sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
+        sudo("find . -name '*.pyc' -delete")
 
 
 @roles(ROLES_DB_ONLY)
@@ -713,7 +713,7 @@ def mail_admins(subject, message):
             'virtualenv_root': env.virtualenv_root,
             'subject': subject,
             'message': message,
-        }, user=env.sudo_user)
+        })
 
 
 @roles(ROLES_DB_ONLY)
@@ -727,7 +727,7 @@ def record_successful_deploy():
             'virtualenv_root': env.virtualenv_root,
             'user': env.user,
             'environment': env.environment,
-        }, user=env.sudo_user)
+        })
 
 
 @task
@@ -820,7 +820,7 @@ def needs_to_migrate():
         result = sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'migrate --all --merge --list | grep "( )"' % env
-        ), user=env.sudo_user, quiet=True)
+        ), quiet=True)
         return result.return_code == 0
 
 
@@ -895,7 +895,7 @@ def update_virtualenv(preindex=False):
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),
-        ), user=env.sudo_user)
+        ))
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -915,14 +915,14 @@ def clear_services_dir():
         ) % {
             'virtualenv_root': env.virtualenv_root,
             'conf_location': services_dir,
-        }, user=env.sudo_user)
+        })
 
 
 @roles('lb')
 def configtest():
     """test Apache configuration"""
     _require_target()
-    sudo('apache2ctl configtest')
+    sudo('apache2ctl configtest', user='root')
 
 
 @roles('lb')
@@ -932,20 +932,20 @@ def apache_reload():
     if what_os() == 'redhat':
         sudo('/etc/init.d/httpd reload')
     elif what_os() == 'ubuntu':
-        sudo('/etc/init.d/apache2 reload')
+        sudo('/etc/init.d/apache2 reload', user='root')
 
 
 @roles('lb')
 def apache_restart():
     """restart Apache on remote host"""
     _require_target()
-    sudo('/etc/init.d/apache2 restart')
+    sudo('/etc/init.d/apache2 restart', user='root')
 
 @task
 def netstat_plnt():
     """run netstat -plnt on a remote host"""
     _require_target()
-    sudo('netstat -plnt')
+    sudo('netstat -plnt', user='root')
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -982,9 +982,9 @@ def _migrate():
     """run south migration on remote environment"""
     _require_target()
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
 
 
 @task
@@ -1013,7 +1013,7 @@ def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env)
 
 
 @parallel
@@ -1021,7 +1021,7 @@ def flip_es_aliases():
 def _do_compress():
     """Run Django Compressor after a code update"""
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env)
     update_manifest(save=True)
 
 
@@ -1030,7 +1030,7 @@ def _do_compress():
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
 
 
 @roles(ROLES_DJANGO)
@@ -1120,9 +1120,9 @@ def fix_locale_perms():
     _require_target()
     _set_apache_user()
     locale_dir = '%s/locale/' % env.code_root
-    sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
-    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
-    sudo('chmod -R g+w %s' % locale_dir, user=env.sudo_user)
+    sudo('chown -R %s %s' % (env.sudo_user, locale_dir))
+    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir))
+    sudo('chmod -R g+w %s' % locale_dir)
 
 
 @task
@@ -1130,8 +1130,8 @@ def commit_locale_changes():
     """Commit locale changes on the remote server and pull them in locally"""
     fix_locale_perms()
     with cd(env.code_root):
-        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user, user=env.sudo_user)
-        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user, user=env.sudo_user)
+        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user)
+        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user)
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 
@@ -1148,7 +1148,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
             'filename': filename,
             'destination': posixpath.join(env.services, 'supervisor'),
             'params': format_env(env)
-        }, user=env.sudo_user)
+        })
 
 
 @roles(ROLES_CELERY)
@@ -1225,7 +1225,7 @@ def set_supervisor_config():
 
 def _supervisor_command(command):
     _require_target()
-    sudo('supervisorctl %s' % (command), shell=False)
+    sudo('supervisorctl %s' % (command), shell=False, user='root')
 
 
 @task
@@ -1235,7 +1235,7 @@ def update_apache_conf():
     with cd(env.code_root):
         tmp = "/tmp/cchq"
         sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.django_port, tmp), user=env.sudo_user)
+              % (env.virtualenv_root, env.django_port, tmp))
         sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp, user='root')
 
     with settings(warn_only=True):
@@ -1255,14 +1255,14 @@ def update_django_locales():
 def stop_pillows():
     _require_target()
     with cd(env.code_root):
-        sudo('scripts/supervisor-group-ctl stop pillowtop', user=env.sudo_user)
+        sudo('scripts/supervisor-group-ctl stop pillowtop')
 
 
 @roles(ROLES_CELERY)
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):
-        sudo('scripts/supervisor-group-ctl stop celery', user=env.sudo_user)
+        sudo('scripts/supervisor-group-ctl stop celery')
 
 
 @roles(ROLES_ALL_SRC)
@@ -1272,7 +1272,7 @@ def do_update_django_locales():
         command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(
             virtualenv_root=env.virtualenv_root,
         )
-        sudo(command, user=env.sudo_user)
+        sudo(command)
 
 # tests
 
