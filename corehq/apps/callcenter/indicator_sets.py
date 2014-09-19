@@ -44,6 +44,7 @@ class FakeQuerySet(object):
 
 class CallCenterIndicators(object):
     no_value = 0
+    name = 'call-center'
 
     def __init__(self, domain, user):
         self.domain = domain
