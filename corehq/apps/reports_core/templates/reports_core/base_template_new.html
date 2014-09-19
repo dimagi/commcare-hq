@@ -1,11 +1,18 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% block stylesheets %}
+    {{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+{% endblock %}
 {% block js %}{{ block.super }}
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
+    <script src="{% static 'reports_core/js/charts.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -16,6 +23,7 @@
         }
 
     $(function(){
+
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             defaultRows: {{ report_table.default_rows|default:10 }},
@@ -37,6 +45,7 @@
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
         });
+        var graphConfig = {{ report.spec.graph_config|JSON }};
         $('#report-filters').submit(function(event) {
             var postData = $(this).serialize();
             $.ajax({
@@ -45,8 +54,11 @@
                 data: postData,
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
-                    console.log("submit successful");
                     reportTables.render();
+                    if (graphConfig !== null) {
+                        // draw graph
+                        charts.render(graphConfig, data.aaData, $("#chart-container"));
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log("wah waaaah");
@@ -119,7 +131,11 @@
         {% endif %}
     </div>
 </div>
-
+{% block reportcharts %}
+<section id="chart-container" style="display: none;">
+    <svg id="charts" width="400" height="80"></svg>
+</section>
+{% endblock %}
 {% block reporttable %}
 <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
     <thead>
