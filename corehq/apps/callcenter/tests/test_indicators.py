@@ -74,8 +74,9 @@ class CallCenterTests(TestCase):
     def _test_indicators(self, domain, user, expected):
         indicator_set = CallCenterV2(domain, user)
         data = indicator_set.get_data()
-        self.assertIn(user.user_id, data)
-        user_data = data[user.user_id]
+        case_id = indicator_set.user_to_case_map[user.user_id]
+        self.assertIn(case_id, data)
+        user_data = data[case_id]
 
         mismatches = []
         for k, v in expected.items():

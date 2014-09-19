@@ -1,14 +1,13 @@
 from collections import defaultdict
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
-from django.db.models.aggregates import Count, Sum, Avg
+from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
-from sqlagg.base import TableNotFoundException, ColumnNotFoundException
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id, get_callcenter_case_mapping
 from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -296,6 +295,11 @@ class CallCenterV2(object):
         groups = Group.get_case_sharing_groups(self.domain.name)
         return {group.get_id: group.users for group in groups}
 
+    @property
+    @memoized
+    def user_to_case_map(self):
+        return get_callcenter_case_mapping(self.domain.name, self.user_ids)
+
     def _add_data(self, queryset, indicator_name, transformer=None):
         """
         Given a QuerySet containing rows containing 'user_id' and 'count' values for an indicator
@@ -315,15 +319,18 @@ class CallCenterV2(object):
         seen_users = set()
 
         for row in queryset.iterator():
-            user_id = row['user_id']
-            val = transformer(row['count']) if transformer else row['count']
-            self.data[user_id][indicator_name] = val
-            seen_users.add(user_id)
+            user_case_id = self.user_to_case_map.get(row['user_id'])
+            if user_case_id:
+                val = transformer(row['count']) if transformer else row['count']
+                self.data[user_case_id][indicator_name] = val
+                seen_users.add(row['user_id'])
 
         # add data for user_ids with no data
         unseen_users = self.user_ids - seen_users
         for user_id in unseen_users:
-            self.data[user_id].setdefault(indicator_name, self.no_value)
+            user_case_id = self.user_to_case_map.get(user_id)
+            if user_case_id:
+                self.data[user_case_id].setdefault(indicator_name, self.no_value)
 
     def _add_case_data(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
