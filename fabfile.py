@@ -25,6 +25,7 @@ from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
+from fabric.colors import blue
 from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
@@ -788,12 +789,16 @@ def _deploy_without_asking():
 
         execute(clear_services_dir)
         set_supervisor_config()
-        if env.should_migrate:
+
+        do_migrate = env.should_migrate and needs_to_migrate()
+        if do_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
             execute(_migrate)
+        else:
+            print(blue("No migration required, skipping."))
         execute(do_update_django_locales)
-        if env.should_migrate:
+        if do_migrate:
             execute(flip_es_aliases)
 
         # hard update of manifest.json since we're about to force restart
@@ -807,6 +812,16 @@ def _deploy_without_asking():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
+
+
+@roles(ROLES_DB_ONLY)
+def needs_to_migrate():
+    with cd(env.code_root):
+        result = sudo((
+            '%(virtualenv_root)s/bin/python manage.py '
+            'migrate --all --merge --list | grep "( )"' % env
+        ), user=env.sudo_user, quiet=True)
+        return result.return_code == 0
 
 
 @task
