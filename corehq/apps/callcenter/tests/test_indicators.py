@@ -1,6 +1,6 @@
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterV2
+from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators
 from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data
@@ -72,7 +72,7 @@ class CallCenterTests(TestCase):
         cls.aarohi_domain.delete()
 
     def _test_indicators(self, domain, user, expected):
-        indicator_set = CallCenterV2(domain, user)
+        indicator_set = CallCenterIndicators(domain, user)
         data = indicator_set.get_data()
         case_id = indicator_set.user_to_case_map[user.user_id]
         self.assertIn(case_id, data)
