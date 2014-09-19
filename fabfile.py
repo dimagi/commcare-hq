@@ -168,7 +168,7 @@ def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 def setup_dirs():
     """
     create uploaded media, log, etc. directories (if needed) and make writable
@@ -314,7 +314,11 @@ def production():
     # Gets auto-populated by what_os()
     # if you don't know what it is or don't want to specify.
     env.host_os_map = None
-    env.roles = ['deploy']  # this line should be commented out when running bootstrap on a new machine
+
+    # The next 2 lines should be commented out when running bootstrap on a new machine
+    env.roles = ['deploy']
+    env.hosts = env.roledefs['deploy']
+
     env.es_endpoint = 'hqes0.internal.commcarehq.org'
     env.flower_port = 5555
 
@@ -365,6 +369,7 @@ def staging():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
     env.roles = ['deploy']
+    env.hosts = env.roledefs['deploy']
     env.flower_port = 5555
 
     _setup_path()
@@ -421,11 +426,10 @@ def preview():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
     env.roles = ['deploy']
+    env.hosts = env.roledefs['deploy']
     env.flower_port = 5556
 
     _setup_path()
-
-
 
 
 @task
@@ -461,7 +465,7 @@ def development():
     env.flower_port = 5555
 
 @task
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 def install_packages():
     """Install packages, given a list of package names"""
     _require_target()
@@ -482,7 +486,7 @@ def install_packages():
 
 
 @task
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @parallel
 def upgrade_packages():
     """
@@ -525,7 +529,7 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
@@ -540,7 +544,7 @@ def setup_server():
     execute(create_pg_db)
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 @task
 def create_pg_user():
     """Create the Postgres user"""
@@ -548,7 +552,7 @@ def create_pg_user():
     sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 @task
 def create_pg_db():
     """Create the Postgres database"""
@@ -593,7 +597,7 @@ def unbootstrap():
               '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', 'virtualenv_root_preindex',
@@ -604,7 +608,7 @@ def create_virtualenvs():
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 def clone_repo():
     """clone a new copy of the git repository"""
     with settings(warn_only=True):
@@ -638,14 +642,14 @@ def remove_submodule_source(path):
     execute(_remove_submodule_source_preindex, path)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @parallel
 def _remove_submodule_source_main(path):
     with cd(env.code_root):
         sudo('rm -rf submodules/%s' % path, user=env.sudo_user)
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 @parallel
 def _remove_submodule_source_preindex(path):
     with cd(env.code_root_preindex):
@@ -653,7 +657,7 @@ def _remove_submodule_source_preindex(path):
 
 
 @task
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def preindex_views():
     if not env.should_migrate:
         utils.abort((
@@ -676,7 +680,7 @@ def preindex_views():
         version_static(preindex=True)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @parallel
 def update_code(preindex=False):
     if preindex:
@@ -698,7 +702,7 @@ def update_code(preindex=False):
         sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def mail_admins(subject, message):
     with cd(env.code_root):
         sudo((
@@ -711,7 +715,7 @@ def mail_admins(subject, message):
         }, user=env.sudo_user)
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def record_successful_deploy():
     with cd(env.code_root):
         sudo((
@@ -808,6 +812,7 @@ def _deploy_without_asking():
 @task
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
+    _require_target()
     if strtobool(confirm) and not console.confirm(
             'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
@@ -818,7 +823,7 @@ def awesome_deploy(confirm="yes"):
 
     execute(preindex_views)
 
-    @roles(*ROLES_DB_ONLY)
+    @roles(ROLES_DB_ONLY)
     def preindex_complete():
         with settings(warn_only=True):
             return sudo(
@@ -847,7 +852,7 @@ def awesome_deploy(confirm="yes"):
 
 
 @task
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @parallel
 def update_virtualenv(preindex=False):
     """
@@ -878,7 +883,7 @@ def update_virtualenv(preindex=False):
         ), user=env.sudo_user)
 
 
-@roles(*ROLES_ALL_SERVICES)
+@roles(ROLES_ALL_SERVICES)
 @parallel
 def clear_services_dir():
     """
@@ -928,7 +933,7 @@ def netstat_plnt():
     sudo('netstat -plnt')
 
 
-@roles(*ROLES_ALL_SERVICES)
+@roles(ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
     _require_target()
@@ -945,7 +950,7 @@ def restart_services():
     execute(services_restart)
 
 
-@roles(*ROLES_ALL_SERVICES)
+@roles(ROLES_ALL_SERVICES)
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -957,7 +962,7 @@ def services_restart():
     _supervisor_command('start  all')
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def _migrate():
     """run south migration on remote environment"""
     _require_target()
@@ -968,7 +973,7 @@ def _migrate():
 
 
 @task
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def migrate():
     """run south migration on remote environment"""
     if not console.confirm(
@@ -988,7 +993,7 @@ def migrate():
     _supervisor_command('start all')
 
 
-@roles(*ROLES_DB_ONLY)
+@roles(ROLES_DB_ONLY)
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -997,7 +1002,7 @@ def flip_es_aliases():
 
 
 @parallel
-@roles(*ROLES_STATIC)
+@roles(ROLES_STATIC)
 def _do_compress():
     """Run Django Compressor after a code update"""
     with cd(env.code_root):
@@ -1006,14 +1011,14 @@ def _do_compress():
 
 
 @parallel
-@roles(*ROLES_STATIC)
+@roles(ROLES_STATIC)
 def _do_collectstatic():
     """Collect static after a code update"""
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
 
 
-@roles(*ROLES_DJANGO)
+@roles(ROLES_DJANGO)
 @parallel
 def update_manifest(save=False, soft=False):
     """
@@ -1039,7 +1044,7 @@ def update_manifest(save=False, soft=False):
         )
 
 
-@roles(*ROLES_DJANGO)
+@roles(ROLES_DJANGO)
 @parallel
 def version_static(preindex=False):
     """
@@ -1064,7 +1069,7 @@ def version_static(preindex=False):
 
 
 @task
-@roles(*ROLES_STATIC)
+@roles(ROLES_STATIC)
 def collectstatic():
     """run collectstatic on remote environment"""
     _require_target()
@@ -1131,7 +1136,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
         }, user=env.sudo_user)
 
 
-@roles(*ROLES_CELERY)
+@roles(ROLES_CELERY)
 def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
@@ -1153,7 +1158,7 @@ def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_couchdb_lucene.conf') #to be deprecated
 
 
-@roles(*ROLES_PILLOWTOP)
+@roles(ROLES_PILLOWTOP)
 def set_pillowtop_supervisorconf():
     # in reality this also should be another machine
     # if the number of listeners gets too high
@@ -1163,26 +1168,26 @@ def set_pillowtop_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
 
 
-@roles(*ROLES_DJANGO)
+@roles(ROLES_DJANGO)
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
-@roles(*ROLES_TOUCHFORMS)
+@roles(ROLES_TOUCHFORMS)
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
-@roles(*ROLES_SMS_QUEUE)
+@roles(ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
     if env.sms_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
-@roles(*ROLES_REMINDER_QUEUE)
+@roles(ROLES_REMINDER_QUEUE)
 def set_reminder_queue_supervisorconf():
     if env.reminder_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
-@roles(*ROLES_PILLOW_RETRY_QUEUE)
+@roles(ROLES_PILLOW_RETRY_QUEUE)
 def set_pillow_retry_queue_supervisorconf():
     if env.pillow_retry_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
@@ -1231,21 +1236,21 @@ def update_django_locales():
     do_update_django_locales()
 
 
-@roles(*ROLES_PILLOWTOP)
+@roles(ROLES_PILLOWTOP)
 def stop_pillows():
     _require_target()
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop pillowtop', user=env.sudo_user)
 
 
-@roles(*ROLES_CELERY)
+@roles(ROLES_CELERY)
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop celery', user=env.sudo_user)
 
 
-@roles(*ROLES_ALL_SRC)
+@roles(ROLES_ALL_SRC)
 @parallel
 def do_update_django_locales():
     with cd(env.code_root):
