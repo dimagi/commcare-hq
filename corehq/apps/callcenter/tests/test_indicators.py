@@ -1,7 +1,6 @@
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
-from corehq.apps.callcenter.indicator_sets import CallCenter, AAROHI_MOTHER_FORM, CallCenterV2
+from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterV2
 from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data
@@ -21,6 +20,22 @@ def create_domain_and_user(domain_name, username):
 
     sync_user_cases(user)
     return domain, user
+
+
+def get_indicators(prefix, values, infix=None, is_legacy=False):
+    ranges = ['week0', 'week1', 'month0', 'month1']
+    data = {}
+    separator = '' if is_legacy else '_'
+    infix = '{}{}{}'.format(separator, infix, separator) if infix else separator
+    for i, r in enumerate(ranges):
+        r = r.title() if is_legacy else r
+        indicator_name = '{prefix}{infix}{suffix}'.format(
+            prefix=prefix,
+            infix=infix,
+            suffix=r)
+        data[indicator_name] = values[i]
+
+    return data
 
 
 class CallCenterTests(TestCase):
@@ -64,101 +79,49 @@ class CallCenterTests(TestCase):
 
         mismatches = []
         for k, v in expected.items():
-            if user_data.get(k) != v:
-                mismatches.append('{}: {} != {}'.format(k, v, user_data.get(k)))
+            expected_value = user_data.pop(k)
+            if expected_value != v:
+                mismatches.append('{}: {} != {}'.format(k, v, expected_value))
 
         if mismatches:
             self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(mismatches)))
 
-    def test_callcenter_indicators(self):
-        expected = {
-            'formsSubmittedWeek0': 2L,
-            'formsSubmittedWeek1': 4L,
-            'formsSubmittedMonth0': 7L,
-            'totalCases': 5L,
+        if user_data:
+            self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
 
-            'casesUpdatedWeek0': 0L,
-            'casesUpdatedWeek1': 1L,
-            'casesUpdatedMonth0': 3L,
-            'casesUpdatedMonth1': 5L,
-
-            'cases_total_week0': 4L,
-            'cases_total_week1': 4L,
-            'cases_total_month0': 6L,
-            'cases_total_month1': 5L,
-            'cases_total_person_week0': 1L,
-            'cases_total_person_week1': 1L,
-            'cases_total_person_month0': 3L,
-            'cases_total_person_month1': 0L,
-            'cases_total_dog_week0': 3L,
-            'cases_total_dog_week1': 3L,
-            'cases_total_dog_month0': 3L,
-            'cases_total_dog_month1': 5L,
-
-            'cases_opened_week0': 0L,
-            'cases_opened_week1': 1L,
-            'cases_opened_month0': 3L,
-            'cases_opened_month1': 5L,
-            'cases_opened_person_week0': 0L,
-            'cases_opened_person_week1': 1L,
-            'cases_opened_person_month0': 3L,
-            'cases_opened_person_month1': 0L,
-            'cases_opened_dog_week0': 0L,
-            'cases_opened_dog_week1': 0L,
-            'cases_opened_dog_month0': 0L,
-            'cases_opened_dog_month1': 5L,
-
-            'cases_closed_week0': 0L,
-            'cases_closed_week1': 0L,
-            'cases_closed_month0': 2L,
-            'cases_closed_month1': 2L,
-            'cases_closed_person_week0': 0L,
-            'cases_closed_person_week1': 0L,
-            'cases_closed_person_month0': 2L,
-            'cases_closed_person_month1': 0L,
-            'cases_closed_dog_week0': 0L,
-            'cases_closed_dog_week1': 0L,
-            'cases_closed_dog_month0': 0L,
-            'cases_closed_dog_month1': 2L,
-            
-            'cases_active_week0': 0L,
-            'cases_active_week1': 1L,
-            'cases_active_month0': 3L,
-            'cases_active_month1': 5L,
-            'cases_active_person_week0': 0L,
-            'cases_active_person_week1': 1L,
-            'cases_active_person_month0': 3L,
-            'cases_active_person_month1': 0L,
-            'cases_active_dog_week0': 0L,
-            'cases_active_dog_week1': 0L,
-            'cases_active_dog_month0': 0L,
-            'cases_active_dog_month1': 5L,
-        }
+    def test_standard_indicators(self):
+        expected = {'totalCases': 5L}
+        expected.update(get_indicators('formsSubmitted', [2L, 4L, 7L, 0L], is_legacy=True))
+        expected.update(get_indicators('forms_submitted', [2L, 4L, 7L, 0L]))
+        expected.update(get_indicators('casesUpdated', [0L, 1L, 3L, 5L], is_legacy=True))
+        expected.update(get_indicators('cases_total', [4L, 4L, 6L, 5L]))
+        expected.update(get_indicators('cases_total', [1L, 1L, 3L, 0L], infix='person'))
+        expected.update(get_indicators('cases_total', [3L, 3L, 3L, 5L], infix='dog'))
+        expected.update(get_indicators('cases_opened', [0L, 1L, 3L, 5L]))
+        expected.update(get_indicators('cases_opened', [0L, 1L, 3L, 0L], infix='person'))
+        expected.update(get_indicators('cases_opened', [0L, 0L, 0L, 5L], infix='dog'))
+        expected.update(get_indicators('cases_closed', [0L, 0L, 2L, 2L]))
+        expected.update(get_indicators('cases_closed', [0L, 0L, 2L, 0L], infix='person'))
+        expected.update(get_indicators('cases_closed', [0L, 0L, 0L, 2L], infix='dog'))
+        expected.update(get_indicators('cases_active', [0L, 1L, 3L, 5L]))
+        expected.update(get_indicators('cases_active', [0L, 1L, 3L, 0L], infix='person'))
+        expected.update(get_indicators('cases_active', [0L, 0L, 0L, 5L], infix='dog'))
 
         self._test_indicators(self.cc_domain, self.cc_user, expected)
 
     def test_custom_indicators(self):
-        expected = {
-            'formsSubmittedWeek0': 3L,
-            'formsSubmittedWeek1': 3L,
-            'formsSubmittedMonth0': 9L,
-            # 'casesUpdatedMonth0': 0L,
-            # 'casesUpdatedMonth1': 0L,
-            'totalCases': 0L,
-            'cases_total_week0': 0L,
-            'cases_total_week1': 0L,
-            'cases_total_month0': 0L,
-            'cases_total_month1': 0L,
-            'motherFormsWeek0': 3L,
-            'motherFormsWeek1': 3L,
-            'motherFormsMonth0': 9L,
-            'childFormsWeek0': 0L,
-            'childFormsWeek1': 0L,
-            'childFormsMonth0': 0L,
-            'motherDurationWeek0': 3L,
-            'motherDurationWeek1': 4L,
-            'motherDurationMonth0': 4L,
-        }
+        expected = {'totalCases': 0L}
+        expected.update(get_indicators('formsSubmitted', [3L, 3L, 9L, 0L], is_legacy=True))
+        expected.update(get_indicators('forms_submitted', [3L, 3L, 9L, 0L]))
+        expected.update(get_indicators('casesUpdated', [0L, 0L, 0L, 0L], is_legacy=True))
+        expected.update(get_indicators('cases_total', [0L, 0L, 0L, 0L]))
+        expected.update(get_indicators('cases_opened', [0L, 0L, 0L, 0L]))
+        expected.update(get_indicators('cases_closed', [0L, 0L, 0L, 0L]))
+        expected.update(get_indicators('cases_active', [0L, 0L, 0L, 0L]))
+
+        # custom
+        expected.update(get_indicators('motherForms', [3L, 3L, 9L, 0L], is_legacy=True))
+        expected.update(get_indicators('childForms', [0L, 0L, 0L, 0L], is_legacy=True))
+        expected.update(get_indicators('motherDuration', [3L, 4L, 4L, 0L], is_legacy=True))
 
         self._test_indicators(self.aarohi_domain, self.aarohi_user, expected)
-

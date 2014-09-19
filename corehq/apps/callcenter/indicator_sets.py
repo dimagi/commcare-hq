@@ -518,15 +518,10 @@ class CallCenterV2(object):
     def get_data(self):
         self.add_case_total_legacy()
         for range_name, lower, upper in self.date_ranges:
-            print range_name, lower, upper
             self.add_form_data(range_name, lower, upper)
             self.add_cases_total_data(range_name, lower, upper)
             self.add_cases_opened_data(range_name, lower, upper)
             self.add_cases_closed_data(range_name, lower, upper)
             self.add_cases_active_data(range_name, lower, upper)
 
-        for u, v in self.data.items():
-            print u
-            for x, y in v.items():
-                print "    ", x, y
         return self.data
