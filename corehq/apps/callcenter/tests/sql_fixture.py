@@ -4,8 +4,7 @@ from sqlalchemy import *
 from django.conf import settings
 from sqlalchemy.engine.url import make_url
 from datetime import date, timedelta, datetime
-from corehq.apps.callcenter.utils import get_case_mapping, get_case_ownership_mapping
-from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
+from corehq.apps.sofabed.models import FormData, CaseData
 
 metadata = sqlalchemy.MetaData()
 
@@ -111,25 +110,6 @@ fixture_test_table = Table("call_center",
                            Column("duration", INT))
 
 
-def load_fixture_test_data():
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
-    fixture_test_table.drop(engine, checkfirst=True)
-    metadata.create_all()
-
-    data = [
-        {"case": "123", "date": date.today(), "cases_updated": 1, "duration": 10},
-        {"case": "123", "date": date.today() - timedelta(days=2), "cases_updated": 2, "duration": 15},
-        {"case": "123", "date": date.today() - timedelta(days=7), "cases_updated": 1, "duration": 6},
-        {"case": "123", "date": date.today() - timedelta(days=8), "cases_updated": 4, "duration": 50},
-    ]
-
-    connection = engine.connect()
-    try:
-        connection.execute(fixture_test_table.delete())
-        for d in data:
-            insert = fixture_test_table.insert().values(**d)
-            connection.execute(insert)
-    finally:
-        connection.close()
-        engine.dispose()
+def clear_data():
+    FormData.objects.all().delete()
+    CaseData.objects.all().delete()

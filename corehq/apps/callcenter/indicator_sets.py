@@ -1,16 +1,20 @@
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, time
+from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
+from jsonobject.base import JsonObject
+from jsonobject.properties import DictProperty, StringProperty
+import pytz
+from casexml.apps.phone.caselogic import CaseSyncOperation
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import get_callcenter_case_mapping
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
-from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('callcenter')
 
 PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
 PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
@@ -34,6 +38,25 @@ PER_DOMAIN_FORM_INDICATORS = {
 }
 
 
+def seconds_till_midnight(timezone):
+    tomorrow = date.today() + timedelta(1)
+    midnight_utc = datetime.combine(tomorrow, time())
+    midnight_in_tz = timezone.localize(midnight_utc)
+    now_in_tz = datetime.now(timezone)
+    return (midnight_in_tz - now_in_tz).total_seconds()
+
+
+def cache_key(user_id):
+    return 'callcenter_{}'.format(user_id)
+
+
+class CachedIndicators(JsonObject):
+    user_id = StringProperty()
+    case_id = StringProperty()
+    domain = StringProperty()
+    indicators = DictProperty()
+
+
 class FakeQuerySet(object):
     def __init__(self, results):
         self.results = results
@@ -43,14 +66,25 @@ class FakeQuerySet(object):
 
 
 class CallCenterIndicators(object):
+    """
+    Process to figure which users we need to do queries for:
+
+    1. get all owner IDs for current user (user ID + group IDs)
+    2. get all CallCenter cases owned by user. This is the full set of users that should
+       be included in the final data set
+    3. get all cached data for the users from step 2
+    4. Users who we need to calculate data for = (users from step 2) - (cached users)
+
+    """
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user):
+    def __init__(self, domain, user, custom_cache=None):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
+        self.cache = custom_cache or cache
 
     @property
     def date_ranges(self):
@@ -74,26 +108,88 @@ class CallCenterIndicators(object):
 
     @property
     @memoized
-    def user_ids(self):
-        return set(CommCareUser.ids_by_domain(self.domain.name))
+    def all_user_ids(self):
+        """
+        :return: Set of all user_ids that we need to produce data for.
+        """
+        all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
+        relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
+
+        ids = {case.hq_user_id for case in relevant_cases}
+        logger.debug('ALL user ids: %s', ids)
+        return ids
+
+    @property
+    @memoized
+    def cached_data(self):
+        """
+        :return: Dictionary of user_id -> CachedIndicators
+        """
+        cached = self.cache.get_many([cache_key(user_id) for user_id in self.all_user_ids])
+        data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
+        logger.debug('Cached data: %s', data)
+        return data
+
+    @property
+    @memoized
+    def users_needing_data(self):
+        """
+        :return: Set of user_ids for whom we need to generate data
+        """
+        ids = self.all_user_ids - set(self.cached_data.keys())
+        logger.debug('Users needing data: %s', ids)
+        return ids
 
     @property
     @memoized
     def case_types(self):
+        """
+        :return: Set of all case types for the domain excluding the CallCenter case type.
+        """
         case_types = set(CaseTypeMixin.get_case_types(self.domain.name))
         case_types.remove(self.cc_case_type)
+        logger.debug('Case types: %s', case_types)
         return case_types
 
     @property
     @memoized
+    def case_sharing_groups(self):
+        return Group.get_case_sharing_groups(self.domain.name)
+
+    @property
+    @memoized
     def group_to_user_ids(self):
-        groups = Group.get_case_sharing_groups(self.domain.name)
-        return {group.get_id: group.users for group in groups}
+        return {group.get_id: group.users for group in self.case_sharing_groups}
+
+    @property
+    @memoized
+    def user_id_to_groups(self):
+        mapping = defaultdict(list)
+        for group in self.case_sharing_groups:
+            for user_id in group.users:
+                mapping[user_id].append(group.get_id)
+
+        return mapping
+
+    @property
+    @memoized
+    def owners_needing_data(self):
+        """
+        :return: List combining user_ids and case sharing group ids
+        """
+        user_to_groups = self.user_id_to_groups
+        owners = set()
+        for user_id in self.users_needing_data:
+            owners.add(user_id)
+            owners = owners.union(user_to_groups[user_id])
+
+        logger.debug('owners needing data: %s', owners)
+        return owners
 
     @property
     @memoized
     def user_to_case_map(self):
-        return get_callcenter_case_mapping(self.domain.name, self.user_ids)
+        return get_callcenter_case_mapping(self.domain.name, self.users_needing_data)
 
     def _add_data(self, queryset, indicator_name, transformer=None):
         """
@@ -114,18 +210,17 @@ class CallCenterIndicators(object):
         seen_users = set()
 
         for row in queryset.iterator():
-            user_case_id = self.user_to_case_map.get(row['user_id'])
-            if user_case_id:
-                val = transformer(row['count']) if transformer else row['count']
-                self.data[user_case_id][indicator_name] = val
-                seen_users.add(row['user_id'])
+            user_id = row['user_id']
+            logger.debug('Appending indicator: %s - %s', user_id, indicator_name)
+            val = transformer(row['count']) if transformer else row['count']
+            self.data[user_id][indicator_name] = val
+            seen_users.add(user_id)
 
         # add data for user_ids with no data
-        unseen_users = self.user_ids - seen_users
+        unseen_users = self.users_needing_data - seen_users
         for user_id in unseen_users:
-            user_case_id = self.user_to_case_map.get(user_id)
-            if user_case_id:
-                self.data[user_case_id].setdefault(indicator_name, self.no_value)
+            logger.debug('Appending zero values: %s - %s', user_id, indicator_name)
+            self.data[user_id].setdefault(indicator_name, self.no_value)
 
     def _add_case_data(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
@@ -145,7 +240,8 @@ class CallCenterIndicators(object):
         def _update_dataset(dataset, owner_id, cnt):
             if owner_id in self.group_to_user_ids:
                 for user_id in self.group_to_user_ids[owner_id]:
-                    dataset[user_id] += cnt
+                    if user_id in self.users_needing_data:
+                        dataset[user_id] += cnt
             else:
                 dataset[owner_id] += cnt
 
@@ -182,7 +278,11 @@ class CallCenterIndicators(object):
 
     def _base_case_query(self):
         return CaseData.objects \
-            .extra(select={"case_owner": "COALESCE(owner_id, sofabed_casedata.user_id)"}) \
+            .extra(
+                select={"case_owner": "COALESCE(owner_id, sofabed_casedata.user_id)"},
+                where={"COALESCE(owner_id, sofabed_casedata.user_id) in %s"},
+                params=[tuple(self.owners_needing_data)]
+            ) \
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
@@ -199,7 +299,8 @@ class CallCenterIndicators(object):
             .filter(
                 domain=self.domain.name,
                 doc_type='CommCareCase',
-                closed=False) \
+                closed=False,
+                user_id__in=self.users_needing_data) \
             .annotate(count=Count('case_id'))
 
         self._add_data(results, 'totalCases')
@@ -280,7 +381,8 @@ class CallCenterIndicators(object):
             .filter(
                 xmlns=xmlns,
                 domain=self.domain.name,
-                doc_type='XFormInstance') \
+                doc_type='XFormInstance',
+                user_id__in=self.users_needing_data) \
             .filter(**self.date_filter('time_end', lower, upper)) \
             .annotate(count=aggregation)
 
@@ -294,11 +396,12 @@ class CallCenterIndicators(object):
         Count of forms submitted by each user during the period (upper to lower)
         """
         results = FormData.objects \
-            .values('user_id')\
+            .values('user_id') \
             .filter(**self.date_filter('time_end', lower, upper)) \
             .filter(
                 domain=self.domain.name,
-                doc_type='XFormInstance'
+                doc_type='XFormInstance',
+                user_id__in=self.users_needing_data
             )\
             .annotate(count=Count('instance_id'))
 
@@ -317,13 +420,41 @@ class CallCenterIndicators(object):
                     upper
                 )
 
+    @memoized
     def get_data(self):
-        self.add_case_total_legacy()
-        for range_name, lower, upper in self.date_ranges:
-            self.add_form_data(range_name, lower, upper)
-            self.add_cases_total_data(range_name, lower, upper)
-            self.add_cases_opened_data(range_name, lower, upper)
-            self.add_cases_closed_data(range_name, lower, upper)
-            self.add_cases_active_data(range_name, lower, upper)
+        final_data = {}
+        if self.users_needing_data:
+            self.add_case_total_legacy()
+            for range_name, lower, upper in self.date_ranges:
+                self.add_form_data(range_name, lower, upper)
+                self.add_cases_total_data(range_name, lower, upper)
+                self.add_cases_opened_data(range_name, lower, upper)
+                self.add_cases_closed_data(range_name, lower, upper)
+                self.add_cases_active_data(range_name, lower, upper)
 
-        return self.data
+            for k, v in self.data.items():
+                for u, i in v.items():
+                    print k, u, i
+
+            cache_timeout = seconds_till_midnight(pytz.timezone(self.domain.default_timezone))
+            for user_id, indicators in self.data.iteritems():
+                if user_id in self.users_needing_data:
+                    user_case_id = self.user_to_case_map[user_id]
+                    if user_case_id:
+                        cache_data = CachedIndicators(
+                            user_id=user_id,
+                            case_id=user_case_id,
+                            domain=self.domain.name,
+                            indicators=indicators
+                        )
+                        logger.debug('Adding and caching data for user: %s', user_id)
+                        cache.set(cache_key(user_id), cache_data.to_json(), cache_timeout)
+                        final_data[user_case_id] = indicators
+                else:
+                    logging.debug("We've got data we don't need for user: %s", user_id)
+
+        for cache_data in self.cached_data.itervalues():
+            logger.debug('Adding cached data for user: %s', cache_data.user_id)
+            final_data[cache_data.case_id] = cache_data.indicators
+
+        return final_data
