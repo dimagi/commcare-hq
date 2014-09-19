@@ -57,17 +57,16 @@ function(doc) {
                         contained_in_indicator_value(referral_doc, "basic")) {
                     	// This is an urgent referral
                     	referral_date = new Date(referral_doc.timeEnd);
-       		            urgent_dates.push(referral_date);
-       		            if(condition_improved) {
-       		            	for (var c in condition_improved) {
-       		            		var condition_data = condition_improved[c];
-       		            		var condition_date = new Date(condition_data.timeEnd);
-       		            		if (condition_date == referral_date) {
-       		            			visit_dates.push(new Date(referral_doc.timeEnd));       		            		 
-       		            		}
-							}
-       		            	
-       		            }
+                        urgent_dates.push(referral_date);
+                        if (condition_improved) {
+                            for (var c in condition_improved) {
+                                var condition_data = condition_improved[c];
+                                var condition_date = new Date(condition_data.timeEnd);
+                                if (condition_date == referral_date) {
+                                    visit_dates.push(new Date(referral_doc.timeEnd));
+                                }
+                            }
+                         }
                     } else {
                         visit_dates.push(new Date(referral_doc.timeEnd));
                     }
