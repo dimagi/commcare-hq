@@ -91,6 +91,8 @@ var charts = (function() {
         } else {
             chartContainer.show();
             $('<h2 />').text(config.display_name).appendTo(chartContainer);
+            var $svg = d3.select(chartContainer[0]).append("svg");
+            $svg.attr({id: "charts", width: "400", height: "80"});
             nv.addGraph(chartMap[config.type](config, data, chartContainer));
         }
     }
