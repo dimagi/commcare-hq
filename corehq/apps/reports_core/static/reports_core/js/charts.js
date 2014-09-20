@@ -30,11 +30,11 @@ var charts = (function() {
             for (var i = 0; i < data.length; i++) {
                 current = data[i];
                 primary = current[config.primary_aggregation];
-                if (!transformedDataDict.hasOwnProperty(primaryKey)) {
+                if (!transformedDataDict.hasOwnProperty(primary)) {
                     record = {};
-                    transformedDataDict[primaryKey] = record;
+                    transformedDataDict[primary] = record;
                 } else {
-                    record = transformedDataDict[primaryKey];
+                    record = transformedDataDict[primary];
                 }
                 secondaryValues[current[config.secondary_aggregation]] = null;
                 record[current[config.secondary_aggregation]] = current[config.value_column];
