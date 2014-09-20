@@ -35,7 +35,10 @@ class ConfigurableReportDataSource(SqlData):
 
     @memoized
     def get_data(self, slugs=None):
-        return super(ConfigurableReportDataSource, self).get_data(slugs)
+        ret = super(ConfigurableReportDataSource, self).get_data(slugs)
+        # arbitrarily sort by the first column in memory
+        # todo: should get pushed to the database but not currently supported in sqlagg
+        return sorted(ret, key=lambda x: x[self.column_configs[0].field])
 
     def get_total_records(self):
         return len(self.get_data())
