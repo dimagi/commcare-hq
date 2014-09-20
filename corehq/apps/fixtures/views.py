@@ -176,7 +176,8 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
         domain=domain,
         tag=data_tag,
         is_global=is_global,
-        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches]
+        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
+        item_attributes=[]
     )
     transaction.save(data_type)
     return data_type
