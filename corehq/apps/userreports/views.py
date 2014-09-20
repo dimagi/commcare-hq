@@ -24,6 +24,15 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
+@domain_admin_required
+@require_POST
+def delete_report(request, domain, report_id):
+    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config.delete()
+    messages.success(request, _(u'Report "{}" deleted!').format(config.display_name))
+    return HttpResponseRedirect(reverse('create_configurable_report', args=[domain]))
+
+
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
@@ -36,6 +45,7 @@ def _edit_report_shared(request, domain, config):
     context = _shared_context(domain)
     context.update({
         'form': form,
+        'report': config,
     })
     return render(request, "userreports/edit_report_config.html", context)
 
