@@ -257,6 +257,8 @@ class FixtureDataItem(Document):
 
     def to_xml(self):
         xData = ElementTree.Element(self.data_type.tag)
+        for attribute in self.data_type.item_attributes:
+            xData.attrib[attribute] = self.item_attributes[attribute]
         for field in self.data_type.fields:
             if not self.fields.has_key(field.field_name):
                 xField = ElementTree.SubElement(xData, field.field_name)
