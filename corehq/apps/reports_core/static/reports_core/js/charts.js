@@ -90,6 +90,7 @@ var charts = (function() {
             console.error("Bad chart configuration " + config.type);
         } else {
             chartContainer.show();
+            chartContainer.empty();
             $('<h2 />').text(config.display_name).appendTo(chartContainer);
             var $svg = d3.select(chartContainer[0]).append("svg");
             $svg.attr({id: "charts", width: "400", height: "80"});
