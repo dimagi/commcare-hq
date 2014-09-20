@@ -114,7 +114,7 @@ var charts = (function() {
         for (var i = 0; i < configs.length; i++) {
             var config = configs[i];
             if (chartMap[config.type] === undefined) {
-                console.error("Bad chart configuration " + config.type);
+                console.error("Bad chart configuration: " + config.type);
             } else {
                 $('<h2 />').text(config.display_name).appendTo(chartContainer);
                 var $svg = d3.select(chartContainer[0]).append("svg");
