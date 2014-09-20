@@ -21,13 +21,20 @@ class FixtureDataType(Document):
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
+    item_attributes = StringListProperty()
 
     @classmethod
     def wrap(cls, obj):
         if not obj["doc_type"] == "FixtureDataType":
             raise ResourceNotFound
+        # Migrate fixtures without attributes on item-fields to fields with attributes
         if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
+        
+        # Migrate fixtures without attributes on items to items with attributes
+        if 'item_attributes' not in obj:
+            obj['item_attributes'] = []
+
         return super(FixtureDataType, cls).wrap(obj)
 
     # support for old fields
@@ -131,6 +138,7 @@ class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
     fields = DictProperty(FieldList)
+    item_attributes = DictProperty()
     sort_key = IntegerProperty()
 
     @classmethod
@@ -140,6 +148,8 @@ class FixtureDataItem(Document):
         if not obj["fields"]:
             return super(FixtureDataItem, cls).wrap(obj)
         
+        # Migrate old basic fields to fields with attributes
+
         is_of_new_type = False
         fields_dict = {}
 
@@ -161,6 +171,11 @@ class FixtureDataItem(Document):
             }
         if not is_of_new_type:
             obj['fields'] = fields_dict
+
+        # Migrate fixture-items to have attributes
+        if 'item_attributes' not in obj:
+            obj['item_attributes'] = {}
+
         return super(FixtureDataItem, cls).wrap(obj)
 
     @property
