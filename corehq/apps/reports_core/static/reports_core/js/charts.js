@@ -37,7 +37,7 @@ var charts = (function() {
         }
     };
 
-    var renderMultibar = function (config, data, svgSelector) {
+    var renderMultibarAggregate = function (config, data, svgSelector) {
         return function() {
             var transformedDataDict = {};
             var transformedData = [];
@@ -103,9 +103,52 @@ var charts = (function() {
         };
     };
 
+    var renderMultibar = function (config, data, svgSelector) {
+        return function() {
+            var valuesDict = {};
+            var chartData =[];
+            var i, j, current, record;
+
+            // initialize records
+            for (i = 0; i < config.y_axis_columns.length; i++) {
+                record = {
+                    key: config.y_axis_columns[i],
+                    values: []
+                };
+                valuesDict[config.y_axis_columns[i]] = record;
+                chartData.push(record);
+            }
+            for (i = 0; i < data.length; i++) {
+                current = data[i];
+                for (j = 0; j < config.y_axis_columns.length; j++) {
+                    record = valuesDict[config.y_axis_columns[j]];
+                    record.values.push({
+                        x: current[config.x_axis_column],
+                        y: current[config.y_axis_columns[j]]
+                    });
+                }
+            }
+            var chart = nv.models.multiBarChart()
+              .transitionDuration(350)
+              .reduceXTicks(true)
+              .rotateLabels(0)
+              .showControls(true)
+              .groupSpacing(0.1)
+              .stacked(true)
+            ;
+
+            d3.select(svgSelector)
+                .datum(chartData)
+                .call(chart);
+            nv.utils.windowResize(chart.update);
+            return chart;
+        };
+    };
+
     var chartMap = {
         'pie': renderPie,
-        'multi-bar': renderMultibar
+        'multibar': renderMultibar,
+        'multibar-aggregate': renderMultibarAggregate,
     };
 
     fn.render = function (configs, data, chartContainer) {
