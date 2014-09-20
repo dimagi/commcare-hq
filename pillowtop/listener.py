@@ -1,6 +1,7 @@
 from functools import wraps
 import json
 import logging
+from couchdbkit.exceptions import ResourceNotFound
 from psycopg2._psycopg import InterfaceError
 import pytz
 from datetime import datetime
@@ -297,7 +298,14 @@ class BasicPillow(object):
                         self.change_transport(tr)
         except Exception, ex:
             if not is_retry_attempt:
-                error = PillowError.get_or_create(change, self)
+                try:
+                    # This breaks the module boundary by using a show function defined in commcare-hq
+                    # but it was decided that it wasn't worth the effort to maintain the separation.
+                    meta = self.couch_db.show('domain/domain_date', change['id'])
+                except ResourceNotFound:
+                    # Show function does not exist
+                    meta = None
+                error = PillowError.get_or_create(change, self, change_meta=meta)
                 error.add_attempt(ex, sys.exc_info()[2])
                 error.save()
                 pillow_logging.exception(
