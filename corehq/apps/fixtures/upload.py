@@ -18,6 +18,9 @@ FAILURE_MESSAGES = {
     "has_no_column": ugettext_noop(
         "Workbook 'types' has no column '{column_name}'."
     ),
+    "niether_fields_nor_attributes": ugettext_noop(
+        "Lookup-tables can not have empty fields and empty properties on items. table_id '{tag}' has no fields and no properties"
+    ),
     "duplicate_tag": ugettext_noop(
         "Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
     ),
@@ -72,9 +75,10 @@ class FixtureUploadResult(object):
 
 class FixtureTableDefinitition(object):
 
-    def __init__(self, table_id, fields, is_global, uid, delete):
+    def __init__(self, table_id, fields, item_attributes, is_global, uid, delete):
         self.table_id = table_id
         self.fields = fields
+        self.item_attributes = item_attributes
         self.is_global = is_global
         self.uid = uid
         self.delete = delete
@@ -86,8 +90,10 @@ class FixtureTableDefinitition(object):
             raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
 
         field_names = row_dict.get('field')
-        if field_names is None:
-            raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
+        item_attributes = row_dict.get('property')
+
+        if field_names is None and item_attributes is None:
+            raise ExcelMalformatException(_(FAILURE_MESSAGES['niether_fields_nor_attributes']).format(tag=tag))
 
         def _get_field_properties(field, prop_key):
             if row_dict.has_key(prop_key):
@@ -108,9 +114,11 @@ class FixtureTableDefinitition(object):
                 properties=_get_field_properties(field, 'field {count}'.format(count=i + 1))
             ) for i, field in enumerate(field_names)
         ]
+
         return FixtureTableDefinitition(
             table_id=tag,
             fields=fields,
+            item_attributes = item_attributes,
             is_global=row_dict.get('is_global', False),
             uid=row_dict.get('UID'),
             delete=(row_dict.get(DELETE_HEADER) or '').lower() == 'y',
@@ -223,6 +231,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                 is_global=table_def.is_global,
                 tag=table_def.table_id,
                 fields=table_def.fields,
+                item_attributes=table_def.item_attributes
             )
             try:
                 tagged_fdt = FixtureDataType.fixture_tag_exists(domain, tag)
@@ -239,6 +248,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                     data_type = new_data_type
 
                 data_type.fields = table_def.fields
+                data_type.item_attributes = table_def.item_attributes
                 data_type.is_global = table_def.is_global
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
@@ -258,6 +268,16 @@ def run_upload(domain, workbook, replace=False, task=None):
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
                 item_fields_list = di['field'].keys()
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
+                if len(not_in_sheet) > 0:
+                    error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
+                    raise ExcelMalformatException(error_message)
+                if len(not_in_types) > 0:
+                    error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
+                    raise ExcelMalformatException(error_message)
+
+                # check that this item has all the properties listen in its 'types' definition
+                item_attributes_list = di['property'].keys()
+                not_in_sheet, not_in_types = diff_lists(item_attributes_list, data_type.item_attributes)
                 if len(not_in_sheet) > 0:
                     error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
                     raise ExcelMalformatException(error_message)
@@ -333,10 +353,12 @@ def run_upload(domain, workbook, replace=False, task=None):
                             field_list=field_list
                         )
 
+                item_attributes = di['property']
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
                     fields=item_fields,
+                    item_attributes=item_attributes,
                     sort_key=sort_key
                 )
                 try:
@@ -346,6 +368,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                         old_data_item = new_data_item
                         pass
                     old_data_item.fields = item_fields
+                    old_data_item.item_attributes = item_attributes
                     if old_data_item.domain != domain or not old_data_item.data_type_id == data_type.get_id:
                         old_data_item = new_data_item
                         return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
