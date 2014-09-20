@@ -2,13 +2,34 @@ var charts = (function() {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {
+            // preaggregate the data in the case of multiple levels of aggregation
+            // todo: this could be done on the server side too which is probably more efficient
+            var aggregatedData = [];
+            var aggregatedDataDict = {};
+            var current, aggregation, record;
+            for (var i = 0; i < data.length; i++) {
+                current = data[i];
+                aggregation = current[config.aggregation_column];
+                if (!aggregatedDataDict.hasOwnProperty(aggregation)) {
+                    record = {
+                        x: aggregation,
+                        y: 0
+                    };
+                    aggregatedDataDict[aggregation] = record;
+                    aggregatedData.push(record);
+                } else {
+                    record = aggregatedDataDict[aggregation];
+                }
+                record.y += current[config.value_column];
+            }
+
             var chart = nv.models.pieChart()
-                .x(function(d) { return d[config.aggregation_column]; })
-                .y(function(d) { return d[config.value_column]; })
+                .x(function(d) { return d.x; })
+                .y(function(d) { return d.y; })
                 .showLabels(true);
 
             d3.select(svgSelector)
-                .datum(data)
+                .datum(aggregatedData)
                 .transition()
                 .duration(500)
                 .call(chart)
@@ -26,7 +47,8 @@ var charts = (function() {
             var record, primary, current, secondary, value;  // loop variables
 
             // first create intermediate data structures to make it easy to generate
-            // the formatted chart data
+            // the formatted chart data.
+            // this also aggregates if there are any duplicate key pairs in the data set.
             for (var i = 0; i < data.length; i++) {
                 current = data[i];
                 primary = current[config.primary_aggregation];
@@ -36,8 +58,11 @@ var charts = (function() {
                 } else {
                     record = transformedDataDict[primary];
                 }
+                if (!record.hasOwnProperty(current[config.secondary_aggregation])) {
+                    record[current[config.secondary_aggregation]] = 0;
+                }
                 secondaryValues[current[config.secondary_aggregation]] = null;
-                record[current[config.secondary_aggregation]] = current[config.value_column];
+                record[current[config.secondary_aggregation]] += current[config.value_column];
             }
 
             // this annoying extra nested loop is because nvd3 appears to choke if the data
@@ -96,7 +121,7 @@ var charts = (function() {
                 $('<h2 />').text(config.display_name).appendTo(chartContainer);
                 var $svg = d3.select(chartContainer[0]).append("svg");
                 var id = 'chart-' + i;
-                $svg.attr({id: id, width: "400", height: "80"});
+                $svg.attr({id: id, width: "50%", height: "200"});
                 nv.addGraph(chartMap[config.type](config, data, '#' + id));
             }
         }
