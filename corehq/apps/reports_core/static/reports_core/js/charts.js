@@ -90,6 +90,7 @@ var charts = (function() {
             console.error("Bad chart configuration " + config.type);
         } else {
             chartContainer.show();
+            $('<h2 />').text(config.display_name).appendTo(chartContainer);
             nv.addGraph(chartMap[config.type](config, data, chartContainer));
         }
     }
