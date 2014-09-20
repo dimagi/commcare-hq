@@ -86,7 +86,7 @@ class ReportConfiguration(Document):
     aggregation_columns = StringListProperty()
     filters = ListProperty()
     columns = ListProperty()
-    graph_config = DictProperty()
+    graphs = ListProperty()
 
     @property
     @memoized

@@ -40,7 +40,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     aggregation_columns = JsonField(expected_type=list)
     filters = JsonField(expected_type=list)
     columns = JsonField(expected_type=list)
-    graph_config = JsonField(expected_type=dict)
+    graphs = JsonField(expected_type=list)
 
     def __init__(self, domain, instance=None, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)

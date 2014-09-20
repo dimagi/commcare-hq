@@ -1,13 +1,13 @@
 var charts = (function() {
     var fn = {};
-    var renderPie = function (config, data, container) {
+    var renderPie = function (config, data, svgSelector) {
         return function () {
             var chart = nv.models.pieChart()
                 .x(function(d) { return d[config.aggregation_column]; })
                 .y(function(d) { return d[config.value_column]; })
                 .showLabels(true);
 
-            d3.select('#charts')
+            d3.select(svgSelector)
                 .datum(data)
                 .transition()
                 .duration(500)
@@ -18,7 +18,7 @@ var charts = (function() {
         }
     };
 
-    var renderMultibar = function (config, data, container) {
+    var renderMultibar = function (config, data, svgSelector) {
         return function() {
             var transformedDataDict = {};
             var transformedData = [];
@@ -72,7 +72,7 @@ var charts = (function() {
               .groupSpacing(0.1)
             ;
 
-            d3.select('#charts')
+            d3.select(svgSelector)
                 .datum(transformedData)
                 .call(chart);
             nv.utils.windowResize(chart.update);
@@ -85,16 +85,20 @@ var charts = (function() {
         'multi-bar': renderMultibar
     };
 
-    fn.render = function (config, data, chartContainer) {
-        if (chartMap[config.type] === undefined) {
-            console.error("Bad chart configuration " + config.type);
-        } else {
-            chartContainer.show();
-            chartContainer.empty();
-            $('<h2 />').text(config.display_name).appendTo(chartContainer);
-            var $svg = d3.select(chartContainer[0]).append("svg");
-            $svg.attr({id: "charts", width: "400", height: "80"});
-            nv.addGraph(chartMap[config.type](config, data, chartContainer));
+    fn.render = function (configs, data, chartContainer) {
+        chartContainer.show();
+        chartContainer.empty();
+        for (var i = 0; i < configs.length; i++) {
+            var config = configs[i];
+            if (chartMap[config.type] === undefined) {
+                console.error("Bad chart configuration " + config.type);
+            } else {
+                $('<h2 />').text(config.display_name).appendTo(chartContainer);
+                var $svg = d3.select(chartContainer[0]).append("svg");
+                var id = 'chart-' + i;
+                $svg.attr({id: id, width: "400", height: "80"});
+                nv.addGraph(chartMap[config.type](config, data, '#' + id));
+            }
         }
     }
     return fn;

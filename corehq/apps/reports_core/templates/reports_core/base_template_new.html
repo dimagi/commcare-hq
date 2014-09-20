@@ -45,7 +45,7 @@
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
         });
-        var graphConfig = {{ report.spec.graph_config|JSON }};
+        var graphSpecs = {{ report.spec.graphs|JSON }};
         $('#report-filters').submit(function(event) {
             var postData = $(this).serialize();
             $.ajax({
@@ -55,9 +55,9 @@
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
                     reportTables.render();
-                    if (graphConfig !== null) {
+                    if (graphSpecs !== null && graphSpecs.length > 0) {
                         // draw graph
-                        charts.render(graphConfig, data.aaData, $("#chart-container"));
+                        charts.render(graphSpecs, data.aaData, $("#chart-container"));
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
