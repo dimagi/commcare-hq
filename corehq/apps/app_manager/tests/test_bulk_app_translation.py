@@ -6,10 +6,8 @@ from django.test import TestCase
 from corehq import Domain
 
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module, \
+from corehq.apps.app_manager.models import Application, DetailColumn, APP_V1, Module, \
     get_app
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.formdetails.readable import FormQuestion
 from corehq.apps.users.models import WebUser
 
 
