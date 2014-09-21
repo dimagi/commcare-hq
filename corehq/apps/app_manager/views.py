@@ -2660,6 +2660,7 @@ def _get_translation(id, lang, form, media=None):
         except StopIteration:
             return ""
 
+
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
 

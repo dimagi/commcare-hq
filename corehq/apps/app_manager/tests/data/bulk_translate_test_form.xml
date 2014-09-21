@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Form0-0</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/E8D47E58-B33C-4448-A8D1-8A5705FEF034" uiVersion="1" version="1" name="Form0-0">
+					<question1 />
+					<question2 />
+					<question3 />
+					<question4 />
+					<question14 />
+					<question15 />
+					<question16 />
+					<question17 />
+					<question18 />
+					<question19 />
+					<question13>
+						<question6 />
+						<question5 />
+						<question7 />
+						<question8 />
+					</question13>
+					<question9 />
+					<question10 />
+					<question11 />
+					<question12 />
+				</data>
+			</instance>
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" />
+			<bind nodeset="/data/question3" />
+			<bind nodeset="/data/question4" />
+			<bind nodeset="/data/question14" type="binary" />
+			<bind nodeset="/data/question15" type="binary" />
+			<bind nodeset="/data/question16" type="binary" />
+			<bind nodeset="/data/question17" type="geopoint" />
+			<bind nodeset="/data/question18" type="barcode" />
+			<bind nodeset="/data/question19" type="xsd:string" />
+			<bind nodeset="/data/question13" />
+			<bind nodeset="/data/question13/question6" type="xsd:string" />
+			<bind nodeset="/data/question13/question5" type="xsd:int" />
+			<bind nodeset="/data/question13/question7" type="xsd:double" />
+			<bind nodeset="/data/question13/question8" type="xsd:long" />
+			<bind nodeset="/data/question9" type="xsd:date" />
+			<bind nodeset="/data/question10" type="xsd:time" />
+			<bind nodeset="/data/question11" type="xsd:dateTime" />
+			<bind nodeset="/data/question12" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>question1</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+						<value form="audio">jr://file/commcare/audio/data/question1.mp3</value>
+						<value form="video">jr://file/commcare/video/data/question1.3gp</value>
+					</text>
+					<text id="question2-label">
+						<value>question2</value>
+					</text>
+					<text id="question3-label">
+						<value>question3</value>
+					</text>
+					<text id="question3-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="question3-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="question4-label">
+						<value>question4</value>
+					</text>
+					<text id="question4-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="question4-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="question13/question14-label">
+						<value>question14</value>
+					</text>
+					<text id="question15-label">
+						<value>question15</value>
+					</text>
+					<text id="question16-label">
+						<value>question16</value>
+					</text>
+					<text id="question17-label">
+						<value>question17</value>
+					</text>
+					<text id="question18-label">
+						<value>question18</value>
+					</text>
+					<text id="question19-label">
+						<value>question19</value>
+					</text>
+					<text id="question13-label">
+						<value>question13</value>
+					</text>
+					<text id="question6-label">
+						<value>question6</value>
+					</text>
+					<text id="question5-label">
+						<value>question5</value>
+					</text>
+					<text id="question7-label">
+						<value>question7</value>
+					</text>
+					<text id="question8-label">
+						<value>question8</value>
+					</text>
+					<text id="question9-label">
+						<value>question9</value>
+					</text>
+					<text id="question10-label">
+						<value>question10</value>
+					</text>
+					<text id="question11-label">
+						<value>question11</value>
+					</text>
+				</translation>
+				<translation lang="fra">
+					<text id="question1-label">
+						<value>question1</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+						<value form="audio">jr://file/commcare/audio/data/question1.mp3</value>
+						<value form="video">jr://file/commcare/video/data/question1.3gp</value>
+					</text>
+					<text id="question2-label">
+						<value>question2</value>
+					</text>
+					<text id="question3-label">
+						<value>question3</value>
+					</text>
+					<text id="question3-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="question3-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="question4-label">
+						<value>question4</value>
+					</text>
+					<text id="question4-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="question4-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="question13/question14-label">
+						<value>question14</value>
+					</text>
+					<text id="question15-label">
+						<value>question15</value>
+					</text>
+					<text id="question16-label">
+						<value>question16</value>
+					</text>
+					<text id="question17-label">
+						<value>question17</value>
+					</text>
+					<text id="question18-label">
+						<value>question18</value>
+					</text>
+					<text id="question19-label">
+						<value>question19</value>
+					</text>
+					<text id="question13-label">
+						<value>question13</value>
+					</text>
+					<text id="question6-label">
+						<value>question6</value>
+					</text>
+					<text id="question5-label">
+						<value>question5</value>
+					</text>
+					<text id="question7-label">
+						<value>question7</value>
+					</text>
+					<text id="question8-label">
+						<value>question8</value>
+					</text>
+					<text id="question9-label">
+						<value>question9</value>
+					</text>
+					<text id="question10-label">
+						<value>question10</value>
+					</text>
+					<text id="question11-label">
+						<value>question11</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
+		</input>
+		<trigger ref="/data/question2" appearance="minimal">
+			<label ref="jr:itext('question2-label')" />
+		</trigger>
+		<select1 ref="/data/question3">
+			<label ref="jr:itext('question3-label')" />
+			<item>
+				<label ref="jr:itext('question3-item1-label')" />
+				<value>item1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question3-item2-label')" />
+				<value>item2</value>
+			</item>
+		</select1>
+		<select ref="/data/question4">
+			<label ref="jr:itext('question4-label')" />
+			<item>
+				<label ref="jr:itext('question4-item1-label')" />
+				<value>item1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question4-item2-label')" />
+				<value>item2</value>
+			</item>
+		</select>
+		<upload ref="/data/question14" mediatype="image/*">
+			<label ref="jr:itext('question13/question14-label')" />
+		</upload>
+		<upload ref="/data/question15" mediatype="audio/*">
+			<label ref="jr:itext('question15-label')" />
+		</upload>
+		<upload ref="/data/question16" mediatype="video/*">
+			<label ref="jr:itext('question16-label')" />
+		</upload>
+		<input ref="/data/question17">
+			<label ref="jr:itext('question17-label')" />
+		</input>
+		<input ref="/data/question18">
+			<label ref="jr:itext('question18-label')" />
+		</input>
+		<secret ref="/data/question19">
+			<label ref="jr:itext('question19-label')" />
+		</secret>
+		<group ref="/data/question13">
+			<label ref="jr:itext('question13-label')" />
+			<input ref="/data/question13/question6" appearance="numeric">
+				<label ref="jr:itext('question6-label')" />
+			</input>
+			<input ref="/data/question13/question5">
+				<label ref="jr:itext('question5-label')" />
+			</input>
+			<input ref="/data/question13/question7">
+				<label ref="jr:itext('question7-label')" />
+			</input>
+			<input ref="/data/question13/question8">
+				<label ref="jr:itext('question8-label')" />
+			</input>
+		</group>
+		<input ref="/data/question9">
+			<label ref="jr:itext('question9-label')" />
+		</input>
+		<input ref="/data/question10">
+			<label ref="jr:itext('question10-label')" />
+		</input>
+		<input ref="/data/question11">
+			<label ref="jr:itext('question11-label')" />
+		</input>
+	</h:body>
+</h:html>
