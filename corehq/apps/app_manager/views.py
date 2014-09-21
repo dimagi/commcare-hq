@@ -2683,7 +2683,7 @@ def download_bulk_app_translations(request, domain, app_id):
         # Add module to the first sheet
         row_data = cleaned_row(("Module", module_string)+\
                                 tuple(module.name.get(lang, "") for lang in app.langs)+\
-                                (module.media_image, module.media_audio, module.unique_id))
+                                (module.media_audio, module.media_image, module.unique_id))
         rows["Modules_and_forms"].append(row_data)
 
         # Populate module sheet
@@ -2720,7 +2720,7 @@ def download_bulk_app_translations(request, domain, app_id):
             # This next line is same logic as above :(
             first_sheet_row = cleaned_row(("Form", form_string)+\
                                             tuple(form.name.get(lang, "") for lang in app.langs)+\
-                                            (form.media_image, form.media_audio, form.unique_id))
+                                            (form.media_audio, form.media_image, form.unique_id))
             rows["Modules_and_forms"].append(first_sheet_row)
 
             # TODO: This formatting is a mess
@@ -2740,7 +2740,7 @@ def download_bulk_app_translations(request, domain, app_id):
                     id = question['value'].split("/")[-1]
                     labels = tuple(questions_by_lang[l][i]['label'] for l in app.langs)
                     media_paths = []
-                    for media in ['image', 'audio', 'video']:
+                    for media in ['audio', 'image', 'video']:
                         for lang in app.langs:
                             media_paths.append(_get_translation(id, lang, xform, media=media))
                     row = (id,) + labels + tuple(media_paths)
@@ -2753,7 +2753,7 @@ def download_bulk_app_translations(request, domain, app_id):
                             labels = tuple(questions_by_lang[l][i]['options'][j]['label'] for l in app.langs)
                             # TODO: Get rid of this repeated media logic
                             media_paths = []
-                            for media in ['image', 'audio', 'video']:
+                            for media in ['audio', 'image', 'video']:
                                 for lang in app.langs:
                                     media_paths.append(_get_translation(id, lang, xform, media=media))
                             select_row = (select_id,) + labels + tuple(media_paths)
@@ -2832,10 +2832,18 @@ def _process_modules_and_forms_sheet(rows, app):
             continue
 
         module_index = int(identifying_text[0].replace("module", "")) - 1
-        document = app.get_module(module_index)
+        try:
+            document = app.get_module(module_index)
+        except ModuleNotFoundException, e:
+            messages.error('Invalid module in row "%s", skipping row.' % row.get('sheet_name'))
+            continue
         if len(identifying_text) == 2:
             form_index = int(identifying_text[1].replace("form", "")) - 1
-            document = document.get_form(form_index)
+            try:
+                document = document.get_form(form_index)
+            except FormNotFoundException, e:
+                messages.error('Invalid form in row "%s", skipping row.' % row.get('sheet_name'))
+                continue
 
         if _has_at_least_one_translation(row, 'default', app.langs):
             for lang in app.langs:
@@ -2996,12 +3004,12 @@ def _update_form_translations(sheet, rows, missing_cols, app):
             text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
 
             # Create text node if it doesn't already exist and translations are to be updated
-            not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'image', 'audio', 'video']])
+            not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'audio', 'image', 'video']])
             if text_node.exists() == False and len(not_none_translations) > 0:
                 text_node = _make_text_nodes(question_id, itext, lang)
 
             # Add or remove translations
-            for trans_type in ['default', 'image', 'audio', 'video']:
+            for trans_type in ['default', 'audio', 'image', 'video']:
 
                 if trans_type == 'default':
                     attributes = None
