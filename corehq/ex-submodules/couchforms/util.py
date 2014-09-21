@@ -435,6 +435,7 @@ class SubmissionPost(object):
                             xform_id=instance.get_id,
                             timestamp=now,
                             saved=False,
+                            domain=domain,
                         )
                         unfinished_submission_stub.save()
                         cases = case_db.get_changed()
