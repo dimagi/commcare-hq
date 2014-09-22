@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.core.urlresolvers import reverse
 from django import forms
 
-from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
+from crispy_forms.bootstrap import InlineField, FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
-from crispy_forms import layout as crispy
+from crispy_forms.layout import Layout, Fieldset, Div, HTML
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -128,11 +128,12 @@ class CustomDataFieldsMixin(object):
 
 class CustomDataEditor(object):
     def __init__(self, field_type, domain, existing_custom_data=None,
-            post_dict=None, required_only=False):
+            post_dict=None, required_only=False, edit_fields_model_urlname=None):
         self.field_type = field_type
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
+        self.edit_fields_model_urlname = edit_fields_model_urlname
         self.form = self.init_form(post_dict)
 
     @property
@@ -185,6 +186,7 @@ class CustomDataEditor(object):
             if slug not in field_names
         ] if self.existing_custom_data is not None else []
 
+
         CustomDataForm.helper.layout = Layout(
             Fieldset(
                 _("Additional Information"),
@@ -192,6 +194,15 @@ class CustomDataEditor(object):
             ),
             Fieldset(
                 _("Uncatagorized Information") if len(help_div) else '',
+                Div(
+                    HTML("""
+                        <strong>Warning!</strong> This data is not part of the specified user fields and will be deleted if you save.
+                        You can add them <a href="{}">here</a> to prevent this.
+                    """.format(reverse(
+                        self.edit_fields_model_urlname, args=[self.domain]
+                    ))),
+                    css_class="alert alert-error",
+                ),
                 *help_div
             )
         )

@@ -48,6 +48,7 @@ from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.util import get_download_context, expose_download
+from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -70,7 +71,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_type="UserFields",
+            field_type=UserFieldsView.field_type,
+            edit_fields_model_urlname=UserFieldsView.urlname,
             domain=self.domain,
             existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
@@ -599,9 +601,10 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            "UserFields",
+            UserFieldsView.field_type,
             self.domain,
             required_only=True,
+            existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
