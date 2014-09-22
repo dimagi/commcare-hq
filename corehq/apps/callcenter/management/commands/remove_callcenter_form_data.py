@@ -3,12 +3,23 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
-from corehq.apps.callcenter.utils import get_call_center_domains, get_or_create_mapping
+from corehq.apps.callcenter.utils import get_call_center_domains
 from ctable.models import SqlExtractMapping
 from ctable.util import get_extractor
 from django.conf import settings
 
 mapping_names = ('cc_case_updates', 'cc_case_ownership')
+
+
+def get_mapping(domain, mapping_name):
+    mapping = SqlExtractMapping.by_name(domain, mapping_name)
+    if not mapping:
+        mapping = SqlExtractMapping()
+
+    mapping.domains = [domain]
+    mapping.name = mapping_name
+
+    return mapping
 
 
 class Command(BaseCommand):
@@ -39,7 +50,7 @@ class Command(BaseCommand):
         for mapping_name in mapping_names:
             for domain in domains:
                 print("Processing domain", domain)
-                mapping = get_or_create_mapping(domain, mapping_name)
+                mapping = get_mapping(domain, mapping_name)
 
                 if mapping.table_name in all_tables:
                     print("\tDropping SQL table", mapping.table_name)

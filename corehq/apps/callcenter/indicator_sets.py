@@ -24,7 +24,6 @@ AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-B
 TYPE_DURATION = 'duration'
 TYPE_SUM = 'sum'
 
-
 PER_DOMAIN_FORM_INDICATORS = {
     'aarohi': [
         {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': AAROHI_MOTHER_FORM},
@@ -67,14 +66,25 @@ class FakeQuerySet(object):
 
 class CallCenterIndicators(object):
     """
-    Process to figure which users we need to do queries for:
+    Data source class that provides the CallCenter / Supervisor indicators for users of a domain.
 
-    1. get all owner IDs for current user (user ID + group IDs)
-    2. get all CallCenter cases owned by user. This is the full set of users that should
-       be included in the final data set
-    3. get all cached data for the users from step 2
-    4. Users who we need to calculate data for = (users from step 2) - (cached users)
+    Returned data will only include data for users who are 'assigned' to the current user (passed in via
+    the init method). A user is 'assigned' to the current user in one of two ways:
 
+    1. Their 'user case' is owned by the current user.
+    2. Their 'user case' is owned by a case sharing group which the current user is part of.
+
+    The data that is generated is valid for the current day so is cached on a per user basis.
+    The following process is used to figure which users we need to do queries for:
+
+    1. Get all owner IDs for current user (user ID + group IDs)
+    2. Get all CallCenter cases owned by the owners in 1. This is the full set of users that should
+       be included in the final data set.
+    3. Get all cached data for the users.
+    4. Users who we need to calculate data for = (all users assigned to current user) - (cached users)
+
+    See https://help.commcarehq.or/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application
+    for user docs.
     """
     no_value = 0
     name = 'call-center'
@@ -120,7 +130,6 @@ class CallCenterIndicators(object):
         relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
 
         ids = {case.hq_user_id for case in relevant_cases}
-        logger.debug('ALL user ids: %s', ids)
         return ids
 
     @property
@@ -131,7 +140,6 @@ class CallCenterIndicators(object):
         """
         cached = self.cache.get_many([cache_key(user_id) for user_id in self.all_user_ids])
         data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
-        logger.debug('Cached data: %s', data)
         return data
 
     @property
@@ -141,8 +149,21 @@ class CallCenterIndicators(object):
         :return: Set of user_ids for whom we need to generate data
         """
         ids = self.all_user_ids - set(self.cached_data.keys())
-        logger.debug('Users needing data: %s', ids)
         return ids
+
+    @property
+    @memoized
+    def owners_needing_data(self):
+        """
+        :return: List combining user_ids and case sharing group ids
+        """
+        user_to_groups = self.user_id_to_groups
+        owners = set()
+        for user_id in self.users_needing_data:
+            owners.add(user_id)
+            owners = owners.union(user_to_groups[user_id])
+
+        return owners
 
     @property
     @memoized
@@ -152,7 +173,6 @@ class CallCenterIndicators(object):
         """
         case_types = set(CaseTypeMixin.get_case_types(self.domain.name))
         case_types.remove(self.cc_case_type)
-        logger.debug('Case types: %s', case_types)
         return case_types
 
     @property
@@ -168,27 +188,12 @@ class CallCenterIndicators(object):
     @property
     @memoized
     def user_id_to_groups(self):
-        mapping = defaultdict(list)
+        mapping = defaultdict(set)
         for group in self.case_sharing_groups:
             for user_id in group.users:
-                mapping[user_id].append(group.get_id)
+                mapping[user_id].add(group.get_id)
 
         return mapping
-
-    @property
-    @memoized
-    def owners_needing_data(self):
-        """
-        :return: List combining user_ids and case sharing group ids
-        """
-        user_to_groups = self.user_id_to_groups
-        owners = set()
-        for user_id in self.users_needing_data:
-            owners.add(user_id)
-            owners = owners.union(user_to_groups[user_id])
-
-        logger.debug('owners needing data: %s', owners)
-        return owners
 
     @property
     @memoized
@@ -197,8 +202,8 @@ class CallCenterIndicators(object):
 
     def _add_data(self, queryset, indicator_name, transformer=None):
         """
-        Given a QuerySet containing rows containing 'user_id' and 'count' values for an indicator
-        add them to the data set. If any user ID's are missing from the QuerySet set the value
+        Given a QuerySet containing values for an indicator add them to the data set.
+        If any user ID's are missing from the QuerySet set the value
         of the indicator for those users to a default value (self,no_value).
 
         QuerySet expected to contain the following columns:
@@ -207,15 +212,12 @@ class CallCenterIndicators(object):
 
         :param queryset:        The QuerySet containing the calculated indicator data.
         :param indicator_name:  The name of the indicator.
-        :param user_key:        The name of the column in the QuerySet that contains the user_id.
-        :param value_key:       The name of the column in the QuerySet that contains the value.
         :param transformer:     Function to apply to each value before adding it to the dataset.
         """
         seen_users = set()
 
         for row in queryset.iterator():
             user_id = row['user_id']
-            logger.debug('Appending indicator: %s - %s', user_id, indicator_name)
             val = transformer(row['count']) if transformer else row['count']
             self.data[user_id][indicator_name] = val
             seen_users.add(user_id)
@@ -223,13 +225,12 @@ class CallCenterIndicators(object):
         # add data for user_ids with no data
         unseen_users = self.users_needing_data - seen_users
         for user_id in unseen_users:
-            logger.debug('Appending zero values: %s - %s', user_id, indicator_name)
             self.data[user_id].setdefault(indicator_name, self.no_value)
 
     def _add_case_data(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
         Given a QuerySet containing data for case based indicators generate the 'total' and
-        'by_case' indicators before adding them to the dataset.
+        'by_case' indicators before adding them to the data set.
 
         QuerySet expected to contain the following columns:
         *  case_owner:  ID of the case owner - User or Group.
@@ -438,6 +439,8 @@ class CallCenterIndicators(object):
 
             cache_timeout = seconds_till_midnight(self.timezone)
             for user_id, indicators in self.data.iteritems():
+                # only include data for users that we are expecting. There may be partial
+                # data for other users who are part of the same case sharing groups.
                 if user_id in self.users_needing_data:
                     user_case_id = self.user_to_case_map[user_id]
                     if user_case_id:
@@ -447,14 +450,10 @@ class CallCenterIndicators(object):
                             domain=self.domain.name,
                             indicators=indicators
                         )
-                        logger.debug('Adding and caching data for user: %s', user_id)
                         cache.set(cache_key(user_id), cache_data.to_json(), cache_timeout)
                         final_data[user_case_id] = indicators
-                else:
-                    logging.debug("We've got data we don't need for user: %s", user_id)
 
         for cache_data in self.cached_data.itervalues():
-            logger.debug('Adding cached data for user: %s', cache_data.user_id)
             final_data[cache_data.case_id] = cache_data.indicators
 
         return final_data

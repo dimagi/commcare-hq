@@ -49,8 +49,7 @@ def gen_fixture(user, indicator_set):
     fixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
     for case_id, indicators in data.iteritems():
-        elem_name = 'case'
-        group = ElementTree.SubElement(indicators_node, elem_name, attrib={'id': case_id})
+        group = ElementTree.SubElement(indicators_node, 'case', attrib={'id': case_id})
         for name, value in indicators.items():
             indicator = ElementTree.SubElement(group, name)
             indicator.text = str(value)

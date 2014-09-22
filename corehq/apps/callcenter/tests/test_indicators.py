@@ -1,3 +1,4 @@
+from collections import namedtuple
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, cache_key, CachedIndicators
@@ -34,6 +35,18 @@ def create_domain_and_user(domain_name, username):
     return domain, user
 
 
+def create_cases_for_types(domain, case_types):
+    for i, case_type in enumerate(case_types):
+        submit_case_blocks(
+            CaseBlock(
+                create=True,
+                case_id='person%s' % i,
+                case_type=case_type,
+                user_id='user%s' % i,
+                version=V2,
+            ).as_string(), domain)
+
+
 def get_indicators(prefix, values, infix=None, is_legacy=False):
     ranges = ['week0', 'week1', 'month0', 'month1']
     data = {}
@@ -50,24 +63,32 @@ def get_indicators(prefix, values, infix=None, is_legacy=False):
     return data
 
 
-def expected_standard_indicators(include_case_types=True):
-    expected = {'totalCases': 5L}
-    expected.update(get_indicators('formsSubmitted', [2L, 4L, 7L, 0L], is_legacy=True))
-    expected.update(get_indicators('forms_submitted', [2L, 4L, 7L, 0L]))
-    expected.update(get_indicators('casesUpdated', [0L, 1L, 3L, 5L], is_legacy=True))
-    expected.update(get_indicators('cases_total', [4L, 4L, 6L, 5L]))
-    expected.update(get_indicators('cases_opened', [0L, 1L, 3L, 5L]))
-    expected.update(get_indicators('cases_closed', [0L, 0L, 2L, 2L]))
-    expected.update(get_indicators('cases_active', [0L, 1L, 3L, 5L]))
-    if include_case_types:
-        expected.update(get_indicators('cases_total', [1L, 1L, 3L, 0L], infix='person'))
-        expected.update(get_indicators('cases_total', [3L, 3L, 3L, 5L], infix='dog'))
-        expected.update(get_indicators('cases_opened', [0L, 1L, 3L, 0L], infix='person'))
-        expected.update(get_indicators('cases_opened', [0L, 0L, 0L, 5L], infix='dog'))
-        expected.update(get_indicators('cases_closed', [0L, 0L, 2L, 0L], infix='person'))
-        expected.update(get_indicators('cases_closed', [0L, 0L, 0L, 2L], infix='dog'))
-        expected.update(get_indicators('cases_active', [0L, 1L, 3L, 0L], infix='person'))
-        expected.update(get_indicators('cases_active', [0L, 0L, 0L, 5L], infix='dog'))
+StaticIndicators = namedtuple('StaticIndicators', 'name, values, is_legacy, infix')
+
+
+def expected_standard_indicators(no_data=False):
+    expected = {'totalCases': 0L if no_data else 5L}
+    expected_values = [
+        StaticIndicators('formsSubmitted', [2L, 4L, 7L, 0L], True, None),
+        StaticIndicators('forms_submitted', [2L, 4L, 7L, 0L], False, None),
+        StaticIndicators('casesUpdated', [0L, 1L, 3L, 5L], True, None),
+        StaticIndicators('cases_total', [4L, 4L, 6L, 5L], False, None),
+        StaticIndicators('cases_opened', [0L, 1L, 3L, 5L], False, None),
+        StaticIndicators('cases_closed', [0L, 0L, 2L, 2L], False, None),
+        StaticIndicators('cases_active', [0L, 1L, 3L, 5L], False, None),
+        StaticIndicators('cases_total', [1L, 1L, 3L, 0L], False, 'person'),
+        StaticIndicators('cases_total', [3L, 3L, 3L, 5L], False, 'dog'),
+        StaticIndicators('cases_opened', [0L, 1L, 3L, 0L], False, 'person'),
+        StaticIndicators('cases_opened', [0L, 0L, 0L, 5L], False, 'dog'),
+        StaticIndicators('cases_closed', [0L, 0L, 2L, 0L], False, 'person'),
+        StaticIndicators('cases_closed', [0L, 0L, 0L, 2L], False, 'dog'),
+        StaticIndicators('cases_active', [0L, 1L, 3L, 0L], False, 'person'),
+        StaticIndicators('cases_active', [0L, 0L, 0L, 5L], False, 'dog')
+    ]
+    for val in expected_values:
+        values = [0L] * 4 if no_data else val.values
+        expected.update(get_indicators(val.name, values, val.infix, val.is_legacy))
+
     return expected
 
 
@@ -75,11 +96,11 @@ class BaseCCTests(TestCase):
     def setUp(self):
         locmem_cache.clear()
 
-    def _test_indicators(self, indicator_set, expected):
+    def _test_indicators(self, user, indicator_set, expected):
         data = indicator_set.get_data()
         user_case = get_case_by_domain_hq_user_id(
-            indicator_set.user.domain,
-            indicator_set.user.user_id,
+            user.domain,
+            user.user_id,
             include_docs=True
         )
         case_id = user_case.case_id
@@ -106,34 +127,12 @@ class CallCenterTests(BaseCCTests):
         cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
         load_data(cls.cc_domain.name, cls.cc_user.user_id)
         cls.cc_user_no_data = CommCareUser.create(cls.cc_domain.name, 'user3', '***')
-        user_case_no_data = get_case_by_domain_hq_user_id(
-            cls.cc_domain.name,
-            cls.cc_user_no_data.user_id,
-            include_docs=True
-        )
-        cls.cc_case_id_no_data = user_case_no_data.case_id
 
         cls.aarohi_domain, cls.aarohi_user = create_domain_and_user('aarohi', 'user2')
         load_custom_data(cls.aarohi_domain.name, cls.aarohi_user.user_id, xmlns=AAROHI_MOTHER_FORM)
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        submit_case_blocks(
-            CaseBlock(
-                create=True,
-                case_id='person1',
-                case_type='person',
-                user_id='user1',
-                version=V2,
-            ).as_string(), 'callcentertest')
-
-        submit_case_blocks(
-            CaseBlock(
-                create=True,
-                case_id='dog1',
-                case_type='dog',
-                user_id='user1',
-                version=V2,
-            ).as_string(), 'callcentertest')
+        create_cases_for_types('callcentertest', ['person', 'dog'])
 
     @classmethod
     def tearDownClass(cls):
@@ -141,21 +140,17 @@ class CallCenterTests(BaseCCTests):
         cls.aarohi_domain.delete()
         clear_data()
 
-    def _test_indicators(self, indicator_set, expected):
-        super(CallCenterTests, self)._test_indicators(indicator_set, expected)
-        if indicator_set.domain.name == self.cc_domain.name:
-            data = indicator_set.get_data()
-            self.assertIn(self.cc_case_id_no_data, data)
-            data = data.get(self.cc_case_id_no_data)
-            for k, v in data.items():
-                self.assertEqual(0, v)
+    def check_cc_indicators(self, indicator_set, expected):
+        super(CallCenterTests, self)._test_indicators(self.cc_user, indicator_set, expected)
+        expected_no_data = expected_standard_indicators(no_data=True)
+        super(CallCenterTests, self)._test_indicators(self.cc_user_no_data, indicator_set, expected_no_data)
 
     def test_standard_indicators(self):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
-        self._test_indicators(indicator_set, expected_standard_indicators())
+        self.check_cc_indicators(indicator_set, expected_standard_indicators())
 
     def test_custom_indicators(self):
         expected = {'totalCases': 0L}
@@ -173,6 +168,7 @@ class CallCenterTests(BaseCCTests):
         expected.update(get_indicators('motherDuration', [3L, 4L, 4L, 0L], is_legacy=True))
 
         self._test_indicators(
+            self.aarohi_user,
             CallCenterIndicators(self.aarohi_domain, self.aarohi_user, custom_cache=locmem_cache),
             expected
         )
@@ -192,19 +188,9 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
-        self._test_indicators(indicator_set, expected_indicators)
+        self.check_cc_indicators(indicator_set, expected_indicators)
 
     def test_no_cases_owned_by_user(self):
-        # group = Group(
-        #     domain=self.cc_domain.name,
-        #     name='case sharing group',
-        #     case_sharing=True
-        # )
-        # group.save()
-        # user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, include_docs=True)
-        # user_case.owner_id = group.get_id
-        # user_case.save()
-
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user_no_data, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set())
         self.assertEqual(indicator_set.users_needing_data, set())
@@ -217,6 +203,9 @@ class CallCenterCaseSharingTest(BaseCCTests):
     def setUpClass(cls):
         cls.domain, cls.user = create_domain_and_user('callcentertest_group', 'user4')
         load_data(cls.domain.name, cls.user.user_id)
+
+        # create one case of each type so that we get the indicators where there is no data for the period
+        create_cases_for_types('callcentertest_group', ['person', 'dog'])
 
     @classmethod
     def tearDownClass(cls):
@@ -239,4 +228,4 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, group.get_id]))
-        self._test_indicators(indicator_set, expected_standard_indicators())
+        self._test_indicators(self.user, indicator_set, expected_standard_indicators())
