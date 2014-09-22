@@ -16,12 +16,6 @@ from mock import patch
 locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
 
 
-def patch_local_cache(module, varname):
-    locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
-    locmem_cache.clear()
-    return patch.object(module, varname, locmem_cache)
-
-
 def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
     user = CommCareUser.create(domain_name, username, '***')
@@ -48,6 +42,9 @@ def create_cases_for_types(domain, case_types):
 
 
 def get_indicators(prefix, values, infix=None, is_legacy=False):
+    """
+    Generate indicators e.g. cases_opened_week0, cases_opened_{case_type}_week0 etc.
+    """
     ranges = ['week0', 'week1', 'month0', 'month1']
     data = {}
     separator = '' if is_legacy else '_'
@@ -132,7 +129,7 @@ class CallCenterTests(BaseCCTests):
         load_custom_data(cls.aarohi_domain.name, cls.aarohi_user.user_id, xmlns=AAROHI_MOTHER_FORM)
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types('callcentertest', ['person', 'dog'])
+        create_cases_for_types(cls.cc_domain.name, ['person', 'dog'])
 
     @classmethod
     def tearDownClass(cls):
@@ -198,14 +195,78 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.get_data(), {})
 
 
+class CallCenterSupervisorGroupTest(BaseCCTests):
+    @classmethod
+    def setUpClass(cls):
+        domain_name = 'cc_test_supervisor_group'
+        cls.domain = create_domain(domain_name)
+        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+
+        cls.supervisor_group = Group(
+            domain=domain_name,
+            name='supervisor group',
+            case_sharing=True,
+            users=[cls.supervisor.get_id]
+        )
+        cls.supervisor_group.save()
+
+        cls.domain.call_center_config.enabled = True
+        cls.domain.call_center_config.case_owner_id = cls.supervisor_group.get_id
+        cls.domain.call_center_config.case_type = 'cc_flw'
+        cls.domain.save()
+
+        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
+        sync_user_cases(cls.user)
+
+        load_data(domain_name, cls.user.user_id)
+
+        # create one case of each type so that we get the indicators where there is no data for the period
+        create_cases_for_types(domain_name, ['person', 'dog'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        clear_data()
+
+    def test_users_assigned_via_group(self):
+        """
+        Ensure that users who are assigned to the supervisor via a group are also included
+        in final data set.
+        """
+        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
+        self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
+        self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
+        self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
+        self._test_indicators(self.user, indicator_set, expected_standard_indicators())
+
+
 class CallCenterCaseSharingTest(BaseCCTests):
     @classmethod
     def setUpClass(cls):
-        cls.domain, cls.user = create_domain_and_user('callcentertest_group', 'user4')
-        load_data(cls.domain.name, cls.user.user_id)
+        domain_name = 'cc_test_case_sharing'
+        cls.domain = create_domain(domain_name)
+        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+
+        cls.domain.call_center_config.enabled = True
+        cls.domain.call_center_config.case_owner_id = cls.supervisor.get_id
+        cls.domain.call_center_config.case_type = 'cc_flw'
+        cls.domain.save()
+
+        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
+        sync_user_cases(cls.user)
+
+        cls.group = Group(
+            domain=domain_name,
+            name='case sharing group',
+            case_sharing=True,
+            users=[cls.user.user_id]
+        )
+        cls.group.save()
+
+        load_data(domain_name, cls.user.user_id, '', cls.group.get_id)
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types('callcentertest_group', ['person', 'dog'])
+        create_cases_for_types(domain_name, ['person', 'dog'])
 
     @classmethod
     def tearDownClass(cls):
@@ -213,19 +274,11 @@ class CallCenterCaseSharingTest(BaseCCTests):
         clear_data()
 
     def test_cases_owned_by_group(self):
-        group = Group(
-            domain=self.domain.name,
-            name='case sharing group',
-            case_sharing=True,
-            users=[self.user.user_id]
-        )
-        group.save()
-        user_case = get_case_by_domain_hq_user_id(self.domain.name, self.user._id, include_docs=True)
-        user_case.owner_id = group.get_id
-        user_case.save()
-
-        indicator_set = CallCenterIndicators(self.domain, self.user, custom_cache=locmem_cache)
+        """
+        Ensure that indicators include cases owned by a case sharing group the user is part of.
+        """
+        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
-        self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, group.get_id]))
+        self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
         self._test_indicators(self.user, indicator_set, expected_standard_indicators())

@@ -28,7 +28,7 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     )
 
 
-def get_casedata(domain, days_ago, case_id, user_id, case_type, close):
+def get_casedata(domain, days_ago, case_id, user_id, owner_id, case_type, close):
     now = datetime.now()
     date_ago = now - timedelta(days=days_ago)
     return CaseData(
@@ -36,6 +36,7 @@ def get_casedata(domain, days_ago, case_id, user_id, case_type, close):
         doc_type='CommCareCase',
         type=case_type,
         domain=domain,
+        owner_id=owner_id,
         user_id=user_id,
         opened_on=date_ago,
         modified_on=now,
@@ -54,28 +55,30 @@ def add_case_action(case):
     )
 
 
-def load_data(domain, user_id):
+def load_data(domain, form_user_id, case_user_id=None, case_owner_id=None):
     form_data = [
-        get_formdata(0, domain, user_id),
-        get_formdata(3, domain, user_id),
-        get_formdata(7, domain, user_id),
-        get_formdata(8, domain, user_id),
-        get_formdata(9, domain, user_id),
-        get_formdata(11, domain, user_id),
-        get_formdata(14, domain, user_id),
-        get_formdata(15, domain, user_id),
+        get_formdata(0, domain, form_user_id),
+        get_formdata(3, domain, form_user_id),
+        get_formdata(7, domain, form_user_id),
+        get_formdata(8, domain, form_user_id),
+        get_formdata(9, domain, form_user_id),
+        get_formdata(11, domain, form_user_id),
+        get_formdata(14, domain, form_user_id),
+        get_formdata(15, domain, form_user_id),
     ]
 
+    case_user_id = case_user_id or form_user_id
+    case_owner_id = case_owner_id or case_user_id
     case_data = [
-        get_casedata(domain, 0, '1', user_id, 'person', False),
-        get_casedata(domain, 10, '2', user_id, 'person', False),
-        get_casedata(domain, 29, '3', user_id, 'person', True),
-        get_casedata(domain, 30, '4', user_id, 'person', True),
-        get_casedata(domain, 31, '5', user_id, 'dog', True),
-        get_casedata(domain, 45, '6', user_id, 'dog', False),
-        get_casedata(domain, 55, '7', user_id, 'dog', False),
-        get_casedata(domain, 56, '8', user_id, 'dog', True),
-        get_casedata(domain, 59, '9', user_id, 'dog', False),
+        get_casedata(domain, 0, '1', case_user_id, case_owner_id, 'person', False),
+        get_casedata(domain, 10, '2', case_user_id, case_owner_id, 'person', False),
+        get_casedata(domain, 29, '3', case_user_id, case_owner_id, 'person', True),
+        get_casedata(domain, 30, '4', case_user_id, case_owner_id, 'person', True),
+        get_casedata(domain, 31, '5', case_user_id, case_owner_id, 'dog', True),
+        get_casedata(domain, 45, '6', case_user_id, case_owner_id, 'dog', False),
+        get_casedata(domain, 55, '7', case_user_id, case_owner_id, 'dog', False),
+        get_casedata(domain, 56, '8', case_user_id, case_owner_id, 'dog', True),
+        get_casedata(domain, 59, '9', case_user_id, case_owner_id, 'dog', False),
     ]
 
     FormData.objects.bulk_create(form_data)
@@ -100,14 +103,6 @@ def load_custom_data(domain, user_id, xmlns):
     ]
 
     FormData.objects.bulk_create(form_data)
-
-
-fixture_test_table = Table("call_center",
-                           metadata,
-                           Column("case", String(50), primary_key=True, autoincrement=False),
-                           Column("date", DATE, primary_key=True, autoincrement=False),
-                           Column("cases_updated", INT),
-                           Column("duration", INT))
 
 
 def clear_data():
