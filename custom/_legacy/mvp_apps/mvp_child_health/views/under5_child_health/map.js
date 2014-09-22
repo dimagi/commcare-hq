@@ -31,7 +31,7 @@ function(doc) {
 
                 var danger_signs = [],
                     emergency_signs = [],
-                    valid_referrals = ['emergency', 'basic', 'convenient', 'take_to_clinic'];
+                    valid_referrals = ['emergency', 'basic', 'take_to_clinic'];
 
                 try {
                     danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
@@ -80,7 +80,7 @@ function(doc) {
                         indicator_keys.push(category+"rdt_not_available");
                     }
 
-                } else if (complicated_fever && meta.timeEnd && age > 180*MS_IN_DAY) {
+                } else if (complicated_fever && meta.timeEnd) {
                     category = "under5_complicated_fever ";
 
                     if (doc.form.patient_available.referral_given === 'yes' ||
