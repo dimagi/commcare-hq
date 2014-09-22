@@ -188,6 +188,9 @@ class CallCenterTests(BaseCCTests):
         self.check_cc_indicators(indicator_set, expected_indicators)
 
     def test_no_cases_owned_by_user(self):
+        """
+        Test to verify that only data belonging to users managed by the supervisor is returned.
+        """
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user_no_data, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set())
         self.assertEqual(indicator_set.users_needing_data, set())
@@ -263,7 +266,13 @@ class CallCenterCaseSharingTest(BaseCCTests):
         )
         cls.group.save()
 
-        load_data(domain_name, cls.user.user_id, '', cls.group.get_id)
+        load_data(
+            domain_name,
+            cls.user.user_id,
+            'not this user',
+            cls.group.get_id,
+            case_opened_by=cls.user.user_id,
+            case_closed_by=cls.user.user_id)
 
         # create one case of each type so that we get the indicators where there is no data for the period
         create_cases_for_types(domain_name, ['person', 'dog'])
@@ -281,4 +290,46 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
-        self._test_indicators(self.user, indicator_set, expected_standard_indicators())
+        expected = expected_standard_indicators()
+        expected['totalCases'] = 0L  # no cases with user_id = self.user.get_id
+        self._test_indicators(self.user, indicator_set, expected)
+
+
+class CallCenterTestOpenedClosed(BaseCCTests):
+    @classmethod
+    def setUpClass(cls):
+        domain_name = 'cc_test_opened_closed'
+        cls.domain = create_domain(domain_name)
+        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+
+        cls.domain.call_center_config.enabled = True
+        cls.domain.call_center_config.case_owner_id = cls.supervisor.get_id
+        cls.domain.call_center_config.case_type = 'cc_flw'
+        cls.domain.save()
+
+        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
+        sync_user_cases(cls.user)
+
+        load_data(domain_name, cls.user.user_id, case_opened_by='not me', case_closed_by='not me')
+
+        # create one case of each type so that we get the indicators where there is no data for the period
+        create_cases_for_types(domain_name, ['person', 'dog'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        clear_data()
+
+    def test_opened_closed(self):
+        """
+        Test that cases_closed and cases_opened indicators count based on the user that
+        opened / closed the case and not the case owner.
+        """
+        indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
+        expected = expected_standard_indicators()
+
+        # cases opened / closed by another user so expect 0
+        for key in expected:
+            if key.startswith('cases_opened') or key.startswith('cases_closed'):
+                expected[key] = 0L
+        self._test_indicators(self.user, indicator_set, expected)

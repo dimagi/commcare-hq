@@ -1,3 +1,4 @@
+from collections import namedtuple
 import uuid
 import sqlalchemy
 from sqlalchemy import *
@@ -28,20 +29,25 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     )
 
 
-def get_casedata(domain, days_ago, case_id, user_id, owner_id, case_type, close):
+CaseInfo = namedtuple('CaseInfo', 'id, days_ago, case_type, is_closed')
+
+
+def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
     now = datetime.now()
-    date_ago = now - timedelta(days=days_ago)
+    date_ago = now - timedelta(days=case_info.days_ago)
     return CaseData(
-        case_id=case_id,
+        case_id=case_info.id,
         doc_type='CommCareCase',
-        type=case_type,
+        type=case_info.case_type,
         domain=domain,
         owner_id=owner_id,
         user_id=user_id,
         opened_on=date_ago,
+        opened_by=opened_by or user_id,
         modified_on=now,
-        closed=close,
-        closed_on=(date_ago if close else None)
+        closed=case_info.is_closed,
+        closed_on=(date_ago if case_info.is_closed else None),
+        closed_by=(closed_by or user_id) if case_info.is_closed else None
     )
     return case
 
@@ -55,7 +61,7 @@ def add_case_action(case):
     )
 
 
-def load_data(domain, form_user_id, case_user_id=None, case_owner_id=None):
+def load_data(domain, form_user_id, case_user_id=None, case_owner_id=None, case_opened_by=None, case_closed_by=None):
     form_data = [
         get_formdata(0, domain, form_user_id),
         get_formdata(3, domain, form_user_id),
@@ -69,16 +75,22 @@ def load_data(domain, form_user_id, case_user_id=None, case_owner_id=None):
 
     case_user_id = case_user_id or form_user_id
     case_owner_id = case_owner_id or case_user_id
+
+    case_infos = [
+        CaseInfo('1', 0, 'person', False),
+        CaseInfo('2', 10, 'person', False),
+        CaseInfo('3', 29, 'person', True),
+        CaseInfo('4', 30, 'person', True),
+        CaseInfo('5', 31, 'dog', True),
+        CaseInfo('6', 45, 'dog', False),
+        CaseInfo('7', 55, 'dog', False),
+        CaseInfo('8', 56, 'dog', True),
+        CaseInfo('9', 59, 'dog', False),
+    ]
+
     case_data = [
-        get_casedata(domain, 0, '1', case_user_id, case_owner_id, 'person', False),
-        get_casedata(domain, 10, '2', case_user_id, case_owner_id, 'person', False),
-        get_casedata(domain, 29, '3', case_user_id, case_owner_id, 'person', True),
-        get_casedata(domain, 30, '4', case_user_id, case_owner_id, 'person', True),
-        get_casedata(domain, 31, '5', case_user_id, case_owner_id, 'dog', True),
-        get_casedata(domain, 45, '6', case_user_id, case_owner_id, 'dog', False),
-        get_casedata(domain, 55, '7', case_user_id, case_owner_id, 'dog', False),
-        get_casedata(domain, 56, '8', case_user_id, case_owner_id, 'dog', True),
-        get_casedata(domain, 59, '9', case_user_id, case_owner_id, 'dog', False),
+        get_casedata(info, domain, case_user_id, case_owner_id, case_opened_by, case_closed_by)
+        for info in case_infos
     ]
 
     FormData.objects.bulk_create(form_data)

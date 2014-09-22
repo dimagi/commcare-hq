@@ -114,7 +114,7 @@ class CallCenterIndicators(object):
             ('month1', daysago60, daysago30),
         ]
 
-    def date_filter(self, date_field, lower, upper):
+    def _date_filters(self, date_field, lower, upper):
         return {
             '{}__gte'.format(date_field): lower,
             '{}__lte'.format(date_field): upper,
@@ -281,7 +281,7 @@ class CallCenterIndicators(object):
         for case_type in unseen_cases:
             self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
-    def _base_case_query(self):
+    def _base_case_query_coalesce_owner(self):
         return CaseData.objects \
             .extra(
                 select={"case_owner": "COALESCE(owner_id, sofabed_casedata.user_id)"},
@@ -293,6 +293,21 @@ class CallCenterIndicators(object):
             .filter(
                 domain=self.domain.name,
                 doc_type='CommCareCase')
+
+    def _case_query_opened_closed(self, opened_or_closed, lower, upper):
+        extra_filters = {
+            '{}_by__in'.format(opened_or_closed): self.users_needing_data
+        }
+        extra_filters.update(self._date_filters('{}_on'.format(opened_or_closed), lower, upper))
+        return CaseData.objects \
+            .extra(select={'case_owner': '{}_by'.format(opened_or_closed)}) \
+            .values('case_owner', 'type') \
+            .exclude(type=self.cc_case_type) \
+            .filter(
+                domain=self.domain.name,
+                doc_type='CommCareCase',
+                **extra_filters
+            ).annotate(count=Count('case_id'))
 
     def add_case_total_legacy(self):
         """
@@ -317,42 +332,26 @@ class CallCenterIndicators(object):
         cases_total_{period}
         cases_total_{case_type}_{period}
         """
-        results = self._base_case_query() \
+        results = self._base_case_query_coalesce_owner() \
             .filter(opened_on__lte=upper) \
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
 
         self._add_case_data(results, 'cases_total', range_name)
 
-    def add_cases_opened_data(self, range_name, lower, upper):
+    def add_cases_opened_closed_data(self, range_name, lower, upper):
         """
         Count of cases where lower <= opened_on <= upper
+            cases_opened_{period}
+            cases_opened_{case_type}_{period}
 
-        cases_opened_{period}
-        cases_opened_{case_type}_{period}
-        """
-        results = self._base_case_query() \
-            .filter(
-                opened_on__gte=lower,
-                opened_on__lte=upper
-            ).annotate(count=Count('case_id'))
-
-        self._add_case_data(results, 'cases_opened', range_name)
-
-    def add_cases_closed_data(self, range_name, lower, upper):
-        """
         Count of cases where lower <= closed_on <= upper
-
-        cases_closed_{period}
-        cases_closed_{case_type}_{period}
+            cases_closed_{period}
+            cases_closed_{case_type}_{period}
         """
-        results = self._base_case_query() \
-            .filter(
-                closed_on__gte=lower,
-                closed_on__lte=upper
-            ).annotate(count=Count('case_id'))
-
-        self._add_case_data(results, 'cases_closed', range_name)
+        for oc in ['opened', 'closed']:
+            results = self._case_query_opened_closed(oc, lower, upper)
+            self._add_case_data(results, 'cases_{}'.format(oc), range_name)
 
     def add_cases_active_data(self, range_name, lower, upper):
         """
@@ -361,7 +360,7 @@ class CallCenterIndicators(object):
         cases_active_{period}
         cases_active_{case_type}_{period}
         """
-        results = self._base_case_query() \
+        results = self._base_case_query_coalesce_owner() \
             .filter(
                 actions__date__gte=lower,
                 actions__date__lte=upper
@@ -388,7 +387,7 @@ class CallCenterIndicators(object):
                 domain=self.domain.name,
                 doc_type='XFormInstance',
                 user_id__in=self.users_needing_data) \
-            .filter(**self.date_filter('time_end', lower, upper)) \
+            .filter(**self._date_filters('time_end', lower, upper)) \
             .annotate(count=aggregation)
 
         self._add_data(
@@ -402,7 +401,7 @@ class CallCenterIndicators(object):
         """
         results = FormData.objects \
             .values('user_id') \
-            .filter(**self.date_filter('time_end', lower, upper)) \
+            .filter(**self._date_filters('time_end', lower, upper)) \
             .filter(
                 domain=self.domain.name,
                 doc_type='XFormInstance',
@@ -433,8 +432,7 @@ class CallCenterIndicators(object):
             for range_name, lower, upper in self.date_ranges:
                 self.add_form_data(range_name, lower, upper)
                 self.add_cases_total_data(range_name, lower, upper)
-                self.add_cases_opened_data(range_name, lower, upper)
-                self.add_cases_closed_data(range_name, lower, upper)
+                self.add_cases_opened_closed_data(range_name, lower, upper)
                 self.add_cases_active_data(range_name, lower, upper)
 
             cache_timeout = seconds_till_midnight(self.timezone)
