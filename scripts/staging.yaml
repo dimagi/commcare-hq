@@ -63,8 +63,8 @@ branches:
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - caseindex # SK 9/16
   - bulk-app-translate # Noah 9/18
+  - callcenter # SK 9/22
 submodules:
   submodules/couchlog-src:
     branches:
