@@ -13,7 +13,7 @@ function(doc) {
 
                 var fever_medication = indicators.fever_medication.value,
                     diarrhea_medication = indicators.diarrhea_medication.value,
-                    rdt_result = indicators.rdt_result.value,
+                    rdt_result = (typeof indicators.rdt_result.value === 'string') ? indicators.rdt_result.value.toLowerCase() : indicators.rdt_result.value,
                     referral_type = indicators.referral_type.value;
 
                 var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'negative'),
