@@ -186,7 +186,6 @@ class CallCenterIndicators(object):
         return {group.get_id: group.users for group in self.case_sharing_groups}
 
     @property
-    @memoized
     def user_id_to_groups(self):
         mapping = defaultdict(set)
         for group in self.case_sharing_groups:
@@ -196,7 +195,6 @@ class CallCenterIndicators(object):
         return mapping
 
     @property
-    @memoized
     def user_to_case_map(self):
         return get_callcenter_case_mapping(self.domain.name, self.users_needing_data)
 
@@ -422,7 +420,6 @@ class CallCenterIndicators(object):
                     upper
                 )
 
-    @memoized
     def get_data(self):
         final_data = {}
         if self.users_needing_data:
@@ -434,11 +431,12 @@ class CallCenterIndicators(object):
                 self.add_cases_active_data(range_name, lower, upper)
 
             cache_timeout = seconds_till_midnight(self.timezone)
+            user_to_case_map = self.user_to_case_map
             for user_id, indicators in self.data.iteritems():
                 # only include data for users that we are expecting. There may be partial
                 # data for other users who are part of the same case sharing groups.
                 if user_id in self.users_needing_data:
-                    user_case_id = self.user_to_case_map[user_id]
+                    user_case_id = user_to_case_map[user_id]
                     if user_case_id:
                         cache_data = CachedIndicators(
                             user_id=user_id,

@@ -93,17 +93,16 @@ class BaseCCTests(TestCase):
     def setUp(self):
         locmem_cache.clear()
 
-    def _test_indicators(self, user, indicator_set, expected):
-        data = indicator_set.get_data()
+    def _test_indicators(self, user, data_set, expected):
         user_case = get_case_by_domain_hq_user_id(
             user.domain,
             user.user_id,
             include_docs=True
         )
         case_id = user_case.case_id
-        self.assertIn(case_id, data)
+        self.assertIn(case_id, data_set)
 
-        user_data = data[case_id]
+        user_data = data_set[case_id]
 
         mismatches = []
         for k, v in expected.items():
@@ -137,17 +136,17 @@ class CallCenterTests(BaseCCTests):
         cls.aarohi_domain.delete()
         clear_data()
 
-    def check_cc_indicators(self, indicator_set, expected):
-        super(CallCenterTests, self)._test_indicators(self.cc_user, indicator_set, expected)
+    def check_cc_indicators(self, data_set, expected):
+        super(CallCenterTests, self)._test_indicators(self.cc_user, data_set, expected)
         expected_no_data = expected_standard_indicators(no_data=True)
-        super(CallCenterTests, self)._test_indicators(self.cc_user_no_data, indicator_set, expected_no_data)
+        super(CallCenterTests, self)._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
 
     def test_standard_indicators(self):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
-        self.check_cc_indicators(indicator_set, expected_standard_indicators())
+        self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
     def test_custom_indicators(self):
         expected = {'totalCases': 0L}
@@ -164,9 +163,10 @@ class CallCenterTests(BaseCCTests):
         expected.update(get_indicators('childForms', [0L, 0L, 0L, 0L], is_legacy=True))
         expected.update(get_indicators('motherDuration', [3L, 4L, 4L, 0L], is_legacy=True))
 
+        indicator_set = CallCenterIndicators(self.aarohi_domain, self.aarohi_user, custom_cache=locmem_cache)
         self._test_indicators(
             self.aarohi_user,
-            CallCenterIndicators(self.aarohi_domain, self.aarohi_user, custom_cache=locmem_cache),
+            indicator_set.get_data(),
             expected
         )
 
@@ -185,7 +185,7 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
-        self.check_cc_indicators(indicator_set, expected_indicators)
+        self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
 
     def test_no_cases_owned_by_user(self):
         """
@@ -240,7 +240,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
-        self._test_indicators(self.user, indicator_set, expected_standard_indicators())
+        self._test_indicators(self.user, indicator_set.get_data(), expected_standard_indicators())
 
 
 class CallCenterCaseSharingTest(BaseCCTests):
@@ -292,7 +292,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
         expected = expected_standard_indicators()
         expected['totalCases'] = 0L  # no cases with user_id = self.user.get_id
-        self._test_indicators(self.user, indicator_set, expected)
+        self._test_indicators(self.user, indicator_set.get_data(), expected)
 
 
 class CallCenterTestOpenedClosed(BaseCCTests):
@@ -332,4 +332,4 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         for key in expected:
             if key.startswith('cases_opened') or key.startswith('cases_closed'):
                 expected[key] = 0L
-        self._test_indicators(self.user, indicator_set, expected)
+        self._test_indicators(self.user, indicator_set.get_data(), expected)
