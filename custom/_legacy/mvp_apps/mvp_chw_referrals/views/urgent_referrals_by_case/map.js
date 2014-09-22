@@ -50,20 +50,21 @@ function(doc) {
             for (var r in referrals) {
                 if (referrals.hasOwnProperty(r)) {
                     var referral_doc = referrals[r];
-                    if (contained_in_indicator_value(referral_doc, "emergency") ||
-                        // contained_in_indicator_value(referral_doc, "convenient") ||
+                    if (contained_in_indicator_value(referral_doc, "emergency") ||i
                         contained_in_indicator_value(referral_doc, "take_to_clinic") ||
                         contained_in_indicator_value(referral_doc, "immediate") ||
                         contained_in_indicator_value(referral_doc, "basic")) {
-                    	// This is an urgent referral
-                    	referral_date = new Date(referral_doc.timeEnd);
+                        // This is an urgent referral
+                        referral_date = new Date(referral_doc.timeEnd);
                         urgent_dates.push(referral_date);
                         if (condition_improved) {
                             for (var c in condition_improved) {
-                                var condition_data = condition_improved[c];
-                                var condition_date = new Date(condition_data.timeEnd);
-                                if (condition_date == referral_date) {
-                                    visit_dates.push(new Date(referral_doc.timeEnd));
+                                if (condition_improved.hasOwnProperty(c)) {
+                                    var condition_data = condition_improved[c];
+                                    var condition_date = new Date(condition_data.timeEnd);
+                                    if (condition_date == referral_date) {
+                                        visit_dates.push(new Date(referral_doc.timeEnd));
+                                    }
                                 }
                             }
                          }
