@@ -85,10 +85,14 @@ class CallCenterIndicators(object):
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
+        try:
+            self.timezone = pytz.timezone(self.domain.default_timezone)
+        except pytz.UnknownTimeZoneError:
+            self.timezone = pytz.utc
 
     @property
     def date_ranges(self):
-        today = date.today()
+        today = datetime.now(self.timezone).date()
         weekago = today - timedelta(days=7)
         weekago2 = today - timedelta(days=14)
         daysago30 = today - timedelta(days=30)
@@ -432,11 +436,7 @@ class CallCenterIndicators(object):
                 self.add_cases_closed_data(range_name, lower, upper)
                 self.add_cases_active_data(range_name, lower, upper)
 
-            for k, v in self.data.items():
-                for u, i in v.items():
-                    print k, u, i
-
-            cache_timeout = seconds_till_midnight(pytz.timezone(self.domain.default_timezone))
+            cache_timeout = seconds_till_midnight(self.timezone)
             for user_id, indicators in self.data.iteritems():
                 if user_id in self.users_needing_data:
                     user_case_id = self.user_to_case_map[user_id]
