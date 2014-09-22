@@ -183,7 +183,7 @@ class CustomDataEditor(object):
             _make_field_div(slug, val)
             for slug, val in self.existing_custom_data.items()
             if slug not in field_names
-        ]
+        ] if self.existing_custom_data is not None else []
 
         CustomDataForm.helper.layout = Layout(
             Fieldset(
