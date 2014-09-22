@@ -71,8 +71,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_type=UserFieldsView.field_type,
-            edit_fields_model_urlname=UserFieldsView.urlname,
+            field_view=UserFieldsView,
             domain=self.domain,
             existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
@@ -601,8 +600,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            UserFieldsView.field_type,
-            self.domain,
+            field_view=UserFieldsView,
+            domain=self.domain,
             required_only=True,
             existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,

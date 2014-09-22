@@ -125,15 +125,24 @@ class CustomDataFieldsMixin(object):
         else:
             return self.get(request, *args, **kwargs)
 
+def add_prefix(field_dict):
+    """
+    Prefix all keys in the dict with the defined
+    custom data prefix (such as data-field-whatevs).
+    """
+    return {
+        "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
+        for k, v in field_dict.iteritems()
+    }
+
 
 class CustomDataEditor(object):
-    def __init__(self, field_type, domain, existing_custom_data=None,
-            post_dict=None, required_only=False, edit_fields_model_urlname=None):
-        self.field_type = field_type
+    def __init__(self, field_view, domain, existing_custom_data=None,
+            post_dict=None, required_only=False):
+        self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
-        self.edit_fields_model_urlname = edit_fields_model_urlname
         self.form = self.init_form(post_dict)
 
     @property
@@ -141,7 +150,7 @@ class CustomDataEditor(object):
     def model(self):
         definition = CustomDataFieldsDefinition.by_domain(
             self.domain,
-            self.field_type,
+            self.field_view.field_type,
         )
         return definition or CustomDataFieldsDefinition()
 
@@ -149,7 +158,11 @@ class CustomDataEditor(object):
         return self.form.is_valid()
 
     def get_data_to_save(self):
-        return self.form.cleaned_data
+        cleaned_data = self.form.cleaned_data
+        self.existing_custom_data = None
+        self.form = self.init_form(add_prefix(cleaned_data))
+        self.form.is_valid()
+        return cleaned_data
 
     def init_form(self, post_dict=None):
         def _make_field(field):
@@ -164,9 +177,30 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
+        CustomDataForm.helper.layout = Layout(
+            Fieldset(
+                _("Additional Information"),
+                *field_names
+            ),
+            self.get_uncategorized_form(field_names),
+        )
+        CustomDataForm._has_uncategorized = bool(self.get_uncategorized_form(field_names))
+
+        if post_dict:
+            fields = post_dict
+        elif self.existing_custom_data is not None:
+            fields = add_prefix(self.existing_custom_data)
+        else:
+            fields = None
+
+        self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
+        return self.form
+
+    def get_uncategorized_form(self, field_names):
 
         def FakeInput(val):
             return HTML('<span class="input-xlarge uneditable-input">%s</span>' % val)
+
         def Label(val):
             return HTML('<label class="control-label">%s</label>' % val)
 
@@ -186,36 +220,21 @@ class CustomDataEditor(object):
             if slug not in field_names
         ] if self.existing_custom_data is not None else []
 
+        msg = """
+        <strong>Warning!</strong>
+        This data is not part of the specified user fields and will be
+        deleted if you save.
+        You can add them <a href="{}">here</a> to prevent this.
+        """.format(reverse(
+            self.field_view.urlname, args=[self.domain]
+        ))
 
-        CustomDataForm.helper.layout = Layout(
-            Fieldset(
-                _("Additional Information"),
-                *field_names
+        return Fieldset(
+            _("Uncatagorized Information"),
+            Div(
+                HTML(msg),
+                css_class="alert alert-error",
             ),
-            Fieldset(
-                _("Uncatagorized Information") if len(help_div) else '',
-                Div(
-                    HTML("""
-                        <strong>Warning!</strong> This data is not part of the specified user fields and will be deleted if you save.
-                        You can add them <a href="{}">here</a> to prevent this.
-                    """.format(reverse(
-                        self.edit_fields_model_urlname, args=[self.domain]
-                    ))),
-                    css_class="alert alert-error",
-                ),
-                *help_div
-            )
-        )
+            *help_div
+        ) if len(help_div) else HTML('')
 
-        if post_dict:
-            fields = post_dict
-        elif self.existing_custom_data is not None:
-            fields = {
-                "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
-                for k, v in self.existing_custom_data.items()
-            }
-        else:
-            fields = None
-
-        self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
-        return self.form
