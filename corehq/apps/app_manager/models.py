@@ -3338,7 +3338,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _has_cycles(self, modules):
         """
         :param modules: A mapping of module unique_ids to Module objects
-        :return: True if there is a cycle in the module parents graph
+        :return: True if there is a cycle in the parent-child selection graph
         """
         visited = set()
         completed = set()
