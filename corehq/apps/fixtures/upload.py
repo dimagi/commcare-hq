@@ -95,6 +95,9 @@ class FixtureTableDefinitition(object):
         if field_names is None and item_attributes is None:
             raise ExcelMalformatException(_(FAILURE_MESSAGES['niether_fields_nor_attributes']).format(tag=tag))
 
+        field_names = [] if field_names is None else field_names
+        item_attributes = [] if item_attributes is None else item_attributes
+
         def _get_field_properties(field, prop_key):
             if row_dict.has_key(prop_key):
                 try:
@@ -266,7 +269,7 @@ def run_upload(domain, workbook, replace=False, task=None):
             for sort_key, di in enumerate(data_items):
                 _update_progress(table_number, sort_key, items_in_table)
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields_list = di['field'].keys()
+                item_fields_list = di['field'].keys() if 'fields' in di else []
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
                 if len(not_in_sheet) > 0:
                     error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
@@ -276,7 +279,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                     raise ExcelMalformatException(error_message)
 
                 # check that this item has all the properties listen in its 'types' definition
-                item_attributes_list = di['property'].keys()
+                item_attributes_list = di['property'].keys() if 'property' in di else []
                 not_in_sheet, not_in_types = diff_lists(item_attributes_list, data_type.item_attributes)
                 if len(not_in_sheet) > 0:
                     error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
@@ -353,7 +356,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                             field_list=field_list
                         )
 
-                item_attributes = di['property']
+                item_attributes = di['property'] if 'property' in di else []
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
