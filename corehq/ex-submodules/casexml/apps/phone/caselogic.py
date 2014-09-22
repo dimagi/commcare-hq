@@ -177,8 +177,6 @@ class CaseSyncOperation(object):
         # having to reload all the cases from the DB
         return dict((case.get_id, case) for case in self.all_potential_to_sync)
 
-    @property
-    @memoized
     def _get_case(self, case_id):
         if case_id in self._all_relevant_cases:
             return self._all_relevant_cases[case_id]
