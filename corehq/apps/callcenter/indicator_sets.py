@@ -102,22 +102,22 @@ class CallCenterIndicators(object):
 
     @property
     def date_ranges(self):
-        today = datetime.now(self.timezone).date()
-        weekago = today - timedelta(days=7)
-        weekago2 = today - timedelta(days=14)
-        daysago30 = today - timedelta(days=30)
-        daysago60 = today - timedelta(days=60)
+        last_midnight = datetime.now(self.timezone).date()
+        weekago = last_midnight - timedelta(days=7)
+        weekago2 = last_midnight - timedelta(days=14)
+        daysago30 = last_midnight - timedelta(days=30)
+        daysago60 = last_midnight - timedelta(days=60)
         return [
-            ('week0', weekago, today),
+            ('week0', weekago, last_midnight),
             ('week1', weekago2, weekago),
-            ('month0', daysago30, today),
+            ('month0', daysago30, last_midnight),
             ('month1', daysago60, daysago30),
         ]
 
     def _date_filters(self, date_field, lower, upper):
         return {
             '{}__gte'.format(date_field): lower,
-            '{}__lte'.format(date_field): upper,
+            '{}__lt'.format(date_field): upper,
         }
 
     @property
@@ -295,19 +295,17 @@ class CallCenterIndicators(object):
                 doc_type='CommCareCase')
 
     def _case_query_opened_closed(self, opened_or_closed, lower, upper):
-        extra_filters = {
-            '{}_by__in'.format(opened_or_closed): self.users_needing_data
-        }
-        extra_filters.update(self._date_filters('{}_on'.format(opened_or_closed), lower, upper))
         return CaseData.objects \
             .extra(select={'case_owner': '{}_by'.format(opened_or_closed)}) \
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
                 domain=self.domain.name,
-                doc_type='CommCareCase',
-                **extra_filters
-            ).annotate(count=Count('case_id'))
+                doc_type='CommCareCase') \
+            .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
+            .filter(**{
+                '{}_by__in'.format(opened_or_closed): self.users_needing_data
+            }).annotate(count=Count('case_id'))
 
     def add_case_total_legacy(self):
         """
@@ -327,13 +325,13 @@ class CallCenterIndicators(object):
 
     def add_cases_total_data(self, range_name, lower, upper):
         """
-        Count of cases where opened_on <= upper and (closed == False or closed_on >= lower)
+        Count of cases where opened_on < upper and (closed == False or closed_on >= lower)
 
         cases_total_{period}
         cases_total_{case_type}_{period}
         """
         results = self._base_case_query_coalesce_owner() \
-            .filter(opened_on__lte=upper) \
+            .filter(opened_on__lt=upper) \
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
 
@@ -341,11 +339,11 @@ class CallCenterIndicators(object):
 
     def add_cases_opened_closed_data(self, range_name, lower, upper):
         """
-        Count of cases where lower <= opened_on <= upper
+        Count of cases where lower <= opened_on < upper
             cases_opened_{period}
             cases_opened_{case_type}_{period}
 
-        Count of cases where lower <= closed_on <= upper
+        Count of cases where lower <= closed_on < upper
             cases_closed_{period}
             cases_closed_{case_type}_{period}
         """
@@ -355,7 +353,7 @@ class CallCenterIndicators(object):
 
     def add_cases_active_data(self, range_name, lower, upper):
         """
-        Count of cases where lower <= case_action.date <= upper
+        Count of cases where lower <= case_action.date < upper
 
         cases_active_{period}
         cases_active_{case_type}_{period}
@@ -363,7 +361,7 @@ class CallCenterIndicators(object):
         results = self._base_case_query_coalesce_owner() \
             .filter(
                 actions__date__gte=lower,
-                actions__date__lte=upper
+                actions__date__lt=upper
             ).annotate(count=Count('case_id', distinct=True))
 
         self._add_case_data(results, 'cases_active', range_name, legacy_prefix='casesUpdated')

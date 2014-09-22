@@ -68,11 +68,11 @@ def expected_standard_indicators(no_data=False):
     expected_values = [
         StaticIndicators('formsSubmitted', [2L, 4L, 7L, 0L], True, None),
         StaticIndicators('forms_submitted', [2L, 4L, 7L, 0L], False, None),
-        StaticIndicators('casesUpdated', [0L, 1L, 3L, 5L], True, None),
         StaticIndicators('cases_total', [4L, 4L, 6L, 5L], False, None),
         StaticIndicators('cases_opened', [0L, 1L, 3L, 5L], False, None),
         StaticIndicators('cases_closed', [0L, 0L, 2L, 2L], False, None),
         StaticIndicators('cases_active', [0L, 1L, 3L, 5L], False, None),
+        StaticIndicators('casesUpdated', [0L, 1L, 3L, 5L], True, None),
         StaticIndicators('cases_total', [1L, 1L, 3L, 0L], False, 'person'),
         StaticIndicators('cases_total', [3L, 3L, 3L, 5L], False, 'dog'),
         StaticIndicators('cases_opened', [0L, 1L, 3L, 0L], False, 'person'),
