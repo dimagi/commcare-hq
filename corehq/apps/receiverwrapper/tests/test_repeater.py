@@ -128,9 +128,11 @@ class RepeaterTest(TestCase):
 
         self.clear_log()
 
+        records_by_repeater_id = {}
         for repeat_record in repeat_records:
             repeat_record.fire(post_fn=self.make_post_fn([404, 404, 404]))
             repeat_record.save()
+            records_by_repeater_id[repeat_record.repeater_id] = repeat_record
 
         for (url, status, data, headers) in self.log:
             self.assertEqual(status, 404)
@@ -166,13 +168,15 @@ class RepeaterTest(TestCase):
         # This is deterministic but easily affected by minor code changes
 
         # check case stuff
-        self.assertEqual(self.log[1][:2], (self.case_repeater.url, 200))
+        rec = records_by_repeater_id[self.case_repeater.get_id]
+        self.assertEqual(self.log[1][:2], (self.case_repeater.get_url(rec), 200))
         self.assertIn('server-modified-on', self.log[1][3])
         check_xml_line_by_line(self, self.log[1][2], case_block)
 
         # check form stuff
+        rec = records_by_repeater_id[self.form_repeater.get_id]
         self.assertEqual(self.log[3][:3],
-                         (self.form_repeater.url, 200, xform_xml))
+                         (self.form_repeater.get_url(rec), 200, xform_xml))
         self.assertIn('received-on', self.log[3][3])
 
         repeat_records = RepeatRecord.all(

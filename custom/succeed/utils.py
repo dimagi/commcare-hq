@@ -4,6 +4,7 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime, timedelta
+from pytz import timezone
 
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
@@ -72,8 +73,8 @@ def get_form_dict(case, form_xmlns):
     return None
 
 
-def format_date(date_string, OUTPUT_FORMAT):
-    if date_string is None or date_string == '' or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
+def format_date(date_string, OUTPUT_FORMAT, localize=None):
+    if date_string is None or date_string == '' or date_string == " " or date_string == EMPTY_FIELD or isinstance(date_string, (int, float)):
         return _("Bad Date Format!")
 
     if isinstance(date_string, basestring):
@@ -81,6 +82,12 @@ def format_date(date_string, OUTPUT_FORMAT):
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):
             return _("Bad Date Format!")
+
+    if localize:
+        tz = timezone(Domain.get_by_name(SUCCEED_DOMAIN).default_timezone)
+        if date_string.tzname() is None:
+            date_string = timezone('UTC').localize(date_string)
+        date_string = date_string.astimezone(tz)
 
     return date_string.strftime(OUTPUT_FORMAT)
 

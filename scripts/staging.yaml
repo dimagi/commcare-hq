@@ -1,22 +1,70 @@
+########################
+#   STAGING WORKFLOW   #
+########################
+
+# GENERAL PROCESS
+# From your commcare-hq directory with the virtualenv turned on
+# to safely push your changes to scripts/staging.yaml
+#     $ scripts/commit-staging --push
+# to rebuild from your new spec and deploy
+#     $ scripts/rebuildstaging --deploy
+# Both commands commands can be run without the flag as well.
+
+# CONFLICT RESOLUTION
+# First, determine where the conflict lies.
+# a). branch `foo` conflicts with `master`
+#       $ git checkout -b foo origin/foo
+#       $ git pull origin master
+#     try to resolve conflict
+#       $ git push origin foo
+# b). branch `foo` conflicts with branch `bar`
+#     you can't just merge foo into bar or vice versa, otherwise the PR
+#     for foo will contain commits from bar.  Instead make a third,
+#     conflict-resolution branch:
+#       $ git checkout -b foo+bar origin/foo
+#       $ git pull origin bar
+#     try to resolve conflict
+#       $ git push origin foo+bar
+#     add the branch `foo+bar` to staging.yaml and move branches foo and
+#     bar to right below it
+#
+#     Later on branch B gets merged into master and removed from staging.yaml.
+#     Perhaps the person who removes it also notices the A+B and does the
+#     following. Otherwise anyone who comes along and sees A+B but not both
+#     branches can feel free to assume the following need to be done.
+#       * Merge A+B into A. Since B is now gone, you want to merge the
+#         resolution into A, otherwise A will conflict with master.
+#       * Remove A+B from staging.yaml. It's no longer necessary since it's
+#         now a subset of A.
+#
+# If you are unsure of how to resolve a conflict, notify the branch owner.
+
+
 trunk: master
 name: autostaging
 branches:
+  - archive-products+explicit_case_processing # tw 8/14
+  - explicit_case_processing # danny?
+  - master+schedule # Nick P 9/11
+  - schedule # SK 7/17
 #  - add-build-ui
-  - time-ago-deployed
-  - filter-suggested-properties
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
-#  - vellum-requirejs+use-django-compressor
-#  - use-django-compressor # bb 7/1
-  - offline-install-multimedia  # Danny 5/28
   - logos # Nick P 5/28
-  - 109909-case-performance  # ethan/cory 5/30
-  - switch_to_site_code # tw 6/17
-  - vellum-requirejs # Daniel 6/12
-  - coredb # SK 7/7
-  - all-filter-hack # Noah 7/7
-  - schedule # SK 7/17
-  - dynmic-opm # sravan 7/10
+  - admin-reports # Nick P 8/13
+#  - subscription-no-contact-info # bb 8/4
+  - increase-es-timeout # Nick P 8/11
+  - archive-products # tw 8/14
+  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
+  - subscription-no-contact-info # bb 8/4
+  - fix-timeout # Nick P 8/26
+  - custom_user_data # tw+Ethan 9/9
+  - lwyszomi:better_date_filters_improvment
+  - lwyszomi:uservoice-pending-invitations
+  # - lwyszomi:b3-mobile-layout
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - caseindex # SK 9/16
+  - bulk-app-translate # Noah 9/18
 submodules:
   submodules/couchlog-src:
     branches:
@@ -31,9 +79,19 @@ submodules:
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
+      # Danny 8/12. If form validation seems wonky on staging, just remove this
+      - clean-up-api
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  submodules/dimagi-utils-src:
+    branches:
+      # Danny 8/12. If there's weird errors or issues in saving forms
+      # or saving apps, just remove this
+      - faster-lazy-attachments
+  # submodules/pillowtop-src:
+    # branches:
+      # - request_timeout  # Ethan 9/12

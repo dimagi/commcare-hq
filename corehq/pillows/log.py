@@ -29,12 +29,16 @@ class PhoneLogPillow(SQLPillow):
             'users/by_username',
             key=cc_username,
             include_docs=False,
+            reduce=False,
         )
         row = result.one()
         if row:
             return row["id"]
 
-    def process_sql(self, doc_dict):
+    def process_sql(self, doc_dict, delete=False):
+        if delete:
+            return
+
         xform_id = doc_dict.get('_id')
         form = doc_dict.get('form', {})
         userlogs = get_logs(form, 'user_subreport', 'user')

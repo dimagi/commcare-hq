@@ -81,6 +81,12 @@
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                         {% endif %}
+                        {% if error.type == "no parent select id" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            uses parent case selection but doesn't have a parent
+                            module specified.
+                        {% endif %}
                         {% if error.type == "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}
@@ -146,7 +152,15 @@
                             A circular reference was detected in the hierarchy of subcase "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}
-                        {% if error.type == "auto select ref" %}
+                        {% if error.type == "auto select key" %}
+                            The auto-select case action is missing the "{{ error.key_name }}" value
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "auto select source" %}
+                            The auto-select case action is missing the "{{ error.source_name }}" value
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% endif %}
+                        {% if error.type == "auto select case ref" %}
                             The case tag referenced in the auto-select expression of "{{ error.case_tag }}" was not found
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% endif %}

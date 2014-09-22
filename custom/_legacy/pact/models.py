@@ -1,4 +1,3 @@
-from functools import partial
 from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
@@ -9,11 +8,9 @@ from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
-from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
 from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART, PACT_REGIMEN_CHOICES_FLAT_DICT, REGIMEN_CHOICES, PACT_DOMAIN
 from pact.regimen import regimen_string_from_doc
 
-ALLOWED_PROPERTY_TYPES.add(partial)
 
 def make_uuid():
     return uuid.uuid4().hex
@@ -149,6 +146,8 @@ class PactPatientCase(CommCareCase):
         regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
         if regimen_string is None:
             return "No regimen"
+        elif regimen_string.startswith('Error,'):
+            return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], regimen_string)
         else:
             return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 

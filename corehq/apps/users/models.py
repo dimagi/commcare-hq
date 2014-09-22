@@ -3,13 +3,11 @@ couch models go here
 """
 from __future__ import absolute_import
 from datetime import datetime
-import logging
 import re
 
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -968,7 +966,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     # Couch view wrappers
     @classmethod
     def all(cls):
-        return CouchUser.view("users/by_username", include_docs=True)
+        return CouchUser.view("users/by_username", include_docs=True, reduce=False)
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
@@ -1107,6 +1105,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
+                reduce=False,
                 #stale=stale,
             )
             return result.one(except_all=raise_if_none)
@@ -1162,7 +1161,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
-                first_name=first_name, last_name=last_name
+                first_name=first_name, last_name=last_name, **kwargs
             )
 
         if uuid:
@@ -1198,7 +1197,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def save(self, **params):
         # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username).first()
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
@@ -1296,7 +1295,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     return self.has_permission(domain, perm, data)
                 fn.__name__ = item
                 return fn
-        return super(CouchUser, self).__getattr__(item)
+        raise AttributeError("'{}' object has no attribute '{}'".format(
+            self.__class__.__name__, item))
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
@@ -1619,8 +1619,28 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.save()
         self.save()
 
-    def get_group_fixture(self):
-        return group_fixture(self.get_case_sharing_groups(), self)
+    def get_group_fixture(self, last_sync=None):
+        def _should_sync_groups(groups, last_sync):
+            """
+            Determine if we need to sync the groups fixture by checking
+            the modified date on all groups compared to the
+            last sync.
+            """
+            if not last_sync or not last_sync.date:
+                return True
+
+            for group in groups:
+                if not group.last_modified or group.last_modified >= last_sync.date:
+                    return True
+
+            return False
+
+        groups = self.get_case_sharing_groups()
+
+        if _should_sync_groups(groups, last_sync):
+            return group_fixture(groups, self)
+        else:
+            return None
 
     @memoized
     def get_case_sharing_groups(self):
@@ -1934,6 +1954,21 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             return UserRole(domain=domain, permissions=total_permission,
                             name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
             #set up a domain_membership
+
+    @classmethod
+    def get_admins_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            web_user = cls.wrap(user_doc)
+            if web_user.is_domain_admin(domain):
+                yield web_user
+
+    @classmethod
+    def get_dimagi_emails_by_domain(cls, domain):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            if user_doc['email'].endswith('@dimagi.com'):
+                yield user_doc['email']
 
 
 class FakeUser(WebUser):

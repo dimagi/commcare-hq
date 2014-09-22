@@ -18,6 +18,18 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 
+# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
+# this to select various versions of Vellum source on the form designer page.
+# Acceptable values:
+# None - production mode
+# "dev" - use raw vellum source (submodules/formdesigner/src)
+# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
+VELLUM_DEBUG = None
+
+# enables all plugins, including ones that haven't been released on production
+# yet
+VELLUM_PRERELEASE = False
+
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -79,9 +91,14 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-)
+STATICFILES_DIRS = ()
+
+# bleh, why did this submodule have to be removed?
+# deploy fails if this item is present and the path does not exist
+_formdesigner_path = os.path.join(FILEPATH, 'submodules', 'formdesigner')
+if os.path.exists(_formdesigner_path):
+    STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
+del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
@@ -172,6 +189,11 @@ DEFAULT_APPS = (
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+    'bootstrap3_transitional',
+)
 
 HQ_APPS = (
     'django_digest',
@@ -214,11 +236,11 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -263,7 +285,9 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -289,13 +313,17 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.care_pathways',
+    'bootstrap3_crispy',
 )
 
 TEST_APPS = ()
@@ -315,6 +343,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
+    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -332,9 +361,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
@@ -432,7 +458,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -460,6 +486,11 @@ CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder case updates.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -535,6 +566,32 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Reminders Queue Settings #######
+
+# Setting this to False will make the system fire reminders every
+# minute on the periodic queue. Setting to True will queue up reminders
+# on the reminders queue.
+REMINDERS_QUEUE_ENABLED = False
+
+# If a reminder still has not been processed in this number of minutes, enqueue it
+# again.
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single reminder
+REMINDERS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the reminder
+REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The number of hours to wait before counting a reminder as stale. Stale
+# reminders will not be processed.
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
@@ -889,8 +946,9 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -925,6 +983,7 @@ COUCHDB_APPS = [
     'trialconnect',
     'accounting',
     'succeed',
+    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -982,6 +1041,7 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+    'custom.ilsgateway.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1054,7 +1114,8 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1072,6 +1133,8 @@ PILLOWTOPS = {
         'custom.opm.opm_reports.models.OpmUserFluffPillow',
         'custom.opm.opm_reports.models.OpmFormFluffPillow',
         'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
+        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1084,7 +1147,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow'
+        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
+        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.care_pathways.models.GeographyFluffPillow',
+        'custom.care_pathways.models.FarmerRecordFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1111,6 +1178,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1187,7 +1255,9 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'pathways-india-mis': 'custom.care_pathways',
+    'pathways-tanzania': 'custom.care_pathways',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

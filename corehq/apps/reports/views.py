@@ -22,10 +22,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from casexml.apps.case.cleanup import rebuild_case
-from corehq import toggles
+import pytz
+from corehq import toggles, Domain
+from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.reports.standard.export import ExcelExportReport
+from corehq.util.couch import get_document_or_404
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -125,6 +126,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
 
     scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
     scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
+    for report in scheduled_reports:
+        time_difference = get_timezone_difference(domain)
+        (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
+        report.minute = 0
+        if day_change:
+            report.day = calculate_day(report.interval, report.day, day_change)
 
     context = dict(
         couch_user=request.couch_user,
@@ -536,6 +543,43 @@ def delete_config(request, domain, config_id):
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
+def normalize_hour(hour):
+    day_change = 0
+    if hour < 0:
+        day_change = -1
+        hour += 24
+    elif hour >= 24:
+        day_change = 1
+        hour -= 24
+
+    assert 0 <= hour < 24
+    return (hour, day_change)
+
+def calculate_hour(hour, hour_difference, minute_difference):
+    hour += hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour -= 1
+    return normalize_hour(hour)
+
+
+def recalculate_hour(hour, hour_difference, minute_difference):
+    hour -= hour_difference
+    if hour_difference < 0 and minute_difference != 0:
+        hour += 1
+    return normalize_hour(hour)
+
+
+def get_timezone_difference(domain):
+    return datetime.now(pytz.timezone(Domain._get_by_name(domain)['default_timezone'])).strftime('%z')
+
+
+def calculate_day(interval, day, day_change):
+    if interval == "weekly":
+        return (day + day_change) % 7
+    elif interval == "monthly":
+        return (day - 1 + day_change) % 31 + 1
+    return day
+
 
 @login_and_domain_required
 def edit_scheduled_report(request, domain, scheduled_report_id=None,
@@ -569,11 +613,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     if scheduled_report_id:
         instance = ReportNotification.get(scheduled_report_id)
+        time_difference = get_timezone_difference(domain)
+        (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = 0
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
+
         if instance.owner_id != user_id or instance.domain != domain:
             raise HttpResponseBadRequest()
     else:
         instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8,
+                                      config_ids=[], hour=8, minute=0,
                                       send_to_owner=True, recipient_emails=[])
 
     is_new = instance.new_document
@@ -587,9 +637,21 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     form.fields['config_ids'].choices = config_choices
     form.fields['recipient_emails'].choices = web_user_emails
 
+    form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
+                                    (Domain._get_by_name(domain)['default_timezone'],
+                                    get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
+
+
     if request.method == "POST" and form.is_valid():
         for k, v in form.cleaned_data.items():
             setattr(instance, k, v)
+
+        time_difference = get_timezone_difference(domain)
+        (instance.hour, day_change) = calculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+        instance.minute = int(time_difference[3:])
+        if day_change:
+            instance.day = calculate_day(instance.interval, instance.day, day_change)
+
         instance.save()
         if is_new:
             messages.success(request, "Scheduled report added!")
@@ -725,7 +787,7 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user, domain)
 
     try:
-        case = _get_case_or_404(domain, case_id)
+        case = get_document_or_404(CommCareCase, domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
@@ -771,7 +833,7 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_xml(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
@@ -780,20 +842,52 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     rebuild_case(case_id)
-    messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
+    messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
-def _get_case_or_404(domain, case_id):
-    try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
-        raise Http404
-    return case
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def close_case_view(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    if case.closed:
+        messages.info(request, u'Case {} is already closed.'.format(case.name))
+    else:
+        form_id = close_case(case_id, domain, request.couch_user)
+        msg = _(u'''Case {name} has been closed.
+            <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
+            You can also reopen the case in the future by archiving the last form in the case history.
+            <form id="{html_form_id}" action="{url}" method="POST">
+                <input type="hidden" name="closing_form" value="{xform_id}" />
+            </form>
+        '''.format(
+            name=case.name,
+            html_form_id='undo-close-case',
+            xform_id=form_id,
+            url=reverse('undo_close_case', args=[domain, case_id]),
+        ))
+        messages.success(request, mark_safe(msg), extra_tags='html')
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def undo_close_case_view(request, domain, case_id):
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    if not case.closed:
+        messages.info(request, u'Case {} is not closed.'.format(case.name))
+    else:
+        closing_form_id = request.POST['closing_form']
+        assert closing_form_id in case.xform_ids
+        form = XFormInstance.get(closing_form_id)
+        form.archive(user=request.couch_user._id)
+        messages.success(request, u'Case {} has been reopened.'.format(case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
@@ -889,7 +983,8 @@ def _get_form_context(request, domain, instance_id):
         "domain": domain,
         "display": display,
         "timezone": timezone,
-        "instance": instance
+        "instance": instance,
+        "user": request.couch_user,
     }
     context['form_render_options'] = context
     return context
@@ -927,6 +1022,7 @@ def form_data(request, domain, instance_id):
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
+
 
 @require_form_view_permission
 @login_and_domain_required

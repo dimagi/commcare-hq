@@ -91,6 +91,29 @@ COMMTRACK = FeaturePreview(
         "goods and materials, from medication to food to bednets. <br/>"
         "Note: You must also enable CommTrack on any CommTrack "
         "application's settings page."),
-    help_link='https://confluence.dimagi.com/display/commtrack/CommTrack+Home',
+    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     save_fn=commtrackify,
 )
+
+
+def enable_callcenter(domain_name, checked):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(domain_name)
+    domain.call_center_config.enabled = checked
+    domain.save()
+
+
+CALLCENTER = FeaturePreview(
+    slug='callcenter',
+    label=_("Call Center"),
+    description=_(
+        'The call center application setting allows an application to reference a '
+        'mobile user as a case that can be monitored using CommCare.  '
+        'This allows supervisors to view their workforce within CommCare.  '
+        'From here they can do things like monitor workers with performance issues, '
+        'update their case with possible reasons for poor performance, '
+        'and offer guidance towards solutions.'),
+    help_link='https://help.commcarehq.org/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application',
+    save_fn=enable_callcenter,
+)
+

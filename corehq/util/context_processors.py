@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
+from django.utils.translation import ugettext as _
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import toggles, privileges
+from corehq import privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
@@ -11,17 +12,10 @@ RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
 def base_template(request):
     """This sticks the base_template variable defined in the settings
        into the request context."""
-
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
-        'use_bootstrap_3': (
-            hasattr(request, 'use_bootstrap_3')
-            and request.use_bootstrap_3
-            and hasattr(request, 'user')
-            and toggles.BOOTSTRAP3_PREVIEW.enabled(request.user.username)
-        ),
     }
 
 
@@ -31,19 +25,19 @@ def get_per_domain_context(project, request=None):
         logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
-        can_be_your = "mobile logistics solution"
+        can_be_your = _("mobile logistics solution")
     elif project and project.commconnect_enabled:
         domain_type = 'commconnect'
         logo_url = static('hqstyle/img/commconnect-logo.png')
         site_name = "CommConnect"
         public_site = "http://www.commcarehq.org"
-        can_be_your = "mobile health solution"
+        can_be_your = _("mobile solution for your frontline workforce")
     else:
         domain_type = 'commcare'
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
-        can_be_your = "mobile health solution"
+        can_be_your = _("mobile solution for your frontline workforce")
 
     try:
         if 'commtrack.org' in request.get_host():

@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.conf import settings
 
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
@@ -20,12 +21,14 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
+from corehq.apps.accounting.exceptions import CreateAccountingAdminError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
-from django_prbac.models import Role, Grant
+from django_prbac.models import Role, Grant, UserRole
 
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
@@ -83,6 +86,11 @@ class BillingAccountBasicForm(forms.Form):
                     "Billing Account Specified here."),
         required=False,
     )
+    dimagi_contact = forms.EmailField(
+        label=_("Dimagi Contact Email"),
+        max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
+        required=False,
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -94,6 +102,7 @@ class BillingAccountBasicForm(forms.Form):
                 'currency': account.currency.code,
                 'emails': contact_info.emails,
                 'is_active': account.is_active,
+                'dimagi_contact': account.dimagi_contact,
             }
         else:
             kwargs['initial'] = {
@@ -125,6 +134,7 @@ class BillingAccountBasicForm(forms.Form):
                 'Basic Information',
                 'name',
                 crispy.Field('emails', css_class='input-xxlarge'),
+                'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
                 crispy.Div(*additional_fields),
@@ -205,6 +215,7 @@ class BillingAccountBasicForm(forms.Form):
         account.currency, _ = Currency.objects.get_or_create(
             code=self.cleaned_data['currency'],
         )
+        account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -614,7 +625,7 @@ class ChangeSubscriptionForm(forms.Form):
 
 class CreditForm(forms.Form):
     amount = forms.DecimalField(label="Amount (USD)")
-    note = forms.CharField(required=False)
+    note = forms.CharField(required=True)
     rate_type = forms.ChoiceField(
         label=_("Rate Type"),
         choices=(
@@ -669,7 +680,7 @@ class CreditForm(forms.Form):
             ))
         return amount
 
-    def adjust_credit(self):
+    def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
         product_type = (self.cleaned_data['product_type']
@@ -683,6 +694,7 @@ class CreditForm(forms.Form):
             feature_type=feature_type,
             product_type=product_type,
             note=note,
+            web_user=web_user,
         )
         return True
 
@@ -1290,7 +1302,11 @@ class FeatureRateForm(forms.ModelForm):
             crispy.Field('rate_id', data_bind="value: rate_id"),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
             crispy.Field('monthly_limit', data_bind="value: monthly_limit"),
-            crispy.Field('per_excess_fee', data_bind="value: per_excess_fee"),
+            crispy.Div(
+                crispy.Field('per_excess_fee',
+                             data_bind="value: per_excess_fee"),
+                data_bind="visible: isPerExcessVisible",
+            ),
         )
 
     def is_new(self):
@@ -1800,3 +1816,57 @@ class ResendEmailForm(forms.Form):
         contact_emails += self.cleaned_data['additional_recipients']
         record = BillingRecord.generate_record(self.invoice)
         record.send_email(contact_emails=contact_emails)
+
+
+class CreateAdminForm(forms.Form):
+    username = forms.CharField(
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CreateAdminForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_show_labels= False
+        self.helper.form_style = 'inline'
+        self.helper.layout = crispy.Layout(
+            InlineField(
+                'username',
+                css_id="select-admin-username",
+            ),
+            StrictButton(
+                mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
+                css_class="btn-success",
+                type="submit",
+            )
+        )
+
+    def add_admin_user(self):
+        # create UserRole for user
+        username = self.cleaned_data['username']
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise CreateAccountingAdminError(
+                "User '%s' does not exist" % username
+            )
+        web_user = WebUser.get_by_username(username)
+        if not web_user or not web_user.is_superuser:
+            raise CreateAccountingAdminError(
+                "The user '%s' is not a superuser." % username,
+            )
+        try:
+            user_role = UserRole.objects.get(user=user)
+        except UserRole.DoesNotExist:
+            user_privs = Role.objects.get_or_create(
+                name="Privileges for %s" % user.username,
+                slug="%s_privileges" % user.username,
+            )[0]
+            user_role = UserRole.objects.create(
+                user=user,
+                role=user_privs,
+            )
+        ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
+        if not user_role.role.has_privilege(ops_role):
+            Grant.objects.create(from_role=user_role.role, to_role=ops_role)
+        return user

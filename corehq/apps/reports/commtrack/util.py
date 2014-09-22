@@ -1,13 +1,15 @@
 from corehq.apps.locations.models import all_locations
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, SupplyPointCase
 
 
 def supply_point_ids(locations):
-    sp_ids = []
-    for l in locations:
-        if l.linked_supply_point():
-            sp_ids.append(l.linked_supply_point()._id)
-    return sp_ids
+    keys = [[loc.domain, loc._id] for loc in locations]
+    rows = SupplyPointCase.get_db().view(
+        'commtrack/supply_point_by_loc',
+        keys=keys,
+        include_docs=False,
+    )
+    return [row['id'] for row in rows]
 
 
 def get_relevant_supply_point_ids(domain, active_location=None):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # CommCareHQ documentation build configuration file, created by
-# sphinx-quickstart on Fri Aug 23 11:23:26 2013.
+# sphinx-quickstart on Wed Sep  3 09:42:11 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -14,25 +14,12 @@
 import sys, os
 
 sys.path.insert(0, os.path.abspath('..'))
-filedir = os.path.abspath('..')
-submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
+from ..manage import _set_source_root, _set_source_root_parent
 
-for d in submodules_list:
-    if d == "__init__.py" or d == '.' or d == '..':
-        continue
-    sys.path.insert(1, os.path.join(filedir, 'submodules', d))
-
-sys.path.append(os.path.join(filedir, 'submodules'))
-
-import settings
-from django.core.management import setup_environ
-
-setup_environ(settings)
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+_set_source_root_parent('submodules')
+_set_source_root(os.path.join('corehq', 'ex-submodules'))
+_set_source_root(os.path.join('custom', '_legacy'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 # -- General configuration -----------------------------------------------------
 
@@ -57,7 +44,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CommCareHQ'
-copyright = u'2013, Dimagi'
+copyright = u'2014, Dimagi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

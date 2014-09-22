@@ -22,6 +22,7 @@ def sync_user_cases(commcare_user):
     # case submission
     fields = {
         'name': commcare_user.name or commcare_user.raw_username,
+        'username': commcare_user.raw_username,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or ''
@@ -38,16 +39,31 @@ def sync_user_cases(commcare_user):
     close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
     owner_id = domain.call_center_config.case_owner_id
+    caseblock = None
     if found:
-        caseblock = CaseBlock(
-            create=False,
-            case_id=case._id,
-            version=V2,
-            owner_id=owner_id,
-            case_type=domain.call_center_config.case_type,
-            close=close,
-            update=fields
-        )
+        props = dict(case.dynamic_case_properties())
+
+        changed = close != case.closed
+        changed = changed or case.owner_id != owner_id
+        changed = changed or case.type != domain.call_center_config.case_type
+        changed = changed or case.name != fields['name']
+
+        if not changed:
+            for field, value in fields.items():
+                if field != 'name' and props.get(field) != value:
+                    changed = True
+                    break
+
+        if changed:
+            caseblock = CaseBlock(
+                create=False,
+                case_id=case._id,
+                version=V2,
+                owner_id=owner_id,
+                case_type=domain.call_center_config.case_type,
+                close=close,
+                update=fields
+            )
     else:
         fields['hq_user_id'] = commcare_user._id
         caseblock = CaseBlock(
@@ -60,8 +76,9 @@ def sync_user_cases(commcare_user):
             update=fields
         )
 
-    casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain.name)
+    if caseblock:
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, domain.name)
 
 
 def bootstrap_callcenter(domain):

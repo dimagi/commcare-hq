@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
+import corehq.apps.style.utils as style_utils
 import corehq
 
 
@@ -64,7 +65,11 @@ class MainMenuNode(template.Node):
         # other blocks
         context.dicts[0]['active_tab'] = active_tab
 
-        return mark_safe(render_to_string("hqwebapp/partials/main_menu.html", {
+        template = {
+            style_utils.BOOTSTRAP_2: 'hqwebapp/partials/main_menu.html',
+            style_utils.BOOTSTRAP_3: 'style/includes/menu_main.html',
+        }[style_utils.bootstrap_version(request)]
+        return mark_safe(render_to_string(template, {
             'tabs': visible_tabs,
         }))
 
@@ -131,6 +136,10 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    return mark_safe(render_to_string("hqwebapp/partials/sidebar.html", {
+    template = {
+        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/sidebar.html',
+        style_utils.BOOTSTRAP_3: 'style/includes/navigation_left_sidebar.html',
+    }[style_utils.bootstrap_version(request)]
+    return mark_safe(render_to_string(template, {
         'sections': sections
     }))

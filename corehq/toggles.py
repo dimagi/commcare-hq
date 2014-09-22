@@ -94,15 +94,14 @@ CASE_REBUILD = StaticToggle(
     'Show UI-based case rebuild option',
 )
 
-ANDROID_OFFLINE_INSTALL = StaticToggle(
-    'android_offline_install',
-    'Android Offline Install',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer'
+)
+
+PATHWAYS_PREVIEW = StaticToggle(
+    'pathways_preview',
+    'Is Pathways preview'
 )
 
 CUSTOM_PRODUCT_DATA = StaticToggle(
@@ -114,4 +113,9 @@ CUSTOM_PRODUCT_DATA = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
+)
+
+DASHBOARD_PREVIEW = StaticToggle(
+    'dashboard_preview',
+    'HQ Dashboard Preview'
 )

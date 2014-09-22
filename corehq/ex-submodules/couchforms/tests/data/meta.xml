@@ -1,0 +1,47 @@
+<?xml version='1.0' ?>
+<general xmlns="http://openrosa.org/app/general">
+	<meta>
+		<clinic_id>5020280</clinic_id>
+		<timeStart>2010-07-22T13:54:27.971</timeStart>
+		<timeEnd>2010-07-23T13:55:11.648</timeEnd>
+		<username>admin</username>
+		<userID>f7f0c79e-8b79-11df-b7de-005056c00008</userID>
+        <appVersion>v1.2.3 (biz bazzle)</appVersion>
+	</meta>
+	<case>
+		<patient_id>6713c1c211b3af6832c8ad781e310d98</patient_id>
+		<case_type>malaria</case_type>
+		<followup_type>referral</followup_type>
+		<followup_date />
+		<outcome />
+	</case>
+	<encounter_date>2010-07-22</encounter_date>
+	<encounter_type>new_case</encounter_type>
+	<chw_referral_id />
+	<vitals>
+		<height />
+		<weight />
+		<bp />
+		<temp />
+		<resp_rate />
+		<heart_rate />
+	</vitals>
+	<danger_signs>convuls</danger_signs>
+	<medical_history>daibetes</medical_history>
+	<hiv_result>r</hiv_result>
+	<on_haart />
+	<general_exam>none</general_exam>
+	<phys_exam_detail>none</phys_exam_detail>
+	<assessment>
+		<categories>other</categories>
+	</assessment>
+	<investigations>
+		<categories />
+	</investigations>
+	<diagnosis>malaria</diagnosis>
+	<drugs>
+		<prescribed />
+		<dispensed />
+	</drugs>
+	<resolution>referral</resolution>
+</general>

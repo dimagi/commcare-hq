@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles, privileges
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -229,17 +230,15 @@ class ProjectReportsTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-        
+
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
              'icon': 'icon-tasks'}
         ])]
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            context)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            context)
+        project_reports = ProjectReportDispatcher.navigation_sections(context)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(context)
 
         return tools + project_reports + custom_reports
 
@@ -271,6 +270,16 @@ class IndicatorAdminTab(UITab):
     def is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
         return self.couch_user.can_edit_data() and self.domain in indicator_enabled_projects
+
+
+class DashboardTab(UITab):
+    title = ugettext_noop("Dashboard")
+    view = 'corehq.apps.dashboard.views.dashboard_default'
+
+    @property
+    def is_viewable(self):
+        return (self.couch_user
+                and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
 
 
 class ReportsTab(UITab):
@@ -342,6 +351,7 @@ class CommTrackSetupTab(UITab):
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
+            ILSConfigView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -435,6 +445,11 @@ class CommTrackSetupTab(UITab):
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
         ]])
+        if self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username)):
+            items[0][1].append({
+                'title': ILSConfigView.page_title,
+                'url': reverse(ILSConfigView.urlname, args=[self.domain]),
+            })
         return items
 
 
@@ -474,17 +489,16 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
-            if self.couch_user.is_previewer:
-                edit_section[0][1].append({
-                    'title': CaseGroupListView.page_title,
-                    'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': CaseGroupCaseManagementView.page_title,
-                            'urlname': CaseGroupCaseManagementView.urlname,
-                        }
-                    ]
-                })
+            edit_section[0][1].append({
+                'title': CaseGroupListView.page_title,
+                'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': CaseGroupCaseManagementView.page_title,
+                        'urlname': CaseGroupCaseManagementView.urlname,
+                    }
+                ]
+            })
 
             items.extend(edit_section)
             
@@ -1048,8 +1062,14 @@ class ProjectSettingsTab(UITab):
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain]),
                  'subpages': [
-                     {'title': forward_name,
-                      'urlname': 'add_repeater'}
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_repeater',
+                     },
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_form_repeater',
+                     },
                  ]}
             ])
 
@@ -1224,19 +1244,20 @@ class AccountingTab(UITab):
 
     @property
     def is_viewable(self):
-        roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
-        if not roles:
-            return False
-        privilege = roles[0].instantiate({})
-        try:
-            return self._request.user.prbac_role.has_privilege(privilege)
-        except UserRole.DoesNotExist:
-            return False
+        return is_accounting_admin(self._request.user)
 
     @property
     @memoized
     def sidebar_items(self):
         items = super(AccountingTab, self).sidebar_items
+
+        from corehq.apps.accounting.views import ManageAccountingAdminsView
+        items.append(('Permissions', (
+            {
+                'title': ManageAccountingAdminsView.page_title,
+                'url': reverse(ManageAccountingAdminsView.urlname),
+            },
+        )))
 
         if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
             from corehq.apps.accounting.views import (

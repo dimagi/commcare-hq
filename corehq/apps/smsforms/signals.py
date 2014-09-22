@@ -5,7 +5,7 @@ from couchforms.models import XFormInstance
 
 def handle_sms_form_complete(sender, session_id, form, **kwargs):
     from corehq.apps.smsforms.models import XFormsSession
-    session = XFormsSession.latest_by_session_id(session_id)
+    session = XFormsSession.by_session_id(session_id)
     if session:
         resp = submit_form_locally(form, session.domain, app_id=session.app_id)
         xform_id = resp['X-CommCareHQ-FormID']

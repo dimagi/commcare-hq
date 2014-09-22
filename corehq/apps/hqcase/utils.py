@@ -21,14 +21,20 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns='http://commcarehq.org/case'):
+    """
+    Submits casexml in a manner similar to how they would be submitted from a phone.
+
+    returns the UID of the resulting form.
+    """
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, basestring):
         case_blocks = ''.join(case_blocks)
+    form_id = uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
         'xmlns': xmlns,
         'case_block': case_blocks,
         'time': now,
-        'uid': uuid.uuid4().hex,
+        'uid': form_id,
         'username': username,
         'user_id': user_id,
     })
@@ -36,6 +42,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         instance=form_xml,
         domain=domain,
     )
+    return form_id
 
 
 def get_case_wrapper(data):

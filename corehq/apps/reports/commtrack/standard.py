@@ -1,5 +1,4 @@
 from corehq.apps.api.es import CaseES
-from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -15,10 +14,6 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-
-
-def _enabled_hack(domain):
-    return not is_psi_domain(domain)
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -55,9 +50,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
         if not any(a.action_type == 'consumption' for a in actions):
             # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
             actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
-        if is_psi_domain(self.domain):
-            ordering = ['sales', 'receipts', 'consumption']
-            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
         return actions
 
     @property
@@ -224,7 +216,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(InventoryReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):
@@ -290,7 +282,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
@@ -299,7 +290,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):
@@ -318,13 +309,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
-            'program_id': self.request.GET.get('program'),
             'startdate': self.datespan.startdate_utc,
             'enddate': self.datespan.enddate_utc,
             'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
-
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1

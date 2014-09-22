@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.test.utils import override_settings
 from lxml import etree
 import os
 import random
@@ -144,10 +145,8 @@ class CommTrackOTATest(CommTrackTest):
         # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
-        self.assertEqual(1, len(balance_blocks))
-        [balance_block] = balance_blocks
-        element = etree.fromstring(balance_block)
-        self.assertEqual(0, len([child for child in element]))
+        # with no data, there should be no consumption block
+        self.assertEqual(0, len(balance_blocks))
 
         self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
@@ -166,9 +165,8 @@ class CommTrackSubmissionTest(CommTrackTest):
         loc2 = make_loc('loc1')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
+    @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     def submit_xml_form(self, xml_method, **submit_extras):
-        from casexml.apps.case import settings
-        settings.CASEXML_FORCE_DOMAIN_CHECK = False
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,

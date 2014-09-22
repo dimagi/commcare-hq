@@ -31,6 +31,7 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -47,6 +48,7 @@ from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
+from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -58,18 +60,23 @@ from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
     BlankXFormError,
     ConflictingCaseTypeError,
+    FormNotFoundException,
+    IncompatibleFormTypeException,
+    LocationXpathValidationError,
+    ModuleNotFoundException,
     RearrangeError,
     VersioningError,
     XFormError,
     XFormIdNotUnique,
     XFormValidationError,
-    LocationXpathValidationError)
+)
 from corehq.apps.app_manager import id_strings
 
 WORKFLOW_DEFAULT = 'default'
@@ -114,18 +121,6 @@ def partial_escape(xpath):
 
     """
     return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
-
-
-class ModuleNotFoundException(Exception):
-    pass
-
-
-class FormNotFoundException(Exception):
-    pass
-
-
-class IncompatibleFormTypeException(Exception):
-    pass
 
 
 class IndexedSchema(DocumentSchema):
@@ -176,6 +171,8 @@ class FormActionCondition(DocumentSchema):
     answer = StringProperty()
     operator = StringProperty(choices=['=', 'selected'], default='=')
 
+    def is_active(self):
+        return self.type in ('if', 'always')
 
 class FormAction(DocumentSchema):
     """
@@ -185,7 +182,7 @@ class FormAction(DocumentSchema):
     condition = SchemaProperty(FormActionCondition)
 
     def is_active(self):
-        return self.condition.type in ('if', 'always')
+        return self.condition.is_active()
 
     @classmethod
     def get_action_paths(cls, action):
@@ -253,6 +250,7 @@ class OpenSubCaseAction(FormAction):
     case_properties = DictProperty()
     repeat_context = StringProperty()
 
+    close_condition = SchemaProperty(FormActionCondition)
 
 class FormActions(DocumentSchema):
 
@@ -308,7 +306,7 @@ class AutoSelectCase(DocumentSchema):
         value_source    Reference to the source of the value. For mode = fixture,
                         this represents the FixtureDataType ID. For mode = case
                         this represents the 'case_tag' for the case.
-                        The mode 'user' doesn't require a value_source.
+                        The modes 'user' and 'raw' don't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
                         index or a user data key or a fixture field name or the raw
                         xpath expression.
@@ -316,7 +314,7 @@ class AutoSelectCase(DocumentSchema):
     """
     mode = StringProperty(choices=[AUTO_SELECT_USER, AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_RAW])
     value_source = StringProperty()
-    value_key = StringProperty()
+    value_key = StringProperty(required=True)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -371,6 +369,15 @@ class AdvancedFormActions(DocumentSchema):
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
+
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in [a for a in self.open_cases if a.parent_tag]:
+            if not parent_case_type:
+                yield action
+            else:
+                parent = self.actions_meta_by_tag[action.parent_tag]['action']
+                if parent.case_type == parent_case_type:
+                    yield parent
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -513,6 +520,7 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -568,7 +576,8 @@ class FormBase(DocumentSchema):
         vc = self.validation_cache
         if vc is None:
             try:
-                XForm(self.source).validate(version=self.get_app().application_version)
+                validate_xform(self.source,
+                               version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -666,6 +675,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, **kwargs):
         return XForm(self.source).get_questions(langs, **kwargs)
 
+    @memoized
     def get_case_property_name_formatter(self):
         """Get a function that formats case property names
 
@@ -721,6 +731,13 @@ class FormBase(DocumentSchema):
     @property
     def has_fixtures(self):
         return 'src="jr://fixture/item-list:' in self.source
+
+    def get_auto_gps_capture(self):
+        app = self.get_app()
+        if app.build_version and app.enable_auto_gps:
+            return self.auto_gps_capture or app.auto_gps_capture
+        else:
+            return False
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -826,7 +843,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             if self.requires == 'none':
                 action_types = (
-                    'open_case', 'update_case', 'subcases',
+                    'open_case', 'update_case', 'close_case', 'subcases',
                 )
             elif self.requires == 'case':
                 action_types = (
@@ -1171,8 +1188,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     @parse_int([1])
     def get_form(self, i):
-        self__forms = self.forms
-        return self__forms[i].with_id(i%len(self.forms), self)
+
+        try:
+            return self.forms[i].with_id(i % len(self.forms), self)
+        except IndexError:
+            raise FormNotFoundException()
 
     def requires_case_details(self):
         return False
@@ -1378,6 +1398,11 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -1498,11 +1523,28 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
                 errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
 
-            if isinstance(action, LoadUpdateAction) and \
-                    action.auto_select and action.auto_select.mode == AUTO_SELECT_CASE:
-                case_tag = action.auto_select.value_source
-                if not self.actions.get_action_from_tag(case_tag):
-                    errors.append({'type': 'auto select ref', 'case_tag': action.case_tag})
+            if isinstance(action, LoadUpdateAction) and action.auto_select:
+                mode = action.auto_select.mode
+                if not action.auto_select.value_key:
+                    key_name = {
+                        AUTO_SELECT_CASE: _('Case property'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table field'),
+                        AUTO_SELECT_USER: _('custom user property'),
+                        AUTO_SELECT_RAW: _('custom XPath expression'),
+                    }[mode]
+                    errors.append({'type': 'auto select key', 'key_name': key_name})
+
+                if not action.auto_select.value_source:
+                    source_names = {
+                        AUTO_SELECT_CASE: _('Case tag'),
+                        AUTO_SELECT_FIXTURE: _('Lookup Table tag'),
+                    }
+                    if mode in source_names:
+                        errors.append({'type': 'auto select source', 'source_name': source_names[mode]})
+                elif mode == AUTO_SELECT_CASE:
+                    case_tag = action.auto_select.value_source
+                    if not self.actions.get_action_from_tag(case_tag):
+                        errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
@@ -1659,6 +1701,21 @@ class AdvancedModule(ModuleBase):
                     case_properties=update.update if update else {},
                     preload=convert_preload(preload.preload) if preload else {}
                 )
+
+                if from_module.parent_select.active:
+                    gen = suite_xml.SuiteGenerator(self.get_app())
+                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    for n, link in enumerate(reversed(list(enumerate(select_chain)))):
+                        i, module = link
+                        new_form.actions.load_update_cases.append(LoadUpdateAction(
+                            case_type=module.case_type,
+                            case_tag='_'.join(['parent'] * (i + 1)),
+                            details_module=module.unique_id,
+                            parent_tag='_'.join(['parent'] * (i + 2)) if n > 0 else ''
+                        ))
+
+                    base_action.parent_tag = 'parent'
+
                 if close:
                     base_action.close_condition = close.condition
                 new_form.actions.load_update_cases.append(base_action)
@@ -2160,7 +2217,8 @@ def absolute_url_property(method):
     return property(_inner)
 
 
-class ApplicationBase(VersionedDoc, SnapshotMixin):
+class ApplicationBase(VersionedDoc, SnapshotMixin,
+                      CommCareFeatureSupportMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -2359,7 +2417,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         # `LooseVersion`s are smart!
         # LooseVersion('2.12.0') > '2.2'
         # (even though '2.12.0' < '2.2')
-        return LooseVersion(self.build_spec.version)
+        if self.build_spec.version:
+            return LooseVersion(self.build_spec.version)
 
     def get_preview_build(self):
         preview = self.get_build()
@@ -2544,7 +2603,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception('Unexpected error building app')
+
+            # this is much less useful/actionable without a URL
+            # so make sure to include the request
+            logging.error('Unexpected error building app', exc_info=True,
+                          extra={'request': view_utils.get_request()})
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -2695,7 +2758,8 @@ class SavedAppBuild(ApplicationBase):
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
-            'short_name': self.short_name
+            'short_name': self.short_name,
+            'enable_offline_install': self.enable_offline_install,
         })
         comment_from = data['comment_from']
         if comment_from:
@@ -2727,6 +2791,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
+    auto_gps_capture = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -2807,24 +2872,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return "./media_suite.xml"
         else:
             return "jr://resource/media_suite.xml"
-
-    @property
-    def enable_relative_suite_path(self):
-        return self.build_version >= '2.12'
-
-    @property
-    def enable_multi_sort(self):
-        """
-        Multi (tiered) sort is supported by apps version 2.2 or higher
-        """
-        return self.build_version >= '2.2'
-
-    @property
-    def enable_multimedia_case_property(self):
-        """
-        Multimedia case properties are supported by apps version 2.6 or higher
-        """
-        return self.build_version >= '2.6'
 
     @property
     def default_language(self):
@@ -2995,9 +3042,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @parse_int([1])
     def get_module(self, i):
-        self__modules = self.modules
         try:
-            return self__modules[i].with_id(i%len(self__modules), self)
+            return self.modules[i].with_id(i % len(self.modules), self)
         except IndexError:
             raise ModuleNotFoundException()
 
@@ -3159,18 +3205,58 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
+        to_module = self.get_module(to_module_id)
+        self._copy_form(from_module, form, to_module)
+
+    def _copy_form(self, from_module, form, to_module):
         if not form.source:
             raise BlankXFormError()
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        to_module = self.get_module(to_module_id)
+
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
+
+    def convert_module_to_advanced(self, module_id):
+        from_module = self.get_module(module_id)
+
+        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
+
+        case_details = deepcopy(from_module.case_details.to_json())
+        to_module = AdvancedModule(
+            name=name,
+            forms=[],
+            case_type=from_module.case_type,
+            case_label=from_module.case_label,
+            put_in_root=from_module.put_in_root,
+            case_list=from_module.case_list,
+            case_details=DetailPair.wrap(case_details),
+            product_details=DetailPair(
+                short=Detail(
+                    columns=[
+                        DetailColumn(
+                            format='plain',
+                            header={'en': ugettext("Product")},
+                            field='name',
+                            model='product',
+                        ),
+                    ],
+                ),
+                long=Detail(),
+            ),
+        )
+        to_module.get_or_create_unique_id()
+        to_module = self.add_module(to_module)
+
+        for form in from_module.get_forms():
+            self._copy_form(from_module, form, to_module)
+
+        return to_module
 
     @cached_property
     def has_case_management(self):

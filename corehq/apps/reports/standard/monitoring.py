@@ -8,11 +8,12 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -40,7 +41,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         user_link = user_link_template % {
             'link': "%s%s" % (get_url_base(),
                               CaseListReport.get_url(domain=self.domain)),
-            'params': urlencode(ExpandedMobileWorkerFilter.for_user(user.user_id)),
+            'params': urlencode(EMWF.for_user(user.user_id)),
             'username': user.username_in_report,
         }
         return user_link
@@ -191,13 +192,13 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of active cases.")
+                help_text=_("The number of cases created or modified in the last 120 days.")
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
             )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days).") % landmark.days
+                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
@@ -215,7 +216,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
 
     @property
     def rows(self):
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         rows = [self.Row(self, user) for user in users_data.combined_users]
 
@@ -327,7 +328,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         for user in users_data.combined_users:
             row = []
@@ -362,6 +363,22 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
             endkey=key + [self.datespan.enddate_param_utc],
         ).first()
         return data['value'] if data else 0
+
+    @memoized
+    def forms_per_user(self, app_id, xmlns):
+        # todo: this seems to not work properly
+        # needs extensive QA before being used
+        query = (FormES()
+                 .domain(self.domain)
+                 .xmlns(xmlns)
+                 .submitted(gt=self.datespan.startdate_utc,
+                            lte=self.datespan.enddate_utc)
+                 .size(0)
+                 .user_facet())
+        if app_id and app_id != MISSING_APP_ID:
+            query = query.app(app_id)
+        res = query.run()
+        return res.facets.user.counts_by_term()
 
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
@@ -416,8 +433,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     def shared_pagination_GET_params(self):
         params = [
             dict(
-                name=ExpandedMobileWorkerFilter.slug,
-                value=ExpandedMobileWorkerFilter.get_value(self.request, self.domain)),
+                name=EMWF.slug,
+                value=EMWF.get_value(self.request, self.domain)),
             dict(
                 name=CompletionOrSubmissionTimeFilter.slug,
                 value=CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)),
@@ -434,12 +451,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     @memoized
     def all_users(self):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        result = ExpandedMobileWorkerFilter.pull_users_from_es(
-            self.domain, self.request, fields=fields)
-        return sorted(map(
-            util._report_user_dict,
-            [u['fields'] for u in result['hits']['hits']]
-        ), key=lambda u: u['username_in_report'])
+        users = EMWF.user_es_query(self.domain, self.request).fields(fields)\
+                .run().hits
+        users = map(util._report_user_dict, users)
+        return sorted(users, key=lambda u: u['username_in_report'])
 
     def paginate_list(self, data_list):
         if self.pagination:
@@ -561,7 +576,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
     def get_user_link(self, user):
 
         params = {
-            'select_mw': user.user_id,
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
             "form_status": self.request.GET.get("form_status", ''),
@@ -571,6 +585,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             "startdate": self.request.GET.get("startdate", ''),
             "enddate": self.request.GET.get("enddate", '')
         }
+
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
@@ -669,7 +685,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
                     Count('duration')
                 )
 
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         user_ids = [user.user_id for user in users_data.combined_users]
 
@@ -723,7 +739,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            users_data = EMWF.pull_users_and_groups(
                 self.domain, self.request, True, True)
 
             placeholders = []
@@ -846,7 +862,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
@@ -1139,10 +1155,10 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
             fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
             if type == 'user':
-                url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+                url_args = EMWF.for_user(owner_id)
             else:
                 assert type == 'group'
-                url_args = ExpandedMobileWorkerFilter.for_group(owner_id)
+                url_args = EMWF.for_reporting_group(owner_id)
 
             start_date, end_date = dates_for_linked_reports()
             url_args.update({
@@ -1162,7 +1178,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 takes a row, and converts certain cells in the row to links that link to the case list page
             """
             cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = ExpandedMobileWorkerFilter.for_user(owner_id)
+            url_args = EMWF.for_user(owner_id)
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
             start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)

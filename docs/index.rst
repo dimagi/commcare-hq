@@ -28,6 +28,7 @@ Welcome to CommCareHQ's documentation!
    commtrack
    cloudcare
    translations
+   profiling
 
 Tips for documenting
 --------------------
