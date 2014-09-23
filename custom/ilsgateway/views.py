@@ -1,8 +1,17 @@
+import json
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.commtrack.models import Product
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser, WebUser
+from django.http import HttpResponse
+from django.utils.translation import ugettext_noop
+from django.views.decorators.http import require_POST
+from corehq import IS_DEVELOPER
+from corehq.apps.commtrack.views import BaseCommTrackManageView
+from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig
+from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 
 
 class GlobalStats(BaseDomainView):
@@ -41,4 +50,61 @@ class GlobalStats(BaseDomainView):
         }
         main_context.update(context)
         return main_context
+
+
+class ILSConfigView(BaseCommTrackManageView):
+    urlname = 'ils_config'
+    sync_urlname = 'sync_ilsgateway'
+    page_title = ugettext_noop("ILSGateway")
+    template_name = 'ilsgateway/ilsconfig.html'
+    source = 'ilsgateway'
+
+    @cls_require_superuser_or_developer
+    def dispatch(self, request, *args, **kwargs):
+        return super(ILSConfigView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        try:
+            checkpoint = ILSMigrationCheckpoint.objects.get(domain=self.domain)
+        except ILSMigrationCheckpoint.DoesNotExist:
+            checkpoint = None
+        return {
+            'checkpoint': checkpoint,
+            'settings': self.settings_context,
+            'source': self.source,
+            'sync_url': self.sync_urlname,
+            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username)
+        }
+
+    @property
+    def settings_context(self):
+        config = ILSGatewayConfig.for_domain(self.domain_object.name)
+
+        if config:
+            return {
+                "source_config": config._doc,
+            }
+        else:
+            return {
+                "source_config": ILSGatewayConfig()._doc
+            }
+
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.POST.get('json'))
+        ils = ILSGatewayConfig.wrap(self.settings_context['source_config'])
+        ils.enabled = payload['source_config'].get('enabled', None)
+        ils.domain = self.domain_object.name
+        ils.url = payload['source_config'].get('url', None)
+        ils.username = payload['source_config'].get('username', None)
+        ils.password = payload['source_config'].get('password', None)
+        ils.save()
+        return self.get(request, *args, **kwargs)
+
+
+@domain_admin_required
+@require_POST
+def sync_ilsgateway(request, domain):
+    ils_bootstrap_domain_task.delay(domain)
+    return HttpResponse('OK')
 
