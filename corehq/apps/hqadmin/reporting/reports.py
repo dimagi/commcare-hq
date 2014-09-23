@@ -71,7 +71,7 @@ def daterange(interval, start_date, end_date):
     elif interval == 'year':
         step = relativedelta(years=1)
 
-    while cur_date < end_date:
+    while cur_date <= end_date:
         yield cur_date
         cur_date += step
 
