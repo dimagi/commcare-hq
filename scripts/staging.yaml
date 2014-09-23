@@ -65,6 +65,7 @@ branches:
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
+  - fixture-prop # sravan 9/23
 submodules:
   submodules/couchlog-src:
     branches:
