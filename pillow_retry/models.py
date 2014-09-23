@@ -109,7 +109,7 @@ class PillowError(models.Model):
         if attempts_gte is None:
             attempts_gte = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
 
-        qs = PillowError.objects.filter(
+        return PillowError.objects.filter(
             date_last_attempt__lt=last_attempt_lt,
             current_attempt__gte=attempts_gte
         ).update(
