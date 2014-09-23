@@ -287,6 +287,7 @@
         <div class="tab-pane active" id="form-settings">
             <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder clearfix"></div>
+
                 <div class="control-group">
                     <label class="control-label">{% trans "Form Name" %}</label>
                     <div class="controls">
@@ -297,14 +298,59 @@
                         {% endif %}
                     </div>
                 </div>
-                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
-                {% if allow_form_filtering %}
-                    {% include "app_manager/partials/form_filter.html" %}
-                {% endif %}
-                {% if allow_form_workflow %}
-                    {% include "app_manager/partials/form_workflow.html" %}
-                {% endif %}
-                {% include "app_manager/partials/form_gps_capture.html" %}
+
+                <legend>
+                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
+                    <i class="icon-double-angle-down"></i>
+                    <span data-bind="text: title">Media</span>
+                </a>
+                </legend>
+                <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
+                    <div class="control-group" data-bind="
+                        visible: visible,
+                        css: {error: hasError()}">
+
+                        {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+
+                    </div>
+                </div>
+
+                <legend>
+                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
+                    <i class="icon-double-angle-down"></i>
+                    <span data-bind="text: title">Logic</span>
+                </a>
+                </legend>
+                <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
+                    <div class="control-group" data-bind="
+                        visible: visible,
+                        css: {error: hasError()}">
+
+                        {% if allow_form_filtering %}
+                            {% include "app_manager/partials/form_filter.html" %}
+                        {% endif %}
+                        {% if allow_form_workflow %}
+                            {% include "app_manager/partials/form_workflow.html" %}
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <legend>
+                <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
+                    <i class="icon-double-angle-down"></i>
+                    <span data-bind="text: title">Advanced</span>
+                </a>
+                </legend>
+                <div class="collapse collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
+                    <div class="control-group" data-bind="
+                        visible: visible,
+                        css: {error: hasError()}">
+
+                        {% include "app_manager/partials/form_gps_capture.html" %}
+
+                    </div>
+                </div>
             </form>
         </div>
         {% endif %}
@@ -409,11 +455,13 @@
             </ul>
             {% if edit and allow_form_copy%}
             <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
-                <p><i class="icon-share"></i> {% trans "Copy form to a different module" %}</p>
-                <select name='to_module_id'>{% for mod in app.get_modules %}
-                    <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-                {% endfor %}</select>
-                <button class='btn btn-primary' type="submit">Copy</button>
+                <p>
+                    <i class="icon-share"></i> {% trans "Copy form to: " %}
+                    <select name='to_module_id'>{% for mod in app.get_modules %}
+                        <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
+                    {% endfor %}</select>
+                    <button class='btn btn-primary' type="submit">{% trans "Copy" %}</button>
+                </p>
             </form>
             {% endif %}
         </div>

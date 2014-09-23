@@ -1,0 +1,14 @@
+{
+    "username": "ilsgateway",
+    "first_name": "ILS",
+    "last_name": "Gateway",
+    "email": "ilsgateway@gmail.com",
+    "password": "sha1$44fa5$ae4f55a31a768f14dd552be204058f34756c8d6",
+    "is_staff": true,
+    "is_active": true,
+    "is_superuser": true,
+    "last_login": "2014-04-28 18:17:46.13074+02",
+    "date_joined": "2011-08-03 10:55:22+02",
+    "location": 1,
+    "supply_point": ""
+}

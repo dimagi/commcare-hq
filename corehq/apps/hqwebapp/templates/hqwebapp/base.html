@@ -17,7 +17,7 @@
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
-        {% block underscore %}<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>{% endblock %}
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
         {% block oldstyle_imports %}
@@ -138,6 +138,8 @@
                             <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                             &nbsp;|&nbsp;
                             <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
                         </p>
                     </div>
                 </div>

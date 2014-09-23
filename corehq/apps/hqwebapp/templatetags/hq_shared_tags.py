@@ -12,6 +12,8 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_handler
 
+import corehq.apps.style.utils as style_utils
+
 
 register = template.Library()
 
@@ -89,6 +91,11 @@ def static(url):
 
 
 @register.simple_tag
+def cachebuster(url):
+    return resource_versions.get(url, "")
+
+
+@register.simple_tag
 def new_static(url, **kwargs):
     """Caching must explicitly be defined on tags with any of the extensions
     that could be compressed by django compressor. The static tag above will
@@ -118,17 +125,8 @@ def domains_for_user(request, selected_domain=None):
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
     the user doc updates via save.
     """
-
-
-    lst = list()
-    lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
-    new_domain_url = reverse("registration_domain")
-    if selected_domain == 'public':
-        # viewing the public domain with a different db, so the user's domains can't readily be accessed.
-        lst.append('<li><a href="%s">%s...</a></li>' % (reverse("domain_select"), _("Back to My Projects")))
-        lst.append('<li class="divider"></li>')
-    else:
-
+    domain_list = []
+    if selected_domain != 'public':
         cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
         if cached_domains:
             domain_list = [Domain.wrap(x) for x in cached_domains]
@@ -142,21 +140,20 @@ def domains_for_user(request, selected_domain=None):
                 else:
                     domain_list = Domain.active_for_user(request.user)
                     notify_exception(request)
-
-        if len(domain_list) > 0:
-            lst.append('<li class="nav-header">%s</li>' % _('My Projects'))
-            for domain in domain_list:
-                default_url = reverse("domain_homepage", args=[domain.name])
-                lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
-        else:
-            lst.append('<li class="nav-header">No Projects</li>')
-    lst.append('<li class="divider"></li>')
-    lst.append('<li><a href="%s">%s...</a></li>' % (new_domain_url, _('New Project')))
-    lst.append('<li><a href="%s">%s...</a></li>' % (reverse("appstore"), _('CommCare Exchange')))
-    lst.append("</ul>")
-
-    domain_list_str = "".join(lst)
-    return domain_list_str
+    domain_list = [dict(
+        url=reverse('domain_homepage', args=[d.name]),
+        name=d.long_display_name()
+    ) for d in domain_list]
+    context = {
+        'is_public': selected_domain == 'public',
+        'domain_list': domain_list,
+        'current_domain': selected_domain,
+    }
+    template = {
+        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/domain_list_dropdown.html',
+        style_utils.BOOTSTRAP_3: 'style/includes/domain_list_dropdown.html',
+    }[style_utils.bootstrap_version(request)]
+    return mark_safe(render_to_string(template, context))
 
 
 @register.simple_tag

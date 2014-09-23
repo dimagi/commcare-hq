@@ -13,10 +13,12 @@
         });
         exportDownloader.init();
 
+        var filterParams = '{{ get_filter_params.urlencode|safe }}';
+        var jsonFilterParams = {{ get_filter_params|JSON }};
         var customExportManager = new ExportManager( {
             domain: '{{ domain }}',
-            exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            jsonExportFilters: {{ get_filter_params|JSON }},
+            exportFilters: filterParams,
+            jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             is_custom: true
         } );
@@ -24,7 +26,8 @@
 
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
-            exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            exportFilters: filterParams,
+            jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             downloadUrl: '{% url "export_default_data" domain %}'
 

@@ -21,6 +21,7 @@ MSG_MULTIPLE_ANSWERS_FOUND = "sms.structured.multipleanswers"
 MSG_MULTIPLE_QUESTIONS_MATCH = "sms.structured.ambiguousanswer"
 MSG_MISSING_EXTERNAL_ID = "sms.caselookup.missingexternalid"
 MSG_CASE_NOT_FOUND = "sms.caselookup.casenotfound"
+MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
 
 _MESSAGES = {
@@ -43,6 +44,7 @@ _MESSAGES = {
     MSG_MULTIPLE_QUESTIONS_MATCH: ugettext_noop("More than one question matches '{0}'"),
     MSG_MISSING_EXTERNAL_ID: ugettext_noop("Please provide an external id for the case."),
     MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
+    MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
     MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
 }
 

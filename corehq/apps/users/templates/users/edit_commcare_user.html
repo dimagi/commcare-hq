@@ -56,7 +56,7 @@
             $("input#user-data-input").val(JSON.stringify(data));
         }
 
-        customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', '{% trans 'User Data' %}');
+        customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', "{% trans 'User Data' %}");
         customDataEditor.val({{ custom_user_data|JSON }});
         customDataEditor.on('change', handleChange);
 
@@ -76,7 +76,7 @@
                     if (response.status == "OK") {
                         var $alert = $('<p />')
                                 .addClass('alert alert-success')
-                                .text('{% trans 'Password changed successfully' %}');
+                                .text("{% trans 'Password changed successfully' %}");
                         form.find('.reset-password-body').prepend($alert);
                         form.find('input').val('');
                     }
@@ -262,7 +262,7 @@
                 </ul>
                 <p>
                     {% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                    If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
+                    If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
                     <a href="{{ archive_url }}">here</a>.
                     {% endblocktrans %}
                 </p>

@@ -1,8 +1,8 @@
 Profiling
 =========
 
-Practical guide to profiling a slow view
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Practical guide to profiling a slow view or function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will walkthrough one way to profile slow code using the `@profile decorator <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py>`_.
 
@@ -157,4 +157,50 @@ Reloading the page twice (the first time to prime the cache and the second time 
 Yikes! It looks like this is already quite fast with a hot cache!
 And there don't appear to be any obvious candidates for further optimization.
 If it is still a problem it may be an indication that we need to prime the cache better, or increase the amount of data we are testing with locally to see more interesting results.
-To be continued...
+
+Aggregating data from multiple runs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In some cases it is useful to run a function a number of times and aggregate the profile data.
+To do this follow the steps above to create a set of '.prof' files (one for each run of the function) then use the
+'gather_profile_stats.py' script included with django (lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py)
+to aggregate the data.
+
+This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
+
+Line profiling
+^^^^^^^^^^^^^^^
+
+In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
+data to individual lines of code as opposed to function names.
+
+Example output:
+
+    File: /home/skelly/dev/projects/commcare-hq/corehq/apps/app_manager/views.py
+          Function: view_app at line 781
+          Total time: 2.10091 s
+
+          Line #      Hits         Time  Per Hit   % Time  Line Contents
+          ==============================================================
+             781                                           @login_and_domain_required
+             782                                           @devserver_profile(follow=[view_generic])
+             783                                           def view_app(req, domain, app_id=None):
+             784                                               # redirect old m=&f= urls
+             785         1           58     58.0      0.0      module_id = req.GET.get('m', None)
+             786         1           12     12.0      0.0      form_id = req.GET.get('f', None)
+             787         1            1      1.0      0.0      if module_id or form_id:
+             788                                                   return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+             789                                                                       form_id=form_id)
+             790
+             791         1      2100843 2100843.0    100.0      return view_generic(req, domain, app_id)
+
+TODO: give more detailed info
+
+See
+* https://github.com/dmclain/django-debug-toolbar-line-profiler
+* https://github.com/dcramer/django-devserver#devservermodulesprofilelineprofilermodule
+
+Additional references
+^^^^^^^^^^^^^^^^^^^^^
+* http://django-extensions.readthedocs.org/en/latest/runprofileserver.html
+

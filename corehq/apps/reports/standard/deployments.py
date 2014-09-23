@@ -20,7 +20,7 @@ from django.utils.translation import ugettext as _
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
-        Base class for all deployments reports
+    Base class for all deployments reports
     """
    
     @classmethod

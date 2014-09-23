@@ -16,7 +16,7 @@
             <tr>
                 <td>{{ row.0 }}</td>
                 <td>{{ row.1 }}</td>
-                <td><a href="{{ url }}?startdate={{ startdate|date:"Y-m-d" }}&enddate={{ enddate|date:"Y-m-d" }}&pillow={{ row.0 }}&date_prop=date_last_attempt&error={{ row.1 }}&filter_attempts=True">{{ row.2 }}</a></td>
+                <td><a href="{{ url }}?startdate={{ startdate|date:"Y-m-d" }}&enddate={{ enddate|date:"Y-m-d" }}&pillow_error_pillow={{ row.0 }}&date_prop=date_last_attempt&pillow_error_error={{ row.1 }}&filter_attempts=True">{{ row.2 }}</a></td>
             </tr>
         {% endfor %}
     </tbody>

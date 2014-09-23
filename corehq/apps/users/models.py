@@ -3,13 +3,11 @@ couch models go here
 """
 from __future__ import absolute_import
 from datetime import datetime
-import logging
 import re
 
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -1163,7 +1161,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
-                first_name=first_name, last_name=last_name
+                first_name=first_name, last_name=last_name, **kwargs
             )
 
         if uuid:

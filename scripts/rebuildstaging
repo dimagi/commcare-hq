@@ -58,7 +58,7 @@ args=''
 
 # if staging.yaml isn't up-to-date, warn and quit
 git fetch origin master
-if [[ -n $(git diff origin/master -- scripts/staging.yaml) ]]
+if [[ -n $(git diff origin/master -- scripts/staging.yaml) && $no_push != 'y' ]]
 then
     echo "scripts/staging.yaml on this branch different from the one on master"
     echo "Aborting."
