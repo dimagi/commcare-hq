@@ -303,6 +303,7 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
 
     'bootstrap3_crispy',
 )
@@ -977,6 +978,7 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('world_vision', 'world_vision')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1230,7 +1232,8 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'world-vision': 'custom.world_vision'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
