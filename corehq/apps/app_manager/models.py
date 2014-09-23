@@ -3328,14 +3328,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
-        if self._has_cycles({m.unique_id:m for m in self.get_modules()}):
+        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
             errors.append({'type': 'parent cycle'})
 
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
 
-    def _has_cycles(self, modules):
+    def _has_parent_child_selection_cycle(self, modules):
         """
         :param modules: A mapping of module unique_ids to Module objects
         :return: True if there is a cycle in the parent-child selection graph
