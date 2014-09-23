@@ -20,7 +20,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case'):
+                       xmlns='http://commcarehq.org/case', attachments={}):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -41,6 +41,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
     submit_form_locally(
         instance=form_xml,
         domain=domain,
+        attachments=attachments,
     )
     return form_id
 

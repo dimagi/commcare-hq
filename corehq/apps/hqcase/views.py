@@ -3,6 +3,9 @@ from collections import defaultdict
 from copy import deepcopy
 import json
 import uuid
+import xml.etree.ElementTree as ET
+import re
+
 from casexml.apps.case import const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -10,6 +13,7 @@ from corehq.apps.users.models import CommCareUser
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
@@ -65,15 +69,49 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
                 reduce=False
             ):
                 # we'll be screwing with this guy, so make him unsaveable
-                case.save = None
+                # case.save = None
+                old_case_id = case._id
                 for i in range(factor - 1):
-
                     case._id = uuid.uuid4().hex
                     case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
-                    submit_case_blocks(case_block, domain)
+                    case_block, attachments = process_case_block(case_block, case.case_attachments, old_case_id)
+                    submit_case_blocks(case_block, domain, attachments=attachments)
+
             messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
 
     return render(request, template, {
         'domain': domain,
         'users': CommCareUser.by_domain(domain),
     })
+
+def process_case_block(case_block, attachments, old_case_id):
+    def get_namespace(element):
+        m = re.match('\{.*\}', element.tag)
+        return m.group(0) if m else ''
+
+    def local_attachment(attachment, old_case_id, tag):
+        mime = attachment['server_mime']
+        size = attachment['attachment_size']
+        src = attachment['attachment_src']
+        attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(old_case_id, tag)
+        return UploadedFile(attachment_stream, src, size=size, content_type=mime)
+
+    # Remove namespace because it makes looking up tags a pain
+    root = ET.fromstring(case_block)
+    xmlns = get_namespace(root)
+    case_block = re.sub(' xmlns="[^"]+"', '', case_block, count=1)
+
+    root = ET.fromstring(case_block)
+    tag = "attachment"
+    xml_attachments = root.find(tag)
+    ret_attachments = {}
+
+    if xml_attachments:
+        for attach in xml_attachments:
+            attach.attrib['from'] = 'local'
+            attach.attrib['src'] = attachments[attach.tag]['attachment_src']
+            ret_attachments[attach.attrib['src']] = local_attachment(attachments[attach.tag], old_case_id, attach.tag)
+
+    # Add namespace back in without { } added by ET
+    root.attrib['xmlns'] = xmlns[1:-1]
+    return ET.tostring(root), ret_attachments
