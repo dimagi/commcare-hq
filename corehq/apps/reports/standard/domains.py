@@ -300,7 +300,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 help_text=_("The time when these indicators were last calculated")),
             DataTablesColumn(_("Sector"), prop_name="internal.area.exact"),
             DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
-            DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started")
+            DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
+            DataTablesColumn(_("Test Project?"), prop_name="is_test"),
+            DataTablesColumn(_("Active?"), prop_name="is_active"),
         )
         return headers
 
@@ -375,4 +377,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('area') or _('No info'),
                     dom.get('internal', {}).get('sub_area') or _('No info'),
                     format_bool(dom.get('internal', {}).get('self_started')),
+                    dom.get('is_test') or _('No info'),
+                    format_bool(dom.get('cp_is_active') or _('No info')),
                 ]

@@ -121,4 +121,6 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
+
+    url(r'^', include('custom.ucla.urls')),
 )

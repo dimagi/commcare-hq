@@ -107,5 +107,6 @@ class EditGroupMembersView(BaseGroupsView):
     def page_context(self):
         return {
             'group': self.group,
+            'num_users': len(self.member_ids),
             'user_form': self.user_selection_form
         }
