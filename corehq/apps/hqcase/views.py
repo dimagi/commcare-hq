@@ -2,18 +2,18 @@
 from collections import defaultdict
 from copy import deepcopy
 import json
+import re
 import uuid
 import xml.etree.ElementTree as ET
-import re
 
 from casexml.apps.case import const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.contrib import messages
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
