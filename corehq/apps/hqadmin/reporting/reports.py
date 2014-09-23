@@ -82,6 +82,15 @@ def daterange(interval, start_date, end_date):
         cur_date += step
 
 
+def intervals(interval, start_date, end_date):
+    for starting_date in daterange(interval, start_date, end_date):
+        closing_date = (
+            starting_date + get_timestep(interval) - relativedelta(days=1)
+        )
+        ending_date = closing_date if closing_date < end_date else end_date
+        yield (starting_date, ending_date)
+
+
 def get_real_project_spaces(facets=None):
     """
     Returns a set of names of real domains
