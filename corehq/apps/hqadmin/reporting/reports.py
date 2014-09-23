@@ -9,6 +9,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
+from corehq.apps.hqadmin.reporting.exceptions import IntervalNotFoundException
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ES_MAX_CLAUSE_COUNT,
@@ -56,20 +57,25 @@ def add_blank_data(histo_data, start, end):
     return histo_data
 
 
+def get_timestep(interval):
+    if interval == 'day':
+        return relativedelta(days=1)
+    elif interval == 'week':
+        return relativedelta(weeks=1)
+    elif interval == 'month':
+        return relativedelta(months=1)
+    elif interval == 'year':
+        return relativedelta(years=1)
+    raise IntervalNotFoundException(unicode(interval))
+
+
 def daterange(interval, start_date, end_date):
     """
     Generator that yields dates from start_date to end_date in the interval
     specified
     """
     cur_date = start_date
-    if interval == 'day':
-        step = relativedelta(days=1)
-    elif interval == 'week':
-        step = relativedelta(weeks=1)
-    elif interval == 'month':
-        step = relativedelta(months=1)
-    elif interval == 'year':
-        step = relativedelta(years=1)
+    step = get_timestep(interval)
 
     while cur_date <= end_date:
         yield cur_date
