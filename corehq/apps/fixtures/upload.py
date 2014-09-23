@@ -18,7 +18,7 @@ FAILURE_MESSAGES = {
     "has_no_column": ugettext_noop(
         "Workbook 'types' has no column '{column_name}'."
     ),
-    "niether_fields_nor_attributes": ugettext_noop(
+    "neither_fields_nor_attributes": ugettext_noop(
         "Lookup-tables can not have empty fields and empty properties on items. table_id '{tag}' has no fields and no properties"
     ),
     "duplicate_tag": ugettext_noop(
@@ -93,7 +93,7 @@ class FixtureTableDefinitition(object):
         item_attributes = row_dict.get('property')
 
         if field_names is None and item_attributes is None:
-            raise ExcelMalformatException(_(FAILURE_MESSAGES['niether_fields_nor_attributes']).format(tag=tag))
+            raise ExcelMalformatException(_(FAILURE_MESSAGES['neither_fields_nor_attributes']).format(tag=tag))
 
         field_names = [] if field_names is None else field_names
         item_attributes = [] if item_attributes is None else item_attributes
@@ -269,7 +269,7 @@ def run_upload(domain, workbook, replace=False, task=None):
             for sort_key, di in enumerate(data_items):
                 _update_progress(table_number, sort_key, items_in_table)
                 # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields_list = di['field'].keys() if 'fields' in di else []
+                item_fields_list = di['field'].keys() if 'field' in di else []
                 not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
                 if len(not_in_sheet) > 0:
                     error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
@@ -278,7 +278,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                     error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
                     raise ExcelMalformatException(error_message)
 
-                # check that this item has all the properties listen in its 'types' definition
+                # check that this item has all the properties listed in its 'types' definition
                 item_attributes_list = di['property'].keys() if 'property' in di else []
                 not_in_sheet, not_in_types = diff_lists(item_attributes_list, data_type.item_attributes)
                 if len(not_in_sheet) > 0:
@@ -356,7 +356,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                             field_list=field_list
                         )
 
-                item_attributes = di['property'] if 'property' in di else []
+                item_attributes = di.get('property', [])
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
