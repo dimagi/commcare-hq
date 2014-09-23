@@ -1,3 +1,4 @@
+import datetime
 import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
@@ -16,6 +17,8 @@ from corehq.elastic import (
     get_general_stats_data,
     get_user_ids,
 )
+
+from casexml.apps.stock.models import StockReport, StockTransaction
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -531,6 +534,45 @@ def commtrack_form_submissions(domains, datespan, interval,
     return format_return_data(histo_data, forms_before_date, datespan)
 
 
+def get_stock_transaction_stats_data(domains, datespan, interval):
+    def get_stock_transactions_in_daterange(
+            in_domains, end_date, start_date=None):
+        def date_to_datetime(date):
+            return datetime.datetime.fromordinal(date.toordinal())
+        stock_report_query = StockReport.objects.filter(domain__in=in_domains)
+        if start_date is not None:
+            stock_report_query = stock_report_query.filter(
+                date__gte=date_to_datetime(start_date)
+            )
+        stock_report_query = stock_report_query.filter(
+            date__lt=(date_to_datetime(end_date) + relativedelta(days=1))
+        )
+        return sum(
+            StockTransaction.objects.filter(report=stock_report)
+            for stock_report in stock_report_query
+        )
+
+    return format_return_data(
+        [
+            {
+                "count": get_stock_transactions_in_daterange(
+                    domains,
+                    enddate,
+                    start_date=startdate,
+                ),
+                "time": 1000 * time.mktime(enddate.timetuple()),
+            }
+            for startdate, enddate in intervals(
+                interval,
+                datespan.startdate,
+                datespan.enddate,
+            )
+        ],
+        get_stock_transactions_in_daterange(domains, datespan.enddate),
+        datespan,
+    )
+
+
 def get_active_cases_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("active_cases", domains, datespan, interval,
                            **kwargs)
@@ -603,6 +645,7 @@ HISTO_TYPE_TO_FUNC = {
     "real_sms_messages": get_real_sms_messages_data,
     "sms_domains": get_commconnect_domain_stats_data,
     "sms_only_domains": get_sms_only_domain_stats_data,
+    "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
     "users": get_user_stats,
 }
