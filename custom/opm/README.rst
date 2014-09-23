@@ -25,22 +25,6 @@ Module structure
 -  case\_calcs.py/user\_calcs.py - houses per-case or per-user
    Calculators
 
-Testing
--------
-
-Currently this report has just regression tests. The normal
-functionality of the report relies on monthly definitive snapshots.
-There's a json file ``opm_test.json`` that stores a snapshot of each
-report for a given month,
-as well as the data used to generate these snapshots.
-To verify fidelity in reporting, tests recalculate the report based on
-the test data and check if it matches the snapshot.
-
-There's a management command ``opm_test_data`` that runs the reports and
-takes a snapshot of them. It then pulls the cases, forms, fixtures, and users
-needed to generate the reports from the db. The command then saves it
-all to ``opt_test.json``.
-
 Extracting data from the db:
 ----------------------------
 

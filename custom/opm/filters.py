@@ -116,18 +116,3 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
-
-
-
-class SnapshotFilter(CheckboxFilter):
-    label = 'Load from snapshot'
-    slug = 'load_snapshot'
-
-    @property
-    def filter_context(self):
-        first_load = self.request.GET.get('hq_filters', False)
-        if first_load:
-            return {'checked': True}
-        else:
-            return {'checked': self.request.GET.get(self.slug, False)}
-
