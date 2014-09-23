@@ -258,7 +258,16 @@ class FixtureDataItem(Document):
     def to_xml(self):
         xData = ElementTree.Element(self.data_type.tag)
         for attribute in self.data_type.item_attributes:
-            xData.attrib[attribute] = self.item_attributes[attribute]
+            try:
+                xData.attrib[attribute] = self.item_attributes[attribute]
+            except KeyError as e:
+                """
+                    This should never occur, buf if it does, the OTA restore on mobile will fail and
+                    this error would have been raised and email-logged. Not adding translation, dev-facing
+                """
+                raise FixtureTypeCheckError("Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
+                    % (self.data_type.tag, self.get_id)
+                )
         for field in self.data_type.fields:
             if not self.fields.has_key(field.field_name):
                 xField = ElementTree.SubElement(xData, field.field_name)
