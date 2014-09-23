@@ -978,7 +978,7 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('world_vision', 'world_vision')
+    ('wvindia2', 'wvindia2')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1233,7 +1233,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'world-vision': 'custom.world_vision'
+    'wvindia2': 'custom.world_vision'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
