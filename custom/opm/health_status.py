@@ -1,4 +1,4 @@
-from custom.opm import normal_format, format_percent
+from .utils import normal_format, format_percent
 
 
 class HealthStatus(object):

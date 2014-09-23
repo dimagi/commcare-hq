@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from .case_reports import Report, OPMCase, MockCaseRow, OPMCaseReportTestBase
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import BIRTH_PREP_XMLNS
+from ..constants import BIRTH_PREP_XMLNS
 from dimagi.utils.dates import add_months_to_date
 
 

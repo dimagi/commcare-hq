@@ -1,8 +1,8 @@
 from collections import defaultdict
 from datetime import date, datetime, timedelta, time
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import InvalidRow, CFU1_XMLNS
-from custom.opm.opm_reports.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
+from ..constants import InvalidRow, CFU1_XMLNS
+from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     offset_date, MockDataProvider
 from dimagi.utils.dates import add_months_to_date
 from .test_multiple_children import make_child2_form

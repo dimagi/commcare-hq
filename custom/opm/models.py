@@ -5,8 +5,7 @@ from corehq.fluff.calculators.case import CasePropertyFilter
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.case_calcs import VhndAvailabilityCalc
-from custom.opm.opm_reports.constants import CFU1_XMLNS, VHND_XMLNS
+from .constants import *
 import fluff
 
 from . import case_calcs, user_calcs
@@ -166,7 +165,7 @@ class VhndAvailabilityFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
     document_filter = CasePropertyFilter(type='vhnd')
 
-    vhnd = VhndAvailabilityCalc()
+    vhnd = case_calcs.VhndAvailabilityCalc()
 
 
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py

@@ -40,17 +40,17 @@ from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 
-from custom.opm import BaseMixin, normal_format, format_percent
-from ..opm_tasks.models import OpmReportSnapshot
+from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import SnapshotFilter, HierarchyFilter, MetHierarchyFilter
+from .filters import HierarchyFilter, MetHierarchyFilter
 from .constants import *
 
 
 DATE_FILTER ="date between :startdate and :enddate"
 DATE_FILTER_EXTENDED = '(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))'
+
 
 def ret_val(value):
     return value
@@ -339,7 +339,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
-    load_snapshot = True
 
     @property
     def show_html(self):
@@ -365,20 +364,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             ed = parser.parse(enddate)
             subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
         datetime_format = "%Y-%m-%d %H:%M:%S"
-        if self.snapshot is not None:
-            snapshot_str = "Loaded from snapshot"
-            date = getattr(self.snapshot, 'generated_on', False)
-            if date:
-                snapshot_str += " generated on %s" % date.strftime(datetime_format)
-            subtitles.append(snapshot_str)
-            try:
-                if self.request.user.is_superuser:
-                    subtitles.append("Snapshot id: %s" % self.snapshot._id)
-            except AttributeError:
-                pass
-        else:
-            subtitles.append("Generated {}".format(
-                datetime.datetime.utcnow().strftime(datetime_format)))
+        subtitles.append("Generated {}".format(
+            datetime.datetime.utcnow().strftime(datetime_format)))
         return subtitles
 
     def filter(self, fn, filter_fields=None):
@@ -389,7 +376,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         that should match the filters for a given field.
 
         I'm not super happy with this implementation, but it beats repeating
-        the same logic in incentive, beneficiary, and snapshot.
+        the same logic everywhere
         """
         if filter_fields is None:
             filter_fields = self.filter_fields
@@ -418,29 +405,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
 
     @property
-    @memoized
-    def snapshot(self):
-        # Don't load snapshot if filtering by current case status,
-        # instead, calculate again.
-        if self.filter_data.get('is_open', False):
-            return None
-        snapshot = OpmReportSnapshot.from_view(self)
-        if snapshot and self.load_snapshot:
-            return snapshot
-        else:
-            return None
-
-    @property
     def headers(self):
-        if self.snapshot is not None:
-            headers = []
-            for i, header in enumerate(self.snapshot.headers):
-                if header != 'Bank Branch Name':
-                    if self.snapshot.visible_cols:
-                        headers.append(DataTablesColumn(name=header, visible=self.snapshot.visible_cols[i]))
-                    else:
-                        headers.append(DataTablesColumn(name=header))
-            return DataTablesHeader(*headers)
         headers = []
         for t in self.model.method_map:
             if len(t) == 3:
@@ -451,8 +416,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     @property
     def rows(self):
-        if self.snapshot is not None:
-            return self.snapshot.rows
         rows = []
         for row in self.row_objects:
             data = []
@@ -607,12 +570,7 @@ class CaseReportMixin(object):
             MonthFilter,
             YearFilter,
             SelectOpenCloseFilter,
-            SnapshotFilter
         ]
-
-    @property
-    def load_snapshot(self):
-        return self.request.GET.get("load_snapshot", False)
 
     @property
     def block(self):
@@ -624,14 +582,6 @@ class CaseReportMixin(object):
 
     @property
     def rows(self):
-        if self.snapshot is not None:
-            if 'status' in self.snapshot.slugs:
-                current_status_index = self.snapshot.slugs.index('status')
-                for row in self.snapshot.rows:
-                    if self.is_rendered_as_email:
-                        with localize('hin'):
-                            row[current_status_index] = _(row[current_status_index])
-            return self.snapshot.rows
         rows = []
         for row in self.row_objects + self.extra_row_objects:
             rows.append([getattr(row, method) for
@@ -641,7 +591,6 @@ class CaseReportMixin(object):
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
-        # TODO test with snapshots.
         if filter_fields is None:
             filter_fields = self.filter_fields
         for key, field in filter_fields:
@@ -710,10 +659,6 @@ class MetReport(CaseReportMixin, BaseReport):
     @property
     def headers(self):
         if not self.is_rendered_as_email:
-            if self.snapshot is not None:
-                return DataTablesHeader(*[
-                    DataTablesColumn(name=header[0], visible=header[1]) for header in zip(self.snapshot.headers, self.snapshot.visible_cols)
-                ])
             return DataTablesHeader(*[
                 DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
             ])
@@ -745,24 +690,14 @@ class IncentivePaymentReport(BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter] + super(BaseReport, self).fields + [SnapshotFilter,]
-
-    @property
-    def load_snapshot(self):
-        return self.request.GET.get("load_snapshot", False)
+        return [HierarchyFilter] + super(BaseReport, self).fields
 
     @property
     @memoized
     def last_month_totals(self):
         last_month = self.datespan.startdate_utc - datetime.timedelta(days=4)
-        snapshot = OpmReportSnapshot.by_month(last_month.month, last_month.year,
-            "IncentivePaymentReport")
-        if snapshot is not None:
-            total_index = snapshot.slugs.index('month_total')
-            account_index = snapshot.slugs.index('account_number')
-            return dict(
-                (row[account_index], row[total_index]) for row in snapshot.rows
-            )
+        # TODO This feature depended on snapshots
+        return None
 
     def get_model_kwargs(self):
         return {'last_month_totals': self.last_month_totals}
@@ -791,7 +726,6 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     """
     month, year = this_month_if_none(month, year)
     class Report(ReportClass):
-        snapshot = None
         report_class = ReportClass
         _visible_cols = []
 
@@ -1021,12 +955,6 @@ def _unformat_row(row):
 class HealthMapSource(HealthStatusReport):
 
     @property
-    def snapshot(self):
-        # Don't attempt to load a snapshot
-        return None
-
-
-    @property
     @memoized
     def get_users(self):
         return super(HealthMapSource, self).es_results['hits'].get('hits', [])
@@ -1092,7 +1020,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     data_source = {
         'adapter': 'legacyreport',
         'geo_column': 'gps',
-        'report': 'custom.opm.opm_reports.reports.HealthMapSource',
+        'report': 'custom.opm.reports.HealthMapSource',
     }
 
     @property

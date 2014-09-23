@@ -57,12 +57,6 @@ class OPMCaseRow(object):
         self.month = report.month
         self.year = report.year
 
-        if report.snapshot is not None:
-            report.filter(
-                lambda key: self.case[key],
-                # case.awc_name, case.block_name
-                [('awc_name', 'awcs'), ('block_name', 'block'), ('owner_id', 'gp'), ('closed', 'is_open')],
-            )
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
         else:
