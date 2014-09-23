@@ -1,9 +1,9 @@
 from unittest import TestCase
 from datetime import date, datetime
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report, offset_date,
-                                          MockDataProvider, AggressiveDefaultDict)
+from ..constants import InvalidRow
+from . import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report,
+               offset_date, MockDataProvider, AggressiveDefaultDict)
 
 
 class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):

@@ -1,6 +1,6 @@
 from datetime import date
-from custom.opm.opm_reports.constants import InvalidRow
-from custom.opm.opm_reports.tests import OPMCaseReportTestBase, OPMCase, MockCaseRow
+from ..constants import InvalidRow
+from . import OPMCaseReportTestBase, OPMCase, MockCaseRow
 
 
 class TestPregnancyStatus(OPMCaseReportTestBase):

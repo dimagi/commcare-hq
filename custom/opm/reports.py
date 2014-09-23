@@ -1092,7 +1092,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     data_source = {
         'adapter': 'legacyreport',
         'geo_column': 'gps',
-        'report': 'custom.opm.opm_reports.reports.HealthMapSource',
+        'report': 'custom.opm.reports.HealthMapSource',
     }
 
     @property

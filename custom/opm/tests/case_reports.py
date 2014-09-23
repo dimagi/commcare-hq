@@ -7,7 +7,7 @@ from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from custom.opm.opm_reports.reports import SharedDataProvider
+from ..reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
@@ -91,7 +91,7 @@ class OPMCase(CommCareCase):
 
     class Meta:
         # This is necessary otherwise tests get sad
-        app_label = "opm_reports"
+        app_label = "opm"
 
 
 class MockCaseRow(OPMCaseRow):
