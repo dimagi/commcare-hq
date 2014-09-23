@@ -87,7 +87,7 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
 def process_case_block(case_block, attachments, old_case_id):
     def get_namespace(element):
         m = re.match('\{.*\}', element.tag)
-        return m.group(0) if m else ''
+        return m.group(0)[1:-1] if m else ''
 
     def local_attachment(attachment, old_case_id, tag):
         mime = attachment['server_mime']
@@ -113,5 +113,5 @@ def process_case_block(case_block, attachments, old_case_id):
             ret_attachments[attach.attrib['src']] = local_attachment(attachments[attach.tag], old_case_id, attach.tag)
 
     # Add namespace back in without { } added by ET
-    root.attrib['xmlns'] = xmlns[1:-1]
+    root.attrib['xmlns'] = xmlns
     return ET.tostring(root), ret_attachments
