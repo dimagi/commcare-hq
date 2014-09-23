@@ -548,7 +548,7 @@ def normalize_hour(hour):
     if hour < 0:
         day_change = -1
         hour += 24
-    elif hour > 24:
+    elif hour >= 24:
         day_change = 1
         hour -= 24
 

@@ -2,6 +2,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import logging
 import numpy
+import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
@@ -232,6 +233,10 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 ]
             )
         ]
+
+    @property
+    def timezone(self):
+        return pytz.utc
 
     def get_response_for_indicator(self, indicator):
         raw_values = {}

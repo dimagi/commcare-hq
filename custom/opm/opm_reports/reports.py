@@ -531,6 +531,27 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         return SharedDataProvider()
 
 
+def _get_terms_list(terms):
+    """
+    >>> terms = ["Sahora", "Kenar Paharpur", "   ", " Patear"]
+    >>> _get_filter_list(terms)
+    [["sahora"], ["kenar", "paharpur"], ["patear"]]
+    """
+    return filter(None, [term.lower().split() for term in terms])
+
+
+def get_nested_terms_filter(prop, terms):
+    filters = []
+    def make_filter(term):
+        return es_filters.term(prop, term)
+    for term in _get_terms_list(terms):
+        if len(term) == 1:
+            filters.append(make_filter(term[0]))
+        elif len(term) > 1:
+            filters.append(es_filters.AND(*(make_filter(t) for t in term)))
+    return es_filters.OR(*filters)
+
+
 class CaseReportMixin(object):
     default_case_type = "Pregnancy"
     extra_row_objects = []
@@ -546,23 +567,10 @@ class CaseReportMixin(object):
 
     def get_rows(self, datespan):
         def get_awc_filter(awcs):
-            # TODO confirm that this places nicely with ES tokenization
-            awc_filters = []
-            def make_filter(term):
-                return es_filters.term("awc_name.#value", term)
-
-            for awc in awcs:
-                awc_terms = filter(None, awc.lower().split())
-                if len(awc_terms) == 1:
-                    awc_filters.append(make_filter(awc_terms[0]))
-                elif len(awc_terms) > 1:
-                    awc_filters.append(es_filters.AND(*(make_filter(term) for term in awc_terms)))
-
-            return es_filters.OR(*awc_filters)
+            return get_nested_terms_filter("awc_name.#value", awcs)
 
         def get_gp_filter(gp):
-            users = CouchUser.by_domain(self.domain)
-            owner_ids = [user._id for user in users
+            owner_ids = [user._id for user in self.users
                          if getattr(user, 'user_data', {}).get('gp') in self.gp]
             return es_filters.term("owner_id", owner_ids)
 
@@ -695,6 +703,7 @@ class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
+    fix_left_col = True
     model = ConditionsMet
     exportable = False
 
@@ -725,6 +734,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.override_template = "opm/met_print_report.html"
         return HttpResponse(self._async_context()['report'])
 
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=9, width=800)
 
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
@@ -891,20 +903,14 @@ class HealthStatusReport(BaseReport):
         }
         es_filters = q["query"]["filtered"]["filter"]
         if self.awcs:
-            awcs_lower = [awc.lower() for awc in self.awcs]
-            awc_term = {
-                "or":
-                    [{"and": [{"term": {"user_data.awc": term}} for term in re.split('\s', awc)
-                                if not re.search(r'^\W+$', term) or re.search(r'^\w+', term)]
-                    } for awc in awcs_lower]
-            }
+            awc_term = get_nested_terms_filter("user_data.awc", self.awcs)
             es_filters["bool"]["must"].append(awc_term)
         elif self.gp:
-            es_filters["bool"]["must"].append({"term": {"user_data.gp": self.gp.lower()}})
-
+            gp_term = get_nested_terms_filter("user_data.gp", self.gp)
+            es_filters["bool"]["must"].append(gp_term)
         elif self.blocks:
-            block_lower = [block.lower() for block in self.blocks]
-            es_filters["bool"]["must"].append({"terms": {"user_data.block": block_lower}})
+            block_term = get_nested_terms_filter("user_data.block", self.blocks)
+            es_filters["bool"]["must"].append(block_term)
         q["query"]["filtered"]["query"].update({"match_all": {}})
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,

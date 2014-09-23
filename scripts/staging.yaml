@@ -53,20 +53,19 @@ branches:
   - logos # Nick P 5/28
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
-#  - cachecomparisons  # SK 8/11
   - increase-es-timeout # Nick P 8/11
-  - parent-child-select-revised # Noah 8/14
   - archive-products # tw 8/14
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - fix-timeout # Nick P 8/26
-  - caselistmixin-refactor # Noah 8/14
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
-  - lwyszomi:ilsgateway-bugs
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - bulk-app-translate # Noah 9/18
+  - callcenter # SK 9/22
+  - fixture-prop # sravan 9/23
 submodules:
   submodules/couchlog-src:
     branches:
@@ -97,3 +96,6 @@ submodules:
   # submodules/pillowtop-src:
     # branches:
       # - request_timeout  # Ethan 9/12
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches:
+      - allowclose # SK 9/23
