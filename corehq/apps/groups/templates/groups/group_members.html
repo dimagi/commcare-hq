@@ -111,6 +111,13 @@
                     });
                     return false;
                 });
+                $('#group-case-sharing-input').change(function() {
+                    if($('#group-case-sharing-input').val() == 'true') {
+                        $(this).parent().append('<p class="help-block alert alert-warning">Warning: Case sharing will not work until enabled under application settings</p>')
+                    } else {
+                        $('.alert.alert-warning').remove()
+                    }
+                })
                 $('#group-data-form').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
