@@ -1452,7 +1452,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             'form': self.snapshot_settings_form,
             'app_forms': self.app_forms,
             'can_publish_as_org': self.can_publish_as_org,
-            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
         if self.published_snapshot:
             context.update({
