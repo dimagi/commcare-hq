@@ -201,6 +201,8 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 )
 
 HQ_APPS = (
+    # just for tests
+    'corehq.ext',
     'django_digest',
     'rosetta',
     'auditcare',
@@ -939,6 +941,8 @@ COUCHDB_APPS = [
     'ctable',
     'hqadmin',
     'domain',
+    # for couchdbkit app_label
+    'ext',
     'facilities',
     'fluff_filter',
     'fixtures',

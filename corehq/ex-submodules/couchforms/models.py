@@ -6,10 +6,11 @@ import hashlib
 import logging
 import time
 from copy import copy
-from jsonobject.base import DefaultProperty
-from lxml import etree
 from xml.etree import ElementTree
 
+from jsonobject.base import DefaultProperty
+
+from lxml import etree
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
@@ -17,17 +18,14 @@ from couchdbkit.resource import ResourceNotFound
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
-
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
-
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
-
-from couchforms.jsonobject_extensions import (
+from corehq.ext.couchdbkit import (
     GeoPointProperty,
     ISO8601Property as DateTimeProperty,
     ISOSafeSaveDocument as SafeSaveDocument,
