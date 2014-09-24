@@ -107,13 +107,13 @@ def new_update_case_properties():
                 if not owner_id:
                     continue
                 update = {
-                    "owner_id": owner_id,
                     "current_assignment": "cati"
                 }
                 cases_to_modify.append({
                     "case_id": case._id,
                     "update": update,
                     "close": False,
+                    "owner_id": owner_id,
                 })
             # Assign Cases Directly To Field
             elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (not curr_assignment) and (not next_assignment):
@@ -121,7 +121,6 @@ def new_update_case_properties():
                     continue
                 update = {
                     "current_assignment": "fida",
-                    "owner_id": fida_group,                   
                     "cati_status": 'skipped',
                 }
                 cases_to_modify.append(
@@ -129,6 +128,7 @@ def new_update_case_properties():
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign Cases Directly to Lost to Follow Up
@@ -155,7 +155,6 @@ def new_update_case_properties():
                     "last_cati_user": cati_owner_username,
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": fida_group,
                     "cati_status": 'manually_assigned_to_field'
                 }
                 cases_to_modify.append(
@@ -163,6 +162,7 @@ def new_update_case_properties():
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign cases to field (automatically)
@@ -175,13 +175,13 @@ def new_update_case_properties():
                     "cati_status": 'timed_out',
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": fida_group                        
                 }
                 cases_to_modify.append(
                     {
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign Cases to Lost to Follow Up
@@ -225,12 +225,16 @@ def new_update_case_properties():
                         "close": True,
                     }
                 )
-        case_blocks = [ElementTree.tostring(CaseBlock(
-            create=False,
-            case_id=case["case_id"],
-            update=case["update"],
-            close=case["close"],
-            version=V2,
-            ).as_xml()) for case in cases_to_modify
-        ]
+        case_blocks = []
+        for case in cases_to_modify:
+            kwargs = {
+                "create": False,
+                "case_id": case["case_id"],
+                "update": case["update"],
+                "close": case["close"],
+                "version": V2,
+            }
+            if case.get("owner_id", None):
+                kwargs["owner_id"] = case["owner_id"]
+            case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
         submit_case_blocks(case_blocks, domain)
