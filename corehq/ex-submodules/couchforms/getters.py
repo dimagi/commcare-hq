@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 from django.conf import settings
 from django.contrib.sites.models import Site
-from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip
 
 
@@ -66,7 +66,7 @@ def get_location(request=None):
 def get_received_on(request):
     received_on = request.META.get('HTTP_X_SUBMIT_TIME')
     if received_on:
-        return string_to_datetime(received_on)
+        return string_to_utc_datetime(received_on)
     else:
         return None
 
