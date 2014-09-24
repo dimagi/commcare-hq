@@ -52,5 +52,6 @@
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null
+    "submit_ip": null,
+    "is_timezone_aware": true
 }

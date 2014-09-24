@@ -125,6 +125,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
+    is_timezone_aware = BooleanProperty(default=False)
+
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
         # copied and tweaked from the superclass's method
