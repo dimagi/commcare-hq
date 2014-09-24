@@ -1,10 +1,10 @@
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.specs import RawIndicatorSpec
+from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
-from corehq.apps.userreports.logic import EQUAL, IN_MULTISELECT
+from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter, ORFilter, CustomFilter
 
 
@@ -94,10 +94,8 @@ def _build_boolean_indicator(spec):
 
 
 def _build_choice_list_indicator(spec):
-    _validate_required_fields(spec, ('column_id', 'property_name', 'choices'))
-    operator = IN_MULTISELECT if spec.get('select_style') == 'multiple' else EQUAL
-    getter = DictGetter(spec['property_name'])
-    base_display_name = spec.get('display_name', spec['column_id'])
+    wrapped_spec = ChoiceListIndicatorSpec.wrap(spec)
+    base_display_name = wrapped_spec.display_name
 
     def _construct_display(choice):
         return '{base} ({choice})'.format(base=base_display_name, choice=choice)
@@ -110,8 +108,8 @@ def _build_choice_list_indicator(spec):
             display_name=_construct_display(choice),
             column_id=_construct_column(choice),
             filter=SinglePropertyValueFilter(
-                getter=getter,
-                operator=operator,
+                getter=wrapped_spec.getter,
+                operator=wrapped_spec.get_operator(),
                 reference_value=choice,
             )
         ) for choice in spec['choices']

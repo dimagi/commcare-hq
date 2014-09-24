@@ -283,6 +283,16 @@ class ChoiceListIndicatorTest(SimpleTestCase):
 
         self.assertEqual(self.spec['display_name'], indicator.display_name)
 
+    def testChoiceListWithPath(self):
+        spec = copy(self.spec)
+        del spec['property_name']
+        spec['property_path'] = ['path', 'to', 'category']
+        indicator = IndicatorFactory.from_spec(spec)
+        self._check_vals(indicator, {'category': 'bug'}, [0, 0, 0, 0])
+        self._check_vals(indicator, {'path': {'category': 'bug'}}, [0, 0, 0, 0])
+        self._check_vals(indicator, {'path': {'to': {'category': 'bug'}}}, [1, 0, 0, 0])
+        self._check_vals(indicator, {'path': {'to': {'nothing': 'bug'}}}, [0, 0, 0, 0])
+
     def testSingleSelectIndicators(self):
         indicator = IndicatorFactory.from_spec(self.spec)
         self._check_vals(indicator, dict(category='bug'), [1, 0, 0, 0])
