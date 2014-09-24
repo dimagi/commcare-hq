@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty
+from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 
 # todo: all spec definitions will go here. moving them over piece meal when touched.
 from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
@@ -37,6 +37,9 @@ class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
             assert self.property_path
             return NestedDictGetter(property_path=self.property_path)
 
+
+class BooleanIndicatorSpec(IndicatorSpecBase):
+    filter = DictProperty(required=True)
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     datatype = StringProperty(required=True)

@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec
+from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
+    IndicatorSpecBase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
@@ -58,18 +59,16 @@ class FilterFactory(object):
 
 
 def _build_count_indicator(spec):
-    _validate_required_fields(spec, ('column_id',))
-    display_name = spec.get('display_name', spec['column_id'])
+    wrapped = IndicatorSpecBase.wrap(spec)
     return BooleanIndicator(
-        display_name,
-        spec['column_id'],
-        CustomFilter(lambda item: True)
+        wrapped.display_name,
+        wrapped.column_id,
+        CustomFilter(lambda item: True),
     )
 
 
 def _build_raw_indicator(spec):
     wrapped = RawIndicatorSpec.wrap(spec)
-
     column = Column(
         id=wrapped.column_id,
         datatype=wrapped.datatype,
@@ -84,13 +83,12 @@ def _build_raw_indicator(spec):
 
 
 def _build_boolean_indicator(spec):
-    _validate_required_fields(spec, ('column_id', 'filter'))
-    if not isinstance(spec['filter'], dict):
-        raise BadSpecError(_('filter property must be a dictionary.'))
-
-    filter = FilterFactory.from_spec(spec['filter'])
-    display_name = spec.get('display_name', spec['column_id'])
-    return BooleanIndicator(display_name, spec['column_id'], filter)
+    wrapped = BooleanIndicatorSpec.wrap(spec)
+    return BooleanIndicator(
+        wrapped.display_name,
+        wrapped.column_id,
+        FilterFactory.from_spec(wrapped.filter),
+    )
 
 
 def _build_choice_list_indicator(spec):
