@@ -3,7 +3,7 @@ import os
 from datetime import date, datetime
 from django.test import TestCase
 from couchforms import create_xform_from_xml
-from couchforms.datatypes import GeoPoint
+from corehq.ext.jsonobject import GeoPoint
 from couchforms.models import XFormInstance
 
 

@@ -2,11 +2,10 @@ from __future__ import absolute_import
 import hashlib
 import datetime
 import logging
-
 from StringIO import StringIO
+
 from django.conf import settings
 from django.test.client import Client
-
 from couchdbkit import ResourceConflict, ResourceNotFound, resource
 from django.http import (
     HttpRequest,
@@ -19,7 +18,6 @@ from redis import ConnectionError
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
 import xml2json
-
 import couchforms
 from . import const
 from .exceptions import DuplicateError
@@ -140,7 +138,7 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
         # for is_timezone_aware to be set to True without
         # the code actually being timezone aware
         from couchforms.models import DateTimeProperty
-        from couchforms.jsonobject_extensions import ISO8601Property
+        from corehq.ext.couchdbkit import ISO8601Property
         assert DateTimeProperty is ISO8601Property
         xform.is_timezone_aware = True
     except Exception:
