@@ -547,10 +547,9 @@ def get_stock_transaction_stats_data(domains, datespan, interval):
         stock_report_query = stock_report_query.filter(
             date__lt=(date_to_datetime(end_date) + relativedelta(days=1))
         )
-        return sum(
-            StockTransaction.objects.filter(report=stock_report)
-            for stock_report in stock_report_query
-        )
+        return StockTransaction.objects.filter(
+            report__in=stock_report_query,
+        ).count()
 
     return format_return_data(
         [
