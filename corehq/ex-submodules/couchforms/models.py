@@ -15,19 +15,24 @@ from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from casexml.apps.phone.models import SyncLog
-from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dimagi.utils.couch.safe_index import safe_index
-from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
+from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
+
+from couchforms.jsonobject_extensions import (
+    GeoPointProperty,
+    ISO8601Property as DateTimeProperty,
+    ISOSafeSaveDocument as SafeSaveDocument,
+    ISODocumentSchema as DocumentSchema,
+)
 
 
 def doc_types():
@@ -184,9 +189,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                             if meta_block[key]:
                                 try:
                                     # try to parse to ensure correctness
-                                    parsed = string_to_datetime(meta_block[key])
+                                    parsed = DateTimeProperty().wrap(meta_block[key])
                                     # and set back in the right format in case it was a date, not a datetime
-                                    ret[key] = json_format_datetime(parsed)
+                                    _, ret[key] = DateTimeProperty().unwrap(parsed)
                                 except ValueError:
                                     # we couldn't parse it
                                     del ret[key]

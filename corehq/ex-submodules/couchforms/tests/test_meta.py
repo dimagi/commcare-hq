@@ -8,7 +8,8 @@ from couchforms.models import XFormInstance
 
 
 class TestMeta(TestCase):
-    
+    maxDiff = None
+
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
@@ -25,9 +26,9 @@ class TestMeta(TestCase):
             'doc_type': 'Metadata',
             'instanceID': None,
             'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-            'timeEnd': '2010-07-23T13:55:11Z',
+            'timeEnd': '2010-07-23T13:55:11.648000Z',
             'appVersion': u'v1.2.3 (biz bazzle)',
-            'timeStart': '2010-07-22T13:54:27Z',
+            'timeStart': '2010-07-22T13:54:27.971000Z',
             'deprecatedID': None,
             'deviceID': None,
             'clinic_id': u'5020280',
@@ -40,7 +41,7 @@ class TestMeta(TestCase):
         (a) is not converted to a Decimal by couchdbkit
         (b) does not crash anything
         '''
-        
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
         with create_and_save_xform(xml_data) as doc_id:
@@ -51,9 +52,9 @@ class TestMeta(TestCase):
             'doc_type': 'Metadata',
             'instanceID': None,
             'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-            'timeEnd': '2010-07-23T13:55:11Z',
+            'timeEnd': '2010-07-23T13:55:11.648000Z',
             'appVersion': u'2.0',
-            'timeStart': '2010-07-22T13:54:27Z',
+            'timeStart': '2010-07-22T13:54:27.971000Z',
             'deprecatedID': None,
             'deviceID': None,
             'clinic_id': u'5020280',
@@ -72,9 +73,9 @@ class TestMeta(TestCase):
                 'doc_type': 'Metadata',
                 'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
                 'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-                'timeEnd': '2013-07-20T00:02:27Z',
+                'timeEnd': '2013-07-20T00:02:27.493000Z',
                 'appVersion': u'2.0',
-                'timeStart': '2013-07-19T21:21:31Z',
+                'timeStart': '2013-07-19T21:21:31.188000Z',
                 'deprecatedID': None,
                 'deviceID': u'commconnect',
                 'location': None,
@@ -93,9 +94,9 @@ class TestMeta(TestCase):
                 'doc_type': 'Metadata',
                 'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
                 'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-                'timeEnd': '2013-07-20T00:02:27Z',
+                'timeEnd': '2013-07-20T00:02:27.493000Z',
                 'appVersion': u'2.0',
-                'timeStart': '2013-07-19T21:21:31Z',
+                'timeStart': '2013-07-19T21:21:31.188000Z',
                 'deprecatedID': None,
                 'deviceID': u'commconnect',
                 'location': None,
@@ -123,9 +124,9 @@ class TestMeta(TestCase):
                 'doc_type': 'Metadata',
                 'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
                 'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
-                'timeEnd': '2013-07-20T00:02:27Z',
+                'timeEnd': '2013-07-20T00:02:27.493000Z',
                 'appVersion': u'2.0',
-                'timeStart': '2013-07-19T21:21:31Z',
+                'timeStart': '2013-07-19T21:21:31.188000Z',
                 'deprecatedID': None,
                 'deviceID': u'commconnect',
                 'location': '42.3739063 -71.1109113 0.0 886.0',
