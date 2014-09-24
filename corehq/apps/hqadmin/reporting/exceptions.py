@@ -1,0 +1,2 @@
+class IntervalNotFoundException(Exception):
+    pass

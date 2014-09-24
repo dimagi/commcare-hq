@@ -441,6 +441,14 @@ INDICATOR_DATA = {
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
+    "stock_transactions": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "stock_transactions",
+        "chart_title": "Total Stock Transactions",
+        "histogram_type": "stock_transactions",
+        "interval": "week",
+        "xaxis_label": "# stock transactions",
+    },
 }
 
 ES_PREFIX = "es_"
@@ -1001,4 +1009,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'active_users_mobile',
         'commtrack_users_web',
         'active_supply_points',
+        'stock_transactions',
     ]

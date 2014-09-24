@@ -1,3 +1,4 @@
+import datetime
 import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
@@ -9,12 +10,15 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
+from corehq.apps.hqadmin.reporting.exceptions import IntervalNotFoundException
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ES_MAX_CLAUSE_COUNT,
     get_general_stats_data,
     get_user_ids,
 )
+
+from casexml.apps.stock.models import StockReport, StockTransaction
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -56,24 +60,38 @@ def add_blank_data(histo_data, start, end):
     return histo_data
 
 
+def get_timestep(interval):
+    if interval == 'day':
+        return relativedelta(days=1)
+    elif interval == 'week':
+        return relativedelta(weeks=1)
+    elif interval == 'month':
+        return relativedelta(months=1)
+    elif interval == 'year':
+        return relativedelta(years=1)
+    raise IntervalNotFoundException(unicode(interval))
+
+
 def daterange(interval, start_date, end_date):
     """
     Generator that yields dates from start_date to end_date in the interval
     specified
     """
     cur_date = start_date
-    if interval == 'day':
-        step = relativedelta(days=1)
-    elif interval == 'week':
-        step = relativedelta(weeks=1)
-    elif interval == 'month':
-        step = relativedelta(months=1)
-    elif interval == 'year':
-        step = relativedelta(years=1)
+    step = get_timestep(interval)
 
-    while cur_date < end_date:
+    while cur_date <= end_date:
         yield cur_date
         cur_date += step
+
+
+def intervals(interval, start_date, end_date):
+    for starting_date in daterange(interval, start_date, end_date):
+        closing_date = (
+            starting_date + get_timestep(interval) - relativedelta(days=1)
+        )
+        ending_date = closing_date if closing_date < end_date else end_date
+        yield (starting_date, ending_date)
 
 
 def get_real_project_spaces(facets=None):
@@ -516,6 +534,44 @@ def commtrack_form_submissions(domains, datespan, interval,
     return format_return_data(histo_data, forms_before_date, datespan)
 
 
+def get_stock_transaction_stats_data(domains, datespan, interval):
+    def get_stock_transactions_in_daterange(
+            in_domains, end_date, start_date=None):
+        def date_to_datetime(date):
+            return datetime.datetime.fromordinal(date.toordinal())
+        stock_report_query = StockReport.objects.filter(domain__in=in_domains)
+        if start_date is not None:
+            stock_report_query = stock_report_query.filter(
+                date__gte=date_to_datetime(start_date)
+            )
+        stock_report_query = stock_report_query.filter(
+            date__lt=(date_to_datetime(end_date) + relativedelta(days=1))
+        )
+        return StockTransaction.objects.filter(
+            report__in=stock_report_query,
+        ).count()
+
+    return format_return_data(
+        [
+            {
+                "count": get_stock_transactions_in_daterange(
+                    domains,
+                    enddate,
+                    start_date=startdate,
+                ),
+                "time": 1000 * time.mktime(enddate.timetuple()),
+            }
+            for startdate, enddate in intervals(
+                interval,
+                datespan.startdate,
+                datespan.enddate,
+            )
+        ],
+        get_stock_transactions_in_daterange(domains, datespan.enddate),
+        datespan,
+    )
+
+
 def get_active_cases_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("active_cases", domains, datespan, interval,
                            **kwargs)
@@ -588,6 +644,7 @@ HISTO_TYPE_TO_FUNC = {
     "real_sms_messages": get_real_sms_messages_data,
     "sms_domains": get_commconnect_domain_stats_data,
     "sms_only_domains": get_sms_only_domain_stats_data,
+    "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
     "users": get_user_stats,
 }
