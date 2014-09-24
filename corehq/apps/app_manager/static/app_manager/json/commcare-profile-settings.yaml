@@ -273,4 +273,5 @@
   disabled_default: "no"
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
+  preview: true
 
