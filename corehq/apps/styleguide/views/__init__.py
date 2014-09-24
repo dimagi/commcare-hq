@@ -1,10 +1,10 @@
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django.views.generic import *
-from corehq.apps.styleguide.examples.simple_crispy_form.forms import ExampleUserLoginForm
 
 
 def styleguide_default(request):
-    return HttpResponse("woot")
+    return HttpResponseRedirect(reverse(MainStyleGuideView.urlname))
 
 
 class MainStyleGuideView(TemplateView):
@@ -71,16 +71,7 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     navigation_name = 'forms'
 
     @property
-    def page_context(self):
-        return {
-            'user_login_form': ExampleUserLoginForm(),
-        }
-
-    @property
     def sections(self):
         return [
             'forms/anatomy',
-            'forms/crispy_forms',
-            'forms/knockout_js',
-            'forms/ui_components',
         ]
