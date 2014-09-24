@@ -17,8 +17,8 @@
         "#type": "general",
         "@xmlns": "http://openrosa.org/app/general",
         "Meta": {
-            "TimeEnd": "2010-07-23T13:55:11Z",
-            "TimeStart": "2010-07-22T13:54:27Z",
+            "TimeEnd": "2010-07-23T13:55:11.648000Z",
+            "TimeStart": "2010-07-22T13:54:27.971000Z",
             "clinic_id": "5020280",
             "uid": "7H46J37FGH3",
             "user_id": "f7f0c79e-8b79-11df-b7de-005056c00008",

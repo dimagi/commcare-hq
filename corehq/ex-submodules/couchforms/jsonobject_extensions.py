@@ -1,7 +1,11 @@
 from decimal import Decimal
-from jsonobject import JsonProperty
+from couchdbkit import Document, DocumentSchema
+import datetime
+import iso8601
+from jsonobject import JsonProperty, DateTimeProperty
 from jsonobject.exceptions import BadValueError
 from .datatypes import GeoPoint
+from dimagi.utils.couch.database import SafeSaveDocument
 
 
 def _canonical_decimal(n):
@@ -33,3 +37,31 @@ class GeoPointProperty(JsonProperty):
 
     def unwrap(self, obj):
         return obj, '{} {} {} {}'.format(*obj)
+
+
+class ISO8601Property(DateTimeProperty):
+    def __init__(self, **kwargs):
+        if 'exact' in kwargs:
+            assert kwargs['exact'] is True
+        kwargs['exact'] = True
+        super(ISO8601Property, self).__init__(**kwargs)
+
+    def wrap(self, obj):
+        dt = iso8601.parse_date(obj)
+        return dt.astimezone(iso8601.iso8601.UTC).replace(tzinfo=None)
+
+
+class ISOMeta(object):
+    update_properties = {datetime.datetime: ISO8601Property}
+
+
+class ISODocument(Document):
+    Meta = ISOMeta
+
+
+class ISODocumentSchema(DocumentSchema):
+    Meta = ISOMeta
+
+
+class ISOSafeSaveDocument(SafeSaveDocument):
+    Meta = ISOMeta

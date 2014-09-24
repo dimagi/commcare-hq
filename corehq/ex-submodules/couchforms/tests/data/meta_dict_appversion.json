@@ -28,8 +28,8 @@
             },
             "deviceID": "commconnect",
             "instanceID": "5d3d01561f584e85b53669a48bfc6039",
-            "timeEnd": "2013-07-20T00:02:27Z",
-            "timeStart": "2013-07-19T21:21:31Z",
+            "timeEnd": "2013-07-20T00:02:27.493000Z",
+            "timeStart": "2013-07-19T21:21:31.188000Z",
             "userID": "f7f0c79e-8b79-11df-b7de-005056c00008",
             "username": "some_username@test.commcarehq.org"
         },
