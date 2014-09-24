@@ -1,9 +1,10 @@
 import time
 from dateutil.relativedelta import relativedelta
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -572,6 +573,32 @@ def get_other_stats(histo_type, domains, datespan, interval,
     return stats_data
 
 
+def get_products_stats_data(domains, datespan, interval,
+        datefield='created_at'):
+    """
+    Number of products by created time
+    """
+    # groups products by the interval and returns the time interval and count
+    ret = (SQLProduct.objects
+                     .filter(domain__in=domains,
+                             created_at__gte=datespan.startdate,
+                             created_at__lte=datespan.enddate)
+                     .extra({
+                         interval:
+                             "EXTRACT(EPOCH FROM date_trunc('%s', %s))*1000" %
+                             (interval, datefield)})
+                     .values(interval).annotate(Count('id')))
+
+    ret = [{"time": int(r[interval]), "count": r['id__count']} for r in ret]
+
+    initial = (SQLProduct.objects
+                     .filter(domain__in=domains,
+                             created_at__lt=datespan.startdate)
+                     .count())
+
+    return format_return_data(ret, initial, datespan)
+
+
 HISTO_TYPE_TO_FUNC = {
     "active_cases": get_active_cases_stats,
     "active_countries": get_active_countries_stats_data,
@@ -589,6 +616,7 @@ HISTO_TYPE_TO_FUNC = {
     "sms_domains": get_commconnect_domain_stats_data,
     "sms_only_domains": get_sms_only_domain_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
+    "total_products": get_products_stats_data,
     "users": get_user_stats,
 }
 
