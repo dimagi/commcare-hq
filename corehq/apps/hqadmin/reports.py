@@ -757,7 +757,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date((dom.get('deployment') or {}).get('date'), _('No date')),
-                    (dom.get("deployment") or {}).get('countries') or _('No country'),
+                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_users_submitted_form", _("Not yet calculated")),
