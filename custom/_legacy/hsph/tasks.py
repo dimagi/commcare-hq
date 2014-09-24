@@ -23,6 +23,7 @@ OWNER_FIELD_MAPPINGS = {
         "fida": "field_follow_up_assignment"
     }
 INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
+GROUPS_BY_ID = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
 def indexed_facilities():
@@ -31,9 +32,14 @@ def indexed_facilities():
         current_domain_index = {}
         facilities = get_cases_in_domain(domain, type="facility")
         for facility in facilities:
+            case_sharing_group = GROUPS_BY_ID[domain].get(facility.owner_id, None)
+            if case_sharing_group is None:
+                continue
+            cati_user = case_sharing_group.metadata.get('cati_user', None)
+            fida_user = case_sharing_group.metadata.get('fida_user', None)
             current_domain_index[facility.facility_id] = {
-                "cati": facility.cati_user,
-                "fida": facility.fida_user
+                "cati": cati_user, 
+                "fida": fida_user
             }
         facility_index[domain] = current_domain_index
     return facility_index
@@ -50,6 +56,7 @@ def get_owner_username(domain, owner_type, facility_id):
 def update_groups_index(domain):
     groups = Group.by_domain(domain)
     for group in groups:
+        GROUPS_BY_ID[domain][group._id] = group
         if group.case_sharing and group.metadata.get("main_user", None):
             INDEXED_GROUPS[domain][group.metadata["main_user"]] = group
 
