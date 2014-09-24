@@ -1,6 +1,7 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 
 # todo: all spec definitions will go here. moving them over piece meal when touched.
+from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
 
@@ -15,9 +16,12 @@ class IndicatorSpecBase(JsonObject):
 
     @classmethod
     def wrap(cls, obj):
-        if 'display_name' not in obj:
-            obj['display_name'] = obj['column_id']
-        return super(IndicatorSpecBase, cls).wrap(obj)
+        wrapped = super(IndicatorSpecBase, cls).wrap(obj)
+        if not wrapped.column_id:
+            raise BadValueError('column_id must not be empty!')
+        if not wrapped.display_name not in obj:
+            wrapped.display_name = wrapped.column_id
+        return wrapped
 
 
 class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
@@ -30,16 +34,12 @@ class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
 
     @property
     def getter(self):
-        if self.property_name:
-            assert not self.property_path
-            return DictGetter(property_name=self.property_name)
-        else:
-            assert self.property_path
-            return NestedDictGetter(property_path=self.property_path)
+        return _getter_from_property_reference(self)
 
 
 class BooleanIndicatorSpec(IndicatorSpecBase):
     filter = DictProperty(required=True)
+
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     datatype = StringProperty(required=True)
@@ -54,3 +54,11 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
 
+
+def _getter_from_property_reference(spec):
+    if spec.property_name:
+        assert not spec.property_path
+        return DictGetter(property_name=spec.property_name)
+    else:
+        assert spec.property_path
+        return NestedDictGetter(property_path=spec.property_path)

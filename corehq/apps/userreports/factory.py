@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext as _
+from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
     IndicatorSpecBase
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -126,7 +127,11 @@ class IndicatorFactory(object):
     @classmethod
     def from_spec(cls, spec):
         cls.validate_spec(spec)
-        return cls.constructor_map[spec['type']](spec)
+        try:
+            return cls.constructor_map[spec['type']](spec)
+        except BadValueError, e:
+            # for now reraise jsonobject exceptions as BadSpecErrors
+            raise BadSpecError(str(e))
 
     @classmethod
     def validate_spec(self, spec):
