@@ -386,7 +386,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def autocomplete_fields(self):
-        return ['city', 'country', 'region']
+        return ['city', 'countries', 'region']
 
     @property
     @memoized
@@ -400,7 +400,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
         }
         for attr in [
             'city',
-            'country',
+            'countries',
             'region',
             'description',
         ]:
