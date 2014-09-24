@@ -6010,8 +6010,8 @@ msgid "Not Billing Admin, Can't Make Payment"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:122
-#: custom/opm/opm_reports/conditions_met.py:52
-#: custom/opm/opm_reports/conditions_met.py:70
+#: custom/opm/conditions_met.py:52
+#: custom/opm/conditions_met.py:70
 #, fuzzy
 msgid "Payment Amount"
 msgstr "Cas actifs"
@@ -9714,8 +9714,8 @@ msgstr ""
 
 #: corehq/apps/importer/templates/importer/excel_config.html:84
 #: corehq/ex-submodules/casexml/apps/case/models.py:1083
-#: custom/opm/opm_reports/conditions_met.py:53
-#: custom/opm/opm_reports/conditions_met.py:71
+#: custom/opm/conditions_met.py:53
+#: custom/opm/conditions_met.py:71
 #, fuzzy
 msgid "Case ID"
 msgstr "Cas"
@@ -11770,8 +11770,8 @@ msgstr ""
 
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:30
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:33
-#: custom/opm/opm_reports/conditions_met.py:46
-#: custom/opm/opm_reports/conditions_met.py:65
+#: custom/opm/conditions_met.py:46
+#: custom/opm/conditions_met.py:65
 msgid "Window"
 msgstr ""
 
@@ -13622,8 +13622,8 @@ msgid "Report Filters"
 msgstr "Filtres du rapport"
 
 #: corehq/apps/reports/templates/reports/async/print_report.html:35
-#: custom/opm/opm_reports/templates/opm/hsr_print.html:53
-#: custom/opm/opm_reports/templates/opm/met_print_report.html:53
+#: custom/opm/templates/opm/hsr_print.html:53
+#: custom/opm/templates/opm/met_print_report.html:53
 #, fuzzy
 msgid "Loading ..."
 msgstr "Chargement"
@@ -16266,8 +16266,8 @@ msgid ""
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/models.py:347
-#: custom/opm/opm_reports/conditions_met.py:55
-#: custom/opm/opm_reports/conditions_met.py:73
+#: custom/opm/conditions_met.py:55
+#: custom/opm/conditions_met.py:73
 #, fuzzy
 msgid "Closed"
 msgstr "Fermer"
@@ -17195,8 +17195,8 @@ msgid "Beneficiary Information"
 msgstr "Renseignements concernant les visites à domicile"
 
 #: custom/bihar/reports/mch_reports.py:145
-#: custom/opm/opm_reports/conditions_met.py:42
-#: custom/opm/opm_reports/conditions_met.py:61
+#: custom/opm/conditions_met.py:42
+#: custom/opm/conditions_met.py:61
 #, fuzzy
 msgid "Husband Name"
 msgstr "Nom du mari"
@@ -19197,81 +19197,81 @@ msgstr "Aperçu"
 msgid "Reject"
 msgstr "Informations du projet"
 
-#: custom/opm/opm_reports/conditions_met.py:39
-#: custom/opm/opm_reports/conditions_met.py:58
+#: custom/opm/conditions_met.py:39
+#: custom/opm/conditions_met.py:58
 msgid "List of Beneficiary"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:40
-#: custom/opm/opm_reports/conditions_met.py:59
+#: custom/opm/conditions_met.py:40
+#: custom/opm/conditions_met.py:59
 #, fuzzy
 msgid "AWC Name"
 msgstr "Nom des travailleurs de première ligne"
 
-#: custom/opm/opm_reports/conditions_met.py:41
-#: custom/opm/opm_reports/conditions_met.py:60
+#: custom/opm/conditions_met.py:41
+#: custom/opm/conditions_met.py:60
 #, fuzzy
 msgid "Block Name"
 msgstr "Nom du projet"
 
-#: custom/opm/opm_reports/conditions_met.py:43
-#: custom/opm/opm_reports/conditions_met.py:62
+#: custom/opm/conditions_met.py:43
+#: custom/opm/conditions_met.py:62
 #, fuzzy
 msgid "Current status"
 msgstr "Rapports de projet"
 
-#: custom/opm/opm_reports/conditions_met.py:44
-#: custom/opm/opm_reports/conditions_met.py:63
+#: custom/opm/conditions_met.py:44
+#: custom/opm/conditions_met.py:63
 #, fuzzy
 msgid "Pregnancy Month"
 msgstr "Issues de la grossesse"
 
-#: custom/opm/opm_reports/conditions_met.py:45
-#: custom/opm/opm_reports/conditions_met.py:64
+#: custom/opm/conditions_met.py:45
+#: custom/opm/conditions_met.py:64
 #, fuzzy
 msgid "Child Age"
 msgstr "Nombre total de cas"
 
-#: custom/opm/opm_reports/conditions_met.py:47
-#: custom/opm/opm_reports/conditions_met.py:66
+#: custom/opm/conditions_met.py:47
+#: custom/opm/conditions_met.py:66
 msgid "1"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:48
-#: custom/opm/opm_reports/conditions_met.py:67
+#: custom/opm/conditions_met.py:48
+#: custom/opm/conditions_met.py:67
 msgid "2"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:49
-#: custom/opm/opm_reports/conditions_met.py:68
+#: custom/opm/conditions_met.py:49
+#: custom/opm/conditions_met.py:68
 msgid "3"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:50
-#: custom/opm/opm_reports/conditions_met.py:69
+#: custom/opm/conditions_met.py:50
+#: custom/opm/conditions_met.py:69
 msgid "4"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:51
+#: custom/opm/conditions_met.py:51
 msgid "5"
 msgstr ""
 
-#: custom/opm/opm_reports/conditions_met.py:54
-#: custom/opm/opm_reports/conditions_met.py:72
+#: custom/opm/conditions_met.py:54
+#: custom/opm/conditions_met.py:72
 #, fuzzy
 msgid "Owner Id"
 msgstr "Propriétaire"
 
-#: custom/opm/opm_reports/reports.py:748
+#: custom/opm/reports.py:748
 #, fuzzy
 msgid "Conditions Met Report"
 msgstr "Dernière mise à jour"
 
-#: custom/opm/opm_reports/templates/opm/beneficiary_report.html:36
+#: custom/opm/templates/opm/beneficiary_report.html:36
 msgid "Prepared and verified by:"
 msgstr ""
 
-#: custom/opm/opm_reports/templates/opm/beneficiary_report.html:37
+#: custom/opm/templates/opm/beneficiary_report.html:37
 #, fuzzy
 msgid "Approved by:"
 msgstr "Approuver"

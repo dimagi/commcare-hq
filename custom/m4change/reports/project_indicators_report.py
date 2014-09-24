@@ -72,6 +72,31 @@ class ProjectIndicatorsReport(MonthYearMixin, CaseListReport, M4ChangeReport):
                 "s/n": 32,
                 "label": _("Number of women who attended PNC within 6 weeks of delivery"),
                 "value": 0
+            },
+            "number_of_free_sims_given_total": {
+                "s/n": 33,
+                "label": _("Number of free sim cards given"),
+                "value": 0
+            },
+            "mno_mtn_total": {
+                "s/n": 34,
+                "label": _("Number of MTN MNO"),
+                "value": 0
+            },
+            "mno_etisalat_total": {
+                "s/n": 35,
+                "label": _("Number of Etisalat MNO"),
+                "value": 0
+            },
+            "mno_glo_total": {
+                "s/n": 36,
+                "label": _("Number of GLO MNO"),
+                "value": 0
+            },
+            "mno_airtel_total": {
+                "s/n": 37,
+                "label": _("Number of Airtel MNO"),
+                "value": 0
             }
         }
 

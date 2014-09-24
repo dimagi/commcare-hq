@@ -1398,6 +1398,11 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -3323,9 +3328,38 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
+        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+            errors.append({'type': 'parent cycle'})
+
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
+
+    def _has_parent_child_selection_cycle(self, modules):
+        """
+        :param modules: A mapping of module unique_ids to Module objects
+        :return: True if there is a cycle in the parent-child selection graph
+        """
+        visited = set()
+        completed = set()
+
+        def cycle_helper(m):
+            if m.id in visited:
+                if m.id in completed:
+                    return False
+                return True
+            visited.add(m.id)
+            if m.parent_select.active:
+                parent = modules.get(m.parent_select.module_id, None)
+                if parent != None and cycle_helper(parent):
+                    return True
+            completed.add(m.id)
+            return False
+        for module in modules.values():
+            if cycle_helper(module):
+                return True
+        return False
+
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):

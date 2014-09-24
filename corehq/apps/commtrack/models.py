@@ -342,11 +342,6 @@ class CommtrackRequisitionConfig(DocumentSchema):
         return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
 
-class SupplyPointType(DocumentSchema):
-    name = StringProperty()
-    categories = StringListProperty()
-
-
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
@@ -413,7 +408,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     multiaction_keyword_ = StringProperty()
 
     location_types = SchemaListProperty(LocationType)
-    supply_point_types = SchemaListProperty(SupplyPointType)
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
@@ -492,48 +486,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
             default_product_list=default_product_ids,
             force_consumption_case_filter=case_filter,
         )
-
-
-    """
-    @property
-    def keywords(self):
-        return self._keywords(self.actions, multi)
-
-    # TODO clean all this up
-    def stock_keywords(self):
-        return self.keywords()
-    def requisition_keywords(self):
-        return self._keywords(self.requisition_config.actions if self.requisitions_enabled else [], False)
-
-    def all_keywords(self, multi=False):
-        return self._keywords(self.all_actions(), multi)
-
-    def _by_name(self, action_list):
-        return dict((action_config.action_name, action_config) for action_config in action_list)
-
-    @property
-    def actions_by_name(self):
-        return self._by_name(self.actions)
-
-    @property
-    def all_actions_by_name(self):
-        return self._by_name(self.all_actions())
-
-    @property
-    def all_actions_by_type(self):
-        return dict((action_config.action_type, action_config) for action_config in self.all_actions())
-
-    def get_action_by_type(self, action_type):
-        return self.all_actions_by_type[action_type]
-    """
-
-    @property
-    def known_supply_point_types(self):
-        return set(spt.name for spt in self.supply_point_types)
-
-    @property
-    def supply_point_categories(self):
-        return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
 
     @property
     def requisitions_enabled(self):
@@ -622,7 +574,12 @@ class NewStockReport(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
+        report = DbStockReport.objects.create(
+            form_id=self.form_id,
+            date=self.timestamp,
+            type=self.tag,
+            domain=self._form.domain,
+        )
         for txn in self.transactions:
             db_txn = DbStockTransaction(
                 report=report,
@@ -1142,69 +1099,6 @@ class RequisitionTransaction(StockTransaction):
     @property
     def category(self):
         return 'requisition'
-
-
-class StockReport(object):
-    """
-    This is a wrapper around the couch xform doc that gets associated with
-    stock reports to provide convenient access to the underlying structure.
-    """
-
-    def __init__(self, form):
-        # TODO: validation?
-        self._form = form
-
-    @property
-    def id(self):
-        return self._form._id
-
-    @property
-    def user_id(self):
-        return self._form.metadata.userID
-
-    @property
-    def submitted_on(self):
-        return self._form.metadata.timeEnd
-
-    @property
-    def received_on(self):
-        return self._form.received_on
-
-    @property
-    def location_path(self):
-        return self._form.location_
-
-    @property
-    def location_id(self):
-        return self.location_path[-1]
-
-    @property
-    def transactions(self):
-        return [StockTransaction.force_wrap(t) for t in \
-                self._form.form.get('transaction', [])]
-
-    @property
-    def raw_form(self):
-        return self._form._doc
-
-    @classmethod
-    def get(cls, id):
-        return StockReport(XFormInstance.get(id))
-
-    @classmethod
-    def get_reports(cls, domain, location=None, datespan=None):
-        start = datespan.startdate if datespan else datetime(1900, 1, 1)
-        end = datespan.end_of_end_day if datespan else datetime.max
-        timestamp_start = dateparse.json_format_datetime(start)
-        timestamp_end =  dateparse.json_format_datetime(end)
-        loc_id = location._id if location else None
-        startkey = [domain, loc_id, timestamp_start]
-        endkey = [domain, loc_id, timestamp_end]
-        return [StockReport(f) for f in \
-                XFormInstance.view('commtrack/stock_reports',
-                                   startkey=startkey,
-                                   endkey=endkey,
-                                   include_docs=True)]
 
 
 class CommTrackUser(CommCareUser):
