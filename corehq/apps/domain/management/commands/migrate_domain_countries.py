@@ -11,14 +11,28 @@ class Command(LabelCommand):
         print "Migrating Domain countries"
 
         country_lookup = {x[1].lower(): x[0] for x in COUNTRIES}
+        #Special cases
+        country_lookup["USA"] = country_lookup["united states"]
+        country_lookup["California"] = country_lookup["united states"]
+        country_lookup["Wales"] = country_lookup["united kingdom"]
+
         for domain in Domain.get_all():
             try:
                 if isinstance(domain.deployment.country, basestring):
-                    if domain.deployment.country in country_lookup.keys():
-                        abbr = [country_lookup[domain.deployment.country.lower()]]
+                    if ',' in domain.deployment.country:
+                        countries = domain.deployment.country.split(',')
+                    elif ' and ' in domain.deployment.country:
+                        countries = domain.deployment.country.split(' and ')
                     else:
-                        abbr = []
-                    domain.deployment.country = abbr
+                        countries = [domain.deployment.country]
+
+                    abbr = []
+                    for country in countries:
+                        country = country.strip().lower()
+                        if country in country_lookup.keys():
+                            abbr.append(country_lookup[country])
+
+                    domain.deployment.countries = abbr
                     domain.save()
             except Exception as e:
                 print "There was an error migrating the domain named %s." % domain.name
