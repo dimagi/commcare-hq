@@ -13,7 +13,9 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
+import iso8601
 from redis import ConnectionError
+from corehq.ext.jsonobject import TARGET_DATETIME_FORMAT, re_loose_datetime
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -108,6 +110,30 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
+def adjust_datetimes(data, parent=None, key=None):
+    """
+    find all datetime-like strings within data (deserialized json)
+    and format them uniformly, in place.
+
+    """
+    # this strips the timezone like we've always done
+    # todo: in the future this will convert to UTC
+    if isinstance(data, basestring):
+        if re_loose_datetime.match(data):
+            parent[key] = (iso8601.parse_date(data).replace(tzinfo=None)
+                           .strftime(TARGET_DATETIME_FORMAT))
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            adjust_datetimes(value, parent=data, key=key)
+    elif isinstance(data, list):
+        for i, value in enumerate(data):
+            adjust_datetimes(value, parent=data, key=i)
+
+    # return data, just for convenience in testing
+    # this is the original input, modified, not a new data structure
+    return data
+
+
 def create_xform(xml_string, attachments=None, _id=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
@@ -125,6 +151,7 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
 
     assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
+    adjust_datetimes(json_form)
 
     _id = (_id or _extract_meta_instance_id(json_form)
            or XFormInstance.get_db().server.next_uuid())
