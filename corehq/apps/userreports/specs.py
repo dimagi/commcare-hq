@@ -7,20 +7,26 @@ from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
 
 class IndicatorSpecBase(JsonObject):
     """
-    Base class for indicator specs. All specs (for now) are assumed to have a column_id,
-    a display_name, which defaults to the column_id, and either a property_name or property_path
-    that defines how it references properties in documents
+    Base class for indicator specs. All specs (for now) are assumed to have a column_id and
+    a display_name, which defaults to the column_id.
     """
     column_id = StringProperty(required=True)
     display_name = StringProperty()
-    property_name = StringProperty()
-    property_path = ListProperty()
 
     @classmethod
     def wrap(cls, obj):
         if 'display_name' not in obj:
             obj['display_name'] = obj['column_id']
         return super(IndicatorSpecBase, cls).wrap(obj)
+
+
+class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
+    """
+    Extension of an indicator spec that references a property - either via
+    a property_name or property_path.
+    """
+    property_name = StringProperty()
+    property_path = ListProperty()
 
     @property
     def getter(self):
@@ -32,13 +38,13 @@ class IndicatorSpecBase(JsonObject):
             return NestedDictGetter(property_path=self.property_path)
 
 
-class RawIndicatorSpec(IndicatorSpecBase):
+class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     datatype = StringProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
 
 
-class ChoiceListIndicatorSpec(IndicatorSpecBase):
+class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     choices = ListProperty(required=True)
     select_style = StringProperty()
 
