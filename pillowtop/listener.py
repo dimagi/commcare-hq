@@ -494,6 +494,49 @@ class BulkPillow(BasicPillow):
     def send_bulk(self, payload):
         raise NotImplementedError()
 
+
+def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
+        except_on_failure=False, update=False):
+    """
+    More fault tolerant es.put method
+    """
+    data = data if data is not None else {}
+    current_tries = 0
+    while current_tries < retries:
+        try:
+            if update:
+                res = es_getter().post("%s/_update" % path, data={"doc": data})
+            else:
+                res = es_getter().put(path, data=data)
+            break
+        except ConnectionError, ex:
+            current_tries += 1
+            pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
+                name, ex, current_tries, retries))
+            time.sleep(math.pow(RETRY_INTERVAL, current_tries))
+
+            if current_tries == retries:
+                message = "[%s] Max retry error on %s" % (name, path)
+                if except_on_failure:
+                    raise PillowtopIndexingError(message)
+                else:
+                    pillow_logging.error(message)
+                res = {}
+
+    if res.get('status', 0) == 400:
+        error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s\n\t%s" % (
+            name,
+            res.get('error', "No error message"),
+            path,
+            data.keys())
+
+        if except_on_failure:
+            raise PillowtopIndexingError(error_message)
+        else:
+            pillow_logging.error(error_message)
+    return res
+
+
 class ElasticPillow(BulkPillow):
     """
     Elasticsearch handler
@@ -609,44 +652,17 @@ class ElasticPillow(BulkPillow):
         head_result = es.head(doc_path)
         return head_result
 
-    def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
-        """
-        More fault tolerant es.put method
-        """
-        current_tries = 0
-        while current_tries < retries:
-            try:
-                if update:
-                    res = self.get_es().post("%s/_update" % path, data={"doc": data})
-                else:
-                    res = self.get_es().put(path, data=data)
-                break
-            except ConnectionError, ex:
-                current_tries += 1
-                pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
-                    self.get_name(), ex, current_tries, retries))
-                time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-
-                if current_tries == retries:
-                    message = "[%s] Max retry error on %s" % (self.get_name(), path)
-                    if except_on_failure:
-                        raise PillowtopIndexingError(message)
-                    else:
-                        pillow_logging.error(message)
-                    res = {}
-
-        if res.get('status', 0) == 400:
-            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s\n\t%s" % (
-                self.get_name(),
-                res.get('error', "No error message"),
-                path,
-                data.keys())
-
-            if except_on_failure:
-                raise PillowtopIndexingError(error_message)
-            else:
-                pillow_logging.error(error_message)
-        return res
+    def send_robust(self, path, data=None, retries=MAX_RETRIES,
+            except_on_failure=False, update=False):
+        return send_to_elasticsearch(
+            path=path,
+            es_getter=self.get_es,
+            name=self.get_name(),
+            data=data,
+            retries=retries,
+            except_on_failure=except_on_failure,
+            update=update,
+        )
 
     @autoretry_connection()
     def change_transport(self, doc_dict):
@@ -656,7 +672,6 @@ class ElasticPillow(BulkPillow):
         if self.bulk:
             return
 
-        es = self.get_es()
         doc_path = self.get_doc_path(doc_dict['_id'])
 
         doc_exists = self.doc_exists(doc_dict['_id'])
