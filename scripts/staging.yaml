@@ -67,9 +67,6 @@ branches:
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/23
-  - fuzzy-setting+logos # J$ 9/24
-  - schedule+fuzzy-setting # J$ 9/24
-  - fuzzy-setting # Noah 9/24
 submodules:
   submodules/couchlog-src:
     branches:
