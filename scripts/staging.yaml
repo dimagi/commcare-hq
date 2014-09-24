@@ -51,9 +51,7 @@ branches:
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
   - logos # Nick P 5/28
-  - admin-reports+stock-transactions-indicator
   - admin-reports # Nick P 8/13
-  - stock-transactions-indicator # Nick P 9/23
 #  - subscription-no-contact-info # bb 8/4
   - increase-es-timeout # Nick P 8/11
   - archive-products # tw 8/14
