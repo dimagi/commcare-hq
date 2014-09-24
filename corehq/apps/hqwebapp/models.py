@@ -351,7 +351,6 @@ class CommTrackSetupTab(UITab):
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
-            ILSConfigView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -363,9 +362,8 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        items = []
 
-        items.append([_('CommTrack Setup'), [
+        return [[_('CommTrack Setup'), [
             # products
             {
                 'title': ProductListView.page_title,
@@ -444,13 +442,7 @@ class CommTrackSetupTab(UITab):
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
-        ]])
-        if self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username)):
-            items[0][1].append({
-                'title': ILSConfigView.page_title,
-                'url': reverse(ILSConfigView.urlname, args=[self.domain]),
-            })
-        return items
+        ]]]
 
 
 class ProjectDataTab(UITab):
