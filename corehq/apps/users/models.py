@@ -1207,6 +1207,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         super(CouchUser, self).save(**params)
 
+        from corehq.elastic import send_to_elasticsearch
+        res = send_to_elasticsearch("users", self.to_json())
+
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error

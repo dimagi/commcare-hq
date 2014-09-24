@@ -2,6 +2,7 @@ import copy
 from urllib import unquote
 import rawes
 from django.conf import settings
+from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
@@ -17,9 +18,27 @@ def get_es(timeout=30):
     """
     Get a handle to the configured elastic search DB
     """
-    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST, 
+    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
                                     settings.ELASTICSEARCH_PORT),
                          timeout=timeout)
+
+def send_to_elasticsearch(index, doc):
+    """
+    Utility method to update the doc in elasticsearch.
+    Duplicates the functionality of pillowtop but can be called directly.
+    """
+    doc_id = doc['_id']
+    path = ES_URLS[index].replace('_search', doc_id)
+    doc_exists = get_es().head(path)
+    return send_to_es(
+        path=path,
+        es_getter=get_es,
+        name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
+                                  send_to_elasticsearch.__name__, index),
+        data=doc,
+        except_on_failure=True,
+        update=doc_exists
+    )
 
 
 ES_URLS = {
