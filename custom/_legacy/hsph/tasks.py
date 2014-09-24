@@ -13,11 +13,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
-DOMAINS = ["hsph-dev", "hsph-betterbirth"]
+DOMAINS = ["hsph-dev", "hsph-betterbirth", "hsph-learning-sites", "hsph-test"]
 PAST_N_DAYS = 21
 GROUPS_TO_CHECK = ["cati", "cati-tl"]
 GROUP_SHOULD_BE = "fida"
-TYPE = "birth"
+BIRTH_TYPE = "birth"
+CATI_FIDA_CHECK_TYPE = "cati_fida_check"
 OWNER_FIELD_MAPPINGS = {
         "cati": "cati_assignment",
         "fida": "field_follow_up_assignment"
@@ -85,7 +86,8 @@ def new_update_case_properties():
     past_42_date = past_x_date(time_zone, 42)
     for domain in DOMAINS:
         update_groups_index(domain)
-        case_list = get_cases_in_domain(domain, type=TYPE)
+        case_list = list(get_cases_in_domain(domain, type=BIRTH_TYPE))
+        case_list = case_list + list(get_cases_in_domain(domain, type=CATI_FIDA_CHECK_TYPE))
         cases_to_modify = []
         for case in case_list:
             if case.closed:
