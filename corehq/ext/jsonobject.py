@@ -48,6 +48,11 @@ class ISO8601Property(DateTimeProperty):
     >>> ISO8601Property().unwrap(_)
     (datetime.datetime(2014, 12, 10, 22, 5, 18), '2014-12-10T22:05:18.000000Z')
 
+    >>> ISO8601Property().wrap('2014-12-11')
+    datetime.datetime(2014, 12, 11, 0, 0)
+    >>> ISO8601Property().unwrap(_)
+    (datetime.datetime(2014, 12, 11, 0, 0), '2014-12-11T00:00:00.000000Z')
+
     """
     def __init__(self, **kwargs):
         if 'exact' in kwargs:
