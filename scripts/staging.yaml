@@ -67,7 +67,7 @@ branches:
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
-  - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
+  # - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
 submodules:
   submodules/couchlog-src:
     branches:
@@ -97,8 +97,8 @@ submodules:
       - faster-lazy-attachments
   submodules/pillowtop-src:
     branches:
-      - request_timeout  # Ethan 9/24
-      - save-to-es  # Ethan 9/24
+      # - request_timeout  # Ethan 9/24
+      # - save-to-es  # Ethan 9/24
   # corehq/apps/hqmedia/static/hqmedia/MediaUploader:
   #   branches:
   #     - allowclose # SK 9/23
