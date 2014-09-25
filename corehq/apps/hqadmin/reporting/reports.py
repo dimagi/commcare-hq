@@ -10,7 +10,10 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
-from corehq.apps.hqadmin.reporting.exceptions import IntervalNotFoundException
+from corehq.apps.hqadmin.reporting.exceptions import (
+    HistoTypeNotFoundException,
+    IntervalNotFoundException,
+)
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ES_MAX_CLAUSE_COUNT,
@@ -21,10 +24,6 @@ from corehq.elastic import (
 from casexml.apps.stock.models import StockReport, StockTransaction
 
 LARGE_ES_NUMBER = 10 ** 6
-
-
-class HistoTypeNotFound(Exception):
-    pass
 
 
 def add_params_to_query(query, params):
@@ -658,4 +657,4 @@ def get_stats_data(histo_type, domain_params, datespan, interval, **kwargs):
             interval,
             **kwargs
         )
-    raise HistoTypeNotFound(histo_type)
+    raise HistoTypeNotFoundException(histo_type)
