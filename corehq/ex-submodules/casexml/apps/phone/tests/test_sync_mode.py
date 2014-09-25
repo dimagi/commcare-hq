@@ -366,7 +366,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
         # first request should populate the cache
         original_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         next_sync_log = synclog_from_restore_payload(original_payload)
@@ -376,23 +376,14 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # a second request with the same config should be exactly the same
         cached_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.assertEqual(original_payload, cached_payload)
 
-        # a second request without caching should be different (generate a new id)
-        uncached_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=False,
-            restore_id=self.sync_log._id,
-        ).get_payload()
-        self.assertNotEqual(original_payload, uncached_payload)
-        uncached_sync_log = synclog_from_restore_payload(uncached_payload)
-        self.assertNotEqual(next_sync_log._id, uncached_sync_log._id)
-
         # caching a different version should also produce something new
         versioned_payload = RestoreConfig(
-            self.user, version=V1, caching_enabled=True,
+            self.user, version=V1,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.assertNotEqual(original_payload, versioned_payload)
@@ -401,7 +392,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.sync_log = SyncLog.get(self.sync_log._id)
@@ -415,7 +406,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # resyncing should recreate the cache
         next_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.sync_log = SyncLog.get(self.sync_log._id)
@@ -426,7 +417,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCacheNonInvalidation(self):
         original_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.sync_log = SyncLog.get(self.sync_log._id)
@@ -444,7 +435,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             version=V2,
         ).as_xml()])
         next_payload = RestoreConfig(
-            self.user, version=V2, caching_enabled=True,
+            self.user, version=V2,
             restore_id=self.sync_log._id,
         ).get_payload()
         self.assertEqual(original_payload, next_payload)

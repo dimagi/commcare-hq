@@ -53,7 +53,7 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 caching_enabled=False, items=False, stock_settings=None):
+                 items=False, stock_settings=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
@@ -61,9 +61,6 @@ class RestoreConfig(object):
         self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
-
-        # todo: remove this - no longer being used
-        self.caching_enabled = caching_enabled
 
     @property
     @memoized
