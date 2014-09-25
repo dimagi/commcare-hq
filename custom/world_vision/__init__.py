@@ -4,6 +4,8 @@ from custom.world_vision.reports.mother_report import MotherTTCReport
 
 DEFAULT_URL = MixedTTCReport
 
+WORLD_VISION_DOMAINS = ('wvindia2', )
+
 CUSTOM_REPORTS = (
     ('TTC App Reports', (
         MixedTTCReport,
