@@ -6,14 +6,29 @@ from fluff.filters import ANDFilter, ORFilter
 
 class PropertyMatchFilterTest(SimpleTestCase):
 
-    def setUp(self):
-        self.filter = FilterFactory.from_spec({
+    def get_filter(self):
+        return FilterFactory.from_spec({
             'type': 'property_match',
             'property_name': 'foo',
             'property_value': 'bar',
         })
 
-    def testNoName(self):
+    def get_path_filter(self):
+        return FilterFactory.from_spec({
+            'type': 'property_match',
+            'property_path': ['path', 'to', 'foo'],
+            'property_value': 'bar',
+        })
+
+    def testNormalFilter(self):
+        # just asserting that this doesn't raise any exceptions
+        self.get_filter()
+
+    def testFilterWithPath(self):
+        # just asserting that this doesn't raise any exceptions
+        self.get_path_filter()
+
+    def testNoNameOrPath(self):
         self.assertRaises(BadSpecError, FilterFactory.from_spec, {
             'type': 'property_match',
             'property_value': 'bar',
@@ -26,27 +41,37 @@ class PropertyMatchFilterTest(SimpleTestCase):
             'property_value': 'bar',
         })
 
-    def testNoValue(self):
+    def testNameNoValue(self):
         self.assertRaises(BadSpecError, FilterFactory.from_spec, {
             'type': 'property_match',
             'property_name': 'foo',
         })
 
-    def testEmptyValue(self):
+    def testEmptyPath(self):
         self.assertRaises(BadSpecError, FilterFactory.from_spec, {
             'type': 'property_match',
-            'property_name': 'foo',
-            'property_value': '',
+            'property_path': [],
+            'property_value': 'bar',
         })
 
     def testFilterMatch(self):
-        self.assertTrue(self.filter.filter(dict(foo='bar')))
+        self.assertTrue(self.get_filter().filter(dict(foo='bar')))
 
     def testFilterNoMatch(self):
-        self.assertFalse(self.filter.filter(dict(foo='not bar')))
+        self.assertFalse(self.get_filter().filter(dict(foo='not bar')))
 
     def testFilterMissing(self):
-        self.assertFalse(self.filter.filter(dict(not_foo='bar')))
+        self.assertFalse(self.get_filter().filter(dict(not_foo='bar')))
+
+    def testFilterPathMatch(self):
+        self.assertTrue(self.get_path_filter().filter({'path': {'to': {'foo': 'bar'}}}))
+
+    def testFilterPathNoMatch(self):
+        self.assertFalse(self.get_path_filter().filter({'path': {'to': {'foo': 'not bar'}}}))
+
+    def testFilterMissing(self):
+        self.assertFalse(self.get_path_filter().filter({'path': {'to': {'not_foo': 'bar'}}}))
+        self.assertFalse(self.get_path_filter().filter({'foo': 'bar'}))
 
 
 class ConfigurableANDFilterTest(SimpleTestCase):

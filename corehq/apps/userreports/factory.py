@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase
+    IndicatorSpecBase, PropertyMatchFilterSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
@@ -28,12 +28,11 @@ def _build_compound_filter(spec):
 
 
 def _build_property_match_filter(spec):
-    _validate_required_fields(spec, ('property_name', 'property_value'))
-
+    wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        getter=DictGetter(spec['property_name']),
+        getter=wrapped.getter,
         operator=EQUAL,
-        reference_value=spec['property_value']
+        reference_value=wrapped.property_value,
     )
 
 
@@ -47,7 +46,10 @@ class FilterFactory(object):
     @classmethod
     def from_spec(cls, spec):
         cls.validate_spec(spec)
-        return cls.constructor_map[spec['type']](spec)
+        try:
+            return cls.constructor_map[spec['type']](spec)
+        except (AssertionError, BadValueError), e:
+            raise BadSpecError(str(e))
 
     @classmethod
     def validate_spec(self, spec):

@@ -55,6 +55,17 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
 
 
+
+class PropertyMatchFilterSpec(JsonObject):
+    property_name = StringProperty()
+    property_path = ListProperty()
+    property_value = StringProperty(required=True)
+
+    @property
+    def getter(self):
+        return _getter_from_property_reference(self)
+
+
 def _getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path
