@@ -91,8 +91,9 @@ class InvitationView():
         try:
             invitation = self.inv_type.get(invitation_id)
         except ResourceNotFound:
-            messages.error(request, _("Sorry, we couldn't find that invitation. Please double check "
-                                      "the invitation link you received and try again."))
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or request a "
+                                      "project administrator to send you the invitation again."))
             return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
