@@ -114,6 +114,27 @@ def format_date_string(value):
         return format(force_to_datetime(value), 'd E')
 
 
+def get_pps_name(form):
+    if form.form['PPS_name']:
+        return form.form['PPS_name']
+    else:
+        loc = _get_location(form)
+        if not loc:
+            return None
+        return loc.name
+
+
+def get_district_name(form):
+    if form.form['district_name']:
+        return form.form['district_name']
+    else:
+        loc = get_location_by_type(form, 'district')
+        if not loc:
+            return None
+        return loc.name
+
+
+
 class IsExistFormPropertyFilter(FormPropertyFilter):
 
     def __init__(self, xmlns=None, property_path=None, property_value=None):
