@@ -8,11 +8,6 @@ from corehq.apps.commtrack.views import (
 )
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
-    url(r'^debug/bootstrap/$', 'bootstrap'),
-    url(r'^debug/import_history/$', 'historical_import'),
-    url(r'^debug/charts/$', 'charts'),
-    url(r'^debug/location_dump/$', 'location_dump'),
-
     url(r'^api/supply_point_query/$', 'api_query_supply_point'),
 )
 

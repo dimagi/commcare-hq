@@ -48,6 +48,7 @@ from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
+from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -368,6 +369,15 @@ class AdvancedFormActions(DocumentSchema):
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
+
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in [a for a in self.open_cases if a.parent_tag]:
+            if not parent_case_type:
+                yield action
+            else:
+                parent = self.actions_meta_by_tag[action.parent_tag]['action']
+                if parent.case_type == parent_case_type:
+                    yield parent
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -1388,6 +1398,11 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -2588,7 +2603,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except Exception as e:
             if settings.DEBUG:
                 raise
-            logging.exception('Unexpected error building app')
+
+            # this is much less useful/actionable without a URL
+            # so make sure to include the request
+            logging.error('Unexpected error building app', exc_info=True,
+                          extra={'request': view_utils.get_request()})
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -3309,9 +3328,38 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
+        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+            errors.append({'type': 'parent cycle'})
+
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
+
+    def _has_parent_child_selection_cycle(self, modules):
+        """
+        :param modules: A mapping of module unique_ids to Module objects
+        :return: True if there is a cycle in the parent-child selection graph
+        """
+        visited = set()
+        completed = set()
+
+        def cycle_helper(m):
+            if m.id in visited:
+                if m.id in completed:
+                    return False
+                return True
+            visited.add(m.id)
+            if m.parent_select.active:
+                parent = modules.get(m.parent_select.module_id, None)
+                if parent != None and cycle_helper(parent):
+                    return True
+            completed.add(m.id)
+            return False
+        for module in modules.values():
+            if cycle_helper(module):
+                return True
+        return False
+
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
@@ -3332,6 +3380,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
+        if self.build_version < yaml_setting.get("since", "0"):
+            setting = yaml_setting.get("disabled_default", None)
+            if setting is not None:
+                return setting
         return yaml_setting.get("default")
 
     @property

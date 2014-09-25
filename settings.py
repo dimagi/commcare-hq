@@ -18,6 +18,18 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 
+# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
+# this to select various versions of Vellum source on the form designer page.
+# Acceptable values:
+# None - production mode
+# "dev" - use raw vellum source (submodules/formdesigner/src)
+# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
+VELLUM_DEBUG = None
+
+# enables all plugins, including ones that haven't been released on production
+# yet
+VELLUM_PRERELEASE = False
+
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -79,9 +91,14 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-)
+STATICFILES_DIRS = ()
+
+# bleh, why did this submodule have to be removed?
+# deploy fails if this item is present and the path does not exist
+_formdesigner_path = os.path.join(FILEPATH, 'submodules', 'formdesigner')
+if os.path.exists(_formdesigner_path):
+    STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
+del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
@@ -172,6 +189,11 @@ DEFAULT_APPS = (
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+    'bootstrap3_transitional',
+)
 
 HQ_APPS = (
     'django_digest',
@@ -219,7 +241,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -266,6 +287,7 @@ HQ_APPS = (
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -276,8 +298,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -291,13 +312,17 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.care_pathways',
+    'bootstrap3_crispy',
 )
 
 TEST_APPS = ()
@@ -317,6 +342,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
+    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -431,7 +457,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -922,7 +948,6 @@ COUCHDB_APPS = [
     'pillowtop',
     'pillow_retry',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -949,7 +974,6 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -957,13 +981,14 @@ COUCHDB_APPS = [
     'trialconnect',
     'accounting',
     'succeed',
+    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
@@ -1014,6 +1039,7 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+    'custom.ilsgateway.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1086,7 +1112,8 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1100,12 +1127,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
-        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1118,7 +1145,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow'
+        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
+        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.care_pathways.models.GeographyFluffPillow',
+        'custom.care_pathways.models.FarmerRecordFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1178,6 +1209,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1208,7 +1240,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
@@ -1222,7 +1254,9 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'pathways-india-mis': 'custom.care_pathways',
+    'pathways-tanzania': 'custom.care_pathways',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

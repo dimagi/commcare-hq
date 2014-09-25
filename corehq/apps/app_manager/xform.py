@@ -1,8 +1,10 @@
 from collections import defaultdict
+import logging
 import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
+from corehq.util.view_utils import get_request
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
@@ -1990,5 +1992,15 @@ def infer_vellum_type(control, bind):
     appearance = control.attrib.get('appearance')
 
     results = VELLUM_TYPE_INDEX[tag][data_type][media_type][appearance]
-    result, = results
+    try:
+        result, = results
+    except ValueError:
+        logging.error('No vellum type found matching', extra={
+            'tag': tag,
+            'data_type': data_type,
+            'media_type': media_type,
+            'appearance': appearance,
+            'request': get_request()
+        })
+        return None
     return result['name']

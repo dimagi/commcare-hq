@@ -1,5 +1,5 @@
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
-from corehq.pillows.formdata import FormDataPillow
+from corehq.pillows.sofabed import FormDataPillow
 from couchforms.models import XFormInstance
 
 DEVICEREPORT = 'http://code.javarosa.org/devicereport'

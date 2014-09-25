@@ -95,6 +95,73 @@ def _sms_count(user, startdate, enddate, message_type='SMSLog'):
 
     return ret
 
+class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+    def _fmt(self, val):
+        if val is None:
+            return format_datatables_data("-", "-")
+        else:
+            return format_datatables_data(val, val)
+
+    def _fmt_timestamp(self, timestamp):
+        return self.table_cell(
+            timestamp,
+            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    def _fmt_contact_link(self, msg, doc_info):
+        if doc_info:
+            username, contact_type, url = (doc_info.display,
+                doc_info.type_display, doc_info.link)
+        else:
+            username, contact_type, url = (None, None, None)
+        username = username or "-"
+        contact_type = contact_type or _("Unknown")
+        if url:
+            ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
+        else:
+            ret = self.table_cell(username, username)
+        ret['raw'] = "|||".join([username, contact_type,
+            msg.couch_recipient or ""])
+        return ret
+
+    def get_recipient_info(self, message, contact_cache):
+        recipient_id = message.couch_recipient
+
+        if recipient_id in contact_cache:
+            return contact_cache[recipient_id]
+
+        doc = None
+        if recipient_id not in [None, ""]:
+            try:
+                if message.couch_recipient_doc_type == "CommCareCase":
+                    doc = CommCareCase.get(recipient_id)
+                else:
+                    doc = CouchUser.get_by_user_id(recipient_id)
+            except Exception:
+                pass
+
+        if doc:
+            doc_info = get_doc_info(doc.to_json(), self.domain)
+        else:
+            doc_info = None
+
+        contact_cache[recipient_id] = doc_info
+
+        return doc_info
+
+    @property
+    def export_table(self):
+        result = super(BaseCommConnectLogReport, self).export_table
+        table = result[0][1]
+        table[0].append(_("Contact Type"))
+        table[0].append(_("Contact Id"))
+        for row in table[1:]:
+            contact_info = row[1].split("|||")
+            row[1] = contact_info[0]
+            row.append(contact_info[1])
+            row.append(contact_info[2])
+        return result
+
 """
 Displays all sms for the given domain and date range.
 
@@ -105,7 +172,7 @@ the phone number, but rather a settings parameter.
 So, to have this report abbreviate the phone number to only the first four digits for a certain domain, add 
 the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number_domains"]
 """
-class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+class MessageLogReport(BaseCommConnectLogReport):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
@@ -145,22 +212,8 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         for message in data:
             if message.direction == OUTGOING and not message.processed:
                 continue
-            recipient_id = message.couch_recipient
-            doc = None
-            if recipient_id not in [None, ""]:
-                try:
-                    if message.couch_recipient_doc_type == "CommCareCase":
-                        doc = CommCareCase.get(recipient_id)
-                    else:
-                        doc = CouchUser.get_by_user_id(recipient_id)
-                except Exception:
-                    pass
 
-            if doc:
-                doc_info = get_doc_info(doc.to_json(), self.domain,
-                    contact_cache)
-            else:
-                doc_info = None
+            doc_info = self.get_recipient_info(message, contact_cache)
 
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
@@ -177,41 +230,4 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
 
         return result
 
-    @property
-    def export_table(self):
-        result = super(MessageLogReport, self).export_table
-        table = result[0][1]
-        table[0].append(_("Contact Type"))
-        table[0].append(_("Contact Id"))
-        for row in table[1:]:
-            contact_info = row[1].split("|||")
-            row[1] = contact_info[0]
-            row.append(contact_info[1])
-            row.append(contact_info[2])
-        return result
-
-    def _fmt(self, val):
-        return format_datatables_data(val, val)
-
-    def _fmt_contact_link(self, msg, doc_info):
-        if doc_info:
-            username, contact_type, url = (doc_info.display,
-                doc_info.type_display, doc_info.link)
-        else:
-            username, contact_type, url = (None, None, None)
-        username = username or "-"
-        contact_type = contact_type or _("Unknown")
-        if url:
-            ret = self.table_cell(username, '<a href="%s">%s</a>' % (url, username))
-        else:
-            ret = self.table_cell(username, username)
-        ret['raw'] = "|||".join([username, contact_type,
-            msg.couch_recipient or ""])
-        return ret
-
-    def _fmt_timestamp(self, timestamp):
-        return self.table_cell(
-            timestamp,
-            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-        )
 

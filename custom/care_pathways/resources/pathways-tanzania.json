@@ -1,0 +1,514 @@
+{
+    "geography_hierarchy": {
+        "lvl_1": {
+            "prop": "group_district",
+            "name": "District"
+        },
+        "lvl_2": {
+            "prop": "group_village",
+            "name": "Village"
+        }
+    },
+    "by_type_hierarchy" : [
+        {
+            "val": "sesame",
+            "text": "Sesame",
+            "next": [
+                {
+                    "val": "ils",
+                    "text": "Domain 01: Input and Land Selection",
+                    "next": [
+                        {
+                            "val": "ppt1_ils_gender",
+                            "text": "Which farmers discussed with their spouse cultivation plan for HH?"
+                        },
+                        {
+                            "val": "ppt1_ils_soil_type",
+                            "text": "Which farmers considered soil characteristics and land slope when selecting where to plant crop?"
+                        },
+                        {
+                            "val": "ppt1_ils_inputs",
+                            "text": "Which farmers used improved inputs in land preparation?"
+                        }
+                    ]
+                },
+                {
+                    "val": "swm",
+                    "text": "Domain 02: Soil and Water Management",
+                    "next": [
+                        {
+                            "val": "ppt1_swm_preparation_practices",
+                            "text": "Which farmers applied farm preparation practices?"
+                        },
+                        {
+                            "val": "ppt1_swm_fertilizers",
+                            "text": "Which farmers used fertilizers? "
+                        },
+                        {
+                            "val": "ppt1_swm_conservation",
+                            "text": "Which farmers used soil and water conservation structures?"
+                        },
+                        {
+                            "val": "ppt1_swm_crop_rotation",
+                            "text": "Which farmers used crop rotation techniques?"
+                        }
+                    ]
+                },
+                {
+                    "val": "uoi",
+                    "text": "Domain 03: Use of Inputs",
+                    "next": [
+                        {
+                            "val": "ppt1_uoi_improved_seeds",
+                            "text": "Which farmers used improved/recommended seed varieties?"
+                        },
+                        {
+                            "val": "ppt1_uoi_local_seeds",
+                            "text": "Which farmers used local seed varieties?"
+                        }
+                    ]
+                },
+                {
+                    "val": "p",
+                    "text": "Domain 04: Planting",
+                    "next": [
+                        {
+                            "val": "ppt1_p_gender",
+                            "text": "Which farmers were supported by spouse with HH work while planting?"
+                        },
+                        {
+                            "val": "ppt1_p_farming_calendar",
+                            "text": "Which farmers planted according to farming calendar?"
+                        },
+                        {
+                            "val": "ppt1_p_spacing_needs",
+                            "text": "Which farmers used recommended seed spacing?"
+                        }
+                    ]
+                },
+                {
+                    "val": "pdm",
+                    "text": "Domain 05: Pest and Disease Management",
+                    "next": [
+                        {
+                            "val": "ppt1_pdm_gender",
+                            "text": "Which farmers were supported by spouse with HH work while weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_thinning",
+                            "text": "Which farmers perfomed timely thinning?"
+                        },
+                        {
+                            "val": "ppt1_pdm_weeding1",
+                            "text": "Which farmers completed first scheduled weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_weeding2",
+                            "text": "Which farmers completed second scheduled weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_lowrisk_pesticide",
+                            "text": "Which farmers used low risk pesticide?"
+                        },
+                        {
+                            "val": "ppt1_pdm_pesticides_appropriately",
+                            "text": "Which farmers used pesticides appropriately?"
+                        },
+                        {
+                            "val": "ppt1_pdm_scouting",
+                            "text": "Which farmers looked for and destroyed infected plants?"
+                        }
+                    ]
+                },
+                {
+                    "val": "h",
+                    "text": "Domain 06: Harvest",
+                    "next": [
+                        {
+                            "val": "ppt2_h_workload_harvest",
+                            "text": "Which farmers were supported by their spouse during harvest?"
+                        },
+                        {
+                            "val": "ppt2_h_methods",
+                            "text": "Which farmers used improved harvesting methods?"
+                        }
+                    ]
+                },
+                {
+                    "val": "phm",
+                    "text": "Domain 07: Post Harvest Management",
+                    "next": [
+                        {
+                            "val": "ppt2_phm_processing",
+                            "text": "Which farmers used improved processing techniques?"
+                        },
+                        {
+                            "val": "ppt2_phm_seed_stored",
+                            "text": "Which farmers stored sesame seeds for next season?"
+                        },
+                        {
+                            "val": "ppt2_phm_treatment_seeds",
+                            "text": "Which farmers applied seed treatment? "
+                        },
+                        {
+                            "val": "ppt2_phm_traditional_storage",
+                            "text": "Which farmers used traditional storage facilities for harvest?"
+                        },
+                        {
+                            "val": "ppt2_phm_modern_storage",
+                            "text": "Which farmers used modern storage facilities?"
+                        }
+                    ]
+                },
+                {
+                    "val": "m",
+                    "text": "Domain 08: Marketing",
+                    "next": [
+                        {
+                            "val": "ppt2_m_group_marketing",
+                            "text": "Which individual farmers participated in group-based marketing?"
+                        },
+                        {
+                            "val": "ppt2_m_market_info",
+                            "text": "Which farmers got accurate informtion about market demand, price, buyers?"
+                        },
+                        {
+                            "val": "ppt2_m_negotiate",
+                            "text": "Which farmers felt confident to negotiate with buyers to get a fair price?"
+                        },
+                        {
+                            "val": "ppt2_m_info_decision",
+                            "text": "Which farmers used marketing information for decision-making?"
+                        },
+                        {
+                            "val": "ppt2_m_calc_profit",
+                            "text": "Which farmers Calculated (and discussed with spouse) the expected profit based on total production and price information?"
+                        }
+                    ]
+                },
+                {
+                    "val": "rkf_ppt2",
+                    "text": "Domain 09: Record Keeping and Finance",
+                    "next": [
+                        {
+                            "val": "ppt2_rkf_measurement",
+                            "text": "Which farmers know how to use scales, measurement tools, and count money?"
+                        },
+                        {
+                            "val": "ppt2_rkf_record_keeping",
+                            "text": "Which farmers kept records of costs and sales, with regular updates?"
+                        },
+                        {
+                            "val": "ppt2_rkf_record_practices",
+                            "text": "Which farmers kept records of production practices throughout the season?"
+                        },
+                        {
+                            "val": "ppt2_rkf_calc_profit_loss",
+                            "text": "Which farmers calculated actual profit or loss (after all costs and sales incurred)?"
+                        }
+                    ]
+                },
+                {
+                    "val": "g_ppt2",
+                    "text": "Domain 10: Savings and Loans",
+                    "next": [
+                        {
+                            "val": "ppt2_g_discussion_budget",
+                            "text": "Which farmers had a discussion with spouse (cash-flow tree) on the family budget and contributions to it?"
+                        },
+                        {
+                            "val": "ppt2_g_dialogue",
+                            "text": "Which farmers attends group dialogue sessions spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_ctrl_hhasset",
+                            "text": "Which farmers reported control of household assets?"
+                        },
+                        {
+                            "val": "ppt2_g_share_earnings_info",
+                            "text": "Which farmers reported sharing information about their earnings with their spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_dm_spending2",
+                            "text": "Which farmers reported discussing how to spend HH income with their spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_purchase_ownasset",
+                            "text": "Which farmers reported having purchasing something for herself with own money in the last 6 months?"
+                        },
+                        {
+                            "val": "ppt2_g_public_speaking",
+                            "text": "Which farmers reported spoke up comfortably in group meetings even when others disagree them?"
+                        },
+                        {
+                            "val": "ppt2_g_inluential_decision",
+                            "text": "Which farmers reported having influenced decision making on spending of earnings at HH?"
+                        },
+                        {
+                            "val": "ppt2_g_freedom_association",
+                            "text": "Which farmers reported attending trainings and meetings without restrictions from spouse or other family members?"
+                        }
+                    ]
+                },
+                {
+                    "val": "sav_ppt2",
+                    "text": "Domain 11: Savings",
+                    "next": [
+                        {
+                            "val": "ppt2_sav_sav",
+                            "text": "Which farmers reported that they are saving?"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "val": "cassava",
+            "text": "Cassava",
+            "next": [
+                {
+                    "val": "ils",
+                    "text": "Domain 01: Input and Land Selection",
+                    "next": [
+                        {
+                            "val": "ppt1_ils_gender",
+                            "text": "Which farmers discussed with their spouse cultivation plan for HH?"
+                        },
+                        {
+                            "val": "ppt1_ils_soil_type",
+                            "text": "Which farmers considered soil characteristics and land slope when selecting where to plant crop?"
+                        },
+                        {
+                            "val": "ppt1_ils_inputs",
+                            "text": "Which farmers used improved inputs in land preparation?"
+                        }
+                    ]
+                },
+                {
+                    "val": "swm",
+                    "text": "Domain 02: Soil and Water Management",
+                    "next": [
+                        {
+                            "val": "ppt1_swm_preparation_practices",
+                            "text": "Which farmers applied farm preparation practices?"
+                        },
+                        {
+                            "val": "ppt1_swm_fertilizers",
+                            "text": "Which farmers used fertilizers? "
+                        },
+                        {
+                            "val": "ppt1_swm_conservation",
+                            "text": "Which farmers used soil and water conservation structures?"
+                        },
+                        {
+                            "val": "ppt1_swm_crop_rotation",
+                            "text": "Which farmers used crop rotation techniques?"
+                        }
+                    ]
+                },
+                {
+                    "val": "uoi",
+                    "text": "Domain 03: Use of Inputs",
+                    "next": [
+                        {
+                            "val": "ppt1_uoi_improved_seeds",
+                            "text": "Which farmers used improved/recommended seed varieties?"
+                        },
+                        {
+                            "val": "ppt1_uoi_local_seeds",
+                            "text": "Which farmers used local seed varieties?"
+                        }
+                    ]
+                },
+                {
+                    "val": "p",
+                    "text": "Domain 04: Planting",
+                    "next": [
+                        {
+                            "val": "ppt1_p_gender",
+                            "text": "Which farmers were supported by spouse with HH work while planting?"
+                        },
+                        {
+                            "val": "ppt1_p_farming_calendar",
+                            "text": "Which farmers planted according to farming calendar?"
+                        },
+                        {
+                            "val": "ppt1_p_spacing_cuttings",
+                            "text": "Which farmers used recommended cuttings spacing?"
+                        }
+                    ]
+                },
+                {
+                    "val": "pdm",
+                    "text": "Domain 05: Pest and Disease Management",
+                    "next": [
+                        {
+                            "val": "ppt1_pdm_gender",
+                            "text": "Which farmers were supported by spouse with HH work while weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_weeding1",
+                            "text": "Which farmers completed first scheduled weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_weeding2",
+                            "text": "Which farmers completed second scheduled weeding?"
+                        },
+                        {
+                            "val": "ppt1_pdm_lowrisk_pesticide",
+                            "text": "Which farmers used low risk pesticide?"
+                        },
+                        {
+                            "val": "ppt1_pdm_pesticides_appropriately",
+                            "text": "Which farmers used pesticides appropriately?"
+                        },
+                        {
+                            "val": "ppt1_pdm_scouting",
+                            "text": "Which farmers looked for and destroyed infected plants?"
+                        }
+                    ]
+                },
+                {
+                    "val": "h",
+                    "text": "Domain 06: Harvest",
+                    "next": [
+                        {
+                            "val": "ppt2_h_workload_harvest",
+                            "text": "Which farmers were supported by their spouse during harvest?"
+                        },
+                        {
+                            "val": "ppt2_h_methods",
+                            "text": "Which farmers used improved harvesting methods?"
+                        }
+                    ]
+                },
+                {
+                    "val": "phm",
+                    "text": "Domain 07: Post Harvest Management",
+                    "next": [
+                        {
+                            "val": "ppt2_phm_processing",
+                            "text": "Which farmers used improved processing techniques?"
+                        },
+                        {
+                            "val": "ppt2_phm_cuttings_stored",
+                            "text": "Which farmers stored cassava cuttings for next season?"
+                        },
+                        {
+                            "val": "ppt2_phm_treatment_cuttings",
+                            "text": "Which farmer treated cassava cuttings stored for next season? "
+                        },
+                        {
+                            "val": "ppt2_phm_traditional_storage",
+                            "text": "Which farmers used traditional storage facilities for harvest?"
+                        },
+                        {
+                            "val": "ppt2_phm_modern_storage",
+                            "text": "Which farmers used modern storage facilities?"
+                        }
+                    ]
+                },
+                {
+                    "val": "m",
+                    "text": "Domain 08: Marketing",
+                    "next": [
+                        {
+                            "val": "ppt2_m_group_marketing",
+                            "text": "Which individual farmers participated in group-based marketing?"
+                        },
+                        {
+                            "val": "ppt2_m_market_info",
+                            "text": "Which farmers got accurate informtion about market demand, price, buyers?"
+                        },
+                        {
+                            "val": "ppt2_m_negotiate",
+                            "text": "Which farmers felt confident to negotiate with buyers to get a fair price?"
+                        },
+                        {
+                            "val": "ppt2_m_info_decision",
+                            "text": "Which farmers used marketing information for decision-making?"
+                        },
+                        {
+                            "val": "ppt2_m_calc_profit",
+                            "text": "Which farmers Calculated (and discussed with spouse) the expected profit based on total production and price information?"
+                        }
+                    ]
+                },
+                {
+                    "val": "rkf_ppt2",
+                    "text": "Domain 09: Record Keeping and Finance",
+                    "next": [
+                        {
+                            "val": "ppt2_rkf_measurement",
+                            "text": "Which farmers know how to use scales, measurement tools, and count money?"
+                        },
+                        {
+                            "val": "ppt2_rkf_record_keeping",
+                            "text": "Which farmers kept records of costs and sales, with regular updates?"
+                        },
+                        {
+                            "val": "ppt2_rkf_record_practices",
+                            "text": "Which farmers kept records of production practices throughout the season?"
+                        },
+                        {
+                            "val": "ppt2_rkf_calc_profit_loss",
+                            "text": "Which farmers calculated actual profit or loss (after all costs and sales incurred)?"
+                        }
+                    ]
+                },
+                {
+                    "val": "g_ppt2",
+                    "text": "Domain 10: Savings and Loans",
+                    "next": [
+                        {
+                            "val": "ppt2_g_discussion_budget",
+                            "text": "Which farmers had a discussion with spouse (cash-flow tree) on the family budget and contributions to it?"
+                        },
+                        {
+                            "val": "ppt2_g_dialogue",
+                            "text": "Which farmers attends group dialogue sessions spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_ctrl_hhasset",
+                            "text": "Which farmers reported control of household assets?"
+                        },
+                        {
+                            "val": "ppt2_g_share_earnings_info",
+                            "text": "Which farmers reported sharing information about their earnings with their spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_dm_spending2",
+                            "text": "Which farmers reported discussing how to spend HH income with their spouse?"
+                        },
+                        {
+                            "val": "ppt2_g_purchase_ownasset",
+                            "text": "Which farmers reported having purchasing something for herself with own money in the last 6 months?"
+                        },
+                        {
+                            "val": "ppt2_g_public_speaking",
+                            "text": "Which farmers reported spoke up comfortably in group meetings even when others disagree them?"
+                        },
+                        {
+                            "val": "ppt2_g_inluential_decision",
+                            "text": "Which farmers reported having influenced decision making on spending of earnings at HH?"
+                        },
+                        {
+                            "val": "ppt2_g_freedom_association",
+                            "text": "Which farmers reported attending trainings and meetings without restrictions from spouse or other family members?"
+                        }
+                    ]
+                },
+                {
+                    "val": "sav_ppt2",
+                    "text": "Domain 11: Savings",
+                    "next": [
+                        {
+                            "val": "ppt2_sav_sav",
+                            "text": "Which farmers reported that they are saving?"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

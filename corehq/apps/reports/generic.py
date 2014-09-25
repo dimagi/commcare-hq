@@ -597,8 +597,8 @@ class GenericReportView(CacheableRequestMixIn):
     @request_cache("export")
     def export_response(self):
         """
-            Intention: Not to be overridden in general.
-            Returns the tabular export of the data, if available.
+        Intention: Not to be overridden in general.
+        Returns the tabular export of the data, if available.
         """
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)

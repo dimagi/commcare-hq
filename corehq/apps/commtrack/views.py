@@ -2,33 +2,32 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
+    cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
+from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from soil.util import expose_download, get_download_context
-import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
-    recalculate_domain_consumption_task
+from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
-import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
+
 
 
 @domain_admin_required
@@ -456,115 +455,6 @@ class EditProductView(NewProductView):
         return reverse(self.urlname, args=[self.domain, self.product_id])
 
 
-@require_superuser
-def bootstrap(request, domain):
-    if request.method == "POST":
-        D = Domain.get_by_name(domain)
-
-        if D.commtrack_enabled:
-            return HttpResponse('already configured', 'text/plain')
-        else:
-            psi_one_time_setup(D)
-            return HttpResponse('set up successfully', 'text/plain')
-
-    return render(request, 'commtrack/debug/bootstrap.html', {
-        'domain': domain,
-        }
-    )
-
-@require_superuser
-def historical_import(request, domain):
-    if request.method == "POST":
-        file_ref = expose_download(request.FILES['history'].read(),
-                                   expiry=1*60*60)
-        download_id = uuid.uuid4().hex
-        import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
-        return _async_in_progress(request, domain, download_id)
-
-    return HttpResponse("""
-<form method="post" action="" enctype="multipart/form-data">
-  <div><input type="file" name="history" /></div>
-  <div><button type="submit">Import historical stock reports</button></div>
-</form>
-""")
-
-def _async_in_progress(request, domain, download_id):
-    messages.success(request,
-        'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
-        (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
-        extra_tags="html")
-    return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
-
-
-@require_previewer
-def charts(request, domain, template="commtrack/charts.html"):
-    products = Product.by_domain(domain)
-    prod_codes = [p.code for p in products]
-    prod_codes.extend(range(20))
-
-    from random import randint
-    num_facilities = randint(44, 444)
-
-
-    ### gen fake data
-    def vals():
-        tot = 0
-        l = []
-        for i in range(4):
-            v = randint(0, num_facilities - tot)
-            l.append(v)
-            tot += v
-        l.append(num_facilities - tot)
-        return l
-
-    statuses = [
-        {"key": "stocked out", "color": "#e00707"},
-        {"key": "under stock", "color": "#ffb100"},
-        {"key": "adequate stock", "color": "#4ac925"},
-        {"key": "overstocked", "color": "#b536da"},
-        {"key": "unknown", "color": "#ABABAB"}
-    ]
-
-    for s in statuses:
-        s["values"] = []
-
-    for i, p in enumerate(prod_codes):
-        vs = vals()
-        for j in range(5):
-            statuses[j]["values"].append({"x": p, "y": vs[j]})
-
-    # colors don't actually work correctly for pie charts
-    resp_values = [
-        {"label": "Submitted on Time", "color": "#4ac925", "value": randint(0, 40)},
-        {"label": "Didn't respond", "color": "#ABABAB", "value": randint(0, 20)},
-        {"label": "Submitted Late", "color": "#e00707", "value": randint(0, 8)},
-    ]
-    response_data = [{
-        "key": "Current Late Report",
-        "values": resp_values
-    }]
-
-    ctxt = {
-        "domain": domain,
-        "stock_data": statuses,
-        "response_data": response_data,
-    }
-    return render(request, template, ctxt)
-
-@require_superuser
-def location_dump(request, domain):
-    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
-    
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
-
-    w = csv.writer(resp)
-    w.writerow(['UUID', 'Location Type', 'SMS Code'])
-    for raw in iter_docs(Location.get_db(), loc_ids):
-        loc = Location.wrap(raw)
-        w.writerow([loc._id, loc.location_type, loc.site_code])
-    return resp
-
 @login_and_domain_required
 def api_query_supply_point(request, domain):
     id = request.GET.get('id')
@@ -720,6 +610,7 @@ class EditProgramView(NewProgramView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.program_id])
+
 
 class FetchProductForProgramListView(EditProgramView):
     urlname = 'commtrack_product_for_program_fetch'

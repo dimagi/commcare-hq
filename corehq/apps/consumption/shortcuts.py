@@ -5,6 +5,11 @@ from dimagi.utils.couch.cache import cache_core
 
 
 def get_default_monthly_consumption(domain, product_id, location_type, case_id):
+    """
+    Return the most specific consumption value for the passed
+    parameters.
+    """
+
     keys = [
         [domain, product_id, {}, case_id],
         [domain, product_id, location_type, None],
@@ -25,6 +30,20 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         return Decimal(results['value'])
     else:
         return None
+
+
+def get_domain_monthly_consumption_data(domain):
+    """
+    Get all default consumption rows for this domain.
+    """
+    results = cache_core.cached_view(
+        DefaultConsumption.get_db(),
+        'consumption/consumption_index',
+        startkey=[domain],
+        endkey=[domain, {}],
+        reduce=False,
+    )
+    return results
 
 
 def get_default_consumption(domain, product_id, location_type, case_id):
@@ -60,3 +79,53 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         default = DefaultConsumption(domain=domain, default_consumption=amount, type=type, **kwargs)
         default.save()
         return default
+
+
+def hashable_key(key):
+    """
+    Convert the key from couch into something hasable.
+    Mostly, just need to make it a tuple and remove the special
+    {} value.
+    """
+    return tuple('{}' if item == {} else item for item in key)
+
+
+def build_consumption_dict(domain):
+    """
+    Takes raw rows from couch and builds a dict to 
+    look up consumption values from.
+    """
+    raw_rows = get_domain_monthly_consumption_data(domain)
+
+    return dict(
+        (hashable_key(row['key']), Decimal(row['value']))
+        for row in raw_rows if row['value']
+    )
+
+
+def get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id):
+    """
+    Recreates the couch view logic to access the most specific
+    consumption value available for the passed options
+    """
+    keys = [
+        tuple([domain, product_id, '{}', case_id]),
+        tuple([domain, product_id, location_type, None]),
+        tuple([domain, product_id, None, None]),
+        tuple([domain, None, None, None]),
+    ]
+
+    for key in keys:
+        if key in consumption_dict:
+            return consumption_dict[key]
+
+    return None
+
+
+def get_loaded_default_consumption(consumption_dict, domain, product_id, location_type, case_id):
+    consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
+
+    if consumption:
+        return consumption / Decimal(DAYS_IN_MONTH)
+    else:
+        return None

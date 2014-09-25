@@ -1,0 +1,83 @@
+.navbar-hq-main-menu {
+  border: 1px solid #d5d5d5;
+  font-size: 13px;
+  #gradient > .vertical(#fdfdfd, #f4f4f4);
+  margin-bottom: 0px;
+
+  .navbar-brand {
+    padding: 15px 20px;
+  }
+
+  .nav > li:not(.active) > a:focus,
+  .nav > li:not(.active) > a:hover {
+    .transition(color .2s ease-in-out);
+    .transition(background .2s ease-in-out);
+    .box-shadow(inset 0 3px 8px @navbar-default-bg);
+    background-color: #edeff2;
+    color: #1557a2;
+    text-decoration: none;
+  }
+
+  .nav > li > a:hover,
+  .nav > li > a.hovered {
+    text-decoration: none;
+    background-color: @gray-lighter;
+  }
+
+  .nav > li.active {
+    .box-shadow(inset 0 3px 8px rgba(0, 0, 0, 0.125));
+  }
+}
+
+.navbar-hq-footer {
+  margin-top: @grid-gutter-width;
+  min-height: @navbar-footer-height;
+  color: #ffffff;
+
+  .container-fluid > .navbar-header {
+    margin-top: 2px;
+    margin-right: 20px;
+  }
+
+  a, a:link, a:visited {
+    color: @navbar-footer-link-color;
+    &.btn { color: #ffffff; }
+  }
+
+  a:hover {
+    color: @navbar-footer-link-color-hover;
+    &.btn { color: #ffffff; }
+  }
+
+  .btn-toolbar {
+    margin-top: 6px;
+  }
+}
+
+// ///////// BEGIN TEMPORARY BOOTSTRAP TRANSITION STYLES /////////
+.navbar-hq-main-menu {
+  .btn-toolbar {
+    margin-top: 15px;
+
+    a.btn {
+      font-size: 13px;
+      padding: 4px 12px;
+      .caret {
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .dropdown-header {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  .dropdown-menu > li > a:hover,
+  .dropdown-menu > li > a:focus {
+    background-color: @brand-primary;
+    color: #ffffff;
+  }
+}
+// ///////// END TEMPORARY BOOTSTRAP TRANSITION STYLES /////////

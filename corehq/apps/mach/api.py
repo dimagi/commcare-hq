@@ -1,5 +1,3 @@
-import logging
-from corehq.apps.sms.util import clean_outgoing_sms_text, create_billable_for_sms
 import urllib
 from django.conf import settings
 import urllib2
@@ -51,7 +49,5 @@ class MachBackend(SMSBackend):
             params["encoding"] = "ucs"
         url = "%s?%s" % (MACH_URL, urllib.urlencode(params))
         resp = urllib2.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-
-        create_billable_for_sms(msg, MachBackend.get_api_id(), delay=delay, response=resp)
 
         return resp

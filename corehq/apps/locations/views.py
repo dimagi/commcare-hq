@@ -213,39 +213,53 @@ class EditLocationView(NewLocationView):
         return reverse(self.urlname, args=[self.domain, self.location_id])
 
 
-class FacilitySyncView(BaseLocationView):
-    urlname = 'sync_facilities'
-    page_title = ugettext_noop("OpenLMIS")
-    template_name = 'locations/facility_sync.html'
+class BaseSyncView(BaseLocationView):
+    source = ""
+    sync_urlname = None
 
     @property
     def page_context(self):
         return {
             'settings': self.settings_context,
+            'source': self.source,
+            'sync_url': self.sync_urlname
         }
 
     @property
     def settings_context(self):
-        return {
-            'openlmis_config': self.domain_object.commtrack_settings.openlmis_config._doc,
-        }
+        key = "%s_config" % self.source
+        if hasattr(self.domain_object.commtrack_settings, key):
+            return {
+                "source_config": getattr(self.domain_object.commtrack_settings, key)._doc,
+            }
+        else:
+            return {}
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
         #TODO add server-side input validation here (currently validated on client)
-
-        if 'openlmis_config' in payload:
-            for item in payload['openlmis_config']:
-                setattr(
-                    self.domain_object.commtrack_settings.openlmis_config,
-                    item,
-                    payload['openlmis_config'][item]
-                )
+        key = "%s_config" % self.source
+        if "source_config" in payload:
+            for item in payload['source_config']:
+                if hasattr(self.domain_object.commtrack_settings, key):
+                    setattr(
+                        getattr(self.domain_object.commtrack_settings, key),
+                        item,
+                        payload['source_config'][item]
+                    )
 
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class FacilitySyncView(BaseSyncView):
+    urlname = 'sync_facilities'
+    sync_urlname = 'sync_openlmis'
+    page_title = ugettext_noop("OpenLMIS")
+    template_name = 'locations/facility_sync.html'
+    source = 'openlmis'
 
 
 class EditLocationHierarchy(BaseLocationView):
@@ -289,6 +303,7 @@ class LocationImportView(BaseLocationView):
                 "adjective": _("location"),
                 "plural_noun": _("locations"),
             },
+            "manage_consumption": self.domain_object.commtrack_settings.individual_consumption_defaults,
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -334,9 +349,10 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 
 @login_and_domain_required
 def location_export(request, domain):
+    include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain)
+    dump_locations(response, domain, include_consumption)
     return response
 
 
@@ -439,3 +455,4 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
