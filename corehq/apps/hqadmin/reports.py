@@ -76,7 +76,7 @@ INDICATOR_DATA = {
         "chart_title": "Active Self Started Project Spaces",
         "get_request_params": {
             "domain_params_es": {
-                "self_started": ["T"],
+                "internal.self_started": ["T"],
             },
         },
         "hide_cumulative_charts": True,
@@ -157,7 +157,7 @@ INDICATOR_DATA = {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
         "chart_title": "Total Users",
-        "histogram_type": "users",
+        "histogram_type": "users_all",
         "interval": "week",
         "xaxis_label": "# users",
     },
@@ -168,7 +168,7 @@ INDICATOR_DATA = {
         "get_request_params": {
             "user_type_mobile": True,
         },
-        "histogram_type": "users",
+        "histogram_type": "users_all",
         "interval": "week",
         "xaxis_label": "# users",
     },
@@ -179,7 +179,7 @@ INDICATOR_DATA = {
         "get_request_params": {
             "user_type_mobile": False,
         },
-        "histogram_type": "users",
+        "histogram_type": "users_all",
         "interval": "week",
         "xaxis_label": "# users",
     },
@@ -191,7 +191,7 @@ INDICATOR_DATA = {
             "require_submissions": False,
             "user_type_mobile": False,
         },
-        "histogram_type": "users",
+        "histogram_type": "users_all",
         "interval": "week",
         "xaxis_label": "# users",
     },
@@ -203,7 +203,7 @@ INDICATOR_DATA = {
             "user_type_mobile": True,
         },
         "hide_cumulative_charts": True,
-        "histogram_type": "users",
+        "histogram_type": "users_all",
         "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# users",
@@ -937,10 +937,6 @@ class GlobalAdminReports(AdminDomainStatsReport):
             'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
         })
         return context
-
-    @property
-    def domains(self):
-        return Domain.get_all()
 
     @property
     def indicators(self):

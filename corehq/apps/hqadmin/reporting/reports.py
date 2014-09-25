@@ -10,7 +10,10 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
-from corehq.apps.hqadmin.reporting.exceptions import IntervalNotFoundException
+from corehq.apps.hqadmin.reporting.exceptions import (
+    HistoTypeNotFoundException,
+    IntervalNotFoundException,
+)
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ES_MAX_CLAUSE_COUNT,
@@ -21,10 +24,6 @@ from corehq.elastic import (
 from casexml.apps.stock.models import StockReport, StockTransaction
 
 LARGE_ES_NUMBER = 10 ** 6
-
-
-class HistoTypeNotFound(Exception):
-    pass
 
 
 def add_params_to_query(query, params):
@@ -589,6 +588,10 @@ def get_user_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("users", domains, datespan, interval, **kwargs)
 
 
+def get_users_all_stats(domains, datespan, interval, **kwargs):
+    return get_other_stats("users_all", domains, datespan, interval, **kwargs)
+
+
 def get_other_stats(histo_type, domains, datespan, interval,
         individual_domain_limit=16, is_cumulative="True",
         user_type_mobile=None, require_submissions=True, supply_points=False):
@@ -647,6 +650,7 @@ HISTO_TYPE_TO_FUNC = {
     "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
     "users": get_user_stats,
+    "users_all": get_users_all_stats,
 }
 
 
@@ -658,4 +662,4 @@ def get_stats_data(histo_type, domain_params, datespan, interval, **kwargs):
             interval,
             **kwargs
         )
-    raise HistoTypeNotFound(histo_type)
+    raise HistoTypeNotFoundException(histo_type)
