@@ -496,7 +496,7 @@ class BulkPillow(BasicPillow):
 
 
 def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
-        except_on_failure=False, update=False):
+        except_on_failure=False, update=False, delete=False):
     """
     More fault tolerant es.put method
     """
@@ -504,7 +504,9 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     current_tries = 0
     while current_tries < retries:
         try:
-            if update:
+            if delete:
+                res = es_getter().delete(path=path)
+            elif update:
                 res = es_getter().post("%s/_update" % path, data={"doc": data})
             else:
                 res = es_getter().put(path, data=data)
