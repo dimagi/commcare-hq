@@ -7,7 +7,6 @@ from corehq.apps.userreports.models import ReportConfiguration
 
 class ReportConfigurationTest(SimpleTestCase):
 
-
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
         sample_file = os.path.join(folder, 'sample_report_config.json')
