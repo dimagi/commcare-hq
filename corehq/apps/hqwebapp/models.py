@@ -1,3 +1,5 @@
+from urllib import urlencode
+
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
@@ -1231,7 +1233,8 @@ class AdminReportsTab(UITab):
                 {
                     'title': report.name,
                     'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                   args=(report.slug,)), report.default_params)
+                                   args=(report.slug,)),
+                                   urlencode(report.default_params))
                 } for report in [
                     RealProjectSpacesReport,
                     CommConnectProjectSpacesReport,
