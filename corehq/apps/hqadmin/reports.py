@@ -76,7 +76,7 @@ INDICATOR_DATA = {
         "chart_title": "Active Self Started Project Spaces",
         "get_request_params": {
             "domain_params_es": {
-                "self_started": ["T"],
+                "internal.self_started": ["T"],
             },
         },
         "hide_cumulative_charts": True,
