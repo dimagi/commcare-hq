@@ -28,6 +28,7 @@ ES_URLS = {
     "cases": CASE_INDEX + '/case/_search',
     "active_cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
+    "users_all": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
     "groups": GROUP_INDEX + '/group/_search',
@@ -57,6 +58,7 @@ DATE_FIELDS = {
     "cases": "opened_on",
     "active_cases": "modified_on",
     "users": "created_on",
+    "users_all": "created_on",
     "sms": 'date',
     "tc_sms": 'date',
 }
@@ -93,7 +95,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
         result['terms']["form.meta.userID"] = [
             user_id for user_id in get_user_ids(user_type_mobile)
         ]
-    elif histo_type == 'users':
+    elif histo_type == 'users_all':
         existing_users = get_user_ids(user_type_mobile)
 
         if require_submissions:
