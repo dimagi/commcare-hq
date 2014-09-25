@@ -702,8 +702,7 @@ class MultiUserSyncTest(SyncBaseTest):
         parent_id = "other_updates_index_parent"
         case_id = "other_updates_index_child"
         self._createCaseStubs([parent_id])
-        parent = CaseBlock(case_id=parent_id, version=V2).as_xml()
-        
+
         child = CaseBlock(
             create=True,
             case_id=case_id,
@@ -737,11 +736,13 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         # make sure there are no new changes
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id,
+                                     purge_restore_cache=True)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
+        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
+                             purge_restore_cache=True)
         # update the parent case from another user
-        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
         other_parent_update = CaseBlock(
             create=False,
@@ -754,7 +755,8 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # make sure the indexed case syncs again
         self.sync_log = SyncLog.last_for_user(USER_ID)
-        assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, parent_id, restore_id=self.sync_log.get_id,
+                             purge_restore_cache=True)
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
