@@ -214,8 +214,11 @@ class EmwfMixin(object):
         name = "%s [user]" % user['username_in_report']
         return (uid, name)
 
-    def group_tuple(self, g):
-        return ("g__%s" % g['_id'], "%s [group]" % g['name'])
+    def reporting_group_tuple(self, g):
+        return ("g__%s" % g['_id'], '%s [group]' % g['name'])
+
+    def sharing_group_tuple(self, g):
+        return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
 
     def user_type_tuple(self, t):
         return (
@@ -280,8 +283,18 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
     @classmethod
     def selected_group_ids(cls, request):
+        return cls.selected_reporting_group_ids(request) +\
+               cls.selected_sharing_group_ids(request)
+
+    @classmethod
+    def selected_reporting_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
         return [g[3:] for g in emws if g.startswith("g__")]
+
+    @classmethod
+    def selected_sharing_group_ids(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return [g[4:] for g in emws if g.startswith("sg__")]
 
     @property
     @memoized
@@ -313,9 +326,13 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             res = es_query(
                 es_url=ES_URLS["groups"],
                 q=q,
-                fields=['_id', 'name'],
+                fields=['_id', 'name', "case_sharing", "reporting"],
             )
-            selected += [self.group_tuple(hit['fields']) for hit in res['hits']['hits']]
+            for group in res['hits']['hits']:
+                if group['fields'].get("reporting", False):
+                    selected.append(self.reporting_group_tuple(group['fields']))
+                if group['fields'].get("case_sharing", False):
+                    selected.append(self.sharing_group_tuple(group['fields']))
         if user_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": user_ids}
@@ -435,7 +452,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         }
 
     @classmethod
-    def for_group(cls, group_id):
+    def for_reporting_group(cls, group_id):
         return {
             cls.slug: 'g__%s' % group_id
         }

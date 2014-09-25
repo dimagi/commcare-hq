@@ -276,20 +276,18 @@ var AdvancedCase = (function () {
 
         self.actionOptions = ko.computed(function () {
             var options = [];
-            if (self.load_update_cases().length <= 2) {
-                options.push({
-                    display: 'Load / Update / Close a case',
-                    value: 'load'
-                });
-                options.push({
-                    display: 'Automatic Case Selection',
-                    value: 'auto_select'
-                });
-                options.push({
-                    display: '---',
-                    value: 'separator'
-                });
-            }
+            options.push({
+                display: 'Load / Update / Close a case',
+                value: 'load'
+            });
+            options.push({
+                display: 'Automatic Case Selection',
+                value: 'auto_select'
+            });
+            options.push({
+                display: '---',
+                value: 'separator'
+            });
             options.push({
                 display: 'Open a Case',
                 value: 'open'

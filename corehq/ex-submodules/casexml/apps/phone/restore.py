@@ -132,13 +132,20 @@ class RestoreConfig(object):
                         if self.stock_settings.default_product_list \
                         else section_product_map[section_id]
 
-                    yield E.balance(
-                        *filter(lambda e: e is not None,
-                                [consumption_entry(commtrack_case._id, p, section_id)
-                                 for p in consumption_product_ids]),
-                        **{'entity-id': commtrack_case._id, 'date': section_timestamp_map[section_id],
-                           'section-id': consumption_section_id}
-                    )
+                    consumption_entries = filter(lambda e: e is not None, [
+                        consumption_entry(commtrack_case._id, p, section_id)
+                        for p in consumption_product_ids
+                    ])
+
+                    if consumption_entries:
+                        yield E.balance(
+                            *consumption_entries,
+                            **{
+                                'entity-id': commtrack_case._id,
+                                'date': section_timestamp_map[section_id],
+                                'section-id': consumption_section_id,
+                            }
+                        )
 
     def get_payload(self):
         user = self.user

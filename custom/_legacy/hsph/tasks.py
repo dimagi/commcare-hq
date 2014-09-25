@@ -13,16 +13,18 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks, get_cases_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
-DOMAINS = ["hsph-dev", "hsph-betterbirth"]
+DOMAINS = ["hsph-dev", "hsph-betterbirth", "hsph-learning-sites", "hsph-test"]
 PAST_N_DAYS = 21
 GROUPS_TO_CHECK = ["cati", "cati-tl"]
 GROUP_SHOULD_BE = "fida"
-TYPE = "birth"
+BIRTH_TYPE = "birth"
+CATI_FIDA_CHECK_TYPE = "cati_fida_check"
 OWNER_FIELD_MAPPINGS = {
         "cati": "cati_assignment",
         "fida": "field_follow_up_assignment"
     }
 INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
+GROUPS_BY_ID = dict((domain, {}) for domain in DOMAINS)
 
 @memoized
 def indexed_facilities():
@@ -31,9 +33,14 @@ def indexed_facilities():
         current_domain_index = {}
         facilities = get_cases_in_domain(domain, type="facility")
         for facility in facilities:
+            case_sharing_group = GROUPS_BY_ID[domain].get(facility.owner_id, None)
+            if case_sharing_group is None:
+                continue
+            cati_user = case_sharing_group.metadata.get('cati_user', None)
+            fida_user = case_sharing_group.metadata.get('fida_user', None)
             current_domain_index[facility.facility_id] = {
-                "cati": facility.cati_user,
-                "fida": facility.fida_user
+                "cati": cati_user, 
+                "fida": fida_user
             }
         facility_index[domain] = current_domain_index
     return facility_index
@@ -50,6 +57,7 @@ def get_owner_username(domain, owner_type, facility_id):
 def update_groups_index(domain):
     groups = Group.by_domain(domain)
     for group in groups:
+        GROUPS_BY_ID[domain][group._id] = group
         if group.case_sharing and group.metadata.get("main_user", None):
             INDEXED_GROUPS[domain][group.metadata["main_user"]] = group
 
@@ -78,7 +86,8 @@ def new_update_case_properties():
     past_42_date = past_x_date(time_zone, 42)
     for domain in DOMAINS:
         update_groups_index(domain)
-        case_list = get_cases_in_domain(domain, type=TYPE)
+        case_list = list(get_cases_in_domain(domain, type=BIRTH_TYPE))
+        case_list = case_list + list(get_cases_in_domain(domain, type=CATI_FIDA_CHECK_TYPE))
         cases_to_modify = []
         for case in case_list:
             if case.closed:
@@ -98,13 +107,13 @@ def new_update_case_properties():
                 if not owner_id:
                     continue
                 update = {
-                    "owner_id": owner_id,
                     "current_assignment": "cati"
                 }
                 cases_to_modify.append({
                     "case_id": case._id,
                     "update": update,
                     "close": False,
+                    "owner_id": owner_id,
                 })
             # Assign Cases Directly To Field
             elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (not curr_assignment) and (not next_assignment):
@@ -112,7 +121,6 @@ def new_update_case_properties():
                     continue
                 update = {
                     "current_assignment": "fida",
-                    "owner_id": fida_group,                   
                     "cati_status": 'skipped',
                 }
                 cases_to_modify.append(
@@ -120,6 +128,7 @@ def new_update_case_properties():
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign Cases Directly to Lost to Follow Up
@@ -146,7 +155,6 @@ def new_update_case_properties():
                     "last_cati_user": cati_owner_username,
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": fida_group,
                     "cati_status": 'manually_assigned_to_field'
                 }
                 cases_to_modify.append(
@@ -154,6 +162,7 @@ def new_update_case_properties():
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign cases to field (automatically)
@@ -166,13 +175,13 @@ def new_update_case_properties():
                     "cati_status": 'timed_out',
                     "current_assignment": "fida",
                     "next_assignment": '',
-                    "owner_id": fida_group                        
                 }
                 cases_to_modify.append(
                     {
                         "case_id": case._id,
                         "update": update,
                         "close": False,
+                        "owner_id": fida_group,
                     }
                 )
             # Assign Cases to Lost to Follow Up
@@ -216,12 +225,16 @@ def new_update_case_properties():
                         "close": True,
                     }
                 )
-        case_blocks = [ElementTree.tostring(CaseBlock(
-            create=False,
-            case_id=case["case_id"],
-            update=case["update"],
-            close=case["close"],
-            version=V2,
-            ).as_xml()) for case in cases_to_modify
-        ]
+        case_blocks = []
+        for case in cases_to_modify:
+            kwargs = {
+                "create": False,
+                "case_id": case["case_id"],
+                "update": case["update"],
+                "close": case["close"],
+                "version": V2,
+            }
+            if case.get("owner_id", None):
+                kwargs["owner_id"] = case["owner_id"]
+            case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
         submit_case_blocks(case_blocks, domain)

@@ -63,6 +63,13 @@ class ConventureData(BaseSqlData):
     table_name = 'fluff_CouvertureFluff'
 
     @property
+    def filters(self):
+        #We have to filter data by real_date_repeat not date(first position in filters list).
+        #Filtering is done directly in columns method(CountUniqueColumn).
+        filters = super(ConventureData, self).filters
+        return filters[1:]
+
+    @property
     def group_by(self):
         if 'region_id' in self.config:
             return ['region_id']
@@ -166,9 +173,9 @@ class DispDesProducts(BaseSqlData):
 
 class TauxDeRuptures(BaseSqlData):
     slug = 'taux_de_ruptures'
-    title = 'Taux de ruptures de stock total'
+    title = u'Disponibilité des Produits - Taux des Ruptures de Stock'
     table_name = 'fluff_IntraHealthFluff'
-    col_names = ['stock_total']
+    col_names = ['total_stock_total']
     have_groups = False
     custom_total_calculate = True
 
@@ -185,7 +192,7 @@ class TauxDeRuptures(BaseSqlData):
     @property
     def filters(self):
         filter = super(TauxDeRuptures, self).filters
-        filter.append("stock_total = 0")
+        filter.append("total_stock_total = 0")
         return filter
 
     @property
@@ -196,7 +203,7 @@ class TauxDeRuptures(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Stock total"), CountColumn('stock_total')))
+        columns.append(DatabaseColumn(_("Stock total"), CountColumn('total_stock_total')))
         return columns
 
     def calculate_total_row(self, rows):
@@ -243,6 +250,34 @@ class FicheData(BaseSqlData):
             AggregateColumn(_("Consommation Non Facturable"), diff,
                 [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
+
+class PPSAvecDonnees(BaseSqlData):
+    slug = 'pps_avec_donnees'
+    title = 'PPS Avec Données'
+    table_name = 'fluff_IntraHealthFluff'
+    col_names = ['location_id']
+    have_groups = False
+
+    @property
+    def group_by(self):
+        group_by = []
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_(u"Données Soumises (1 si oui)"), CountUniqueColumn('location_id')))
+        return columns
 
 class DateSource(BaseSqlData):
     title = ''
@@ -458,6 +493,13 @@ class NombreData(BaseSqlData):
 
 class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
+    title = u'Gestion de l`IPM - Taux des Ruptures de Stock'
+
+    @property
+    def filters(self):
+        filter = super(TauxDeRuptures, self).filters
+        filter.append("total_stock_total = 1")
+        return filter
 
 
 class DureeData(BaseSqlData):
