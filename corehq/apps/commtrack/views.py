@@ -2,7 +2,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
@@ -21,6 +20,7 @@ from soil.util import expose_download, get_download_context
 import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
     recalculate_domain_consumption_task
 import json
