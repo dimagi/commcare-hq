@@ -44,7 +44,7 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
     "users": [
-        #{"term": {"doc_type": "CommCareUser"}}, # TODO check nothing broken
+        {"term": {"doc_type": "CommCareUser"}},
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
