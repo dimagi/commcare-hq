@@ -939,10 +939,6 @@ class GlobalAdminReports(AdminDomainStatsReport):
         return context
 
     @property
-    def domains(self):
-        return Domain.get_all()
-
-    @property
     def indicators(self):
         raise NotImplementedError
 
