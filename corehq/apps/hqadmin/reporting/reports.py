@@ -137,7 +137,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
         domains = [x['term'] for x in domains]
         countries = (DomainES()
                 .in_domains(domains)
-                .terms_facet('countries', 'country', size=LARGE_ES_NUMBER))
+                .terms_facet('countries', 'countries', size=LARGE_ES_NUMBER))
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
@@ -279,7 +279,7 @@ def get_countries_stats_data(domains, datespan, interval,
         countries = (DomainES()
                 .in_domains(domains)
                 .created(lte=timestamp)
-                .terms_facet('countries', 'country', size=LARGE_ES_NUMBER)
+                .terms_facet('countries', 'countries', size=LARGE_ES_NUMBER)
                 .size(0))
 
         c = len(countries.run().facet('countries', 'terms'))

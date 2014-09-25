@@ -1,4 +1,4 @@
-DOMAIN_INDEX="hqdomains_c3ab8ff13720e8ad9047dd39466b3c89"
+DOMAIN_INDEX="hqdomains_79df75dfc271bbb8a64550b10a929f2d"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
@@ -83,11 +83,12 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
                                                                   'exact': {'index': 'not_analyzed',
                                                                             'type': 'string'}},
                                                        'type': 'multi_field'},
-                                              'country': {'fields': {'country': {'index': 'analyzed',
-                                                                                 'type': 'string'},
-                                                                     'exact': {'index': 'not_analyzed',
-                                                                               'type': 'string'}},
-                                                          'type': 'multi_field'},
+                                              'countries': {'fields':
+                                                               {'countries': {'index': 'analyzed',
+                                                                              'type': 'string'},
+                                                                'exact': {'index': 'not_analyzed',
+                                                                          'type': 'string'}},
+                                                            'type': 'multi_field'},
                                               'date': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                                        'type': 'date'},
                                               'description': {'fields': {'description': {'index': 'analyzed',

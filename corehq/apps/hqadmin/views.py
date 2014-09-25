@@ -555,7 +555,7 @@ def update_domains(request):
     headers = DataTablesHeader(
         DataTablesColumn("Domain"),
         DataTablesColumn("City"),
-        DataTablesColumn("Country"),
+        DataTablesColumn("Countries"),
         DataTablesColumn("Region"),
         DataTablesColumn("Project Type"),
         DataTablesColumn("Customer Type"),
@@ -575,7 +575,7 @@ def update_domains(request):
 @require_superuser
 def domain_list_download(request):
     domains = Domain.get_all()
-    properties = ("name", "city", "country", "region", "project_type", 
+    properties = ("name", "city", "countries", "region", "project_type",
                   "customer_type", "is_test?")
     
     def _row(domain):
