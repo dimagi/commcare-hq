@@ -357,7 +357,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
         form.archive()
-        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -549,7 +549,8 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml(format_datetime=json_format_datetime)
 
         check_user_has_case(self, self.user, expected_parent_case,
-                            restore_id=self.sync_log.get_id, version=V2)
+                            restore_id=self.sync_log.get_id, version=V2,
+                            purge_restore_cache=True)
         orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("index" in ElementTree.tostring(orig))
 
@@ -692,7 +693,8 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
         # second user syncs
         # make sure both cases restore
-        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
+        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
+                             purge_restore_cache=True)
         assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
 
     def testOtherUserUpdatesIndex(self):
