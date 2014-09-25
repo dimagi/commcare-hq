@@ -32,7 +32,7 @@ from corehq.apps.users.util import normalize_username, user_data_from_registrati
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
-from corehq.elastic import es_wrapper
+from corehq.elastic import es_wrapper, send_to_elasticsearch
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
@@ -1207,8 +1207,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         super(CouchUser, self).save(**params)
 
-        from corehq.elastic import send_to_elasticsearch
-        res = send_to_elasticsearch("users", self.to_json())
+        res = send_to_elasticsearch("users", self.to_json(),
+                                    delete=self.to_be_deleted())
 
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:

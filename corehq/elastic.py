@@ -22,7 +22,7 @@ def get_es(timeout=30):
                                     settings.ELASTICSEARCH_PORT),
                          timeout=timeout)
 
-def send_to_elasticsearch(index, doc):
+def send_to_elasticsearch(index, doc, delete=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
@@ -37,7 +37,8 @@ def send_to_elasticsearch(index, doc):
                                   send_to_elasticsearch.__name__, index),
         data=doc,
         except_on_failure=True,
-        update=doc_exists
+        update=doc_exists,
+        delete=delete,
     )
 
 
