@@ -695,11 +695,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
 def get_case_owner_filters():
     result = {'terms': {}}
 
-    from corehq.apps.users.models import CouchUser
-    mobile_user_ids = [
-        mobile_user._id for mobile_user in CouchUser.all()
-        if mobile_user.doc_type == "CommCareUser"
-    ]
+    mobile_user_ids = list(get_user_ids(True))
 
     def all_groups():
         from corehq.apps.groups.models import Group
