@@ -3,7 +3,7 @@ from custom.intrahealth.filters import LocationFilter
 from custom.world_vision.reports import TTCReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
-    AnteNatalCareServiceOverview, PostnatalCareOverview, CauseOfMaternalDeaths
+    AnteNatalCareServiceOverview, PostnatalCareOverview, CauseOfMaternalDeaths, ChildRegistrationDetails
 
 
 class MixedTTCReport(TTCReport):
@@ -29,5 +29,6 @@ class MixedTTCReport(TTCReport):
             PregnantMotherBreakdownByTrimester(config=config),
             AnteNatalCareServiceOverview(config=config),
             PostnatalCareOverview(config=config),
-            CauseOfMaternalDeaths(config=config)
+            CauseOfMaternalDeaths(config=config),
+            ChildRegistrationDetails(config=config)
         ]

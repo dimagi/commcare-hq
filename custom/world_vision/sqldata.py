@@ -109,7 +109,7 @@ class MotherRegistrationOverview(BaseSqlData):
                 DatabaseColumn("Total mothers followed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="followed",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GT('closed_on', "strsd")])])]
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
                     )
                 ),
                 DatabaseColumn("New registrations during time period",
@@ -386,3 +386,69 @@ class CauseOfMaternalDeaths(BaseSqlData):
             DatabaseColumn("Reason", SimpleColumn('cause_of_death_maternal')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
+
+class ChildRegistrationDetails(MotherRegistrationOverview):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'child_registration_overview'
+    title = 'Child Registration Details'
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Total children registered ever",
+                CountUniqueColumn('doc_id',
+                    alias="total",
+                    filters=self.filters
+                )
+            ),
+        ]
+        #TODO: if date_not_selected:
+        if False:
+            columns.extend([
+                DatabaseColumn("Total open children cases",
+                    CountUniqueColumn('doc_id',
+                        alias="opened",
+                        filters=self.filters + [EQ('closed_on', 'empty')]
+                    )
+                ),
+                DatabaseColumn("Total closed children cases",
+                    CountUniqueColumn('doc_id',
+                        alias="closed",
+                        filters=self.filters +  [NOTEQ('closed_on', 'empty')]
+                    )
+                ),
+                DatabaseColumn("New registrations during last 30 days",
+                        CountUniqueColumn('doc_id',
+                            alias="new_registrations",
+                            filters=self.filters + [AND([LTE('opened_on', "last_month"), GTE('opened_on', "today")])]
+                        )
+                )
+            ])
+        else:
+            columns.extend([
+                DatabaseColumn("Children cases open at end of time period",
+                    CountUniqueColumn('doc_id',
+                        alias="opened",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GT('closed_on', "stred")])])]
+                    )
+                ),
+                DatabaseColumn("Children cases closed during the time period",
+                    CountUniqueColumn('doc_id',
+                        alias="closed",
+                        filters=self.filters + [AND([NOTEQ('closed_on', 'empty'), LTE('opened_on', "stred"), LTE('closed_on', "stred")])]
+                    )
+                ),
+                DatabaseColumn("Total children followed during the time period",
+                    CountUniqueColumn('doc_id',
+                        alias="followed",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
+                    )
+                ),
+                DatabaseColumn("New registrations during time period",
+                    CountUniqueColumn('doc_id',
+                        alias="new_registrations",
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
+                    )
+                )
+            ])
+        return columns

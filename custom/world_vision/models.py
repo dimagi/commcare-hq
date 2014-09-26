@@ -51,4 +51,32 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
     women_registered = user_calcs.MotherRegistered()
 
+class WorldVisionChildFluff(fluff.IndicatorDocument):
+    def case_property(property):
+        return flat_field(lambda case: case.get_case_property(property))
+
+    document_class = CommCareCase
+    document_filter = CasePropertyFilter(type='ttc_child')
+
+    domains = WORLD_VISION_DOMAINS
+    group_by = ('domain', 'user_id')
+    save_direct_to_sql = True
+
+    name = flat_field(lambda case: case.name)
+    phc = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).phc \
+        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'phc') else '')
+    block = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).block \
+        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'block') else '')
+    district = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).district \
+        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'district') else '')
+    state = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).state \
+        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'state') else '')
+
+    opened_on = flat_field(lambda case: case.opened_on)
+    closed_on = flat_field(lambda case: case.closed_on)
+
+    women_registered = user_calcs.ChildRegistered()
+
+
 WorldVisionMotherFluffPillow = WorldVisionMotherFluff.pillow()
+WorldVisionChildFluffPillow = WorldVisionChildFluff.pillow()
