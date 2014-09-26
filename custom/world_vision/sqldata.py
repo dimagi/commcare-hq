@@ -452,3 +452,26 @@ class ChildRegistrationDetails(MotherRegistrationOverview):
                 )
             ])
         return columns
+
+class ClosedChildCasesBreakdown(ClosedMotherCasesBreakdown):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'closed_child_cases_breakdown'
+    title = 'Closed Child Cases Breakdown'
+    total_row_name = "Children cases closed during the time period"
+
+    @property
+    def group_by(self):
+        return ['reason_for_child_closure']
+
+    @property
+    def filters(self):
+        filter = super(ClosedMotherCasesBreakdown, self).filters
+        filter.append(NOTEQ('reason_for_child_closure', 'empty'))
+        return filter
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Reason for closure", SimpleColumn('reason_for_child_closure')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
+        ]

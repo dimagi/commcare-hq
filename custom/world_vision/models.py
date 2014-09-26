@@ -72,6 +72,8 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     state = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).state \
         if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'state') else '')
 
+    reason_for_child_closure = case_property('reason_for_child_closure')
+
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
 
