@@ -23,12 +23,14 @@ from dimagi.utils.parsing import json_format_datetime
 def all_supply_point_types(domain):
     return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]
 
+
 def supply_point_type_categories(domain):
     config = CommtrackConfig.for_domain(domain)
     categories = config.supply_point_categories
     other_types = set(all_supply_point_types(domain)) - set(config.known_supply_point_types)
     categories['_oth'] = list(other_types)
     return categories
+
 
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
@@ -41,6 +43,7 @@ def all_sms_codes(domain):
 
     sms_codes = zip(('action', 'product', 'command'), (actions, products, commands))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
+
 
 def get_supply_point(domain, site_code=None, loc=None):
     if loc is None:
@@ -57,6 +60,7 @@ def get_supply_point(domain, site_code=None, loc=None):
         'location': loc,
     }
 
+
 def make_product(domain, name, code, program_id):
     p = Product()
     p.domain = domain
@@ -65,6 +69,7 @@ def make_product(domain, name, code, program_id):
     p.program_id = program_id
     p.save()
     return p
+
 
 def make_program(domain, name, code, default=False):
     p = Program()
@@ -75,19 +80,34 @@ def make_program(domain, name, code, default=False):
     p.save()
     return p
 
-def get_or_make_def_program(domain):
-    program = [p for p in Program.by_domain(domain) if p.name == "Default"]
-    if len(program) == 0:
-        return make_program(domain, 'Default', 'def', default=True)
+
+def get_or_make_default_program(domain):
+    program = Program.default_for_domain(domain)
+
+    if program:
+        return program
     else:
         return program[0]
 
 
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    if not(domain and domain.commtrack_enabled and not CommtrackConfig.for_domain(domain.name)):
+    """
+    Create a new CommtrackConfig object for a domain
+    if it does not already exist.
+
+
+    This adds some collection of default products, programs,
+    SMS keywords, etc.
+    """
+    def _has_commtrack_config(domain):
+        return (domain and
+                domain.commtrack_enabled and
+                not CommtrackConfig.for_domain(domain.name))
+
+    if not _has_commtrack_config(domain):
         return
 
-    c = CommtrackConfig(
+    config = CommtrackConfig(
         domain=domain.name,
         multiaction_enabled=True,
         multiaction_keyword='report',
@@ -120,25 +140,44 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             ),
         ],
         location_types=[
-            LocationType(name='state', allowed_parents=[''], administrative=True),
-            LocationType(name='district', allowed_parents=['state'], administrative=True),
-            LocationType(name='block', allowed_parents=['district'], administrative=True),
-            LocationType(name='village', allowed_parents=['block'], administrative=True),
-            LocationType(name='outlet', allowed_parents=['village']),
+            LocationType(
+                name='state',
+                allowed_parents=[''],
+                administrative=True
+            ),
+            LocationType(
+                name='district',
+                allowed_parents=['state'],
+                administrative=True
+            ),
+            LocationType(
+                name='block',
+                allowed_parents=['district'],
+                administrative=True
+            ),
+            LocationType(
+                name='village',
+                allowed_parents=['block'],
+                administrative=True
+            ),
+            LocationType(
+                name='outlet',
+                allowed_parents=['village']
+            ),
         ],
         supply_point_types=[],
     )
     if requisitions_enabled:
-        c.requisition_config = get_default_requisition_config()
+        config.requisition_config = get_default_requisition_config()
 
-    c.save()
+    config.save()
 
-    program = make_program(domain.name, 'Default', 'def', default=True)
+    program = get_or_make_default_program(domain.name)
     make_product(domain.name, 'Sample Product 1', 'pp', program.get_id)
     make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
     make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
 
-    return c
+    return config
 
 
 def get_default_requisition_config():
@@ -169,6 +208,7 @@ def get_default_requisition_config():
         ],
     )
 
+
 def due_date_weekly(dow, past_period=0): # 0 == sunday
     """compute the next due date on a weekly schedule, where reports are
     due on 'dow' day of the week (0:sunday, 6:saturday). 'next' due date
@@ -178,6 +218,7 @@ def due_date_weekly(dow, past_period=0): # 0 == sunday
     cur_weekday = date.today().isoweekday()
     days_till_due = (dow - cur_weekday) % 7
     return date.today() + timedelta(days=days_till_due - 7 * past_period)
+
 
 def due_date_monthly(day, from_end=False, past_period=0):
     """compute the next due date on a monthly schedule, where reports are
@@ -198,6 +239,7 @@ def due_date_monthly(day, from_end=False, past_period=0):
     y = month_seq // 12
     m = month_seq % 12 + 1
     return date(y, m, min(day, monthrange(y, m)[1]))
+
 
 def num_periods_late(product_case, schedule, *schedule_args):
     last_reported = datetime.strptime(getattr(product_case, 'last_reported', '2000-01-01')[:10], '%Y-%m-%d').date()
@@ -231,6 +273,7 @@ def num_periods_late(product_case, schedule, *schedule_args):
     # find the earliest due date that is on or after the most-recent report date,
     # and return how many reporting periods back it occurs
     return bisect.bisect_right(stream, stream.normalize(last_reported))
+
 
 def submit_mapping_case_block(user, index):
     mapping = user.get_location_map_case()
