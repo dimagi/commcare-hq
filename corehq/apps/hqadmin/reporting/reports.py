@@ -650,9 +650,9 @@ def get_user_ids(user_type_mobile):
 def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
     result = {'terms': {}}
     if histo_type == 'forms':
-        result['terms']["form.meta.userID"] = [
-            user_id for user_id in get_user_ids(user_type_mobile)
-        ]
+        result['terms']["form.meta.userID"] = list(
+            get_user_ids(user_type_mobile)
+        )
     elif histo_type == 'users_all':
         existing_users = get_user_ids(user_type_mobile)
 
@@ -686,9 +686,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
             )
         else:
             filtered_real_users = existing_users
-        result['terms']['_id'] = [
-            user_id for user_id in filtered_real_users
-        ]
+        result['terms']['_id'] = list(filtered_real_users)
     return result
 
 
