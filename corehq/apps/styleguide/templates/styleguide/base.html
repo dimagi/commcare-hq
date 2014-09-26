@@ -17,16 +17,33 @@
                   href="{% static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
         {% endcompress %}
 
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/style.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/docs-style.less' %}" />
+        {% endcompress %}
+
+        {% compress js %}
+            <script type="text/javascript" src="{% new_static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        {% endcompress %}
+
         {% if less_debug %}
             <script src="{% static 'style/lib/lessjs/less-1.7.3.min.js' %}"></script>
             <script>less.watch();</script>
         {% endif %}
     </head>
-    <body>
-        <div class="navbar navbar-default navbar-static-top">
+    <body data-spy="scroll" data-target=".docs-nav">
+        <div class="navbar navbar-inverse navbar-static-top navbar-docs">
             <div class="container">
                 <div class="navbar-header">
-                    <a href="{% url "styleguide_home" %}" class="navbar-brand">
+                    <a href="{% url "styleguide_home" %}"
+                       class="navbar-brand">
                         HQ Style Guide
                     </a>
                 </div>
@@ -37,7 +54,14 @@
                 </nav>
             </div>
         </div>
+        <div class="docs-content" data-spy="scroll" data-target=".docs-subnav">
         {% block content %}
         {% endblock content %}
+        </div>
+        <footer class="docs-footer">
+            <div class="container">
+                <p class="lead">Thanks for reading the style guide! <3</p>
+            </div>
+        </footer>
     </body>
 </html>
