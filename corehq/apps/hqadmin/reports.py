@@ -709,7 +709,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
-            DataTablesColumn(_("Active?"), prop_name="is_active"),
+            DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
             DataTablesColumn(_("CommConnect?"), prop_name="internal.commconnect_domain"),
             DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
         )
@@ -787,7 +787,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info'),
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
-                    format_bool(dom.get('is_active') or _('No info')),
+                    format_bool(dom.get('cp_is_active') or _('No info')),
                     format_bool(dom.get('internal', {}).get('commconnect_domain')),
                     format_bool(dom.get('internal', {}).get('commtrack_domain')),
                 ]
