@@ -4,6 +4,7 @@ import json
 import csv
 import io
 import uuid
+import re
 
 from couchdbkit import ResourceNotFound
 
@@ -350,6 +351,21 @@ class ListCommCareUsersView(BaseUserSettingsView):
         }
 
 
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return "*{}*".format("* *".join(tokens))
+
+
 class AsyncListCommCareUsersView(ListCommCareUsersView):
     urlname = 'user_list'
     es_results = None
@@ -386,8 +402,12 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
+        query = smart_query_string(self.query)
         q = {
-            "query": { "query_string": { "query": self.query }},
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
