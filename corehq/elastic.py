@@ -47,6 +47,10 @@ ADD_TO_ES_FILTER = {
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
+    "users_all": [
+        {"term": {"base_doc": "couchuser"}},
+        {"term": {"is_active": True}},
+    ],
     "active_cases": [
         {"term": {"closed": False}},
     ],
