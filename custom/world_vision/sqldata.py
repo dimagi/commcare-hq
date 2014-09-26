@@ -1,5 +1,5 @@
 from sqlagg import CountUniqueColumn, CountColumn
-from sqlagg.columns import SimpleColumn
+from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
@@ -286,6 +286,118 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                 CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
             )
         ]
+
+
+class DeliveryPlaceDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'delivery_place_details'
+    title = 'Delivery Details'
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Total Deliveries (with/without outcome)",
+                CountUniqueColumn('doc_id', alias="total_delivery", filters=self.filters + [NOTEQ('delivery_date', 'empty')]),
+            ),
+            DatabaseColumn("Institutional deliveries",
+                CountUniqueColumn('doc_id', alias="institutional_deliveries",
+                                  filters=self.filters + [OR([EQ('place_of_birth', 'health_center'), EQ('place_of_birth', "hospital")])]
+                )
+            )
+        ]
+
+    @property
+    def rows(self):
+        result = []
+        for idx, column in enumerate(self.columns):
+            if idx == 0:
+                percent = 'n/a'
+            else:
+                percent = self.percent_fn(self.data['total_delivery'], self.data[column.slug])
+
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}]
+            )
+        return result
+
+
+class DeliveryLiveBirthDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'delivery_live_birth_details'
+    title = ''
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Total live births",
+                SumColumn('number_of_children_total', filters=self.filters, alias='total_live_births')
+            ),
+            DatabaseColumn("Live birth (Male)",
+                SumColumn('number_of_boys_total', filters=self.filters)
+            ),
+            DatabaseColumn("Live birth (Female)",
+                SumColumn('number_of_girls_total', filters=self.filters,)
+            )
+        ]
+
+    @property
+    def rows(self):
+        result = []
+        for idx, column in enumerate(self.columns):
+            if idx == 0:
+                percent = 'n/a'
+            else:
+                percent = self.percent_fn(self.data['total_live_births'], self.data[column.slug])
+
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}]
+            )
+        return result
+
+
+class DeliveryStillBirthDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'delivery_still_birth_details'
+    title = ''
+
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Still births",
+                SumColumn('number_of_children_born_dead_total', filters=self.filters)
+            ),
+            DatabaseColumn("Abortions",
+                CountUniqueColumn('doc_id', alias="abortions", filters=self.filters + [EQ('reason_for_mother_closure', 'abortion')]),
+            ),
+        ]
+
+    @property
+    def rows(self):
+        result = []
+        for column in self.columns:
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}]
+            )
+        return result
+
 
 
 class PostnatalCareOverview(BaseSqlData):

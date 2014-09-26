@@ -45,6 +45,14 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     pp_4_done = case_property('pp_4_done')
     delivery_date = case_property('delivery_date')
     cause_of_death_maternal = case_property('cause_of_death_maternal')
+    place_of_birth = case_property('place_of_birth')
+    birth_attendant_during_delivery = case_property('birth_attendant_during_delivery')
+    type_of_delivery = case_property('type_of_delivery')
+
+    number_of_children = user_calcs.NumberChildren()
+    number_of_boys = user_calcs.NumberBoys()
+    number_of_girls = user_calcs.NumberGirls()
+    number_of_children_born_dead = user_calcs.StillBirth()
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

@@ -4,7 +4,7 @@ from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
-    CauseOfMaternalDeaths, ClosedChildCasesBreakdown, ImmunizationOverview
+    CauseOfMaternalDeaths, DeliveryLiveBirthDetails, ClosedChildCasesBreakdown, ImmunizationOverview
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -44,7 +44,18 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             death='death',
             strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
             stred=self.datespan.enddate.strftime("%Y-%m-%d"),
-            pregnant_mother_type = 'pregnant'
+            pregnant_mother_type = 'pregnant',
+            health_center = 'health center',
+            hospital = 'hospital',
+            home = 'home',
+            on_route = 'on_route',
+            other = 'other',
+            health_center_worker = 'health_center_worker',
+            trained_traditional_birth_attendant = 'trained_traditional_birth_attendant',
+            normal_delivery = 'normal',
+            cesarean_delivery = 'cesarean',
+            unknown_delivery = 'unknown',
+            abortion = 'abortion'
         )
 
         today = datetime.date.today()
@@ -116,6 +127,8 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, PregnantMotherBreakdownByTrimester):
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
+        elif isinstance(data_provider, DeliveryLiveBirthDetails):
+            chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         else:
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
