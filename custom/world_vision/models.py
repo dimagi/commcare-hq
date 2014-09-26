@@ -39,6 +39,11 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     knows_closest_facility = case_property('knows_closest_facility')
     lmp = case_property('lmp')
     previous_tetanus = case_property('previous_tetanus')
+    pp_1_done = case_property('pp_1_done')
+    pp_2_done = case_property('pp_2_done')
+    pp_3_done = case_property('pp_3_done')
+    pp_4_done = case_property('pp_4_done')
+    delivery_date = case_property('delivery_date')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

@@ -128,8 +128,8 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
     show_total = True
     total_row_name = "Mother cases closed during the time period"
     show_charts = True
-    chart_x_label = 'Reason of closure'
-    chart_y_label = 'Number'
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def group_by(self):
@@ -225,6 +225,9 @@ class AnteNatalCareServiceOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'ante_natal_care_service_overview'
     title = 'Ante Natal Care Service Overview'
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def filters(self):
@@ -284,5 +287,63 @@ class AnteNatalCareServiceOverview(BaseSqlData):
             ),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
                 CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
+            )
+        ]
+
+
+class PostnatalCareOverview(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'postnatal_care_overview'
+    title = 'Postnatal Care Overview'
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'),
+                                  DataTablesColumn('Total Eligible'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        result = []
+        for i in range(0,4):
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug])}])
+        return result
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("PNC 1 visits",
+                CountUniqueColumn('doc_id', alias="pnc_1", filters=self.filters + [EQ('pp_1_done', 'yes')]),
+            ),
+            DatabaseColumn("PNC 2 visits",
+                CountUniqueColumn('doc_id', alias="pnc_2", filters=self.filters + [EQ('pp_2_done', 'yes')]),
+            ),
+            DatabaseColumn("PNC 3 visits",
+                CountUniqueColumn('doc_id', alias="pnc_3", filters=self.filters + [EQ('pp_3_done', 'yes')]),
+            ),
+            DatabaseColumn("PNC 4 visits",
+                CountUniqueColumn('doc_id', alias="pnc_4", filters=self.filters + [EQ('pp_4_done', 'yes')]),
+            ),
+            DatabaseColumn("PNC 1 visits Total Eligible",
+                CountUniqueColumn('doc_id', alias="pnc_1_eligible",
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today')])]),
+            ),
+            DatabaseColumn("PNC 2 visits Total Eligible",
+                CountUniqueColumn('doc_id', alias="pnc_2_eligible",
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_2')])]),
+            ),
+            DatabaseColumn("PNC 3 visits Total Eligible",
+                CountUniqueColumn('doc_id', alias="pnc_3_eligible",
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_5')])]),
+            ),
+            DatabaseColumn("PNC 4 visits Total Eligible",
+                CountUniqueColumn('doc_id', alias="pnc_4_eligible",
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_21')])]),
             )
         ]

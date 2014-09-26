@@ -48,6 +48,9 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
         config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d"),
+        config['days_2'] = (today - datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
+        config['days_5'] = (today - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
+        config['days_21'] = (today - datetime.timedelta(days=21)).strftime("%Y-%m-%d"),
         config['days_195'] = (today - datetime.timedelta(days=195)).strftime("%Y-%m-%d"),
         config['days_224'] = (today - datetime.timedelta(days=224)).strftime("%Y-%m-%d"),
         config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
@@ -80,11 +83,9 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             if data_provider.show_charts:
                 charts = list(self.get_chart(
                     rows,
-                    headers,
                     x_label=data_provider.chart_x_label,
                     y_label=data_provider.chart_y_label,
-                    data_provider=data_provider,
-                    has_total_column=False
+                    data_provider=data_provider
                 ))
 
         context = dict(
@@ -94,7 +95,6 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
                 headers=headers,
                 rows=rows,
                 total_row=total_row,
-                default_rows=self.default_rows,
                 datatables=data_provider.datatables,
                 start_at_row=0,
                 fix_column=data_provider.fix_left_col
@@ -105,29 +105,17 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 
         return context
 
-    def get_chart(self, rows, columns, x_label, y_label, data_provider, has_total_column=False):
-
-        end = len(columns)
-        if has_total_column:
-            end -= 1
-        categories = [c.html for c in columns.header[1:end]]
+    def get_chart(self, rows, x_label, y_label, data_provider):
         if isinstance(data_provider, ClosedMotherCasesBreakdown):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, PregnantMotherBreakdownByTrimester):
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         else:
-            chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
+            chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
-            self._chart_data(chart, categories, rows)
+            chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
         return [chart]
-
-    def _chart_data(self, chart, series, data):
-        if data:
-            charts = []
-            for i, s in enumerate(series):
-                charts.append({'x': s, 'y': data[i+1]})
-            chart.add_dataset('products', charts)
 
     @property
     def export_table(self):
