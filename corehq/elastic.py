@@ -11,7 +11,6 @@ from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from settings import ES_QUERY_CHUNKSIZE
 
 
 def get_es(timeout=30):
