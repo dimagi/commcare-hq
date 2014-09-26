@@ -3,7 +3,7 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown
+from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -42,8 +42,17 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
             stred=self.datespan.enddate.strftime("%Y-%m-%d"),
             today=datetime.datetime.now().strftime("%Y-%m-%d"),
-            last_month=(datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+            last_month=(datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d"),
+            pregnant_mother_type = 'pregnant'
         )
+
+        today = datetime.date.today()
+        config['today'] = today.strftime("%Y-%m-%d")
+        config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
+        config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
+        config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
+        config['third_trimester_start_date'] =  (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
+
         return config
 
     def get_report_context(self, data_provider):
@@ -100,9 +109,10 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         if has_total_column:
             end -= 1
         categories = [c.html for c in columns.header[1:end]]
-
         if isinstance(data_provider, ClosedMotherCasesBreakdown):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
+        elif isinstance(data_provider, PregnantMotherBreakdownByTrimester):
+            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         else:
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
             chart.rotateLabels = -45

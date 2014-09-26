@@ -4,7 +4,6 @@ from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 
-
 class BaseSqlData(SqlData):
     show_total = False
     datatables = False
@@ -163,3 +162,69 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
             DatabaseColumn("Reason for closure", SimpleColumn('reason_for_mother_closure')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
+
+class PregnantMotherBreakdownByTrimester(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'pregnant_mother_by_trimester'
+    title = 'Pregnant Woman Breakdown by Trimester'
+    show_total = True
+    total_row_name = "Total pregnant "
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+
+    def percent_fn(self, y):
+        x = self.data['trimester_1'] + self.data['trimester_2'] + self.data['trimester_3']
+        return "%(p).2f%%" % \
+            {
+                "p": (100 * int(y or 0) / (x or 1))
+            }
+
+    @property
+    def filters(self):
+        filter = super(PregnantMotherBreakdownByTrimester, self).filters
+        filter.append(EQ('mother_state', 'pregnant_mother_type'))
+        return filter
+
+    @property
+    def rows(self):
+        result = []
+        for column in self.columns:
+            percent = self.percent_fn(self.data[column.slug])
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}]
+            )
+        return result
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Trimester 1",
+                CountUniqueColumn('doc_id',
+                    alias="trimester_1",
+                    filters=self.filters + [AND([LTE('lmp', "today"), GTE('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
+                )
+            ),
+            DatabaseColumn("Trimester 2",
+                CountUniqueColumn('doc_id',
+                    alias="trimester_2",
+                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GTE('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
+                )
+            ),
+            DatabaseColumn("Trimester 3",
+                CountUniqueColumn('doc_id',
+                    alias="trimester_3",
+                    filters=self.filters + [AND([LTE('lmp', 'third_trimester_start_date'), NOTEQ('lmp', 'empty')])]
+                )
+            )
+        ]
+
+    @property
+    def data(self):
+        return super(PregnantMotherBreakdownByTrimester, self).data

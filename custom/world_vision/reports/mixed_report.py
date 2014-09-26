@@ -2,7 +2,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.intrahealth.filters import LocationFilter
 from custom.world_vision.reports import TTCReport
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown
+from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester
 
 
 class MixedTTCReport(TTCReport):
@@ -24,5 +24,6 @@ class MixedTTCReport(TTCReport):
         config = self.report_config
         return [
             MotherRegistrationOverview(config=config),
-            ClosedMotherCasesBreakdown(config=config)
+            ClosedMotherCasesBreakdown(config=config),
+            PregnantMotherBreakdownByTrimester(config=config)
         ]

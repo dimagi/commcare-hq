@@ -26,6 +26,8 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
+    lmp = case_property('lmp')
+    mother_state = case_property('mother_state')
 
     women_registered = user_calcs.MotherRegistered()
 
