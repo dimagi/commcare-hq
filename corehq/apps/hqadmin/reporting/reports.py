@@ -4,11 +4,13 @@ from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
+from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.reporting.exceptions import (
     HistoTypeNotFoundException,
     IntervalNotFoundException,
@@ -638,7 +640,6 @@ def get_user_ids(user_type_mobile):
     Returns the set of mobile user IDs if user_type_mobile is True,
     else returns the set of web user IDs.
     """
-    from corehq.apps.es.users import UserES
     query = UserES()
     if user_type_mobile:
         query = query.mobile_users()
@@ -657,7 +658,6 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
         existing_users = get_user_ids(user_type_mobile)
 
         if require_submissions:
-            from corehq.apps.es.forms import FormES
             LARGE_NUMBER = 1000 * 1000 * 10
             real_form_users = {
                 user_count['term'] for user_count in (
@@ -669,7 +669,6 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
                 )
             }
 
-            from corehq.apps.es.sms import SMSES
             real_sms_users = {
                 user_count['term'] for user_count in (
                     SMSES()
@@ -696,8 +695,6 @@ def get_case_owner_filters():
     mobile_user_ids = list(get_user_ids(True))
 
     def all_groups():
-        from corehq.apps.groups.models import Group
-        from corehq.apps.domain.models import Domain
         for domain in Domain.get_all():
             for group in Group.by_domain(domain.name):
                 yield group
@@ -750,9 +747,6 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
 
     def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
             interval, user_type_filters, case_owner_filters, case_type_filters):
-        from datetime import datetime
-        from dateutil.relativedelta import relativedelta
-        from corehq.apps.hqadmin.reporting.reports import daterange
         timestamps = daterange(
             interval,
             datetime.strptime(start_date, "%Y-%m-%d").date(),
