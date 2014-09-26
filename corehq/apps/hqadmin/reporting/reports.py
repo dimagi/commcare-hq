@@ -770,14 +770,10 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
             })
         return histo_data
 
-    histo_data = _histo_data(
-        domains,
-        histo_type,
-        datespan.startdate_display,
-        datespan.enddate_display,
-        interval,
-        additional_filters
-    ) if is_cumulative else _histo_data_non_cumulative(
+    hist_data_func = (
+        _histo_data if is_cumulative else _histo_data_non_cumulative
+    )
+    histo_data = hist_data_func(
         domains,
         histo_type,
         datespan.startdate_display,
