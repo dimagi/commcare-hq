@@ -723,37 +723,38 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
 
-    def _histo_data(domains, histo_type, start_date, end_date, filters):
+    def _histo_data(domain_list, histogram_type, start_date, end_date,
+            intrvl, filters):
         return dict([
             (
                 d['display_name'],
                 es_histogram(
-                    histo_type,
+                    histogram_type,
                     d["names"],
                     start_date,
                     end_date,
-                    interval=interval,
+                    interval=intrvl,
                     filters=filters,
                 )
-            ) for d in domains
+            ) for d in domain_list
         ])
 
-    def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
-            interval, filters):
+    def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
+            end_date, intrvl, filters):
         timestamps = daterange(
-            interval,
+            intrvl,
             datetime.strptime(start_date, "%Y-%m-%d").date(),
             datetime.strptime(end_date, "%Y-%m-%d").date(),
         )
         histo_data = {}
-        for domain_name_data in domains:
+        for domain_name_data in domain_list:
             display_name = domain_name_data['display_name']
             domain_data = []
             for timestamp in timestamps:
                 past_30_days = _histo_data(
                     [domain_name_data],
-                    histo_type,
-                    (timestamp - relativedelta(days=(90 if histo_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
+                    histogram_type,
+                    (timestamp - relativedelta(days=(90 if histogram_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
                     timestamp.isoformat(),
                     filters
                 )
@@ -774,6 +775,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         histo_type,
         datespan.startdate_display,
         datespan.enddate_display,
+        interval,
         additional_filters
     ) if is_cumulative else _histo_data_non_cumulative(
         domains,
@@ -784,26 +786,43 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         additional_filters
     )
 
-    def _total_until_date(histo_type, filters=[], doms=None):
-        query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
+    def _total_until_date(histogram_type, filters=[], domain_list=None):
+        query = {
+            "in": {"domain.exact": domain_list}
+        } if domain_list is not None else {"match_all": {}}
         q = {
             "query": query,
             "filter": {
                 "and": [
-                    {"range": {DATE_FIELDS[histo_type]: {"lt": datespan.startdate_display}}},
+                    {
+                        "range": {
+                            DATE_FIELDS[histogram_type]: {
+                                "lt": datespan.startdate_display
+                            }
+                        }
+                    },
                 ],
             },
         }
-        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
+        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histogram_type, [])[:])
         q["filter"]["and"].extend(filters)
 
-        return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
+        return es_query(
+            q=q,
+            es_url=ES_URLS[histogram_type],
+            size=0,
+        )["hits"]["total"]
 
     return {
         'histo_data': histo_data,
         'initial_values': (
-            dict([(dom["display_name"],
-                 _total_until_date(histo_type, additional_filters, dom["names"])) for dom in domains])
+            dict([
+                (
+                    dom["display_name"],
+                    _total_until_date(
+                        histo_type, additional_filters, dom["names"])
+                ) for dom in domains
+            ])
             if is_cumulative else {"All Domains": 0}
         ),
         'startdate': datespan.startdate_key_utc,
