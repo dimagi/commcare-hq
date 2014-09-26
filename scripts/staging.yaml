@@ -50,6 +50,7 @@ branches:
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
+  - logos+master # tw
   - logos # Nick P 5/28
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
