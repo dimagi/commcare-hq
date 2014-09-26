@@ -90,6 +90,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     vita2 = case_property('vita2')
     dpt_opv_booster = case_property('dpt_opv_booster')
     vita3 = case_property('vita3')
+    type_of_child_death = case_property('type_of_child_death')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

@@ -23,11 +23,14 @@ REASON_FOR_CLOSURE_MAPPING = {
     'death': 'Death'
 }
 
-MOTHER_DEATH_MAPPING = {
+DEATH_MAPPING = {
     'seizure': 'Seizure or fits',
     'high_bp': 'High blood pressure',
     'bleeding_postpartum': 'Excessive bleeding post-delivery',
     'fever_or_infection_post_delivery': 'Fever or infection post-delivery',
     'during_caeserian_surgery': 'During Caeserian Surgery',
-    'other': 'Other reason'
+    'other': 'Other reason',
+    'newborn_death': 'Newborn deaths (< 1 month)',
+    'infant_death': 'Infant deaths (< 1 year)',
+    'child_death': 'Child deaths (> 1yr)'
 }

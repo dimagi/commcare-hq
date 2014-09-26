@@ -364,8 +364,8 @@ class CauseOfMaternalDeaths(BaseSqlData):
         rows = super(CauseOfMaternalDeaths, self).rows
         total = calculate_total_row(rows)[-1]
         for row in rows:
-            from custom.world_vision import MOTHER_DEATH_MAPPING
-            row[0] = MOTHER_DEATH_MAPPING[row[0]]
+            from custom.world_vision import DEATH_MAPPING
+            row[0] = DEATH_MAPPING[row[0]]
             percent = self.percent_fn(total, row[1]['html'])
             row.append({'sort_key':percent, 'html': percent})
         return rows
@@ -560,4 +560,30 @@ class ImmunizationOverview(BaseSqlData):
             DatabaseColumn("VitA3 Total Eligible",
                 CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'days_700')])
             )
+        ]
+
+class ChildrenDeathDetails(CauseOfMaternalDeaths):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_death_details'
+    title = 'Children Death Details'
+
+    @property
+    def group_by(self):
+        return ['type_of_child_death']
+
+    @property
+    def filters(self):
+        filter = super(CauseOfMaternalDeaths, self).filters
+        filter.append(EQ('reason_for_child_closure', 'death'))
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Children Death Details'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Reason", SimpleColumn('type_of_child_death')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
