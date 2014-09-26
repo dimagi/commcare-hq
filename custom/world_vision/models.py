@@ -44,6 +44,7 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     pp_3_done = case_property('pp_3_done')
     pp_4_done = case_property('pp_4_done')
     delivery_date = case_property('delivery_date')
+    cause_of_death_maternal = case_property('cause_of_death_maternal')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

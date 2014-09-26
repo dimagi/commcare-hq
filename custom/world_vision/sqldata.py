@@ -344,3 +344,45 @@ class PostnatalCareOverview(BaseSqlData):
                                   filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_21')])]),
             )
         ]
+
+class CauseOfMaternalDeaths(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'Cause_of_maternal_deaths'
+    title = 'Cause of Maternal Deaths'
+    show_total = True
+    total_row_name = "Total Mother Deaths"
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def group_by(self):
+        return ['cause_of_death_maternal']
+
+    @property
+    def rows(self):
+        rows = super(CauseOfMaternalDeaths, self).rows
+        total = calculate_total_row(rows)[-1]
+        for row in rows:
+            from custom.world_vision import MOTHER_DEATH_MAPPING
+            row[0] = MOTHER_DEATH_MAPPING[row[0]]
+            percent = self.percent_fn(total, row[1]['html'])
+            row.append({'sort_key':percent, 'html': percent})
+        return rows
+
+    @property
+    def filters(self):
+        filter = super(CauseOfMaternalDeaths, self).filters
+        filter.append(EQ('reason_for_mother_closure', 'death'))
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Reason'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Reason", SimpleColumn('cause_of_death_maternal')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
+        ]
