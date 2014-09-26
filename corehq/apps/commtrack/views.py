@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.helpers import psi_one_time_setup
-from corehq.apps.commtrack.util import get_or_make_default_program, all_sms_codes
+from corehq.apps.commtrack.util import get_or_create_default_program, all_sms_codes
 
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required, \
     cls_require_superuser_or_developer
@@ -300,7 +300,7 @@ class FetchProductListView(ProductListView):
             if p.program_id:
                 program = Program.get(p.program_id)
             else:
-                program = get_or_make_default_program(self.domain)
+                program = get_or_create_default_program(self.domain)
                 p.program_id = program.get_id
                 p.save()
 

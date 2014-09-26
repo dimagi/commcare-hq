@@ -82,7 +82,7 @@ def make_program(domain, name, code, default=False):
     return p
 
 
-def get_or_make_default_program(domain):
+def get_or_create_default_program(domain):
     program = Program.default_for_domain(domain)
 
     if program:
@@ -178,7 +178,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
 
     config.save()
 
-    program = get_or_make_default_program(domain.name)
+    program = get_or_create_default_program(domain.name)
     make_product(domain.name, 'Sample Product 1', 'pp', program.get_id)
     make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
     make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
