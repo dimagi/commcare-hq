@@ -18,6 +18,7 @@ from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
 from dimagi.utils.parsing import json_format_datetime
+from django.utils.translation import ugettext as _
 
 
 def all_supply_point_types(domain):
@@ -87,7 +88,12 @@ def get_or_make_default_program(domain):
     if program:
         return program
     else:
-        return program[0]
+        return make_program(
+            domain,
+            _('Uncategorized'),
+            _('uncategorized'),
+            default=True
+        )
 
 
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
