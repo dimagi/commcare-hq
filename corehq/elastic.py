@@ -75,8 +75,7 @@ def run_query(url, q):
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None,
-        interval="day", q=None, user_type_filters=None, case_owner_filters=None,
-        case_type_filters=None):
+        interval="day", q=None, filters=[]):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -101,18 +100,10 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
         "size": 0
     })
 
-    if user_type_filters is not None:
-        q["facets"]["histo"]["facet_filter"]["and"].append(user_type_filters)
-
-    if case_owner_filters is not None:
-        q["facets"]["histo"]["facet_filter"]["and"].append(case_owner_filters)
-
-    if case_type_filters is not None:
-        q["facets"]["histo"]["facet_filter"]["and"].append(case_type_filters)
-
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
 
+    q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
 
     es = get_es()

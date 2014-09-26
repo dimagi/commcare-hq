@@ -709,44 +709,37 @@ def get_case_owner_filters():
 def get_general_stats_data(domains, histo_type, datespan, interval="day",
         user_type_mobile=None, is_cumulative=True,
         require_submissions=True, supply_points=False):
-    user_type_filters = (
-        get_user_type_filters(
-            histo_type,
-            user_type_mobile,
-            require_submissions,
+    additional_filters = []
+    if user_type_mobile is not None:
+        additional_filters.append(
+            get_user_type_filters(
+                histo_type,
+                user_type_mobile,
+                require_submissions,
+            )
         )
-        if user_type_mobile is not None else None
-    )
+    if histo_type == 'active_cases':
+        additional_filters.append(get_case_owner_filters())
+    if supply_points:
+        additional_filters.append({'terms': {'type': ['supply-point']}})
 
-    case_owner_filters = (
-        get_case_owner_filters()
-        if histo_type == 'active_cases' else None
-    )
-
-    case_type_filters = (
-            {'terms': {'type': ['supply-point']}}
-            if supply_points else None
-    )
-
-    def _histo_data(domains, histo_type, start_date, end_date,
-            user_type_filters, case_owner_filters=None, case_type_filters=None):
+    def _histo_data(domains, histo_type, start_date, end_date, filters):
         return dict([
-            (d['display_name'],
-             es_histogram(
-                 histo_type,
-                 d["names"],
-                 start_date,
-                 end_date,
-                 interval=interval,
-                 user_type_filters=user_type_filters,
-                 case_owner_filters=case_owner_filters,
-                 case_type_filters=case_type_filters,
-             ))
-            for d in domains
+            (
+                d['display_name'],
+                es_histogram(
+                    histo_type,
+                    d["names"],
+                    start_date,
+                    end_date,
+                    interval=interval,
+                    filters=filters,
+                )
+            ) for d in domains
         ])
 
     def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
-            interval, user_type_filters, case_owner_filters, case_type_filters):
+            interval, filters):
         timestamps = daterange(
             interval,
             datetime.strptime(start_date, "%Y-%m-%d").date(),
@@ -762,9 +755,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                     histo_type,
                     (timestamp - relativedelta(days=(90 if histo_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
                     timestamp.isoformat(),
-                    user_type_filters=user_type_filters,
-                    case_owner_filters=case_owner_filters,
-                    case_type_filters=case_type_filters,
+                    filters
                 )
                 domain_data.append(
                     get_data_point(
@@ -783,19 +774,17 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         histo_type,
         datespan.startdate_display,
         datespan.enddate_display,
-        user_type_filters
+        additional_filters
     ) if is_cumulative else _histo_data_non_cumulative(
         domains,
         histo_type,
         datespan.startdate_display,
         datespan.enddate_display,
         interval,
-        user_type_filters,
-        case_owner_filters,
-        case_type_filters,
+        additional_filters
     )
 
-    def _total_until_date(histo_type, user_type_filters, doms=None):
+    def _total_until_date(histo_type, filters=[], doms=None):
         query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
         q = {
             "query": query,
@@ -806,8 +795,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
             },
         }
         q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
-        if user_type_mobile is not None:
-            q["filter"]["and"].append(user_type_filters)
+        q["filter"]["and"].extend(filters)
 
         return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
 
@@ -815,7 +803,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         'histo_data': histo_data,
         'initial_values': (
             dict([(dom["display_name"],
-                 _total_until_date(histo_type, user_type_filters, dom["names"])) for dom in domains])
+                 _total_until_date(histo_type, additional_filters, dom["names"])) for dom in domains])
             if is_cumulative else {"All Domains": 0}
         ),
         'startdate': datespan.startdate_key_utc,
