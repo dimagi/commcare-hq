@@ -225,9 +225,6 @@ class AnteNatalCareServiceOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'ante_natal_care_service_overview'
     title = 'Ante Natal Care Service Overview'
-    show_charts = True
-    chart_x_label = ''
-    chart_y_label = ''
 
     @property
     def filters(self):
