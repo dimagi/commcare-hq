@@ -50,11 +50,9 @@ def add_blank_data(histo_data, start, end):
         return [
             {
                 "count": 0,
-                "time": timestamp,
-            } for timestamp in [
-                int(1000 * time.mktime(date.timetuple()))
-                for date in [start, end]
-            ]
+                "time": int(1000 * time.mktime(date.timetuple())),
+            }
+            for date in [start, end]
         ]
     return histo_data
 
