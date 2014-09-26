@@ -70,6 +70,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            if not user:
+                raise Http404()
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
