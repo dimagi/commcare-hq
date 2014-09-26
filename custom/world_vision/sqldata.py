@@ -1,7 +1,9 @@
-from sqlagg import CountUniqueColumn
+from sqlagg import CountUniqueColumn, CountColumn
+from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
+
 
 class BaseSqlData(SqlData):
     show_total = False
@@ -9,6 +11,11 @@ class BaseSqlData(SqlData):
     show_charts = False
     no_value = {'sort_key': 0, 'html': 0}
     fix_left_col = False
+    total_row_name = "Total"
+    custom_total_calculate = False
+
+    def percent_fn(self, x, y):
+        return "%.2f%%" % (100 * float(y or 0) / (x or 1))
 
     @property
     def filters(self):
@@ -28,8 +35,12 @@ class BaseSqlData(SqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
+    @property
+    def data(self):
+        return super(BaseSqlData, self).data
+
 class MotherRegistrationOverview(BaseSqlData):
-    table_name = "fluff_MotherRegistrationOverviewFluff"
+    table_name = "fluff_WorldVisionMotherFluff"
     slug = 'mother_registration_overview'
     title = 'Mother Registration Overview'
 
@@ -111,6 +122,44 @@ class MotherRegistrationOverview(BaseSqlData):
             ])
         return columns
 
+class ClosedMotherCasesBreakdown(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'closed_mother_cases-breakdown'
+    title = 'Closed Mother Cases Breakdown'
+    show_total = True
+    total_row_name = "Mother cases closed during the time period"
+    show_charts = True
+    chart_x_label = 'Reason of closure'
+    chart_y_label = 'Number'
+
     @property
-    def data(self):
-        return super(MotherRegistrationOverview, self).data
+    def group_by(self):
+        return ['reason_for_mother_closure']
+
+    @property
+    def rows(self):
+        rows = super(ClosedMotherCasesBreakdown, self).rows
+        total = calculate_total_row(rows)[-1]
+        for row in rows:
+            from custom.world_vision import REASON_FOR_CLOSURE_MAPPING
+            row[0] = REASON_FOR_CLOSURE_MAPPING[row[0]]
+            percent = self.percent_fn(total, row[1]['html'])
+            row.append({'sort_key':percent, 'html': percent})
+        return rows
+
+    @property
+    def filters(self):
+        filter = super(ClosedMotherCasesBreakdown, self).filters
+        filter.append(NOTEQ('reason_for_mother_closure', 'empty'))
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Reason for closure'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Reason for closure", SimpleColumn('reason_for_mother_closure')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
+        ]

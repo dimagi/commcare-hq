@@ -31,6 +31,21 @@
     {% endif %}{{ block.super }}
 {% endblock %}
 
+{% block reporttable %}
+{% if report.needs_filters %}
+    {% include 'reports/standard/partials/description.html' %}
+{% else %}
+    {% for thisreport in reports %}
+        <br/>
+        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+        {% include 'intrahealth/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
+        <br/>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+{% block posttable %}{% endblock %}
+{% endblock %}
+
 {% block js-inline %}
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}
@@ -39,19 +54,4 @@
             {% endwith %}
         {% endfor %}
     {% endfor %}
-{% endblock %}
-
-{% block reporttable %}
-{% if report.needs_filters %}
-    {% include 'reports/standard/partials/description.html' %}
-{% else %}
-    {% for thisreport in reports %}
-        <br/>
-        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-        {% include 'world_vision/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
-        <br/>
-    {% endfor %}
-{% endif %}
-{% endblock %}
-{% block posttable %}{% endblock %}
 {% endblock %}

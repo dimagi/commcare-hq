@@ -1,8 +1,9 @@
 import datetime
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
+from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview
+from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -57,12 +58,21 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             headers = data_provider.headers
             rows = data_provider.rows
 
+            if data_provider.show_total:
+                if data_provider.custom_total_calculate:
+                    total_row = data_provider.calculate_total_row(rows)
+                else:
+                    total_row = list(calculate_total_row(rows))
+                    if total_row:
+                        total_row[0] = data_provider.total_row_name
+
             if data_provider.show_charts:
                 charts = list(self.get_chart(
-                    total_row,
+                    rows,
                     headers,
                     x_label=data_provider.chart_x_label,
                     y_label=data_provider.chart_y_label,
+                    data_provider=data_provider,
                     has_total_column=False
                 ))
 
@@ -84,16 +94,20 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 
         return context
 
-    def get_chart(self, rows, columns, x_label, y_label, has_total_column=False):
+    def get_chart(self, rows, columns, x_label, y_label, data_provider, has_total_column=False):
 
         end = len(columns)
         if has_total_column:
             end -= 1
         categories = [c.html for c in columns.header[1:end]]
-        chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
-        chart.rotateLabels = -45
-        chart.marginBottom = 120
-        self._chart_data(chart, categories, rows)
+
+        if isinstance(data_provider, ClosedMotherCasesBreakdown):
+            chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
+        else:
+            chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, ' ,d'))
+            chart.rotateLabels = -45
+            chart.marginBottom = 120
+            self._chart_data(chart, categories, rows)
         return [chart]
 
     def _chart_data(self, chart, series, data):

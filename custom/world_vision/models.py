@@ -6,7 +6,7 @@ from custom.utils.utils import flat_field
 from custom.world_vision.reports import user_calcs
 
 
-class MotherRegistrationOverviewFluff(fluff.IndicatorDocument):
+class WorldVisionMotherFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
 
@@ -22,10 +22,11 @@ class MotherRegistrationOverviewFluff(fluff.IndicatorDocument):
     block = case_property('block')
     district = case_property('district')
     state = case_property('state')
+    reason_for_mother_closure = case_property('reason_for_mother_closure')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
 
     women_registered = user_calcs.MotherRegistered()
 
-MotherRegistrationOverviewFluffPillow = MotherRegistrationOverviewFluff.pillow()
+WorldVisionMotherFluffPillow = WorldVisionMotherFluff.pillow()

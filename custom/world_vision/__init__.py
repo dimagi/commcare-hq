@@ -13,3 +13,11 @@ CUSTOM_REPORTS = (
         ChildTTCReport
     )),
 )
+
+REASON_FOR_CLOSURE_MAPPING = {
+    'change_of_location': 'Migration',
+    'end_of_pregnancy': 'End of care',
+    'not_pregnant': 'Not pregnant',
+    'abortion': 'Abortion',
+    'death': 'Death'
+}
