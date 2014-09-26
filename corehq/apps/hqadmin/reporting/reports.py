@@ -1,5 +1,4 @@
 import datetime
-import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 from django.utils.translation import ugettext as _
@@ -757,7 +756,6 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
 
     def _histo_data_non_cumulative(domains, histo_type, start_date, end_date,
             interval, user_type_filters, case_owner_filters, case_type_filters):
-        import time
         from datetime import datetime
         from dateutil.relativedelta import relativedelta
         from corehq.apps.hqadmin.reporting.reports import daterange
