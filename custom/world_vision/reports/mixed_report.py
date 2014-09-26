@@ -4,7 +4,7 @@ from custom.world_vision.reports import TTCReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
     AnteNatalCareServiceOverview, PostnatalCareOverview, CauseOfMaternalDeaths, ChildRegistrationDetails, \
-    ClosedChildCasesBreakdown
+    ClosedChildCasesBreakdown, ImmunizationOverview
 
 
 class MixedTTCReport(TTCReport):
@@ -33,4 +33,5 @@ class MixedTTCReport(TTCReport):
             CauseOfMaternalDeaths(config=config),
             ChildRegistrationDetails(config=config),
             ClosedChildCasesBreakdown(config=config),
+            ImmunizationOverview(config=config)
         ]
