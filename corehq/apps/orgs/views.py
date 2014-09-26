@@ -15,13 +15,13 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqadmin.reporting.reports import get_general_stats_data
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
-from corehq.elastic import get_general_stats_data
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response

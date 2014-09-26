@@ -1,27 +1,32 @@
 import datetime
-import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
+from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.reporting.exceptions import (
     HistoTypeNotFoundException,
     IntervalNotFoundException,
 )
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
+    ADD_TO_ES_FILTER,
+    DATE_FIELDS,
+    es_histogram,
     ES_MAX_CLAUSE_COUNT,
-    get_general_stats_data,
-    get_user_ids,
+    es_query,
+    ES_URLS,
 )
 
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.util.dates import get_timestamp_millis
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -31,6 +36,13 @@ def add_params_to_query(query, params):
         for k in params:
             query = query.filter({"terms": {k: params[k]}})
     return query
+
+
+def get_data_point(count, date):
+    return {
+        "count": count,
+        "time": get_timestamp_millis(date),
+    }
 
 
 def format_return_data(shown_data, initial_value, datespan):
@@ -47,15 +59,7 @@ def format_return_data(shown_data, initial_value, datespan):
 
 def add_blank_data(histo_data, start, end):
     if not histo_data:
-        return [
-            {
-                "count": 0,
-                "time": timestamp,
-            } for timestamp in [
-                int(1000 * time.mktime(date.timetuple()))
-                for date in [start, end]
-            ]
-        ]
+        return [get_data_point(0, date) for date in [start, end]]
     return histo_data
 
 
@@ -144,8 +148,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -166,11 +169,12 @@ def domains_matching_plan(software_plan_edition, start, end):
 def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
     return [
-        {
-            "count": len(domains & domains_matching_plan(
+        get_data_point(
+            len(domains & domains_matching_plan(
                 software_plan_edition, timestamp, timestamp)),
-            "time": int(1000 * time.mktime(timestamp.timetuple())),
-        } for timestamp in daterange(
+            timestamp
+        )
+        for timestamp in daterange(
             interval, datespan.startdate, datespan.enddate
         )
     ]
@@ -215,8 +219,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
             }
         c = len(active_domains)
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -238,8 +241,7 @@ def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
         users = sms_query.run().facet('users', "terms")
         c = len(users)
         if c > 0:
-            histo_data.append({"count": c, "time":
-                1000 * time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -266,8 +268,7 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
         d = sms_query.filter(backend_filter).run()
         c = len(d.facet('domains', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -287,8 +288,7 @@ def get_countries_stats_data(domains, datespan, interval,
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -556,14 +556,14 @@ def get_stock_transaction_stats_data(domains, datespan, interval):
 
     return format_return_data(
         [
-            {
-                "count": get_stock_transactions_in_daterange(
+            get_data_point(
+                get_stock_transactions_in_daterange(
                     domains,
                     enddate,
                     start_date=startdate,
                 ),
-                "time": 1000 * time.mktime(enddate.timetuple()),
-            }
+                enddate
+            )
             for startdate, enddate in intervals(
                 interval,
                 datespan.startdate,
@@ -633,6 +633,204 @@ def get_other_stats(histo_type, domains, datespan, interval,
             datespan.enddate
         )
     return stats_data
+
+
+def get_user_ids(user_type_mobile):
+    """
+    Returns the set of mobile user IDs if user_type_mobile is True,
+    else returns the set of web user IDs.
+    """
+    query = UserES()
+    if user_type_mobile:
+        query = query.mobile_users()
+    else:
+        query = query.web_users()
+    return {doc_id for doc_id in query.run().doc_ids}
+
+
+def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
+    result = {'terms': {}}
+    if histo_type == 'forms':
+        result['terms']["form.meta.userID"] = list(
+            get_user_ids(user_type_mobile)
+        )
+    elif histo_type == 'users_all':
+        existing_users = get_user_ids(user_type_mobile)
+
+        if require_submissions:
+            LARGE_NUMBER = 1000 * 1000 * 10
+            real_form_users = {
+                user_count['term'] for user_count in (
+                    FormES()
+                    .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
+
+            real_sms_users = {
+                user_count['term'] for user_count in (
+                    SMSES()
+                    .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                    .incoming_messages()
+                    .size(0)
+                    .run()
+                    .facets.user.result
+                )
+            }
+
+            filtered_real_users = (
+                existing_users & (real_form_users | real_sms_users)
+            )
+        else:
+            filtered_real_users = existing_users
+        result['terms']['_id'] = list(filtered_real_users)
+    return result
+
+
+def get_case_owner_filters():
+    result = {'terms': {}}
+
+    mobile_user_ids = list(get_user_ids(True))
+
+    def all_groups():
+        for domain in Domain.get_all():
+            for group in Group.by_domain(domain.name):
+                yield group
+    group_ids = [
+        group._id for group in all_groups()
+    ]
+
+    result['terms']['owner_id'] = mobile_user_ids + group_ids
+    return result
+
+
+def _histo_data(domain_list, histogram_type, start_date, end_date, interval,
+        filters):
+    return dict([
+        (
+            d['display_name'],
+            es_histogram(
+                histogram_type,
+                d["names"],
+                start_date,
+                end_date,
+                interval=interval,
+                filters=filters,
+            )
+        ) for d in domain_list
+    ])
+
+
+def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
+        end_date, interval, filters):
+    timestamps = daterange(
+        interval,
+        datetime.strptime(start_date, "%Y-%m-%d").date(),
+        datetime.strptime(end_date, "%Y-%m-%d").date(),
+    )
+    histo_data = {}
+    for domain_name_data in domain_list:
+        display_name = domain_name_data['display_name']
+        domain_data = []
+        for timestamp in timestamps:
+            past_30_days = _histo_data(
+                [domain_name_data],
+                histogram_type,
+                (timestamp - relativedelta(days=(90 if histogram_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
+                timestamp.isoformat(),
+                filters
+            )
+            domain_data.append(
+                get_data_point(
+                    sum(point['count']
+                        for point in past_30_days[display_name]),
+                    timestamp
+                )
+            )
+        histo_data.update({
+            display_name: domain_data
+        })
+    return histo_data
+
+
+def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
+    query = {
+        "in": {"domain.exact": domain_list}
+    } if domain_list is not None else {"match_all": {}}
+    q = {
+        "query": query,
+        "filter": {
+            "and": [
+                {
+                    "range": {
+                        DATE_FIELDS[histogram_type]: {
+                            "lt": datespan.startdate_display
+                        }
+                    }
+                },
+            ],
+        },
+    }
+    q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histogram_type, [])[:])
+    q["filter"]["and"].extend(filters)
+
+    return es_query(
+        q=q,
+        es_url=ES_URLS[histogram_type],
+        size=0,
+    )["hits"]["total"]
+
+
+def get_general_stats_data(domains, histo_type, datespan, interval="day",
+        user_type_mobile=None, is_cumulative=True, require_submissions=True,
+        supply_points=False):
+    additional_filters = []
+    if user_type_mobile is not None:
+        additional_filters.append(
+            get_user_type_filters(
+                histo_type,
+                user_type_mobile,
+                require_submissions,
+            )
+        )
+    if histo_type == 'active_cases':
+        additional_filters.append(get_case_owner_filters())
+    if supply_points:
+        additional_filters.append({'terms': {'type': ['supply-point']}})
+
+    hist_data_func = (
+        _histo_data if is_cumulative else _histo_data_non_cumulative
+    )
+    histo_data = hist_data_func(
+        domains,
+        histo_type,
+        datespan.startdate_display,
+        datespan.enddate_display,
+        interval,
+        additional_filters
+    )
+
+    return {
+        'histo_data': histo_data,
+        'initial_values': (
+            dict([
+                (
+                    dom["display_name"],
+                    _total_until_date(
+                        histo_type,
+                        datespan,
+                        filters=additional_filters,
+                        domain_list=dom["names"],
+                    )
+                ) for dom in domains
+            ])
+            if is_cumulative else {"All Domains": 0}
+        ),
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
 
 
 HISTO_TYPE_TO_FUNC = {
