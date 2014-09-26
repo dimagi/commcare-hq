@@ -23,11 +23,25 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     district = case_property('district')
     state = case_property('state')
     reason_for_mother_closure = case_property('reason_for_mother_closure')
+    mother_state = case_property('mother_state')
+
+    anc_1 = case_property('anc_1')
+    anc_2 = case_property('anc_2')
+    anc_3 = case_property('anc_3')
+    anc_4 = case_property('anc_4')
+    tt_1 = case_property('tt_1')
+    tt_2 = case_property('tt_2')
+    tt_booster = case_property('tt_booster')
+    iron_folic = case_property('iron_folic')
+    completed_100_ifa = case_property('completed_100_ifa')
+    anemia_signs = case_property('anemia_signs')
+    currently_referred = case_property('currently_referred')
+    knows_closest_facility = case_property('knows_closest_facility')
+    lmp = case_property('lmp')
+    previous_tetanus = case_property('previous_tetanus')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
-    lmp = case_property('lmp')
-    mother_state = case_property('mother_state')
 
     women_registered = user_calcs.MotherRegistered()
 

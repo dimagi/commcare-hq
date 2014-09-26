@@ -199,10 +199,6 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
         return result
 
     @property
-    def headers(self):
-        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
-
-    @property
     def columns(self):
         return [
             DatabaseColumn("Trimester 1",
@@ -225,6 +221,68 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
             )
         ]
 
+class AnteNatalCareServiceOverview(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'ante_natal_care_service_overview'
+    title = 'Ante Natal Care Service Overview'
+
     @property
-    def data(self):
-        return super(PregnantMotherBreakdownByTrimester, self).data
+    def filters(self):
+        filter = super(AnteNatalCareServiceOverview, self).filters
+        filter.append(EQ('mother_state', 'pregnant_mother_type'))
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'),
+                                  DataTablesColumn('Total Eligible'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+                  {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
+                  {'sort_key': 'n/a', 'html': 'n/a'},
+                  {'sort_key': 'n/a', 'html': 'n/a'}]]
+        for i in range(1,5):
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug])}])
+        return result
+
+    @property
+    def columns(self):
+        return [
+
+            DatabaseColumn("Total pregnant",
+                CountUniqueColumn('doc_id', alias="total_pregnant"),
+            ),
+            DatabaseColumn("ANC3",
+                CountUniqueColumn('doc_id', alias="anc_3", filters=self.filters + [EQ('anc_3', 'yes')]),
+            ),
+            DatabaseColumn("TT Completed (TT2 or Booster)",
+                CountUniqueColumn('doc_id', alias="tt_completed",
+                                  filters=self.filters + [OR([EQ('tt_2', 'yes'), EQ('tt_booster', 'yes')])]),
+            ),
+            DatabaseColumn("Taking IFA tablets",
+                CountUniqueColumn('doc_id', alias="ifa_tablets", filters=self.filters + [EQ('iron_folic', 'yes')]),
+            ),
+            DatabaseColumn("Completed 100 IFA tablets",
+                CountUniqueColumn('doc_id', alias="100_tablets", filters=self.filters + [EQ('completed_100_ifa', 'yes')]),
+            ),
+            DatabaseColumn("ANC3 Total Eligible",
+                CountUniqueColumn('doc_id', alias="anc_3_eligible",
+                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('lmp', 'days_224')])]),
+            ),
+            DatabaseColumn("TT Completed (TT2 or Booster) Total Eligible",
+                CountUniqueColumn('doc_id', alias="tt_completed_eligible",
+                                  filters=self.filters + [OR([EQ('tt_1', 'yes'), EQ('previous_tetanus', 'yes')])]),
+            ),
+            DatabaseColumn("Taking IFA tablets Total Eligible",
+                CountUniqueColumn('doc_id', alias="ifa_tablets_eligible", filters=self.filters + [EQ('iron_folic', 'yes')]),
+            ),
+            DatabaseColumn("Completed 100 IFA tablets Total Eligible",
+                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
+            )
+        ]

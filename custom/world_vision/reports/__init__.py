@@ -39,15 +39,17 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
             empty='',
+            yes='yes',
             strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
             stred=self.datespan.enddate.strftime("%Y-%m-%d"),
-            today=datetime.datetime.now().strftime("%Y-%m-%d"),
-            last_month=(datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d"),
             pregnant_mother_type = 'pregnant'
         )
 
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
+        config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d"),
+        config['days_195'] = (today - datetime.timedelta(days=195)).strftime("%Y-%m-%d"),
+        config['days_224'] = (today - datetime.timedelta(days=224)).strftime("%Y-%m-%d"),
         config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
