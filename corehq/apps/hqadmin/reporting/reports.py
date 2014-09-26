@@ -25,6 +25,7 @@ from corehq.elastic import (
 )
 
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.util.dates import get_timestamp_millis
 
 LARGE_ES_NUMBER = 10 ** 6
 
@@ -34,6 +35,13 @@ def add_params_to_query(query, params):
         for k in params:
             query = query.filter({"terms": {k: params[k]}})
     return query
+
+
+def get_data_point(count, date):
+    return {
+        "count": count,
+        "time": get_timestamp_millis(date),
+    }
 
 
 def format_return_data(shown_data, initial_value, datespan):
@@ -50,13 +58,7 @@ def format_return_data(shown_data, initial_value, datespan):
 
 def add_blank_data(histo_data, start, end):
     if not histo_data:
-        return [
-            {
-                "count": 0,
-                "time": int(1000 * time.mktime(date.timetuple())),
-            }
-            for date in [start, end]
-        ]
+        return [get_data_point(0, date) for date in [start, end]]
     return histo_data
 
 
@@ -145,8 +147,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -167,11 +168,12 @@ def domains_matching_plan(software_plan_edition, start, end):
 def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
     return [
-        {
-            "count": len(domains & domains_matching_plan(
+        get_data_point(
+            len(domains & domains_matching_plan(
                 software_plan_edition, timestamp, timestamp)),
-            "time": int(1000 * time.mktime(timestamp.timetuple())),
-        } for timestamp in daterange(
+            timestamp
+        )
+        for timestamp in daterange(
             interval, datespan.startdate, datespan.enddate
         )
     ]
@@ -216,8 +218,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
             }
         c = len(active_domains)
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -239,8 +240,7 @@ def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
         users = sms_query.run().facet('users', "terms")
         c = len(users)
         if c > 0:
-            histo_data.append({"count": c, "time":
-                1000 * time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -267,8 +267,7 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
         d = sms_query.filter(backend_filter).run()
         c = len(d.facet('domains', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -288,8 +287,7 @@ def get_countries_stats_data(domains, datespan, interval,
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
-            histo_data.append({"count": c, "time": 1000 *
-                time.mktime(timestamp.timetuple())})
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -557,14 +555,14 @@ def get_stock_transaction_stats_data(domains, datespan, interval):
 
     return format_return_data(
         [
-            {
-                "count": get_stock_transactions_in_daterange(
+            get_data_point(
+                get_stock_transactions_in_daterange(
                     domains,
                     enddate,
                     start_date=startdate,
                 ),
-                "time": 1000 * time.mktime(enddate.timetuple()),
-            }
+                enddate
+            )
             for startdate, enddate in intervals(
                 interval,
                 datespan.startdate,
@@ -782,10 +780,13 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                     case_owner_filters=case_owner_filters,
                     case_type_filters=case_type_filters,
                 )
-                domain_data.append({
-                    'time': 1000 * time.mktime(timestamp.timetuple()),
-                    'count': sum(point['count'] for point in past_30_days[display_name]),
-                })
+                domain_data.append(
+                    get_data_point(
+                        sum(point['count']
+                            for point in past_30_days[display_name]),
+                        timestamp
+                    )
+                )
             histo_data.update({
                 display_name: domain_data
             })
