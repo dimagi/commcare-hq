@@ -603,7 +603,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
             field_view=UserFieldsView,
             domain=self.domain,
             required_only=True,
-            existing_custom_data=self.editable_user.user_data,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
