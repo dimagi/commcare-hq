@@ -2767,33 +2767,6 @@ def download_bulk_app_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 
 
-'''
-def _make_text_nodes(id, itext, lang):
-    """
-    Create a new <text id=':id'> node in the given itext node for the given
-    language and return it. Also create nodes for this id in all of the language
-    blocks in itext if they do not already exist.
-
-    According to the following page, it is bad practice to not replicate all
-    text ids across all languages.
-    https://bitbucket.org/javarosa/javarosa/wiki/xform#!multi-lingual-support
-
-    :param itext:
-    :param lang:
-    :param langs:
-    :return:
-    """
-    for lang_node in itext.findall("./{f}translation"):
-        text_node = lang_node.find("./{f}text[@id='%s-label']" % id)
-        if not text_node.exists():
-            e = etree.Element(
-                '{f}text'.format(**namespaces),
-                {'id': "%s-label" % id}
-            )
-            lang_node.xml.append(e)
-    return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
-'''
-
 def _get_col_key(translation_type, language):
     '''
     Returns the name of the column in the bulk app translation spreadsheet given
@@ -3049,13 +3022,6 @@ def _update_form_translations(sheet, rows, missing_cols, app):
             question_id = row['label']
             text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
             assert(text_node.exists())
-
-            # Create text node if it doesn't already exist and translations are to be updated
-            '''
-            not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'audio', 'image', 'video']])
-            if text_node.exists() == False and len(not_none_translations) > 0:
-                text_node = _make_text_nodes(question_id, itext, lang)
-            '''
 
             # Add or remove translations
             for trans_type in ['default', 'audio', 'image', 'video']:
