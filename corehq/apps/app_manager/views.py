@@ -2637,6 +2637,7 @@ def _expected_bulk_app_sheet_headers(app):
             ])
     return headers
 
+
 def _get_translation(id, lang, form, media=None):
     '''
     Returns the label (or media path) for the given question in the given language
@@ -2766,6 +2767,7 @@ def download_bulk_app_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 
 
+'''
 def _make_text_nodes(id, itext, lang):
     """
     Create a new <text id=':id'> node in the given itext node for the given
@@ -2784,10 +2786,13 @@ def _make_text_nodes(id, itext, lang):
     for lang_node in itext.findall("./{f}translation"):
         text_node = lang_node.find("./{f}text[@id='%s-label']" % id)
         if not text_node.exists():
-            e = etree.Element('{f}text'.format(**namespaces), {'id':id})
+            e = etree.Element(
+                '{f}text'.format(**namespaces),
+                {'id': "%s-label" % id}
+            )
             lang_node.xml.append(e)
     return itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s-label']" % (lang, id))
-
+'''
 
 def _get_col_key(translation_type, language):
     '''
@@ -2821,29 +2826,38 @@ def _process_modules_and_forms_sheet(rows, app):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
+    This does not save the changes to the database.
     :param rows:
     :param app:
     :return: None, modifies the given app/forms/modules in place.
     """
+    msgs = []
+
     for row in rows:
         identifying_text = row.get('sheet_name', '').split('_')
 
         if len(identifying_text) not in (1, 2):
-            messages.error('Invalid sheet_name "%s", skipping row.' % row.get('sheet_name', ''))
+            msgs.append(
+                (messages.error, 'Invalid sheet_name "%s", skipping row.' % row.get('sheet_name', ''))
+            )
             continue
 
         module_index = int(identifying_text[0].replace("module", "")) - 1
         try:
             document = app.get_module(module_index)
         except ModuleNotFoundException, e:
-            messages.error('Invalid module in row "%s", skipping row.' % row.get('sheet_name'))
+            msgs.append(
+                (messages.error, 'Invalid module in row "%s", skipping row.' % row.get('sheet_name'))
+            )
             continue
         if len(identifying_text) == 2:
             form_index = int(identifying_text[1].replace("form", "")) - 1
             try:
                 document = document.get_form(form_index)
             except FormNotFoundException, e:
-                messages.error('Invalid form in row "%s", skipping row.' % row.get('sheet_name'))
+                msgs.append(
+                    (messages.error, 'Invalid form in row "%s", skipping row.' % row.get('sheet_name'))
+                )
                 continue
 
         if _has_at_least_one_translation(row, 'default', app.langs):
@@ -2862,23 +2876,21 @@ def _process_modules_and_forms_sheet(rows, app):
             audio = None
         document.media_image = image
         document.media_audio = audio
-    app.save()
+    return msgs
 
 
 def _update_case_list_translations(sheet, rows, app):
     """
     Modify the translations of a module case list display properties given
-    a sheet of translation data.
-
-    The properties in the sheet must be in the exact same order that they appear
+    a sheet of translation data. The properties in the sheet must be in the exact same order that they appear
     in the bulk app translation download.
+    This function does not save the modified app to the database.
 
     :param sheet:
     :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
     :param app:
     :return: None. Modifies app/module in place.
     """
-
     # The spreadsheet contains a list of case properties. These are in the same
     # order as the bulk download and the HQ "Display Properties" page. This
     # list is formed by merging two other lists. These lists also might contain
@@ -2886,6 +2898,7 @@ def _update_case_list_translations(sheet, rows, app):
     # (but are in different positions). Therefore, a little bit of work needs
     # to be done to figure out which instance(s) in which list corresponds to
     # each row in the sheet.
+    msgs = []
 
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
@@ -2901,7 +2914,8 @@ def _update_case_list_translations(sheet, rows, app):
             # Construct a list of mapping rows
             mappings = []
             j = 1
-            while rows[i+j]['case_property'].endswith(" (ID Mapping Value)"):
+            while i+j < len(rows) \
+                  and rows[i+j]['case_property'].endswith(" (ID Mapping Value)"):
                 rows[i+j]['case_property'] = rows[i+j]['case_property'].split(" ")[0] # Cut off the id mapping value part
                 mappings.append(rows[i+j])
                 j += 1
@@ -2971,14 +2985,17 @@ def _update_case_list_translations(sheet, rows, app):
                         else:
                             d.pop(lang, None)
             else:
-                messages.error("You must provide at least one translation of the case property '%s'"
+                msgs.append(
+                    (messages.error, "You must provide at least one translation of the case property '%s'"
                                % translation_row['case_property'] + " (ID Mapping Value)" if index != 0 else "")
-    app.save()
+                )
+    return msgs
 
 
 def _update_form_translations(sheet, rows, missing_cols, app):
     """
     Modify the translations of a form given a sheet of translation data.
+    This does not save the changes to the DB.
 
     :param sheet: a WorksheetJSONReader
     :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
@@ -2986,6 +3003,7 @@ def _update_form_translations(sheet, rows, missing_cols, app):
     :param app:
     :return: None. Modifies app/form in place.
     """
+    msgs = []
     mod_text, form_text = sheet.worksheet.title.split("_")
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
@@ -2997,17 +3015,47 @@ def _update_form_translations(sheet, rows, missing_cols, app):
         # Tell the user this?
         return
     itext = xform.itext_node
+    assert(itext.exists())
+
+    # Make language nodes for each language if they don't yet exist
+    #
+    # Currently operating under the assumption that every xForm has at least
+    # one translation element, that each translation element has a text node
+    # for each question and that each text node has a value node under it
+    template_translation_el = None
+    # Get a translation element to be used as a template for new elements
+    for lang in app.langs:
+        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
+        if trans_el.exists():
+            template_translation_el = trans_el
+    assert(template_translation_el != None)
+    # Add missing translation elements
+    for lang in app.langs:
+        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
+        if not trans_el.exists():
+            new_trans_el = copy.deepcopy(template_translation_el.xml)
+            new_trans_el.set('lang', lang)
+            if lang != app.langs[0]: # If the language isn't the default language
+                new_trans_el.attrib.pop('default')
+            else:
+                new_trans_el.set('default', '')
+            itext.xml.append(new_trans_el)
 
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
+        assert(translation_node.exists())
+
         for row in rows:
             question_id = row['label']
             text_node = translation_node.find("./{f}text[@id='%s-label']" % question_id)
+            assert(text_node.exists())
 
             # Create text node if it doesn't already exist and translations are to be updated
+            '''
             not_none_translations = filter(None, [row[k+'_'+lang] for k in ['default', 'audio', 'image', 'video']])
             if text_node.exists() == False and len(not_none_translations) > 0:
                 text_node = _make_text_nodes(question_id, itext, lang)
+            '''
 
             # Add or remove translations
             for trans_type in ['default', 'audio', 'image', 'video']:
@@ -3036,20 +3084,43 @@ def _update_form_translations(sheet, rows, missing_cols, app):
                     value_node.xml.text = new_translation
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
-    app.save()
+    return msgs
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-
     app = get_app(domain, app_id)
+    msgs = _process_bulk_app_translation_upload(request, app, request.file)
+    app.save()
+    for msg in msgs:
+        # Add the messages to the request object.
+        # msg[0] should be a function like django.contrib.messages.error .
+        # mes[1] should be a string.
+        msg[0](request, msg[1])
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+def _process_bulk_app_translation_upload(app, f):
+    """
+    Process the bulk upload file for the given app.
+    We return these message tuples instead of calling them now to allow this
+    function to be used independently of request objects.
+
+    :param app:
+    :param f:
+    :return: Returns a list of message tuples. The first item in each tuple is
+    a function like django.contrib.messages.error, and the second is a string.
+    """
+
+    msgs = []
+
     headers = _expected_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]:h[1] for h in headers}
     processed_sheets = set()
 
-    workbook = WorkbookJSONReader(request.file)
+    workbook = WorkbookJSONReader(f)
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
@@ -3057,13 +3128,17 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
-            messages.error(request, 'Sheet "%s" was repeated. Only the first occurence has been processed' % sheet.worksheet.title)
+            msgs.append(
+                (messages.error , 'Sheet "%s" was repeated. Only the first occurence has been processed' % sheet.worksheet.title)
+            )
             continue
 
         # CHECK FOR BAD SHEET NAME
         expected_columns = expected_sheets.get(sheet.worksheet.title, None)
         if expected_columns == None:
-            messages.error(request, 'Skipping sheet "%s", did not recognize title' % sheet.worksheet.title)
+            msgs.append(
+                (messages.error, 'Skipping sheet "%s", did not recognize title' % sheet.worksheet.title)
+            )
             continue
 
         # CHECK FOR MISSING KEY COLUMN
@@ -3071,10 +3146,14 @@ def upload_bulk_app_translations(request, domain, app_id):
             # Several columns on this sheet could be used to uniquely identify
             # rows. Using sheet_name for now, but unique_id could also be used.
             if expected_columns[1] not in sheet.headers:
-                messages.error('Skipping sheet "%s", could not find "%s" column' % (sheet.worksheet.title, expected_columns[1]))
+                msgs.append(
+                    (messages.error, 'Skipping sheet "%s", could not find "%s" column' % (sheet.worksheet.title, expected_columns[1]))
+                )
         else:
             if expected_columns[0] not in sheet.headers:
-                messages.error('Skipping sheet "%s", could not find label or case_property column.' % sheet.worksheet.title)
+                msgs.append(
+                    (messages.error, 'Skipping sheet "%s", could not find label or case_property column.' % sheet.worksheet.title)
+                )
                 continue
 
         processed_sheets.add(sheet.worksheet.title)
@@ -3082,19 +3161,21 @@ def upload_bulk_app_translations(request, domain, app_id):
         # CHECK FOR MISSING COLUMNS
         missing_cols = set(expected_columns) - set(sheet.headers)
         if len(missing_cols) > 0:
-            messages.warning(request,
-                             'Sheet "%s" has less columns than expected. '
-                             'Sheet will be processed but the following translations will be unchanged: %s'
-                             % (sheet.worksheet.title, " ,".join(missing_cols))
+            msgs.append(
+                (messages.warning, 'Sheet "%s" has less columns than expected. '
+                                   'Sheet will be processed but the following translations will be unchanged: %s'
+                                    % (sheet.worksheet.title, " ,".join(missing_cols))
+                )
             )
 
         # CHECK FOR EXTRA COLUMNS
         extra_cols = set(sheet.headers) - set(expected_columns)
         if len(extra_cols) > 0:
-            messages.warning(request,
-                             'Sheet "%s" has unrecognized columns. '
-                             'Sheet will be processed but ignoring the following columns: %s'
-                             % (sheet.worksheet.title, " ,".join(extra_cols))
+            msgs.append(
+                (messages.warning, 'Sheet "%s" has unrecognized columns. '
+                                   'Sheet will be processed but ignoring the following columns: %s'
+                                   % (sheet.worksheet.title, " ,".join(extra_cols))
+                )
             )
 
         # NOTE: At the moment there is no missing row detection. This could be added if we want though
@@ -3102,16 +3183,21 @@ def upload_bulk_app_translations(request, domain, app_id):
 
         if sheet.worksheet.title == "Modules_and_forms":
             # It's the first sheet
-            _process_modules_and_forms_sheet(rows, app)
+            ms = _process_modules_and_forms_sheet(rows, app)
+            msgs.extend(ms)
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
-            _update_case_list_translations(sheet, rows, app)
+            ms = _update_case_list_translations(sheet, rows, app) # TODO: Make this func and the next two return messages
+            msgs.extend(ms)
         else:
             # It's a form sheet
-            _update_form_translations(sheet, rows, missing_cols, app)
+            ms = _update_form_translations(sheet, rows, missing_cols, app)
+            msgs.extend(ms)
 
-    messages.success(request, _("App Translations Updated!"))
-    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+    msgs.append(
+        (messages.success, _("App Translations Updated!"))
+    )
+    return msgs
 
 
 common_module_validations = [
