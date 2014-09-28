@@ -129,7 +129,12 @@ class CallCenterIndicators(object):
         all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
         relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
 
-        ids = {case.hq_user_id for case in relevant_cases}
+        ids = {getattr(case, 'hq_user_id', None) for case in relevant_cases}
+        try:
+            ids.remove(None)
+        except KeyError:
+            pass
+        
         return ids
 
     @property
@@ -161,7 +166,7 @@ class CallCenterIndicators(object):
         owners = set()
         for user_id in self.users_needing_data:
             owners.add(user_id)
-            owners = owners.union(user_to_groups[user_id])
+            owners = owners.union(user_to_groups.get(user_id, set()))
 
         return owners
 

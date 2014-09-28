@@ -15,7 +15,7 @@ def indicators(user, version, last_sync):
         try:
             fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
         except Exception as e:  # blanket exception catching intended
-            logger.exception('problem generating report fixtures for user {user}: {msg}'.format(
+            logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
                 user=user._id, msg=str(e)))
 
     return fixtures
