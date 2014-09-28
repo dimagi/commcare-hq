@@ -2737,7 +2737,7 @@ def download_bulk_app_translations(request, domain, app_id):
                 if question['type'] != 'DataBindOnly':
 
                     # Add row for this question
-                    id = question['value'].split("/")[-1]
+                    id = "/".join(question['value'].split("/")[2:])
                     labels = tuple(questions_by_lang[l][i]['label'] for l in app.langs)
                     media_paths = []
                     for media in ['audio', 'image', 'video']:
