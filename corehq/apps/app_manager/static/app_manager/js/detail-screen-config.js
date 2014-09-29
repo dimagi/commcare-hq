@@ -338,11 +338,8 @@ var DetailScreenConfig = (function () {
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
-            this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                that.screen.config.sortRows.addSortRow(that.field.val(), '', '');
-                e.preventDefault();
-                e.stopImmediatePropagation();
-            });
+            // TODO: Look into removing screen.config.sortRows. We will likely need
+            //       some of that code later though to build the "Filtering and Sorting" section
         }
 
         Column.init = function (col, screen) {
@@ -653,14 +650,6 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 column.format.fire('change');
 
-                var sortLine = $('<td/>').addClass('detail-screen-extra');
-                // Only add sort link if we are using new sort feature and
-                // this is not the blank field row
-                if (window.enableNewSort && column.field.value) {
-                    sortLine.append(column.$sortLink)
-                }
-                sortLine.appendTo($tr);
-
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
                         suggested ? column.$add : column.$copy
@@ -717,12 +706,12 @@ var DetailScreenConfig = (function () {
                     //       DetailScreenConfig.message.LONG
                     //       DetailScreenConfig.message.SHORT_POPOVER
                     //       DetailScreenConfig.message.LONG_POPOVER
-                    // TODO: Remove css class that is not longer needed:
+                    // TODO: Remove css classes that are not longer needed:
                     //       detail-screen-checkbox
+                    //       detail-screen-extra
                     $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
                     $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
