@@ -1,14 +1,17 @@
 from datetime import date, timedelta
 from couchdbkit.exceptions import MultipleResultsFound
+from sqlagg.base import TableNotFoundException, ColumnNotFoundException
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen, CountUniqueColumn, CountColumn
 from sqlagg import filters
 from corehq.apps.callcenter.utils import MAPPING_NAME_CASES, MAPPING_NAME_CASE_OWNERSHIP
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.reportfixtures.indicator_sets import SqlIndicatorSet
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlData, DictDataFormat, DataFormatter
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
 PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
@@ -22,6 +25,38 @@ TYPE_SUM = 'sum'
 TABLE_PREFIX = '%s_' % settings.CTABLE_PREFIX if hasattr(settings, 'CTABLE_PREFIX') else ''
 
 FORMDATA_TABLE = 'sofabed_formdata'
+
+
+class IndicatorSetException(Exception):
+    pass
+
+
+class SqlIndicatorSet(SqlData):
+    no_value = 0
+    name = ''
+    table_name = None
+
+    def __init__(self, domain, user):
+        self.domain = domain
+        self.user = user
+
+    @property
+    def data(self):
+        try:
+            data = super(SqlIndicatorSet, self).data
+        except (TableNotFoundException, ColumnNotFoundException) as e:
+            logger.exception(e)
+            return {}
+
+        format = DictDataFormat(self.columns, no_value=self.no_value)
+        formatter = DataFormatter(format, row_filter=self.include_row)
+        return formatter.format(data, keys=self.keys, group_by=self.group_by)
+
+    def include_row(self, key, row):
+        """
+        Final opportunity to determine if row gets included in results.
+        """
+        return True
 
 
 def case_table(domain):
