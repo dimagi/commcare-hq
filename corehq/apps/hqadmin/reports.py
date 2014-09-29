@@ -27,7 +27,7 @@ INDICATOR_DATA = {
     "active_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domains",
-        "chart_title": "Active Project Spaces",
+        "chart_title": "Active Project Spaces (last 30 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
         "xaxis_label": "# domains",
@@ -35,7 +35,7 @@ INDICATOR_DATA = {
     "active_domain_count_forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domain_count_forms",
-        "chart_title": "Active Project Spaces (via Mobile Worker)",
+        "chart_title": "Active Project Spaces (via Mobile Worker) (last 30 days)",
         "get_request_params": {
             "add_sms_domains": False,
             "restrict_to_mobile_submissions": True,
@@ -47,7 +47,7 @@ INDICATOR_DATA = {
     "active_domain_count_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domain_count_sms",
-        "chart_title": "Active Project Spaces (via SMS)",
+        "chart_title": "Active Project Spaces (via SMS) (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
@@ -58,7 +58,7 @@ INDICATOR_DATA = {
     "active_community_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_community_domain_count",
-        "chart_title": "Active Community Project Spaces",
+        "chart_title": "Active Community Project Spaces (last 30 days)",
         "get_request_params": {
             "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
         },
@@ -69,7 +69,7 @@ INDICATOR_DATA = {
     "active_self_started_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_self_started_domains",
-        "chart_title": "Active Self Started Project Spaces",
+        "chart_title": "Active Self Started Project Spaces (last 30 days)",
         "get_request_params": {
             "domain_params_es": {
                 "internal.self_started": ["T"],
@@ -236,7 +236,7 @@ INDICATOR_DATA = {
     "active_commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_commconnect_domains",
-        "chart_title": "Active CommConnect Project Spaces",
+        "chart_title": "Active CommConnect Project Spaces (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
@@ -304,7 +304,7 @@ INDICATOR_DATA = {
     "active_mobile_workers": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
-        "chart_title": "Active Mobile Workers",
+        "chart_title": "Active Mobile Workers (last 30 days)",
         "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcareuser"],
@@ -317,7 +317,7 @@ INDICATOR_DATA = {
     "active_dimagi_owned_gateways": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_dimagi_owned_gateways",
-        "chart_title": "Active Projects Using Dimagi Owned Gateways",
+        "chart_title": "Active Projects Using Dimagi Owned Gateways (last 30 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_dimagi_gateways",
         "xaxis_label": "# domains",
@@ -332,7 +332,7 @@ INDICATOR_DATA = {
     "active_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_clients",
-        "chart_title": "Active Mobile Clients",
+        "chart_title": "Active Mobile Clients (last 30 days)",
         "hide_cumulative_charts": True,
         "get_request_params": {
             "additional_params_es": {
