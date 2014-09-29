@@ -397,7 +397,6 @@ var DetailScreenConfig = (function () {
             this.config = config;
             this.edit = options.edit;
             this.columns = [];
-            this.suggestedColumns = [];
             this.model = config.model;
             this.lang = options.lang;
             this.langs = options.langs || [];
@@ -470,22 +469,6 @@ var DetailScreenConfig = (function () {
                 return column;
             }
 
-            function initColumnAsSuggestion(column) {
-                column.includeInShort.setEdit(false);
-                column.includeInLong.setEdit(false);
-                column.model.setEdit(false);
-                column.field.setEdit(false);
-                column.header.setEdit(false);
-                column.format.setEdit(false);
-                column.enum_extra.setEdit(false);
-                column.late_flag_extra.setEdit(false);
-                column.filter_xpath_extra.setEdit(false);
-                column.calc_xpath_extra.setEdit(false);
-                column.time_ago_extra.setEdit(false);
-                column.setGrip(false);
-                return column;
-            }
-
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
             // Only display columns from the long list or the short list (as is
@@ -508,28 +491,6 @@ var DetailScreenConfig = (function () {
                 this.columns[i] = Column.init(column, this);
                 initColumnAsColumn(this.columns[i]);
             }
-
-            // set up suggestion columns
-            var info;
-            for (i = 0; i < this.properties.length; i += 1) {
-                property = this.properties[i];
-                header = {};
-                header[this.lang] = getPropertyTitle(property);
-                column = Column.init({
-                    model: model,
-                    field: property,
-                    header: header,
-                    includeInShort: false
-                }, this);
-                initColumnAsSuggestion(column);
-                this.suggestedColumns.push(column);
-            }
-            this.suggestedColumns = _(this.suggestedColumns).sortBy(function (column) {
-                return [
-                    /\//.test(column.field.val()) ? 2 : 1,
-                    column.field.val()
-                ];
-            });
 
             this.saveButton = COMMCAREHQ.SaveButton.init({
                 unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
@@ -629,11 +590,8 @@ var DetailScreenConfig = (function () {
                     sort_elements: ko.toJS(this.config.sortRows.sortRows)
                 };
             },
-            addColumn: function (column, $tbody, i, suggested) {
+            addColumn: function (column, $tbody, i) {
                 var $tr = $('<tr/>').data('index', i).appendTo($tbody);
-                if (suggested && i !== -1) {
-                    $tr.addClass('detail-screen-suggestion').attr('title', DetailScreenConfig.message.ADD_COLUMN);
-                }
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(column.$grip).appendTo($tr);
                 } else {
@@ -663,7 +621,7 @@ var DetailScreenConfig = (function () {
                     //       we probably want to preserve $add because the spec
                     //       calls for + signs in that section
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? "" : column.$delete
+                        column.$delete
                     ).appendTo($tr);
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
@@ -671,7 +629,7 @@ var DetailScreenConfig = (function () {
                 return $tr;
             },
             render: function () {
-                var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
+                var $table, $columns, $thead, $tr, i, $box;
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -723,22 +681,11 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
-                    $suggestedColumns = $('<tbody/>').appendTo($table);
 
                     for (i = 0; i < this.columns.length; i += 1) {
                         this.addColumn(this.columns[i], $columns, i, false);
                     }
 
-                    if (this.edit) {
-                        for (i = 0; i < this.suggestedColumns.length; i += 1) {
-                            this.addColumn(this.suggestedColumns[i], $suggestedColumns, i, true).click(
-                                getDuplicateCallback(this.suggestedColumns[i])
-                            );
-                            this.suggestedColumns[i].includeInShort.ui.hide();
-                            this.suggestedColumns[i].includeInLong.ui.hide();
-                            this.suggestedColumns[i].$add.hide();
-                        }
-                    }
                     this.$columns = $columns;
 
                     // init UI events
