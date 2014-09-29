@@ -878,7 +878,6 @@ var DetailScreenConfig = (function () {
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
-        FILTER_XPATH_FORMAT: 'Filter (Advanced)',
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
@@ -909,7 +908,6 @@ var DetailScreenConfig = (function () {
         {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
         {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-        {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
