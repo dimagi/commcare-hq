@@ -112,6 +112,11 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     has_diarrhea_since_last_visit = case_property('has_diarrhea_since_last_visit')
     dairrhea_treated_with_ors = case_property('dairrhea_treated_with_ors')
     dairrhea_treated_with_zinc = case_property('dairrhea_treated_with_zinc')
+    weight_birth = case_property('weight_birth')
+    breastfeed_1_hour = case_property('breastfeed_1_hour')
+    exclusive_breastfeeding = case_property('exclusive_breastfeeding')
+    comp_breastfeeding =  case_property('comp_breastfeeding')
+    supplementary_feeding_baby = case_property('supplementary_feeding_baby')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

@@ -37,5 +37,9 @@ class MixedTTCReport(TTCReport):
             ImmunizationOverview(config=config),
             ChildrenDeaths(config=config),
             ChildrenDeathDetails(config=config),
+            NutritionMeanMedianBirthWeightDetails(config=config),
+            NutritionBirthWeightDetails(config=config),
+            NutritionFeedingDetails(config=config),
+            ChildrenDeathDetails(config=config),
             ChildHealthIndicators(config=config)
         ]

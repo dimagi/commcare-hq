@@ -1,8 +1,9 @@
 from sqlagg import CountUniqueColumn, CountColumn
 from sqlagg.columns import SimpleColumn, SumColumn
-from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
+from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
+from custom.world_vision.custom_queries import CustomMeanColumn, CustomMedianColumn
 
 LOCATION_HIERARCHY = {
     "state": {
@@ -800,6 +801,167 @@ class ChildrenDeathDetails(BaseSqlData):
             DatabaseColumn("Cause of death", SimpleColumn('cause_of_death_child')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id')),
         ]
+
+
+class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_birth_weights_1'
+    title = 'Nutrition Details'
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Mean'), DataTablesColumn('Median')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Median Birth Weight",
+                CustomMeanColumn('weight_birth', alias='mean_birth_weight')
+            ),
+            DatabaseColumn("Median Birth Weight",
+                CustomMedianColumn('weight_birth', alias='median_birth_weight')
+            )
+        ]
+
+    @property
+    def rows(self):
+        return [['Birth Weight (kg)',
+                 "%.2f" % (self.data['mean_birth_weight']),
+                 "%.2f" % (self.data['median_birth_weight'])]
+        ]
+
+class NutritionBirthWeightDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_birth_details_2'
+    title = ''
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        result = []
+        for idx, column in enumerate(self.columns):
+            if idx == 0:
+                percent = 'n/a'
+            else:
+                percent = self.percent_fn(self.data['total_birthweight_known'], self.data[column.slug])
+
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}]
+            )
+        return result
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Total children with with birthweight known",
+                CountUniqueColumn('doc_id',
+                    alias="total_birthweight_known",
+                    filters=self.filters + [NOTEQ('weight_birth', 'empty')]
+                )
+            ),
+        ]
+        columns.extend([
+            DatabaseColumn("Birthweight < 2.5 kg",
+                CountUniqueColumn('doc_id',
+                    alias="total_birthweight_lt_25",
+                    filters=self.filters + [AND([LT('weight_birth', 'weight_birth_25'), NOTEQ('weight_birth', 'empty')])]
+                )
+            ),
+            DatabaseColumn("Birthweight >= 2.5 kg",
+                CountUniqueColumn('doc_id',
+                    alias="total_birthweight_gte_25",
+                    filters=self.filters + [AND([GTE('weight_birth', 'weight_birth_25'), NOTEQ('weight_birth', 'empty')])]
+                )
+            )
+        ])
+        return columns
+
+
+class NutritionFeedingDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_feeding_details'
+    title = ''
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Feeding type'), DataTablesColumn('Number'), DataTablesColumn('Total Eligible'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        result = []
+        for i in range(0,4):
+            result.append([{'sort_key': self.columns[2*i].header, 'html': self.columns[2*i].header},
+                           {'sort_key': self.data[self.columns[2*i].slug], 'html': self.data[self.columns[2*i].slug]},
+                           {'sort_key': self.data[self.columns[2*i+1].slug], 'html': self.data[self.columns[2*i + 1].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[2*i + 1].slug], self.data[self.columns[2*i].slug]),
+                           'html': self.percent_fn(self.data[self.columns[2*i + 1].slug], self.data[self.columns[2*i].slug])}
+
+            ])
+        return result
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Colostrum feeding",
+                CountUniqueColumn('doc_id',
+                    alias="colostrum_feeding",
+                    filters=self.filters + [EQ('breastfeed_1_hour', 'yes')]
+                )
+            ),
+            DatabaseColumn("Colostrum feeding Total Eligible",
+                CountUniqueColumn('doc_id',
+                    alias="colostrum_feeding_total_eligible",
+                    filters=self.filters + [NOTEQ('breastfeed_1_hour', 'empty')]
+                )
+            ),
+
+            DatabaseColumn("Exclusive Breastfeeding (EBF)",
+                CountUniqueColumn('doc_id',
+                    alias="exclusive_breastfeeding",
+                    filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"), LTE('dob', "days_183")])]
+                )
+            ),
+            DatabaseColumn("Exclusive Breastfeeding (EBF) Total Eligible",
+                CountUniqueColumn('doc_id',
+                    alias="exclusive_breastfeeding_total_eligible",
+                    filters=self.filters + [GTE('dob', 'days_183')]
+                )
+            ),
+
+            DatabaseColumn("Supplementary feeding",
+                CountUniqueColumn('doc_id',
+                    alias="supplementary_feeding",
+                    filters=self.filters + [AND([EQ('supplementary_feeding_baby', 'yes'), GTE('dob', 'days_182')])]
+                )
+            ),
+            DatabaseColumn("Supplementary feeding Total Eligible",
+                CountUniqueColumn('doc_id',
+                    alias="supplementary_feeding_total_eligible",
+                    filters=self.filters + [GTE('dob', 'days_182')]
+                )
+            ),
+
+            DatabaseColumn("Complementary feeding",
+                CountUniqueColumn('doc_id',
+                    alias="complementary_feeding",
+                    filters=self.filters + [AND([EQ('comp_breastfeeding', 'yes'), LTE('dob', 'days_183'), GTE('dob', 'days_730')])]
+                )
+            ),
+            DatabaseColumn("Complementary feeding Total Eligible",
+                CountUniqueColumn('doc_id',
+                    alias="complementary_feeding_total_eligible",
+                    filters=self.filters + [AND([LTE('dob', 'days_183'), GTE('dob', 'days_730')])]
+                )
+            )
+        ]
+
 
 class ChildHealthIndicators(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"

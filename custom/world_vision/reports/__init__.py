@@ -3,9 +3,7 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
-    CauseOfMaternalDeaths, DeliveryLiveBirthDetails, ClosedChildCasesBreakdown, ImmunizationOverview, \
-    ChildrenDeathDetails, PostnatalCareOverview
+from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, NutritionBirthWeightDetails, PostnatalCareOverview, ImmunizationOverview, ClosedChildCasesBreakdown
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -56,7 +54,8 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             normal_delivery = 'normal',
             cesarean_delivery = 'cesarean',
             unknown_delivery = 'unknown',
-            abortion = 'abortion'
+            abortion = 'abortion',
+            weight_birth_25 = '2.5'
         )
 
         today = datetime.date.today()
@@ -66,11 +65,14 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         config['days_5'] = (today - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
         config['days_21'] = (today - datetime.timedelta(days=21)).strftime("%Y-%m-%d"),
         config['days_106'] = (today - datetime.timedelta(days=106)).strftime("%Y-%m-%d"),
+        config['days_182'] = (today - datetime.timedelta(days=182)).strftime("%Y-%m-%d"),
+        config['days_183'] = (today - datetime.timedelta(days=183)).strftime("%Y-%m-%d"),
         config['days_195'] = (today - datetime.timedelta(days=195)).strftime("%Y-%m-%d"),
         config['days_224'] = (today - datetime.timedelta(days=224)).strftime("%Y-%m-%d"),
         config['days_273'] = (today - datetime.timedelta(days=273)).strftime("%Y-%m-%d"),
         config['days_548'] = (today - datetime.timedelta(days=548)).strftime("%Y-%m-%d"),
         config['days_700'] = (today - datetime.timedelta(days=700)).strftime("%Y-%m-%d"),
+        config['days_730'] = (today - datetime.timedelta(days=730)).strftime("%Y-%m-%d"),
         config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
@@ -127,6 +129,8 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, DeliveryLiveBirthDetails):
             chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+        elif isinstance(data_provider, NutritionBirthWeightDetails):
+            chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, PostnatalCareOverview) or isinstance(data_provider, ImmunizationOverview):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
@@ -165,3 +169,4 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
+
