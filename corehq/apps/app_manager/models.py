@@ -3349,7 +3349,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     return False
                 return True
             visited.add(m.id)
-            if m.parent_select.active:
+            if hasattr(m, 'parent_select') and m.parent_select.active:
                 parent = modules.get(m.parent_select.module_id, None)
                 if parent != None and cycle_helper(parent):
                     return True
@@ -3380,6 +3380,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
+        if self.build_version < yaml_setting.get("since", "0"):
+            setting = yaml_setting.get("disabled_default", None)
+            if setting is not None:
+                return setting
         return yaml_setting.get("default")
 
     @property

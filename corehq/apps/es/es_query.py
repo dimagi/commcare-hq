@@ -5,15 +5,17 @@ There should be a file and subclass of ESQuery for each index we have.
 Each method returns a new object, so you can chain calls together like
 SQLAlchemy. Here's an example usage:
 
-    q = FormsES()\
-        .domain(self.domain)\
-        .xmlns(self.xmlns)\
+.. code-block:: python
+
+    q = FormsES()\\
+        .domain(self.domain)\\
+        .xmlns(self.xmlns)\\
         .submitted(gte=self.datespan.startdate_param,
-                    lt=self.datespan.enddateparam)\
-        .fields(['xmlns', 'domain', 'app_id'])\
-        .sort('received_on', desc=False)\
-        .size(self.pagination.count)\
-        .start(self.pagination.start)\
+                    lt=self.datespan.enddateparam)\\
+        .fields(['xmlns', 'domain', 'app_id'])\\
+        .sort('received_on', desc=False)\\
+        .size(self.pagination.count)\\
+        .start(self.pagination.start)\\
         .terms_facet('babies_saved', 'babies.count', size=10)
     result = q.run()
     total_docs = result.total
@@ -21,6 +23,8 @@ SQLAlchemy. Here's an example usage:
 
 Generally useful filters and queries should be abstracted away for re-use,
 but you can always add your own like so:
+
+.. code-block:: python
 
     q.filter({"some_arbitrary_filter": {...}})
     q.set_query({"fancy_query": {...}})
@@ -33,16 +37,16 @@ and `query.pprint()`, both of which use `json.dumps()` and are suitable for
 pasting in to ES Head or Marvel or whatever
 
 language:
-    es_query - the entire query, filters, query, pagination, facets
-    filters - a list of the individual filters
-    query - the query, used for searching, not filtering
-    field - a field on the document. User docs have a 'domain' field.
-    lt/gt - less/greater than
-    lte/gte - less/greater than or equal to
+ * es_query - the entire query, filters, query, pagination, facets
+ * filters - a list of the individual filters
+ * query - the query, used for searching, not filtering
+ * field - a field on the document. User docs have a 'domain' field.
+ * lt/gt - less/greater than
+ * lte/gte - less/greater than or equal to
 
-TODOs:
-sorting
-Add esquery.iter() method
+.. TODOs:
+    sorting
+    Add esquery.iter() method
 """
 from collections import namedtuple
 from copy import deepcopy
@@ -266,8 +270,8 @@ class ESQuery(object):
 class ESQuerySet(object):
     """
     The object returned from ESQuery.run
-    ESQuerySet.raw is the raw response from elasticsearch
-    ESQuerySet.query is the ESQuery object
+     * ESQuerySet.raw is the raw response from elasticsearch
+     * ESQuerySet.query is the ESQuery object
     """
     def __init__(self, raw, query):
         if 'error' in raw:
