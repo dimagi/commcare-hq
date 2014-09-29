@@ -39,6 +39,18 @@ class BaseSqlData(SqlData):
     def data(self):
         return super(BaseSqlData, self).data
 
+    def _get_rows(self, dict, rows):
+        total_row = calculate_total_row(rows)
+        total = total_row[-1] if total_row else 0
+        result = []
+        for (k, v) in dict.iteritems():
+            number = [row[1]['html'] if row[0] == k else 0 for row in rows]
+            number = number[0] if number else 0
+            result.append([{'sort_key':v, 'html': v}, {'sort_key':number, 'html': number},
+                   {'sort_key':self.percent_fn(total, number), 'html': self.percent_fn(total, number)}
+            ])
+        return result
+
 class MotherRegistrationOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'mother_registration_overview'
@@ -46,8 +58,12 @@ class MotherRegistrationOverview(BaseSqlData):
 
     @property
     def filters(self):
-        # TODO: add here location filter
-        return []
+        #if date_not_selected:
+        if False:
+            #TODO: add here location filter
+            return []
+        else:
+            return super(MotherRegistrationOverview, self).filters
 
     @property
     def rows(self):
@@ -67,7 +83,7 @@ class MotherRegistrationOverview(BaseSqlData):
             DatabaseColumn("Total mothers registered ever",
                 CountUniqueColumn('doc_id',
                     alias="total",
-                    filters=self.filters
+                    filters=[NOTEQ('doc_id', 'empty')]
                 )
             ),
         ]
@@ -475,15 +491,8 @@ class CauseOfMaternalDeaths(BaseSqlData):
 
     @property
     def rows(self):
-        rows = super(CauseOfMaternalDeaths, self).rows
-        total_row = calculate_total_row(rows)
-        total = total_row[-1] if total_row else 0
-        for row in rows:
-            from custom.world_vision import DEATH_MAPPING
-            row[0] = DEATH_MAPPING[row[0]]
-            percent = self.percent_fn(total, row[1]['html'])
-            row.append({'sort_key':percent, 'html': percent})
-        return rows
+        from custom.world_vision import MOTHER_DEATH_MAPPING
+        return self._get_rows(MOTHER_DEATH_MAPPING, super(CauseOfMaternalDeaths, self).rows)
 
     @property
     def filters(self):
@@ -677,19 +686,28 @@ class ImmunizationOverview(BaseSqlData):
             )
         ]
 
-class ChildrenDeaths(CauseOfMaternalDeaths):
+class ChildrenDeaths(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_deaths'
     title = 'Children Death Details'
     total_row_name = "Total Deaths"
+    show_total = True
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def group_by(self):
         return ['type_of_child_death']
 
     @property
+    def rows(self):
+        from custom.world_vision import CHILD_DEATH_TYPE
+        return self._get_rows(CHILD_DEATH_TYPE, super(ChildrenDeaths, self).rows)
+
+    @property
     def filters(self):
-        filter = super(CauseOfMaternalDeaths, self).filters
+        filter = super(ChildrenDeaths, self).filters
         filter.append(EQ('reason_for_child_closure', 'death'))
         return filter
 
@@ -720,18 +738,8 @@ class ChildrenDeathDetails(BaseSqlData):
 
     @property
     def rows(self):
-        rows = super(ChildrenDeathDetails, self).rows
-        total_row = calculate_total_row(rows)
-        total = total_row[-1] if total_row else 0
-        result = []
-        from custom.world_vision import CAUSE_OF_DEATH
-        for (k, v) in CAUSE_OF_DEATH.iteritems():
-            number = [row[1]['html'] if row[0] == k else 0 for row in rows]
-            number = number[0] if number else 0
-            result.append([{'sort_key':v, 'html': v}, {'sort_key':number, 'html': number},
-                   {'sort_key':self.percent_fn(total, number), 'html': self.percent_fn(total, number)}
-            ])
-        return result
+        from custom.world_vision import CHILD_CAUSE_OF_DEATH
+        return self._get_rows(CHILD_CAUSE_OF_DEATH, super(ChildrenDeathDetails, self).rows)
 
     @property
     def filters(self):

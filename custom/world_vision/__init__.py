@@ -23,19 +23,22 @@ REASON_FOR_CLOSURE_MAPPING = {
     'death': 'Death'
 }
 
-DEATH_MAPPING = {
+MOTHER_DEATH_MAPPING = {
     'seizure': 'Seizure or fits',
     'high_bp': 'High blood pressure',
     'bleeding_postpartum': 'Excessive bleeding post-delivery',
     'fever_or_infection_post_delivery': 'Fever or infection post-delivery',
     'during_caeserian_surgery': 'During Caeserian Surgery',
     'other': 'Other reason',
+}
+
+CHILD_DEATH_TYPE = {
     'newborn_death': 'Newborn deaths (< 1 month)',
     'infant_death': 'Infant deaths (< 1 year)',
     'child_death': 'Child deaths (> 1yr)'
 }
 
-CAUSE_OF_DEATH = {
+CHILD_CAUSE_OF_DEATH = {
     'ari': 'ARI',
     'fever': 'Fever',
     'dysentery': 'Dysentery or diarrhea',

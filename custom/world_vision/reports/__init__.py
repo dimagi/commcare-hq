@@ -5,7 +5,7 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanM
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
     CauseOfMaternalDeaths, DeliveryLiveBirthDetails, ClosedChildCasesBreakdown, ImmunizationOverview, \
-    ChildrenDeathDetails
+    ChildrenDeathDetails, PostnatalCareOverview
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -123,14 +123,11 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
-        if isinstance(data_provider, ClosedMotherCasesBreakdown) or isinstance(data_provider, CauseOfMaternalDeaths)\
-                or isinstance(data_provider, ClosedChildCasesBreakdown):
+        if isinstance(data_provider, ClosedMotherCasesBreakdown) or isinstance(data_provider, ClosedChildCasesBreakdown):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
-        elif isinstance(data_provider, PregnantMotherBreakdownByTrimester) or isinstance(data_provider, ChildrenDeathDetails):
-            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, DeliveryLiveBirthDetails):
             chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
-        else:
+        elif isinstance(data_provider, PostnatalCareOverview) or isinstance(data_provider, ImmunizationOverview):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
@@ -140,6 +137,8 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
                 chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
             else:
                 chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+        else:
+            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]
 
     @property
