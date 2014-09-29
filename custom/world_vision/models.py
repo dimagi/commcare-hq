@@ -1,3 +1,4 @@
+from functools import partial
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.world_vision import WORLD_VISION_DOMAINS
@@ -59,6 +60,17 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
     women_registered = user_calcs.MotherRegistered()
 
+
+def referenced_case_attribute(case, field_name):
+    if not case.indices[0]['referenced_id']:
+        return ""
+    referenced_case = CommCareCase.get(case.indices[0]['referenced_id'])
+    if hasattr(referenced_case, field_name):
+        return getattr(referenced_case, field_name)
+    else:
+        return ""
+
+
 class WorldVisionChildFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
@@ -71,14 +83,10 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
-    phc = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).phc \
-        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'phc') else '')
-    block = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).block \
-        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'block') else '')
-    district = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).district \
-        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'district') else '')
-    state = flat_field(lambda case: CommCareCase.get(case.indices[0]['referenced_id']).state \
-        if hasattr(CommCareCase.get(case.indices[0]['referenced_id']), 'state') else '')
+    phc = flat_field(partial(referenced_case_attribute, field_name='phc'))
+    block = flat_field(partial(referenced_case_attribute, field_name='block'))
+    district = flat_field(partial(referenced_case_attribute, field_name='district'))
+    state = flat_field(partial(referenced_case_attribute, field_name='state'))
 
     reason_for_child_closure = case_property('reason_for_child_closure')
     bcg = case_property('bcg')
