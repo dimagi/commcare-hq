@@ -43,8 +43,11 @@ ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
-PROD_PROXIES = ['hqproxy0.internal.commcarehq.org',
-                'hqproxy2.internal.commcarehq.org']
+PROD_PROXIES = [
+    'hqproxy0.internal.commcarehq.org',
+    'hqproxy3.internal.commcarehq.org',
+]
+
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
