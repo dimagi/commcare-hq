@@ -1,3 +1,6 @@
+.detail-screen-table {
+    display: inline-block;
+}
 .detail-screen-table th {
     border-top-width: 0;
 }

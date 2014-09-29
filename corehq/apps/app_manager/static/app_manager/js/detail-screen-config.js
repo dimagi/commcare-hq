@@ -222,7 +222,6 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 that.header = uiElement.input().val(invisibleVal);
-                that.header.ui.find('input').addClass('input-small');
                 that.header.setVisibleValue(visibleVal);
             }());
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
