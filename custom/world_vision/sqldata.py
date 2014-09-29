@@ -4,6 +4,25 @@ from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 
+LOCATION_HIERARCHY = {
+    "state": {
+        "prop": "state",
+        "name": "State"
+    },
+    "district": {
+        "prop": "district",
+        "name": "District"
+    },
+    "block": {
+        "prop": "block",
+        "name": "Block"
+    },
+    "phc": {
+        "prop": "phc",
+        "name": "PHC"
+    }
+}
+
 class BaseSqlData(SqlData):
     show_total = False
     datatables = False
@@ -50,6 +69,30 @@ class BaseSqlData(SqlData):
                    {'sort_key':self.percent_fn(total, number), 'html': self.percent_fn(total, number)}
             ])
         return result
+
+class LocationSqlData(SqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    geography_config = LOCATION_HIERARCHY
+
+    @property
+    def filters(self):
+        return [EQ('domain', 'domain')]
+
+    @property
+    def filter_values(self):
+        return {'domain': 'wvindia2'}
+
+    @property
+    def group_by(self):
+        return [k for k in self.geography_config.keys()]
+
+    @property
+    def columns(self):
+        levels = [k for k in self.geography_config.keys()]
+        columns = []
+        for k in levels:
+            columns.append(DatabaseColumn(k, SimpleColumn(k)))
+        return columns
 
 class MotherRegistrationOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"

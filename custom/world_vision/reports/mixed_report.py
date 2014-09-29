@@ -1,5 +1,5 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.intrahealth.filters import LocationFilter
+from custom.world_vision.filters import LocationFilter
 from custom.world_vision.reports import TTCReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import *
@@ -10,7 +10,7 @@ class MixedTTCReport(TTCReport):
     name = 'Mother/Child Report'
     slug = 'mother_child_report'
     title = "Mother/Child Report"
-    fields = [DatespanFilter, ]
+    fields = [DatespanFilter, LocationFilter]
     default_rows = 10
     exportable = True
 
