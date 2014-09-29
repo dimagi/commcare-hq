@@ -422,79 +422,117 @@ def get_location_rows(domain):
     return mappings
 
 
-def dump_users_and_groups(response, domain):
-    file = StringIO()
-    writer = Excel2007ExportWriter()
+def build_data_headers(keys):
+    return json_to_headers(
+        {'data': {key: None for key in keys}}
+    )
 
-    users = CommCareUser.by_domain(domain)
-    user_data_keys = set()
-    user_groups_length = 0
-    user_dicts = []
-    group_data_keys = set()
-    group_dicts = []
-    group_memoizer = GroupMemoizer(domain=domain)
-    # load groups manually instead of calling group_memoizer.load_all()
-    # so that we can detect blank groups
-    blank_groups = set()
-    for group in Group.by_domain(domain):
-        if group.name:
-            group_memoizer.add_group(group)
-        else:
-            blank_groups.add(group)
 
-    if blank_groups:
-        raise GroupNameError(blank_groups=blank_groups)
-
-    for user in users:
-        data = user.user_data
-        group_names = sorted(map(
+def parse_users(group_memoizer, users):
+    def _get_group_names(user):
+        return sorted(map(
             lambda id: group_memoizer.get(id).name,
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
-        # exclude password and user_id
-        user_dicts.append({
-            'data': data,
+
+    def _make_user_dict(user):
+        return {
+            'data': user.user_data,
             'group': group_names,
             'name': user.full_name,
-            # dummy display string for passwords
-            'password': "********", 
+            'password': "********",  # dummy display string for passwords
             'phone-number': user.phone_number,
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
             'user_id': user._id,
-        })
-        user_data_keys.update(user.user_data.keys() if user.user_data else {})
+        }
+
+    user_data_keys = set()
+    user_groups_length = 0
+    user_dicts = []
+
+    for user in users:
+        group_names = _get_group_names(user)
+        user_dicts.append(_make_user_dict(user))
+        user_data_keys.update(user.user_data.keys() if user.user_data else [])
         user_groups_length = max(user_groups_length, len(group_names))
 
-    sorted_groups = sorted(group_memoizer.groups, key=lambda group: alphanumeric_sort_key(group.name))
-    for group in sorted_groups:
-        group_dicts.append({
+    user_headers = [
+        'username', 'password', 'name', 'phone-number', 'email',
+        'language', 'user_id'
+    ]
+    user_headers.extend(build_data_headers(user_data_keys))
+    user_headers.extend(json_to_headers(
+        {'group': range(1, user_groups_length + 1)}
+    ))
+
+    def _user_dicts():
+        for user_dict in user_dicts:
+            row = dict(flatten_json(user_dict))
+            yield [row.get(header) or '' for header in user_headers]
+    return user_headers, _user_dicts()
+
+
+def parse_groups(groups):
+    def _make_group_dict(group):
+        return {
             'id': group.get_id,
             'name': group.name,
             'case-sharing': group.case_sharing,
             'reporting': group.reporting,
             'data': group.metadata,
-        })
-        group_data_keys.update(group.metadata.keys() if group.metadata else {})
+        }
 
-    # include obscured password column for adding new users
-    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language', 'user_id']
-    user_headers.extend(json_to_headers(
-        {'data': dict([(key, None) for key in user_data_keys])}
-    ))
-    user_headers.extend(json_to_headers(
-        {'group': range(1, user_groups_length + 1)}
-    ))
+    group_data_keys = set()
+    group_dicts = []
+    sorted_groups = sorted(
+        groups,
+        key=lambda group: alphanumeric_sort_key(group.name)
+    )
+    for group in sorted_groups:
+        group_dicts.append(_make_group_dict(group))
+        group_data_keys.update(group.metadata.keys() if group.metadata else [])
 
     group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
-    group_headers.extend(json_to_headers(
-        {'data': dict([(key, None) for key in group_data_keys])}
-    ))
+    group_headers.extend(build_data_headers(group_data_keys))
 
+    def _get_group_rows():
+        for group_dict in group_dicts:
+            row = dict(flatten_json(group_dict))
+            yield [row.get(header) or '' for header in group_headers]
+    return group_headers, _get_group_rows()
+
+
+def dump_users_and_groups(response, domain):
+    def _load_memoizer(domain):
+        group_memoizer = GroupMemoizer(domain=domain)
+        # load groups manually instead of calling group_memoizer.load_all()
+        # so that we can detect blank groups
+        blank_groups = set()
+        for group in Group.by_domain(domain):
+            if group.name:
+                group_memoizer.add_group(group)
+            else:
+                blank_groups.add(group)
+        if blank_groups:
+            raise GroupNameError(blank_groups=blank_groups)
+
+        return group_memoizer
+
+    export_file = StringIO()
+    writer = Excel2007ExportWriter()
+    group_memoizer = _load_memoizer(domain)
+
+    user_headers, user_rows = parse_users(group_memoizer, CommCareUser.by_domain(domain))
+    group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [
         ('users', [user_headers]),
         ('groups', [group_headers]),
+    ]
+    rows = [
+        ('users', user_rows),
+        ('groups', group_rows),
     ]
 
     commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
@@ -502,34 +540,14 @@ def dump_users_and_groups(response, domain):
         headers.append(
             ('locations', [['username', 'location-sms-code', 'location name (optional)']])
         )
-
-    writer.open(
-        header_table=headers,
-        file=file,
-    )
-
-    def get_user_rows():
-        for user_dict in user_dicts:
-            row = dict(flatten_json(user_dict))
-            yield [row.get(header) or '' for header in user_headers]
-
-    def get_group_rows():
-        for group_dict in group_dicts:
-            row = dict(flatten_json(group_dict))
-            yield [row.get(header) or '' for header in group_headers]
-
-    rows = [
-        ('users', get_user_rows()),
-        ('groups', get_group_rows()),
-    ]
-
-    if commtrack_enabled:
         rows.append(
             ('locations', get_location_rows(domain))
         )
 
-
+    writer.open(
+        header_table=headers,
+        file=export_file,
+    )
     writer.write(rows)
-
     writer.close()
-    response.write(file.getvalue())
+    response.write(export_file.getvalue())
