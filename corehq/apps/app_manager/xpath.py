@@ -56,8 +56,8 @@ class XPath(unicode):
         return XPath(u'{} != {}'.format(self, b))
 
     @staticmethod
-    def expr(template, args, partial=False):
-        if partial:
+    def expr(template, args, chainable=False):
+        if chainable:
             template = template.join(['{}'] * len(args))
 
         def check_type(arg):
@@ -78,11 +78,11 @@ class XPath(unicode):
 
     @staticmethod
     def and_(*args):
-        return XPath.expr(u' and ', args, partial=True)
+        return XPath.expr(u' and ', args, chainable=True)
 
     @staticmethod
     def or_(*args):
-        return XPath.expr(u' or ', args, partial=True)
+        return XPath.expr(u' or ', args, chainable=True)
 
     @staticmethod
     def not_(a):
