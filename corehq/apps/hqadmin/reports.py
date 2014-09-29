@@ -30,7 +30,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Project Spaces",
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_domain_count_forms": {
@@ -43,7 +42,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_domain_count_sms": {
@@ -55,7 +53,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_community_domain_count": {
@@ -67,7 +64,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_self_started_domain_count": {
@@ -81,7 +77,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "domain_count": {
@@ -89,7 +84,6 @@ INDICATOR_DATA = {
         "chart_name": "domains",
         "chart_title": "Total Project Spaces",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "commtrack_domain_count": {
@@ -97,7 +91,6 @@ INDICATOR_DATA = {
         "chart_name": "domains",
         "chart_title": "Total CommTrack Project Spaces",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "domain_self_started_count": {
@@ -110,7 +103,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "subscriptions": {
@@ -119,7 +111,6 @@ INDICATOR_DATA = {
         "chart_title": "Subscriptions",
         "hide_cumulative_charts": True,
         "histogram_type": "subscriptions",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# domains on subscription",
     },
@@ -128,7 +119,6 @@ INDICATOR_DATA = {
         "chart_name": "forms",
         "chart_title": "Forms Submitted by All Users",
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_mobile": {
@@ -139,7 +129,6 @@ INDICATOR_DATA = {
             "user_type_mobile": True,
         },
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_web": {
@@ -150,7 +139,6 @@ INDICATOR_DATA = {
             "user_type_mobile": False,
         },
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "users": {
@@ -158,7 +146,6 @@ INDICATOR_DATA = {
         "chart_name": "users",
         "chart_title": "Total Users",
         "histogram_type": "users_all",
-        "interval": "week",
         "xaxis_label": "# users",
     },
     "users_mobile": {
@@ -169,7 +156,6 @@ INDICATOR_DATA = {
             "user_type_mobile": True,
         },
         "histogram_type": "users_all",
-        "interval": "week",
         "xaxis_label": "# users",
     },
     "users_web": {
@@ -180,7 +166,6 @@ INDICATOR_DATA = {
             "user_type_mobile": False,
         },
         "histogram_type": "users_all",
-        "interval": "week",
         "xaxis_label": "# users",
     },
     "commtrack_users_web": {
@@ -192,7 +177,6 @@ INDICATOR_DATA = {
             "user_type_mobile": False,
         },
         "histogram_type": "users_all",
-        "interval": "week",
         "xaxis_label": "# users",
     },
     "active_users_mobile": {
@@ -204,7 +188,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "users_all",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# users",
     },
@@ -214,7 +197,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Cases (last 90 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_cases",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
@@ -223,7 +205,6 @@ INDICATOR_DATA = {
         "chart_name": "sms_domains",
         "chart_title": "Total Projects That Have Used SMS",
         "histogram_type": "sms_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "commconnect_domain_count": {
@@ -231,7 +212,6 @@ INDICATOR_DATA = {
         "chart_name": "commconnect_domains",
         "chart_title": "Total CommConnect Enabled Domains",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "incoming_sms_domain_count": {
@@ -244,7 +224,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "sms_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "sms_only_domain_count": {
@@ -252,7 +231,6 @@ INDICATOR_DATA = {
         "chart_name": "sms_only_domains",
         "chart_title": "Total Projects Using Only SMS",
         "histogram_type": "sms_only_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_commconnect_domain_count": {
@@ -264,7 +242,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_outgoing_sms": {
@@ -277,7 +254,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_incoming_sms": {
@@ -290,7 +266,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_outgoing_client_sms": {
@@ -304,7 +279,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_incoming_client_sms": {
@@ -318,7 +292,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_mobile_workers": {
@@ -326,7 +299,6 @@ INDICATOR_DATA = {
         "chart_name": "total_mobile_workers",
         "chart_title": "Total Mobile Workers",
         "histogram_type": "mobile_workers",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_mobile_workers": {
@@ -340,7 +312,6 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_dimagi_owned_gateways": {
@@ -349,7 +320,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Projects Using Dimagi Owned Gateways",
         "hide_cumulative_charts": True,
         "histogram_type": "active_dimagi_gateways",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_clients": {
@@ -357,7 +327,6 @@ INDICATOR_DATA = {
         "chart_name": "total_clients",
         "chart_title": "Total Mobile Clients",
         "histogram_type": "mobile_clients",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_clients": {
@@ -371,7 +340,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "active_mobile_users",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_countries": {
@@ -380,7 +348,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "active_countries",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "countries": {
@@ -389,7 +356,6 @@ INDICATOR_DATA = {
         "chart_title": "Total Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "countries",
-        "interval": "week",
         "xaxis_label": "# countries",
     },
     "commtrack_total_outgoing_sms": {
@@ -403,7 +369,6 @@ INDICATOR_DATA = {
             "is_commtrack": True,
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# SMS",
     },
     "commtrack_total_incoming_sms": {
@@ -417,7 +382,6 @@ INDICATOR_DATA = {
             "is_commtrack": True,
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# SMS",
     },
     "commtrack_forms": {
@@ -425,7 +389,6 @@ INDICATOR_DATA = {
         "chart_name": "commtrack_forms",
         "chart_title": "Total CommTrack Form Submissions",
         "histogram_type": "commtrack_forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "active_supply_points": {
@@ -437,7 +400,6 @@ INDICATOR_DATA = {
             "supply_points": True
         },
         "histogram_type": "active_cases",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
@@ -446,7 +408,6 @@ INDICATOR_DATA = {
         "chart_name": "stock_transactions",
         "chart_title": "Total Stock Transactions",
         "histogram_type": "stock_transactions",
-        "interval": "week",
         "xaxis_label": "# stock transactions",
     },
 }
@@ -931,6 +892,8 @@ class GlobalAdminReports(AdminDomainStatsReport):
             indicator_data[key]["get_request_params"] = json.dumps(
                 indicator_data[key]["get_request_params"]
             )
+            if not ("interval" in indicator_data[key]):
+                indicator_data[key]["interval"] = "month"
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
