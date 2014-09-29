@@ -405,6 +405,7 @@ var DetailScreenConfig = (function () {
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
+            this.columnType = options.columnType;
 
             function fireChange() {
                 that.fire('change');
@@ -444,6 +445,16 @@ var DetailScreenConfig = (function () {
 
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
+            // Only display columns from the long list or the short list (as is
+            // appropriate given this.columnType)
+            columns = _.filter(columns, function(col){
+                if (this.columnType == "short" && col.x){
+                    return true;
+                } else if (this.columnType == "long" && col.y){
+                    return true;
+                }
+                return false;
+            }, this);
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
@@ -778,7 +789,14 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
-            function addScreen(pair) {
+            /**
+             * Add a Screen to this DetailScreenConfig
+             * @param pair
+             * @param columnType
+             * The type of case properties that this Screen will be displaying,
+             * either "short" or "long".
+             */
+            function addScreen(pair, columnType) {
                 var screen = Screen.init(
                     $('<div/>'),
                     pair,
@@ -788,14 +806,15 @@ var DetailScreenConfig = (function () {
                         langs: that.langs,
                         edit: that.edit,
                         properties: that.properties,
-                        saveUrl: that.saveUrl
+                        saveUrl: that.saveUrl,
+                        columnType: columnType
                     }
                 );
                 that.screens.push(screen);
                 that.$home.append(screen.$home);
             }
 
-            addScreen(spec.state);
+            addScreen(spec.state, "short");
         };
         DetailScreenConfig.init = function ($home, spec) {
             var ds = new DetailScreenConfig($home, spec);
