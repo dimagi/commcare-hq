@@ -651,14 +651,14 @@ var DetailScreenConfig = (function () {
                 column.format.fire('change');
 
                 if (this.edit) {
-                    $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? column.$add : column.$copy
-                    ).appendTo($tr);
+                    // TODO: Get rid of column.$add and perhaps column.$copy
+                    //       Note: If "Filtering and Sorting" uses Column, then
+                    //       we probably want to preserve $add because the spec
+                    //       calls for + signs in that section
                     $('<td/>').addClass('detail-screen-icon').append(
                         suggested ? "" : column.$delete
                     ).appendTo($tr);
                 } else {
-                    $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
                 return $tr;
@@ -713,7 +713,6 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
 
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
