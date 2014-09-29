@@ -46,6 +46,29 @@ You can also run a once-off reindex for a specific index::
     $ ./manage.py ptop_fast_reindex_users
 
 
+Changing a mapping or adding data
+---------------------------------
+If you're adding additional data to elasticsearch, you'll need modify that
+index's mapping file in order to be able to query on that new data.
+
+Adding data to an index
+'''''''''''''''''''''''
+Each pillow has a ``change_transform`` method which you can override to
+perform additional transformations or lookups on the data.  If for example,
+you wanted to store username in addition to user_id on cases in elastic,
+you'd add ``username`` to ``corehq.pillows.mappings.case_mapping``, then
+modify ``corehq.pillows.case.CasePillow.change_transform`` to do the
+appropriate lookup.  It accepts a ``doc_dict`` for the case doc and is
+expected to return a ``doc_dict``, so just add the ``username`` to that.
+
+Building the new index
+''''''''''''''''''''''
+Once you've made the change, you'll need to build a new index which uses
+that new mapping, so you'll have to update the hash at the top of the file.
+This can just be a random alphanumeric string.  This will trigger a preindex
+as outlined in the `Indexes` section.
+
+
 How to un-bork your broken indexes
 ----------------------------------
 Sometimes things get in a weird state and (locally!) it's easiest to just
