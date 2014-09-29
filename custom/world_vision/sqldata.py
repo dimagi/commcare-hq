@@ -1,6 +1,6 @@
 from sqlagg import CountUniqueColumn, CountColumn
 from sqlagg.columns import SimpleColumn, SumColumn
-from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
+from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 
@@ -18,8 +18,9 @@ class BaseSqlData(SqlData):
 
     @property
     def filters(self):
-        # TODO: add here location and date filter
-        return []
+        # TODO: add here location filter
+        filters = [BETWEEN("date", "startdate", "enddate")]
+        return filters
 
     @property
     def headers(self):
@@ -138,7 +139,8 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
     @property
     def rows(self):
         rows = super(ClosedMotherCasesBreakdown, self).rows
-        total = calculate_total_row(rows)[-1]
+        total_row = calculate_total_row(rows)
+        total = total_row[-1] if total_row else 0
         for row in rows:
             from custom.world_vision import REASON_FOR_CLOSURE_MAPPING
             row[0] = REASON_FOR_CLOSURE_MAPPING[row[0]]
