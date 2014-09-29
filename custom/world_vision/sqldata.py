@@ -474,7 +474,8 @@ class CauseOfMaternalDeaths(BaseSqlData):
     @property
     def rows(self):
         rows = super(CauseOfMaternalDeaths, self).rows
-        total = calculate_total_row(rows)[-1]
+        total_row = calculate_total_row(rows)
+        total = total_row[-1] if total_row else 0
         for row in rows:
             from custom.world_vision import DEATH_MAPPING
             row[0] = DEATH_MAPPING[row[0]]
@@ -636,7 +637,7 @@ class ImmunizationOverview(BaseSqlData):
             DatabaseColumn("Measles",
                 CountUniqueColumn('doc_id', alias="measles", filters=self.filters + [EQ('measles', 'yes')])
             ),
-            DatabaseColumn("Fully Immunized in 1st year (upto Measles)",
+            DatabaseColumn("Fully Immunized in 1st year",
                 CountUniqueColumn('doc_id', alias="fully_immunized",
                                   filters=self.filters + [AND([EQ('bcg', 'yes'), EQ('opv0', 'yes'), EQ('hepb0', 'yes'),
                                   EQ('opv1', 'yes'), EQ('hepb1', 'yes'), EQ('dpt1', 'yes'), EQ('opv2', 'yes'), EQ('hepb2', 'yes'),
@@ -674,10 +675,11 @@ class ImmunizationOverview(BaseSqlData):
             )
         ]
 
-class ChildrenDeathDetails(CauseOfMaternalDeaths):
+class ChildrenDeaths(CauseOfMaternalDeaths):
     table_name = "fluff_WorldVisionChildFluff"
-    slug = 'children_death_details'
+    slug = 'children_deaths'
     title = 'Children Death Details'
+    total_row_name = "Total Deaths"
 
     @property
     def group_by(self):
@@ -691,11 +693,94 @@ class ChildrenDeathDetails(CauseOfMaternalDeaths):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[DataTablesColumn('Children Death Details'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+        return DataTablesHeader(*[DataTablesColumn('Children Death Type'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
 
     @property
     def columns(self):
         return [
             DatabaseColumn("Reason", SimpleColumn('type_of_child_death')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id'))
+        ]
+
+class ChildrenDeathDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_death_details'
+    title = ''
+    show_total = True
+    total_row_name = "Total Deaths"
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def group_by(self):
+        return ['cause_of_death_child']
+
+    @property
+    def rows(self):
+        rows = super(ChildrenDeathDetails, self).rows
+        total_row = calculate_total_row(rows)
+        total = total_row[-1] if total_row else 0
+        result = []
+        from custom.world_vision import CAUSE_OF_DEATH
+        for (k, v) in CAUSE_OF_DEATH.iteritems():
+            number = [row[1]['html'] if row[0] == k else 0 for row in rows]
+            number = number[0] if number else 0
+            result.append([{'sort_key':v, 'html': v}, {'sort_key':number, 'html': number},
+                   {'sort_key':self.percent_fn(total, number), 'html': self.percent_fn(total, number)}
+            ])
+        return result
+
+    @property
+    def filters(self):
+        filter = super(ChildrenDeathDetails, self).filters
+        filter.extend([EQ('reason_for_child_closure', 'death'), NOTEQ('cause_of_death_child', 'empty')])
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Cause of death'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Cause of death", SimpleColumn('cause_of_death_child')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id')),
+        ]
+
+class ChildHealthIndicators(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'Child_health_indicators'
+    title = 'Child Health Indicators'
+
+    @property
+    def rows(self):
+        result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+                  {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]}],
+                  [{'sort_key': self.columns[1].header, 'html': self.columns[1].header},
+                  {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]}]]
+        for i in range(2,4):
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug])}])
+        return result
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("ARI (Pneumonia) cases",
+                CountUniqueColumn('doc_id', alias="ari_cases", filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])
+            ),
+            DatabaseColumn("Diarrhea cases",
+                CountUniqueColumn('doc_id', alias="diarrhea_cases", filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])
+            ),
+            DatabaseColumn("ORS given during diarrhea",
+                CountUniqueColumn('doc_id', alias="ors",
+                                  filters=self.filters + [AND([EQ('dairrhea_treated_with_ors', 'yes'), EQ('has_diarrhea_since_last_visit', 'yes')])])
+            ),
+            DatabaseColumn("Zinc given during diarrhea",
+                CountUniqueColumn('doc_id', alias="zinc",
+                                  filters=self.filters + [AND([EQ('dairrhea_treated_with_zinc', 'yes'), EQ('has_diarrhea_since_last_visit', 'yes')])])
+            )
         ]

@@ -4,7 +4,8 @@ from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, \
-    CauseOfMaternalDeaths, DeliveryLiveBirthDetails, ClosedChildCasesBreakdown, ImmunizationOverview
+    CauseOfMaternalDeaths, DeliveryLiveBirthDetails, ClosedChildCasesBreakdown, ImmunizationOverview, \
+    ChildrenDeathDetails
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -125,7 +126,7 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         if isinstance(data_provider, ClosedMotherCasesBreakdown) or isinstance(data_provider, CauseOfMaternalDeaths)\
                 or isinstance(data_provider, ClosedChildCasesBreakdown):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
-        elif isinstance(data_provider, PregnantMotherBreakdownByTrimester):
+        elif isinstance(data_provider, PregnantMotherBreakdownByTrimester) or isinstance(data_provider, ChildrenDeathDetails):
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, DeliveryLiveBirthDetails):
             chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])

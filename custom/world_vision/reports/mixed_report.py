@@ -35,5 +35,7 @@ class MixedTTCReport(TTCReport):
             ChildRegistrationDetails(config=config),
             ClosedChildCasesBreakdown(config=config),
             ImmunizationOverview(config=config),
-            ChildrenDeathDetails(config=config)
+            ChildrenDeaths(config=config),
+            ChildrenDeathDetails(config=config),
+            ChildHealthIndicators(config=config)
         ]

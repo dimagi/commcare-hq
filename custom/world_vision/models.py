@@ -99,6 +99,11 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     dpt_opv_booster = case_property('dpt_opv_booster')
     vita3 = case_property('vita3')
     type_of_child_death = case_property('type_of_child_death')
+    cause_of_death_child = case_property('cause_of_death_child')
+    pneumonia_since_last_visit = case_property('pneumonia_since_last_visit')
+    has_diarrhea_since_last_visit = case_property('has_diarrhea_since_last_visit')
+    dairrhea_treated_with_ors = case_property('dairrhea_treated_with_ors')
+    dairrhea_treated_with_zinc = case_property('dairrhea_treated_with_zinc')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

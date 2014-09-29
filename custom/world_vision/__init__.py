@@ -34,3 +34,15 @@ DEATH_MAPPING = {
     'infant_death': 'Infant deaths (< 1 year)',
     'child_death': 'Child deaths (> 1yr)'
 }
+
+CAUSE_OF_DEATH = {
+    'ari': 'ARI',
+    'fever': 'Fever',
+    'dysentery': 'Dysentery or diarrhea',
+    'injury': 'Injury or accident',
+    'malnutrition': 'Malnutrition',
+    'cholera': 'Cholera',
+    'measles': 'Measles',
+    'meningitis': 'Meningitis',
+    'other': 'Other',
+}
