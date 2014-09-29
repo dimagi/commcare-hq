@@ -38,10 +38,8 @@ PER_DOMAIN_FORM_INDICATORS = {
 
 
 def seconds_till_midnight(timezone):
-    tomorrow = date.today() + timedelta(1)
-    midnight_utc = datetime.combine(tomorrow, time())
-    midnight_in_tz = timezone.localize(midnight_utc)
     now_in_tz = datetime.now(timezone)
+    midnight_in_tz = now_in_tz.replace(hour=23, minute=59, second=59)
     return (midnight_in_tz - now_in_tz).total_seconds()
 
 
