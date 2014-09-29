@@ -16,14 +16,15 @@ class DocumentTransform():
     # with its attachments so that we can properly deal with it
     # across databases.
     # We also need the source database to fetch the attachment
-    def __init__(self, doc, database):
+    def __init__(self, doc, database, exclude_attachments=False):
         self._attachments = {}
         self.attachments = {}
         self.database = database
         if "_attachments" in doc and doc['_attachments']:
-            self._attachments = doc["_attachments"]
-            del doc["_attachments"]
-            self.attachments = dict((k, self.database.fetch_attachment(doc["_id"], k)) for k in self._attachments)
+            _attachments = doc.pop("_attachments")
+            if not exclude_attachments:
+                self._attachments = _attachments
+                self.attachments = dict((k, self.database.fetch_attachment(doc["_id"], k)) for k in self._attachments)
         self.doc = doc
 
 class TargetSyncConfig():
