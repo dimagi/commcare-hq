@@ -509,46 +509,6 @@ var DetailScreenConfig = (function () {
                 initColumnAsColumn(this.columns[i]);
             }
 
-            // set up the custom column
-            // the "custom column" is the row in the table that allows you to add new display properties
-            this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
-            this.customColumn.field.on('change', function () {
-                that.customColumn.header.val(getPropertyTitle(this.val()));
-                if (this.val() && !field_val_re.test(this.val())) {
-                    that.customColumn.format_warning.show().parent().addClass('error');
-                } else {
-                    that.customColumn.format_warning.hide().parent().removeClass('error');
-                }
-            }).$edit_view.autocomplete({
-                source: function (request, response) {
-                    var availableTags = _.map(that.properties, function(value) {
-                        var label = value;
-                        if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                            label = ('<span class="icon-paper-clip"></span> '
-                                     + label.substring(label.indexOf(":") + 1));
-                        }
-                        return {value: value, label: label};
-                    });
-                    response(
-                        $.ui.autocomplete.filter(availableTags,  request.term)
-                    );
-                },
-                minLength: 0,
-                delay: 0,
-                select: function (event, ui) {
-                    that.customColumn.field.val(ui.item.value);
-                    that.customColumn.field.fire('change');
-                }
-            }).focus(function () {
-                $(this).val("").trigger('change');
-                $(this).autocomplete('search');
-            }).data("autocomplete")._renderItem = function (ul, item) {
-                return $("<li></li>")
-                    .data("item.autocomplete", item)
-                    .append($("<a></a>").html(item.label))
-                    .appendTo(ul);
-            };
-
             // set up suggestion columns
             var info;
             for (i = 0; i < this.properties.length; i += 1) {
@@ -770,8 +730,6 @@ var DetailScreenConfig = (function () {
                     }
 
                     if (this.edit) {
-                        this.addColumn(this.customColumn, $suggestedColumns, -1, true);
-
                         for (i = 0; i < this.suggestedColumns.length; i += 1) {
                             this.addColumn(this.suggestedColumns[i], $suggestedColumns, i, true).click(
                                 getDuplicateCallback(this.suggestedColumns[i])
