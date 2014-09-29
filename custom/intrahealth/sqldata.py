@@ -296,8 +296,6 @@ class PPSAvecDonnees(BaseSqlData):
 
     @property
     def filters(self):
-        #We have to filter data by real_date_repeat not date(first position in filters list).
-        #Filtering is done directly in columns method(CountUniqueColumn).
         filters = super(PPSAvecDonnees, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         return filters[1:]
@@ -319,7 +317,7 @@ class PPSAvecDonnees(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
 
-        columns.append(DatabaseColumn(_(u"Données Soumises (1 si oui)"),
+        columns.append(DatabaseColumn(_(u"PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
                                       format_fn=lambda x: {'sort_key': long(x), 'html': long(x)})
         )
@@ -558,7 +556,7 @@ class DureeData(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['district_name', 'month']
+        return ['district_name']
 
     @property
     def columns(self):
@@ -590,7 +588,7 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, filter_values):
 
-        sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key],
+        sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
                                   group_by=self.group_by + ['month'],
                                   whereclause=' AND '.join([f.build_expression() for f in self.filters]),
                                   from_obj="\"" + self.table_name + "\""
