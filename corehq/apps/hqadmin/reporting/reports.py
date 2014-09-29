@@ -342,6 +342,7 @@ def get_mobile_workers_data(domains, datespan, interval,
             .in_domains(domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
+            .show_inactive()
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
@@ -352,6 +353,7 @@ def get_mobile_workers_data(domains, datespan, interval,
             .in_domains(domains)
             .filter({"ids": {"values": users}})
             .mobile_users()
+            .show_inactive()
             .created(lt=datespan.startdate)
             .size(0)).run().total
 
@@ -515,7 +517,7 @@ def get_domain_stats_data(domains, datespan, interval,
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
     mobile_workers = [a['_id'] for a in
-            UserES().fields([]).mobile_users().run().raw_hits]
+            UserES().fields([]).mobile_users().show_inactive().run().raw_hits]
 
     forms_after_date = (FormES()
             .in_domains(domains)
@@ -640,7 +642,7 @@ def get_user_ids(user_type_mobile):
     Returns the set of mobile user IDs if user_type_mobile is True,
     else returns the set of web user IDs.
     """
-    query = UserES()
+    query = UserES().show_inactive()
     if user_type_mobile:
         query = query.mobile_users()
     else:
