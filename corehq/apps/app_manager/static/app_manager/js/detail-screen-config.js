@@ -636,8 +636,8 @@ var DetailScreenConfig = (function () {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
 
-                $('<td/>').addClass('detail-screen-checkbox').append(column.includeInShort.ui).appendTo($tr);
-                $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
+                //TODO: Look into removing column.includeInShort.ui from the column objects
+                //      (make sure it is not used elsewhere first)
 
                 if (!column.field.edit) {
                     column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
@@ -711,8 +711,14 @@ var DetailScreenConfig = (function () {
                     // grip
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.SHORT).appendTo($tr).popover(DetailScreenConfig.message.SHORT_POPOVER);
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.LONG).appendTo($tr).popover(DetailScreenConfig.message.LONG_POPOVER);
+                    // TODO: Remove properties from DetailScreenConfig that are no longer needed
+                    //       (Note: do some searching first to ensure these won't be required)
+                    //       DetailScreenConfig.message.SHORT
+                    //       DetailScreenConfig.message.LONG
+                    //       DetailScreenConfig.message.SHORT_POPOVER
+                    //       DetailScreenConfig.message.LONG_POPOVER
+                    // TODO: Remove css class that is not longer needed:
+                    //       detail-screen-checkbox
                     $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
                     $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
