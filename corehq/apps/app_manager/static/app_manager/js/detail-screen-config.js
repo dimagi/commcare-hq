@@ -407,11 +407,19 @@ var DetailScreenConfig = (function () {
             function fireChange() {
                 that.fire('change');
             }
+
+            //TODO: Add an initColumnAsSortProperty
+            //      at minimum it will do column.filed.setEdit(false)
+            //      (and probably won't do the autocomplete nonsense)
+            //ASIDE:These initColumnAs* functions are odd. Can't this be
+            //      baked into the constructor? Can we get some subclassing
+            //      going on here?
+
             function initColumnAsColumn(column) {
                 column.includeInShort.setEdit(that.edit);
                 column.includeInLong.setEdit(that.edit);
                 column.model.setEdit(false);
-                column.field.setEdit(false);
+                column.field.setEdit(that.edit);
                 column.header.setEdit(that.edit);
                 column.format.setEdit(that.edit);
                 column.enum_extra.setEdit(that.edit);
@@ -421,6 +429,44 @@ var DetailScreenConfig = (function () {
                 column.time_ago_extra.setEdit(that.edit);
                 column.setGrip(true);
                 column.on('change', fireChange);
+
+                // Set up autocomplete
+                column.field.on('change', function () {
+                    column.header.val(getPropertyTitle(this.val()));
+                    if (this.val() && !field_val_re.test(this.val())) {
+                        column.format_warning.show().parent().addClass('error');
+                    } else {
+                        column.format_warning.hide().parent().removeClass('error');
+                    }
+                }).$edit_view.autocomplete({
+                    source: function (request, response) {
+                        var availableTags = _.map(that.properties, function(value) {
+                            var label = value;
+                            if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                                label = ('<span class="icon-paper-clip"></span> '
+                                         + label.substring(label.indexOf(":") + 1));
+                            }
+                            return {value: value, label: label};
+                        });
+                        response(
+                            $.ui.autocomplete.filter(availableTags,  request.term)
+                        );
+                    },
+                    minLength: 0,
+                    delay: 0,
+                    select: function (event, ui) {
+                        column.field.val(ui.item.value);
+                        column.field.fire('change');
+                    }
+                }).focus(function () {
+                    $(this).autocomplete('search');
+                }).data("autocomplete")._renderItem = function (ul, item) {
+                    return $("<li></li>")
+                        .data("item.autocomplete", item)
+                        .append($("<a></a>").html(item.label))
+                        .appendTo(ul);
+                };
+
                 return column;
             }
 
@@ -464,6 +510,7 @@ var DetailScreenConfig = (function () {
             }
 
             // set up the custom column
+            // the "custom column" is the row in the table that allows you to add new display properties
             this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(getPropertyTitle(this.val()));
