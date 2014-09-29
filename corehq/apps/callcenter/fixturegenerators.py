@@ -1,21 +1,50 @@
-import logging
 from xml.etree import ElementTree
+from datetime import datetime
+import pytz
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.logging import notify_logger
+
+utc = pytz.utc
 
 
-logger = logging.getLogger(__name__)
+def should_sync(domain, last_sync, utcnow=None):
+    # definitely sync if we haven't synced before
+    if not last_sync or not last_sync.date:
+        return True
+
+    try:
+        timezone = pytz.timezone(domain.default_timezone)
+    except pytz.UnknownTimeZoneError:
+        timezone = utc
+
+    # check if user has already synced today (in local timezone). Indicators only change daily.
+    last_sync_utc = last_sync.date if last_sync.date.tzinfo else utc.localize(last_sync.date)
+    last_sync_local = timezone.normalize(last_sync_utc.astimezone(timezone))
+
+    utcnow = utcnow if utcnow else utc.localize(datetime.utcnow())
+    current_date_local = timezone.normalize(utcnow.astimezone(timezone))
+
+    if current_date_local.date() != last_sync_local.date():
+        return True
+
+    return False
 
 
-def indicators(user, version, last_sync):
+def indicators_fixture_generator(user, version, last_sync):
     assert isinstance(user, CommCareUser)
-    fixtures = []
+
     domain = user.project
+    fixtures = []
+
+    if not should_sync(domain, last_sync):
+        return fixtures
+
     if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
         try:
             fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
         except Exception as e:  # blanket exception catching intended
-            logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
+            notify_logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
                 user=user._id, msg=str(e)))
 
     return fixtures
