@@ -73,7 +73,7 @@ def fm_reminder_email():
                 email_content,
                 email_from=MASTER_EMAIL,
                 text_content=email_content_plaintext,
-                cc=["master-list@dimagi.com"],
+                cc=[MASTER_EMAIL],
             )
 
 
