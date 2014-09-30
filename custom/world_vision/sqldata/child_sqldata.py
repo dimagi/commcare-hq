@@ -3,7 +3,7 @@ from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, ImmunizationOverview
@@ -497,7 +497,6 @@ class ImmunizationDetailsFirstYear(ImmunizationOverview):
         return columns[:1] + cols1 + columns[1:-5] + cols2 + columns[-5:]
 
 class ImmunizationDetailsSecondYear(ImmunizationOverview):
-
     @property
     def columns(self):
         return [
@@ -562,4 +561,55 @@ class ChildDeworming(BaseSqlData):
                     filters=self.filters + [LTE('dob', 'days_365')]
                 )
             ),
+        ]
+
+class EBFStoppingDetails(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'ebf_stopping_details'
+    title = 'EBF Stopping Details'
+    show_total = True
+    total_row_name = "EBF stopped"
+
+    @property
+    def filters(self):
+        filters = super(EBFStoppingDetails, self).filters
+        filters.append(EQ('exclusive_breastfeeding', 'no'))
+        filters.append(LTE('dob', 'days_183'))
+        filters.append(NOTEQ('ebf_stop_age_month', 'empty'))
+        return filters
+
+    @property
+    def rows(self):
+        rows = super(EBFStoppingDetails, self).rows
+        total_row = calculate_total_row(rows)
+        total = total_row[-1] if total_row else 0
+        result = []
+        for column in self.columns:
+            percent = self.percent_fn(total, self.data[column.slug])
+            result.append([{'sort_key': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}
+            ])
+
+        return result
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("EBF stopped between 0-1 month",
+                CountUniqueColumn('doc_id', alias="stopped_0_1",
+                                  filters=self.filters + [LTE('ebf_stop_age_month', '1')])
+            ),
+            DatabaseColumn("EBF stopped between 1-3 month",
+                CountUniqueColumn('doc_id', alias="stopped_1_3",
+                                  filters=self.filters + [AND([GT('ebf_stop_age_month', '1'), LTE('ebf_stop_age_month', '3')])])
+            ),
+            DatabaseColumn("EBF stopped between 3-5 month",
+                CountUniqueColumn('doc_id', alias="stopped_3_5",
+                                  filters=self.filters + [AND([GT('ebf_stop_age_month', '3'), LTE('ebf_stop_age_month', '5')])])
+            ),
+            DatabaseColumn("EBF stopped between 5-6 month",
+                CountUniqueColumn('doc_id', alias="stopped_5_6",
+                                  filters=self.filters + [AND([GT('ebf_stop_age_month', '5'), LTE('ebf_stop_age_month', '6')])])
+            )
         ]

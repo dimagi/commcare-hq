@@ -42,6 +42,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             domain=self.domain,
             empty='',
             yes='yes',
+            no='no',
             death='death',
             pregnant_mother_type = 'pregnant',
             health_center = 'health_center',
@@ -70,6 +71,9 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
         for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 365, 547, 548, 700, 730]:
             config['days_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+
+        for d in [1, 3, 5, 6]:
+            config['%d' % d] = '%d' % d
 
         config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")

@@ -141,6 +141,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     comp_breastfeeding = case_property('comp_breastfeeding')
     supplementary_feeding_baby = case_property('supplementary_feeding_baby')
     deworm = case_property('deworm')
+    ebf_stop_age_month = case_property('ebf_stop_age_month')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
