@@ -357,6 +357,122 @@ class AnteNatalCareServiceOverview(BaseSqlData):
             )
         ]
 
+class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def rows(self):
+        result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+                  {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
+                  {'sort_key': 'n/a', 'html': 'n/a'},
+                  {'sort_key': 'n/a', 'html': 'n/a'}]]
+        for i in range(1,15):
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.data[self.columns[i + 14].slug], 'html': self.data[self.columns[i + 14].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug])}])
+        return result
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Total pregnant",
+                CountUniqueColumn('doc_id', alias="total_pregnant"),
+            ),
+            DatabaseColumn("No ANC",
+                CountUniqueColumn('doc_id', alias="no_anc", filters=self.filters + [NOTEQ('anc_1', 'yes')]),
+            ),
+            DatabaseColumn("ANC1",
+                CountUniqueColumn('doc_id', alias="anc_1", filters=self.filters + [EQ('anc_1', 'yes')]),
+            ),
+            DatabaseColumn("ANC2",
+                CountUniqueColumn('doc_id', alias="anc_2", filters=self.filters + [EQ('anc_2', 'yes')]),
+            ),
+            DatabaseColumn("ANC3",
+                CountUniqueColumn('doc_id', alias="anc_3", filters=self.filters + [EQ('anc_3', 'yes')]),
+            ),
+            DatabaseColumn("ANC4",
+                CountUniqueColumn('doc_id', alias="anc_4", filters=self.filters + [EQ('anc_4', 'yes')]),
+            ),
+            DatabaseColumn("TT1",
+                CountUniqueColumn('doc_id', alias="tt_1", filters=self.filters + [EQ('tt_1', 'yes')]),
+            ),
+            DatabaseColumn("TT2",
+                CountUniqueColumn('doc_id', alias="tt_2", filters=self.filters + [EQ('tt_2', 'yes')]),
+            ),
+            DatabaseColumn("TT Booster",
+                CountUniqueColumn('doc_id', alias="tt_booster", filters=self.filters + [EQ('tt_booster', 'yes')]),
+            ),
+            DatabaseColumn("TT Completed (TT2 or Booster)",
+                CountUniqueColumn('doc_id', alias="tt_completed",
+                                  filters=self.filters + [OR([EQ('tt_2', 'yes'), EQ('tt_booster', 'yes')])]),
+            ),
+            DatabaseColumn("IFA tablets",
+                CountUniqueColumn('doc_id', alias="ifa_tablets", filters=self.filters + [EQ('iron_folic', 'yes')]),
+            ),
+            DatabaseColumn("Completed 100 IFA tablets",
+                CountUniqueColumn('doc_id', alias="100_tablets", filters=self.filters + [EQ('completed_100_ifa', 'yes')]),
+            ),
+            DatabaseColumn("Clinically anemic mothers",
+                CountUniqueColumn('doc_id', alias="clinically_anemic", filters=self.filters + [EQ('anemia_signs', 'yes')]),
+            ),
+            DatabaseColumn("Number of pregnant mother referrals due to danger signs",
+                CountUniqueColumn('doc_id', alias="danger_signs", filters=self.filters + [EQ('currently_referred', 'yes')]),
+            ),
+            DatabaseColumn("Knows closest health facility",
+                CountUniqueColumn('doc_id', alias="knows_closest_facility", filters=self.filters + [EQ('knows_closest_facility', 'yes')]),
+            ),
+            DatabaseColumn("No ANC Total Eligible",
+                CountUniqueColumn('doc_id', alias="no_anc_eligible", filters=self.filters + [LTE('lmp', 'days_84')]),
+            ),
+            DatabaseColumn("ANC1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="anc_1_eligible", filters=self.filters + [LTE('lmp', 'days_84')]),
+            ),
+            DatabaseColumn("ANC2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="anc_2_eligible",
+                                  filters=self.filters + [AND([EQ('anc_1', 'yes'), LTE('lmp', 'days_168')])]),
+            ),
+            DatabaseColumn("ANC3 Total Eligible",
+                CountUniqueColumn('doc_id', alias="anc_3_eligible",
+                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('lmp', 'days_224')])]),
+            ),
+            DatabaseColumn("ANC4 Total Eligible",
+                CountUniqueColumn('doc_id', alias="anc_4_eligible",
+                                  filters=self.filters + [AND([EQ('anc_3', 'yes'), LTE('lmp', 'days_245')])]),
+            ),
+            DatabaseColumn("TT1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="tt_1_eligible", filters=self.filters + [NOTEQ('previous_tetanus', 'yes')]),
+            ),
+            DatabaseColumn("TT2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="tt_2_eligible", filters=self.filters + [EQ('tt_1', 'yes')]),
+            ),
+            DatabaseColumn("TT Booster Total Eligible",
+                CountUniqueColumn('doc_id', alias="tt_booster_eligible", filters=self.filters + [EQ('previous_tetanus', 'yes')]),
+            ),
+            DatabaseColumn("TT Completed (TT2 or Booster) Total Eligible",
+                CountUniqueColumn('doc_id', alias="tt_completed_eligible",
+                                  filters=self.filters + [OR([EQ('tt_1', 'yes'), EQ('previous_tetanus', 'yes')])]),
+            ),
+            DatabaseColumn("Taking IFA tablets Total Eligible",
+                CountUniqueColumn('doc_id', alias="ifa_tablets_eligible"),
+            ),
+            DatabaseColumn("Completed 100 IFA tablets Total Eligible",
+                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
+            ),
+            DatabaseColumn("Clinically anemic mothers Total Eligible",
+                CountUniqueColumn('doc_id', alias="clinically_anemic_eligible"),
+            ),
+            DatabaseColumn("Number of mother referrals due to danger signs Total Eligible",
+                CountUniqueColumn('doc_id', alias="danger_signs_eligible"),
+            ),
+            DatabaseColumn("Know closest health facility Total Eligible",
+                CountUniqueColumn('doc_id', alias="knows_closest_facility_eligible"),
+            )
+        ]
+
 
 class DeliveryPlaceDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"

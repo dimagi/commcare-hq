@@ -4,7 +4,7 @@ from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, NutritionBirthWeightDetails, PostnatalCareOverview, ImmunizationOverview, ClosedChildCasesBreakdown, \
-    LOCATION_HIERARCHY
+    LOCATION_HIERARCHY, AnteNatalCareServiceOverviewExtended
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -65,11 +65,14 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         config['days_2'] = (today - datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
         config['days_5'] = (today - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
         config['days_21'] = (today - datetime.timedelta(days=21)).strftime("%Y-%m-%d"),
+        config['days_84'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d"),
         config['days_106'] = (today - datetime.timedelta(days=106)).strftime("%Y-%m-%d"),
+        config['days_168'] = (today - datetime.timedelta(days=168)).strftime("%Y-%m-%d"),
         config['days_182'] = (today - datetime.timedelta(days=182)).strftime("%Y-%m-%d"),
         config['days_183'] = (today - datetime.timedelta(days=183)).strftime("%Y-%m-%d"),
         config['days_195'] = (today - datetime.timedelta(days=195)).strftime("%Y-%m-%d"),
         config['days_224'] = (today - datetime.timedelta(days=224)).strftime("%Y-%m-%d"),
+        config['days_245'] = (today - datetime.timedelta(days=245)).strftime("%Y-%m-%d"),
         config['days_273'] = (today - datetime.timedelta(days=273)).strftime("%Y-%m-%d"),
         config['days_548'] = (today - datetime.timedelta(days=548)).strftime("%Y-%m-%d"),
         config['days_700'] = (today - datetime.timedelta(days=700)).strftime("%Y-%m-%d"),
@@ -147,6 +150,17 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
                 chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
             else:
                 chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+        elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
+            chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
+            chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
+            chart1.rotateLabels = -45
+            chart2.rotateLabels = -45
+            chart1.marginBottom = 120
+            chart2.rotateLabels = -45
+            print rows[0]
+            chart1.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[1:6]])
+            chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
+            return [chart1, chart2]
         else:
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]
