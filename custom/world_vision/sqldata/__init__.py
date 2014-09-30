@@ -50,7 +50,7 @@ class BaseSqlData(SqlData):
         elif 'startdate' not in self.config and 'enddate' in self.config:
             filters = [LTE("date", 'enddate')]
 
-        if 'enddate' not in self.config:
+        if 'enddate' not in self.config and len(filters) > 1:
             self.config['enddate'] = self.config['today']
             self.config['stred'] = self.config['today']
 
