@@ -70,6 +70,7 @@ branches:
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
   - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
+  - status-only-celery # ts 9/30
 submodules:
   submodules/couchlog-src:
     branches:
