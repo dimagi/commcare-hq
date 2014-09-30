@@ -157,7 +157,6 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             chart2.rotateLabels = -45
             chart1.marginBottom = 120
             chart2.rotateLabels = -45
-            print rows[0]
             chart1.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[1:6]])
             chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
             return [chart1, chart2]

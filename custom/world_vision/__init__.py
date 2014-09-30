@@ -49,3 +49,14 @@ CHILD_CAUSE_OF_DEATH = {
     'meningitis': 'Meningitis',
     'other': 'Other',
 }
+
+FAMILY_PLANNING_METHODS = {
+    'condom': 'Condom',
+    'iud': 'IUD',
+    'ocp': 'Contraceptive Pill',
+    'injection': 'Depo-provera injection or implant',
+    'permanent': 'Vasectomy or ligation',
+    'natural': 'Natural methods',
+    'other': 'Others',
+    'not_wish_to_disclose': 'Does not wish to disclose'
+}

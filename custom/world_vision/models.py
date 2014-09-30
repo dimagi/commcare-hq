@@ -25,6 +25,7 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     lvl_1 = case_property('state')
     reason_for_mother_closure = case_property('reason_for_mother_closure')
     mother_state = case_property('mother_state')
+    fp_method = case_property('fp_method')
 
     anc_1 = case_property('anc_1')
     anc_2 = case_property('anc_2')

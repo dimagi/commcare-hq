@@ -69,7 +69,7 @@ class BaseSqlData(SqlData):
         total = total_row[-1] if total_row else 0
         result = []
         for (k, v) in dict.iteritems():
-            number = [row[1]['html'] if row[0] == k else 0 for row in rows]
+            number = [row[1]['html'] for row in rows if row[0] == k]
             number = number[0] if number else 0
             result.append([{'sort_key':v, 'html': v}, {'sort_key':number, 'html': number},
                    {'sort_key':self.percent_fn(total, number), 'html': self.percent_fn(total, number)}
@@ -641,6 +641,42 @@ class PostnatalCareOverview(BaseSqlData):
                 CountUniqueColumn('doc_id', alias="pnc_4_eligible",
                                   filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_21')])]),
             )
+        ]
+
+class FamilyPlanningMethods(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'family_planning_methods'
+    title = 'Family Planning Methods'
+    show_total = True
+    total_row_name = "Total Families who reported using Family Planning"
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+
+    @property
+    def group_by(self):
+        return ['fp_method']
+
+    @property
+    def rows(self):
+        from custom.world_vision import FAMILY_PLANNING_METHODS
+        return self._get_rows(FAMILY_PLANNING_METHODS, super(FamilyPlanningMethods, self).rows)
+
+    @property
+    def filters(self):
+        filter = super(FamilyPlanningMethods, self).filters
+        filter.append(NOTEQ('fp_method', 'empty'))
+        return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Method'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Method", SimpleColumn('fp_method')),
+            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
 
 class CauseOfMaternalDeaths(BaseSqlData):
