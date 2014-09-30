@@ -85,8 +85,10 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
             req_prop = 'location_%s' % v['prop']
             if self.request.GET.getlist(req_prop, []):
-                config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
-                break
+                location_list = self.request.GET.getlist(req_prop, [])
+                if location_list and location_list[0] != '0':
+                    config.update({k: tuple(location_list)})
+                    break
         return config
 
     def get_report_context(self, data_provider):
@@ -164,9 +166,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, 's'), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
-            print [row[0] for row in rows]
             chart.add_dataset('Percentage', [{'x': row[0], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
-            print chart.data
         else:
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]

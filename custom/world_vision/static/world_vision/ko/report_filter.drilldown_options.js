@@ -37,6 +37,19 @@ ko.bindingHandlers.select2 = {
                     converted.push({id: value, text: textAccessor(value)});
                 }
             });
+
+            var data = $(el).select2('data');
+            if (_.indexOf(_.pluck(data, 'id'), 0) === 0 && data.length > 1) {
+                converted.splice(0, 1)
+            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
+                converted = converted[_.indexOf(_.pluck(converted, 'id'), 0)];
+                $.each(allBindings.selectedOptions(), function (key, value) {
+                    if (textAccessor(value) !== '' && value !== 0) {
+                        allBindings.selectedOptions().pop()
+                    }
+                });
+            }
+
             $(el).select2("data", converted);
         }
     }
@@ -67,14 +80,12 @@ var DrilldownOptionFilterControl = function (options) {
             }
             return null;
         }
-        self.notification.changeMessage('');
 
         if (current_selection.length == 0) {
             self.controls()[trigger_level + 1].selected.removeAll();
             self.controls()[trigger_level + 1].control_options([]);
             self.updateNextDrilldown(self.controls()[trigger_level + 1].level);
-        }
-        else {
+        } else {
             var next_options = [];
             for(var i=0; i < current_selection.length; i++) {
                 var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection[i]);
@@ -116,11 +127,12 @@ var DrilldownOption = function (select, drilldown_map) {
     self.level = select.level;
 
     self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
-    self.selected = ko.observableArray();
+    self.selected = ko.observableArray([0]);
 
     self.is_visible = ko.computed(function () {
         if (!(self.control_options().length)) {
             self.selected.removeAll()
+            self.selected.push(0)
         }
         return !!(self.control_options().length);
     });

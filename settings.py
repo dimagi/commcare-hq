@@ -1155,7 +1155,9 @@ PILLOWTOPS = {
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
-        'custom.world_vision.models.WorldVisionChildFluffPillow'
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',

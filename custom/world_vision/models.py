@@ -3,7 +3,7 @@ from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.world_vision import WORLD_VISION_DOMAINS
-from corehq.apps.users.models import CommCareCase
+from corehq.apps.users.models import CommCareUser, CommCareCase
 from custom.utils.utils import flat_field
 from custom.world_vision import user_calcs
 
@@ -93,6 +93,31 @@ def calculate_weight(case):
             return weight_birth
     return ""
 
+# This calculator is necessary to generate 'date' field which is required in the database
+class Numerator(fluff.Calculator):
+    @fluff.null_emitter
+    def numerator(self, case):
+        yield None
+
+class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
+    def user_data(property):
+        """
+        returns a flat field with a callable looking for `property` on the user
+        """
+        return flat_field(lambda user: user.user_data.get(property))
+
+    document_class = CommCareUser
+    domains = WORLD_VISION_DOMAINS
+    group_by = ('domain',)
+    save_direct_to_sql = True
+
+    numerator = Numerator()
+    lvl_4 = user_data('phc')
+    lvl_3 = user_data('block')
+    lvl_2 = user_data('district')
+    lvl_1 = user_data('state')
+
+
 
 class WorldVisionChildFluff(fluff.IndicatorDocument):
     def case_property(property):
@@ -154,3 +179,4 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 
 WorldVisionMotherFluffPillow = WorldVisionMotherFluff.pillow()
 WorldVisionChildFluffPillow = WorldVisionChildFluff.pillow()
+WorldVisionHierarchyFluffPillow = WorldVisionHierarchyFluff.pillow()

@@ -89,12 +89,12 @@ class BaseSqlData(SqlData):
         return result
 
 class LocationSqlData(SqlData):
-    table_name = "fluff_WorldVisionMotherFluff"
+    table_name = "fluff_WorldVisionHierarchyFluff"
     geography_config = LOCATION_HIERARCHY
 
     @property
     def filters(self):
-        return [EQ('domain', 'domain')]
+        return [EQ('domain', 'domain'), "lvl_1 != ''", "lvl_2 != ''", "lvl_3 != ''", "lvl_4 != ''"]
 
     @property
     def filter_values(self):

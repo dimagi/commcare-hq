@@ -25,6 +25,8 @@ class LocationFilter(BaseDrilldownOptionFilter):
                         tmp_next = item['next']
                         break
                 if not exist:
+                    if not hierarchy:
+                        hierarchy.append(dict(val=0, text='All', next=[]))
                     hierarchy.append(tmp)
                     hierarchy = tmp['next']
                 else:
@@ -34,12 +36,33 @@ class LocationFilter(BaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], 'All', v['prop']) for k,v in sorted(LOCATION_HIERARCHY.iteritems())]
+        return [(v['name'], v['prop']) for k,v in sorted(LOCATION_HIERARCHY.iteritems())]
+
+    @property
+    def filter_context(self):
+        controls = []
+        for level, label in enumerate(self.rendered_labels):
+            controls.append({
+                'label': label[0],
+                'slug': label[1],
+                'level': level,
+            })
+
+        drilldown_map = list(self.drilldown_map)
+        return {
+            'option_map': drilldown_map,
+            'controls': controls,
+            'selected': self.selected,
+            'use_last': self.use_only_last,
+            'notifications': self.final_notifications,
+            'empty_text': self.drilldown_empty_text,
+            'is_empty': not drilldown_map,
+        }
 
     @classmethod
     def _get_label_value(cls, request, label):
-        slug = str(label[2])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
         return {
             'slug': slug,
             'value': val,
