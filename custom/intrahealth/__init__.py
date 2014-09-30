@@ -139,7 +139,7 @@ def get_district_name(form):
 
 def get_month(form, prop):
     value = form.form.get(prop, '')
-    if property:
+    if value:
         with localize('fr'):
             return format(force_to_datetime(value), 'E')
     else:
