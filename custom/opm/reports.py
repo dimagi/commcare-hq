@@ -210,74 +210,158 @@ class OpmHealthStatusSqlData(SqlData):
 
     @property
     def filters(self):
-        filters = [
+        return [
             "domain = :domain",
             "user_id = :user_id"
         ]
-        return filters
+
+    @property
+    def sum_column_filters(self):
+        return self.filters + [DATE_FILTER]
+
+    @property
+    def sum_column_filters_extended(self):
+        return self.filters + [DATE_FILTER_EXTENDED]
 
     @property
     def columns(self):
+        def AggColumn(label, alias, sum_slug, slug, extended=False):
+            return AggregateColumn(
+                label,
+                format_percent,
+                [
+                    AliasColumn(alias),
+                    SumColumn(
+                        sum_slug,
+                        filters=self.sum_column_filters_extended
+                                if extended else self.sum_column_filters),
+                ],
+                slug=slug,
+                format_fn=ret_val,
+            ),
+
+        def GrowthMonitoringColumn(number):
+            return AggColumn(
+                "# of Children Who Have Attended At Least {} Growth Monitoring"
+                "Session".format(number),
+                alias='childrens',
+                sum_slug='growth_monitoring_session_{}_total'.format(number),
+                slug='growth_monitoring_session_{}'.format(number),
+            )
+
         return [
             DatabaseColumn('# of Beneficiaries Registered',
-                           SumColumn('beneficiaries_registered_total',
-                                     alias="beneficiaries",
-                                     filters=self.filters.append(DATE_FILTER_EXTENDED)),
-                           format_fn=normal_format),
-            AggregateColumn('# of Pregnant Women Registered', format_percent,
-                            [AliasColumn('beneficiaries'),
-                             SumColumn('lmp_total', filters=self.filters.append(DATE_FILTER_EXTENDED))], slug='lmp', format_fn=ret_val),
-            AggregateColumn('# of Mothers of Children Aged 3 Years and Below Registered', format_percent,
-                            [AliasColumn('beneficiaries'), SumColumn('lactating_total', alias='mothers', filters=self.filters.append(DATE_FILTER_EXTENDED))], slug='mother_reg', format_fn=ret_val),
-            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered', SumColumn('children_total', alias="childrens", filters=self.filters.append(DATE_FILTER_EXTENDED)), format_fn=normal_format),
-            AggregateColumn('# of Beneficiaries Attending VHND Monthly', format_percent, [AliasColumn('beneficiaries'), SumColumn('vhnd_monthly_total', filters=self.filters.append(DATE_FILTER))], slug='vhnd_monthly', format_fn=ret_val),
-            AggregateColumn('# of Pregnant Women Who Have Received at least 30 IFA Tablets', format_percent,
-                            [AliasColumn('beneficiaries'), SumColumn('ifa_tablets_total', filters=self.filters.append(DATE_FILTER))], slug='ifa_tablets', format_fn=ret_val),
-            AggregateColumn('# of Pregnant Women Whose Weight Gain Was Monitored At Least Once', format_percent,
-                            [AliasColumn('beneficiaries'), SumColumn('weight_once_total', filters=self.filters.append(DATE_FILTER))], slug='weight_once', format_fn=ret_val),
-            AggregateColumn('# of Pregnant Women Whose Weight Gain Was Monitored Twice', format_percent,
-                            [AliasColumn('beneficiaries'), SumColumn('weight_twice_total', filters=self.filters.append(DATE_FILTER))], slug='weight_twice', format_fn=ret_val),
-            AggregateColumn('# of Children Whose Weight Was Monitored at Birth', format_percent,
-                            [AliasColumn('childrens'), SumColumn('children_monitored_at_birth_total', filters=self.filters.append(DATE_FILTER))], slug='children_monitored_at_birth', format_fn=ret_val),
-            AggregateColumn('# of Children Whose Birth Was Registered', format_percent,
-                            [AliasColumn('childrens'), SumColumn('children_registered_total', filters=self.filters.append(DATE_FILTER))], slug='children_registered', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 1 Growth Monitoring Session', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_1_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_1', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 2 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_2_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_2', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 3 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_3_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_3', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 4 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_4_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_4', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 5 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_5_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_5', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 6 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_6_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_6', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 7 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_7_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_7', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 8 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_8_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_8', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 9 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_9_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_9', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 10 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_10_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_10', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 11 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_11_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_11', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Attended At Least 12 Growth Monitoring Sessions', format_percent,
-                            [AliasColumn('childrens'), SumColumn('growth_monitoring_session_12_total', filters=self.filters.append(DATE_FILTER))], slug='growth_monitoring_session_12', format_fn=ret_val),
-            AggregateColumn('# of Children Whose Nutritional Status is Normal', format_percent,
-                            [AliasColumn('childrens'), SumColumn('nutritional_status_normal_total', filters=self.filters.append(DATE_FILTER))], slug='nutritional_status_normal', format_fn=ret_val),
-            AggregateColumn('# of Children Whose Nutritional Status is "MAM"', format_percent,
-                            [AliasColumn('childrens'), SumColumn('nutritional_status_mam_total', filters=self.filters.append(DATE_FILTER))], slug='nutritional_status_mam', format_fn=ret_val),
-            AggregateColumn('# of Children Whose Nutritional Status is "SAM"', format_percent,
-                            [AliasColumn('childrens'), SumColumn('nutritional_status_sam_total', filters=self.filters.append(DATE_FILTER))], slug='nutritional_status_sam', format_fn=ret_val),
-            AggregateColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea', format_percent,
-                            [SumColumn('treated_total', filters=self.filters.append(DATE_FILTER)), SumColumn('suffering_total', filters=self.filters.append(DATE_FILTER))], slug='ors_zinc', format_fn=ret_val),
-            AggregateColumn('# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
-                            format_percent,
-                            [AliasColumn('mothers'), SumColumn('excbreastfed_total', filters=self.filters.append(DATE_FILTER))], slug="breastfed", format_fn=ret_val),
-            AggregateColumn('# of Children Who Received Measles Vaccine', format_percent,
-                            [AliasColumn('childrens'), SumColumn('measlesvacc_total', filters=self.filters.append(DATE_FILTER))], slug='measlesvacc', format_fn=ret_val),
+                SumColumn('beneficiaries_registered_total',
+                    alias="beneficiaries",
+                    filters=self.sum_column_filters_extended),
+                format_fn=normal_format),
+            AggColumn(
+                '# of Pregnant Women Registered',
+                alias='beneficiaries',
+                sum_slug='lmp_total',
+                slug='lmp',
+                extended=True,
+            ),
+            AggregateColumn('# of Mothers of Children Aged 3 Years and Below Registered',
+                format_percent,
+                [AliasColumn('beneficiaries'),
+                    SumColumn('lactating_total',
+                        # TODO necessary?
+                        alias='mothers',
+                        filters=self.sum_column_filters_extended)],
+                    slug='mother_reg',
+                    format_fn=ret_val),
+            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered',
+                SumColumn('children_total',
+                    alias="childrens",
+                    filters=self.sum_column_filters_extended),
+                format_fn=normal_format),
+            AggColumn(
+                '# of Beneficiaries Attending VHND Monthly',
+                alias='beneficiaries',
+                sum_slug='vhnd_monthly_total',
+                slug='vhnd_monthly',
+            ),
+            AggColumn(
+                '# of Pregnant Women Who Have Received at least 30 IFA Tablets',
+                alias='beneficiaries',
+                sum_slug='ifa_tablets_total',
+                slug='ifa_tablets',
+            ),
+            AggColumn(
+                '# of Pregnant Women Whose Weight Gain Was Monitored At Least Once',
+                alias='beneficiaries',
+                sum_slug='weight_once_total',
+                slug='weight_once',
+            ),
+            AggColumn(
+                '# of Pregnant Women Whose Weight Gain Was Monitored Twice',
+                alias='beneficiaries',
+                sum_slug='weight_twice_total',
+                slug='weight_twice',
+            ),
+            AggColumn(
+                '# of Children Whose Weight Was Monitored at Birth',
+                alias='childrens',
+                sum_slug='children_monitored_at_birth_total',
+                slug='children_monitored_at_birth',
+            ),
+            AggColumn(
+                '# of Children Whose Birth Was Registered',
+                alias='childrens',
+                sum_slug='children_registered_total',
+                slug='children_registered',
+            ),
+            GrowthMonitoringColumn(1),
+            GrowthMonitoringColumn(2),
+            GrowthMonitoringColumn(3),
+            GrowthMonitoringColumn(4),
+            GrowthMonitoringColumn(5),
+            GrowthMonitoringColumn(6),
+            GrowthMonitoringColumn(7),
+            GrowthMonitoringColumn(8),
+            GrowthMonitoringColumn(9),
+            GrowthMonitoringColumn(10),
+            GrowthMonitoringColumn(11),
+            GrowthMonitoringColumn(12),
+            AggColumn(
+                '# of Children Whose Nutritional Status is Normal',
+                alias='childrens',
+                sum_slug='nutritional_status_normal_total',
+                slug='nutritional_status_normal',
+            ),
+            AggColumn(
+                '# of Children Whose Nutritional Status is "MAM"',
+                alias='childrens',
+                sum_slug='nutritional_status_mam_total',
+                slug='nutritional_status_mam',
+            ),
+            AggColumn(
+                '# of Children Whose Nutritional Status is "SAM"',
+                alias='childrens',
+                sum_slug='nutritional_status_sam_total',
+                slug='nutritional_status_sam',
+            ),
+            AggregateColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
+                    format_percent,
+                    [SumColumn('treated_total',
+                        filters=self.sum_column_filters),
+                        SumColumn('suffering_total',
+                            filters=self.sum_column_filters)],
+                        slug='ors_zinc',
+                        format_fn=ret_val),
+            AggColumn(
+                '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
+                alias='mothers',
+                sum_slug='excbreastfed_total',
+                slug="breastfed",
+            ),
+            AggColumn(
+                '# of Children Who Received Measles Vaccine',
+                alias='childrens',
+                sum_slug='measlesvacc_total',
+                slug='measlesvacc',
+            ),
         ]
 
 
