@@ -54,6 +54,10 @@ var ManageRemindersViewModel = function (
         return self.start_property_offset_type() === self.choices.START_PROPERTY_OFFSET_DELAY;
     });
 
+    self.isStartDayOfWeekVisible = ko.computed(function () {
+        return self.start_property_offset_type() === self.choices.START_REMINDER_ON_DAY_OF_WEEK;
+    });
+
     self.isStartReminderCaseDate = ko.computed(function () {
         return self.start_property_offset_type() === self.choices.START_REMINDER_ON_CASE_DATE;
     });

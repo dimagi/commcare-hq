@@ -541,7 +541,7 @@ class CaseReminderHandler(Document):
         else:
             return result
 
-    def get_day_of_week_offset(dt, day_of_week):
+    def get_day_of_week_offset(self, dt, day_of_week):
         offset = 0
         while dt.weekday() != day_of_week:
             offset += 1
