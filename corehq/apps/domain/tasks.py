@@ -11,6 +11,8 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
 
 
+MASTER_EMAIL="master-list@dimagi.com"
+
 def _domains_over_x_forms(num_forms=200):
     form_domains = (
             FormES()
@@ -52,7 +54,7 @@ def domains_to_email():
     return email_domains
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="sunday"))
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="monday"))
 def fm_reminder_email():
     """
     Reminds FMs to update their domains with up to date information
@@ -69,7 +71,39 @@ def fm_reminder_email():
                 "Please update your domain",
                 email,
                 email_content,
-                email_from="master-list@dimagi.com",
+                email_from=MASTER_EMAIL,
                 text_content=email_content_plaintext,
                 cc=["master-list@dimagi.com"],
             )
+
+
+def self_started_domains():
+    domains = list(_real_incomplete_domains() & _domains_over_x_forms())
+    domains = {"domains": domains}
+
+    email_domains = []
+    for domain in domains:
+        users = list(WebUser.get_dimagi_emails_by_domain(domain))
+        if len(users) == 0:
+            email_domains.append(domain)
+
+    return email_domains
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="monday"))
+def self_starter_email():
+    """
+    Emails master-list@dimagi.com incomplete self started domains
+    """
+    domains = self_started_domains()
+
+    email_content = render_to_string(
+            'domain/email/self_starter.html', domains)
+    email_content_plaintext = render_to_string(
+            'domain/email/self_starter.txt', domains)
+    send_HTML_email(
+        "Incomplete Self Started Domains",
+        MASTER_EMAIL,
+        email_content,
+        text_content=email_content_plaintext,
+    )
