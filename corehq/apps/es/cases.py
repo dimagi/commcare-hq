@@ -11,7 +11,6 @@ class CaseES(HQESQuery):
             opened_range,
             closed_range,
             is_closed,
-            in_domains,
         ] + super(CaseES, self).builtin_filters
 
 
@@ -25,7 +24,3 @@ def closed_range(gt=None, gte=None, lt=None, lte=None):
 
 def is_closed(closed=True):
     return filters.term('closed', closed)
-
-
-def in_domains(domains):
-    return filters.term("domain", list(domains))
