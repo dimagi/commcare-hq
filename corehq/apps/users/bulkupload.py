@@ -278,9 +278,18 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
         for row in user_specs:
             _set_progress(current)
             current += 1
-            data, email, group_names, language, name, password, phone_number, uncategorized_data, user_id, username = (
-                row.get(k) for k in sorted(allowed_headers)
-            )
+
+            data = row.get('data')
+            email = row.get('email')
+            group_names = row.get('group_names')
+            language = row.get('language')
+            name = row.get('name')
+            password = row.get('password')
+            phone_number = row.get('phone_number')
+            uncategorized_data = row.get('uncategorized_data')
+            user_id = row.get('user_id')
+            username = row.get('username')
+
             if password:
                 password = unicode(password)
             group_names = group_names or []
