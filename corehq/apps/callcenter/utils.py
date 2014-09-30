@@ -59,7 +59,6 @@ def sync_user_cases(commcare_user):
                 create=False,
                 case_id=case._id,
                 version=V2,
-                owner_id=owner_id,
                 case_type=domain.call_center_config.case_type,
                 close=close,
                 update=fields
