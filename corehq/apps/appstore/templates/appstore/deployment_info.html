@@ -43,7 +43,11 @@
             <dd>{{ domain.deployment.city }}</dd>
         {% endif %}
         {% if domain.deployment.countries %}
-            <dt>Countries</dt>
+            <dt>
+                {% with total=domain.deployment.countries|length %}
+                    Countr{{ total|pluralize:"y,ies" }}
+                {% endwith %}
+            </dt>
             <dd>{{ domain.deployment.countries|join:", " }}</dd>
         {% endif %}
         {% if domain.deployment.region %}
