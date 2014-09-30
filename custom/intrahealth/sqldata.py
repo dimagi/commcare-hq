@@ -57,6 +57,8 @@ class BaseSqlData(SqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
+    #this is copy/paste from the https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
+    #we added possibility to sum Float values
     def calculate_total_row(self, rows):
         total_row = []
         if len(rows) > 0:
@@ -130,8 +132,9 @@ class ConventureData(BaseSqlData):
     def calculate_total_row(self, rows):
         total_row = super(ConventureData, self).calculate_total_row(rows)
         if len(total_row) != 0:
-            total_row[4] = "%.0f%%" % (total_row[3]*100/float(total_row[1]))
-            total_row[-1] = "%.0f%%" % (total_row[5]*100/float(total_row[3]))
+            #two cell's are recalculated because the summation of percentage gives us bad values
+            total_row[4] = "%.0f%%" % (total_row[3] * 100 / float(total_row[1]))
+            total_row[-1] = "%.0f%%" % (total_row[5] * 100 / float(total_row[3]))
         return total_row
 
 
@@ -238,13 +241,13 @@ class TauxDeRuptures(BaseSqlData):
         return columns
 
     def calculate_total_row(self, rows):
-        converture = ConventureData(self.config)
+        conventure = ConventureData(self.config)
         if self.config['startdate'].month != self.config['enddate'].month:
-            converture_data_rows = converture.calculate_total_row(converture.rows)
-            total = converture_data_rows[3] if converture_data_rows else 0
+            conventure_data_rows = conventure.calculate_total_row(conventure.rows)
+            total = conventure_data_rows[3] if conventure_data_rows else 0
         else:
-            converture_data_rows = converture.rows
-            total = converture_data_rows[0][2]["html"] if converture_data_rows else 0
+            conventure_data_rows = conventure.rows
+            total = conventure_data_rows[0][2]["html"] if conventure_data_rows else 0
 
         for row in rows:
             row.append(dict(sort_key=1L if any([x["sort_key"] for x in row[1:]]) else 0L,
@@ -568,7 +571,7 @@ class DureeData(BaseSqlData):
 
     def calculate_total_row(self, rows):
         total_row = super(DureeData, self).calculate_total_row(rows)
-        if len(total_row) != 0:
+        if total_row:
             total_row[0] = 'Moyenne Region'
             total_row[-1] = "%.2f" % (total_row[-1] / float(len(self.rows)))
         return total_row

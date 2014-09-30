@@ -115,31 +115,35 @@ def format_date_string(value):
 
 
 def get_pps_name(form):
-    if 'PPS_name' in form.form and form.form['PPS_name']:
-        return form.form['PPS_name']
-    else:
+    pps_name = form.form.get('PPS_name', None)
+
+    if not pps_name:
         loc = _get_location(form)
         if not loc:
             return None
         return loc.name
+    else:
+        return pps_name
 
 
 def get_district_name(form):
-    if 'district_name' in form.form and form.form['district_name']:
-        return form.form['district_name']
-    else:
+    district_name = form.form.get('district_name', None)
+    if not district_name:
         loc = get_location_by_type(form, 'district')
         if not loc:
             return None
         return loc.name
+    else:
+        return district_name
 
 
 def get_month(form, prop):
-    if prop in form.form and form.form[prop]:
+    value = form.form.get(prop, '')
+    if property:
         with localize('fr'):
-            return format(force_to_datetime(form.form[prop]), 'E')
+            return format(force_to_datetime(value), 'E')
     else:
-        return ''
+        return value
 
 
 class IsExistFormPropertyFilter(FormPropertyFilter):
