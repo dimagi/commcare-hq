@@ -170,8 +170,8 @@ def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
     return [
         get_data_point(
-            len(set(domains) & set(domains_matching_plan(
-                software_plan_edition, timestamp, timestamp))),
+            len(set(domains) & domains_matching_plan(
+                software_plan_edition, timestamp, timestamp)),
             timestamp
         )
         for timestamp in daterange(
@@ -195,8 +195,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
         domains_in_interval = (
             domains
             if software_plan_edition is None else
-            list((set(domains) & set(domains_matching_plan(software_plan_edition, f,
-                t))))
+            list((set(domains) & domains_matching_plan(software_plan_edition, f, t)))
         )
         active_domains = set()
         if add_form_domains:
