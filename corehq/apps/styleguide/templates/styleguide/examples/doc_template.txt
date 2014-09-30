@@ -1,0 +1,10 @@
+{% extends 'styleguide/base_doc.html' %}
+
+{% block doc_content %}
+    {{#sections}}
+    <div class="row">
+        <div class="col-lg-4">{{{ docs_html }}}</div>
+        <div class="col-lg-8">{{{ code_html }}}</div>
+    </div>
+    {{/sections}}
+{% endblock doc_content %}
