@@ -1,8 +1,10 @@
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 
+from corehq.apps.domain.views import EditInternalDomainInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
@@ -47,7 +49,11 @@ def domains_to_email():
                 {
                     "domain_name": domain,
                     "email_to": users,
-                    "settings_link": get_url_base()
+                    "settings_link": get_url_base() +
+                                     reverse(
+                                         EditInternalDomainInfoView.urlname,
+                                         args=[domain]
+                                     )
                 }
             )
 
