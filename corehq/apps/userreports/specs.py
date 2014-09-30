@@ -55,8 +55,21 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
 
 
+def TypeProperty(value):
+    """
+    Shortcut for making a required property and restricting it to a single specified
+    value. This adds additional validation that the objects are being wrapped as expected
+    according to the type.
+    """
+    return StringProperty(required=True, choices=[value])
 
-class PropertyMatchFilterSpec(JsonObject):
+
+class BaseFilterSpec(JsonObject):
+    _allow_dynamic_properties = False
+
+
+class PropertyMatchFilterSpec(BaseFilterSpec):
+    type = TypeProperty('property_match')
     property_name = StringProperty()
     property_path = ListProperty()
     property_value = StringProperty(required=True)
