@@ -484,10 +484,14 @@ class DeliveryPlaceDetails(BaseSqlData):
         return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
 
     @property
+    def filters(self):
+        return super(DeliveryPlaceDetails, self).filters + [NOTEQ('delivery_date', 'empty')]
+
+    @property
     def columns(self):
         return [
             DatabaseColumn("Total Deliveries (with/without outcome)",
-                CountUniqueColumn('doc_id', alias="total_delivery", filters=self.filters + [NOTEQ('delivery_date', 'empty')]),
+                CountUniqueColumn('doc_id', alias="total_delivery", filters=self.filters),
             ),
             DatabaseColumn("Institutional deliveries",
                 CountUniqueColumn('doc_id', alias="institutional_deliveries",
@@ -1169,3 +1173,22 @@ class ChildHealthIndicators(BaseSqlData):
                                   filters=self.filters + [AND([EQ('dairrhea_treated_with_zinc', 'yes'), EQ('has_diarrhea_since_last_visit', 'yes')])])
             )
         ]
+
+
+class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
+
+    @property
+    def columns(self):
+        columns = super(DeliveryPlaceDetailsExtended, self).columns
+        additional_columns = [
+            DatabaseColumn("Home deliveries",
+                           CountUniqueColumn('doc_id', alias="home_deliveries",
+                                             filters=self.filters + [OR([EQ('place_of_birth', 'home'),
+                                                                         EQ('place_of_birth', "on_route")])])),
+            DatabaseColumn("Other places",
+                           CountUniqueColumn('doc_id', alias="other_places",
+                                             filters=self.filters + [OR([EQ('place_of_birth', 'empty'),
+                                                                         EQ('place_of_birth', "other")])]))
+        ]
+        columns.extend(additional_columns)
+        return columns
