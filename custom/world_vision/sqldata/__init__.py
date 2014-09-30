@@ -43,22 +43,16 @@ class BaseSqlData(SqlData):
 
         if 'startdate' in self.config and 'enddate' in self.config:
             filters = [BETWEEN("date", "startdate", "enddate")]
-
-        if 'startdate' not in self.config and 'enddate' not in self.config:
-            self.config['enddate'] = self.config['today']
-            self.config['stred'] = self.config['today']
+        elif 'startdate' not in self.config and 'enddate' not in self.config:
             filters =  []
-
-        if 'startdate' in self.config and 'enddate' not in self.config:
-            self.config['enddate'] = self.config['today']
-            self.config['stred'] = self.config['today']
-
+        elif 'startdate' in self.config and 'enddate' not in self.config:
             filters = [BETWEEN("date", "startdate", "enddate")]
+        elif 'startdate' not in self.config and 'enddate' in self.config:
+            filters = [LTE("date", 'enddate')]
 
-        if 'startdate' not in self.config and 'enddate' in self.config:
+        if 'enddate' not in self.config:
             self.config['enddate'] = self.config['today']
             self.config['stred'] = self.config['today']
-            filters = [LTE("date", 'enddate')]
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:

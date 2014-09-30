@@ -15,7 +15,7 @@ class MotherRegistrationDetails(BaseSqlData):
     @property
     def filters(self):
         #TODO: if date_not_selected:
-        if False:
+        if 'startdate' not in self.config and 'enddate' not in self.config:
             return super(MotherRegistrationDetails, self).filters[1:]
         else:
             return super(MotherRegistrationDetails, self).filters
@@ -42,8 +42,7 @@ class MotherRegistrationDetails(BaseSqlData):
                 )
             ),
         ]
-        #TODO: if date_not_selected:
-        if False:
+        if 'startdate' not in self.config and 'enddate' not in self.config:
             columns.extend([
                 DatabaseColumn("Total open mother cases",
                     CountUniqueColumn('doc_id',
@@ -65,16 +64,6 @@ class MotherRegistrationDetails(BaseSqlData):
                 )
             ])
         else:
-            filter_1 = None
-            filter_2 = None
-            if 'strsd' in self.config:
-                filter_1 = [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
-                filter_2 = [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
-            else:
-                filter_1 = [AND([LTE('opened_on', "stred"), EQ('closed_on', 'empty')])]
-                filter_2 =  [LTE('opened_on', "stred")]
-
-
             columns.extend([
                 DatabaseColumn("Mother cases open at end of time period",
                     CountUniqueColumn('doc_id',
@@ -91,13 +80,13 @@ class MotherRegistrationDetails(BaseSqlData):
                 DatabaseColumn("Total mothers followed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="followed",
-                        filters=self.filters + filter_1
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
                     )
                 ),
                 DatabaseColumn("New registrations during time period",
                     CountUniqueColumn('doc_id',
                         alias="new_registrations",
-                        filters=self.filters + filter_2
+                        filters=self.filters + [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
                     )
                 )
             ])
