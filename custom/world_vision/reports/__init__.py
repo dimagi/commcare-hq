@@ -48,7 +48,7 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
             stred=self.datespan.enddate.strftime("%Y-%m-%d"),
             pregnant_mother_type = 'pregnant',
-            health_center = 'health center',
+            health_center = 'health_center',
             hospital = 'hospital',
             home = 'home',
             on_route = 'on_route',

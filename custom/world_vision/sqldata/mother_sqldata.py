@@ -4,7 +4,7 @@ from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
 from custom.world_vision.sqldata import BaseSqlData
-from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview
+from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
 
 
 class MotherRegistrationDetails(BaseSqlData):
@@ -517,3 +517,22 @@ class FamilyPlanningMethods(BaseSqlData):
             DatabaseColumn("Method", SimpleColumn('fp_method')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
+
+
+class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
+
+    @property
+    def columns(self):
+        columns = super(DeliveryPlaceDetailsExtended, self).columns
+        additional_columns = [
+            DatabaseColumn("Home deliveries",
+                           CountUniqueColumn('doc_id', alias="home_deliveries",
+                                             filters=self.filters + [OR([EQ('place_of_birth', 'home'),
+                                                                         EQ('place_of_birth', 'on_route')])])),
+            DatabaseColumn("Other places",
+                           CountUniqueColumn('doc_id', alias="other_places",
+                                             filters=self.filters + [OR([EQ('place_of_birth', 'empty'),
+                                                                         EQ('place_of_birth', 'other')])]))
+        ]
+        columns.extend(additional_columns)
+        return columns
