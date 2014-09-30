@@ -323,14 +323,9 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
     # get facets
     results = es_deployments_query({}, DEPLOYMENT_FACETS)
     facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
-    if dom.deployment.countries:
-        countries = ','.join(dom.deployment.countries)
-    else:
-        countries = []
 
     return render(request, template, {
         'domain': dom,
-        'countries': countries,
         'search_url': reverse('deployments'),
         'url_base': reverse('deployments'),
         'facet_map': facet_map,
