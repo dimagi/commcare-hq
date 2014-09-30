@@ -386,6 +386,17 @@ var DetailScreenConfig = (function () {
         return Column;
     }());
     Screen = (function () {
+        /**
+         * The Screen "Class" is in charge inserting a table into the DOM that
+         * contains rows for each case DetailColumn. It also handles the
+         * reordering of these columns through drag and drop as well as
+         * saving them on the server.
+         * @param $home jQuery object where the Screen will be rendered
+         * @param spec
+         * @param config A DetailScreenConfig object.
+         * @param options
+         * @constructor
+         */
         function Screen($home, spec, config, options) {
             var i, column, model, property, header,
                 that = this, columns;
