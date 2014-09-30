@@ -34,7 +34,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
@@ -889,7 +889,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     return Report()
 
 
-class HealthStatusReport(BaseReport):
+class HealthStatusReport(DatespanMixin, BaseReport):
 
     ajax_pagination = True
     asynchronous = True
