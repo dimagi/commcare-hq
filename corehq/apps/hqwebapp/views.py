@@ -79,7 +79,27 @@ def couch_check():
     return (isinstance(xforms, list), None)
 
 
-def hb_check():
+def celery_check():
+    try:
+        from celery import Celery
+        from django.conf import settings
+        app = Celery()
+        app.config_from_object(settings)
+        i = app.control.inspect()
+        ping = i.ping()
+        if not ping:
+            chk = (False, 'No running Celery workers were found.')
+        else:
+            chk = True
+    except IOError as e:
+        chk = (False, "Error connecting to the backend: " + str(e))
+    except ImportError as e:
+        chk = (False, str(e))
+
+    return chk
+
+
+def hb_check(check_heartbeat=True):
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
         try:
@@ -93,7 +113,10 @@ def hb_check():
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
-                hb = heartbeat.is_alive()
+                if check_heartbeat:
+                    hb = heartbeat.is_alive()
+                else:
+                    hb = False # Might need to check for no workers here
         except:
             hb = False
     else:
@@ -233,6 +256,11 @@ def server_up(req):
             "message": "* celery heartbeat is down",
             "check_func": hb_check
         },
+        "celery": {
+            "always_check": False,
+            "message": "* celery is down",
+            "check_func": celery_check
+        },
         "postgres": {
             "always_check": True,
             "message": "* postgres has issues",
@@ -298,7 +326,7 @@ def _login(req, domain, template_name):
         req.POST._mutable = True
         req.POST['username'] = format_username(req.POST['username'], domain)
         req.POST._mutable = False
-    
+
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
@@ -349,7 +377,7 @@ def logout(req):
 
     # we don't actually do anything with the response here:
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
-    
+
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
         mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
