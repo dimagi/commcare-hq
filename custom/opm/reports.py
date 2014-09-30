@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
+from sqlagg.filters import RawFilter
 from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
@@ -48,8 +49,18 @@ from .filters import HierarchyFilter, MetHierarchyFilter
 from .constants import *
 
 
-DATE_FILTER ="date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = '(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))'
+DATE_FILTER = "date between :startdate and :enddate"
+DATE_FILTER_EXTENDED = """(
+    opened_on <= :enddate AND (
+        closed_on >= :enddate OR
+        closed_on = ''
+        )
+    ) OR (
+    opened_on <= :enddate AND (
+        closed_on >= :startdate or closed_on <= :enddate
+        )
+    )
+"""
 
 
 def ret_val(value):
@@ -67,7 +78,6 @@ class OpmCaseSqlData(SqlData):
 
     @property
     def filter_values(self):
-
         return dict(
             domain=self.domain,
             user_id=self.user_id,
@@ -200,8 +210,8 @@ class OpmHealthStatusSqlData(SqlData):
         return dict(
             domain=self.domain,
             user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
+            startdate=str(self.datespan.startdate_utc.date()),
+            enddate=str(self.datespan.enddate_utc.date()),
         )
 
     @property
@@ -216,12 +226,12 @@ class OpmHealthStatusSqlData(SqlData):
         ]
 
     @property
-    def sum_column_filters(self):
-        return self.filters + [DATE_FILTER]
+    def wrapped_sum_column_filters(self):
+        return self.wrapped_filters + [RawFilter(DATE_FILTER)]
 
     @property
-    def sum_column_filters_extended(self):
-        return self.filters + [DATE_FILTER_EXTENDED]
+    def wrapped_sum_column_filters_extended(self):
+        return self.wrapped_filters + [RawFilter(DATE_FILTER_EXTENDED)]
 
     @property
     def columns(self):
@@ -233,12 +243,12 @@ class OpmHealthStatusSqlData(SqlData):
                     AliasColumn(alias),
                     SumColumn(
                         sum_slug,
-                        filters=self.sum_column_filters_extended
-                                if extended else self.sum_column_filters),
+                        filters=self.wrapped_sum_column_filters_extended
+                                if extended else self.wrapped_sum_column_filters),
                 ],
                 slug=slug,
                 format_fn=ret_val,
-            ),
+            )
 
         def GrowthMonitoringColumn(number):
             return AggColumn(
@@ -253,7 +263,7 @@ class OpmHealthStatusSqlData(SqlData):
             DatabaseColumn('# of Beneficiaries Registered',
                 SumColumn('beneficiaries_registered_total',
                     alias="beneficiaries",
-                    filters=self.sum_column_filters_extended),
+                    filters=self.wrapped_sum_column_filters_extended),
                 format_fn=normal_format),
             AggColumn(
                 '# of Pregnant Women Registered',
@@ -268,13 +278,13 @@ class OpmHealthStatusSqlData(SqlData):
                     SumColumn('lactating_total',
                         # TODO necessary?
                         alias='mothers',
-                        filters=self.sum_column_filters_extended)],
+                        filters=self.wrapped_sum_column_filters_extended)],
                     slug='mother_reg',
                     format_fn=ret_val),
             DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered',
                 SumColumn('children_total',
                     alias="childrens",
-                    filters=self.sum_column_filters_extended),
+                    filters=self.wrapped_sum_column_filters_extended),
                 format_fn=normal_format),
             AggColumn(
                 '# of Beneficiaries Attending VHND Monthly',
@@ -345,9 +355,9 @@ class OpmHealthStatusSqlData(SqlData):
             AggregateColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
                     format_percent,
                     [SumColumn('treated_total',
-                        filters=self.sum_column_filters),
+                        filters=self.wrapped_sum_column_filters),
                         SumColumn('suffering_total',
-                            filters=self.sum_column_filters)],
+                            filters=self.wrapped_sum_column_filters)],
                         slug='ors_zinc',
                         format_fn=ret_val),
             AggColumn(
