@@ -6,7 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
-from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, ImmunizationOverview
+from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown
 
 
@@ -177,6 +177,9 @@ class ChildrenDeathsByMonth(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_death_by_month'
     title = ''
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def group_by(self):
@@ -242,8 +245,8 @@ class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
     @property
     def rows(self):
         return [['Birth Weight (kg)',
-                 "%.2f" % (self.data['mean_birth_weight']),
-                 "%.2f" % (self.data['median_birth_weight'])]
+                 "%.2f" % (self.data['mean_birth_weight'] if self.data['mean_birth_weight'] else 0),
+                 "%.2f" % (self.data['median_birth_weight'] if self.data['mean_birth_weight'] else 0)]
         ]
 
 class NutritionBirthWeightDetails(BaseSqlData):
@@ -417,25 +420,8 @@ class ChildHealthIndicators(BaseSqlData):
         ]
 
 
-class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
-
-    @property
-    def columns(self):
-        columns = super(DeliveryPlaceDetailsExtended, self).columns
-        additional_columns = [
-            DatabaseColumn("Home deliveries",
-                           CountUniqueColumn('doc_id', alias="home_deliveries",
-                                             filters=self.filters + [OR([EQ('place_of_birth', 'home'),
-                                                                         EQ('place_of_birth', "on_route")])])),
-            DatabaseColumn("Other places",
-                           CountUniqueColumn('doc_id', alias="other_places",
-                                             filters=self.filters + [OR([EQ('place_of_birth', 'empty'),
-                                                                         EQ('place_of_birth', "other")])]))
-        ]
-        columns.extend(additional_columns)
-        return columns
-
 class ImmunizationDetailsFirstYear(ImmunizationOverview):
+    title = 'Immunization Overview (0 - 1 yrs)'
 
     @property
     def columns(self):
@@ -497,6 +483,8 @@ class ImmunizationDetailsFirstYear(ImmunizationOverview):
         return columns[:1] + cols1 + columns[1:-5] + cols2 + columns[-5:]
 
 class ImmunizationDetailsSecondYear(ImmunizationOverview):
+    title = 'Immunization Overview (1 - 2 yrs)'
+
     @property
     def columns(self):
         return [
@@ -580,9 +568,7 @@ class EBFStoppingDetails(BaseSqlData):
 
     @property
     def rows(self):
-        rows = super(EBFStoppingDetails, self).rows
-        total_row = calculate_total_row(rows)
-        total = total_row[-1] if total_row else 0
+        total = sum(v for v in self.data.values())
         result = []
         for column in self.columns:
             percent = self.percent_fn(total, self.data[column.slug])

@@ -320,6 +320,8 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    show_total = True
+    total_row_name = "Total live births"
 
     @property
     def headers(self):
@@ -328,30 +330,25 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total live births",
-                SumColumn('number_of_children_total', filters=self.filters, alias='total_live_births')
-            ),
             DatabaseColumn("Live birth (Male)",
-                SumColumn('number_of_boys_total', filters=self.filters)
+                SumColumn('number_of_boys_total', alias='girls')
             ),
             DatabaseColumn("Live birth (Female)",
-                SumColumn('number_of_girls_total', filters=self.filters,)
+                SumColumn('number_of_girls_total', alias='boys')
             )
         ]
 
     @property
     def rows(self):
+        total = sum(v for v in self.data.values())
         result = []
-        for idx, column in enumerate(self.columns):
-            if idx == 0:
-                percent = 'n/a'
-            else:
-                percent = self.percent_fn(self.data['total_live_births'], self.data[column.slug])
-
+        for column in self.columns:
+            percent = self.percent_fn(total, self.data[column.slug])
             result.append([{'sort_key': column.header, 'html': column.header},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
-                           {'sort_key': 'percentage', 'html': percent}]
-            )
+                           {'sort_key': 'percentage', 'html': percent}
+            ])
+
         return result
 
 
@@ -369,7 +366,7 @@ class DeliveryStillBirthDetails(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn("Still births",
-                SumColumn('number_of_children_born_dead_total', filters=self.filters)
+                SumColumn('number_of_children_born_dead_total')
             ),
             DatabaseColumn("Abortions",
                 CountUniqueColumn('doc_id', alias="abortions", filters=self.filters + [EQ('reason_for_mother_closure', 'abortion')]),
@@ -519,6 +516,9 @@ class FamilyPlanningMethods(BaseSqlData):
 
 
 class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def columns(self):
@@ -540,6 +540,9 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
 class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
 
     title = ''
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def columns(self):

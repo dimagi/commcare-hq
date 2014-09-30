@@ -1,12 +1,13 @@
 import datetime
-from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
+from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart, LineChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
-from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails, ClosedChildCasesBreakdown
+from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails, ClosedChildCasesBreakdown, \
+    ChildrenDeathsByMonth
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import ClosedMotherCasesBreakdown, DeliveryLiveBirthDetails, \
-    PostnatalCareOverview, AnteNatalCareServiceOverviewExtended
+    PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, DeliveryPlaceDetailsExtended
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -135,10 +136,10 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     def get_chart(self, rows, x_label, y_label, data_provider):
         if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
-        elif isinstance(data_provider, DeliveryLiveBirthDetails):
-            chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, NutritionBirthWeightDetails):
             chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+        elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
+            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
@@ -155,10 +156,17 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart1.rotateLabels = -45
             chart2.rotateLabels = -45
             chart1.marginBottom = 120
-            chart2.rotateLabels = -45
+            chart2.marginBottom = 120
             chart1.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[1:6]])
             chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
             return [chart1, chart2]
+        elif isinstance(data_provider, ChildrenDeathsByMonth):
+            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, 's'), y_axis=Axis(y_label, '.2%'))
+            chart.rotateLabels = -45
+            chart.marginBottom = 120
+            print [row[0] for row in rows]
+            chart.add_dataset('Percentage', [{'x': row[0], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+            print chart.data
         else:
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]

@@ -1,11 +1,10 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import TTCReport
-from custom.world_vision.sqldata.child_sqldata import DeliveryPlaceDetailsExtended
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
     PregnantMotherBreakdownByTrimester, AnteNatalCareServiceOverviewExtended, DeliveryLiveBirthDetails, \
     DeliveryStillBirthDetails, PostnatalCareOverview, CauseOfMaternalDeaths, FamilyPlanningMethods, \
-    DeliveryPlaceMotherDetails
+    DeliveryPlaceMotherDetails, DeliveryPlaceDetailsExtended
 from dimagi.utils.decorators.memoized import memoized
 
 
