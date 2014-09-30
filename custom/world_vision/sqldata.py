@@ -1,9 +1,11 @@
-from sqlagg import CountUniqueColumn, CountColumn
+from sqlagg import CountUniqueColumn, BaseColumn
 from sqlagg.columns import SimpleColumn, SumColumn
-from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN, IN
+from sqlagg.filters import IN
+from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
+from sqlalchemy import func, cast, Numeric
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
-from custom.world_vision.custom_queries import CustomMeanColumn, CustomMedianColumn
+from custom.world_vision.custom_queries import CustomMedianColumn
 
 LOCATION_HIERARCHY = {
     "lvl_1": {
@@ -23,6 +25,7 @@ LOCATION_HIERARCHY = {
         "name": "PHC"
     }
 }
+
 
 class BaseSqlData(SqlData):
     show_total = False
@@ -96,6 +99,7 @@ class LocationSqlData(SqlData):
         for k in levels:
             columns.append(DatabaseColumn(k, SimpleColumn(k)))
         return columns
+
 
 class MotherRegistrationOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
@@ -183,6 +187,7 @@ class MotherRegistrationOverview(BaseSqlData):
             ])
         return columns
 
+
 class ClosedMotherCasesBreakdown(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'closed_mother_cases-breakdown'
@@ -225,6 +230,7 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
             DatabaseColumn("Reason for closure", SimpleColumn('reason_for_mother_closure')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id'))
         ]
+
 
 class PregnantMotherBreakdownByTrimester(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
@@ -283,6 +289,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
                 )
             )
         ]
+
 
 class AnteNatalCareServiceOverview(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
@@ -804,10 +811,20 @@ class ChildrenDeathDetails(BaseSqlData):
         ]
 
 
+class MeanColumnWithCasting(BaseColumn):
+    aggregate_fn = lambda _, column: func.avg(cast(column, Numeric(7, 5)))
+
+
 class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_birth_weights_1'
     title = 'Nutrition Details'
+
+    @property
+    def filters(self):
+        filters = super(NutritionMeanMedianBirthWeightDetails, self).filters
+        filters.append(NOTEQ('weight_birth', 'empty'))
+        return filters
 
     @property
     def headers(self):
@@ -817,7 +834,7 @@ class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn("Median Birth Weight",
-                CustomMeanColumn('weight_birth', alias='mean_birth_weight')
+                MeanColumnWithCasting('weight_birth', alias='mean_birth_weight')
             ),
             DatabaseColumn("Median Birth Weight",
                 CustomMedianColumn('weight_birth', alias='median_birth_weight')

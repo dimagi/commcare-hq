@@ -10,20 +10,6 @@ from sqlalchemy import cast, Float
 
 logger = logging.getLogger("sqlagg")
 
-class CustomMeanQueryMeta(QueryMeta):
-
-    def __init__(self, table_name, filters, group_by, key, alias):
-        self.key = key
-        self.alias = alias
-        super(CustomMeanQueryMeta, self).__init__(table_name, filters, group_by)
-
-    def execute(self, metadata, connection, filter_values):
-        return connection.execute(self._build_query(filter_values)).fetchall()
-
-    def _build_query(self, filter_values):
-        return select(['AVG(%s::float) as %s' % (self.key, self.alias)], from_obj='"fluff_WorldVisionChildFluff"')\
-            .where("%s != '' " % self.key)
-
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 
@@ -112,16 +98,6 @@ class CustomMedianQueryMeta(MedianQueryMeta):
         logger.debug("Populate median table")
         connection.execute(from_select, **filter_values)
 
-
-class CustomMeanColumn(CustomQueryColumn):
-    query_cls = CustomMeanQueryMeta
-    name = "mean"
-
-    def get_query_meta(self, default_table_name, default_filters, default_group_by):
-        table_name = self.table_name or default_table_name
-        filters = self.filters or default_filters
-        group_by = self.group_by or default_group_by
-        return self.query_cls(table_name, filters, group_by, self.key, self.alias)
 
 class CustomMedianColumn(CustomQueryColumn):
     query_cls = CustomMedianQueryMeta
