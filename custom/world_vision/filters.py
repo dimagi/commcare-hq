@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.sqldata import LocationSqlData, LOCATION_HIERARCHY
 
 
@@ -43,3 +44,17 @@ class LocationFilter(BaseDrilldownOptionFilter):
             'slug': slug,
             'value': val,
         }
+
+class WVDatespanFilter(DatespanFilter):
+
+    template = "world_vision/datespan.html"
+
+    @property
+    def datespan(self):
+        if not self.request.datespan.is_default:
+            startdate = self.request.GET['startdate']
+            enddate = self.request.GET['enddate']
+
+            return {'startdate': startdate, 'enddate': enddate}
+        else:
+            return None

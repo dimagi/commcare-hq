@@ -1,6 +1,6 @@
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import IN
-from sqlagg.filters import EQ, BETWEEN
+from sqlagg.filters import EQ, BETWEEN, LTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 
@@ -39,7 +39,27 @@ class BaseSqlData(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("date", "startdate", "enddate")]
+        filters = None
+
+        if 'startdate' in self.config and 'enddate' in self.config:
+            filters = [BETWEEN("date", "startdate", "enddate")]
+
+        if 'startdate' not in self.config and 'enddate' not in self.config:
+            self.config['enddate'] = self.config['today']
+            self.config['stred'] = self.config['today']
+            filters =  []
+
+        if 'startdate' in self.config and 'enddate' not in self.config:
+            self.config['enddate'] = self.config['today']
+            self.config['stred'] = self.config['today']
+
+            filters = [BETWEEN("date", "startdate", "enddate")]
+
+        if 'startdate' not in self.config and 'enddate' in self.config:
+            self.config['enddate'] = self.config['today']
+            self.config['stred'] = self.config['today']
+            filters = [LTE("date", 'enddate')]
+
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
                 filters.append(IN(k, v['prop']))

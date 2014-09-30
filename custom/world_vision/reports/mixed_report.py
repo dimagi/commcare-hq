@@ -1,5 +1,5 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.world_vision.filters import LocationFilter
+from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import TTCReport
 from custom.world_vision.sqldata.child_sqldata import ChildRegistrationDetails, ClosedChildCasesBreakdown, \
     ChildrenDeaths, ChildrenDeathDetails, NutritionMeanMedianBirthWeightDetails, NutritionBirthWeightDetails, \
@@ -17,7 +17,7 @@ class MixedTTCReport(TTCReport):
     name = 'Mother/Child Report'
     slug = 'mother_child_report'
     title = "Mother/Child Report"
-    fields = [DatespanFilter, LocationFilter]
+    fields = [WVDatespanFilter, LocationFilter]
     default_rows = 10
     exportable = True
 

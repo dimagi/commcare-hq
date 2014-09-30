@@ -47,6 +47,15 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 )
             ])
         else:
+            filter_1 = None
+            filter_2 = None
+            if 'strsd' in self.config:
+                filter_1 = [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
+                filter_2 = [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
+            else:
+                filter_1 = [AND([LTE('opened_on', "stred"), EQ('closed_on', 'empty')])]
+                filter_2 =  [LTE('opened_on', "stred")]
+
             columns.extend([
                 DatabaseColumn("Children cases open at end of time period",
                     CountUniqueColumn('doc_id',
@@ -63,13 +72,13 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 DatabaseColumn("Total children followed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="followed",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), OR([EQ('closed_on', 'empty'), GTE('closed_on', "strsd")])])]
+                        filters=self.filters + filter_1
                     )
                 ),
                 DatabaseColumn("New registrations during time period",
                     CountUniqueColumn('doc_id',
                         alias="new_registrations",
-                        filters=self.filters + [AND([LTE('opened_on', "stred"), GTE('opened_on', "strsd")])]
+                        filters=self.filters + filter_2
                     )
                 )
             ])

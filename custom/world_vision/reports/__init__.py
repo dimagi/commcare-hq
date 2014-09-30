@@ -10,7 +10,7 @@ from custom.world_vision.sqldata.mother_sqldata import ClosedMotherCasesBreakdow
 from dimagi.utils.decorators.memoized import memoized
 
 
-class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
+class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     report_template_path = "world_vision/multi_report.html"
 
     title = ''
@@ -40,13 +40,9 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
     def report_config(self):
         config = dict(
             domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
             empty='',
             yes='yes',
             death='death',
-            strsd=self.datespan.startdate.strftime("%Y-%m-%d"),
-            stred=self.datespan.enddate.strftime("%Y-%m-%d"),
             pregnant_mother_type = 'pregnant',
             health_center = 'health_center',
             hospital = 'hospital',
@@ -61,6 +57,13 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
             abortion = 'abortion',
             weight_birth_25 = '2.5'
         )
+
+        if 'startdate' in self.request.GET and self.request.GET['startdate']:
+            config['startdate'] = self.request.GET['startdate']
+            config['strsd'] = self.request.GET['startdate']
+        if 'enddate' in self.request.GET and self.request.GET['enddate']:
+            config['enddate'] = self.request.GET['enddate']
+            config['stred'] = self.request.GET['enddate']
 
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
