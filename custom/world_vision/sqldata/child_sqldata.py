@@ -486,3 +486,39 @@ class ImmunizationDetailsSecondYear(ImmunizationOverview):
             )
 
         ]
+
+
+class ChildDeworming(BaseSqlData):
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_deworming'
+    title = 'Child Deworming'
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Total Eligible'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        return [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+               {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
+               {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]},
+               {'sort_key': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[0].slug]),
+               'html': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[0].slug])}
+            ]]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Deworming dose in last 6 months",
+                CountUniqueColumn('doc_id',
+                    alias="deworming",
+                    filters=self.filters + [EQ('deworm', 'yes')]
+                )
+            ),
+            DatabaseColumn("Deworming Total Eligible",
+                CountUniqueColumn('doc_id',
+                    alias="deworming_total_eligible",
+                    filters=self.filters + [LTE('dob', 'days_365')]
+                )
+            ),
+        ]

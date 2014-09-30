@@ -65,7 +65,7 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
 
-        for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 547, 548, 700, 730]:
+        for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 365, 547, 548, 700, 730]:
             config['days_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
 
         config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
