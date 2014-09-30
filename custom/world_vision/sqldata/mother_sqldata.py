@@ -536,3 +536,30 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
         ]
         columns.extend(additional_columns)
         return columns
+
+
+class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
+
+    title = ''
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Total Deliveries (with/without outcome)",
+                           CountUniqueColumn('doc_id', alias="total_delivery", filters=self.filters),
+            ),
+            DatabaseColumn("Normal deliveries",
+                           CountUniqueColumn('doc_id', alias="normal_deliveries",
+                                             filters=self.filters + [EQ('type_of_delivery', 'normal_delivery')])),
+            DatabaseColumn("Caesarean deliveries",
+                           CountUniqueColumn('doc_id', alias="caesarean_deliveries",
+                                             filters=self.filters + [EQ('type_of_delivery', 'cesarean_delivery')])),
+            DatabaseColumn("Delivery type unknown",
+                           CountUniqueColumn('doc_id', alias="unknown",
+                                             filters=self.filters + [OR([EQ('type_of_delivery', 'empty'),
+                                                                         EQ('type_of_delivery', 'unknown_delivery')])]))
+        ]
+
+    @property
+    def rows(self):
+        return super(DeliveryPlaceMotherDetails, self).rows[1:]
