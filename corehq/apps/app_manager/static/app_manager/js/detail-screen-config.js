@@ -413,9 +413,9 @@ var DetailScreenConfig = (function () {
             this.properties = options.properties;
             this.columnType = options.columnType;
 
-            function fireChange() {
+            this.fireChange = function() {
                 that.fire('change');
-            }
+            };
 
             //TODO: Add an initColumnAsSortProperty
             //      at minimum it will do column.filed.setEdit(false)
@@ -424,7 +424,7 @@ var DetailScreenConfig = (function () {
             //      baked into the constructor? Can we get some subclassing
             //      going on here?
 
-            function initColumnAsColumn(column) {
+            this.initColumnAsColumn = function (column) {
                 column.includeInShort.setEdit(that.edit);
                 column.includeInLong.setEdit(that.edit);
                 column.model.setEdit(false);
@@ -437,7 +437,7 @@ var DetailScreenConfig = (function () {
                 column.calc_xpath_extra.setEdit(that.edit);
                 column.time_ago_extra.setEdit(that.edit);
                 column.setGrip(true);
-                column.on('change', fireChange);
+                column.on('change', that.fireChange);
 
                 // Set up autocomplete
                 column.field.on('change', function () {
@@ -448,28 +448,28 @@ var DetailScreenConfig = (function () {
                         column.format_warning.hide().parent().removeClass('error');
                     }
                 }).$edit_view.autocomplete({
-                    source: function (request, response) {
-                        var availableTags = _.map(that.properties, function(value) {
-                            var label = value;
-                            if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                                label = ('<span class="icon-paper-clip"></span> '
-                                         + label.substring(label.indexOf(":") + 1));
-                            }
-                            return {value: value, label: label};
-                        });
-                        response(
-                            $.ui.autocomplete.filter(availableTags,  request.term)
-                        );
-                    },
-                    minLength: 0,
-                    delay: 0,
-                    select: function (event, ui) {
-                        column.field.val(ui.item.value);
-                        column.field.fire('change');
-                    }
-                }).focus(function () {
-                    $(this).autocomplete('search');
-                }).data("autocomplete")._renderItem = function (ul, item) {
+                        source: function (request, response) {
+                            var availableTags = _.map(that.properties, function (value) {
+                                var label = value;
+                                if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                                    label = ('<span class="icon-paper-clip"></span> '
+                                        + label.substring(label.indexOf(":") + 1));
+                                }
+                                return {value: value, label: label};
+                            });
+                            response(
+                                $.ui.autocomplete.filter(availableTags, request.term)
+                            );
+                        },
+                        minLength: 0,
+                        delay: 0,
+                        select: function (event, ui) {
+                            column.field.val(ui.item.value);
+                            column.field.fire('change');
+                        }
+                    }).focus(function () {
+                        $(this).autocomplete('search');
+                    }).data("autocomplete")._renderItem = function (ul, item) {
                     return $("<li></li>")
                         .data("item.autocomplete", item)
                         .append($("<a></a>").html(item.label))
@@ -477,7 +477,7 @@ var DetailScreenConfig = (function () {
                 };
 
                 return column;
-            }
+            };
 
             var longColumns = spec.long ? spec.long.columns : [];
             columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
@@ -499,7 +499,7 @@ var DetailScreenConfig = (function () {
                 column.includeInLong = columns[i].y;
 
                 this.columns[i] = Column.init(column, this);
-                initColumnAsColumn(this.columns[i]);
+                that.initColumnAsColumn(this.columns[i]);
             }
 
             this.saveButton = COMMCAREHQ.SaveButton.init({
@@ -526,13 +526,13 @@ var DetailScreenConfig = (function () {
                 }
                 column = column.serialize(true);
                 column = Column.init(column, this);
-                initColumnAsColumn(column);
+                that.initColumnAsColumn(column);
                 if (i !== -1) {
                     this.columns.splice(i + 1, 0, column);
                 } else {
                     this.columns.push(column);
                 }
-                $tr = this.addColumn(column, this.$columns, this.$columns.length, false);
+                $tr = this.addColumn(column, this.$columns, this.$columns.length);
                 if (i !== -1) {
                     $tr.detach().insertAfter(this.$columns.find('tr:nth-child(' + (i + 1).toString() + ')'));
                 }
@@ -639,7 +639,8 @@ var DetailScreenConfig = (function () {
                 return $tr;
             },
             render: function () {
-                var $table, $columns, $thead, $tr, i, $box;
+                var that = this;
+                var $table, $columns, $thead, $tr, i, $box, $buttonRow;
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -693,10 +694,53 @@ var DetailScreenConfig = (function () {
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
 
                     for (i = 0; i < this.columns.length; i += 1) {
-                        this.addColumn(this.columns[i], $columns, i, false);
+                        this.addColumn(this.columns[i], $columns, i);
                     }
 
                     this.$columns = $columns;
+
+                    // Add the button
+                    //TODO: Should this be in ui-element.js?
+                    $buttonRow = $(
+                        '<tr> \
+                            <td class="detail-screen-icon"></td> \
+                            <td class="detail-screen-field">\
+                                <div class="btn-group"> \
+                                    <button class="btn add-property-item">Add Property</button> \
+                                    <button class="btn dropdown-toggle" data-toggle="dropdown"> \
+                                        <span class="caret"></span> \
+                                    </button> \
+                                    <ul class="dropdown-menu">\
+                                       <li class="add-property-item"><a>Property</a></li>\
+                                       <li class="add-calculation-item"><a>Calculation</a></li>\
+                                    </ul> \
+                                </div> \
+                            </td> \
+                            <td class="detail-screen-header"></td> \
+                            <td class="detail-screen-format"></td> \
+                            <td class="detail-screen-icon"></td> \
+                        </tr>'
+                    );
+                    var addItem = function(autoComplete){
+                        var col;
+                        col = that.initColumnAsColumn(
+                            Column.init(
+                                {includeInShort: true, includeInLong: false},
+                                that
+                            )
+                            //TODO: Actually do something different if autoComplete == false
+                        );
+                        that.fire('add-column', col);
+                    }
+                    $(".add-property-item", $buttonRow).click(function () {
+                        addItem(true);
+                    });
+                    $(".add-calculation-item", $buttonRow).click(function () {
+                        console.log("boom");
+                        addItem(false);
+                    });
+                    var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
+                    $specialTableBody.append($buttonRow);
 
                     // init UI events
                     this.initUI($columns);

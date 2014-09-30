@@ -30,3 +30,6 @@
 .detail-screen-table .detail-screen-field {
     width: 160px;
 }
+.table > tbody.slim {
+    border-top-width: 0px;
+}
