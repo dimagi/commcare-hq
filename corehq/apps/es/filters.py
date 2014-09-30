@@ -60,9 +60,9 @@ def doc_id(doc_id):
 
 def missing(field, exist=True, null=True):
     return {
-               "missing": {
-                   "field": field,
-                   "existence": exist,
-                   "null_value": null
-               }
-           }
+        "missing": {
+            "field": field,
+            "existence": exist,
+            "null_value": null
+        }
+    }
