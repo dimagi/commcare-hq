@@ -19,10 +19,10 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
-    phc = case_property('phc')
-    block = case_property('block')
-    district = case_property('district')
-    state = case_property('state')
+    lvl_4 = case_property('phc')
+    lvl_3 = case_property('block')
+    lvl_2 = case_property('district')
+    lvl_1 = case_property('state')
     reason_for_mother_closure = case_property('reason_for_mother_closure')
     mother_state = case_property('mother_state')
 
@@ -83,10 +83,10 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
-    phc = flat_field(partial(referenced_case_attribute, field_name='phc'))
-    block = flat_field(partial(referenced_case_attribute, field_name='block'))
-    district = flat_field(partial(referenced_case_attribute, field_name='district'))
-    state = flat_field(partial(referenced_case_attribute, field_name='state'))
+    lvl_4 = flat_field(partial(referenced_case_attribute, field_name='phc'))
+    lvl_3 = flat_field(partial(referenced_case_attribute, field_name='block'))
+    lvl_2 = flat_field(partial(referenced_case_attribute, field_name='district'))
+    lvl_1 = flat_field(partial(referenced_case_attribute, field_name='state'))
 
     reason_for_child_closure = case_property('reason_for_child_closure')
     bcg = case_property('bcg')

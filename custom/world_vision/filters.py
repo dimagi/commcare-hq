@@ -7,15 +7,6 @@ class LocationFilter(BaseDrilldownOptionFilter):
     label = ugettext_noop("Location")
     slug = "location"
     template = "world_vision/location_filter.html"
-    single_option_select = -1
-    single_option_select_without_default_text = -1
-
-    @property
-    def filter_context(self):
-        context = super(LocationFilter, self).filter_context
-        context.update({'single_option_select': self.single_option_select})
-        context.update({'single_option_select_without_default_text': self.single_option_select_without_default_text})
-        return context
 
     @property
     def drilldown_map(self):

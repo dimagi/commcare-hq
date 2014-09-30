@@ -1,25 +1,25 @@
 from sqlagg import CountUniqueColumn, CountColumn
 from sqlagg.columns import SimpleColumn, SumColumn
-from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN
+from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, BETWEEN, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 from custom.world_vision.custom_queries import CustomMeanColumn, CustomMedianColumn
 
 LOCATION_HIERARCHY = {
-    "state": {
-        "prop": "state",
+    "lvl_1": {
+        "prop": "lvl_1",
         "name": "State"
     },
-    "district": {
-        "prop": "district",
+    "lvl_2": {
+        "prop": "lvl_2",
         "name": "District"
     },
-    "block": {
-        "prop": "block",
+    "lvl_3": {
+        "prop": "lvl_3",
         "name": "Block"
     },
-    "phc": {
-        "prop": "phc",
+    "lvl_4": {
+        "prop": "lvl_4",
         "name": "PHC"
     }
 }
@@ -38,8 +38,10 @@ class BaseSqlData(SqlData):
 
     @property
     def filters(self):
-        # TODO: add here location filter
         filters = [BETWEEN("date", "startdate", "enddate")]
+        for k, v in LOCATION_HIERARCHY.iteritems():
+            if v['prop'] in self.config and self.config[v['prop']]:
+                filters.append(IN(k, v['prop']))
         return filters
 
     @property
@@ -102,10 +104,9 @@ class MotherRegistrationOverview(BaseSqlData):
 
     @property
     def filters(self):
-        #if date_not_selected:
+        #TODO: if date_not_selected:
         if False:
-            #TODO: add here location filter
-            return []
+            return super(MotherRegistrationOverview, self).filters[1:]
         else:
             return super(MotherRegistrationOverview, self).filters
 

@@ -2,17 +2,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% if charts %}
-    <div class="row">
-        {% for chart in charts %}
-            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
-            <svg style='height: {{ chart.height }}px'> </svg>
-        </div>
-        {% endfor %}
-    </div>
-{% endif %}
-
 <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
     <thead>
         {%  if report_table.headers.complex %}
@@ -59,6 +48,17 @@
         </tfoot>
     {% endif %}
 </table>
+
+{% if charts %}
+    <div class="row">
+        {% for chart in charts %}
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <svg style='height: {{ chart.height }}px'> </svg>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
 <script type="text/javascript">
    {% if report_table and report_table.datatables %}

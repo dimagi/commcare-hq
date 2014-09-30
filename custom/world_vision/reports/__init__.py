@@ -3,7 +3,8 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, NutritionBirthWeightDetails, PostnatalCareOverview, ImmunizationOverview, ClosedChildCasesBreakdown
+from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, NutritionBirthWeightDetails, PostnatalCareOverview, ImmunizationOverview, ClosedChildCasesBreakdown, \
+    LOCATION_HIERARCHY
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -78,6 +79,11 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
         config['third_trimester_start_date'] =  (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
 
+        for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
+            req_prop = 'location_%s' % v['prop']
+            if self.request.GET.getlist(req_prop, []):
+                config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
+                break
         return config
 
     def get_report_context(self, data_provider):
