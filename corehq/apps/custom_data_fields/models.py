@@ -21,10 +21,17 @@ class CustomDataFieldsDefinition(Document):
     fields = SchemaListProperty(CustomDataField)
 
     @classmethod
-    def by_domain(cls, domain, field_type):
-        return cls.view(
+    def get_or_create(cls, domain, field_type):
+        existing = cls.view(
             'custom_data_fields/by_field_type',
             key=[domain, field_type],
             include_docs=True,
             reduce=False,
         ).one()
+
+        if existing:
+            return existing
+        else:
+            new = cls(domain=domain, field_type=field_type)
+            new.save()
+            return new

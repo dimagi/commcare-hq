@@ -15,16 +15,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for domain in Domain.get_all_names():
-            fields_definition = CustomDataFieldsDefinition.by_domain(
+            fields_definition = CustomDataFieldsDefinition.get_or_create(
                 domain,
                 'UserFields'
             )
-
-            if not fields_definition:
-                fields_definition = CustomDataFieldsDefinition(
-                    field_type='UserFields',
-                    domain=domain
-                )
 
             user_ids = (CommCareUser.ids_by_domain(domain) +
                         CommCareUser.ids_by_domain(domain, is_active=False))

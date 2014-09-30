@@ -76,7 +76,7 @@ class CustomDataFieldsMixin(object):
     form_label = None
 
     def get_definition(self):
-        return CustomDataFieldsDefinition.by_domain(self.domain, self.field_type)
+        return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
     def get_custom_fields(self):
         definition = self.get_definition()
@@ -148,7 +148,7 @@ class CustomDataEditor(object):
     @property
     @memoized
     def model(self):
-        definition = CustomDataFieldsDefinition.by_domain(
+        definition = CustomDataFieldsDefinition.get_or_create(
             self.domain,
             self.field_view.field_type,
         )
