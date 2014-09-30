@@ -83,6 +83,17 @@ def get_datepart(case, t='n'):
         return ""
 
 
+def calculate_weight(case):
+    weight_birth = case.get_case_property('weight_birth')
+    if weight_birth:
+        #Probably measured in grams. Should be converted to kilograms
+        if float(weight_birth) > 10:
+            return str(float(weight_birth) / 1000.0)
+        else:
+            return weight_birth
+    return ""
+
+
 class WorldVisionChildFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
@@ -124,7 +135,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     has_diarrhea_since_last_visit = case_property('has_diarrhea_since_last_visit')
     dairrhea_treated_with_ors = case_property('dairrhea_treated_with_ors')
     dairrhea_treated_with_zinc = case_property('dairrhea_treated_with_zinc')
-    weight_birth = case_property('weight_birth')
+    weight_birth = flat_field(calculate_weight)
     breastfeed_1_hour = case_property('breastfeed_1_hour')
     exclusive_breastfeeding = case_property('exclusive_breastfeeding')
     comp_breastfeeding = case_property('comp_breastfeeding')
