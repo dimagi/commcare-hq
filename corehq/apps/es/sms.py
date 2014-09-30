@@ -16,7 +16,6 @@ class SMSES(HQESQuery):
             to_couch_user,
             to_commcare_user_or_case,
             received,
-            in_domains,
         ] + super(SMSES, self).builtin_filters
 
 
@@ -50,7 +49,3 @@ def to_commcare_user_or_case():
 
 def received(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('date', gt, gte, lt, lte)
-
-
-def in_domains(domains):
-    return filters.term("domain", list(domains))
