@@ -1,3 +1,4 @@
+import calendar
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR
@@ -179,6 +180,47 @@ class ChildrenDeathDetails(BaseSqlData):
             DatabaseColumn("Cause of death", SimpleColumn('cause_of_death_child')),
             DatabaseColumn("Number", CountUniqueColumn('doc_id')),
         ]
+
+
+class ChildrenDeathsByMonth(BaseSqlData):
+
+    table_name = "fluff_WorldVisionChildFluff"
+    slug = 'children_death_by_month'
+    title = ''
+
+    @property
+    def group_by(self):
+        return ['month_of_death', 'year_of_death']
+
+    @property
+    def filters(self):
+        filters = super(ChildrenDeathsByMonth, self).filters
+        filters.extend([NOTEQ('month_of_death', 'empty')])
+        return filters
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Month'), DataTablesColumn('Deaths'), DataTablesColumn('Percentage')])
+
+    @property
+    def rows(self):
+        rows = sorted(super(ChildrenDeathsByMonth, self).rows, key=lambda r: (r[1], r[0]))
+        sum_of_deaths = 0
+        for row in rows:
+            sum_of_deaths += row[2]['sort_key']
+            row[0] = calendar.month_name[int(row[0])]
+            del row[1]
+
+        for row in rows:
+            row.append({'sort_key': self.percent_fn(sum_of_deaths, row[1]['sort_key']),
+                        'html': self.percent_fn(sum_of_deaths, row[1]['sort_key'])})
+        return rows
+
+    @property
+    def columns(self):
+        return [DatabaseColumn("Month", SimpleColumn('month_of_death')),
+                DatabaseColumn("Year", SimpleColumn('year_of_death')),
+                DatabaseColumn("Number", CountUniqueColumn('doc_id'))]
 
 
 class NutritionMeanMedianBirthWeightDetails(BaseSqlData):

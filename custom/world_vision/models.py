@@ -1,10 +1,13 @@
 from functools import partial
+from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.world_vision import WORLD_VISION_DOMAINS
 from corehq.apps.users.models import CommCareCase
 from custom.utils.utils import flat_field
 from custom.world_vision import user_calcs
+
+from django.utils.dateformat import format
 
 
 class WorldVisionMotherFluff(fluff.IndicatorDocument):
@@ -72,6 +75,14 @@ def referenced_case_attribute(case, field_name):
         return ""
 
 
+def get_datepart(case, t='n'):
+    child_date_of_death = case.get_case_property('child_date_of_death')
+    if child_date_of_death:
+        return format(force_to_datetime(child_date_of_death), t)
+    else:
+        return ""
+
+
 class WorldVisionChildFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
@@ -123,6 +134,8 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
     dob = flat_field(lambda case: case.dob)
+    month_of_death = flat_field(get_datepart)
+    year_of_death = flat_field(partial(get_datepart, t='Y'))
 
     women_registered = user_calcs.ChildRegistered()
 

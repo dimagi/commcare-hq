@@ -1,4 +1,5 @@
-from corehq.apps.reports.filters.dates import DatespanFilter
+from custom.world_vision.sqldata.child_sqldata import ChildrenDeathsByMonth, ChildrenDeaths, ChildrenDeathDetails
+from dimagi.utils.decorators.memoized import memoized
 from custom.world_vision.reports import TTCReport
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.sqldata.child_sqldata import ImmunizationDetailsFirstYear, ImmunizationDetailsSecondYear, \
@@ -23,4 +24,7 @@ class ChildTTCReport(TTCReport):
             ImmunizationDetailsFirstYear(config=config),
             ImmunizationDetailsSecondYear(config=config),
             ChildDeworming(config=config),
+            ChildrenDeaths(config=config),
+            ChildrenDeathDetails(config=config),
+            ChildrenDeathsByMonth(config=config)
         ]
