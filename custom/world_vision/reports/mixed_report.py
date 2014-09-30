@@ -1,8 +1,15 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.filters import LocationFilter
 from custom.world_vision.reports import TTCReport
+from custom.world_vision.sqldata.child_sqldata import ChildRegistrationDetails, ClosedChildCasesBreakdown, \
+    ChildrenDeaths, ChildrenDeathDetails, NutritionMeanMedianBirthWeightDetails, NutritionBirthWeightDetails, \
+    NutritionFeedingDetails, ChildHealthIndicators
+from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails, \
+    ImmunizationOverview
+from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
+    PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, DeliveryStillBirthDetails, PostnatalCareOverview, \
+    CauseOfMaternalDeaths
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import *
 
 
 class MixedTTCReport(TTCReport):
@@ -23,7 +30,7 @@ class MixedTTCReport(TTCReport):
     def data_providers(self):
         config = self.report_config
         return [
-            MotherRegistrationOverview(config=config),
+            MotherRegistrationDetails(config=config),
             ClosedMotherCasesBreakdown(config=config),
             PregnantMotherBreakdownByTrimester(config=config),
             AnteNatalCareServiceOverview(config=config),
@@ -40,6 +47,5 @@ class MixedTTCReport(TTCReport):
             NutritionMeanMedianBirthWeightDetails(config=config),
             NutritionBirthWeightDetails(config=config),
             NutritionFeedingDetails(config=config),
-            ChildrenDeathDetails(config=config),
             ChildHealthIndicators(config=config)
         ]

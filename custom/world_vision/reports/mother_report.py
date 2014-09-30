@@ -1,11 +1,11 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.filters import LocationFilter
 from custom.world_vision.reports import TTCReport
+from custom.world_vision.sqldata.child_sqldata import DeliveryPlaceDetailsExtended
+from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
+    PregnantMotherBreakdownByTrimester, AnteNatalCareServiceOverviewExtended, DeliveryLiveBirthDetails, \
+    DeliveryStillBirthDetails, PostnatalCareOverview, CauseOfMaternalDeaths, FamilyPlanningMethods
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, \
-    PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, DeliveryStillBirthDetails, PostnatalCareOverview, \
-    CauseOfMaternalDeaths, AnteNatalCareServiceOverviewExtended, FamilyPlanningMethods, DeliveryPlaceDetailsExtended
-
 
 
 class MotherTTCReport(TTCReport):
@@ -21,7 +21,7 @@ class MotherTTCReport(TTCReport):
     def data_providers(self):
         config = self.report_config
         return [
-            MotherRegistrationOverview(config=config),
+            MotherRegistrationDetails(config=config),
             ClosedMotherCasesBreakdown(config=config),
             PregnantMotherBreakdownByTrimester(config=config),
             AnteNatalCareServiceOverviewExtended(config=config),

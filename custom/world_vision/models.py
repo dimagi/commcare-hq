@@ -4,7 +4,7 @@ from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.world_vision import WORLD_VISION_DOMAINS
 from corehq.apps.users.models import CommCareCase
 from custom.utils.utils import flat_field
-from custom.world_vision.reports import user_calcs
+from custom.world_vision import user_calcs
 
 
 class WorldVisionMotherFluff(fluff.IndicatorDocument):

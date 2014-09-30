@@ -2,9 +2,12 @@ import datetime
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from custom.world_vision.sqldata import LOCATION_HIERARCHY
+from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails, ClosedChildCasesBreakdown
+from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
+from custom.world_vision.sqldata.mother_sqldata import ClosedMotherCasesBreakdown, DeliveryLiveBirthDetails, \
+    PostnatalCareOverview, AnteNatalCareServiceOverviewExtended
 from dimagi.utils.decorators.memoized import memoized
-from custom.world_vision.sqldata import MotherRegistrationOverview, ClosedMotherCasesBreakdown, PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, NutritionBirthWeightDetails, PostnatalCareOverview, ImmunizationOverview, ClosedChildCasesBreakdown, \
-    LOCATION_HIERARCHY, AnteNatalCareServiceOverviewExtended
 
 
 class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport):
@@ -134,13 +137,13 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
-        if isinstance(data_provider, ClosedMotherCasesBreakdown) or isinstance(data_provider, ClosedChildCasesBreakdown):
+        if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, DeliveryLiveBirthDetails):
             chart = PieChart('Live Births by Gender', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, NutritionBirthWeightDetails):
             chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
-        elif isinstance(data_provider, PostnatalCareOverview) or isinstance(data_provider, ImmunizationOverview):
+        elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120

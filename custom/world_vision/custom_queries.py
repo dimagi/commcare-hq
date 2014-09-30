@@ -1,15 +1,15 @@
-import time
 import logging
-from sqlagg.base import CustomQueryColumn, QueryMeta
-from sqlagg.filters import NOTEQ
-from sqlagg.queries.alchemy_extensions import InsertFromSelect, func_ext
+from sqlagg.base import CustomQueryColumn, BaseColumn
+from sqlagg.queries.alchemy_extensions import InsertFromSelect
 from sqlagg.queries.median import MedianQueryMeta
-from sqlalchemy import select, Table, Column, INT, and_, func, alias
-from sqlalchemy.types import DECIMAL
+from sqlalchemy import select, Table, Column, INT, func
+from sqlalchemy.types import DECIMAL, Numeric
 from sqlalchemy import cast, Float
 
 logger = logging.getLogger("sqlagg")
 
+class MeanColumnWithCasting(BaseColumn):
+    aggregate_fn = lambda _, column: func.avg(cast(column, Numeric(7, 5)))
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 
