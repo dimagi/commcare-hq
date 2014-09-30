@@ -10,7 +10,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
-from corehq.apps.reports.formdetails.readable import get_readable_form_data
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -82,13 +82,14 @@ def render_form(form, domain, options):
     timezone = pytz.utc
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
+    user = options.get('user', None)
 
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
     # Form Data tab
-    form_data, question_list_not_found = get_readable_form_data(form)
+    form_data, question_list_not_found = get_readable_data_for_submission(form)
 
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
@@ -168,4 +169,5 @@ def render_form(form, domain, options):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
         "side_pane": side_pane,
+        "user": user,
     })

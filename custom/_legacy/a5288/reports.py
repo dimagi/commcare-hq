@@ -50,6 +50,9 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         data = {}
         
         for case in cases:
+            if case.closed:
+                continue
+
             # If a site coordinator is viewing the report, only show participants from that site (group)
             if group_id is None or group_id == case.owner_id:
                 data[case._id] = {

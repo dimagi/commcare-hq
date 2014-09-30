@@ -7,17 +7,16 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from couchdbkit.ext.django.schema import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-    DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+    DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
-from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -81,60 +80,6 @@ def cached_property(method):
             return self.cached_properties[method.__name__]
     return find_cached
 
-class HQBillingAddress(DocumentSchema):
-    """
-        A billing address for clients
-    """
-    country = StringProperty()
-    postal_code = StringProperty()
-    state_province = StringProperty()
-    city = StringProperty()
-    address = ListProperty()
-    name = StringProperty()
-
-    @property
-    def html_address(self):
-        template = """<address>
-            <strong>%(name)s</strong><br />
-            %(address)s<br />
-            %(city)s%(state)s %(postal_code)s<br />
-            %(country)s
-        </address>"""
-        filtered_address = [a for a in self.address if a]
-        address = template % dict(
-            name=self.name,
-            address="<br />\n".join(filtered_address),
-            city=self.city,
-            state=", %s" % self.state_province if self.state_province else "",
-            postal_code=self.postal_code,
-            country=self.country
-        )
-        return mark_safe(address)
-
-    def update_billing_address(self, **kwargs):
-        self.country = kwargs.get('country','')
-        self.postal_code = kwargs.get('postal_code','')
-        self.state_province = kwargs.get('state_province', '')
-        self.city = kwargs.get('city', '')
-        self.address = kwargs.get('address', [''])
-        self.name = kwargs.get('name', '')
-
-class HQBillingDomainMixin(DocumentSchema):
-    """
-        This contains all the attributes required to bill a client for CommCare HQ services.
-    """
-    billing_address = SchemaProperty(HQBillingAddress)
-    billing_number = StringProperty()
-    currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
-
-    # used to bill client
-    is_sms_billable = BooleanProperty()
-    billable_client = StringProperty()
-
-    def update_billing_info(self, **kwargs):
-        self.billing_number = kwargs.get('phone_number','')
-        self.billing_address.update_billing_address(**kwargs)
-        self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
 class UpdatableSchema():
     def update(self, new_dict):
@@ -228,7 +173,7 @@ class DayTimeWindow(DocumentSchema):
     start_time = TimeProperty()
     end_time = TimeProperty()
 
-class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
+class Domain(Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -304,7 +249,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     # Set to True to allow sending sms and all-label surveys to cases whose
     # phone number is duplicated with another contact
-    send_to_duplicated_case_numbers = BooleanProperty(default=False)
+    send_to_duplicated_case_numbers = BooleanProperty(default=True)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -344,6 +289,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
+
+    default_mobile_worker_redirect = StringProperty(default=None)
 
     @property
     def domain_type(self):
@@ -907,10 +854,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def delete(self):
         # delete all associated objects
-        db = get_db()
-        related_docs = db.view('domain/related_to_domain', startkey=[self.name], endkey=[self.name, {}], include_docs=True)
-        for doc in related_docs:
-            db.delete_doc(doc['doc'])
+        db = self.get_db()
+        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
+            startkey=[self.name],
+            endkey=[self.name, {}],
+            include_docs=False,
+        )]
+        iter_bulk_delete(db, related_doc_ids, chunksize=500)
         super(Domain, self).delete()
 
     def all_media(self, from_apps=None): #todo add documentation or refactor
@@ -1098,4 +1048,4 @@ class DomainCounter(Document):
 
 
 def _domain_cache_key(name):
-    return hashlib.md5(u'cchq:domain:{name}'.format(name=name)).hexdigest()
+    return hashlib.md5(u'cchq:domain:{name}'.format(name=name).encode('utf-8')).hexdigest()

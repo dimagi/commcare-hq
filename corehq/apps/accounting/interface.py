@@ -6,7 +6,7 @@ from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     BillingAccount, Subscription, SoftwarePlan
 )
-from corehq.apps.accounting.utils import get_money_str
+from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -47,6 +47,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.NameFilter',
               'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
               'corehq.apps.accounting.interface.AccountTypeFilter',
+              'corehq.apps.accounting.interface.ActiveStatusFilter',
               ]
     hide_filters = False
 
@@ -65,6 +66,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Date Created"),
             DataTablesColumn("Account Type"),
+            DataTablesColumn("Active Status"),
         )
 
     @property
@@ -92,12 +94,20 @@ class AccountingInterface(AddItemInterface):
             filters.update(
                 account_type=account_type,
             )
+        is_active = ActiveStatusFilter.get_value(self.request, self.domain)
+        if is_active is not None:
+            filters.update(
+                is_active=is_active == ActiveStatusFilter.active,
+            )
 
         for account in BillingAccount.objects.filter(**filters):
-            rows.append([mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
-                         account.salesforce_account_id,
-                         account.date_created.date(),
-                         account.account_type])
+            rows.append([
+                mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
+                account.salesforce_account_id,
+                account.date_created.date(),
+                account.account_type,
+                "Active" if account.is_active else "Inactive",
+            ])
         return rows
 
     @property
@@ -123,15 +133,17 @@ class SubscriptionInterface(AddItemInterface):
 
     crud_form_update_url = "/accounting/form/"
 
-    fields = ['corehq.apps.accounting.interface.StartDateFilter',
-              'corehq.apps.accounting.interface.EndDateFilter',
-              'corehq.apps.accounting.interface.DateCreatedFilter',
-              'corehq.apps.accounting.interface.SubscriberFilter',
-              'corehq.apps.accounting.interface.SalesforceContractIDFilter',
-              'corehq.apps.accounting.interface.ActiveStatusFilter',
-              'corehq.apps.accounting.interface.DoNotInvoiceFilter',
-              'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
-              ]
+    fields = [
+        'corehq.apps.accounting.interface.StartDateFilter',
+        'corehq.apps.accounting.interface.EndDateFilter',
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.ActiveStatusFilter',
+        'corehq.apps.accounting.interface.DoNotInvoiceFilter',
+        'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
+        'corehq.apps.accounting.interface.TrialStatusFilter',
+    ]
     hide_filters = False
 
     def validate_document_class(self):
@@ -144,7 +156,7 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn("Subscriber"),
             DataTablesColumn("Account"),
             DataTablesColumn("Plan"),
@@ -154,8 +166,10 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
-            DataTablesColumn("Action"),
         )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        return header
 
     @property
     def rows(self):
@@ -209,6 +223,11 @@ class SubscriptionInterface(AddItemInterface):
                 'subscriptionadjustment__method': filter_created_by,
             })
 
+        trial_status_filter = TrialStatusFilter.get_value(self.request, self.domain)
+        if trial_status_filter is not None:
+            is_trial = trial_status_filter == TrialStatusFilter.TRIAL
+            filters.update(is_trial=is_trial)
+
         for subscription in Subscription.objects.filter(**filters):
             try:
                 created_by_adj = SubscriptionAdjustment.objects.filter(
@@ -219,18 +238,25 @@ class SubscriptionInterface(AddItemInterface):
                     created_by_adj.method, "Unknown")
             except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
                 created_by = "Unknown"
-            rows.append([subscription.subscriber.domain,
-                         mark_safe('<a href="%s">%s</a>'
-                                   % (reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
-                                      subscription.account.name)),
-                         subscription.plan_version.plan.name,
-                         subscription.is_active,
-                         subscription.salesforce_contract_id,
-                         subscription.date_start,
-                         subscription.date_end,
-                         subscription.do_not_invoice,
-                         created_by,
-                         mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id)])
+            columns = [
+                subscription.subscriber.domain,
+                format_datatables_data(
+                    text=mark_safe('<a href="%s">%s</a>' % (
+                        reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)
+                        ), subscription.account.name)),
+                    sort_key=subscription.account.name,
+                ),
+                subscription.plan_version.plan.name,
+                subscription.is_active,
+                subscription.salesforce_contract_id,
+                subscription.date_start,
+                subscription.date_end,
+                subscription.do_not_invoice,
+                created_by,
+            ]
+            if not self.is_rendered_as_email:
+                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+            rows.append(columns)
 
         return rows
 
@@ -657,3 +683,88 @@ class InvoiceInterface(GenericTabularReport):
                 'rows': self.rows,
             }
         )
+
+
+class PaymentRecordInterface(GenericTabularReport):
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Payment Records"
+    description = "A list of all payment records and transaction IDs from " \
+                  "Stripe."
+    slug = "payment_records"
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentTransactionIdFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date Created"),
+            DataTablesColumn("Account"),
+            DataTablesColumn("Project"),
+            DataTablesColumn("Billing Admin"),
+            DataTablesColumn("Stripe Transaction ID"),
+            DataTablesColumn("Amount (USD)"),
+        )
+
+    @property
+    def filters(self):
+        filters = {}
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            filters.update(
+                payment_method__account__name=account_name,
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            filters.update(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            filters.update(
+                payment_method__billing_admin__domain=subscriber,
+            )
+        transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
+        if transaction_id:
+            filters.update(
+                transaction_id=transaction_id.strip(),
+            )
+        return filters
+
+    @property
+    def payment_records(self):
+        return PaymentRecord.objects.filter(**self.filters)
+
+    @property
+    def rows(self):
+        rows = []
+        for record in self.payment_records:
+            rows.append([
+                format_datatables_data(
+                    text=record.date_created.strftime("%B %m %Y"),
+                    sort_key=record.date_created.isoformat(),
+                ),
+                record.payment_method.account.name,
+                record.payment_method.billing_admin.domain,
+                record.payment_method.billing_admin.web_user,
+                format_datatables_data(
+                    text=mark_safe(
+                        '<a href="https://dashboard.stripe.com/payments/%s"'
+                        '   target="_blank">%s'
+                        '</a>' % (
+                            record.transaction_id,
+                            record.transaction_id,
+                        )),
+                    sort_key=record.transaction_id,
+                ),
+                quantize_accounting_decimal(record.amount),
+            ])
+        return rows

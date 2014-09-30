@@ -6,6 +6,7 @@ be aware of. Save time and create consistency.
 
 
 .. _paginated_crud:
+
 Paginated CRUD View
 -------------------
 
@@ -203,7 +204,7 @@ If you want to update data with your paginated view, you must implement the foll
         def get_updated_item_data(self, update_form):
             updated_puppy = update_form.update_puppy()
             return {
-                'newItem': {
+                'itemData': {
                     'id': updated_puppy._id,
                     'name': updated_puppy.name,
                     'breed': updated_puppy.breed,
@@ -295,7 +296,7 @@ If you want to delete data with your paginated view, you should implement someth
             deleted_puppy = Puppy.get(item_id)
             deleted_puppy.delete()
             return {
-                'newItem': {
+                'itemData': {
                     'id': deleted_puppy._id,
                     ...
                 },
@@ -377,6 +378,7 @@ You implement the following method (note that a return is not expected):
 Add a button like this to your template:
 
 .. code-block:: html
+
     <button type="button"
             class="btn refresh-list-confirm"
             data-loading-text="Making Default...">

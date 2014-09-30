@@ -14,7 +14,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/fields_by_prefix",
         "domain/by_status",
         "domain/by_organization",
-        "hqbilling/domains_marked_for_billing",
     ]
 
 class UserGenerationCache(GenerationCache):
@@ -109,4 +108,21 @@ class LocationGenerationCache(GenerationCache):
         'locations/by_name',
         'commtrack/locations_by_code',
         '_all_docs',
+    ]
+
+
+class DomainInvitationGenerationCache(GenerationCache):
+    generation_key = '#gen#invitation#'
+    doc_types = ['Invitation']
+    views = [
+        'users/open_invitations_by_email',
+        'users/open_invitations_by_domain',
+    ]
+
+
+class CommtrackConfigGenerationCache(GenerationCache):
+    generation_key = '#gen#commtrackconfig#'
+    doc_types = ['CommtrackConfig']
+    views = [
+        'commtrack/domain_config',
     ]

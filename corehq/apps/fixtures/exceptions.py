@@ -2,7 +2,15 @@ class FixtureException(Exception):
     pass
 
 
-class ExcelMalformatException(Exception):
+class FixtureUploadError(FixtureException):
+    pass
+
+
+class DuplicateFixtureTagException(FixtureUploadError):
+    pass
+
+
+class ExcelMalformatException(FixtureUploadError):
     pass
 
 
@@ -18,5 +26,5 @@ class FixtureVersionError(Exception):
     pass
 
 
-class DuplicateFixtureTagException(Exception):
-    pass
+
+

@@ -199,6 +199,8 @@ class SmsBillable(models.Model):
         if self.gateway_fee is not None:
             try:
                 charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
+                if self.gateway_fee_conversion_rate is not None:
+                    return charge.amount / self.gateway_fee_conversion_rate
                 return charge.amount
             except ObjectDoesNotExist:
                 pass
@@ -224,6 +226,7 @@ class SmsBillable(models.Model):
             phone_number=phone_number,
             direction=direction,
             date_sent=message_log.date,
+            domain=message_log.domain,
         )
 
         # Fetch gateway_fee

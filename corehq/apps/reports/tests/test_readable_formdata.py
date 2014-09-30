@@ -1,13 +1,17 @@
-from unittest import TestCase
+import functools
+import json
+import os
+from django.test import SimpleTestCase
+import yaml
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
-    questions_in_hierarchy,
-    strip_form_data,
-    zip_form_data_and_questions,
+    get_questions_from_xform_node,
+    get_readable_form_data,
 )
 
 
-class ReadableFormdataTest(TestCase):
+class ReadableFormdataTest(SimpleTestCase):
 
     maxDiff = None
 
@@ -54,14 +58,11 @@ class ReadableFormdataTest(TestCase):
             },
             "@version": "10"
         }
-        questions = questions_in_hierarchy([FormQuestionResponse(q)
-                                            for q in questions_json])
-        self.assertEqual(
-            [q.to_json()
-             for q in zip_form_data_and_questions(strip_form_data(form_data),
-                                                  questions,
-                                                  path_context='/data/')],
-            [{
+        questions = [FormQuestionResponse(q) for q in questions_json]
+        actual = get_readable_form_data(form_data, questions)
+        self.assertJSONEqual(
+            json.dumps([q.to_json() for q in actual]),
+            json.dumps([{
                 "tag": "input",
                 "repeat": None,
                 "group": None,
@@ -69,7 +70,7 @@ class ReadableFormdataTest(TestCase):
                 "label": "Question 4",
                 "response": "foo",
                 "type": "Text",
-            }]
+            }])
         )
 
     def test_repeat(self):
@@ -211,12 +212,45 @@ class ReadableFormdataTest(TestCase):
                         {'value': 'item2', 'label': 'Item 2'}],
             'response': 'item2',
         }]
-        questions = questions_in_hierarchy([FormQuestionResponse(q)
-                                            for q in questions_json])
-        self.assertEqual(
-            [q.to_json()
-             for q in zip_form_data_and_questions(strip_form_data(form_data),
-                                                  questions,
-                                                  path_context='/data/')],
-            [FormQuestionResponse(q).to_json() for q in expected]
+        actual = get_readable_form_data(
+            form_data,
+            [FormQuestionResponse(q) for q in questions_json]
         )
+        self.assertJSONEqual(
+            json.dumps([q.to_json() for q in actual]),
+            json.dumps([FormQuestionResponse(q).to_json() for q in expected])
+        )
+
+    def _test_corpus(self, slug):
+        xform_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.xform.xml'.format(slug))
+        submission_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.submission.json'.format(slug))
+        result_file = os.path.join(
+            os.path.dirname(__file__),
+            'readable_forms', '{}.result.yaml'.format(slug))
+        with open(xform_file) as f:
+            xform = f.read()
+        with open(submission_file) as f:
+            data = json.load(f)
+        with open(result_file) as f:
+            result = yaml.load(f)
+        questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
+        questions = get_readable_form_data(data, questions)
+
+        # Search for 'READABLE FORMS TEST' for more info
+        # to bootstrap a test and have it print out your yaml result
+        # uncomment this line. Ghetto but it works.
+        # print yaml.safe_dump([json.loads(json.dumps(x.to_json()))
+        #                       for x in questions])
+
+        self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
+                             json.dumps(result))
+
+    def test_mismatched_group_hierarchy(self):
+        self._test_corpus('mismatched_group_hierarchy')
+
+    def test_top_level_refless_group(self):
+        self._test_corpus('top_level_refless_group')

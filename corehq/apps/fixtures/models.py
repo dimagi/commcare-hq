@@ -1,3 +1,4 @@
+from decimal import Decimal
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
@@ -91,6 +92,13 @@ class FieldList(DocumentSchema):
     """
     field_list = SchemaListProperty(FixtureItemField)
 
+    def to_api_json(self):
+        value = self.to_json()
+        del value['doc_type']
+        for field in value['field_list']:
+            del field['doc_type']
+        return value
+
 
 class FixtureDataItem(Document):
     """
@@ -172,7 +180,8 @@ class FixtureDataItem(Document):
         try:
             return self.fields_without_attributes
         except FixtureVersionError:
-            return self.fields
+            return {key: value.to_api_json()
+                    for key, value in self.fields.items()}
 
     @property
     def data_type(self):
@@ -242,7 +251,9 @@ class FixtureDataItem(Document):
                     xField = ElementTree.SubElement(xData, field.field_name)
                     xField.text = field_with_attr.field_value or ""
                     for attribute in field_with_attr.properties:
-                        xField.attrib[attribute] = field_with_attr.properties[attribute]
+                        val = field_with_attr.properties[attribute]
+                        xField.attrib[attribute] = unicode(val) if isinstance(val, Decimal) else val
+
         return xData
 
     def get_groups(self, wrap=True):

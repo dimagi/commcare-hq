@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
-    groups_for_user)
+    groups_for_user, get_role)
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -67,7 +67,7 @@ class ConvenientBaseMixIn(object):
         # sup_roles = ('ANM', 'LS') # todo if we care about these
         man_roles = ('MOIC', 'BHM', 'BCM', 'CDPO')
         if self.request.couch_user.is_commcare_user():
-            if self.request.couch_user.user_data.get('role', '').upper() in man_roles:
+            if get_role(self.request.couch_user) in man_roles:
                 return 'manager'
         return 'supervisor'
 

@@ -17,17 +17,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
+from dimagi.utils.parsing import json_format_datetime
 
-
-def all_supply_point_types(domain):
-    return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]
-
-def supply_point_type_categories(domain):
-    config = CommtrackConfig.for_domain(domain)
-    categories = config.supply_point_categories
-    other_types = set(all_supply_point_types(domain)) - set(config.known_supply_point_types)
-    categories['_oth'] = list(other_types)
-    return categories
 
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
@@ -122,9 +113,8 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
             LocationType(name='district', allowed_parents=['state'], administrative=True),
             LocationType(name='block', allowed_parents=['district'], administrative=True),
             LocationType(name='village', allowed_parents=['block'], administrative=True),
-            LocationType(name='outlet', allowed_parents=['block', 'village']),
+            LocationType(name='outlet', allowed_parents=['village']),
         ],
-        supply_point_types=[],
     )
     if requisitions_enabled:
         c.requisition_config = get_default_requisition_config()
@@ -247,11 +237,15 @@ def submit_mapping_case_block(user, index):
             case_id=location_map_case_id(user),
             version=V2,
             owner_id=user._id,
-            index=index
+            index=index,
+            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
+            user_id=const.COMMTRACK_USERNAME,
         )
 
     submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(
+            caseblock.as_xml(format_datetime=json_format_datetime)
+        ),
         user.domain,
     )
 
@@ -285,3 +279,7 @@ def wrap_commtrack_case(case_json):
 
 def unicode_slug(text):
     return slugify(unicode(unidecode(text)))
+
+
+def encode_if_needed(val):
+    return val.encode("utf8") if isinstance(val, unicode) else val

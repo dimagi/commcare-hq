@@ -1,4 +1,5 @@
 {% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
@@ -15,7 +16,7 @@
 
                 if (this.checked) {
                     var excelField = $(this).closest('tr').find(".excel_field");
-                    customField.val(excelField.val());
+                    customField.val(excelField.val().replace(/[^\w\s]/gi, ''));
                     customField.closest('td').removeClass('hide');
                     caseField.closest('td').addClass('hide');
                 } else {
@@ -23,13 +24,34 @@
                     customField.closest('td').addClass('hide');
                     caseField.closest('td').removeClass('hide');
                 }
-            };
-
+            }
             $('.new_property').change(updatePropertyInput);
-
             function removeRow() {
                 $(this).closest('tr').remove();
-            };
+            }
+
+            var allowedCaseProperties = {{ case_fields|JSON }};
+
+            function autofillProperties() {
+                // just doing this whole thing off the DOM, though would be a good candidate
+                // to port to use more javascript.
+                var getExcelField = function ($row) {
+                    var select = $row.find('.excel_field')[0]
+                    return select.options[select.selectedIndex].text;
+                };
+
+                $('table#fieldlist tbody tr').each(function () {
+                    var field = getExcelField($(this));
+                    if ($.inArray(field, allowedCaseProperties) !== -1) {
+                        var $caseSelect = $(this).find('.case_field').first();
+                        $caseSelect.val(field);
+                    } else {
+                        var $newProperty = $(this).find('.new_property').first();
+                        $newProperty.prop('checked', true);
+                        $newProperty.trigger('change');
+                    }
+                });
+            }
 
             $('a.remove_row').click(removeRow);
 
@@ -82,7 +104,9 @@
             $('#back_button').click(function() {
                 history.back();
                 return false;
-            })
+            });
+
+            $('#autofill').click(autofillProperties);
         });
     </script>
 {% endblock %}
@@ -103,13 +127,13 @@
 
         <fieldset>
             <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
-            <table class="table table-condensed">
+            <table class="table table-condensed" id="fieldlist">
                 <thead>
                     <th class="span1"></th>
                     <th>{% trans "Excel Field" %}</th>
                     <th>{% trans "Data Type" %}</th>
                     <th></th>
-                    <th>{% trans "Case Property" %}</th>
+                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
                     <th></th>
                 </thead>
                 <tbody>

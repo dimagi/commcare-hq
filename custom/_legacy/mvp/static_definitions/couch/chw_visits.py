@@ -20,7 +20,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
             ),
             household_cases=dict(
                 description="No. of Active Households ",
-                title="# Households",
+                title="# Households in specified time period",
                 indicator_key="",
                 case_type="household",
             ),
@@ -40,7 +40,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
             ),
             pregnancy_cases=dict(
                 description="No. of Active Pregnancies",
-                title="# Pregnancies",
+                title="# Pregnancies in specified time period",
                 indicator_key="",
                 case_type="pregnancy",
             ),
@@ -54,7 +54,7 @@ CHW_VISIT_INDICATORS = dict(
         all_visit_forms=dict(
             household_visits=dict(
                 description="No. of household visits",
-                title="# Household Visits",
+                title="# Household Visits in specified time period",
                 indicator_key="household",
             ),
         ),
@@ -132,7 +132,26 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# Under-6-Month Visits",
                 indicator_key="child under6mo",
             ),
+            household_num_func_bednets=dict(
+                description="No. of households ASSESSED with at least one functioning bednet per sleeping site",
+                title="# of households with at least one functioning bednet per sleeping site",
+                indicator_key="household atleastonebednet",
+            ),
+            household_num_bednets=dict(
+                description="No. of households ASSESSED for functioning bednet",
+                title="# of households ASSESSED  for functioning bednet",
+                indicator_key="household bednet",
+            ),
+            num_handwashing_latrine=dict(
+                description="No. of households ASSESSED with handwashing station within 10m of the latrine",
+                title="# of households with handwashing station within 10m of the latrine",
+                indicator_key="household handwashing10metres",
+            ),
+            num_handwashing=dict(
+                description="No. of households ASSESSED with handwashing station",
+                title="# of households with handwashing station",
+                indicator_key="household handwashing",
+            ),
         )
     )
 )
-

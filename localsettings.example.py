@@ -49,7 +49,7 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - d
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
-SERVER_ENVIRONMENT = 'changeme' #identify the target type of this running environment
+SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
 ####### Log/debug setup ########
 
@@ -65,9 +65,13 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
+####### Django Compressor ########
+
+COMPRESS_ENABLED = False  # this will allow less.js to compile less files on the client side
+
 ####### Bitly ########
 
-BITLY_LOGIN = 'dimagi'
+BITLY_LOGIN = 'dimagi'  # set to None to disable bitly app url shortening (useful offline)
 BITLY_APIKEY = '*******'
 
 

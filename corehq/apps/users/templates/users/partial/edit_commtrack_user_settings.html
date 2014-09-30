@@ -11,10 +11,11 @@
         {% include 'hqstyle/forms/basic_fieldset.html' with form=commtrack.update_form %}
     </fieldset>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">{% trans 'Update CommTrack Settings' %}</button>
+      <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommTrack Settings' %}</button>
     </div>
 </form>
 
+{% comment "CommTrack user roles are not doing anything for now" %}
 <form class="form form-horizontal"
       method="post"
       action="{% url "update_user_data" domain couch_user.user_id %}">
@@ -44,3 +45,4 @@
         </button>
     </div>
 </form>
+{% endcomment %}

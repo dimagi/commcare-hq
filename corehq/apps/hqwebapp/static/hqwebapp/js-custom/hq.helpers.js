@@ -24,7 +24,14 @@ $(function() {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function(ev) {
         var form = $(ev.target);
-        form.find('.disable-on-submit').prop('disabled',true).addClass('disabled');
+        form.find('.disable-on-submit').disableButton();
+        form.find('.disable-on-submit-no-spinner').disableButtonNoSpinner();
+    });
+    $(document).on('submit', 'form.disable-on-submit', function (ev) {
+        $(ev.target).find('[type="submit"]').disableButton();
+    });
+    $(document).on('click', '.add-spinner-on-click', function(ev) {
+        $(ev.target).addSpinnerToButton();
     });
 
     $(document).on('click', '.notification-close-btn', function() {
@@ -72,11 +79,30 @@ $.showMessage = function (message, level) {
 };
 
 
-$.fn.disableOnSubmit = function () {
-    $(this).submit(function () {
-        $(this).find('[type="submit"]')
-               .prepend('<i class="icon-refresh icon-spin"></i> ')
-               .attr('disabled', 'disabled')
-               .addClass('disabled');
-    });
+$.fn.addSpinnerToButton = function () {
+    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
 };
+
+
+$.fn.removeSpinnerFromButton = function () {
+    $(this).find('i').remove();
+};
+
+
+$.fn.disableButtonNoSpinner = function () {
+    $(this).attr('disabled', 'disabled')
+           .addClass('disabled');
+};
+
+
+$.fn.disableButton = function () {
+    $(this).disableButtonNoSpinner();
+    $(this).addSpinnerToButton();
+};
+
+
+$.fn.enableButton = function () {
+    $(this).removeSpinnerFromButton();
+    $(this).removeClass('disabled')
+           .removeAttr('disabled');
+}

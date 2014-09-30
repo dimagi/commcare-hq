@@ -4,7 +4,8 @@ from functools import wraps
 import json
 
 # Django imports
-from django.http import Http404, HttpResponse
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
 
 # Tastypie imports
@@ -16,7 +17,7 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import require_permission, require_permission_raw
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -86,7 +87,11 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
-        response = dummy(request, **kwargs)
+        try:
+            response = dummy(request, **kwargs)
+        except PermissionDenied:
+            response = HttpResponseForbidden()
+
         if response == PASSED_AUTH:
             return True
         else:
@@ -97,10 +102,9 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         PASSED_AUTH = 'is_authenticated'
-
+        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
         @api_auth
-        @domain_admin_required
-        @login_or_digest
+        @require_permission_raw(permission_check, login_decorator=login_or_digest)
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 
+{% load hq_shared_tags %}
+
 <html>
     <head>
-        <script src="{{ STATIC_URL }}hqwebapp/js/jsonreport.js"></script>
-        <script src="{{ STATIC_URL }}hqstyle/js/jquery/jquery-1.8.2.min.js"></script>
+        <script src="{% static 'hqwebapp/js/jsonreport.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.8.2.min.js' %}"></script>
         <script>
             $(function(){
                 $.get('{% url "corehq.apps.hqcase.views.open_cases_json" domain %}', function(data){

@@ -3,7 +3,6 @@ import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.core.mail import send_mail
-from corehq import toggles
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -21,12 +20,19 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
 
+class MailChimpNotConfiguredError(Exception):
+    pass
+
+
 def get_mailchimp_api():
-    return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    if settings.MAILCHIMP_APIKEY:
+        return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
+    raise MailChimpNotConfiguredError('Mailchimp is not configured')
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    get_mailchimp_api().lists.subscribe(
+    api = get_mailchimp_api()
+    api.lists.subscribe(
         list_id,
         {'email': email or user.email},
         double_optin=False,
@@ -44,9 +50,10 @@ def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
     try:
         subscribe_user_to_mailchimp_list(user, list_id, email)
     except (
-            mailchimp.ListAlreadySubscribedError,
-            mailchimp.ListInvalidImportError,
-            mailchimp.ValidationError,
+        mailchimp.ListAlreadySubscribedError,
+        mailchimp.ListInvalidImportError,
+        mailchimp.ValidationError,
+        MailChimpNotConfiguredError,
     ):
         pass
     except mailchimp.Error as e:
@@ -67,6 +74,7 @@ def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
         unsubscribe_user_from_mailchimp_list(user, list_id, email)
     except (
         mailchimp.ListNotSubscribedError,
+        MailChimpNotConfiguredError,
     ):
         pass
     except mailchimp.Error as e:
@@ -108,16 +116,30 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
-    safe_subscribe_user_to_mailchimp_list(
-        new_user,
-        settings.MAILCHIMP_MASS_EMAIL_ID
-    )
-    new_user.subscribed_to_commcare_users = email_opt_in
-    if email_opt_in:
+
+    def _log_mailchimp_error(e):
+        logging.exception(
+            'unable to subscribe {0} to mailchimp. Is your configuration broken? {1}'.format(
+                username, e
+            ))
+    try:
         safe_subscribe_user_to_mailchimp_list(
             new_user,
-            settings.MAILCHIMP_COMMCARE_USERS_ID
+            settings.MAILCHIMP_MASS_EMAIL_ID
         )
+    except Exception as e:
+        _log_mailchimp_error(e)
+
+    new_user.subscribed_to_commcare_users = False
+    if email_opt_in:
+        try:
+            safe_subscribe_user_to_mailchimp_list(
+                new_user,
+                settings.MAILCHIMP_COMMCARE_USERS_ID
+            )
+            new_user.subscribed_to_commcare_users = True
+        except Exception as e:
+            _log_mailchimp_error(e)
 
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -171,25 +193,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.name = new_domain._id
         new_domain.save() # we need to get the name from the _id
 
-    # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-        new_domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
-    )
-    expiration_date = date.today() + timedelta(days=30)
-    trial_account = BillingAccount.objects.get_or_create(
-        name="Trial Account for %s" % new_domain.name,
-        currency=Currency.get_default(),
-        created_by_domain=new_domain.name,
-        account_type=BillingAccountType.TRIAL,
-    )[0]
-    trial_subscription = Subscription.new_domain_subscription(
-        trial_account, new_domain.name, advanced_plan_version,
-        date_end=expiration_date,
-        adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
-        is_trial=True,
-    )
-    trial_subscription.is_active = True
-    trial_subscription.save()
+    create_30_day_trial(new_domain)
 
     dom_req.domain = new_domain.name
 
@@ -370,3 +374,33 @@ You can view the %s here: %s""" % (
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
+
+def create_30_day_trial(domain_obj):
+    from corehq.apps.accounting.models import (
+        DefaultProductPlan,
+        SoftwarePlanEdition,
+        BillingAccount,
+        Currency,
+        BillingAccountType,
+        Subscription,
+        SubscriptionAdjustmentMethod,
+    )
+    # Create a 30 Day Trial subscription to the Advanced Plan
+    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+        domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
+    )
+    expiration_date = date.today() + timedelta(days=30)
+    trial_account = BillingAccount.objects.get_or_create(
+        name="Trial Account for %s" % domain_obj.name,
+        currency=Currency.get_default(),
+        created_by_domain=domain_obj.name,
+        account_type=BillingAccountType.TRIAL,
+    )[0]
+    trial_subscription = Subscription.new_domain_subscription(
+        trial_account, domain_obj.name, advanced_plan_version,
+        date_end=expiration_date,
+        adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
+        is_trial=True,
+    )
+    trial_subscription.is_active = True
+    trial_subscription.save()

@@ -99,6 +99,29 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 args=[domain, doc_id],
             ),
         )
+    elif doc_type in ('Group',):
+        from corehq.apps.users.views.mobile import EditGroupMembersView
+        doc_info = DocInfo(
+            type_display=_('Group'),
+            display=doc['name'],
+            link=reverse(
+                EditGroupMembersView.urlname,
+                args=[domain, doc_id],
+            ),
+        )
+    elif doc_type in ('Domain',):
+        if doc['is_snapshot'] and doc['published']:
+            urlname = 'project_info'
+        else:
+            urlname = 'domain_basic_info'
+        doc_info = DocInfo(
+            type_display=_('Domain'),
+            display=doc['name'],
+            link=reverse(
+                urlname,
+                kwargs={'domain' : doc['name']}
+            ),
+        )
     else:
         doc_info = DocInfo()
 

@@ -3,6 +3,7 @@ from django import test as unittest
 from django.test.client import RequestFactory
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+from corehq.db import Session
 from dimagi.utils.dates import DateSpan
 
 from .sql_fixture import load_data
@@ -27,6 +28,7 @@ class BaseReportTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.couch_user.delete()
+        Session.remove()
 
     def _get_report_data(self, report, startdate, enddate):
         req = self._get_request(startdate, enddate)

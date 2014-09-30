@@ -6,7 +6,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import ExportTable, ExportSchema, ExportColumn
+from couchexport.models import ExportTable, ExportSchema, ExportColumn, Format
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
@@ -115,6 +115,8 @@ class CustomExportHelper(object):
 
         custom_export_json = post_data['custom_export']
 
+        self.check_export(custom_export_json['default_format'], len(custom_export_json['tables']))
+
         SAFE_KEYS = ('default_format', 'is_safe', 'name', 'schema_id', 'transform_dates')
         for key in SAFE_KEYS:
             self.custom_export[key] = custom_export_json[key]
@@ -123,7 +125,6 @@ class CustomExportHelper(object):
         schema_id = self.custom_export.schema_id
         schema = ExportSchema.get(schema_id)
         self.custom_export.index = schema.index
-
         self.presave = post_data['presave']
         self.export_stock = post_data['export_stock']
 
@@ -174,6 +175,12 @@ class CustomExportHelper(object):
                 'allow_repeats': self.allow_repeats
             }
         }
+
+    @staticmethod
+    def check_export(default_format, table_count):
+        if default_format is Format.UNZIPPED_CSV and table_count > 1:
+            raise BadExportConfiguration( _('Unzipped csv format is incompatible with multiple tables, please select a \
+            new format'))
 
 
 class FormCustomExportHelper(CustomExportHelper):
@@ -421,6 +428,18 @@ class CaseCustomExportHelper(CustomExportHelper):
             for col in table.get("column_configuration", []):
                 if col["index"] in self.properties_to_show:
                     col["show"] = True
+
+        # Show most of the Case History rows by default
+        dont_show_cols = {"sync_log_id"}
+        for table in table_conf:
+            if table.get("index", "") == "#.actions.#":
+                for col in table.get("column_configuration", []):
+                    index = col.get("index", "")
+                    if index not in dont_show_cols:
+                        col["show"] = True
+                    else:
+                        dont_show_cols.discard(index)
+                break
 
         return table_conf
 

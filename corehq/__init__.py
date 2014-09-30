@@ -46,12 +46,12 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
+            commtrack_reports.InventoryReport,
             commtrack_reports.CurrentStockStatusReport,
-            commtrack_reports.AggregateStockStatusReport,
-            commtrack_reports.ReportingRatesReport,
-            # commtrack_reports.RequisitionReport,
             commtrack_maps.StockStatusMapReport,
+            commtrack_reports.ReportingRatesReport,
             commtrack_maps.ReportingStatusMapReport,
+            # commtrack_reports.RequisitionReport,
         )))
 
     if project.has_careplan:
@@ -214,11 +214,7 @@ from corehq.apps.accounting.interface import (
     SubscriptionInterface,
     SoftwarePlanInterface,
     InvoiceInterface,
-)
-
-from corehq.apps.smsbillables.interface import (
-    SMSBillablesInterface,
-    SMSGatewayFeeCriteriaInterface,
+    PaymentRecordInterface,
 )
 
 ACCOUNTING_ADMIN_INTERFACES = (
@@ -227,6 +223,17 @@ ACCOUNTING_ADMIN_INTERFACES = (
         SubscriptionInterface,
         SoftwarePlanInterface,
         InvoiceInterface,
+        PaymentRecordInterface,
+    )),
+)
+
+from corehq.apps.smsbillables.interface import (
+    SMSBillablesInterface,
+    SMSGatewayFeeCriteriaInterface,
+)
+
+SMS_ADMIN_INTERFACES = (
+    (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
     )),
@@ -258,8 +265,10 @@ ADMIN_REPORTS = (
 )
 
 from corehq.apps.hqwebapp.models import *
+from corehq.apps.styleguide.tabs import SGExampleTab
 
 TABS = (
+    DashboardTab,
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,
@@ -272,4 +281,7 @@ TABS = (
     OrgReportTab,
     OrgSettingsTab, # separate menu?
     AdminTab,
+    SGExampleTab,
 )
+
+from corehq.db import Session

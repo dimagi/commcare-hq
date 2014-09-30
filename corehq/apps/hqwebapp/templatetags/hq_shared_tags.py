@@ -12,6 +12,8 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_handler
 
+import corehq.apps.style.utils as style_utils
+
 
 register = template.Library()
 
@@ -82,23 +84,38 @@ def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
     url = settings.STATIC_URL + url
-    if version:
+    is_less = url.endswith('.less')
+    if version and not is_less:
         url += "?version=%s" % version
     return url
 
 
 @register.simple_tag
-def get_report_analytics_tag(request):
-    # todo: change this to takes_context=True and check the active_tab context
-    # variable to see exactly whether the reports tab is active
-    if 'reports' in request.path_info:
-        try:
-            report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
-        except IndexError:
-            return ''
+def cachebuster(url):
+    return resource_versions.get(url, "")
 
-        return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
-    return ''
+
+@register.simple_tag
+def new_static(url, **kwargs):
+    """Caching must explicitly be defined on tags with any of the extensions
+    that could be compressed by django compressor. The static tag above will
+    eventually turn into this tag.
+    :param url:
+    :param kwargs:
+    :return:
+    """
+    can_be_compressed = url.endswith(('.less', '.css', '.js'))
+    use_cache = kwargs.pop('cache', False)
+    use_versions = not can_be_compressed or use_cache
+
+    resource_url = url
+    url = settings.STATIC_URL + url
+    if use_versions:
+        version = resource_versions.get(resource_url)
+        if version:
+            url += "?version=%s" % version
+
+    return url
 
 
 @register.simple_tag
@@ -108,17 +125,8 @@ def domains_for_user(request, selected_domain=None):
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
     the user doc updates via save.
     """
-
-
-    lst = list()
-    lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
-    new_domain_url = reverse("registration_domain")
-    if selected_domain == 'public':
-        # viewing the public domain with a different db, so the user's domains can't readily be accessed.
-        lst.append('<li><a href="%s">%s...</a></li>' % (reverse("domain_select"), _("Back to My Projects")))
-        lst.append('<li class="divider"></li>')
-    else:
-
+    domain_list = []
+    if selected_domain != 'public':
         cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
         if cached_domains:
             domain_list = [Domain.wrap(x) for x in cached_domains]
@@ -132,41 +140,20 @@ def domains_for_user(request, selected_domain=None):
                 else:
                     domain_list = Domain.active_for_user(request.user)
                     notify_exception(request)
-
-        if len(domain_list) > 0:
-            lst.append('<li class="nav-header">%s</li>' % _('My Projects'))
-            for domain in domain_list:
-                default_url = reverse("domain_homepage", args=[domain.name])
-                lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
-        else:
-            lst.append('<li class="nav-header">No Projects</li>')
-    lst.append('<li class="divider"></li>')
-    lst.append('<li><a href="%s">%s...</a></li>' % (new_domain_url, _('New Project')))
-    lst.append('<li><a href="%s">%s...</a></li>' % (reverse("appstore"), _('CommCare Exchange')))
-    lst.append("</ul>")
-
-    domain_list_str = "".join(lst)
-    return domain_list_str
-
-
-@register.simple_tag
-def list_my_domains(request):
-    cached_val = cache_core.get_cached_prop(request.couch_user.get_id, 'list_my_domains')
-    if cached_val:
-        return cached_val.get('list_my_domains', "")
-
-    domain_list = Domain.active_for_user(request.user)
-    lst = list()
-    lst.append('<ul class="nav nav-pills nav-stacked">')
-    for domain in domain_list:
-        default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
-    lst.append('</ul>')
-
-    my_domain_list_str = "".join(lst)
-    ret = {"list_my_domains": my_domain_list_str}
-    cache_core.cache_doc_prop(request.couch_user.get_id, 'list_my_domains', ret)
-    return my_domain_list_str
+    domain_list = [dict(
+        url=reverse('domain_homepage', args=[d.name]),
+        name=d.long_display_name()
+    ) for d in domain_list]
+    context = {
+        'is_public': selected_domain == 'public',
+        'domain_list': domain_list,
+        'current_domain': selected_domain,
+    }
+    template = {
+        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/domain_list_dropdown.html',
+        style_utils.BOOTSTRAP_3: 'style/includes/domain_list_dropdown.html',
+    }[style_utils.bootstrap_version(request)]
+    return mark_safe(render_to_string(template, context))
 
 
 @register.simple_tag

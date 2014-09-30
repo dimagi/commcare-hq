@@ -1,6 +1,7 @@
-from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2
+from custom.succeed.reports import OUTPUT_DATE_FORMAT, CM2, PM_PM2, PM2, CHW_APP_PD_MODULE, CM_APP_PD_MODULE, PM_APP_PM_MODULE, CHW_APP_MA_MODULE, AP2
 from django.utils.translation import ugettext as _, ugettext_noop
-from custom.succeed.utils import get_form_dict
+from custom.succeed.reports.patient_details import PatientDetailsReport
+from custom.succeed.utils import get_form_dict, is_pm_or_pi, is_cm, is_chw
 from custom.succeed.utils import format_date
 
 EMPTY_FIELD = ""
@@ -49,20 +50,34 @@ class PatientInfoDisplay(object):
 
     def get_recent_blood_pressure(self, number):
         CM2_form_dict = get_form_dict(self.case, CM2)
+        blood_pressure = dict()
+        if CM2_form_dict is not None and 'CM2_bp_%s_group' % number in CM2_form_dict:
+            group = 'CM2_bp_%s_group' % number
+            blood_pressure['CM2_bp_%s_sbp' % number] = CM2_form_dict[group].get('CM2_bp_%s_sbp' % number, EMPTY_FIELD) \
+                                                       + '/' + CM2_form_dict[group].get('CM2_bp_%s_dbp' % number, EMPTY_FIELD)
+            blood_pressure['CM2_patient_bp_%s_date' % number] = format_date(CM2_form_dict[group].get('CM2_patient_bp_%s_date' % number, EMPTY_FIELD), OUTPUT_DATE_FORMAT)
+
         return {'label': _('Recent Blood Pressure %s' % number),
                 'value': [
-                  _("Value: ") + getattr(CM2_form_dict, 'CM2_bp_%s_sbp' % number, EMPTY_FIELD) + '/' + getattr(self.case, 'CM2_bp_%s_dbp' % number, EMPTY_FIELD),
-                  _("Date: ") + format_date(getattr(CM2_form_dict, 'CM2_patient_bp_%s_date' % number, EMPTY_FIELD), OUTPUT_DATE_FORMAT)
+                  _("Value: ") + blood_pressure.get('CM2_bp_%s_sbp' % number, EMPTY_FIELD),
+                  _("Date: ") + blood_pressure.get('CM2_patient_bp_%s_date' % number, EMPTY_FIELD)
                 ]}
 
     def get_baseline_LDL(self):
         CM2_form_dict = get_form_dict(self.case, CM2)
+        baseline_LDL = dict()
+        if CM2_form_dict is not None and 'CM2_LDL_group' in CM2_form_dict:
+            baseline_LDL['lab_LDL'] = CM2_form_dict['CM2_LDL_group'].get('CM2_lab_LDL', EMPTY_FIELD)
+            baseline_LDL['lab_LDL_date'] = format_date(CM2_form_dict['CM2_LDL_group'].get('CM2_lab_LDL_date', EMPTY_FIELD), OUTPUT_DATE_FORMAT)
+            baseline_LDL['lab_LDL_fasting'] = CM2_form_dict['CM2_LDL_group'].get('CM2_lab_LDL_fasting', EMPTY_FIELD)
+            baseline_LDL['lab_LDL_statin'] = CM2_form_dict['CM2_LDL_group'].get('CM2_lab_LDL_statin', EMPTY_FIELD)
+
         return {'label': _('Baseline LDL'),
                 'value': [
-                  _("Value: ") + getattr(CM2_form_dict, 'CM2_lab_LDL', EMPTY_FIELD),
-                  _("Date: ") + format_date(getattr(CM2_form_dict, 'CM2_lab_LDL_date', EMPTY_FIELD), OUTPUT_DATE_FORMAT),
-                  _("Fasting? ") + getattr(CM2_form_dict, 'CM2_lab_LDL_fasting', EMPTY_FIELD),
-                  _("Taking statin at time of draw? ") + getattr(CM2_form_dict, 'CM2_lab_LDL_statin', EMPTY_FIELD),
+                  _("Value: ") + baseline_LDL.get('lab_LDL', EMPTY_FIELD),
+                  _("Date: ") + baseline_LDL.get('lab_LDL_date', EMPTY_FIELD),
+                  _("Fasting? ") + baseline_LDL.get('lab_LDL_fasting', EMPTY_FIELD),
+                  _("Taking statin at time of draw? ") + baseline_LDL.get('lab_LDL_statin', EMPTY_FIELD),
                 ]}
 
     @property
@@ -155,3 +170,36 @@ class PatientInfoDisplay(object):
         allergies['aspirin'] = {'label': _('Aspirin'), 'value': getattr(self.case, 'allergy_aspirin', EMPTY_FIELD)}
         allergies['other'] = {'label': _('Other'), 'value': getattr(self.case, 'allergy_other_list', EMPTY_FIELD)}
         return allergies
+
+class PatientInfoReport(PatientDetailsReport):
+    slug = "patient_info"
+    name = 'Patient Info'
+
+    @property
+    def report_context(self):
+        self.report_template_path = "patient_info.html"
+        ret = super(PatientInfoReport, self).report_context
+        ret['view_mode'] = 'info'
+        patient_info = PatientInfoDisplay(ret['patient'])
+
+        #  check user role:
+        user = self.request.couch_user
+        if is_pm_or_pi(user):
+            ret['edit_patient_info_url'] = self.get_form_url(self.pm_app_dict, self.latest_pm_build, PM_APP_PM_MODULE, PM_PM2, ret['patient']['_id'])
+        elif is_cm(user):
+            ret['edit_patient_info_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_PD_MODULE, PM_PM2, ret['patient']['_id'])
+        elif is_chw(user):
+            ret['edit_patient_info_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_PD_MODULE, PM2, ret['patient']['_id'])
+
+        if is_pm_or_pi(user):
+            ret['upcoming_appointments_url'] = self.get_form_url(self.pm_app_dict, self.latest_pm_build, PM_APP_PM_MODULE, PM_PM2, ret['patient']['_id'])
+        elif is_cm(user):
+            ret['upcoming_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build, CM_APP_PD_MODULE, PM_PM2, ret['patient']['_id'])
+        elif is_chw(user):
+            ret['upcoming_appointments_url'] = self.get_form_url(self.chw_app_dict, self.latest_chw_build, CHW_APP_MA_MODULE, AP2, ret['patient']['_id'])
+
+        ret['general_information'] = patient_info.general_information
+        ret['contact_information'] = patient_info.contact_information
+        ret['most_recent_lab_exams'] = patient_info.most_recent_lab_exams
+        ret['allergies'] = patient_info.allergies
+        return ret

@@ -1,0 +1,12 @@
+{
+    "id": 1,
+    "name": "Test user",
+    "role": "ic",
+    "is_active": true,
+    "supply_point": 79,
+    "email": "test@gmail.com",
+    "phone_numbers": [
+        "4224242442"
+    ],
+    "backend": "push_backend"
+}

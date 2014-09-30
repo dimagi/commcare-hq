@@ -3,6 +3,7 @@ from corehq.apps.accounting.models import *
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
 )
+from corehq.apps.reports.filters.search import SearchFilter
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop as _
 
@@ -88,6 +89,18 @@ class DoNotInvoiceFilter(BaseSingleOptionFilter):
     options = [
         (INVOICE, _('Send invoice')),
         (DO_NOT_INVOICE, _('Do not invoice')),
+    ]
+
+
+class TrialStatusFilter(BaseSingleOptionFilter):
+    slug = 'trial_status'
+    label = _("Trial Status")
+    default_text = _("Show All Subscriptions (including trials)")
+    TRIAL = "trial"
+    NON_TRIAL = "non_trial"
+    options = [
+        (TRIAL, _("Show Non-Trial Subscriptions")),
+        (NON_TRIAL, _("Show Only Trial Subscriptions")),
     ]
 
 
@@ -318,3 +331,10 @@ class BillingContactFilter(BaseSingleOptionFilter):
                 if contact.first_name or contact.last_name
             ]
         )
+
+
+class PaymentTransactionIdFilter(SearchFilter):
+    slug = "transaction_id"
+    label = _("Transaction ID")
+    search_help_inline = _("Usually begins with 'ch_'")
+

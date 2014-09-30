@@ -28,6 +28,8 @@ Welcome to CommCareHQ's documentation!
    commtrack
    cloudcare
    translations
+   profiling
+   elasticsearch
 
 Tips for documenting
 --------------------

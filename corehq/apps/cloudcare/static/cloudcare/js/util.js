@@ -43,6 +43,13 @@ var getFormUrl = function(urlRoot, appId, moduleId, formId) {
 var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
     return urlRoot + getFormEntryPath(appId, moduleId, formId, caseId);
 }
+var getChildSelectUrl = function(urlRoot, appId, moduleId, formId, parentId){
+    return urlRoot + getChildSelectPath(appId, moduleId, formId, parentId);
+}
+var getChildSelectPath = function(appId, moduleId, formId, parentId){
+    return "view/" + appId + "/" + moduleId + "/" + formId + "/parent/" + parentId;
+}
+
 var getFormEntryPath = function(appId, moduleId, formId, caseId) {
     // TODO: make this cleaner
     var url = "view/" + appId + "/" + moduleId + "/" + formId;
@@ -61,9 +68,12 @@ var getSubmitUrl = function (urlRoot, appId) {
     return urlRoot + "/" + appId + "/";
 };
 
-var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
+var getCaseFilterUrl = function(urlRoot, appId, moduleId, special, parentId) {
     // TODO: make this cleaner
     var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    if (parentId){
+        url += "parent/" + parentId + "/";
+    }
     if (special === 'task-list') {
         url += '?task-list=true';
     }
@@ -106,7 +116,7 @@ var showLoading = function (selector) {
 
 var tfLoading = function (selector) {
     showLoading();
-    $('#save-indicator').text('Saving...').removeClass('alert-success alert-error').addClass('alert-warning').show();
+    $('#save-indicator').text(translatedStrings.saving).removeClass('alert-success alert-error').addClass('alert-warning').show();
 }
 
 var hideLoading = function (selector) {
@@ -117,9 +127,9 @@ var hideLoading = function (selector) {
 var tfLoadingComplete = function (isError) {
     hideLoading();
     if (isError) {
-        $('#save-indicator').text('Error saving!').removeClass('alert-warning alert-success').addClass('alert-error').show();
+        $('#save-indicator').text(translatedStrings.errSaving).removeClass('alert-warning alert-success').addClass('alert-error').show();
     } else {
-        $('#save-indicator').text('All Changes Saved!').removeClass('alert-warning alert-error').addClass('alert-success').show();
+        $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-error').addClass('alert-success').show();
     }
 
 }

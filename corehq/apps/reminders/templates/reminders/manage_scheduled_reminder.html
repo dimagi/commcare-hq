@@ -5,7 +5,6 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/language_picker.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 {% endblock %}
 
@@ -34,66 +33,6 @@
               method="post">
             {% crispy form %}
         </form>
-
-        <div class="modal hide fade" id="add-language-modal">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h4>Add a new language</h4>
-            </div>
-            <div class="modal-body form-horizontal" style="max-height: 20em;">
-                <div class="control-group">
-                    <label class="control-label">{% trans 'Current Languages' %}</label>
-                    <div class="controls controls-row">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 200px;">{% trans 'Language' %}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody data-bind="foreach: available_languages">
-                                <tr>
-                                    <td>
-                                        <span data-bind="text: name"></span> (<span data-bind="text: langcode"></span>)
-                                    </td>
-                                    <td>
-                                        <button type="button"
-                                                class="btn btn-danger"
-                                                data-bind="
-                                                    event: { click: $parent.removeLanguage },
-                                                    visible: isNotDefaultLang
-                                                ">
-                                            <i class="icon-remove"></i> {% trans 'Remove' %}
-                                        </button>
-                                        <p class="text-muted"
-                                           data-bind="visible: isDefaultLang">
-                                            {% trans 'Default' %}
-                                        </p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="control-group" data-bind="with: languagePicker">
-                    <label class="control-label" for="new-language-code">{% trans 'New Language' %}</label>
-                    <div class="controls controls-row">
-                        <input type="text"
-                               id="language-picker-input"
-                               class="span9"
-                               data-bind="value: langcode" />
-                        <button type="button"
-                                class="btn btn-success span3"
-                            data-bind="event: { click: confirmLanguageChoice }">
-                            <i class="icon-plus"></i> {% trans 'Add' %}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" class="btn">{% trans 'Done' %}</a>
-            </div>
-        </div>
     </div>
 
     <script type="text/html" id="event-template">

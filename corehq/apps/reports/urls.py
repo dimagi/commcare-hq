@@ -22,6 +22,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/close/$', 'close_case_view', name="close_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/$', 'undo_close_case_view', name="undo_close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data
@@ -37,15 +39,17 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Download Exports
     # todo should eventually be moved to corehq.apps.export
-    ## Custom
+    # Custom
     url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", 'export_default_or_custom_data', name="export_custom_data"),
-    ## Default
+    # Default
     url(r"^export/default/download/$", "export_default_or_custom_data", name="export_default_data"),
-    ## Bulk
+    # Bulk
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
-    ## saved
+    # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
-    ## Full Excel export
+    url(r"^export/saved/update/$", "hq_update_saved_export", name="hq_update_saved_export"),
+
+    # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', "export_report", name="export_report"),
 
     # once off email

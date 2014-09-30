@@ -1,7 +1,7 @@
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
-from fluff.filters import ANDFilter, NOTFilter
+from fluff.filters import ANDFilter, NOTFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
@@ -79,7 +79,7 @@ class CareSAForm(XFormInstance):
             case.province
         ).first()
 
-        return fixture_item._id
+        return fixture_item._id if fixture_item else case.province
 
     @property
     @memoized
@@ -94,8 +94,8 @@ class CareSAFluff(fluff.IndicatorDocument):
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user-registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://openrosa.org/user/registration')),
         NOTFilter(xcalculators.FormPropertyFilter(xmlns='http://code.javarosa.org/devicereport')),
-        xcalculators.CustomFilter(lambda f: f.gender in ['male', 'female']),
-        xcalculators.CustomFilter(lambda f: f.cbo),
+        CustomFilter(lambda f: f.gender in ['male', 'female']),
+        CustomFilter(lambda f: f.cbo),
     ])
 
 

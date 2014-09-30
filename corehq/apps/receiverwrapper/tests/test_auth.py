@@ -103,13 +103,31 @@ class _AuthTest(TestCase):
         self._test_post(
             file_path=self.bare_form,
             client=client,
-            expected_auth_context=expected_auth_context
+            expected_auth_context=expected_auth_context,
+            authtype='digest',
         )
-        # ?authtype=digest should be equivalent to having no authtype
+
+    def test_basic(self):
+        client = django_digest.test.Client()
+        client.set_authorization(self.user.username, '1234',
+                                 method='Basic')
+        expected_auth_context = {
+            'doc_type': 'AuthContext',
+            'domain': self.domain,
+            'authenticated': True,
+            'user_id': self.user.get_id,
+        }
         self._test_post(
             file_path=self.bare_form,
             client=client,
-            authtype='digest',
+            authtype='basic',
+            expected_status=201,
+            expected_auth_context=expected_auth_context
+        )
+        # by default, ?authtype=basic should be equivalent to having no authtype
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
             expected_status=201,
             expected_auth_context=expected_auth_context
         )

@@ -15,6 +15,7 @@ class DeviceReportEntry(models.Model):
                                  null=True)
     app_version = models.TextField(null=True)
     username = models.CharField(max_length=100, db_index=True, null=True)
+    user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True, null=True)
 
     class Meta:
         unique_together = [('xform_id', 'i')]

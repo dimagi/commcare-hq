@@ -18,7 +18,8 @@ from django.contrib.auth.views import login as django_login, redirect_to_login
 from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
+    HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from couchdbkit import ResourceNotFound
@@ -39,6 +40,7 @@ from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
+from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -169,7 +171,11 @@ def redirect_to_default(req, domain=None):
             if domains[0]:
                 domain = domains[0].name
                 if req.couch_user.is_commcare_user():
-                    url = reverse("cloudcare_main", args=[domain, ""])
+                    if not is_mobile_worker_with_report_access(
+                            req.couch_user, domain):
+                        url = reverse("cloudcare_main", args=[domain, ""])
+                    else:
+                        url = reverse("saved_reports", args=[domain])
                 elif req.couch_user.can_view_reports(domain) or req.couch_user.get_viewable_reports(domain):
                     url = reverse('corehq.apps.reports.views.default', args=[domain])
                 else:
@@ -265,16 +271,19 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
-def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
-    next = redirect_to or request.GET.get('next', None)
-    if request.GET.get('switch', None) == 'true':
-        logout(request)
-        return redirect_to_login(next or request.path)
+def no_permissions(request, redirect_to=None, template_name="403.html"):
+    """
+    403 error handler.
+    """
+    t = loader.get_template(template_name)
+    return HttpResponseForbidden(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL
+        })))
 
-    return render(request, template_name, {'next': next})
 
-def _login(req, domain, domain_type, template_name, domain_context=None):
-    from corehq.apps.registration.views import get_domain_context
+
+def _login(req, domain, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
@@ -291,40 +300,55 @@ def _login(req, domain, domain_type, template_name, domain_context=None):
         req.POST._mutable = False
     
     req.base_template = settings.BASE_TEMPLATE
-    context = domain_context or get_domain_context(domain_type)
-    context['domain'] = domain
+
+    context = {}
     if domain:
-        context['next'] = req.REQUEST.get('next', '/a/%s/' % domain)
+        context.update({
+            'domain': domain,
+            'next': req.REQUEST.get('next', '/a/%s/' % domain),
+        })
 
     return django_login(req, template_name=template_name,
                         authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
                         extra_context=context)
-    
+
+
 def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     domain = req.REQUEST.get('domain', None)
-    return _login(req, domain, domain_type, "login_and_password/login.html")
-    
+
+    from corehq.apps.domain.utils import get_dummy_domain
+    # For showing different logos based on CommTrack, CommConnect, CommCare...
+    dummy_domain = get_dummy_domain(domain_type)
+    req.project = dummy_domain
+
+    return _login(req, domain, "login_and_password/login.html")
+
+
 def domain_login(req, domain, template_name="login_and_password/login.html"):
-    from corehq.util.context_processors import get_per_domain_context
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
-    return _login(req, domain, project.domain_type, template_name,
-            domain_context=get_per_domain_context(project))
+
+    # FYI, the domain context_processor will pick this up and apply the
+    # necessary domain contexts:
+    req.project = project
+
+    return _login(req, domain, template_name)
+
 
 def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
-def logout(req, template_name="hqwebapp/loggedout.html"):
+def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
-    req.base_template = settings.BASE_TEMPLATE
-    response = django_logout(req, **{"template_name": template_name})
+    # we don't actually do anything with the response here:
+    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
     
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])

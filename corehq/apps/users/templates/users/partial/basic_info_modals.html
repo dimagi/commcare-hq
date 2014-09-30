@@ -8,7 +8,7 @@
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>{% blocktrans with phone_number.number as number %}Delete +{{ number }}?{% endblocktrans %}</h3>
         </div>
-        <form class="form form-horizontal hq-form"
+        <form class="form form-horizontal hq-form disable-on-submit"
               name="delete_phone_number"
               action="{% url "delete_phone_number" domain couch_user.couch_id %}"
               method="POST">
@@ -32,7 +32,7 @@
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h3>
             </div>
-            <form class="form form-horizontal hq-form"
+            <form class="form form-horizontal hq-form disable-on-submit"
                   name="reverify_phone_number"
                   action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
                   method="post">

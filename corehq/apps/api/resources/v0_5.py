@@ -1,6 +1,8 @@
 from tastypie import http
+from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse
-from tastypie.resources import convert_post_to_patch
+from tastypie.paginator import Paginator
+from tastypie.resources import convert_post_to_patch, ModelResource
 from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
@@ -18,6 +20,7 @@ from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
 from . import JsonResource, DomainSpecificResourceMixin
+from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
@@ -135,7 +138,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             self._update(bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            bundle.obj.retire()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -301,10 +304,10 @@ class GroupResource(v0_4.GroupResource):
         return should_save
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
-        if isinstance(bundle_or_obj, Bundle):
+        if bundle_or_obj is None:
+            return super(GroupResource, self).get_resource_uri(bundle_or_obj, url_name)
+        elif isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
         else:
             obj = bundle_or_obj
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
@@ -331,3 +334,60 @@ class GroupResource(v0_4.GroupResource):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
         return bundle
+
+
+class DomainAuthorization(ReadOnlyAuthorization):
+    def read_list(self, object_list, bundle):
+        return object_list.filter(domain=bundle.request.domain)
+
+
+class NoCountingPaginator(Paginator):
+    """
+    The default paginator contains the total_count value, which shows how
+    many objects are in the underlying object list. Obtaining this data from
+    the database is inefficient, especially with large datasets, and unfiltered API requests.
+
+    This class does not perform any counting and return 'null' as the value of total_count.
+
+    See:
+        * http://django-tastypie.readthedocs.org/en/latest/paginator.html
+        * http://wiki.postgresql.org/wiki/Slow_Counting
+    """
+    def get_previous(self, limit, offset):
+        if offset - limit < 0:
+            return None
+
+        return self._generate_uri(limit, offset-limit)
+
+    def get_next(self, limit, offset, count):
+        """
+        Always generate the next URL even if there may be no records.
+        """
+        return self._generate_uri(limit, offset+limit)
+
+    def get_count(self):
+        """
+        Don't do any counting.
+        """
+        return None
+
+
+class DeviceReportResource(JsonResource, ModelResource):
+    class Meta:
+        queryset = DeviceReportEntry.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'device-log'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization()
+        paginator_class = NoCountingPaginator
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "user_id": ('exact',),
+            "username": ('exact',),
+            "type": ('exact',),
+            "xform_id": ('exact',),
+            "device_id": ('exact',),
+        }

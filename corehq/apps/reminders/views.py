@@ -7,7 +7,9 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -296,13 +298,19 @@ def copy_one_time_reminder(request, domain, handler_id):
         "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
         "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
     }
-    return render_one_time_reminder_form(request, domain, OneTimeReminderForm(initial=initial), None)
+    form = OneTimeReminderForm(initial=initial,
+        can_use_survey=can_use_survey_reminders(request))
+    return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
 def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
         raise Http404
+    if handler.locked:
+        messages.error(request, _("Please wait until the rule finishes "
+            "processing before making further changes."))
+        return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     handler.retire()
     view_name = "one_time_reminders" if handler.reminder_type == REMINDER_TYPE_ONE_TIME else "list_reminders"
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
@@ -390,6 +398,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     sample_list = get_sample_list(domain)
     
     if request.method == "POST":
+        if h and h.locked:
+            messages.error(request, _("Could not save changes. This reminder "
+                "has been updated by someone else."))
+            return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
         form = ComplexCaseReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
         form._cchq_is_superuser = request.couch_user.is_superuser
         form._cchq_use_custom_content_handler = (h is not None and h.custom_content_handler is not None)
@@ -453,6 +465,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
+            if h.locked:
+                messages.error(request, _("Please wait until the rule finishes "
+                    "processing before making further changes."))
+                return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
             initial = {
                 "active"                : h.active,
                 "case_type"             : h.case_type,
@@ -530,26 +546,37 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
                 self.request.POST,
                 domain=self.domain,
                 is_previewer=self.is_previewer,
+                can_use_survey=can_use_survey_reminders(self.request),
+                available_languages=self.available_languages,
             )
         return self.reminder_form_class(
             is_previewer=self.is_previewer,
             domain=self.domain,
+            can_use_survey=can_use_survey_reminders(self.request),
+            available_languages=self.available_languages,
         )
 
     @property
     def available_languages(self):
-        return ['en']
+        default_langs = ['en']
+        try:
+            translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
+            return (translation_doc.langs or default_langs
+                    if translation_doc is not None else default_langs)
+        except ResourceNotFound:
+            pass
+        return default_langs
 
     @property
     def is_previewer(self):
-        return self.request.couch_user.is_previewer
+        return self.request.couch_user.is_previewer()
 
     @property
     def parent_pages(self):
         return [
             {
                 'title': _("Reminders"),
-                'url': reverse('list_reminders', args=[self.domain]),
+                'url': reverse(RemindersListView.urlname, args=[self.domain]),
             },
         ]
 
@@ -618,11 +645,16 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
             for module in app.get_modules():
-                if not module.case_type == self.case_type:
-                    continue
-                for form in module.get_forms():
-                    for subcase in form.actions.subcases:
-                        subcase_properties.extend(subcase.case_properties.keys())
+                if module.module_type == 'basic':
+                    if not module.case_type == self.case_type:
+                        continue
+                    for form in module.get_forms():
+                        for subcase in form.actions.subcases:
+                            subcase_properties.extend(subcase.case_properties.keys())
+                elif module.module_type == 'advanced':
+                    for form in module.get_forms():
+                        for subcase in form.actions.get_open_subcase_actions(self.case_type):
+                            subcase_properties.extend(subcase.case_properties.keys())
         subcase_properties = self._filter_by_term(set(subcase_properties))
         return self._format_response(subcase_properties)
 
@@ -700,7 +732,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @property
     @memoized
     def schedule_form(self):
-        initial = self.reminder_form_class.compute_initial(self.reminder_handler)
+        initial = self.reminder_form_class.compute_initial(
+            self.reminder_handler, self.available_languages,
+        )
         if self.request.method == 'POST':
             return self.reminder_form_class(
                 self.request.POST,
@@ -709,6 +743,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
                 domain=self.domain,
                 is_edit=True,
                 can_use_survey=can_use_survey_reminders(self.request),
+                use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+                custom_content_handler=self.reminder_handler.custom_content_handler,
+                available_languages=self.available_languages,
             )
         return self.reminder_form_class(
             initial=initial,
@@ -716,6 +753,9 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             domain=self.domain,
             is_edit=True,
             can_use_survey=can_use_survey_reminders(self.request),
+            use_custom_content_handler=self.reminder_handler.custom_content_handler is not None,
+            custom_content_handler=self.reminder_handler.custom_content_handler,
+            available_languages=self.available_languages,
         )
 
     @property
@@ -725,13 +765,6 @@ class EditScheduledReminderView(CreateScheduledReminderView):
             return CaseReminderHandler.get(self.handler_id)
         except ResourceNotFound:
             raise Http404()
-
-    @property
-    def available_languages(self):
-        langcodes = []
-        for event in self.reminder_handler.events:
-            langcodes.extend(event.message.keys())
-        return list(set(langcodes)) or ['en']
 
     @property
     def ui_type(self):
@@ -1432,7 +1465,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_all(domain)
+        "samples": CommCareCaseGroup.get_by_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
@@ -1680,4 +1713,47 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+def int_or_none(i):
+    try:
+        i = int(i)
+    except (ValueError, TypeError):
+        i = None
+    return i
+
+
+@reminders_framework_permission
+def rule_progress(request, domain):
+    handler_id = request.GET.get("handler_id", None)
+    response = {
+        "success": False,
+    }
+
+    try:
+        assert isinstance(handler_id, basestring)
+        handler = CaseReminderHandler.get(handler_id)
+        assert handler.doc_type == "CaseReminderHandler"
+        assert handler.domain == domain
+        if handler.locked:
+            response["complete"] = False
+            current = None
+            total = None
+            # It shouldn't be necessary to lock this out, but a deadlock can
+            # happen in rare cases without it
+            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
+                client = get_redis_client()
+                current = client.get("reminder-rule-processing-current-%s" % handler_id)
+                total = client.get("reminder-rule-processing-total-%s" % handler_id)
+            response["current"] = int_or_none(current)
+            response["total"] = int_or_none(total)
+            response["success"] = True
+        else:
+            response["complete"] = True
+            response["success"] = True
+    except:
+        pass
+
+    return HttpResponse(json.dumps(response))
+
 

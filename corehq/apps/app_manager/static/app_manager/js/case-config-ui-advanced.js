@@ -7,7 +7,8 @@ var AdvancedCase = (function () {
         return {
             type: type,
             question: null,
-            answer: null
+            answer: null,
+            operator: null
         };
     };
 
@@ -275,20 +276,18 @@ var AdvancedCase = (function () {
 
         self.actionOptions = ko.computed(function () {
             var options = [];
-            if (self.load_update_cases().length <= 2) {
-                options.push({
-                    display: 'Load / Update / Close a case',
-                    value: 'load'
-                });
-                options.push({
-                    display: 'Automatic Case Selection',
-                    value: 'auto_select'
-                });
-                options.push({
-                    display: '---',
-                    value: 'separator'
-                });
-            }
+            options.push({
+                display: 'Load / Update / Close a case',
+                value: 'load'
+            });
+            options.push({
+                display: 'Automatic Case Selection',
+                value: 'auto_select'
+            });
+            options.push({
+                display: '---',
+                value: 'separator'
+            });
             options.push({
                 display: 'Open a Case',
                 value: 'open'
@@ -459,6 +458,7 @@ var AdvancedCase = (function () {
             if (condition.type() !== 'if') {
                 condition.question(null);
                 condition.answer(null);
+                condition.operator(null);
             }
         },
         header: function (action) {
@@ -603,9 +603,6 @@ var AdvancedCase = (function () {
 
             self.validate = ko.computed(function () {
                 if (self.auto_select){
-                    if (!self.config.caseConfigViewModel) {
-                        return;
-                    }
                     var mode = self.auto_select.mode();
                     var value_source = self.auto_select.value_source();
                     var value_key = self.auto_select.value_key();
@@ -729,7 +726,15 @@ var AdvancedCase = (function () {
     var OpenCaseAction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'name_path', 'case_tag', 'parent_tag', 'parent_reference_id', 'open_condition', 'close_condition'],
+                include: [
+                    'case_type',
+                    'name_path',
+                    'case_tag',
+                    'parent_tag',
+                    'parent_reference_id',
+                    'open_condition',
+                    'close_condition'
+                ],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
@@ -764,7 +769,10 @@ var AdvancedCase = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return ActionBase.suggestedProperties(self, false);
+                return CC_UTILS.filteredSuggestedProperties(
+                    ActionBase.suggestedProperties(self, false),
+                    self.case_properties()
+                );
             });
 
             self.validate = ko.computed(function () {
@@ -862,9 +870,9 @@ var AdvancedCase = (function () {
             if (self.parent_tag() && !self.allow_subcase()) {
                 self.parent_tag('');
             }
-            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
+            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
             var x = propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
@@ -920,7 +928,12 @@ var AdvancedCase = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-properties
-                suggestedSaveProperties: self.action.suggestedProperties
+                suggestedSaveProperties: ko.computed(function () {
+                    return CC_UTILS.filteredSuggestedProperties(
+                        self.action.suggestedProperties(),
+                        self.action.case_properties()
+                    );
+                })
             };
 
             self.defaultKey = ko.computed(function () {
@@ -964,7 +977,12 @@ var AdvancedCase = (function () {
                     }
                 },
                 // template: case-config:case-transaction:case-preload
-                suggestedPreloadProperties: self.action.suggestedProperties
+                suggestedPreloadProperties: ko.computed(function () {
+                    return CC_UTILS.filteredSuggestedProperties(
+                        self.action.suggestedProperties(),
+                        self.action.preload()
+                    );
+                })
             };
             self.defaultKey = ko.computed(function () {
                 return '';

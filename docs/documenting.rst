@@ -2,6 +2,7 @@ Documenting
 =============
 
 .. This is a comment
+
 Documentation is awesome.  You should write it.  Here's how.
 
 All the CommCareHQ docs are stored in a ``docs/`` folder in the root of the repo.

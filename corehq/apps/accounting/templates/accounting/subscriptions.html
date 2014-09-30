@@ -5,6 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -34,6 +35,10 @@
             $('#id_new_plan_product').change(deselectPlanVersion);
             $('#id_new_plan_edition').change(deselectPlanVersion);
         });
+        var billingInfoHandler = new BillingContactInfoHandler(
+            "{% trans "Please enter a valid email." %}"
+        );
+        billingInfoHandler.init();
     </script>
 {% endblock %}
 

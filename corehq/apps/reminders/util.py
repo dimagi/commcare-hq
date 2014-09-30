@@ -71,7 +71,7 @@ def get_sample_list(domain):
     from casexml.apps.case.models import CommCareCaseGroup
     
     sample_list = []
-    for sample in CommCareCaseGroup.get_all(domain):
+    for sample in CommCareCaseGroup.get_by_domain(domain):
         sample_list.append({"code" : sample._id, "name" : sample.name})
     return sample_list
 
@@ -127,6 +127,11 @@ def get_recipient_name(recipient, include_desc=True):
         return "%s '%s'" % (desc, name)
     else:
         return name
+
+def enqueue_reminder_directly(reminder):
+    from corehq.apps.reminders.management.commands.run_reminder_queue import (
+        ReminderEnqueuingOperation)
+    ReminderEnqueuingOperation().enqueue_directly(reminder)
 
 def create_immediate_reminder(contact, content_type, reminder_type=None, message=None, form_unique_id=None, case=None):
     """

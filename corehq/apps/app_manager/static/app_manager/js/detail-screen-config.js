@@ -1,5 +1,39 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
+var CC_DETAIL_SCREEN = {
+    getFieldHtml: function (field) {
+        var text = field;
+        if (CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
+            text = text.substring(text.indexOf(":") + 1);
+        }
+        var parts = text.split('/');
+        // wrap all parts but the last in a label style
+        for (var j = 0; j < parts.length - 1; j++) {
+            parts[j] = ('<span class="label label-info">'
+                        + parts[j] + '</span>');
+        }
+        if (parts[j][0] == '#') {
+            parts[j] = ('<span class="label label-info">'
+                        + CC_DETAIL_SCREEN.toTitleCase(parts[j]) + '</span>');
+        } else {
+            parts[j] = ('<code style="display: inline-block;">'
+                        + parts[j] + '</code>');
+        }
+        return parts.join('<span style="color: #DDD;">/</span>');
+    },
+    isAttachmentProperty: function (value) {
+        return value && value.indexOf("attachment:") === 0;
+    },
+    toTitleCase: function (str) {
+        return (str
+            .replace(/[_\/-]/g, ' ')
+            .replace(/#/g, '')
+        ).replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
+};
+
 var SortRow = function (field, type, direction) {
     var self = this;
     self.field = ko.observable(field);
@@ -13,16 +47,8 @@ var SortRow = function (field, type, direction) {
         window.sortRowSaveButton.fire('change');
     });
 
-    self.labelTextItems = ko.computed(function () {
-        var splitField = self.field().split('/');
-
-        splitField.pop(); // throw away last item (which is field text)
-        return splitField
-    });
-
-    self.fieldText = ko.computed(function () {
-        var splitField = self.field().split('/');
-        return splitField.pop();
+    self.fieldHtml = ko.computed(function () {
+        return CC_DETAIL_SCREEN.getFieldHtml(self.field());
     });
 
     self.ascendText = ko.computed(function () {
@@ -123,9 +149,19 @@ function ParentSelect(init) {
 
 var DetailScreenConfig = (function () {
     "use strict";
+
+    function getPropertyTitle(property) {
+        // Strip "<prefix>:" before converting to title case.
+        // This is aimed at prefixes like ledger: and attachment:
+        var i = property.indexOf(":");
+        return CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
+    }
+
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
-    var field_val_re = RegExp('^('+word+':)*'+word+'(\\/'+word+')*$');
+    var field_val_re = RegExp(
+        '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
+    );
     var field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
@@ -154,6 +190,9 @@ var DetailScreenConfig = (function () {
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
+            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
+                           ? COMMCAREHQ.icons.PAPERCLIP : null);
+
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
@@ -166,7 +205,7 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
-            this.field = uiElement.input().val(this.original.field);
+            this.field = uiElement.input().val(this.original.field).setIcon(icon);
             this.format_warning = field_format_warning.clone().hide();
 
             (function () {
@@ -300,7 +339,7 @@ var DetailScreenConfig = (function () {
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
 
             this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                that.screen.config.sortRows.addSortRow(that.field.ui.text(), '', '');
+                that.screen.config.sortRows.addSortRow(that.field.val(), '', '');
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
@@ -403,18 +442,8 @@ var DetailScreenConfig = (function () {
                 return column;
             }
 
-            function toTitleCase(str) {
-                return (str
-                    .replace(/_/g, ' ')
-                    .replace(/-/g, ' ')
-                    .replace(/\//g, ' ')
-                ).replace(/\w\S*/g, function (txt) {
-                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                });
-            }
-
             var longColumns = spec.long ? spec.long.columns : [];
-            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual).merge;
+            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
@@ -429,7 +458,7 @@ var DetailScreenConfig = (function () {
             // set up the custom column
             this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
             this.customColumn.field.on('change', function () {
-                that.customColumn.header.val(toTitleCase(this.val()));
+                that.customColumn.header.val(getPropertyTitle(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
                     that.customColumn.format_warning.show().parent().addClass('error');
                 } else {
@@ -437,7 +466,14 @@ var DetailScreenConfig = (function () {
                 }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
-                    var availableTags = that.properties;
+                    var availableTags = _.map(that.properties, function(value) {
+                        var label = value;
+                        if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                            label = ('<span class="icon-paper-clip"></span> '
+                                     + label.substring(label.indexOf(":") + 1));
+                        }
+                        return {value: value, label: label};
+                    });
                     response(
                         $.ui.autocomplete.filter(availableTags,  request.term)
                     );
@@ -451,13 +487,19 @@ var DetailScreenConfig = (function () {
             }).focus(function () {
                 $(this).val("").trigger('change');
                 $(this).autocomplete('search');
-            });
+            }).data("autocomplete")._renderItem = function (ul, item) {
+                return $("<li></li>")
+                    .data("item.autocomplete", item)
+                    .append($("<a></a>").html(item.label))
+                    .appendTo(ul);
+            };
 
             // set up suggestion columns
+            var info;
             for (i = 0; i < this.properties.length; i += 1) {
                 property = this.properties[i];
                 header = {};
-                header[this.lang] = toTitleCase(property);
+                header[this.lang] = getPropertyTitle(property);
                 column = Column.init({
                     model: model,
                     field: property,
@@ -587,17 +629,9 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
 
                 if (!column.field.edit) {
-                    var text = column.field.ui.text();
-                    var parts = text.split('/');
-                    // wrap all parts but the last in a label style
-                    for (var j = 0; j < parts.length - 1; j++) {
-                        parts[j] = '<span class="label label-info">' +
-                            parts[j] + '</span>'
-                    }
-                    parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
-                    column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
+                    column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
                 }
-                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
+                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui);
                 dsf.append(column.format_warning);
                 if (column.field.value && !field_val_re.test(column.field.value)) {
                     column.format_warning.show().parent().addClass('error');
@@ -732,7 +766,7 @@ var DetailScreenConfig = (function () {
             this.sortRows = new SortRows();
             this.lang = spec.lang;
             this.langs = spec.langs || [];
-            if (spec.hasOwnProperty('parentSelect')) {
+            if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
                 this.parentSelect = new ParentSelect({
                     active: spec.parentSelect.active,
                     moduleId: spec.parentSelect.module_id,
@@ -830,6 +864,8 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
+        PICTURE_FORMAT: 'Picture',
+        AUDIO_FORMAT: 'Audio',
         CALC_XPATH_FORMAT: 'Calculate',
         CALC_XPATH_EXTRA_LABEL: '',
 
@@ -858,6 +894,13 @@ var DetailScreenConfig = (function () {
         {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
+
+    if (window.FEATURE_mm_case_properties) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
+            {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
+        );
+    }
 
     if (window.FEATURE_enable_enum_image) {
         DetailScreenConfig.MENU_OPTIONS.push(

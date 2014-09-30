@@ -4,6 +4,7 @@ import json
 import csv
 import io
 import uuid
+import re
 
 from couchdbkit import ResourceNotFound
 
@@ -70,6 +71,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            if not user:
+                raise Http404()
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
@@ -341,13 +344,28 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'show_inactive': self.show_inactive,
             'more_columns': self.more_columns,
             'show_case_sharing': self.show_case_sharing,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': (10, 20, 50, 100),
             'query': self.query,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
             'is_billing_admin': self.is_billing_admin,
         }
+
+
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return "*{}*".format("* *".join(tokens))
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
@@ -386,8 +404,12 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
+        query = smart_query_string(self.query)
         q = {
-            "query": { "query_string": { "query": self.query }},
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
@@ -415,10 +437,10 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
 
     def get_archive_text(self, is_active):
         if is_active:
-            return _("As a result of archiving, this user will no longer appear in reports. "
+            return _("As a result of deactivating, this user will no longer appear in reports. "
                      "This action is reversable; you can reactivate this user by viewing "
-                     "Show Archived Mobile Workers and clicking 'Unarchive'.")
-        return _("This will re-activate the user, and the user will show up in reports again.")
+                     "'Show Deactivated Mobile Workers' and clicking 'Reactivate'.")
+        return _("This will reactivate the user, and the user will show up in reports again.")
 
     @property
     def users_list(self):
@@ -426,7 +448,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         for user in self.users:
             u_data = {
                 'user_id': user.user_id,
-                'status': "" if user.is_active else _("Archived"),
+                'status': "" if user.is_active else _("Deactivated"),
                 'edit_url': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
                 'username': user.raw_username,
                 'full_name': user.full_name,
@@ -435,7 +457,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
                 'form_count': '--',
                 'case_count': '--',
                 'case_sharing_groups': [],
-                'archive_action_text': _("Archive") if user.is_active else _("Un-Archive"),
+                'archive_action_text': _("Deactivate") if user.is_active else _("Reactivate"),
                 'archive_action_desc': self.get_archive_text(user.is_active),
                 'archive_action_url': reverse('%s_commcare_user' % ('archive' if user.is_active else 'unarchive'),
                     args=[self.domain, user.user_id]),
@@ -551,7 +573,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
         success=True,
         message=_("User '{user}' has successfully been {action}.").format(
             user=user.raw_username,
-            action=_("Un-Archived") if user.is_active else _("Archived"),
+            action=_("Reactivated") if user.is_active else _("Deactivated"),
         )
     )))
 

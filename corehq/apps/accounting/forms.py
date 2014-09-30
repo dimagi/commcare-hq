@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.conf import settings
 
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
@@ -20,12 +21,14 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.countries import COUNTRIES
 from corehq import privileges, toggles
+from corehq.apps.accounting.exceptions import CreateAccountingAdminError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
-from django_prbac.models import Role, Grant
+from django_prbac.models import Role, Grant, UserRole
 
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
@@ -72,8 +75,25 @@ class BillingAccountBasicForm(forms.Form):
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
+    is_active = forms.BooleanField(
+        label=_("Account is Active"),
+        required=False,
+        initial=True,
+    )
+    active_accounts = forms.CharField(
+        label=_("Transfer Subscriptions To"),
+        help_text=_("Transfer any existing subscriptions to the "
+                    "Billing Account Specified here."),
+        required=False,
+    )
+    dimagi_contact = forms.EmailField(
+        label=_("Dimagi Contact Email"),
+        max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
+        required=False,
+    )
 
     def __init__(self, account, *args, **kwargs):
+        self.account = account
         if account is not None:
             contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
             kwargs['initial'] = {
@@ -81,6 +101,8 @@ class BillingAccountBasicForm(forms.Form):
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
                 'emails': contact_info.emails,
+                'is_active': account.is_active,
+                'dimagi_contact': account.dimagi_contact,
             }
         else:
             kwargs['initial'] = {
@@ -90,14 +112,32 @@ class BillingAccountBasicForm(forms.Form):
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
         self.helper = FormHelper()
+        self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
+        additional_fields = []
+        if account is not None:
+            additional_fields.append(crispy.Field(
+                'is_active',
+                data_bind="checked: is_active",
+            ))
+            if account.subscription_set.count() > 0:
+                additional_fields.append(crispy.Div(
+                    crispy.Field(
+                        'active_accounts',
+                        css_class="input-xxlarge",
+                        placeholder="Select Active Account",
+                    ),
+                    data_bind="visible: showActiveAccounts"
+                ))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Basic Information',
                 'name',
                 crispy.Field('emails', css_class='input-xxlarge'),
+                'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
+                crispy.Div(*additional_fields),
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -123,6 +163,23 @@ class BillingAccountBasicForm(forms.Form):
                 )
         return account_contact_emails
 
+    def clean_active_accounts(self):
+        transfer_subs = self.cleaned_data['active_accounts']
+        if (not self.cleaned_data['is_active'] and self.account is not None
+            and self.account.subscription_set.count() > 0
+            and not transfer_subs
+        ):
+            raise ValidationError(
+                _("This account has subscriptions associated with it. "
+                  "Please specify a transfer account before deactivating.")
+            )
+        if self.account is not None and transfer_subs == self.account.name:
+            raise ValidationError(
+                _("The transfer account can't be the same one you're trying "
+                  "to deactivate.")
+            )
+        return transfer_subs
+
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
@@ -132,7 +189,7 @@ class BillingAccountBasicForm(forms.Form):
         account = BillingAccount(
             name=name,
             salesforce_account_id=salesforce_account_id,
-            currency=currency
+            currency=currency,
         )
         account.save()
 
@@ -146,11 +203,19 @@ class BillingAccountBasicForm(forms.Form):
 
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
+        account.is_active = self.cleaned_data['is_active']
+        transfer_name = self.cleaned_data['active_accounts']
+        if transfer_name:
+            transfer_account = BillingAccount.objects.get(name=transfer_name)
+            for sub in account.subscription_set.all():
+                sub.account = transfer_account
+                sub.save()
         account.salesforce_account_id = \
             self.cleaned_data['salesforce_account_id']
         account.currency, _ = Currency.objects.get_or_create(
             code=self.cleaned_data['currency'],
         )
+        account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -271,6 +336,10 @@ class SubscriptionForm(forms.Form):
     )
     auto_generate_credits = forms.BooleanField(
         label=_("Auto-generate Plan Credits"), required=False
+    )
+    active_accounts = forms.CharField(
+        label=_("Transfer Subscription To"),
+        required=False,
     )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -398,11 +467,21 @@ class SubscriptionForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_text_inline = True
+        transfer_fields = []
+        if self.is_existing:
+            transfer_fields.extend([
+                crispy.Field(
+                    'active_accounts',
+                    css_class='input-xxlarge',
+                    placeholder="Select Active Account",
+                ),
+            ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '%s Subscription' % ('Edit' if self.is_existing
                                      else 'New'),
                 account_field,
+                crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
                 delay_invoice_until_field,
@@ -449,7 +528,7 @@ class SubscriptionForm(forms.Form):
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
-        return Subscription.new_domain_subscription(
+        sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
             date_end=date_end,
@@ -460,9 +539,18 @@ class SubscriptionForm(forms.Form):
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
         )
+        return sub
+
+    def clean_active_accounts(self):
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account and transfer_account == self.subscription.account.name:
+            raise ValidationError("Please select an account other than the "
+                                  "current account to transfer to.")
+        return transfer_account
 
     def update_subscription(self):
         self.subscription.update_subscription(
+            date_start=self.cleaned_data['start_date'],
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
@@ -470,6 +558,11 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user
         )
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account:
+            acct = BillingAccount.objects.get(name=transfer_account)
+            self.subscription.account = acct
+            self.subscription.save()
 
 
 class ChangeSubscriptionForm(forms.Form):
@@ -532,7 +625,7 @@ class ChangeSubscriptionForm(forms.Form):
 
 class CreditForm(forms.Form):
     amount = forms.DecimalField(label="Amount (USD)")
-    note = forms.CharField(required=False)
+    note = forms.CharField(required=True)
     rate_type = forms.ChoiceField(
         label=_("Rate Type"),
         choices=(
@@ -587,7 +680,7 @@ class CreditForm(forms.Form):
             ))
         return amount
 
-    def adjust_credit(self):
+    def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
         product_type = (self.cleaned_data['product_type']
@@ -601,6 +694,7 @@ class CreditForm(forms.Form):
             feature_type=feature_type,
             product_type=product_type,
             note=note,
+            web_user=web_user,
         )
         return True
 
@@ -1208,7 +1302,11 @@ class FeatureRateForm(forms.ModelForm):
             crispy.Field('rate_id', data_bind="value: rate_id"),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
             crispy.Field('monthly_limit', data_bind="value: monthly_limit"),
-            crispy.Field('per_excess_fee', data_bind="value: per_excess_fee"),
+            crispy.Div(
+                crispy.Field('per_excess_fee',
+                             data_bind="value: per_excess_fee"),
+                data_bind="visible: isPerExcessVisible",
+            ),
         )
 
     def is_new(self):
@@ -1718,3 +1816,57 @@ class ResendEmailForm(forms.Form):
         contact_emails += self.cleaned_data['additional_recipients']
         record = BillingRecord.generate_record(self.invoice)
         record.send_email(contact_emails=contact_emails)
+
+
+class CreateAdminForm(forms.Form):
+    username = forms.CharField(
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CreateAdminForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_show_labels= False
+        self.helper.form_style = 'inline'
+        self.helper.layout = crispy.Layout(
+            InlineField(
+                'username',
+                css_id="select-admin-username",
+            ),
+            StrictButton(
+                mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
+                css_class="btn-success",
+                type="submit",
+            )
+        )
+
+    def add_admin_user(self):
+        # create UserRole for user
+        username = self.cleaned_data['username']
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise CreateAccountingAdminError(
+                "User '%s' does not exist" % username
+            )
+        web_user = WebUser.get_by_username(username)
+        if not web_user or not web_user.is_superuser:
+            raise CreateAccountingAdminError(
+                "The user '%s' is not a superuser." % username,
+            )
+        try:
+            user_role = UserRole.objects.get(user=user)
+        except UserRole.DoesNotExist:
+            user_privs = Role.objects.get_or_create(
+                name="Privileges for %s" % user.username,
+                slug="%s_privileges" % user.username,
+            )[0]
+            user_role = UserRole.objects.create(
+                user=user,
+                role=user_privs,
+            )
+        ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
+        if not user_role.role.has_privilege(ops_role):
+            Grant.objects.create(from_role=user_role.role, to_role=ops_role)
+        return user

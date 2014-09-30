@@ -17,7 +17,9 @@ ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
 MIN_HEIGHT = 300; //px
 
 $(document).ready(function() {
-    load(CONTEXT, ICON_PATH);
+    if (CONTEXT !== '') {
+        load(CONTEXT, ICON_PATH);
+    }
 });
 
 </script>

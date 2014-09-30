@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import MinLengthValidator
-from hqstyle.forms.fields import MultiEmailField
+from corehq.apps.style.forms.fields import MultiEmailField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import ReportNotification
@@ -26,8 +26,7 @@ class ScheduledReportForm(forms.Form):
     hour = forms.TypedChoiceField(
         label='Time',
         coerce=int,
-        choices=ReportNotification.hour_choices(),
-        help_text='Sorry, at the moment all times are in GMT.')
+        choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
         label='Send to me',

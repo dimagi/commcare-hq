@@ -1,9 +1,11 @@
 from collections import defaultdict
 import json
 import logging
+from django.conf import settings
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
+from casexml.apps.case.models import CommCareCase
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import privileges
@@ -15,8 +17,7 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanM
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
-from dimagi.utils.couch.database import get_db
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.models import get_app, Application
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
@@ -104,7 +105,10 @@ class ExcelExportReport(FormExportReportBase):
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
         unknown_forms = []
-        for f in get_db().view('exports_forms/by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+        db = Application.get_db()  # the view emits from both forms and applications
+        for f in db.view('exports_forms/by_xmlns',
+                         startkey=[self.domain], endkey=[self.domain, {}], group=True,
+                         stale=settings.COUCH_STALE_QUERY):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
@@ -123,10 +127,11 @@ class ExcelExportReport(FormExportReportBase):
             forms.append(form)
 
         if unknown_forms:
-            apps = get_db().view('exports_forms/by_xmlns',
+            apps = db.view('exports_forms/by_xmlns',
                 startkey=['^Application', self.domain],
                 endkey=['^Application', self.domain, {}],
                 reduce=False,
+                stale=settings.COUCH_STALE_QUERY,
             )
             possibilities = defaultdict(list)
             for app in apps:
@@ -231,6 +236,7 @@ class ExcelExportReport(FormExportReportBase):
             edit=self.request.GET.get('edit') == 'true',
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
+            report_slug=self.slug,
         )
         return context
 
@@ -258,7 +264,7 @@ class CaseExportReport(ExportReport):
     @property
     def report_context(self):
         context = super(CaseExportReport, self).report_context
-        cases = get_db().view("hqcase/types_by_domain",
+        cases = CommCareCase.get_db().view("hqcase/types_by_domain",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=True,
@@ -269,6 +275,7 @@ class CaseExportReport(ExportReport):
             case_types=[case['key'][1] for case in cases],
             group_exports=[group.case_exports for group in groups
                 if group.case_exports],
+            report_slug=self.slug,
         )
         context['case_format'] = self.request.GET.get('case_format') or 'csv'
         return context

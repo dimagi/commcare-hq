@@ -121,7 +121,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             raise Http404()
     else:
         if not user_filter:
-            user_filter = HQUserType.use_defaults()
+            user_filter = HQUserType.all()
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
@@ -403,19 +403,6 @@ def get_possible_reports(domain_name):
     return reports
 
 
-def format_relative_date(date, tz=pytz.utc):
-    #todo cleanup
-    now = datetime.now(tz=tz)
-    time = datetime.replace(date, tzinfo=tz)
-    dtime = now - time
-    if dtime.days < 1:
-        dtext = "Today"
-    elif dtime.days < 2:
-        dtext = "Yesterday"
-    else:
-        dtext = "%s days ago" % dtime.days
-    return format_datatables_data(dtext, dtime.days)
-
 def friendly_timedelta(td):
     hours, remainder = divmod(td.seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -520,3 +507,11 @@ def make_ctable_table_name(name):
         return '{0}_{1}'.format(settings.CTABLE_PREFIX, name)
 
     return name
+
+
+def is_mobile_worker_with_report_access(couch_user, domain):
+    return (
+        couch_user.is_commcare_user
+        and domain is not None
+        and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
+    )

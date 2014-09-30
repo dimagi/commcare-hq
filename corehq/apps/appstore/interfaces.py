@@ -1,11 +1,12 @@
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import DatespanMixin
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
+from corehq.apps.reports.util import format_datatables_data
 
 
 class AppstoreInterface(GenericReportView):
@@ -82,7 +83,7 @@ class CommCareExchangeAdvanced(GenericTabularReport, AppstoreInterface, Datespan
                          app.project_type,
                          len(app.copies_of_parent()),
                          app.get_license_display,
-                         util.format_relative_date(app.snapshot_time)]
+                         format_datatables_data(naturaltime(app.snapshot_time), app.snapshot_time.toordinal())]
             )
         return rows
 

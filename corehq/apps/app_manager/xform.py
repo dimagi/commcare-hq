@@ -1,7 +1,10 @@
 from collections import defaultdict
+import logging
+import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
+from corehq.util.view_utils import get_request
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
@@ -111,6 +114,13 @@ class WrappedNode(object):
                     xpath.format(**self.namespaces), *args, **kwargs)]
         else:
             return []
+
+    def iterfind(self, xpath, *args, **kwargs):
+        if self.xml is None:
+            return
+        formatted_xpath = xpath.format(**self.namespaces)
+        for n in self.xml.iterfind(formatted_xpath, *args, **kwargs):
+            yield WrappedNode(n)
 
     def findtext(self, xpath, *args, **kwargs):
         if self.xml is not None:
@@ -342,18 +352,21 @@ class CaseBlock(object):
     def add_update_block(self, updates, make_relative=False):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
-        update_mapping = {}
+        if not updates:
+            return
 
-        if updates:
-            for key, value in updates.items():
-                if key == 'name':
-                    key = 'case_name'
+        update_mapping = {}
+        attachments = {}
+        for key, value in updates.items():
+            if key == 'name':
+                key = 'case_name'
+            if self.is_attachment(value):
+                attachments[key] = value
+            else:
                 update_mapping[key] = value
 
-        for key in sorted(update_mapping.keys()):
-            update_block.append(make_case_elem(key))
-
         for key, q_path in sorted(update_mapping.items()):
+            update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
             resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
@@ -364,6 +377,29 @@ class CaseBlock(object):
                 calculate=resolved_path,
                 relevant=("count(%s) > 0" % resolved_path)
             )
+
+        if attachments:
+            attachment_block = make_case_elem('attachment')
+            self.elem.append(attachment_block)
+            for key, q_path in sorted(attachments.items()):
+                attach_elem = make_case_elem(key, {'src': '', 'from': 'local'})
+                attachment_block.append(attach_elem)
+                nodeset = self.xform.resolve_path(
+                    "%scase/attachment/%s" % (self.path, key))
+                resolved_path = self.xform.resolve_path(q_path)
+                if make_relative:
+                    resolved_path = relative_path(nodeset, resolved_path)
+                self.xform.add_bind(nodeset=nodeset, relevant=("count(%s) = 1" % resolved_path))
+                self.xform.add_bind(nodeset=nodeset + "/@src", calculate=resolved_path)
+
+    def is_attachment(self, ref):
+        """Return true if there is an upload node with the given ref """
+        try:
+            uploads = self.xform.__upload_refs
+        except AttributeError:
+            itr = self.xform.find('{h}body').iterfind(".//{f}upload[@ref]")
+            uploads = self.xform.__upload_refs = set(node.attrib["ref"] for node in itr)
+        return ref in uploads
 
     def add_close_block(self, relevance):
         self.elem.append(make_case_elem('close'))
@@ -394,6 +430,20 @@ def autoset_owner_id_for_subcase(subcase):
     return 'owner_id' not in subcase.case_properties
 
 
+def validate_xform(source, version='1.0'):
+    if isinstance(source, unicode):
+        source = source.encode("utf-8")
+    # normalize and strip comments
+    source = ET.tostring(parse_xml(source))
+    validation_results = formtranslate.api.validate(source, version=version)
+    if not validation_results.success:
+        raise XFormValidationError(
+            fatal_error=validation_results.fatal_error,
+            version=version,
+            validation_problems=validation_results.problems,
+        )
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -409,9 +459,8 @@ class XForm(WrappedNode):
         self.has_casedb = False
 
     def validate(self, version='1.0'):
-        validation_results = formtranslate.api.validate(ET.tostring(self.xml) if self.xml is not None else '', version=version)
-        if not validation_results.success:
-            raise XFormValidationError(validation_results.fatal_error, version, validation_results.problems)
+        validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
+                       version=version)
         return self
 
     @property
@@ -498,29 +547,31 @@ class XForm(WrappedNode):
         for g in node_groups.values():
             duplicate_dict[g].append(g)
 
-        def replace_ref(old_xpath, attrib_name, new):
-            for ref in self.findall(old_xpath):
-                if ref.xml is not None:
-                    ref.attrib[attrib_name] = new
+        duplicates = [sorted(g, key=lambda ng: ng.id) for g in duplicate_dict.values() if len(g) > 1]
 
-        duplicates = [g for g in duplicate_dict.values() if len(g) > 1]
-        for d in duplicates:
-            d = sorted(d, key=lambda ng: ng.id)
-            reference = d[0]
-            new_ref = u"jr:itext('{0}')".format(reference.id)
-
-            for group in d[1:]:
+        for dup in duplicates:
+            for group in dup[1:]:
                 itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
 
-                ref_path = u'.//*[@ref="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(ref_path, 'ref', new_ref)
+        def replace_ref_s(xmlstring, find, replace):
+            find = find.encode('ascii', 'xmlcharrefreplace')
+            replace = replace.encode('ascii', 'xmlcharrefreplace')
+            return xmlstring.replace(find, replace)
 
-                constraint_path = u'.//*[@{{jr}}constraintMsg="jr:itext(\'{0}\')"]'.format(group.id)
-                replace_ref(constraint_path, '{jr}constraintMsg', new_ref)
+        xf_string = self.render()
+        for dup in duplicates:
+            reference = dup[0]
+            new_ref = u"jr:itext('{0}')".format(reference.id)
+
+            for group in dup[1:]:
+                old_ref = u'jr:itext(\'{0}\')'.format(group.id)
+                xf_string = replace_ref_s(xf_string, old_ref, new_ref)
+
+        self.xml = parse_xml(xf_string)
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
@@ -765,7 +816,7 @@ class XForm(WrappedNode):
         elif 'bind' in node.attrib:
             bind_id = node.attrib['bind']
             bind = self.model_node.find('{f}bind[@id="%s"]' % bind_id)
-            if not bind.xml:
+            if not bind.exists():
                 raise BindNotFound('No binding found for %s' % bind_id)
             path = bind.attrib['nodeset']
         elif node.tag_name == "group":
@@ -797,11 +848,11 @@ class XForm(WrappedNode):
             self.add_case_and_meta_1(form)
         else:
             self.create_casexml_2(form)
-            self.add_meta_2()
+            self.add_meta_2(form)
 
     def add_case_and_meta_advanced(self, form):
         self.create_casexml_2_advanced(form)
-        self.add_meta_2()
+        self.add_meta_2(form)
 
     def already_has_meta(self):
         meta_blocks = set()
@@ -812,7 +863,7 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def add_meta_2(self):
+    def add_meta_2(self, form):
         case_parent = self.data_node
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
@@ -825,7 +876,7 @@ class XForm(WrappedNode):
         nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
         meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-        for tag in (
+        tags = (
             '{orx}deviceID',
             '{orx}timeStart',
             '{orx}timeEnd',
@@ -833,7 +884,10 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
-        ):
+        )
+        if form.get_auto_gps_capture():
+            tags += ('{cc}location',)
+        for tag in tags:
             meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
 
         case_parent.append(meta)
@@ -869,6 +923,13 @@ class XForm(WrappedNode):
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
         )
+
+        # never add pollsensor to a pre-2.14 app
+        if form.get_app().enable_auto_gps:
+            if form.get_auto_gps_capture():
+                self.add_pollsensor(ref="/data/meta/location")
+            elif self.model_node.findall("{f}bind[@type='geopoint']"):
+                self.add_pollsensor()
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
@@ -984,11 +1045,30 @@ class XForm(WrappedNode):
         if type:
             self.add_bind(nodeset=ref, type=type)
 
+    def add_pollsensor(self, event="xforms-ready", ref=None):
+        """
+        <orx:pollsensor event="xforms-ready" ref="/data/meta/location" />
+        <bind nodeset="/data/meta/location" type="geopoint"/>
+        """
+        if ref:
+            self.model_node.append(_make_elem('{orx}pollsensor',
+                                              {'event': event, 'ref': ref}))
+            self.add_bind(nodeset=ref, type="geopoint")
+        else:
+            self.model_node.append(_make_elem('{orx}pollsensor', {'event': event}))
+
     def action_relevance(self, condition):
         if condition.type == 'always':
             return 'true()'
         elif condition.type == 'if':
-            return "%s = '%s'" % (self.resolve_path(condition.question), condition.answer)
+            if condition.operator == 'selected':
+                template = "selected({path}, '{answer}')"
+            else:
+                template = "{path} = '{answer}'"
+            return template.format(
+                path=self.resolve_path(condition.question),
+                answer=condition.answer
+            )
         else:
             return 'false()'
 
@@ -1117,6 +1197,9 @@ class XForm(WrappedNode):
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
+
+                if subcase.close_condition.is_active():
+                    subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     reference_id = subcase.reference_id or 'parent'
@@ -1611,7 +1694,7 @@ class XForm(WrappedNode):
     def add_care_plan(self, form):
         from const import CAREPLAN_GOAL, CAREPLAN_TASK
         from corehq.apps.app_manager.util import split_path
-        self.add_meta_2()
+        self.add_meta_2(form)
         self.add_instance('casedb', src='jr://instance/casedb')
 
         for property, nodeset in form.case_preload.items():
@@ -1658,7 +1741,7 @@ class XForm(WrappedNode):
                     case_name=form.name_path,
                     case_type=form.case_type,
                     autoset_owner_id=False,
-                    case_id=session_var('case_id_goal')
+                    case_id=session_var('case_id_goal_new')
                 )
 
                 case_block.add_update_block(form.case_updates())
@@ -1909,5 +1992,15 @@ def infer_vellum_type(control, bind):
     appearance = control.attrib.get('appearance')
 
     results = VELLUM_TYPE_INDEX[tag][data_type][media_type][appearance]
-    result, = results
+    try:
+        result, = results
+    except ValueError:
+        logging.error('No vellum type found matching', extra={
+            'tag': tag,
+            'data_type': data_type,
+            'media_type': media_type,
+            'appearance': appearance,
+            'request': get_request()
+        })
+        return None
     return result['name']

@@ -1,11 +1,17 @@
 {% extends "error_base.html" %}
+{% load i18n %}
 {% block title %}404 Error {% endblock %}
 {% block tabs %}{% endblock tabs %}
+{% block tabs_3 %}{% endblock tabs_3 %}
 {% block centered-content %}
     <div class="page-header">
         <h1>404
-            <small>Sorry, we couldn't find that for you.</small>
+            <small>{% trans "Sorry, we couldn't find that for you." %}</small>
         </h1>
     </div>
-    <p>If you think there should be something here, please <a href="mailto:commcarehq-support@dimagi.com">let us know</a>!</p>
+    <p>
+    {% blocktrans %}
+    If you think there should be something here, please <a href="mailto:commcarehq-support@dimagi.com">let us know</a>!
+    {% endblocktrans %}
+    </p>
 {% endblock %}

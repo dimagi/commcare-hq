@@ -1,25 +1,36 @@
+from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from corehq.apps.api.resources import JsonResource
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import (
+    CustomResourceMeta,
+    RequirePermissionAuthentication,
+)
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import Permissions
 
 
 def convert_fdt(fdi):
-    fdt = FixtureDataType.get(fdi.data_type_id)
-    fdi.fixture_type = fdt.tag
-    return fdi
+    try:
+        fdt = FixtureDataType.get(fdi.data_type_id)
+        fdi.fixture_type = fdt.tag
+        return fdi
+    except ResourceNotFound:
+        return fdi
 
 
 class FixtureResource(JsonResource):
     type = "fixture"
-    fields = tp_f.DictField(attribute='try_fields_without_attributes', readonly=True, unique=True)
-    fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True)
+    fields = tp_f.DictField(attribute='try_fields_without_attributes',
+                            readonly=True, unique=True)
+    # when null, that means the ref'd fixture type was not found
+    fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True,
+                                  null=True)
     id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
     def obj_get(self, bundle, **kwargs):
-        return convert_fdt(get_object_or_not_exist(FixtureDataItem, kwargs['pk'], kwargs['domain']))
+        return convert_fdt(get_object_or_not_exist(
+            FixtureDataItem, kwargs['pk'], kwargs['domain']))
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -32,9 +43,14 @@ class FixtureResource(JsonResource):
 
         if parent_id and parent_ref_name and child_type and references:
             parent_fdi = FixtureDataItem.get(parent_id)
-            fdis = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields_without_attributes[references]))
+            fdis = list(
+                FixtureDataItem.by_field_value(
+                    domain, child_type, parent_ref_name,
+                    parent_fdi.fields_without_attributes[references])
+            )
         elif type_id or type_tag:
-            type_id = type_id or FixtureDataType.by_domain_tag(domain, type_tag).one()
+            type_id = type_id or FixtureDataType.by_domain_tag(
+                domain, type_tag).one()
             fdis = list(FixtureDataItem.by_data_type(domain, type_id))
         else:
             fdis = list(FixtureDataItem.by_domain(domain))

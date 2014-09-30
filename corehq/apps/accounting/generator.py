@@ -3,6 +3,7 @@ import calendar
 from decimal import Decimal
 import random
 import datetime
+import uuid
 
 from django.conf import settings
 from django.core.management import call_command
@@ -43,9 +44,13 @@ def init_default_currency():
     return currency
 
 
+def unique_name():
+    return uuid.uuid4().hex.lower()[:60]
+
+
 def arbitrary_web_user(save=True, is_dimagi=False):
-    domain = data_gen.arbitrary_unique_name().lower()[:25]
-    username = "%s@%s.com" % (data_gen.arbitrary_username(), 'dimagi' if is_dimagi else 'gmail')
+    domain = unique_name()[:25]
+    username = "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
     try:
         web_user = WebUser.create(domain, username, 'test123')
     except Exception:
@@ -166,7 +171,7 @@ def arbitrary_domains_by_product_type():
 
 
 def arbitrary_commcare_user(domain, is_active=True):
-    username = data_gen.arbitrary_unique_name()[:80]
+    username = unique_name()
     try:
         commcare_user = CommCareUser.create(domain, username, 'test123')
         commcare_user.is_active = is_active

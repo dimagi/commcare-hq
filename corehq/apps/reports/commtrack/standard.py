@@ -1,5 +1,4 @@
 from corehq.apps.api.es import CaseES
-from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -7,7 +6,7 @@ from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActi
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.loosechange import map_reduce
-from datetime import datetime, timedelta
+from datetime import datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -15,10 +14,6 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-
-
-def _enabled_hack(domain):
-    return not is_psi_domain(domain)
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -55,9 +50,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
         if not any(a.action_type == 'consumption' for a in actions):
             # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
             actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
-        if is_psi_domain(self.domain):
-            ordering = ['sales', 'receipts', 'consumption']
-            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
         return actions
 
     @property
@@ -91,16 +83,41 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    _('Product'),
-                    _('# Facilities'),
-                    _('Stocked Out'),
-                    _('Understocked'),
-                    _('Adequate Stock'),
-                    _('Overstocked'),
-                    #_('Non-reporting'),
-                    _('Insufficient Data'),
-                ]))
+        columns = [
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('# Facilities')),
+            DataTablesColumn(
+                _('Stocked Out'),
+                help_text=_("A facility is counted as stocked out when its \
+                            stock is below the emergency level during the date \
+                            range selected.")),
+            DataTablesColumn(
+                _('Understocked'),
+                help_text=_("A facility is counted as under stocked when its \
+                            stock is above the emergency level but below the \
+                            low stock level during the date range selected.")),
+            DataTablesColumn(
+                _('Adequate Stock'),
+                help_text=_("A facility is counted as adequately stocked when \
+                            its stock is above the low level but below the \
+                            overstock level during the date range selected.")),
+            DataTablesColumn(
+                _('Overstocked'),
+                help_text=_("A facility is counted as overstocked when \
+                            its stock is above the overstock level \
+                            during the date range selected.")),
+            #DataTablesColumn(_('Non-reporting')),
+            DataTablesColumn(
+                _('Insufficient Data'),
+                help_text=_("A facility is marked as insufficient data when \
+                            there is no known consumption amount or there \
+                            has never been a stock report at the location. \
+                            Consumption amount can be unknown if there is \
+                            either no default consumption value or the reporting \
+                            history does not meet the calculation settings \
+                            for the project."))
+        ]
+        return DataTablesHeader(*columns)
 
     @property
     def product_data(self):
@@ -187,7 +204,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart.data = self.get_data_for_graph()
             return [chart]
 
-class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
+class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
@@ -199,7 +216,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(AggregateStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):
@@ -230,8 +247,8 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 'domain': self.domain,
                 'location_id': self.request.GET.get('location_id'),
                 'program_id': self.request.GET.get('program'),
-                'start_date': self.datespan.startdate_utc,
-                'end_date': self.datespan.enddate_utc,
+                'startdate': self.datespan.startdate_utc,
+                'enddate': self.datespan.enddate_utc,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -265,7 +282,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter',]
     exportable = True
@@ -274,7 +290,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):
@@ -293,13 +309,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
-            'program_id': self.request.GET.get('program'),
-            'start_date': self.datespan.startdate_utc,
-            'end_date': self.datespan.enddate_utc,
+            'startdate': self.datespan.startdate_utc,
+            'enddate': self.datespan.enddate_utc,
             'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
-
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1

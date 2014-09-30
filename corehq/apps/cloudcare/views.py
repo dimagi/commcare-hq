@@ -1,6 +1,8 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.app_manager.exceptions import FormNotFoundException, \
+    ModuleNotFoundException
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -89,9 +91,9 @@ def cloudcare_main(request, domain, urlPath):
     language = request.couch_user.language or _default_lang()
     
     def _url_context():
-        # given a url path, returns potentially the app and case, if they're
-        # selected. the front end optimizes with these to avoid excess server
-        # calls
+        # given a url path, returns potentially the app, parent, and case, if
+        # they're selected. the front end optimizes with these to avoid excess
+        # server calls
 
         # there's an annoying dependency between this logic and backbone's
         # url routing that seems hard to solve well. this needs to be synced
@@ -101,13 +103,22 @@ def cloudcare_main(request, domain, urlPath):
 
         # for cases it will be:
         # "view/:app/:module/:form/case/:case/"
+
+        # if there are parent cases, it will be:
+        # "view/:app/:module/:form/parent/:parent/case/:case/
         
         # could use regex here but this is actually simpler with the potential
         # absence of a trailing slash
         split = urlPath.split('/')
         app_id = split[1] if len(split) >= 2 else None
-        case_id = split[5] if len(split) >= 6 else None
-        
+
+        if len(split) >= 5 and split[4] == "parent":
+            parent_id = split[5]
+            case_id = split[7] if len(split) >= 7 else None
+        else:
+            parent_id = None
+            case_id = split[5] if len(split) >= 6 else None
+
         app = None
         if app_id:
             if app_id in [a['_id'] for a in apps]:
@@ -122,11 +133,16 @@ def cloudcare_main(request, domain, urlPath):
             case = CommCareCase.get(case_id)
             assert case.domain == domain, "case %s not in %s" % (case_id, domain)
             return case.get_json()
-        
+
         case = _get_case(domain, case_id) if case_id else None
+        if parent_id is None and case is not None:
+            parent_id = case.get('indices',{}).get('parent', {}).get('case_id', None)
+        parent = _get_case(domain, parent_id) if parent_id else None
+
         return {
             "app": app,
-            "case": case
+            "case": case,
+            "parent": parent
         }
 
     context = {
@@ -137,7 +153,8 @@ def cloudcare_main(request, domain, urlPath):
        "preview": preview,
        "maps_api_key": settings.GMAPS_API_KEY,
        'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
-       'sessions_enabled': request.couch_user.is_commcare_user()
+       'sessions_enabled': request.couch_user.is_commcare_user(),
+       'use_cloudcare_releases': request.project.use_cloudcare_releases,
     }
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
@@ -149,10 +166,15 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
 
+    try:
+        form = app.get_module(module_id).get_form(form_id).name.values()[0]
+    except (FormNotFoundException, ModuleNotFoundException):
+        raise Http404()
+
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
         app=app.name,
-        form=app.get_module(module_id).forms[int(form_id)].name.values()[0]
+        form=form,
     )
     if case_id:
         session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
@@ -231,7 +253,7 @@ def get_cases(request, domain):
     return json_response(cases)
 
 @cloudcare_api
-def filter_cases(request, domain, app_id, module_id):
+def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     delegation = request.GET.get('task-list') == 'true'
@@ -240,7 +262,7 @@ def filter_cases(request, domain, app_id, module_id):
     suite_gen = SuiteGenerator(app)
     xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
     extra_instances = [{'id': inst.id, 'src': inst.src}
-                       for inst in suite_gen.get_extra_instances(module)]
+                       for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
@@ -267,11 +289,18 @@ def filter_cases(request, domain, app_id, module_id):
     else:
         # otherwise just use our built in api with the defaults
         case_ids = [res.id for res in get_filtered_cases(
-            domain, status=CASE_STATUS_OPEN, case_type=case_type,
-            user_id=request.couch_user._id, ids_only=True
+            domain,
+            status=CASE_STATUS_OPEN,
+            case_type=case_type,
+            user_id=request.couch_user._id,
+            ids_only=True
         )]
 
     cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
+
+    if parent_id:
+        cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
+
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
@@ -288,7 +317,7 @@ def filter_cases(request, domain, app_id, module_id):
         })
     else:
         return json_response(cases)
-    
+
 @cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))

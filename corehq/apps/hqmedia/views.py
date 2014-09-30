@@ -1,11 +1,9 @@
 from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
-import tempfile
 import zipfile
 import logging
 import os
 from django.contrib.auth.decorators import login_required
-from django.core.servers.basehttp import FileWrapper
 import json
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
@@ -17,9 +15,9 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpRespons
 
 from django.shortcuts import render
 
-from corehq.apps.app_manager.decorators import safe_download
-from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.models import get_app, RemoteApp
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
@@ -27,6 +25,7 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.zip_utils import DownloadZip
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_download
@@ -131,6 +130,9 @@ def media_from_path(request, domain, app_id, file_path):
     # Rewrote it to use new media refs.
     # Yedi, care to comment?
     app = get_app(domain, app_id)
+    if isinstance(app, RemoteApp):
+        raise Http404('Media not yet available for remote apps')
+
     # todo remove get_media_references
     multimedia = app.get_media_references()
 
@@ -393,49 +395,68 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
-class DownloadMultimediaZip(View, ApplicationViewMixin):
+def _iter_media_files(media_objects):
     """
-        This is where the Multimedia for an application gets generated.
-        Expects domain and app_id to be in its args, otherwise it's generally unhappy.
+    take as input the output of get_media_objects
+    and return an iterator of (path, data) tuples for the media files
+    as they should show up in the .zip
+    as well as a list of error messages
+
+    as a side effect of implementation,
+    errors will not include all error messages until the iterator is exhausted
+
     """
-    name = "download_multimedia_zip"
+    errors = []
 
-    @method_decorator(safe_download)
-    def dispatch(self, request, *args, **kwargs):
-        return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        errors = []
-        self.app.remove_unused_mappings()
-        if not self.app.multimedia_map:
-            return HttpResponse("You have no multimedia to download.")
-
-        fd, fpath = tempfile.mkstemp()
-        tmpfile = os.fdopen(fd, 'w')
-        media_zip = zipfile.ZipFile(tmpfile, "w")
-        for path, media in self.app.get_media_objects():
+    def _media_files():
+        for path, media in media_objects:
             try:
-                data, content_type = media.get_display_file()
+                data, _ = media.get_display_file()
                 folder = path.replace(MULTIMEDIA_PREFIX, "")
                 if not isinstance(data, unicode):
-                    media_zip.writestr(os.path.join(folder), data)
+                    yield os.path.join(folder), data
             except NameError as e:
                 errors.append("%(path)s produced an ERROR: %(error)s" % {
                     'path': path,
                     'error': e,
                 })
-        media_zip.close()
-        if errors:
-            logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
-                          (self.domain, self.app_id))
-            return HttpResponseServerError("Errors were encountered while "
-                                           "retrieving media for this application.<br /> %s" % "<br />".join(errors))
+    return _media_files(), errors
 
-        wrapper = FileWrapper(open(fpath))
-        response = HttpResponse(wrapper, mimetype="application/zip")
-        response['Content-Length'] = os.path.getsize(fpath)
-        set_file_download(response, 'commcare.zip')
-        return response
+
+class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
+    """
+    This is where the Multimedia for an application gets generated.
+    Expects domain and app_id to be in its args
+
+    """
+
+    name = "download_multimedia_zip"
+    compress_zip = False
+    zip_name = 'commcare.zip'
+
+    def iter_files(self):
+        self.app.remove_unused_mappings()
+        return _iter_media_files(self.app.get_media_objects())
+
+    def check_before_zipping(self):
+        if not self.app.multimedia_map:
+            return HttpResponse("You have no multimedia to download.")
+
+    def log_errors(self, errors):
+        logging.error(
+            "Error downloading multimedia ZIP "
+            "for domain %s and application %s." % (
+                self.domain, self.app_id)
+        )
+        return HttpResponseServerError(
+            "Errors were encountered while "
+            "retrieving media for this application.<br /> %s" % (
+                "<br />".join(errors))
+        )
+
+    @method_decorator(safe_download)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
 
 
 class MultimediaUploadStatusView(View):

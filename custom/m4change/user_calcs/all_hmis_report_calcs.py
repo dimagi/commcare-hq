@@ -31,22 +31,22 @@ class FormComparisonCalculator(fluff.Calculator):
         if form.xmlns in self.namespaces and (self.filter_function is None or self.filter_function(form)):
             all_filters_passed = True
             if self.joint:
-                for comparison in self.comparisons:
-                    field_value = form.form.get(comparison[0], "")
+                for c in self.comparisons:
+                    field_value = form.form.get(c[0], "")
                     if field_value is None:
                         field_value = ""
-                    if not _get_comparison_results(field_value, comparison[1], comparison[2]):
+                    if not _get_comparison_results(field_value, c[1], c[2]):
                         all_filters_passed = False
                         break
                 if all_filters_passed:
                     yield [self.get_date_function(form), 1]
             else:
                 all_filters_passed = False
-                for comparison in self.comparisons:
-                    field_value = form.form.get(comparison[0], "")
+                for c in self.comparisons:
+                    field_value = form.form.get(c[0], "")
                     if field_value is None:
                         field_value = ""
-                    if _get_comparison_results(field_value, comparison[1], comparison[2]):
+                    if _get_comparison_results(field_value, c[1], c[2]):
                         all_filters_passed = True
                         break
                 if all_filters_passed:

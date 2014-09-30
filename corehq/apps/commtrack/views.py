@@ -1,31 +1,34 @@
-import os
-import tempfile
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
+    cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
+from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
+from corehq import toggles
 from soil.util import expose_download, get_download_context
-import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async
+from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
-import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
+import copy
+from couchexport.writers import Excel2007ExportWriter
+from StringIO import StringIO
+from couchexport.models import Format
+
+
 
 @domain_admin_required
 def default(request, domain):
@@ -47,10 +50,103 @@ class BaseCommTrackManageView(BaseDomainView):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
 
+class CommTrackSettingsView(BaseCommTrackManageView):
+    urlname = 'commtrack_settings'
+    page_title = ugettext_noop("Advanced Settings")
+    template_name = 'domain/admin/commtrack_settings.html'
+
+    @property
+    @memoized
+    def commtrack_settings(self):
+        return self.domain_object.commtrack_settings
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.commtrack_settings_form
+        }
+
+    @property
+    @memoized
+    def commtrack_settings_form(self):
+        from corehq.apps.commtrack.forms import CommTrackSettingsForm
+        initial = self.commtrack_settings.to_json()
+        initial.update(dict(('consumption_' + k, v) for k, v in
+            self.commtrack_settings.consumption_config.to_json().items()))
+        initial.update(dict(('stock_' + k, v) for k, v in
+            self.commtrack_settings.stock_levels_config.to_json().items()))
+
+        if self.request.method == 'POST':
+            return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
+        return CommTrackSettingsForm(initial=initial, domain=self.domain)
+
+    def set_ota_restore_config(self):
+        """
+        If the checkbox for syncing consumption fixtures is
+        checked, then we build the restore config with appropriate
+        special properties, otherwise just clear the object.
+
+        If there becomes a way to tweak these on the UI, this should
+        be done differently.
+        """
+
+        from corehq.apps.commtrack.models import StockRestoreConfig
+        if self.commtrack_settings.sync_consumption_fixtures:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+                section_to_consumption_types={
+                    'stock': 'consumption'
+                },
+                force_consumption_case_types=[
+                    'supply-point'
+                ],
+                use_dynamic_product_list=True,
+            )
+        else:
+            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+
+    def post(self, request, *args, **kwargs):
+        if self.commtrack_settings_form.is_valid():
+            data = self.commtrack_settings_form.cleaned_data
+            previous_config = copy.copy(self.commtrack_settings)
+            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
+            self.commtrack_settings.sync_location_fixtures = bool(data.get('sync_location_fixtures'))
+            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
+            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
+
+            self.set_ota_restore_config()
+
+            fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
+            for field in fields:
+                if data.get('stock_' + field):
+                    setattr(self.commtrack_settings.stock_levels_config, field,
+                            data['stock_' + field])
+
+            consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
+            for field in consumption_fields:
+                if data.get('consumption_' + field):
+                    setattr(self.commtrack_settings.consumption_config, field,
+                            data['consumption_' + field])
+
+            self.commtrack_settings.save()
+
+
+            if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
+                or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
+            ):
+                # kick off delayed consumption rebuild
+                recalculate_domain_consumption_task.delay(self.domain)
+                messages.success(request, _("Settings updated! Your updated consumption settings may take a "
+                                            "few minutes to show up in reports and on phones."))
+            else:
+                messages.success(request, _("Settings updated!"))
+            return HttpResponseRedirect(self.page_url)
+        return self.get(request, *args, **kwargs)
+
+
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Default Consumption")
+    page_title = ugettext_noop("Consumption")
 
     @property
     @memoized
@@ -171,9 +267,17 @@ class NewProductView(BaseCommTrackManageView):
 
     @property
     def page_context(self):
+        def _custom_product_data_enabled():
+            return (
+                toggles.CUSTOM_PRODUCT_DATA.enabled(self.request.user.username) or
+                toggles.CUSTOM_PRODUCT_DATA.enabled(self.domain)
+            )
+
         return {
             'product': self.product,
             'form': self.new_product_form,
+            'custom_product_data': copy.copy(dict(self.product.product_data)),
+            'custom_product_data_enabled': _custom_product_data_enabled()
         }
 
     def post(self, request, *args, **kwargs):
@@ -215,8 +319,8 @@ class UploadProductView(BaseCommTrackManageView):
         if not upload:
             messages.error(request, _('no file uploaded'))
             return self.get(request, *args, **kwargs)
-        elif not upload.name.endswith('.csv'):
-            messages.error(request, _('please use csv format only'))
+        elif not upload.name.endswith('.xlsx'):
+            messages.error(request, _('please use xlsx format only'))
             return self.get(request, *args, **kwargs)
 
         domain = args[0]
@@ -266,29 +370,60 @@ def product_importer_job_poll(request, domain, download_id, template="hqwebapp/p
 
 
 def download_products(request, domain):
-    def _iter_product_rows(domain):
+    def _get_products(domain):
         for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
-            p = Product.wrap(p_doc)
-            yield p.to_csv()
+            yield Product.wrap(p_doc)
 
-    fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as file:
-        writer = csv.writer(file, dialect=csv.excel)
-        writer.writerow([
-            'id',
-            'name',
-            'unit',
-            'code',
-            'description',
-            'category',
-            'program_id',
-            'cost',
-        ])
-        for row in _iter_product_rows(domain):
-            writer.writerow(row)
+    def _build_row(keys, product):
+        row = []
+        for key in keys:
+            row.append(product.get(key, '') or '')
 
-    response = HttpResponse(open(path, 'rb').read())
-    response['Content-Disposition'] = 'attachment; filename="{domain}-products.csv"'.format(domain=domain)
+        return row
+
+    file = StringIO()
+    writer = Excel2007ExportWriter()
+
+    product_keys = [
+        'id',
+        'name',
+        'unit',
+        'product_id',
+        'description',
+        'category',
+        'program_id',
+        'cost',
+    ]
+
+    data_keys = set()
+
+    products = []
+    for product in _get_products(domain):
+        product_dict = product.to_dict()
+
+        custom_properties = product.custom_property_dict()
+        data_keys.update(custom_properties.keys())
+        product_dict.update(custom_properties)
+
+        products.append(product_dict)
+
+    keys = product_keys + list(data_keys)
+
+    writer.open(
+        header_table=[
+            ('products', [keys])
+        ],
+        file=file,
+    )
+
+    for product in products:
+        writer.write([('products', [_build_row(keys, product)])])
+
+    writer.close()
+
+    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
+    response.write(file.getvalue())
     return response
 
 
@@ -319,115 +454,6 @@ class EditProductView(NewProductView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.product_id])
 
-
-@require_superuser
-def bootstrap(request, domain):
-    if request.method == "POST":
-        D = Domain.get_by_name(domain)
-
-        if D.commtrack_enabled:
-            return HttpResponse('already configured', 'text/plain')
-        else:
-            psi_one_time_setup(D)
-            return HttpResponse('set up successfully', 'text/plain')
-
-    return render(request, 'commtrack/debug/bootstrap.html', {
-        'domain': domain,
-        }
-    )
-
-@require_superuser
-def historical_import(request, domain):
-    if request.method == "POST":
-        file_ref = expose_download(request.FILES['history'].read(),
-                                   expiry=1*60*60)
-        download_id = uuid.uuid4().hex
-        import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
-        return _async_in_progress(request, domain, download_id)
-
-    return HttpResponse("""
-<form method="post" action="" enctype="multipart/form-data">
-  <div><input type="file" name="history" /></div>
-  <div><button type="submit">Import historical stock reports</button></div>
-</form>
-""")
-
-def _async_in_progress(request, domain, download_id):
-    messages.success(request,
-        'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
-        (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
-        extra_tags="html")
-    return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
-
-
-@require_previewer
-def charts(request, domain, template="commtrack/charts.html"):
-    products = Product.by_domain(domain)
-    prod_codes = [p.code for p in products]
-    prod_codes.extend(range(20))
-
-    from random import randint
-    num_facilities = randint(44, 444)
-
-
-    ### gen fake data
-    def vals():
-        tot = 0
-        l = []
-        for i in range(4):
-            v = randint(0, num_facilities - tot)
-            l.append(v)
-            tot += v
-        l.append(num_facilities - tot)
-        return l
-
-    statuses = [
-        {"key": "stocked out", "color": "#e00707"},
-        {"key": "under stock", "color": "#ffb100"},
-        {"key": "adequate stock", "color": "#4ac925"},
-        {"key": "overstocked", "color": "#b536da"},
-        {"key": "unknown", "color": "#ABABAB"}
-    ]
-
-    for s in statuses:
-        s["values"] = []
-
-    for i, p in enumerate(prod_codes):
-        vs = vals()
-        for j in range(5):
-            statuses[j]["values"].append({"x": p, "y": vs[j]})
-
-    # colors don't actually work correctly for pie charts
-    resp_values = [
-        {"label": "Submitted on Time", "color": "#4ac925", "value": randint(0, 40)},
-        {"label": "Didn't respond", "color": "#ABABAB", "value": randint(0, 20)},
-        {"label": "Submitted Late", "color": "#e00707", "value": randint(0, 8)},
-    ]
-    response_data = [{
-        "key": "Current Late Report",
-        "values": resp_values
-    }]
-
-    ctxt = {
-        "domain": domain,
-        "stock_data": statuses,
-        "response_data": response_data,
-    }
-    return render(request, template, ctxt)
-
-@require_superuser
-def location_dump(request, domain):
-    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
-    
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
-
-    w = csv.writer(resp)
-    w.writerow(['UUID', 'Location Type', 'SMS Code'])
-    for raw in iter_docs(Location.get_db(), loc_ids):
-        loc = Location.wrap(raw)
-        w.writerow([loc._id, loc.location_type, loc.site_code])
-    return resp
 
 @login_and_domain_required
 def api_query_supply_point(request, domain):
@@ -584,6 +610,7 @@ class EditProgramView(NewProgramView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.program_id])
+
 
 class FetchProductForProgramListView(EditProgramView):
     urlname = 'commtrack_product_for_program_fetch'

@@ -18,7 +18,7 @@ class SearchFilter(BaseReportFilter):
     @property
     def filter_context(self):
         return {
-            'search_query': self.request.GET.get('search_query', ""),
+            'search_query': self.request.GET.get(self.slug, ""),
             'search_help_title': self.search_help_title,
             'search_help_content': self.search_help_content,
             'search_help_inline': self.search_help_inline

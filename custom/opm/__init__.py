@@ -1,9 +1,12 @@
-class HealthStatusMixin(object):
+from . import reports
 
-    @property
-    def blocks(self):
-        return self.request.GET.getlist('blocks', [])
 
-    @property
-    def awcs(self):
-        return self.request.GET.getlist('awcs', [])
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        reports.BeneficiaryPaymentReport,
+        reports.IncentivePaymentReport,
+        reports.HealthStatusReport,
+        reports.MetReport,
+        reports.HealthMapReport,
+    )),
+)

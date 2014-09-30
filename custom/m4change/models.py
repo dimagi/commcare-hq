@@ -306,6 +306,11 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     women_having_4_anc_visits = project_indicators_report_calcs.Anc4VisitsCalculator()
     women_delivering_at_facility_cct = project_indicators_report_calcs.FacilityDeliveryCctCalculator()
     women_delivering_within_6_weeks_attending_pnc = project_indicators_report_calcs.PncAttendanceWithin6WeeksCalculator()
+    number_of_free_sims_given = project_indicators_report_calcs.NumberOfFreeSimsGivenCalculator()
+    mno_mtn = project_indicators_report_calcs.MnoCalculator('mtn')
+    mno_etisalat = project_indicators_report_calcs.MnoCalculator('etisalat')
+    mno_glo = project_indicators_report_calcs.MnoCalculator('glo')
+    mno_airtel = project_indicators_report_calcs.MnoCalculator('airtel')
 
 ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 
@@ -423,10 +428,10 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
         [("partner_hiv_status", operator.eq, "positive")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_stage_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "clinical_stage")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "clinical_stage")], PMTCT_CLIENTS_FORM
     )
     assessed_for_clinical_cd4_eligibility = all_hmis_report_calcs.FormComparisonCalculator(
-        [("eligibility_assessment", operator.eq, "cd4")], PMTCT_CLIENTS_FORM
+        [("eligibility_assessment", operator.contains, "cd4")], PMTCT_CLIENTS_FORM
     )
     pregnant_hiv_positive_women_received_art = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "3tc")], PMTCT_CLIENTS_FORM
@@ -439,15 +444,6 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     )
     pregnant_hiv_positive_women_received_mother_sdnvp = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "mother_sdnvp")], PMTCT_CLIENTS_FORM
-    )
-    pregnant_positive_women_received_arv_for_pmtct = all_hmis_report_calcs.FormComparisonCalculator(
-        [
-            ("commenced_drugs", operator.contains, "mother_sdnvp"),
-            ("commenced_drugs", operator.contains, "azt"),
-            ("commenced_drugs", operator.contains, ["3tc", "mother_sdnvp"]),
-            ("commenced_drugs", operator.contains, "3tc")
-        ],
-        PMTCT_CLIENTS_FORM, joint=False
     )
     infants_hiv_women_cotrimoxazole_lt_2_months = \
         all_hmis_report_calcs.InfantsBornToHivInfectedWomenCotrimoxazoleLt2Months()
@@ -488,6 +484,13 @@ class FixtureReportResult(Document, QueryMixin):
                              include_docs=True).one(except_all=True)
         except (NoResultFound, ResourceNotFound, MultipleResultsFound):
             return None
+
+    @classmethod
+    def all_by_composite_key(cls, domain, location_id, start_date, end_date, report_slug):
+        return cls.view("m4change/fixture_by_composite_key",
+                        startkey=[domain, location_id, start_date, end_date, report_slug],
+                        endkey=[domain, location_id, start_date, end_date, report_slug],
+                        include_docs=True).all()
 
     @classmethod
     def by_domain(cls, domain):

@@ -43,7 +43,7 @@
             {% endifequal %}
         {% endif %}
         <a class="btn btn-project dropdown-toggle" href="#" data-toggle="dropdown">
-            <i class="icon-hq-flower"></i> {% if not domain %}{% trans 'Select Project' %}{% endif %}
+            <i class="icon-hq-flower fcc fcc-flower"></i> {% if not domain %}{% trans 'Select Project' %}{% endif %}
             <span class="caret"></span>
         </a>
         {% if domain %}
@@ -64,26 +64,26 @@
             <span class="caret"></span>
         </a>
         <ul class="dropdown-menu nav-list dropdown-blue right-align">
-            <li class="nav-header">
+            <li class="nav-header dropdown-header">
                 {% if user.first_name %}
                     {{ user.first_name }} {{ user.last_name }}
                 {% else %}
                     {{ user.username }}
                 {% endif %}
             </li>
-            <li class="nav-header nav-header-role">
+            <li class="dropdown-header nav-header nav-header-role">
                 {% with request.couch_user.role_label.strip as role %}
                     {% if role %}
                         {{ role }}
                     {% endif %}
                 {% endwith %}
             </li>
-            <li><a href="{% url "my_account_settings" %}"><i class="icon-user"></i> {% trans 'My Account Settings' %}</a></li>
+            <li><a href="{% url "my_account_settings" %}"><i class="icon-user fa fa-user"></i> {% trans 'My Account Settings' %}</a></li>
             {% if domain %}
-                <li><a href="{% url "domain_settings_default" domain %}"><i class="icon-cog"></i> {% trans 'Project Settings' %}</a></li>
+                <li><a href="{% url "domain_settings_default" domain %}"><i class="icon-cog fa fa-cog"></i> {% trans 'Project Settings' %}</a></li>
             {% endif %}
             <li class="divider"></li>
-            <li><a href="{% url "logout" %}"><i class="icon-signout"></i> {% trans 'Sign Out' %}</a></li>
+            <li><a href="{% url "logout" %}"><i class="icon-signout fa fa-sign-out"></i> {% trans 'Sign Out' %}</a></li>
         </ul>
     </div>
 </div>

@@ -1,5 +1,6 @@
 import json
 import xlrd
+from couchdbkit import NoResultFound
 from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
 from datetime import date
@@ -7,6 +8,9 @@ from casexml.apps.case.models import CommCareCase
 from xlrd import xldate_as_tuple
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import format_username
+
 
 def get_case_properties(domain, case_type=None):
     """
@@ -303,12 +307,10 @@ def populate_updated_fields(config, columns, row):
     due to the import. This can be then used to pass to the CaseBlock
     to trigger updates.
     """
-
     field_map = convert_custom_fields_to_struct(config)
     key_column_index = get_key_column_index(config, columns)
     value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
-
     for key in field_map:
         try:
             if key_column_index and key == row[key_column_index]:
@@ -335,7 +337,7 @@ def populate_updated_fields(config, columns, row):
             else:
                 update_value = convert_field_value(update_value)
 
-        fields_to_update[update_field_name] = update_value
+        fields_to_update[update_field_name.strip()] = update_value
 
     return fields_to_update
 
@@ -353,3 +355,29 @@ def is_valid_id(uploaded_id, domain, cache):
 
     owner = get_wrapped_owner(uploaded_id)
     return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)
+
+def get_id_from_name(uploaded_name, domain, cache):
+    '''
+    :param uploaded_name: A username or group name
+    :param domain:
+    :param cache:
+    :return: Looks for the given name and returns the corresponding id if the
+    user or group exists and None otherwise. Searches for user first, then
+    group.
+    '''
+    if uploaded_name in cache:
+        return cache[uploaded_name]
+    try:
+        name_as_address = uploaded_name
+        if '@' not in name_as_address:
+            name_as_address = format_username(uploaded_name, domain)
+        user = CouchUser.get_by_username(name_as_address)
+        id = getattr(user, 'couch_id', None)
+    except NoResultFound:
+        id = None
+    if not id:
+        group = Group.by_name(domain, uploaded_name, one=True)
+        id = getattr(group, 'get_id', None)
+
+    cache[uploaded_name] = id
+    return id

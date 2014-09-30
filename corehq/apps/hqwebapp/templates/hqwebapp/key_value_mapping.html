@@ -1,7 +1,8 @@
 <div id="key_value_mapping_editable_template" class="hide">
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
-            <div class="control-group hq-input-map">
+            <div class="control-group hq-input-map"
+                 data-bind="css: {'error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
                 <i class="sortable-handle icon-resize-vertical"></i>
                 <input type="text"
                        class="input-small enum-key"
@@ -21,6 +22,8 @@
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
                     <i class="icon icon-white icon-remove"></i> Delete
                 </a>
+                <span class="help-inline"
+                      data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
             </div>
         </fieldset>
 
@@ -44,7 +47,10 @@
              data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
         <div class="modal-footer">
             <button class="btn" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" data-dismiss="modal" data-bind="click: save">OK</button>
+            <button class="btn btn-primary" data-dismiss="modal"
+                    data-bind="disable: ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0,
+                    text: (ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0) ? 'Fix errors' : 'OK',
+                    click: save"></button>
         </div>
     </div>
 </div>

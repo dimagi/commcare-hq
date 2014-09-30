@@ -20,6 +20,9 @@ var ManageRemindersViewModel = function (
     self.available_languages = ko.observableArray(_.map(available_languages, function (langcode) {
         return new ReminderLanguage(langcode, self.default_lang);
     }));
+    self.showDefaultLanguageOption = ko.computed(function () {
+        return self.available_languages().length > 1;
+    });
 
     self.start_reminder_on = ko.observable(initial.start_reminder_on);
     self.isStartReminderCaseProperty = ko.computed(function () {
@@ -42,6 +45,9 @@ var ManageRemindersViewModel = function (
     self.recipient = ko.observable(initial.recipient);
     self.isRecipientSubcase = ko.computed(function () {
         return self.recipient() === self.choices.RECIPIENT_SUBCASE;
+    });
+    self.isRecipientGroup = ko.computed(function () {
+        return self.recipient() === self.choices.RECIPIENT_USER_GROUP;
     });
 
     self.recipient_case_match_type = ko.observable(initial.recipient_case_match_type);
@@ -96,6 +102,14 @@ var ManageRemindersViewModel = function (
                 self.method() === self.choices.METHOD_SMS_SURVEY);
     });
 
+    self.submit_partial_forms = ko.observable(initial.submit_partial_forms);
+    self.isPartialSubmissionsVisible = ko.computed(function () {
+        return (self.method() === self.choices.METHOD_IVR_SURVEY ||
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
+    self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
@@ -118,32 +132,7 @@ var ManageRemindersViewModel = function (
         _.each(self.select2_fields, function (field) {
             self.initCasePropertyChoices(field);
         });
-
-        self.languagePicker.init();
     };
-
-    self.addLanguage = function (langcode) {
-        var currentLangcodes = _.map(self.available_languages(), function (lang) {
-            return lang.langcode();
-        });
-        if (currentLangcodes.indexOf(langcode) === -1) {
-            var newLanguage = new ReminderLanguage(langcode, self.default_lang);
-            self.available_languages.push(newLanguage);
-             _(self.eventObjects()).each(function (event) {
-                event.addTranslation(newLanguage.langcode());
-            });
-        }
-        self.default_lang(langcode);
-    };
-
-    self.removeLanguage = function (reminderLang) {
-        self.available_languages.remove(reminderLang);
-        _(self.eventObjects()).each(function (event) {
-            event.removeTranslation(reminderLang.langcode());
-        });
-    };
-
-    self.languagePicker = new LanguagePickerViewModel(self.addLanguage);
 
     self.initCasePropertyChoices = function (field) {
         var fieldInput = $('[name="' + field.name + '"]');

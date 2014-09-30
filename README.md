@@ -23,6 +23,9 @@ More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs
 + Over-the-air (ota) restore of user and cases
 + Integrated web and email reporting
 
+Contributing
+------------
+We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document for more.
 
 Installing CommCare HQ
 ----------------------
@@ -31,7 +34,7 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 ### Installing dependencies
 
-For Ubuntu 12.04, download the JDK tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
+For Ubuntu 12.04, download the JDK (version 7) tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
 Run the included `install.sh` script to install all
 dependencies, set them up to run at startup, and set up required databases.
 Then skip to "Setting up a virtualenv". 
@@ -43,7 +46,9 @@ individual project sites when necessary.
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7)
++ [elasticsearch][elasticsearch] (including Java 7).
+  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
+  - `brew install homebrew/versions/elasticsearch090` works well on mac
 + memcached
 + redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
@@ -52,10 +57,10 @@ individual project sites when necessary.
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
- [elasticsearch]: http://www.elasticsearch.org/download/
+ [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
-#### Elasticsearch Configuration
+#### Elasticsearch Configuration (optional)
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
@@ -66,7 +71,17 @@ supervisor config demonstrates the tunnel creation using autossh.
 
 #### CouchDB Configuration
 
-Open http://localhost:5984/_utils/ and create a new database named `commcarehq`.
+Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+
+To set up CouchDB from the command line
+
+Create the database:
+
+    curl -X PUT "http://localhost:5984/commcarehq
+
+Add the required user:
+
+    curl -X PUT "http://localhost:5984/_config/users/commcarehq" -d \"commcarehq\"
 
 #### PostgreSQL Configuration
 
@@ -95,6 +110,10 @@ Once all the dependencies are in order, please do the following:
     mkdir pip_cache
     pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
+
+There is also a separate collection of Dimagi dev oriented tools that you can install:
+
+  pip install -r requirements/dev-requirements.txt
 
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
 log file settings are correct, as well as any settings required by any other
@@ -156,6 +175,16 @@ that you have a 32bit version of Python installed.
     # that sets the stored index names to the aliases.
 
     ./manage.py ptop_es_manage --flip_all_aliases
+
+
+### Optional for using Django Compressor: Install lessc for compiling less files
+
+    1. Install node and alongside it npm (eg, on a mac: `brew install node`)
+    2. Install less@1.3.1 with npm `npm install -g less@1.3.1`
+    3. Make sure `lessc --version` runs and outputs 1.3.1 as the current version
+
+    If you don't do this, all the .less files should compile on the fly with
+    less.js in your browser (for development purposes ONLY).
 
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
@@ -255,6 +284,15 @@ Running Tests
 To run the standard tests for CommCare HQ, simply run
 
     ./manage.py test
+
+To run a particular test or subset of tests
+
+    ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
+
+    # examples
+    ./manage.py test app_manager
+    ./manage.py test app_manager.SuiteTest
+    ./manage.py test app_manager.SuiteTest.test_picture_format
 
 To run the selenium tests, you first need to install the
 [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).

@@ -129,7 +129,7 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
             "child_type": "careplan_task",
             "description_property": "description",
             "create_session_data": {
-                "case_id_goal": str(uuid.uuid4())
+                "case_id_goal_new": str(uuid.uuid4())
             },
         }
         goal_conf.update(self.config.goal_conf)

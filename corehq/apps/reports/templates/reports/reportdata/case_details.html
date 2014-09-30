@@ -8,10 +8,15 @@
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
-    
-    <style type="text/css">
+    <style type="text/css" >
         .hq-generic-report {
             padding: 10px;
+        }
+        section#case-actions {
+            padding-top: 1em;
+        }
+        section#case-actions form {
+            display: inline-block;
         }
     </style>
 {% endblock %}
@@ -63,10 +68,17 @@
 {% block main_column %}
 <div class="hq-generic-report">
     {% render_case case case_display_options %}
+    <section id="case-actions" >
     {% if show_case_rebuild %}
-        <form action="{% url 'rebuild_case' domain case_id %}" method="post">
-             <button type="submit" class="btn btn-primary" >{% trans 'Rebuild Case' %}</button>
+        <form action="{% url 'rebuild_case' domain case_id %}" method="post" >
+             <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
         </form>
     {% endif %}
+    {% if not case.closed %}
+        <form action="{% url 'close_case' domain case_id %}" method="post" >
+             <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
+        </form>
+    {% endif %}
+    </section>
 </div>
 {% endblock %}

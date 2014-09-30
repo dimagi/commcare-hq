@@ -1,8 +1,32 @@
-from django.http import HttpResponseForbidden, Http404
+from django.http import Http404
+from django.core.exceptions import PermissionDenied
 from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
 from functools import wraps
 from corehq.apps.users.models import CouchUser
 from django.utils.translation import ugettext as _
+
+
+def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
+    """
+    A way to do more fine-grained permissions via decorator. The permission_check should be
+    a function that takes in a couch_user and a domain and returns True if that user can access
+    the page, otherwise false.
+    """
+    def decorator(view_func):
+        def _inner(request, domain, *args, **kwargs):
+            if not hasattr(request, "couch_user"):
+                return domain_specific_login_redirect(request, domain)
+            elif request.user.is_superuser or permission_check(request.couch_user, domain):
+                return view_func(request, domain, *args, **kwargs)
+            else:
+                raise PermissionDenied()
+
+        if login_decorator:
+            return login_decorator(_inner)
+        else:
+            return _inner
+
+    return decorator
 
 
 def require_permission(permission, data=None, login_decorator=login_and_domain_required):
@@ -13,23 +37,8 @@ def require_permission(permission, data=None, login_decorator=login_and_domain_r
             permission = permission.__name__
         except AttributeError:
             pass
-
-    def decorator(view_func):
-        def _inner(request, domain, *args, **kwargs):
-            if not hasattr(request, "couch_user"):
-                return domain_specific_login_redirect(request, domain)
-            elif request.user.is_superuser or request.couch_user.has_permission(domain, permission, data=data):
-                return view_func(request, domain, *args, **kwargs)
-            else:
-                return HttpResponseForbidden(_("Sorry, you don't have permission to access that page! "
-                                               "Contact your administrator if you believe this is a mistake."))
-
-        if login_decorator:
-            return login_decorator(_inner)
-        else:
-            return _inner
-
-    return decorator
+    permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
+    return require_permission_raw(permission_check, login_decorator)
 
 
 require_can_edit_web_users = require_permission('edit_web_users')

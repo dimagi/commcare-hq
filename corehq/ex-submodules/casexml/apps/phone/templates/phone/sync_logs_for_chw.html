@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% load sync_log_tags %}
+{% block page_imports %}
+    {% include "imports/jquery-ui.html" %}
+    {% include "imports/datatables.html" %}
+{% endblock %}
+{% block page_javascripts %}
+    <script type="text/javascript">
+        // datatable configuration.
+        $(document).ready(function() {
+            $('.datatable').dataTable({
+                "bJQueryUI": true,
+                "aaSorting": [[ 1, "desc" ]]
+            });
+        }); 
+    </script>
+{% endblock %}
+{% block content %}
+<br></br>
+<h3>Sync history for <strong>{{ chw.formatted_name }}</strong> at {{ chw.current_clinic_display }}</h3>
+{% sync_logs_for_chw chw.get_id %}
+{% endblock %}

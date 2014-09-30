@@ -9,6 +9,7 @@ function HQReportDataTables(options) {
     self.showAllRowsOption = options.showAllRowsOption || false;
     self.aoColumns = options.aoColumns;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
+    self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
     self.customSort = options.customSort;
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
@@ -24,14 +25,16 @@ function HQReportDataTables(options) {
     this.render_footer_row = (function() {
         var $dataTableElem = $(self.dataTableElem);
         return function(id, row) {
-            var $row = $dataTableElem.find('#' + id);
-            if ($row.length == 0) {
-                $row = $('<tfoot />');
-                $dataTableElem.append($row);
-            }
-            $row.html('');
-            for (var i = 0; i < row.length; i++) {
-                $row.append('<td>' + row[i] + '</td>');
+            if ($dataTableElem.find('tfoot').length === 0) {
+                var $row = $dataTableElem.find('#' + id);
+                if ($row.length == 0) {
+                    $row = $('<tfoot />');
+                    $dataTableElem.append($row);
+                }
+                $row.html('');
+                for (var i = 0; i < row.length; i++) {
+                    $row.append('<td>' + row[i] + '</td>');
+                }
             }
         }
     })();
@@ -58,7 +61,8 @@ function HQReportDataTables(options) {
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
-                sScrollX: "100%"
+                sScrollX: "100%",
+                bSort: self.defaultSort
             };
 
             if(self.ajaxSource) {

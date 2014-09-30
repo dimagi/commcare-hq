@@ -3,11 +3,13 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.util import ErrorList
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.util.translation import localize
@@ -21,9 +23,10 @@ from corehq.apps.accounting.forms import (
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
     TestReminderEmailFrom,
-)
+    CreateAdminForm)
 from corehq.apps.accounting.exceptions import (
-    NewSubscriptionError, InvoiceError, CreditLineError
+    NewSubscriptionError, InvoiceError, CreditLineError,
+    CreateAccountingAdminError,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
@@ -32,7 +35,7 @@ from corehq.apps.accounting.interface import (
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler, Select2RateAsyncHandler,
     SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
-    Select2SubscriptionInfoHandler, Select2InvoiceTriggerHandler,
+    Select2InvoiceTriggerHandler,
 )
 from corehq.apps.accounting.models import (
     SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
@@ -43,9 +46,10 @@ from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended
 )
-from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
+from django_prbac.models import Role, Grant
 
 logger = logging.getLogger('accounting')
 
@@ -168,15 +172,18 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         if ('account_basic' in self.request.POST
                 and self.basic_account_form.is_valid()):
             self.basic_account_form.update_basic_info(self.account)
+            messages.success(request, "Account successfully updated.")
             return HttpResponseRedirect(self.page_url)
         elif ('account_contact' in self.request.POST
               and self.contact_form.is_valid()):
             self.contact_form.update_contact_info(self.account)
+            messages.success(request, "Account Contact Info successfully updated.")
             return HttpResponseRedirect(self.page_url)
         elif ('adjust_credit' in self.request.POST
               and self.credit_form.is_valid()):
             try:
-                if self.credit_form.adjust_credit():
+                if self.credit_form.adjust_credit(web_user=request.user.username):
+                    messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
                 logger.error(
@@ -192,7 +199,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/subscriptions_base.html'
     urlname = 'new_subscription'
     async_handlers = [
-        Select2SubscriptionInfoHandler,
+        Select2BillingInfoHandler,
     ]
 
     @property
@@ -260,7 +267,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/subscriptions.html'
     urlname = 'edit_subscription'
     async_handlers = [
-        Select2SubscriptionInfoHandler,
+        Select2BillingInfoHandler,
     ]
 
     @property
@@ -340,14 +347,20 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         if 'set_subscription' in self.request.POST and self.subscription_form.is_valid():
-            self.subscription_form.update_subscription()
+            try:
+                self.subscription_form.update_subscription()
+                messages.success(request, "The subscription has been updated.")
+            except Exception as e:
+                messages.error(request,
+                               "Could not update subscription due to: %s" % e)
             return HttpResponseRedirect(self.page_url)
         elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
-            if self.credit_form.adjust_credit():
+            if self.credit_form.adjust_credit(web_user=request.user.username):
                 return HttpResponseRedirect(self.page_url)
         elif ('cancel_subscription' in self.request.POST
               and self.cancel_form.is_valid()):
             self.cancel_subscription()
+            messages.success(request, "The subscription has been cancelled.")
         elif ('subscription_change_note' in self.request.POST
               and self.change_subscription_form.is_valid()
         ):
@@ -690,3 +703,97 @@ class InvoiceSummaryView(AccountingSectionView):
                     messages.error(request,
                                    "Could not send emails due to: %s" % e)
         return self.get(request, *args, **kwargs)
+
+
+class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
+    template_name = 'accounting/accounting_admins.html'
+    urlname = 'accounting_manage_admins'
+    page_title = ugettext_noop("Accounting Admins")
+
+    limit_text = ugettext_noop("Admins per page")
+    empty_notification = ugettext_noop("You haven't specified any accounting admins. "
+                                       "How are you viewing this page??! x_x")
+    loading_message = ugettext_noop("Loading admin list...")
+    deleted_items_header = ugettext_noop("Removed Users:")
+    new_items_header = ugettext_noop("Added Users:")
+
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def accounting_admin_queryset(self):
+        return User.objects.filter(
+            prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
+        ).exclude(username=self.request.user.username)
+
+    @property
+    @memoized
+    def total(self):
+        return self.accounting_admin_queryset.count()
+
+    @property
+    def column_names(self):
+        return [
+            _('Username'),
+            _('Action'),
+        ]
+
+    @property
+    def paginated_list(self):
+        for admin in self.accounting_admin_queryset:
+            yield {
+                'itemData': self._fmt_admin_data(admin),
+                'template': 'accounting-admin-row',
+            }
+
+    def _fmt_admin_data(self, admin):
+        return {
+            'id': admin.id,
+            'username': admin.username,
+        }
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return CreateAdminForm(self.request.POST)
+        return CreateAdminForm()
+
+    def get_create_item_data(self, create_form):
+        try:
+            user = create_form.add_admin_user()
+        except CreateAccountingAdminError as e:
+            return {
+                'error': "Could Not Add to Admins: %s" % e,
+            }
+        return {
+            'itemData': self._fmt_admin_data(user),
+            'template': 'accounting-admin-new',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        user = User.objects.get(id=item_id)
+        ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
+        grant_to_remove = Grant.objects.filter(
+            from_role=user.prbac_role.role,
+            to_role=ops_role,
+        )
+        grant_to_remove.delete()
+        return {
+            'deletedItem': self._fmt_admin_data(user),
+            'template': 'accounting-admin-removed',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
+

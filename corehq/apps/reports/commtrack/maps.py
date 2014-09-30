@@ -111,22 +111,24 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 }[c]
 
             conf['metrics'].append({
-                    'title': p.name,
-                    'group': True,
-                    'children': product_metrics,
-                })
+                'title': p.name,
+                'group': True,
+                'children': product_metrics,
+            })
             conf['table_columns'].append({
-                    'title': p.name,
-                    'subcolumns': product_cols,
-                })
+                'title': p.name,
+                'subcolumns': product_cols,
+            })
 
         conf['detail_template'] = render_to_string('reports/partials/commtrack/stockstatus_mapdetail.html', {
-                'products': products,
-                'columns': [{'id': c, 'title': titles[c]} for c in
-                            ('category', 'current_stock', 'consumption', 'months_remaining')],
-                })
-        #print conf['detail_template']
+            'products': products,
+            'columns': [{'id': c, 'title': titles[c]} for c in
+                        ('category', 'current_stock', 'consumption', 'months_remaining')],
+        })
 
+        conf['display'] = {
+            'table': False,
+        }
         return conf
 
 
@@ -134,9 +136,12 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Reporting Status (map)")
     slug = "reportingstatus_map"
 
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     data_source = {
         'adapter': 'report',

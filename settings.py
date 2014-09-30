@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import sys
 import os
+from urllib import urlencode
 from django.contrib import messages
 
 # odd celery fix
@@ -15,6 +16,19 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+LESS_DEBUG = DEBUG
+
+# clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
+# this to select various versions of Vellum source on the form designer page.
+# Acceptable values:
+# None - production mode
+# "dev" - use raw vellum source (submodules/formdesigner/src)
+# "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
+VELLUM_DEBUG = None
+
+# enables all plugins, including ones that haven't been released on production
+# yet
+VELLUM_PRERELEASE = False
 
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
@@ -73,12 +87,18 @@ LOCALE_PATHS = (
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder"
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-)
+STATICFILES_DIRS = ()
+
+# bleh, why did this submodule have to be removed?
+# deploy fails if this item is present and the path does not exist
+_formdesigner_path = os.path.join(FILEPATH, 'submodules', 'formdesigner')
+if os.path.exists(_formdesigner_path):
+    STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
+del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
@@ -150,9 +170,11 @@ DEFAULT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -163,9 +185,15 @@ DEFAULT_APPS = (
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_ALLOWED_TEMPLATE_PACKS = (
+    'bootstrap',
+    'bootstrap3',
+    'bootstrap3_transitional',
+)
 
 HQ_APPS = (
     'django_digest',
@@ -208,11 +236,11 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.es',
     'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -252,13 +280,14 @@ HQ_APPS = (
     'soil',
     'toggle',
     'touchforms.formplayer',
-    'hqbilling',
     'phonelog',
     'hutch',
     'pillowtop',
     'pillow_retry',
-    'hqstyle',
+    'corehq.apps.style',
+    'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -269,8 +298,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -284,12 +312,17 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.ilsgateway',
     'custom.m4change',
     'custom.succeed',
+    'custom.ucla',
 
     'custom.uth',
 
     'custom.colalife',
+    'custom.intrahealth',
+    'custom.care_pathways',
+    'bootstrap3_crispy',
 )
 
 TEST_APPS = ()
@@ -300,7 +333,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.kookoo',
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
@@ -310,6 +342,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
+    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -327,9 +360,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.succeed'
 
     # submodules with tests that run on travis
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'couchforms',
     'couchexport',
     'ctable',
     'ctable_view',
@@ -346,10 +376,6 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
-
-
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -390,8 +416,9 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
-LOGGEDOUT_TEMPLATE = "loggedout.html"
+LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "user@domain.com"
@@ -430,7 +457,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -448,9 +475,21 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 # celery
 BROKER_URL = 'django://'  # default django db based
 
+CELERY_MAIN_QUEUE = 'celery'
+
 # this is the default celery queue
 # for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = 'celery'
+CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder rules.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
+
+# This is the celery queue to use for running reminder case updates.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -526,6 +565,32 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
 SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+
+
+####### Reminders Queue Settings #######
+
+# Setting this to False will make the system fire reminders every
+# minute on the periodic queue. Setting to True will queue up reminders
+# on the reminders queue.
+REMINDERS_QUEUE_ENABLED = False
+
+# If a reminder still has not been processed in this number of minutes, enqueue it
+# again.
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+
+# Number of minutes a celery task will alot for itself (via lock timeout)
+REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
+
+# Number of minutes to wait before retrying an unsuccessful processing attempt
+# for a single reminder
+REMINDERS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Max number of processing attempts before giving up on processing the reminder
+REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
+
+# The number of hours to wait before counting a reminder as stale. Stale
+# reminders will not be processed.
+REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 
 
 ####### Pillow Retry Queue Settings #######
@@ -753,6 +818,14 @@ LOGGING = {
     }
 }
 
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
+
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
@@ -771,6 +844,8 @@ STRIPE_PRIVATE_KEY = ''
 MAILCHIMP_APIKEY = ''
 MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
+
+SQL_REPORTING_DATABASE_URL = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -800,6 +875,20 @@ else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
+
+### Reporting database - use same DB as main database
+db_settings = DATABASES["default"].copy()
+db_settings['PORT'] = db_settings.get('PORT', '5432')
+options = db_settings.get('OPTIONS')
+db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
+
+if UNIT_TESTING:
+    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+
+if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
+    SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
+        **db_settings
+    )
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
@@ -856,8 +945,9 @@ COUCHDB_APPS = [
     'migration',
     'mobile_auth',
     'phone',
+    'pillowtop',
+    'pillow_retry',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -871,7 +961,6 @@ COUCHDB_APPS = [
     'phonelog',
     'registration',
     'hutch',
-    'hqbilling',
     'wisepill',
     'fri',
     'crs_reports',
@@ -885,7 +974,6 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -893,13 +981,14 @@ COUCHDB_APPS = [
     'trialconnect',
     'accounting',
     'succeed',
+    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
@@ -950,6 +1039,7 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+    'custom.ilsgateway.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -968,6 +1058,10 @@ SMS_LOADED_BACKENDS = [
     "corehq.apps.twilio.models.TwilioBackend",
     "corehq.apps.megamobile.api.MegamobileBackend",
 ]
+
+IVR_BACKEND_MAP = {
+    "91": "MOBILE_BACKEND_KOOKOO",
+}
 
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 30
@@ -1018,7 +1112,8 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1032,11 +1127,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusBasicInfoFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1046,6 +1142,14 @@ PILLOWTOPS = {
         'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
         'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
         'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.intrahealth.models.CouvertureFluffPillow',
+        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
+        'custom.intrahealth.models.IntraHealthFluffPillow',
+        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
+        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.care_pathways.models.GeographyFluffPillow',
+        'custom.care_pathways.models.FarmerRecordFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1071,6 +1175,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
+    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1103,6 +1209,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1133,19 +1240,23 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
     'gc': 'custom.trialconnect',
     'tc-test': 'custom.trialconnect',
     'trialconnect': 'custom.trialconnect',
+    'ipm-senegal': 'custom.intrahealth',
+    'testing-ipm-senegal': 'custom.intrahealth',
 
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change'
+    'test-pathfinder': 'custom.m4change',
+    'pathways-india-mis': 'custom.care_pathways',
+    'pathways-tanzania': 'custom.care_pathways',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
@@ -1164,6 +1275,21 @@ TRAVIS_TEST_GROUPS = (
         'djangocouch', 'djangocouchuser', 'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqbilling', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
     ),
 )
+
+#### Django Compressor Stuff after localsettings overrides ####
+
+# This makes sure that Django Compressor does not run at all
+# when LESS_DEBUG is set to True.
+if LESS_DEBUG:
+    COMPRESS_ENABLED = False
+    COMPRESS_PRECOMPILERS = ()
+
+COMPRESS_OFFLINE_CONTEXT = {
+    'base_template': BASE_TEMPLATE,
+    'login_template': LOGIN_TEMPLATE,
+    'original_template': BASE_ASYNC_TEMPLATE,
+    'less_debug': LESS_DEBUG,
+}
