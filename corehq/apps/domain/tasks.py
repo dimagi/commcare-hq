@@ -13,7 +13,8 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
 
 
-MASTER_EMAIL="master-list@dimagi.com"
+MASTER_EMAIL = "master-list@dimagi.com"
+
 
 def _domains_over_x_forms(num_forms=200):
     form_domains = (
@@ -38,7 +39,7 @@ def _real_incomplete_domains():
     return {x['fields']['name'] for x in incomplete_domains}
 
 
-def domains_to_email():
+def _domains_to_email():
     domains = _real_incomplete_domains() & _domains_over_x_forms()
 
     email_domains = []
@@ -65,7 +66,7 @@ def fm_reminder_email():
     """
     Reminds FMs to update their domains with up to date information
     """
-    email_domains = domains_to_email()
+    email_domains = _domains_to_email()
 
     for domain in email_domains:
         email_content = render_to_string(
@@ -83,7 +84,11 @@ def fm_reminder_email():
             )
 
 
-def self_started_domains():
+def _self_started_domains():
+    """
+    Returns domains that have submitted 200 forms, but haven't filled out any
+    project information
+    """
     domains = list(_real_incomplete_domains() & _domains_over_x_forms())
     domains = {"domains": domains}
 
@@ -100,8 +105,10 @@ def self_started_domains():
 def self_starter_email():
     """
     Emails master-list@dimagi.com incomplete self started domains
+
+    Doesn't actually look at self-started attribute.
     """
-    domains = self_started_domains()
+    domains = _self_started_domains()
 
     email_content = render_to_string(
             'domain/email/self_starter.html', domains)
