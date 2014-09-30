@@ -131,16 +131,17 @@ class ImmunizationOverview(BaseSqlData):
     @property
     def rows(self):
         result = []
-        for i in range(0,8):
-            dropout = self.data[self.columns[i + 8].slug] - self.data[self.columns[i].slug]
+        rg = len(self.columns) / 2
+        for i in range(0, rg):
+            dropout = self.data[self.columns[i + rg].slug] - self.data[self.columns[i].slug]
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + 8].slug], 'html': self.data[self.columns[i + 8].slug]},
-                           {'sort_key': self.percent_fn(self.data[self.columns[i + 8].slug], self.data[self.columns[i].slug]),
-                            'html': self.percent_fn(self.data[self.columns[i + 8].slug], self.data[self.columns[i].slug])},
+                           {'sort_key': self.data[self.columns[i + rg].slug], 'html': self.data[self.columns[i + rg].slug]},
+                           {'sort_key': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug])},
                            {'sort_key': dropout, 'html': dropout},
-                           {'sort_key': self.percent_fn(self.data[self.columns[i + 8].slug], dropout),
-                            'html': self.percent_fn(self.data[self.columns[i + 8].slug], dropout)}
+                           {'sort_key': self.percent_fn(self.data[self.columns[i + rg].slug], dropout),
+                            'html': self.percent_fn(self.data[self.columns[i + rg].slug], dropout)}
             ])
         return result
 
@@ -151,7 +152,7 @@ class ImmunizationOverview(BaseSqlData):
                 CountUniqueColumn('doc_id', alias="bcg", filters=self.filters + [EQ('bcg', 'yes')])
             ),
             DatabaseColumn("OPV3",
-                CountUniqueColumn('doc_id', alias="opv3", filters=self.filters + [EQ('opv0', 'yes')])
+                CountUniqueColumn('doc_id', alias="opv3", filters=self.filters + [EQ('opv3', 'yes')])
             ),
             DatabaseColumn("HEP3",
                 CountUniqueColumn('doc_id', alias="hep3", filters=self.filters + [EQ('hepb3', 'yes')])

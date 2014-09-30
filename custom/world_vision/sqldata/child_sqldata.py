@@ -5,7 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
-from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails
+from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown
 
 
@@ -393,3 +393,96 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
         ]
         columns.extend(additional_columns)
         return columns
+
+class ImmunizationDetailsFirstYear(ImmunizationOverview):
+
+    @property
+    def columns(self):
+        columns = super(ImmunizationDetailsFirstYear, self).columns
+        del columns[6:8]
+        del columns[-2:]
+        cols1 = [
+            DatabaseColumn("OPV0",
+                CountUniqueColumn('doc_id', alias="opv0", filters=self.filters + [EQ('opv0', 'yes')])
+            ),
+            DatabaseColumn("HEP0",
+                CountUniqueColumn('doc_id', alias="hep0", filters=self.filters + [EQ('hepb0', 'yes')])
+            ),
+            DatabaseColumn("OPV1",
+                CountUniqueColumn('doc_id', alias="opv1", filters=self.filters + [EQ('opv1', 'yes')])
+            ),
+            DatabaseColumn("HEP1",
+                CountUniqueColumn('doc_id', alias="hep1", filters=self.filters + [EQ('hepb1', 'yes')])
+            ),
+            DatabaseColumn("DPT1",
+                CountUniqueColumn('doc_id', alias="dpt1", filters=self.filters + [EQ('dpt1', 'yes')])
+            ),
+            DatabaseColumn("OPV2",
+                CountUniqueColumn('doc_id', alias="opv2", filters=self.filters + [EQ('opv2', 'yes')])
+            ),
+            DatabaseColumn("HEP2",
+                CountUniqueColumn('doc_id', alias="hep2", filters=self.filters + [EQ('hepb2', 'yes')])
+            ),
+            DatabaseColumn("DPT2",
+                CountUniqueColumn('doc_id', alias="dpt2", filters=self.filters + [EQ('dpt2', 'yes')])
+            ),
+        ]
+        cols2 = [
+            DatabaseColumn("OPV0 Total Eligible",
+                CountUniqueColumn('doc_id', alias="opv0_eligible", filters=self.filters)
+            ),
+            DatabaseColumn("HEP0 Total Eligible",
+                CountUniqueColumn('doc_id', alias="hep0_eligible", filters=self.filters)
+            ),
+            DatabaseColumn("OPV1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="opv1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+            ),
+            DatabaseColumn("HEP1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="hep1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+            ),
+            DatabaseColumn("DPT1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="dpt1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+            ),
+            DatabaseColumn("OPV2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="opv2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+            ),
+            DatabaseColumn("HEP2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="hep2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+            ),
+            DatabaseColumn("DPT2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="dpt2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+            )
+        ]
+        return columns[:1] + cols1 + columns[1:-5] + cols2 + columns[-5:]
+
+class ImmunizationDetailsSecondYear(ImmunizationOverview):
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("VitA1",
+                CountUniqueColumn('doc_id', alias="vita1", filters=self.filters + [EQ('vita1', 'yes')])
+            ),
+            DatabaseColumn("VitA2",
+                CountUniqueColumn('doc_id', alias="vita2", filters=self.filters + [EQ('vita2', 'yes')])
+            ),
+            DatabaseColumn("DPT-OPT Booster",
+                CountUniqueColumn('doc_id', alias="dpt_opv_booster", filters=self.filters + [EQ('dpt_opv_booster', 'yes')])
+            ),
+            DatabaseColumn("VitA3",
+                CountUniqueColumn('doc_id', alias="vita3", filters=self.filters + [EQ('vita3', 'yes')])
+            ),
+            DatabaseColumn("VitA1 Total Eligible",
+                CountUniqueColumn('doc_id', alias="vita1_eligible", filters=self.filters + [LTE('dob', 'days_273')])
+            ),
+            DatabaseColumn("VitA2 Total Eligible",
+                CountUniqueColumn('doc_id', alias="vita2_eligible", filters=self.filters + [LTE('dob', 'days_547')])
+            ),
+            DatabaseColumn("DPT-OPT Booster Total Eligible",
+                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'days_548')])
+            ),
+            DatabaseColumn("VitA3 Total Eligible",
+                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'days_700')])
+            )
+
+        ]

@@ -11,6 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class MotherTTCReport(TTCReport):
     report_title = 'Mother Report'
+    title = 'Mother Report'
     name = 'Mother Report'
     slug = 'mother_report'
     fields = [DatespanFilter, LocationFilter]

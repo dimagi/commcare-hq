@@ -116,7 +116,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     weight_birth = case_property('weight_birth')
     breastfeed_1_hour = case_property('breastfeed_1_hour')
     exclusive_breastfeeding = case_property('exclusive_breastfeeding')
-    comp_breastfeeding =  case_property('comp_breastfeeding')
+    comp_breastfeeding = case_property('comp_breastfeeding')
     supplementary_feeding_baby = case_property('supplementary_feeding_baby')
 
     opened_on = flat_field(lambda case: case.opened_on)

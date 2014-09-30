@@ -64,22 +64,11 @@ class TTCReport(ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
-        config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d"),
-        config['days_2'] = (today - datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
-        config['days_5'] = (today - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
-        config['days_21'] = (today - datetime.timedelta(days=21)).strftime("%Y-%m-%d"),
-        config['days_84'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d"),
-        config['days_106'] = (today - datetime.timedelta(days=106)).strftime("%Y-%m-%d"),
-        config['days_168'] = (today - datetime.timedelta(days=168)).strftime("%Y-%m-%d"),
-        config['days_182'] = (today - datetime.timedelta(days=182)).strftime("%Y-%m-%d"),
-        config['days_183'] = (today - datetime.timedelta(days=183)).strftime("%Y-%m-%d"),
-        config['days_195'] = (today - datetime.timedelta(days=195)).strftime("%Y-%m-%d"),
-        config['days_224'] = (today - datetime.timedelta(days=224)).strftime("%Y-%m-%d"),
-        config['days_245'] = (today - datetime.timedelta(days=245)).strftime("%Y-%m-%d"),
-        config['days_273'] = (today - datetime.timedelta(days=273)).strftime("%Y-%m-%d"),
-        config['days_548'] = (today - datetime.timedelta(days=548)).strftime("%Y-%m-%d"),
-        config['days_700'] = (today - datetime.timedelta(days=700)).strftime("%Y-%m-%d"),
-        config['days_730'] = (today - datetime.timedelta(days=730)).strftime("%Y-%m-%d"),
+
+        for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 547, 548, 700, 730]:
+            config['days_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+
+        config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
         config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
