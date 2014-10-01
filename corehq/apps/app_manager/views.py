@@ -2802,7 +2802,8 @@ def _process_modules_and_forms_sheet(rows, app):
     This does not save the changes to the database.
     :param rows:
     :param app:
-    :return: None, modifies the given app/forms/modules in place.
+    :return:  Returns a list of message tuples. The first item in each tuple is
+    a function like django.contrib.messages.error, and the second is a string.
     """
     msgs = []
 
@@ -2862,7 +2863,8 @@ def _update_case_list_translations(sheet, rows, app):
     :param sheet:
     :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
     :param app:
-    :return: None. Modifies app/module in place.
+    :return:  Returns a list of message tuples. The first item in each tuple is
+    a function like django.contrib.messages.error, and the second is a string.
     """
     # The spreadsheet contains a list of case properties. These are in the same
     # order as the bulk download and the HQ "Display Properties" page. This
@@ -2974,7 +2976,8 @@ def _update_form_translations(sheet, rows, missing_cols, app):
     :param rows: The rows of the sheet (we can't get this from the sheet because sheet.__iter__ can only be called once)
     :param missing_cols:
     :param app:
-    :return: None. Modifies app/form in place.
+    :return:  Returns a list of message tuples. The first item in each tuple is
+    a function like django.contrib.messages.error, and the second is a string.
     """
     msgs = []
     mod_text, form_text = sheet.worksheet.title.split("_")
@@ -2986,7 +2989,7 @@ def _update_form_translations(sheet, rows, missing_cols, app):
     else:
         # This Form doesn't have an xform yet. It is empty.
         # Tell the user this?
-        return
+        return msgs
     itext = xform.itext_node
     assert(itext.exists())
 
@@ -3044,7 +3047,7 @@ def _update_form_translations(sheet, rows, missing_cols, app):
                     # create a value node if it doesn't already exist
                     if not value_node.exists():
                         e = etree.Element("{f}value".format(**namespaces), attributes)
-                        text_node.xml.add(e)
+                        text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
                     value_node.xml.text = new_translation
@@ -3058,7 +3061,7 @@ def _update_form_translations(sheet, rows, missing_cols, app):
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    msgs = _process_bulk_app_translation_upload(request, app, request.file)
+    msgs = _process_bulk_app_translation_upload(app, request.file)
     app.save()
     for msg in msgs:
         # Add the messages to the request object.
@@ -3153,7 +3156,7 @@ def _process_bulk_app_translation_upload(app, f):
             msgs.extend(ms)
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
-            ms = _update_case_list_translations(sheet, rows, app) # TODO: Make this func and the next two return messages
+            ms = _update_case_list_translations(sheet, rows, app)
             msgs.extend(ms)
         else:
             # It's a form sheet
