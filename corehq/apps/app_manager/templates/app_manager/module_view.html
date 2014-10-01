@@ -78,6 +78,24 @@
                     $('#case_type_error').css('display', 'none');
                 }
             });
+
+            if (!_.isEmpty($('#case-list-form'))) {
+                var CaseListForm = function (case_list_form_options) {
+                    var self = this;
+                    var initial_form = {{ module.case_list_form|JSON }},
+                        initial_option = initial_form ? initial_form : 'disabled';
+                    self.case_list_form = ko.observable(initial_form ? initial_form : null);
+                    self.case_list_form_proxy = ko.observable(initial_option);
+                    self.case_list_form_optstr = _.map(case_list_form_options, function (label, value) {
+                        return {value: value, label: label};
+                    });
+                    self.case_list_form_proxy.subscribe(function (form_id) {
+                        self.case_list_form(form_id === 'disabled' ? null : form_id);
+                    });
+                    self.case_list_form_display = case_list_form_options[initial_option];
+                };
+                ko.applyBindings(new CaseListForm({{ case_list_form_options|JSON }}), $('#case-list-form').get(0));
+            }
         });
         $(function () {
             COMMCAREHQ.app_manager.module_view = {
@@ -223,6 +241,7 @@
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}

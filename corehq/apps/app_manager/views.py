@@ -7,7 +7,7 @@ from lxml import etree
 import os
 import re
 import json
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from xml.dom.minidom import parseString
 
 from diff_match_patch import diff_match_patch
@@ -760,6 +760,15 @@ def get_module_view_context_and_template(app, module):
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
 
+    def case_list_form_options(case_type):
+        forms = [form for form in module.get_forms() if form.is_registration_form(case_type)]
+        options = OrderedDict()
+        if forms:
+            options['disabled'] = _('Disabled')
+            options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+
+        return options
+
     ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
@@ -787,6 +796,7 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
+
         def get_details():
             details = [{
                 'label': _('Case List'),
@@ -812,6 +822,7 @@ def get_module_view_context_and_template(app, module):
 
         return "app_manager/module_view.html", {
             'details': get_details(),
+            'case_list_form_options': case_list_form_options(case_type)
         }
     else:
         case_type = module.case_type
@@ -829,6 +840,7 @@ def get_module_view_context_and_template(app, module):
                     'parent_select': module.parent_select,
                 },
             ],
+            'case_list_form_options': case_list_form_options(case_type)
         }
 
 
@@ -1234,6 +1246,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
+        "case_list_form": None,
         "parent_module": None,
     }
 
@@ -1287,6 +1300,8 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+    if should_edit('case_list_form'):
+        module.case_list_form = req.POST.get('case_list_form')
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = req.POST.get(attribute, None)
