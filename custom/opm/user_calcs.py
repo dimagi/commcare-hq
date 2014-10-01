@@ -66,17 +66,12 @@ class ServiceForms(fluff.Calculator):
 
 class GrowthMonitoring(fluff.Calculator):
     """
-    "No. of Growth monitoring Sections Filled for eligible children"
-
-    Sum of form property (in child followup form) where child1_child_growthmon,
-    child2_child_growthmon, and child3_child_growthmon = '1' in the time period.
-    Within a form, if multiple = '1', give xtimes the amount. "Union" this so
-    that if ever '1' within the time period, that this triggers payment
+    Number of Growth Monitoring Calculator forms submitted
     """
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
+        if form.xmlns == GROWTH_MONITORING_XMLNS:
 
             yield {
                 'date': form.received_on,
