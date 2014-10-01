@@ -45,7 +45,6 @@ def sync_user_cases(commcare_user):
         props = dict(case.dynamic_case_properties())
 
         changed = close != case.closed
-        changed = changed or case.owner_id != owner_id
         changed = changed or case.type != domain.call_center_config.case_type
         changed = changed or case.name != fields['name']
 
