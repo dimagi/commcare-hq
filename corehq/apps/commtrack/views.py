@@ -27,6 +27,8 @@ import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
+from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin
+
 
 
 
@@ -169,6 +171,13 @@ class DefaultConsumptionView(BaseCommTrackManageView):
                 reverse(DefaultConsumptionView.urlname, args=[self.domain])
             )
         return self.get(request, *args, **kwargs)
+
+
+class ProductFieldsView(CustomDataFieldsMixin, BaseCommTrackManageView):
+    urlname = "product_fields_view"
+    page_name = ugettext_noop("Edit Product Fields")
+    field_type = 'ProductFields'
+    form_label = 'Product Fields'
 
 
 class ProductListView(BaseCommTrackManageView):
