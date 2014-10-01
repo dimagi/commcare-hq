@@ -289,6 +289,18 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
+    def processor(self, change, do_set_checkpoint=True):
+        """
+        Parent processsor for a pillow class - this should not be overridden.
+        This workflow is made for the situation where 1 change yields 1 transport/transaction
+        """
+
+        self.changes_seen += 1
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+            self.set_checkpoint(change)
+
+        self.process_change(change)
+
     def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
@@ -318,18 +330,6 @@ class BasicPillow(object):
                 )
             else:
                 raise
-
-    def processor(self, change, do_set_checkpoint=True):
-        """
-        Parent processsor for a pillow class - this should not be overridden.
-        This workflow is made for the situation where 1 change yields 1 transport/transaction
-        """
-
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            self.set_checkpoint(change)
-
-        self.process_change(change)
 
     def change_trigger(self, changes_dict):
         """
