@@ -103,13 +103,13 @@ def get_project_spaces(facets=None):
     """
     real_domain_query = (
         DomainES()
-        .terms_facet('name', 'name')
-        .size(0)
+        .fields(["name"])
+        .size(LARGE_ES_NUMBER)
     )
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
-    real_domain_query_results = real_domain_query.run().facets.name.result
-    return [_['term'] for _ in real_domain_query_results]
+    real_domain_query_results = real_domain_query.run().raw_hits
+    return [_['fields']['name'] for _ in real_domain_query_results]
 
 
 def get_sms_query(begin, end, facet_name, facet_terms, domains,
