@@ -207,7 +207,7 @@
 
                             result = compare(y_selected, x_selected)
                                     || compare(x_tag, y_tag);
-                            result = result || x_tag ?
+                            result = result || (x_tag || order === undefined) ?
                                     result || compare(x_index, y_index) :
                                     result || compare(order.indexOf(x_index), order.indexOf(y_index));
 
