@@ -145,41 +145,24 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        uri = '{}/_changes'.format(self.couch_db.uri)
-        query_params = {
-            'feed': 'continuous',
-            'heartbeat': 'true',  # default of one minute
-        }
+        changes_stream = ChangesStream(
+            db=self.couch_db,
+            feed='continuous',
+            heartbeat=True,
+            since=self.since,
+            filter=self.couch_filter,
+            include_docs=self.include_docs,
+            **self.extra_args
+        )
         while True:
-            query_params.update({
-                'since': self.since,
-                'filter': self.couch_filter,
-                'include_docs': str(self.include_docs).lower(),
-            })
-            query_params.update(self.extra_args)
             try:
-                r = requests.get(uri, params=query_params, stream=True)
-                for line in r.iter_lines():
-                    change = self._parse_change(line)
+                for change in changes_stream:
                     if change:
                         self.processor(change)
                     else:
                         self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
             except PillowtopCheckpointReset:
                 self.changes_seen = 0
-
-    def _parse_change(self, line):
-        """
-        Copied from CouchDBKit ChangesStream class
-        """
-        if line.startswith('{"results":') or line.startswith('"last_seq'):
-            return None
-        else:
-            try:
-                obj = json.loads(line)
-                return obj
-            except ValueError:
-                return None
 
     def run(self):
         """
