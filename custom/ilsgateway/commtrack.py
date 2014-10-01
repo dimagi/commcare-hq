@@ -74,9 +74,7 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
     user_dict = {
         'first_name': ilsgateway_webuser.first_name,
         'last_name': ilsgateway_webuser.last_name,
-        'is_staff': False,
         'is_active': ilsgateway_webuser.is_active,
-        'is_superuser': False,
         'last_login': force_to_datetime(ilsgateway_webuser.last_login),
         'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
         'password_hashed': True,
@@ -86,27 +84,21 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
                               reduce=False,
                               include_docs=True,
                               limit=1).first()
-    role_id = ilsgateway_webuser.role_id if hasattr(ilsgateway_webuser, 'role_id') else None
+    role_id = UserRole.get_read_only_role_by_domain(domain).get_id
     location_id = sp.location_id if sp else None
 
     if user is None:
         try:
             user = WebUser.create(domain=None, username=username,
                                   password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
-            user.add_domain_membership(domain, is_admin=ilsgateway_webuser.is_superuser, role_id=role_id, location_id=location_id)
+            user.add_domain_membership(domain, is_admin=False, role_id=role_id, location_id=location_id)
             user.save()
         except Exception as e:
             logging.error(e)
     else:
         if domain not in user.get_domains():
             user.add_domain_membership(domain, role_id=role_id, location_id=location_id,
-                                       is_admin=ilsgateway_webuser.is_superuser)
-            user.save()
-        else:
-            dm = user.get_domain_membership(domain)
-            dm.role_id = role_id
-            dm.location_id = location_id
-            dm.is_admin = ilsgateway_webuser.is_superuser
+                                       is_admin=False)
             user.save()
     return user
 
@@ -137,16 +129,15 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
         'last_name': last_name,
         'is_active': bool(ilsgateway_smsuser.is_active),
         'email': ilsgateway_smsuser.email,
-        'user_data': {
-            "role": ilsgateway_smsuser.role
-        }
+        'user_data': {}
     }
+
+    if ilsgateway_smsuser.role:
+        user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
     if ilsgateway_smsuser.phone_numbers:
         user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
         user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
-
-
 
     sp = SupplyPointCase.view('hqcase/by_domain_external_id',
                               key=[domain, str(ilsgateway_smsuser.supply_point)],
@@ -216,7 +207,8 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             location.lineage = []
         location.domain = domain
         location.name = ilsgateway_location.name
-        location.metadata = {'groups': ilsgateway_location.groups}
+        if ilsgateway_location.groups:
+            location.metadata = {'groups': ilsgateway_location.groups}
         if ilsgateway_location.latitude:
             location.latitude = float(ilsgateway_location.latitude)
         if ilsgateway_location.longitude:
@@ -258,12 +250,11 @@ def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
     for product in endpoint.get_products(**kwargs):
         sync_ilsgateway_product(domain, product)
 
+
 def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
     save_checkpoint(checkpoint, "webuser", limit, offset, kwargs.get('date', None))
     for user in endpoint.get_webusers(**kwargs):
         if user.email or user.username:
-            if not user.is_superuser:
-                setattr(user, 'role_id', UserRole.get_read_only_role_by_domain(project).get_id)
             sync_ilsgateway_webuser(project, user)
 
 
@@ -320,8 +311,6 @@ def commtrack_settings_sync(project):
 
 
 def bootstrap_domain(ilsgateway_config):
-
-
     domain = ilsgateway_config.domain
     start_date = datetime.today()
     endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
