@@ -35,17 +35,6 @@ Supported backends:
 
   For elasticsearch endpoint to send json data directly to an elasticsearch index+type mapping.
 
-Extending pillowtop
-===================
-
-Inherit the BasicPillow class
-
-Implement at a bare minimum change_transport - and override the other processing steps where
-necessary.
-
-Todo on this is to make this standalone outside a django context - but the use case has not
-presented itself.
-
 
 Running pillowtop
 =================
@@ -67,3 +56,10 @@ process is restarted - all BasicPillows will keep a document unique to its class
 to keep its checkpoint based upon the _seq of the changes listener it is on.
 
 
+Extending pillowtop
+===================
+
+Inherit the BasicPillow class
+
+Implement at a bare minimum change_transport - and override the other processing steps where
+necessary.
