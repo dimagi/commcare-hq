@@ -3,8 +3,14 @@
         <title>Doc {{ doc_id }} {{ status }}</title>
     </head>
     <body>
+        <h1>Enter a doc id</h1>
+        <form method="GET" action="">
+            <input name="id" type="text"/>
+            <input type="submit"/>
+        </form>
+        <hr/>
         {% if doc_id %}
-            <h1>Doc {{ doc_id }} {{ status }}</h1>
+            <h3>Doc {{ doc_id }} {{ status }}</h3>
             <p>
                 Doc type: {{ doc_type }}
             </p>
@@ -16,12 +22,6 @@
                 Couch Doc:
             </h3>
             <pre>{{ couch_doc }}</pre>
-        {% else %}
-            <h1>Enter a doc id</h1>
-            <form method="GET" action="">
-                <input name="id" type="text"/>
-                <input type="submit"/>
-            </form>
         {% endif %}
     </body>
 </html>
