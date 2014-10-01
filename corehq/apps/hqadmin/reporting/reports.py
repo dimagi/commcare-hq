@@ -120,7 +120,7 @@ def get_sms_query(begin, end, facet_name, facet_terms, domains,
     return (SMSES()
             .domain(domains)
             .received(gte=begin, lte=end)
-            .terms_facet(facet_name, facet_terms, size)
+            .terms_facet(facet_terms, facet_name, size)
             .size(0))
 
 
@@ -137,7 +137,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
         form_query = (FormES()
             .domain(domains)
             .submitted(gte=f, lte=t)
-            .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+            .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
             .size(0))
 
         domains = form_query.run().facet('domains', "terms")
@@ -202,7 +202,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
             form_query = (FormES()
                 .domain(domains_in_interval)
                 .submitted(gte=f, lte=t)
-                .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+                .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
                 .size(0))
             if restrict_to_mobile_submissions:
                 form_query = form_query.user_id(get_user_ids(True))
@@ -301,7 +301,7 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
     sms_cases = (SMSES()
             .to_commcare_case()
             .domain(domains)
-            .terms_facet('cases', 'couch_recipient', size=LARGE_ES_NUMBER)
+            .terms_facet('couch_recipient', 'cases', size=LARGE_ES_NUMBER)
             .size(0))
 
     cases = [u['term'] for u in sms_cases.run().facet('cases', 'terms')]
@@ -333,7 +333,7 @@ def get_mobile_workers_data(domains, datespan, interval,
     sms_users = (SMSES()
             .to_commcare_user()
             .domain(domains)
-            .terms_facet('users', 'couch_recipient', LARGE_ES_NUMBER)
+            .terms_facet('couch_recipient', 'users', LARGE_ES_NUMBER)
             .size(0))
 
     users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
@@ -409,11 +409,11 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
 
     sms = (SMSES()
             .domain(domains)
-            .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+            .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
             .size(0))
     forms = (FormES()
              .domain(domains)
-             .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+             .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
              .size(0))
 
     sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
@@ -446,7 +446,7 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
     """
     sms = (SMSES()
            .domain(domains)
-           .terms_facet('domains', 'domain', size=LARGE_ES_NUMBER)
+           .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
            .size(0))
 
     if additional_params_es:
@@ -664,7 +664,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
             real_form_users = {
                 user_count['term'] for user_count in (
                     FormES()
-                    .terms_facet('user', 'form.meta.userID', LARGE_NUMBER)
+                    .terms_facet('form.meta.userID', 'user', LARGE_NUMBER)
                     .size(0)
                     .run()
                     .facets.user.result
@@ -674,7 +674,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
             real_sms_users = {
                 user_count['term'] for user_count in (
                     SMSES()
-                    .terms_facet('user', 'couch_recipient', LARGE_NUMBER)
+                    .terms_facet('couch_recipient', 'user', LARGE_NUMBER)
                     .incoming_messages()
                     .size(0)
                     .run()

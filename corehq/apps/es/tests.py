@@ -210,7 +210,7 @@ class TestESFacet(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT,
         }
         query = HQESQuery('forms')\
-                .terms_facet('babies_saved', 'babies.count', size=10)
+                .terms_facet('babies.count', 'babies_saved', size=10)
         self.checkQuery(query, json_output)
 
     def test_facet_response(self):
@@ -251,7 +251,7 @@ class TestESFacet(ElasticTestMixin, TestCase):
             "7334d1ab1cd8847c69fba75043ed43d3": 298,
         }
         query = HQESQuery('forms')\
-                .terms_facet('user', 'form.meta.userID', size=10)
+                .terms_facet('form.meta.userID', 'user', size=10)
         res = ESQuerySet(example_response, query)
         output = res.facets.user.counts_by_term()
         self.assertEqual(output, expected_output)
