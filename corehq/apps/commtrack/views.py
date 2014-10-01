@@ -9,6 +9,8 @@ from corehq.apps.domain.decorators import domain_admin_required, require_preview
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
 from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionForm
+from corehq.apps.commtrack.util import encode_if_needed
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
@@ -28,8 +30,6 @@ from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
 from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin, CustomDataEditor
-
-
 
 
 @domain_admin_required
@@ -391,6 +391,24 @@ def product_importer_job_poll(request, domain, download_id, template="hqwebapp/p
 
 
 def download_products(request, domain):
+    def _parse_custom_properties(product):
+        product_data_model = CustomDataFieldsDefinition.get_or_create(
+            domain,
+            ProductFieldsView.field_type
+        )
+        product_data_fields = [f.slug for f in product_data_model.fields]
+
+        model_data = {}
+        uncategorized_data = {}
+
+        for prop, val in product.product_data.iteritems():
+            if prop in product_data_fields:
+                model_data['data: ' + prop] = encode_if_needed(val)
+            else:
+                uncategorized_data['uncategorized_data: ' + prop] = encode_if_needed(val)
+
+        return model_data, uncategorized_data
+
     def _get_products(domain):
         for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
             yield Product.wrap(p_doc)
@@ -416,19 +434,24 @@ def download_products(request, domain):
         'cost',
     ]
 
-    data_keys = set()
-
+    model_data = set()
+    uncategorized_data = set()
     products = []
+
     for product in _get_products(domain):
         product_dict = product.to_dict()
 
-        custom_properties = product.custom_property_dict()
-        data_keys.update(custom_properties.keys())
-        product_dict.update(custom_properties)
+        product_model, product_uncategorized = _parse_custom_properties(product)
+
+        model_data.update(product_model.keys())
+        uncategorized_data.update(product_uncategorized.keys())
+
+        product_dict.update(product_model)
+        product_dict.update(product_uncategorized)
 
         products.append(product_dict)
 
-    keys = product_keys + list(data_keys)
+    keys = product_keys + list(model_data) + list(uncategorized_data)
 
     writer.open(
         header_table=[

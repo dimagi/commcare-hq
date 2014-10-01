@@ -213,15 +213,6 @@ class Product(Document):
 
         return product_dict
 
-    def custom_property_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        property_dict = {}
-
-        for prop, val in self.product_data.iteritems():
-            property_dict['data: ' + prop] = encode_if_needed(val)
-
-        return property_dict
-
     @classmethod
     def from_excel(cls, row):
         if not row:
@@ -253,6 +244,7 @@ class Product(Document):
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
         p.product_data = row.get('data', {})
+        p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
 
