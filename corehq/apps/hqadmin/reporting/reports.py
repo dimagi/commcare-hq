@@ -816,20 +816,14 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
 
     return {
         'histo_data': histo_data,
-        'initial_values': (
-            dict([
-                (
-                    dom["display_name"],
-                    _total_until_date(
-                        histo_type,
-                        datespan,
-                        filters=additional_filters,
-                        domain_list=dom["names"],
-                    )
-                ) for dom in domains
-            ])
-            if is_cumulative else {"All Domains": 0}
-        ),
+        'initial_values': {
+            domain_data["display_name"]: _total_until_date(
+                histo_type,
+                datespan,
+                filters=additional_filters,
+                domain_list=domain_data["names"],
+            ) for domain_data in domains
+        } if is_cumulative else {"All Domains": 0},
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
