@@ -76,8 +76,7 @@ class GrowthMonitoring(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
-
+        if form.xmlns == GROWTH_MONITORING_XMLNS:
             yield {
                 'date': form.received_on,
                 'group_by': [

@@ -6,12 +6,12 @@ PREG_REG_XMLNS = "http://openrosa.org/formdesigner/D127C457-3E15-4F5E-88C3-98CD1
 VHND_XMLNS = "http://openrosa.org/formdesigner/ff5de10d75afda15cddb3b00a0b1e21d33a50d59"
 BIRTH_PREP_XMLNS = "http://openrosa.org/formdesigner/50378991-FEC3-408D-B4A5-A264F3B52184"
 DELIVERY_XMLNS = "http://openrosa.org/formdesigner/492F8F0E-EE7D-4B28-B890-7CDA5F137194"
-CHILD_FOLLOWUP_XMLNS = "http://openrosa.org/formdesigner/F1356F3F-C695-491F-9277-7F9B5522200C"
+GROWTH_MONITORING_XMLNS = "http://openrosa.org/formdesigner/F1356F3F-C695-491F-9277-7F9B5522200C"
 CFU1_XMLNS = "http://openrosa.org/formdesigner/d642dd328514f2af92c093d414d63e5b2670b9c"
 CFU2_XMLNS = "http://openrosa.org/formdesigner/9ef423bba8595a99976f0bc9532617841253a7fa"
 CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609ed16649"
 
-CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, CHILD_FOLLOWUP_XMLNS]
+CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, GROWTH_MONITORING_XMLNS]
 
 # TODO Move these to a cached fixtures lookup
 MONTH_AMT = 250
