@@ -1,3 +1,4 @@
+import calendar
 import datetime
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart, LineChart
 from corehq.apps.reports.sqlreport import calculate_total_row
@@ -163,10 +164,12 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
-            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, 's'), y_axis=Axis(y_label, '.2%'))
+            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
-            chart.add_dataset('Percentage', [{'x': row[0], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+            months_mapping = dict((v,k) for k,v in enumerate(calendar.month_abbr))
+            chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
+                                              'y':float(row[-1]['html'][:-1])/100} for row in rows])
         else:
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]
