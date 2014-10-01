@@ -90,7 +90,7 @@ def celery_check():
         if not ping:
             chk = (False, 'No running Celery workers were found.')
         else:
-            chk = True
+            chk = (True, None)
     except IOError as e:
         chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
