@@ -97,9 +97,9 @@ def intervals(interval, start_date, end_date):
         yield (starting_date, ending_date)
 
 
-def get_real_project_spaces(facets=None):
+def get_project_spaces(facets=None):
     """
-    Returns a set of names of real domains
+    Returns a list of names of project spaces that satisfy the facets
     """
     real_domain_query = (
         DomainES()
