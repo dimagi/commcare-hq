@@ -27,7 +27,7 @@ class Command(BaseCommand):
             for user in iter_docs(CommCareUser.get_db(), user_ids):
                 user_data = user.get('user_data', {})
                 for key in user_data.keys():
-                    if key not in existing_field_slugs:
+                    if key and key not in existing_field_slugs:
                         existing_field_slugs.add(key)
                         fields_definition.fields.append(CustomDataField(
                             slug=key,
