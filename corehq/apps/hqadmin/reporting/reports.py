@@ -114,9 +114,6 @@ def get_real_project_spaces(facets=None):
 
 def get_sms_query(begin, end, facet_name, facet_terms, domains,
         size=LARGE_ES_NUMBER):
-    """
-    Returns query in domains from the begin to end
-    """
     return (SMSES()
             .domain(domains)
             .received(gte=begin, lte=end)
@@ -228,7 +225,7 @@ def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
         additional_params_es={}):
     """
     Returns list of timestamps and how many users of SMS were active in the
-    30 days before the timestamp
+    30 days before each timestamp
     """
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
@@ -276,7 +273,8 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
 def get_countries_stats_data(domains, datespan, interval,
         datefield='created_on'):
     """
-    Returns list of timestamps and how many countries have been created
+    Returns list of timestamps and how many countries have been created before
+    each interval
     """
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
