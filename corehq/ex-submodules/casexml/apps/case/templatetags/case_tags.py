@@ -112,6 +112,9 @@ def sortkey(child, type_info=None):
         try:
             for attr, direction in type_info[case.type]['closed_sortkeys']:
                 val = getattr(case, attr)
+                if isinstance(val, datetime.date):
+                    val = datetime.datetime.combine(val, datetime.datetime.min.time())
+
                 if direction.lower() == 'desc':
                     val = get_inverse(val)
                 key.append(val)
@@ -122,6 +125,9 @@ def sortkey(child, type_info=None):
         try:
             for attr, direction in type_info[case.type]['open_sortkeys']:
                 val = getattr(case, attr)
+                if isinstance(val, datetime.date):
+                    val = datetime.datetime.combine(val, datetime.datetime.min.time())
+
                 if direction.lower() == 'desc':
                     val = get_inverse(val)
                 key.append(val)
