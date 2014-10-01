@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from urllib import urlencode
+from corehq.apps.registration.utils import create_30_day_trial
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
@@ -292,6 +293,10 @@ def copy_snapshot(request, domain):
                 d.downloads += 1
 
             apply_update(dom, inc_downloads)
+
+            # sign project up for trial
+            create_30_day_trial(new_domain)
+
             messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
             return HttpResponseRedirect(reverse('view_app',
                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))

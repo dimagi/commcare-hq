@@ -15,9 +15,18 @@ class AppManagerTest(TestCase):
     with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
         xform_str = f.read()
 
+    @classmethod
+    def setUpClass(cls):
+        cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
+        cls.build2 = {'version': '2.7.0', 'build_number': 20655}
+
+        add_build(**cls.build1)
+        add_build(**cls.build2)
+
+        cls.domain = 'test-domain'
+        create_domain(cls.domain)
+
     def setUp(self):
-        self.domain = 'test-domain'
-        create_domain(self.domain)
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
 
         for i in range(3):
@@ -33,12 +42,6 @@ class AppManagerTest(TestCase):
                 DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago")
             )
         self.app.save()
-
-        self.build1 = {'version': '1.2.dev', 'build_number': 7106}
-        self.build2 = {'version': '2.7.0', 'build_number': 20655}
-
-        add_build(**self.build1)
-        add_build(**self.build2)
 
     def test_increment_version(self):
         old_version = self.app.version
