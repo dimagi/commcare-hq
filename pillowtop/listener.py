@@ -374,6 +374,7 @@ class BasicPillow(object):
 PYTHONPILLOW_CHUNK_SIZE = 250
 PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
 
+
 class PythonPillow(BasicPillow):
     """
     A pillow that does filtering in python instead of couch.
@@ -394,7 +395,7 @@ class PythonPillow(BasicPillow):
         Use chunk_size = 0 to disable chunking
         """
         super(PythonPillow, self).__init__(document_class=document_class)
-        self.change_queue=[]
+        self.change_queue = []
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
