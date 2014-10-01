@@ -56,7 +56,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.hqadmin.reporting.reports import (
-    get_real_project_spaces,
+    get_project_spaces,
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -895,7 +895,7 @@ def stats_data(request):
     domain_params, __ = parse_args_for_es(request, prefix='es_')
     domain_params.update(domain_params_es)
 
-    domains = get_real_project_spaces(facets=domain_params)
+    domains = get_project_spaces(facets=domain_params)
 
     return json_response(get_stats_data(
         histo_type,
