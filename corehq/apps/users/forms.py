@@ -173,7 +173,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         required=False,
         label="",
         help_text=ugettext_lazy(
-            "Opt out of emails about new features and other CommCare updates."
+            "Opt out of emails about CommCare updates."
         ),
     )
 
