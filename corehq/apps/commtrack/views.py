@@ -27,7 +27,7 @@ import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
-from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin
+from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin, CustomDataEditor
 
 
 
@@ -276,21 +276,33 @@ class NewProductView(BaseCommTrackManageView):
 
     @property
     def page_context(self):
-        def _custom_product_data_enabled():
-            return (
-                toggles.CUSTOM_PRODUCT_DATA.enabled(self.request.user.username) or
-                toggles.CUSTOM_PRODUCT_DATA.enabled(self.domain)
-            )
-
         return {
             'product': self.product,
             'form': self.new_product_form,
-            'custom_product_data': copy.copy(dict(self.product.product_data)),
-            'custom_product_data_enabled': _custom_product_data_enabled()
+            'data_fields_form': self.custom_data.form,
         }
 
+    @property
+    @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=ProductFieldsView,
+            domain=self.domain,
+            required_only=True,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    def custom_product_is_valid(self):
+        if self.custom_data.is_valid():
+            self.product.product_data = self.custom_data.get_data_to_save()
+            self.product.save()
+            return True
+        else:
+            return False
+
     def post(self, request, *args, **kwargs):
-        if self.new_product_form.is_valid():
+        if all([self.new_product_form.is_valid(),
+                self.custom_product_is_valid()]):
             self.new_product_form.save()
             messages.success(request, _("Product saved!"))
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
@@ -462,6 +474,16 @@ class EditProductView(NewProductView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.product_id])
+
+    @property
+    @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=ProductFieldsView,
+            domain=self.domain,
+            existing_custom_data=self.product.product_data,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
 
 
 @login_and_domain_required

@@ -104,12 +104,6 @@ PATHWAYS_PREVIEW = StaticToggle(
     'Is Pathways preview'
 )
 
-CUSTOM_PRODUCT_DATA = StaticToggle(
-    'custom_product_data',
-    'Custom Product Data',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',

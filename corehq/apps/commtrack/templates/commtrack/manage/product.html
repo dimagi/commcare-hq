@@ -1,5 +1,6 @@
 {% extends "settings/base_template.html" %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
@@ -9,44 +10,13 @@
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-{% if custom_product_data_enabled %}
-<script>
-    $(function () {
-        var customDataEditor;
-
-        function handleChange() {
-            var data = customDataEditor.val();
-
-            $("input#product-data-input").val(JSON.stringify(data));
-        }
-
-        customDataEditor = uiElement.map_list('{{ product.get_id }}', "{% trans 'Product Data' %}");
-        customDataEditor.val({{ custom_product_data|JSON }});
-        customDataEditor.on('change', handleChange);
-
-        $("form .custom-data-controls").append(customDataEditor.ui);
-
-    });
-</script>
-{% endif %}
-{% endblock %}
-
 {% block main_column %}
     <form class="form form-horizontal" name="product" method="post">
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Product Information" %}
 
-        {% if custom_product_data_enabled %}
-        <input name="product_data" id="product-data-input" type="hidden" />
-
-        <fieldset>
-            <legend>{% trans "Custom Product Data" %}</legend>
-            <div class="control-group">
-                <label class="control-label">{% trans 'Current Data' %}</label>
-                <div class="controls custom-data-controls"></div>
-            </div>
-        </fieldset>
+        {% if data_fields_form.fields %}
+            {% crispy data_fields_form %}
         {% endif %}
 
         <div class="form-actions"><button type="submit" class="btn btn-primary">
