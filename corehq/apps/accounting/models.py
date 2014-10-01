@@ -1450,6 +1450,8 @@ class BillingRecord(models.Model):
                     'month_name': month_name,
                 })
         for email in contact_emails:
+            if isinstance(email, WebUser):
+                email = email.email or email.username
             greeting = _("Hello,")
             can_view_statement = False
             try:
