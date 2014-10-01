@@ -20,7 +20,7 @@ from soil.util import expose_download, get_download_context
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
-import jsondd
+import json
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 import itertools
