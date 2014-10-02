@@ -137,6 +137,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     phone_model = StringProperty()
     goal_time_period = IntegerProperty()
     goal_followup_rate = DecimalProperty()
+    # intentionally different from commconnect_enabled and commtrack_enabled so
+    # that FMs can change
     commconnect_domain = BooleanProperty()
     commtrack_domain = BooleanProperty()
 
