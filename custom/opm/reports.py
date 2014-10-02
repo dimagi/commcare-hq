@@ -779,6 +779,7 @@ class MetReport(CaseReportMixin, BaseReport):
 
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
+    group_by = ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
 
     @property
     def filters(self):
@@ -789,10 +790,6 @@ class UsersIdsData(SqlData):
         elif self.config.get('block'):
             return [IN('block', 'block')]
         return []
-
-    @property
-    def group_by(self):
-        return ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
 
     @property
     def columns(self):

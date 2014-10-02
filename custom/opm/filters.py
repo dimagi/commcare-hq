@@ -29,6 +29,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
     template = "opm/drilldown_options.html"
 
+    @property
     def selected(self):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
@@ -100,6 +101,7 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
+    @property
     def selected(self):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
