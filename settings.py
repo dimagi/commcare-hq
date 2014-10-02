@@ -161,6 +161,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
     "corehq.util.context_processors.raven",
+    "corehq.util.context_processors.accounting",
 ]
 
 TEMPLATE_DIRS = []
