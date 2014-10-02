@@ -87,12 +87,17 @@ class CallCenterIndicators(object):
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user, custom_cache=None):
+    def __init__(self, domain, user, custom_cache=None, override_date=None):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
+        if override_date and isinstance(override_date, datetime):
+            self.override_date = override_date.date()
+        else:
+            self.override_date = override_date
+
         try:
             self.timezone = pytz.timezone(self.domain.default_timezone)
         except pytz.UnknownTimeZoneError:
@@ -100,7 +105,7 @@ class CallCenterIndicators(object):
 
     @property
     def date_ranges(self):
-        last_midnight = datetime.now(self.timezone).date()
+        last_midnight = self.override_date or datetime.now(self.timezone).date()
         weekago = last_midnight - timedelta(days=7)
         weekago2 = last_midnight - timedelta(days=14)
         daysago30 = last_midnight - timedelta(days=30)

@@ -1,0 +1,56 @@
+{% load hq_shared_tags %}
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Call Center Indicator Test</title>
+</head>
+<body>
+    <h2>Call Center Indicator Testing</h2>
+    <p>
+    Use this page generate the Call Center fixture data for a supervisor. This is the fixture data
+    that would be synced to the supervisor's phone if they had performed a sync on the supplied date.
+    </p>
+    <p>
+    The data should include indicators for any mobile user who is <em>assigned</em> to the specified
+    user. This assignment can be in two ways:
+    <ul>
+        <li>The mobile user's case is directly assigned to the supervisor.</li>
+        <li>The mobile user's case is assigned to a case sharing group that the supervisor is part of.</li>
+    </ul>
+    </p>
+    <form method="GET" action="">
+        Supervisor User ID (the user who is syncing): <input name="user_id" type="text" value="{% if mobile_user %}{{ mobile_user.user_id }}{% endif %}"/><br/>
+        Sync date (YYYY-MM-DD): <input name="date" type="text" value="{% if date %}{{ date }}{% endif %}"/><br/>
+        <input type="submit"/>
+    </form>
+    <hr/>
+    {% if error %}
+        <p style="color: orangered">{{ error }}</p>
+    {% endif %}
+    {% if mobile_user %}
+        <h3>Fixture data for <a href="{% url "edit_commcare_user" mobile_user.domain mobile_user.user_id %}">{{ mobile_user.name }} ({{ mobile_user.username }})</a> on <em>{{ date }}</em></h3>
+        <hr/>
+        {% for case_id, view_data in data.items %}
+            <h4>Data for user: <a href="{% url "edit_commcare_user" view_data.case.domain view_data.case.hq_user_id %}">{{ view_data.case.name }} ({{ view_data.case.username }})</a></h4>
+            <p>User case ID: <a href="{% url "case_details" view_data.case.domain view_data.case.case_id %}">{{ view_data.case.case_id }}</a></p>
+            <table>
+                <thead>
+                    <tr>
+                        <td>Indicator Name</td>
+                        <td>Value</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, value in view_data.indicators.items %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
