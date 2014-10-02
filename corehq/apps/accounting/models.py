@@ -40,6 +40,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
+from corehq.apps.domain.models import Domain
 
 logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -744,6 +745,18 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
+
+    def save(self, *args, **kwargs):
+        """
+        Overloaded to update domain pillow with subscription information
+        """
+        super(Subscription, self).save(*args, **kwargs)
+        try:
+            Domain.get_by_name(self.subscriber.domain).save()
+        except Exception as e:
+            # If a subscriber doesn't have a valid domain associated with it 
+            # we don't care the pillow won't be updated
+            pass
 
     @property
     def allowed_attr_changes(self):
