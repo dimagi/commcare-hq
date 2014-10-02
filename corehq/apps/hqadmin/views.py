@@ -32,6 +32,7 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from couchdbkit import ResourceNotFound
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -56,7 +57,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
 from corehq.apps.hqadmin.reporting.reports import (
-    get_real_project_spaces,
+    get_project_spaces,
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -69,7 +70,7 @@ from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import parse_args_for_es
+from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
@@ -895,7 +896,7 @@ def stats_data(request):
     domain_params, __ = parse_args_for_es(request, prefix='es_')
     domain_params.update(domain_params_es)
 
-    domains = get_real_project_spaces(facets=domain_params)
+    domains = get_project_spaces(facets=domain_params)
 
     return json_response(get_stats_data(
         histo_type,
@@ -979,3 +980,34 @@ def loadtest(request):
 
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
+
+@require_superuser
+def doc_in_es(request):
+    doc_id = request.GET.get("id")
+    if not doc_id:
+        return render(request, "hqadmin/doc_in_es.html", {})
+    try:
+        couch_doc = get_db().get(doc_id)
+        doc_type = couch_doc.get('doc_type')
+    except ResourceNotFound:
+        couch_doc = "NOT FOUND!"
+        doc_type = "Unknown"
+    query = {"filter":
+                {"ids": {
+                    "values": [doc_id]}}}
+    es_doc = "NOT FOUND!"
+    status = "NOT FOUND!"
+    for url in ES_URLS.values():
+        res = run_query(url, query)
+        if res['hits']['total'] == 1:
+            status = "found"
+            es_doc = res['hits']['hits'][0]['_source']
+            break
+    context = {
+        "doc_id": doc_id,
+        "status": status,
+        "doc_type": doc_type,
+        "couch_doc": json.dumps(couch_doc, indent=4),
+        "es_doc": json.dumps(es_doc, indent=4),
+    }
+    return render(request, "hqadmin/doc_in_es.html", context)

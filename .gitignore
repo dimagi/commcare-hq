@@ -12,7 +12,7 @@
 xforms/
 /data/
 submissions/
-export/
+/export/
 bad/
 rapidsms-django.log*
 rapidsms.log*

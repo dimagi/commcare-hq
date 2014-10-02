@@ -1600,7 +1600,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     subcase.case_properties.keys()
                 )
                 parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                if parent:
+                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
 
         return parent_types, case_properties
 
