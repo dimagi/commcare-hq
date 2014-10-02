@@ -4,6 +4,7 @@ try:
     from .test_case_assigment import *
     from .test_case_sharing import *
     from .test_object_cache import *
+    from .test_explode_cases import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
