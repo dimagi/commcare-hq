@@ -1,3 +1,32 @@
+"""
+Definitions for the graphs of admin reports.
+
+Common params:
+    domains: list of domains to search
+    datespan: span of dates given from the UI to search
+    interval: space between buckets (day, week, month, year)
+    datefield: field to search the date (created_on, received etc)
+
+Common Output:
+    JSON with form:
+        {
+            startdate: [YYYY, MM, DD],
+            enddate: [YYYY, MM, DD],
+            initial_values: {
+                label1: integer,
+                label2: integer,
+                ....
+            },
+            histo_data: {
+                label1: [
+                    {count: integer, time: time in milliseconds},
+                        ....
+                ],
+                label2: [...],
+                ....
+            }
+        }
+"""
 import datetime
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
@@ -165,6 +194,8 @@ def domains_matching_plan(software_plan_edition, start, end):
 
 def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
+    # intentionally passing timestamp in twice to get subscription info on that
+    # particular day. not in a range
     return [
         get_data_point(
             len(set(domains) & domains_matching_plan(
@@ -221,7 +252,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_mobile_users_data(domains, datespan, interval, datefield='date',
+def get_active_sms_users_data(domains, datespan, interval, datefield='date',
         additional_params_es={}):
     """
     Returns list of timestamps and how many users of SMS were active in the
@@ -599,6 +630,15 @@ def get_users_all_stats(domains, datespan, interval, **kwargs):
 def get_other_stats(histo_type, domains, datespan, interval,
         individual_domain_limit=16, is_cumulative="True",
         user_type_mobile=None, require_submissions=True, supply_points=False):
+    """
+    A catch all for graphs that are not complex.
+
+    individual_domain_limit: after limit make graph apply to all domains instead
+                             graphing each individually
+    user_type_mobile: mobile or web users
+    require_submissions: real users that have submitted something
+    supply_points: used for cases that are supply points
+    """
     if len(domains) <= individual_domain_limit:
         domain_info = [{"names": [d], "display_name": d} for d in domains]
     elif len(domains) < ES_MAX_CLAUSE_COUNT:
@@ -756,6 +796,9 @@ def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
 
 
 def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
+    """
+    Returns the initial values for the non cumulative graphs
+    """
     query = {
         "in": {"domain.exact": domain_list}
     } if domain_list is not None else {"match_all": {}}
@@ -838,7 +881,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_domains": get_active_domain_stats_data,
-    "active_mobile_users": get_active_mobile_users_data,
+    "active_mobile_users": get_active_sms_users_data,
     "cases": get_case_stats,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
