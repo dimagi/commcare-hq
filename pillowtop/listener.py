@@ -145,41 +145,24 @@ class BasicPillow(object):
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
         """
-        uri = '{}/_changes'.format(self.couch_db.uri)
-        query_params = {
-            'feed': 'continuous',
-            'heartbeat': 'true',  # default of one minute
-        }
+        changes_stream = ChangesStream(
+            db=self.couch_db,
+            feed='continuous',
+            heartbeat=True,
+            since=self.since,
+            filter=self.couch_filter,
+            include_docs=self.include_docs,
+            **self.extra_args
+        )
         while True:
-            query_params.update({
-                'since': self.since,
-                'filter': self.couch_filter,
-                'include_docs': str(self.include_docs).lower(),
-            })
-            query_params.update(self.extra_args)
             try:
-                r = requests.get(uri, params=query_params, stream=True)
-                for line in r.iter_lines():
-                    change = self._parse_change(line)
+                for change in changes_stream:
                     if change:
                         self.processor(change)
                     else:
                         self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
             except PillowtopCheckpointReset:
                 self.changes_seen = 0
-
-    def _parse_change(self, line):
-        """
-        Copied from CouchDBKit ChangesStream class
-        """
-        if line.startswith('{"results":') or line.startswith('"last_seq'):
-            return None
-        else:
-            try:
-                obj = json.loads(line)
-                return obj
-            except ValueError:
-                return None
 
     def run(self):
         """
@@ -289,6 +272,18 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
+    def processor(self, change, do_set_checkpoint=True):
+        """
+        Parent processsor for a pillow class - this should not be overridden.
+        This workflow is made for the situation where 1 change yields 1 transport/transaction
+        """
+
+        self.changes_seen += 1
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+            self.set_checkpoint(change)
+
+        self.process_change(change)
+
     def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
@@ -318,18 +313,6 @@ class BasicPillow(object):
                 )
             else:
                 raise
-
-    def processor(self, change, do_set_checkpoint=True):
-        """
-        Parent processsor for a pillow class - this should not be overridden.
-        This workflow is made for the situation where 1 change yields 1 transport/transaction
-        """
-
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            self.set_checkpoint(change)
-
-        self.process_change(change)
 
     def change_trigger(self, changes_dict):
         """
@@ -374,6 +357,7 @@ class BasicPillow(object):
 PYTHONPILLOW_CHUNK_SIZE = 250
 PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
 
+
 class PythonPillow(BasicPillow):
     """
     A pillow that does filtering in python instead of couch.
@@ -394,7 +378,7 @@ class PythonPillow(BasicPillow):
         Use chunk_size = 0 to disable chunking
         """
         super(PythonPillow, self).__init__(document_class=document_class)
-        self.change_queue=[]
+        self.change_queue = []
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
@@ -539,14 +523,29 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     return res
 
 
-class ElasticPillow(BulkPillow):
+class AliasedElasticPillow(BulkPillow):
     """
-    Elasticsearch handler
+    This pillow class defines it as being alias-able. That is, when you query it, you use an
+    Alias to access it.
+
+    This could be for varying reasons -  to make an index by certain metadata into its own index
+    for performance/separation reasons
+
+    Or, for our initial use case, needing to version/update the index mappings on the fly with
+    minimal disruption.
+
+
+    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the
+    pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
+    you will need to flip the alias over to it.
     """
     es_host = ""
     es_port = ""
     es_index = ""
     es_type = ""
+    es_alias = ''
+    es_index_prefix = ''
+    seen_types = {}
     es_meta = {}
     es_timeout = 3  # in seconds
     bulk = False
@@ -560,16 +559,22 @@ class ElasticPillow(BulkPillow):
         """
         create_index if the index doesn't exist on the ES cluster
         """
-        super(ElasticPillow, self).__init__(**kwargs)
+        super(AliasedElasticPillow, self).__init__(**kwargs)
         self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
+        if self.online:
+            self.seen_types = self.get_index_mapping()
+            pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+        else:
+            pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
+            self.seen_types = {}
 
     @autoretry_connection()
     def index_exists(self):
         if not self.online:
-            #If offline, just say the index is there and proceed along
+            # If offline, just say the index is there and proceed along
             return True
 
         es = self.get_es()
@@ -641,7 +646,7 @@ class ElasticPillow(BulkPillow):
                     )
                 )
             return None
-        return super(ElasticPillow, self).change_trigger(changes_dict)
+        return super(AliasedElasticPillow, self).change_trigger(changes_dict)
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
@@ -666,73 +671,65 @@ class ElasticPillow(BulkPillow):
             update=update,
         )
 
-    @autoretry_connection()
     def change_transport(self, doc_dict):
         """
-        Default elastic pillow for a given doc to a type.
+        Override the elastic transport to go to the index + the type being a string between the
+        domain and case type
         """
-        if self.bulk:
-            return
+        try:
+            if not self.type_exists(doc_dict):
+                # if type is never seen, apply mapping for said type
+                type_mapping = self.get_mapping_from_type(doc_dict)
+                # update metadata
+                type_mapping[self.get_type_string(doc_dict)]['_meta'][
+                    'created'] = datetime.isoformat(datetime.utcnow())
+                mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
+                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                    # API confirms OK, trust it.
+                    pillow_logging.info(
+                        "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
+                    # manually update in memory dict
+                    self.seen_types[self.get_type_string(doc_dict)] = {}
 
-        doc_path = self.get_doc_path(doc_dict['_id'])
+            if not self.bulk:
+                doc_path = self.get_doc_path_typed(doc_dict)
 
-        doc_exists = self.doc_exists(doc_dict['_id'])
+                doc_exists = self.doc_exists(doc_dict)
 
-        if self.allow_updates:
-            can_put = True
-        else:
-            can_put = not doc_exists
+                if self.allow_updates:
+                    can_put = True
+                else:
+                    can_put = not doc_exists
 
-        if can_put:
-            res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
-            return res
+                if can_put and not self.bulk:
+                    res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
+                    return res
+        except Exception, ex:
+            tb = traceback.format_exc()
+            pillow_logging.error(
+                "PillowTop [%(pillow_name)s]: Aliased Elastic Pillow transport change data doc_id: %(doc_id)s to elasticsearch error: %(error)s\ntraceback: %(tb)s\n" %
+                {
+                    "pillow_name": self.get_name(),
+                    "doc_id": doc_dict['_id'],
+                    "error": ex,
+                    "tb": tb
+                }
+            )
+            return None
 
     def send_bulk(self, payload):
         es = self.get_es()
         es.post('_bulk', data=payload)
 
-
-class AliasedElasticPillow(ElasticPillow):
-    """
-    This pillow class defines it as being alias-able. That is, when you query it, you use an
-    Alias to access it.
-
-    This could be for varying reasons -  to make an index by certain metadata into its own index
-    for performance/separation reasons
-
-    Or, for our initial use case, needing to version/update the index mappings on the fly with
-    minimal disruption.
-
-
-    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the
-    pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
-    you will need to flip the alias over to it.
-    """
-    es_alias = ''
-    es_index_prefix = ''
-    seen_types = {}
-    es_index = ""
-
-    def __init__(self, **kwargs):
-        super(AliasedElasticPillow, self).__init__(**kwargs)
-        if self.online:
-            self.seen_types = self.get_index_mapping()
-            pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
-        else:
-            pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
-            self.seen_types = {}
-
-
     def check_alias(self):
         """
         Naive means to verify the alias of the current pillow iteration is matched.
-        If we go fancier with routing and multi-index aliases due to index splitting, this
-        will need to be revisited.
         """
         es = self.get_es()
         aliased_indexes = es[self.es_alias].get('_aliases')
         return aliased_indexes.keys()
 
+    # todo: remove from class - move to the ptop_es_manage command
     def assume_alias(self):
         """
         For this instance, have the index that represents this index receive the alias itself.
@@ -759,7 +756,6 @@ class AliasedElasticPillow(ElasticPillow):
 
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
-
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
@@ -791,6 +787,7 @@ class AliasedElasticPillow(ElasticPillow):
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
 
+    # todo: make private and remove extra agruments that are never called
     def type_exists(self, doc_dict, server=False):
         """
         Verify whether the server has indexed this type
@@ -829,7 +826,7 @@ class AliasedElasticPillow(ElasticPillow):
     @autoretry_connection()
     def doc_exists(self, doc_dict):
         """
-        Overrided based upon the doc type
+        Overridden based upon the doc type
         """
         es = self.get_es()
         head_result = es.head(self.get_doc_path_typed(doc_dict))
@@ -846,50 +843,6 @@ class AliasedElasticPillow(ElasticPillow):
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
-
-    def change_transport(self, doc_dict):
-        """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
-        """
-        try:
-            if not self.type_exists(doc_dict):
-                #if type is never seen, apply mapping for said type
-                type_mapping = self.get_mapping_from_type(doc_dict)
-                #update metadata
-                type_mapping[self.get_type_string(doc_dict)]['_meta'][
-                    'created'] = datetime.isoformat(datetime.utcnow())
-                mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
-                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                    #API confirms OK, trust it.
-                    pillow_logging.info(
-                        "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
-                    #manually update in memory dict
-                    self.seen_types[self.get_type_string(doc_dict)] = {}
-
-            if not self.bulk:
-                doc_path = self.get_doc_path_typed(doc_dict)
-
-                doc_exists = self.doc_exists(doc_dict)
-
-                if self.allow_updates:
-                    can_put = True
-                else:
-                    can_put = not doc_exists
-
-                if can_put and not self.bulk:
-                    res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
-                    return res
-        except Exception, ex:
-            tb = traceback.format_exc()
-            pillow_logging.error("PillowTop [%(pillow_name)s]: Aliased Elastic Pillow transport change data doc_id: %(doc_id)s to elasticsearch error: %(error)s\ntraceback: %(tb)s\n" %
-                          {
-                              "pillow_name": self.get_name(),
-                              "doc_id": doc_dict['_id'],
-                              "error": ex,
-                              "tb": tb
-                          })
-            return None
 
 
 class NetworkPillow(BasicPillow):
