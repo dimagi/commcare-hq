@@ -36,9 +36,9 @@ def determine_authtype(request):
     Guess the auth type, based on request.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith('basic'):
+    if auth_header.startswith('basic '):
         return 'basic'
-    elif auth_header.startswith('digest'):
+    elif auth_header.startswith('digest '):
         return 'digest'
 
     # the initial digest request doesn't have any authorization, so default to
