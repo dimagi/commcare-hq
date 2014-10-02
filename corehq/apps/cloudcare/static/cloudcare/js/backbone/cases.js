@@ -349,6 +349,55 @@ cloudCare.CaseMainView = Backbone.View.extend({
     }
 });
 
+cloudCare.CaseSelectionModel = Backbone.Model.extend({
+});
+
+cloudCare.CaseSelectionView = Backbone.View.extend({
+    el: $("#case-crumbs"),
+    template: _.template($("#template-crumbs").html()),
+
+    initialize: function (){
+        var self = this;
+        self.model = new cloudCare.CaseSelectionModel();
+        self.language = this.options.language;
+        self.model.on("change", self.render, this);
+    },
+    render: function (){
+        var self = this;
+        var parentCase = self.model.get("parentCase");
+        var childCase = self.model.get("childCase");
+        var data = {parentCase: null, childCase: null};
+
+        if (parentCase){
+            data.parentCase = {};
+            var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language] + ": ";
+            if (caseLabel === "Cases: "){
+                caseLabel = "";
+            }
+            var caseName = parentCase.get("properties").case_name;
+            data.parentCase.text = caseLabel + caseName;
+
+            // This is hacky and I hate it
+            var root = window.location.href.replace(Backbone.history.getFragment(), '');
+            data.parentCase.href = root + "view/" + parentCase.get("appConfig").app_id
+                        + "/" + parentCase.get("appConfig").module_index
+                        + "/" + parentCase.get("appConfig").form_index
+                 + "/parent/" + parentCase.id;
+        }
+        if (childCase){
+            data.childCase = {};
+            var caseLabel = childCase.get("module").get("case_label")[self.language] + ": ";
+            if (caseLabel === "Cases: "){
+                caseLabel = "";
+            }
+            var caseName = childCase.get("properties").case_name;
+            data.childCase.text = caseLabel + caseName
+        }
+        self.$el.html(self.template(data));
+        return self;
+    }
+});
+
 $.extend( $.fn.dataTableExt.oStdClasses, {
     "sSortAsc": "header headerSortDown",
     "sSortDesc": "header headerSortUp",

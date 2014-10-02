@@ -241,7 +241,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -288,6 +287,7 @@ HQ_APPS = (
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
+    'corehq.apps.dashboard',
 
     # custom reports
     'a5288',
@@ -298,8 +298,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -458,7 +457,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -949,7 +948,6 @@ COUCHDB_APPS = [
     'pillowtop',
     'pillow_retry',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -976,7 +974,6 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -991,7 +988,7 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
@@ -1115,7 +1112,8 @@ PILLOWTOPS = {
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
-        'corehq.pillows.formdata.FormDataPillow',
+        'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1129,12 +1127,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
-        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1211,6 +1209,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1241,7 +1240,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 

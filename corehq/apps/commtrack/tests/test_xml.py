@@ -145,10 +145,8 @@ class CommTrackOTATest(CommTrackTest):
         # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
-        self.assertEqual(1, len(balance_blocks))
-        [balance_block] = balance_blocks
-        element = etree.fromstring(balance_block)
-        self.assertEqual(0, len([child for child in element]))
+        # with no data, there should be no consumption block
+        self.assertEqual(0, len(balance_blocks))
 
         self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)

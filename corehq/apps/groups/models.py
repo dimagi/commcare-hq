@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from itertools import imap
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -11,8 +12,8 @@ class Group(UndoableDocument):
     """
     The main use case for these 'groups' of users is currently
     so that we can break down reports by arbitrary regions.
-    
-    (Things like who sees what reports are determined by permissions.) 
+
+    (Things like who sees what reports are determined by permissions.)
     """
     domain = StringProperty()
     name = StringProperty()
@@ -37,7 +38,7 @@ class Group(UndoableDocument):
             self.users.append(couch_user_id)
         if save:
             self.save()
-        
+
     def remove_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
@@ -48,7 +49,7 @@ class Group(UndoableDocument):
                     if save:
                         self.save()
                     return
-    
+
     def add_group(self, group):
         group.add_to_group(self)
 
@@ -56,7 +57,7 @@ class Group(UndoableDocument):
         """
         food = Food(path=[food_id])
         fruit = Fruit(path=[fruit_id])
-        
+
         If fruit.add_to_group(food._id):
             then update fruit.path to be [food_id, fruit_id]
         """
@@ -70,7 +71,7 @@ class Group(UndoableDocument):
         new_path.extend(self.path)
         self.path = new_path
         self.save()
-    
+
     def remove_group(self, group):
         group.remove_from_group(self)
 
@@ -78,7 +79,7 @@ class Group(UndoableDocument):
         """
         food = Food(path=[food_id])
         fruit = Fruit(path=[food_id, fruit_id])
-        
+
         If fruit.remove_from_group(food._id):
             then update fruit.path to be [fruit_id]
         """
@@ -99,18 +100,18 @@ class Group(UndoableDocument):
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active)]
 
+    @memoized
     def get_users(self, is_active=True, only_commcare=False):
-        users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
-        users = [user for user in users if not user.is_deleted()]
-        if only_commcare is True:
-            users = [
-                user for user in users
-                if user.__class__ == CommCareUser().__class__
-            ]
-        if is_active is True:
-            return [user for user in users if user.is_active]
-        else:
-            return users
+        def is_relevant_user(user):
+            if user.is_deleted():
+                return False
+            if only_commcare and user.__class__ != CommCareUser().__class__:
+                return False
+            if is_active and not user.is_active:
+                return False
+            return True
+        users = imap(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
+        return filter(is_relevant_user, users)
 
     @memoized
     def get_static_user_ids(self, is_active=True):

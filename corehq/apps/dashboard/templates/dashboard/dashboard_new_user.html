@@ -1,0 +1,77 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}{% load hq_shared_tags %}
+
+{% block dashboard-content %}
+<div class="page-header">
+    <h1>
+        {% if project.commtrack_enabled %}
+            {% trans 'Welcome to CommTrack' %}
+        {% else %}
+            {% trans 'Welcome to CommCare HQ' %}
+        {% endif %}
+         <small>{% trans 'What would you like to do?' %}</small></h1>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <div class="panel panel-dashboard">
+            <div class="panel-heading">
+                {% trans 'Exchange' %}
+            </div>
+            <div class="panel-body">
+                <p><a href="{% url 'appstore' %}" class="dashboard-link">
+                    <span class="dashboard-icon dashboard-icon-exchange"></span>
+                    <span class="lead">{% blocktrans %}
+                        Start with an existing application
+                    {% endblocktrans %}</span>
+                </a></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-dashboard">
+            <div class="panel-heading">
+                {% if project.commtrack_enabled %}
+                    {% trans 'CommTrack Setup' %}
+                {% else %}
+                    {% trans 'Applications' %}
+                {% endif %}
+            </div>
+            <div class="panel-body">
+                <form action="/a/biyeun/apps/new_app/" method="post"><p>
+                    <input type="hidden" name="type" value="Application">
+                    <input type="hidden" name="application_version" value="2.0">
+                    <button href="#" type="submit" class="dashboard-button">
+                        <span class="dashboard-icon {% if project.commtrack_enabled %}dashboard-icon-commtrack{% else %}dashboard-icon-applications{% endif %}"></span>
+                        <span class="lead">
+                        {% if project.commtrack_enabled %}
+                            {% blocktrans %}
+                                Setup CommTrack
+                            {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans %}
+                                Build a new application
+                            {% endblocktrans %}
+                        {% endif %}
+                        </span>
+                    </button>
+                </p></form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-dashboard">
+            <div class="panel-heading">{% trans 'Help Site' %}</div>
+            <div class="panel-body">
+                <p><a href="http://help.commcarehq.org/"
+                      class="dashboard-link"
+                      target="_blank">
+                    <span class="dashboard-icon dashboard-icon-help"></span>
+                    <span class="lead">{% blocktrans %}
+                        Learn how to build an application
+                    {% endblocktrans %}</span>
+                </a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock dashboard-content %}

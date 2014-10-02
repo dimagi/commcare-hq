@@ -347,6 +347,8 @@ def process_incoming(msg, delay=True):
 
 
 def create_billable_for_sms(msg, delay=True):
+    if not msg.domain:
+        return
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:

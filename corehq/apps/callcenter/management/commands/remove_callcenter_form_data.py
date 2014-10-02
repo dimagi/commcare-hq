@@ -24,8 +24,8 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        drop_all_tables = options.get('all-tables', False)
-        delete_all_mappings = options.get('all-mappings', False)
+        drop_all_tables = options.get('all_tables', False)
+        delete_all_mappings = options.get('all_mappings', False)
         dry_run = options.get('dry_run', False)
 
         if dry_run:
@@ -33,6 +33,7 @@ class Command(BaseCommand):
 
         all_tables = get_db_tables(settings.SQL_REPORTING_DATABASE_URL)
 
+        extractor = get_extractor('SQL')
         domains = get_call_center_domains()
         for domain in domains:
             print("Processing domain", domain)
@@ -41,7 +42,6 @@ class Command(BaseCommand):
             if mapping.table_name in all_tables:
                 print("\tDropping SQL table", mapping.table_name)
                 if not dry_run:
-                    extractor = get_extractor(mapping.backend)
                     extractor.clear_all_data(mapping)
 
             if not mapping.new_document:
