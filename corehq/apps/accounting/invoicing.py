@@ -194,8 +194,7 @@ class DomainInvoiceFactory(object):
 
         record = BillingRecord.generate_record(invoice)
         try:
-            record.send_em
-            ail()
+            record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
