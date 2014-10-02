@@ -141,7 +141,6 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get', 'post']
 
 
-
 def group_by_dict(objs, fn):
     """
     Itertools.groupby returns a transient iterator with alien
