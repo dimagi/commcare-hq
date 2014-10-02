@@ -758,6 +758,10 @@ def _histo_data(domain_list, histogram_type, start_date, end_date, interval,
 
 def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
         end_date, interval, filters):
+    def _get_active_length(histo_type):
+        # TODO - add to configs
+        return 90 if histogram_type == 'active_cases' else 30
+
     timestamps = daterange(
         interval,
         datetime.strptime(start_date, "%Y-%m-%d").date(),
@@ -771,7 +775,8 @@ def _histo_data_non_cumulative(domain_list, histogram_type, start_date,
             past_30_days = _histo_data(
                 [domain_name_data],
                 histogram_type,
-                (timestamp - relativedelta(days=(90 if histogram_type == 'active_cases' else 30))).isoformat(),  # TODO - add to configs
+                (timestamp - relativedelta(
+                        days=_get_active_length())).isoformat(),
                 timestamp.isoformat(),
                 filters
             )
