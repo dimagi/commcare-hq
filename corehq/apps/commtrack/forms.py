@@ -225,13 +225,14 @@ class ProgramForm(forms.Form):
     def __init__(self, program, *args, **kwargs):
         self.program = program
 
+        kwargs['initial'] = self.program._doc
+        super(ProgramForm, self).__init__(*args, **kwargs)
+
         # don't let users rename the uncategorized
         # program
         if program.default:
-            self.base_fields['name'].widget.attrs['readonly'] = True
-
-        kwargs['initial'] = self.program._doc
-        super(ProgramForm, self).__init__(*args, **kwargs)
+            self.fields['name'].required = False
+            self.fields['name'].widget.attrs['readonly'] = True
 
     def clean_name(self):
         name = self.cleaned_data['name']
