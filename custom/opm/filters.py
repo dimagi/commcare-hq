@@ -35,21 +35,6 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
         context.update({'single_option_select': self.single_option_select})
         return context
 
-    hierarchy_config = {
-        'lvl_1': {
-            'prop': 'block',
-            'name': 'Block'
-        },
-        'lvl_2': {
-            'prop': 'gp',
-            'name': 'Gram Panchayat'
-        },
-        'lvl_3': {
-            'prop': 'awc',
-            'name': 'AWC'
-        }
-    }
-
     @property
     def drilldown_map(self):
         hierarchy = helper = []

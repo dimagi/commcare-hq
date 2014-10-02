@@ -17,7 +17,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter
+from sqlagg.filters import RawFilter, IN
 from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
@@ -777,6 +777,37 @@ class MetReport(CaseReportMixin, BaseReport):
     def fixed_cols_spec(self):
         return dict(num=9, width=800)
 
+class UsersIdsData(SqlData):
+    table_name = "fluff_OpmUserFluff"
+
+    @property
+    def filters(self):
+        if self.config.get('awc'):
+            return [IN('awc', 'awc')]
+        elif self.config.get('gp'):
+            return [IN('gp', 'gp')]
+        elif self.config.get('block'):
+            return [IN('block', 'block')]
+        return []
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('awc', SimpleColumn('awc')),
+            DatabaseColumn('awc_code', SimpleColumn('awc_code')),
+            DatabaseColumn('bank_name', SimpleColumn('bank_name')),
+            DatabaseColumn('ifs_code', SimpleColumn('ifs_code')),
+            DatabaseColumn('account_number', SimpleColumn('account_number')),
+            DatabaseColumn('gp', SimpleColumn('gp')),
+            DatabaseColumn('block', SimpleColumn('block')),
+            DatabaseColumn('village', SimpleColumn('village'))
+        ]
+
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
@@ -797,11 +828,17 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        return CommCareUser.by_domain(DOMAIN)
+        config={}
+        for lvl in ['awc', 'gp', 'block']:
+            req_prop = 'hierarchy_%s' % lvl
+            if self.request.GET.getlist(req_prop, []):
+                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
+                break
+        return UsersIdsData(config=config).get_data()
 
     def get_row_data(self, row):
-        case_sql_data = OpmCaseSqlData(DOMAIN, row._id, self.datespan)
-        form_sql_data = OpmFormSqlData(DOMAIN, row._id, self.datespan)
+        case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
+        form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
 def this_month_if_none(month, year):
