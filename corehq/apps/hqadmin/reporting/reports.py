@@ -157,11 +157,13 @@ def get_active_countries_stats_data(domains, datespan, interval,
     days before the timestamp
     """
     histo_data = []
-    for start, end in intervals(interval, datespan.startdate, datespan.enddate):
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
         form_query = (FormES()
             .domain(domains)
-            .submitted(gte=start, lte=end)
             .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
+            .submitted(gte=f, lte=t)
             .size(0))
 
         domains = form_query.run().facet('domains', "terms")
@@ -172,7 +174,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
         c = len(countries.run().facet('countries', 'terms'))
         if c > 0:
-            histo_data.append(get_data_point(c, end))
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -215,19 +217,20 @@ def get_active_domain_stats_data(domains, datespan, interval,
     before the timestamp
     """
     histo_data = []
-    for start, end in intervals(interval, datespan.startdate, datespan.enddate):
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
         domains_in_interval = (
             domains
             if software_plan_edition is None else
-            list((set(domains) & domains_matching_plan(software_plan_edition,
-                start, end)))
+            list((set(domains) & domains_matching_plan(software_plan_edition, f, t)))
         )
         active_domains = set()
         if add_form_domains:
             form_query = (FormES()
                 .domain(domains_in_interval)
-                .submitted(gte=start, lte=end)
                 .terms_facet('domain', 'domains', size=LARGE_ES_NUMBER)
+                .submitted(gte=f, lte=t)
                 .size(0))
             if restrict_to_mobile_submissions:
                 form_query = form_query.user_id(get_user_ids(True))
@@ -236,7 +239,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 form_query.run().facet('domains', "terms")
             }
         if add_sms_domains:
-            sms_query = (get_sms_query(start, end, 'domains', 'domain', domains)
+            sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
                 .incoming_messages())
             active_domains |= {
                 term_and_count['term'] for term_and_count in
@@ -244,7 +247,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
             }
         c = len(active_domains)
         if c > 0:
-            histo_data.append(get_data_point(c, end))
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -256,15 +259,17 @@ def get_active_sms_users_data(domains, datespan, interval, datefield='date',
     30 days before each timestamp
     """
     histo_data = []
-    for start, end in intervals(interval, datespan.startdate, datespan.enddate):
-        sms_query = get_sms_query(start, end, 'users', 'couch_recipient',
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        sms_query = get_sms_query(f, t, 'users', 'couch_recipient',
                 domains)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
         users = sms_query.run().facet('users', "terms")
         c = len(users)
         if c > 0:
-            histo_data.append(get_data_point(c, end))
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -284,12 +289,14 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
     backend_filter = {'terms': {'backend_id': dimagi_owned_backend_ids}}
 
     histo_data = []
-    for start, end in intervals(interval, datespan.startdate, datespan.enddate):
-        sms_query = get_sms_query(start, end, 'domains', 'domain', domains)
+    for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
+        t = timestamp
+        f = timestamp - relativedelta(days=30)
+        sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
         d = sms_query.filter(backend_filter).run()
         c = len(d.facet('domains', 'terms'))
         if c > 0:
-            histo_data.append(get_data_point(c, end))
+            histo_data.append(get_data_point(c, timestamp))
 
     return format_return_data(histo_data, 0, datespan)
 
