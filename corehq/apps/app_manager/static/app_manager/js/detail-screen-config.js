@@ -31,14 +31,64 @@ var CC_DETAIL_SCREEN = {
         ).replace(/\w\S*/g, function (txt) {
             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
         });
+    },
+    /**
+     * Enable autocomplete on the given jquery element with the given autocomplete
+     * options.
+     * @param $elem
+     * @param options
+     */
+    setUpAutocomplete: function($elem, options){
+        $elem.$edit_view.autocomplete({
+            source: function (request, response) {
+                var availableTags = _.map(options, function(value) {
+                    var label = value;
+                    if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                        label = ('<span class="icon-paper-clip"></span> '
+                            + label.substring(label.indexOf(":") + 1));
+                    }
+                    return {value: value, label: label};
+                });
+                response(
+                    $.ui.autocomplete.filter(availableTags, request.term)
+                );
+            },
+            minLength: 0,
+            delay: 0,
+            select: function (event, ui) {
+                $elem.val(ui.item.value);
+                $elem.fire('change');
+            }
+        }).focus(function () {
+            $(this).autocomplete('search');
+        }).data("autocomplete")._renderItem = function (ul, item) {
+            return $("<li></li>")
+                .data("item.autocomplete", item)
+                .append($("<a></a>").html(item.label))
+                .appendTo(ul);
+        };
+        return $elem;
+    }
+
+};
+
+/**
+ * A custom knockout binding that replaces the element's contents with a jquery
+ * element.
+ * @type {{update: update}}
+ */
+ko.bindingHandlers.jqueryElement = {
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        $(element).empty();
+        $(element).append(ko.unwrap(valueAccessor()));
     }
 };
 
 var SortRow = function (field, type, direction) {
     var self = this;
-    self.field = ko.observable(field);
-    self.type = ko.observable(type);
-    self.direction = ko.observable(direction);
+    self.field = ko.observable(typeof field !== 'undefined' ? field : "");
+    self.type = ko.observable(typeof type !== 'undefined' ? type : "");
+    self.direction = ko.observable(typeof direction !== 'undefined' ? direction : "");
 
     self.type.subscribe(function () {
         window.sortRowSaveButton.fire('change');
@@ -77,15 +127,31 @@ var SortRow = function (field, type, direction) {
         }
     });
 };
+var SortRowTemplate = function(properties){
+    var self = this;
+    this.textField = uiElement.input().val("");
+    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, properties);
+    // TODO: Give the textField some validation (maybe on the add event actually?)
+};
+SortRowTemplate.prototype = new SortRow();
 
-var SortRows = function () {
+var SortRows = function (properties) {
     var self = this;
     self.sortRows = ko.observableArray([]);
+    //TODO: Only add the template if editing is allowed.
+    //      User still can't save right now though, so it's not a security issue.
+    //      (current case list page let's non-editors edit sorts on the page (but can't save them))
+    self.templateRow = new SortRowTemplate(properties);
 
     self.addSortRow = function (field, type, direction) {
         self.sortRows.push(new SortRow(field, type, direction));
     };
-
+    self.addSortRowFromTemplateRow = function(row) {
+        self.sortRows.push(new SortRow(
+            row.textField.val(), row.type(), row.direction()
+        ));
+        row.textField.val("");
+    };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
         window.sortRowSaveButton.fire('change');
@@ -336,9 +402,6 @@ var DetailScreenConfig = (function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
-
-            // TODO: Look into removing screen.config.sortRows. We will likely need
-            //       some of that code later though to build the "Filtering and Sorting" section
         }
 
         Column.init = function (col, screen) {
@@ -447,35 +510,8 @@ var DetailScreenConfig = (function () {
                     } else {
                         column.format_warning.hide().parent().removeClass('error');
                     }
-                }).$edit_view.autocomplete({
-                        source: function (request, response) {
-                            var availableTags = _.map(that.properties, function (value) {
-                                var label = value;
-                                if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                                    label = ('<span class="icon-paper-clip"></span> '
-                                        + label.substring(label.indexOf(":") + 1));
-                                }
-                                return {value: value, label: label};
-                            });
-                            response(
-                                $.ui.autocomplete.filter(availableTags, request.term)
-                            );
-                        },
-                        minLength: 0,
-                        delay: 0,
-                        select: function (event, ui) {
-                            column.field.val(ui.item.value);
-                            column.field.fire('change');
-                        }
-                    }).focus(function () {
-                        $(this).autocomplete('search');
-                    }).data("autocomplete")._renderItem = function (ul, item) {
-                    return $("<li></li>")
-                        .data("item.autocomplete", item)
-                        .append($("<a></a>").html(item.label))
-                        .appendTo(ul);
-                };
-
+                });
+                CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                 return column;
             };
 
@@ -774,7 +810,7 @@ var DetailScreenConfig = (function () {
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
-            this.sortRows = new SortRows();
+            this.sortRows = new SortRows(this.properties);
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
