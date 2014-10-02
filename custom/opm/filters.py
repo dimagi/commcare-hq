@@ -29,11 +29,33 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
     template = "opm/drilldown_options.html"
 
+    def selected(self):
+        selected = super(OpmBaseDrilldownOptionFilter, self).selected
+        if selected:
+            return selected
+        return [["Atri"], ["0"]]
+
     @property
     def filter_context(self):
-        context = super(OpmBaseDrilldownOptionFilter, self).filter_context
-        context.update({'single_option_select': self.single_option_select})
-        return context
+        controls = []
+        for level, label in enumerate(self.rendered_labels):
+            controls.append({
+                'label': label[0],
+                'slug': label[1],
+                'level': level,
+            })
+
+        drilldown_map = list(self.drilldown_map)
+        return {
+            'option_map': drilldown_map,
+            'controls': controls,
+            'selected': self.selected,
+            'use_last': self.use_only_last,
+            'notifications': self.final_notifications,
+            'empty_text': self.drilldown_empty_text,
+            'is_empty': not drilldown_map,
+            'single_option_select': self.single_option_select
+        }
 
     @property
     def drilldown_map(self):
@@ -50,6 +72,8 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                         tmp_next = item['next']
                         break
                 if not exist:
+                    if not hierarchy:
+                        hierarchy.append(dict(val="0", text='All', next=[]))
                     hierarchy.append(tmp)
                     hierarchy = tmp['next']
                 else:
@@ -59,13 +83,13 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
     @classmethod
     def get_labels(cls):
-        return [('Block', 'All', 'block'), ('Gram Panchayat', 'All', 'gp'), ('AWC', 'All', 'awc')]
+        return [('Block', 'block'), ('Gram Panchayat', 'gp'), ('AWC', 'awc')]
 
 
     @classmethod
     def _get_label_value(cls, request, label):
-        slug = str(label[2])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
         return {
             'slug': slug,
             'value': val,
@@ -76,6 +100,12 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
+    def selected(self):
+        selected = super(OpmBaseDrilldownOptionFilter, self).selected
+        if selected:
+            return selected
+        return [["0"]]
+
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
@@ -85,7 +115,7 @@ class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
 
     @classmethod
     def get_labels(cls):
-        return [('Block', '', 'block'), ('Gram Panchayat', 'All', 'gp'), ('AWC', 'All', 'awc')]
+        return [('Block', 'block'), ('Gram Panchayat', 'gp'), ('AWC', 'awc')]
 
     @property
     def drilldown_map(self):

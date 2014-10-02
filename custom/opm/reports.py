@@ -668,7 +668,7 @@ class CaseReportMixin(object):
 
     @property
     def block(self):
-        block = self.request_params.get("block")
+        block = self.request_params.get("hierarchy_block")
         if block:
             return block
         else:
@@ -831,7 +831,8 @@ class IncentivePaymentReport(BaseReport):
         config={}
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
-            if self.request.GET.getlist(req_prop, []):
+            request_param = self.request.GET.getlist(req_prop, [])
+            if request_param and not request_param[0] == '0':
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()
@@ -985,17 +986,22 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row):
+        def empty_health_status(row):
+            model = HealthStatus()
+            model.awc = row['_source']['user_data']['awc']
+            return model
+
         if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
             sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan)
             if sql_data.data:
                 formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
                 data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
+                if row['_id'] not in data:
+                    return empty_health_status(row)
                 data[row['_id']].update({'awc': row['_source']['user_data']['awc']})
                 return HealthStatus(**data[row['_id']])
             else:
-                model = HealthStatus()
-                model.awc = row['_source']['user_data']['awc']
-                return model
+                return empty_health_status(row)
         else:
             raise InvalidRow
 

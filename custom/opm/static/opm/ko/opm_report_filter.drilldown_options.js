@@ -40,6 +40,19 @@ ko.bindingHandlers.select2 = {
                     converted.push({id: value, text: textAccessor(value)});
                 }
             });
+
+            var data = $(el).select2('data');
+            if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
+                converted.splice(0, 1)
+            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
+                converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
+                $.each(allBindings.selectedOptions(), function (key, value) {
+                    if (textAccessor(value) !== '' && value !== '0') {
+                        allBindings.selectedOptions().pop()
+                    }
+                });
+            }
+
             $(el).select2("data", converted);
         }
     }
@@ -70,7 +83,7 @@ var OPMDrilldownOptionFilterControl = function (options) {
             }
             return null;
         }
-        self.notification.changeMessage('');
+        //self.notification.changeMessage('');
 
         if (current_selection.length == 0) {
             self.controls()[trigger_level + 1].selected.removeAll();
@@ -108,8 +121,9 @@ var OPMDrilldownOption = function (select, drilldown_map) {
 
     self.is_visible = ko.computed(function () {
         if (!(self.control_options().length)) {
-            self.selected.removeAll()
+            self.selected.removeAll();
         }
+        self.selected.push("0");
         return !!(self.control_options().length);
     });
 
