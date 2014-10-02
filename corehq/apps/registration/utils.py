@@ -24,6 +24,10 @@ class MailChimpNotConfiguredError(Exception):
     pass
 
 
+class MailChimpListNotSetError(MailChimpNotConfiguredError):
+    pass
+
+
 def get_mailchimp_api():
     if settings.MAILCHIMP_APIKEY:
         return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
@@ -31,6 +35,9 @@ def get_mailchimp_api():
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
+    if not list_id:
+        raise MailChimpListNotSetError()
+
     api = get_mailchimp_api()
     api.lists.subscribe(
         list_id,
@@ -61,6 +68,9 @@ def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
 
 
 def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
+    if not list_id:
+        raise MailChimpListNotSetError()
+
     get_mailchimp_api().lists.unsubscribe(
         list_id,
         {'email': email or user.email},
