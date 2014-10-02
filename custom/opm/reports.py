@@ -948,19 +948,22 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row):
-        if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
-            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan)
-            if sql_data.data:
-                formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
-                data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
-                data[row['_id']].update({'awc': row['_source']['user_data']['awc']})
-                return HealthStatus(**data[row['_id']])
+        try:
+            if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
+                sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan)
+                if sql_data.data:
+                    formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
+                    data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
+                    data[row['_id']].update({'awc': row['_source']['user_data']['awc']})
+                    return HealthStatus(**data[row['_id']])
+                else:
+                    model = HealthStatus()
+                    model.awc = row['_source']['user_data']['awc']
+                    return model
             else:
-                model = HealthStatus()
-                model.awc = row['_source']['user_data']['awc']
-                return model
-        else:
-            raise InvalidRow
+                raise InvalidRow()
+        except KeyError:
+            raise InvalidRow()
 
     @property
     def fixed_cols_spec(self):
