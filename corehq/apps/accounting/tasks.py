@@ -92,17 +92,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "domain %s: %s" % (domain.name, e)
                 )
             except BillingContactInfoError as e:
-                subject = "[%s] Invoice Generation Issue" % domain.name
-                email_content = render_to_string(
-                    'accounting/invoice_error_email.html', {
-                        'project': domain.name,
-                        'error_msg': 'BillingContactInfoError: %s' % e,
-                    }
-                )
-                send_HTML_email(
-                    subject, settings.BILLING_EMAIL, email_content,
-                    email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
-                )
+                logger.info("BillingContactInfoError: %s" % e)
             except InvoiceError as e:
                 logger.error(
                     "[BILLING] Could not create invoice for domain %s: %s" % (
@@ -305,30 +295,3 @@ def weekly_digest():
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
-
-
-# Email this out every Tuesday morning
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=2))
-def blank_contact_emails_digest():
-    all_billing_accounts_no_emails = BillingAccount.objects.filter(
-        models.Q(billingcontactinfo=None) |
-        models.Q(billingcontactinfo__emails=None)
-    ).exclude(account_type=BillingAccountType.TRIAL)
-    if all_billing_accounts_no_emails.count() > 0:
-        email_content = render_to_string(
-            'accounting/account_emails_digest.html', {
-                'accounts': all_billing_accounts_no_emails,
-                'base_url': Site.objects.get_current().domain,
-            }
-        )
-        from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
-        send_HTML_email(
-            "Accounts Without Contact Emails: %d needing attention" % all_billing_accounts_no_emails.count(),
-            settings.INVOICING_CONTACT_EMAIL,
-            email_content,
-            email_from=from_email,
-        )
-        logger.info(
-            "[BILLING] Sent summary of accounts without contact emails"
-        )
-
