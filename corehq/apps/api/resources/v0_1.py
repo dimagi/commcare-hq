@@ -21,7 +21,7 @@ from corehq.apps.users.decorators import require_permission, require_permission_
 from couchforms.models import XFormInstance
 
 # CCHQ imports
-from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
+from corehq.apps.domain.decorators import login_or_digest, login_or_basic
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -29,6 +29,21 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
+
+
+def determine_authtype(request):
+    """
+    Guess the auth type, based on request.
+    """
+    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
+    if auth_header.startswith('basic'):
+        return 'basic'
+    elif auth_header.startswith('digest'):
+        return 'digest'
+
+    # the initial digest request doesn't have any authorization, so default to
+    # digest in order to send back
+    return 'digest'
 
 
 def api_auth(view_func):
@@ -50,11 +65,17 @@ def api_auth(view_func):
 class LoginAndDomainAuthentication(Authentication):
 
     def is_authenticated(self, request, **kwargs):
-        return self._auth_test(request, wrappers=[login_or_digest, api_auth], **kwargs)
+        return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
+
+    def _get_auth_decorator(self, request):
+        decorator_map = {
+            'digest': login_or_digest,
+            'basic': login_or_basic,
+        }
+        return decorator_map[determine_authtype(request)]
 
     def _auth_test(self, request, wrappers=None, **kwargs):
         PASSED_AUTH = 'is_authenticated'
-
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 
@@ -86,7 +107,10 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         self.permission = permission
 
     def is_authenticated(self, request, **kwargs):
-        wrappers = [require_permission(self.permission, login_decorator=login_or_digest), api_auth]
+        wrappers = [
+            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
@@ -94,7 +118,10 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
-        wrappers = [require_permission_raw(permission_check, login_decorator=login_or_digest), api_auth]
+        wrappers = [
+            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
