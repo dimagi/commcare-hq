@@ -12,16 +12,18 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
-        $(function(){
-            $('#product-list').asyncProgramProductList({
-                total: {{ data_list.total }},
-                start_page: {{ data_list.page }},
-                limit: {{ data_list.limit }},
-                list_url: '{% url "commtrack_product_for_program_fetch" domain program.get_id %}'
+    {% if program.get_id %}
+        <script type="text/javascript">
+            $(function(){
+                $('#product-list').asyncProgramProductList({
+                    total: {{ data_list.total }},
+                    start_page: {{ data_list.page }},
+                    limit: {{ data_list.limit }},
+                    list_url: '{% url "commtrack_product_for_program_fetch" domain program.get_id %}'
+                });
             });
-        });
-    </script>
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block main_column %}
