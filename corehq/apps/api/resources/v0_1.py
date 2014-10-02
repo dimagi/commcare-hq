@@ -74,7 +74,7 @@ class LoginAndDomainAuthentication(Authentication):
         }
         return decorator_map[determine_authtype(request)]
 
-    def _auth_test(self, request, wrappers=None, **kwargs):
+    def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
