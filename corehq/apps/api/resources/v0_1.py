@@ -48,24 +48,33 @@ def api_auth(view_func):
 
 
 class LoginAndDomainAuthentication(Authentication):
+
     def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[login_or_digest, api_auth], **kwargs)
+
+    def _auth_test(self, request, wrappers=None, **kwargs):
         PASSED_AUTH = 'is_authenticated'
 
-        @api_auth
-        @login_or_digest
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
+
+        wrapped_dummy = dummy
+        for wrapper in wrappers:
+            wrapped_dummy = wrapper(wrapped_dummy)
 
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
-        response = dummy(request, **kwargs)
+        try:
+            response = wrapped_dummy(request, **kwargs)
+        except PermissionDenied:
+            response = HttpResponseForbidden()
+
 
         if response == PASSED_AUTH:
             return True
         else:
             return response
-
 
     def get_identifier(self, request):
         return request.couch_user.username
@@ -77,45 +86,16 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         self.permission = permission
 
     def is_authenticated(self, request, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
-
-        @api_auth
-        @require_permission(self.permission, login_decorator=login_or_digest)
-        def dummy(request, domain, **kwargs):
-            return PASSED_AUTH
-
-        if not kwargs.has_key('domain'):
-            kwargs['domain'] = request.domain
-
-        try:
-            response = dummy(request, **kwargs)
-        except PermissionDenied:
-            response = HttpResponseForbidden()
-
-        if response == PASSED_AUTH:
-            return True
-        else:
-            return response
+        wrappers = [require_permission(self.permission, login_decorator=login_or_digest), api_auth]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
 class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
         permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
-        @api_auth
-        @require_permission_raw(permission_check, login_decorator=login_or_digest)
-        def dummy(request, domain, **kwargs):
-            return PASSED_AUTH
-
-        if not kwargs.has_key('domain'):
-            kwargs['domain'] = request.domain
-
-        response = dummy(request, **kwargs)
-        if response == PASSED_AUTH:
-            return True
-        else:
-            return response
+        wrappers = [require_permission_raw(permission_check, login_decorator=login_or_digest), api_auth]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
 class CustomResourceMeta(object):
