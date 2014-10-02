@@ -7,8 +7,7 @@ $(function() {
         var ranges = {};
 
         ranges[range_labels['last_7_days']] = [
-            moment().subtract('days', '7').startOf('days'),
-            moment().subtract('days', '1').endOf('days')
+            moment().subtract('days', '7').startOf('days')
         ];
 
         ranges[range_labels['last_month']] = [
@@ -17,13 +16,11 @@ $(function() {
         ];
 
         ranges[range_labels['last_30_days']] = [
-            moment().subtract('days', '30').startOf('days'),
-            moment().subtract('days', '1').endOf('days')
+            moment().subtract('days', '30').startOf('days')
         ];
 
         ranges[range_labels['last_quarter']] = [
-            moment().subtract('days', '1').endOf('days').subtract('months', '2').startOf('month'),
-            moment().subtract('days', '1').endOf('days')
+            moment().subtract('days', '1').endOf('days').subtract('months', '2').startOf('month')
         ];
 
 
