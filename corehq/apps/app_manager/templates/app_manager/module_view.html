@@ -255,6 +255,35 @@
                 <legend>
                     {% trans "Filtering and Sorting" %}
                 </legend>
+                <div id="{{ detail.type }}-filter">
+                    <a href="#" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+                        <i class="icon-plus"></i>
+                        Add a filter...
+                    </a>
+                    <div data-bind="visible: showing">
+                    <form class="form-inline filter-form">
+                        <label>
+                            Filter
+                        </label>
+                        <span class="hq-help-template"
+                            data-title="{% trans "Filters" %}"
+                            data-content=
+                            "{% blocktrans %}
+                                Filter help text goes here
+                            {% endblocktrans %}"
+                        >
+
+                        </span>
+                        <input type="text" placeholder="Filter expression" class="ui-autocomplete-input"
+                               data-bind="value: filterText"
+                        >
+                        <a data-bind="click: function(data){showing(false);}">
+                            <i class="icon-remove icon-blue"></i>
+                        </a>
+                    </form>
+                    </div>
+
+                </div>
                 <div id="{{ detail.type }}-detail-screen-sort">
                 {% if app.enable_multi_sort %}
                     <div class="ui-sortable">

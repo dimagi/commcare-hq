@@ -4,7 +4,10 @@
 .detail-screen-table th {
     border-top-width: 0;
 }
-
+.filter-form .ui-autocomplete-input {
+    margin-left: 26px;
+    margin-right: 6px;
+}
 .detail-screen-table td {
     word-wrap: break-word;
 }

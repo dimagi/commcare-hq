@@ -162,6 +162,23 @@ var SortRows = function (properties) {
     });
 };
 
+var filterViewModel = function(filterText){
+    var self = this;
+    self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
+    self.showing = ko.observable(self.filterText() != "");
+    self.serialize = function(){
+        if (self.showing()) {
+            return {
+                filter_xpath: self.filterText(),
+                header: {"en": "super secret filter field"},
+                field: "super_secret_filter_field",
+                format: "filter"
+            };
+        }
+        return null;
+    }
+};
+
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -825,6 +842,15 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
+            //populate filter view model
+            // Assume that filters are only in the short list!
+            // Assume there is only one filter!!!
+            // (this might change depending on how the migration goes down)
+            var filterCol = _.find(spec.state.short.columns, function(col){
+                return col.format === "filter";
+            });
+            this.filter = new filterViewModel(filterCol ? filterCol.filter_xpath : null);
+
             /**
              * Add a Screen to this DetailScreenConfig
              * @param pair
@@ -856,8 +882,10 @@ var DetailScreenConfig = (function () {
             var ds = new DetailScreenConfig($home, spec);
             var type = spec.state.type;
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
+            var $filterHome = $('#' + type + '-filter');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
+            ko.applyBindings(ds.filter, $filterHome.get(0));
             if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
                 ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
                 $parentSelectHome.on('change', '*', function () {
