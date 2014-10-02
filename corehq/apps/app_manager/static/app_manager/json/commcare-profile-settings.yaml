@@ -266,7 +266,7 @@
 
 - name: "Fuzzy Search"
   description: "Whether searches on the phone will match similar strings. IE: 'Jhon' will match 'John'"
-  id: "fuzzy_search_enabled"
+  id: "cc-fuzzy-search-enabled"
   values: ["yes", "no"]
   value_names: ["Yes", "No"]
   default: "yes"

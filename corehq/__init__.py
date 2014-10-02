@@ -265,6 +265,7 @@ ADMIN_REPORTS = (
 )
 
 from corehq.apps.hqwebapp.models import *
+from corehq.apps.styleguide.tabs import SGExampleTab
 
 TABS = (
     DashboardTab,
@@ -280,6 +281,7 @@ TABS = (
     OrgReportTab,
     OrgSettingsTab, # separate menu?
     AdminTab,
+    SGExampleTab,
 )
 
 from corehq.db import Session

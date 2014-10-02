@@ -18,17 +18,18 @@ def sync_user_cases(commcare_user):
     if not (domain and domain.call_center_config.enabled):
         return
 
+    # remove any blank fields
+    fields = {k: v for k, v in commcare_user.user_data.items() if k}
+
     # language or phone_number can be null and will break
     # case submission
-    fields = {
+    fields.update({
         'name': commcare_user.name or commcare_user.raw_username,
         'username': commcare_user.raw_username,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or ''
-    }
-    # fields comes second to prevent custom user data overriding
-    fields = dict(commcare_user.user_data, **fields)
+    })
 
     try:
         case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, include_docs=True)
@@ -44,7 +45,6 @@ def sync_user_cases(commcare_user):
         props = dict(case.dynamic_case_properties())
 
         changed = close != case.closed
-        changed = changed or case.owner_id != owner_id
         changed = changed or case.type != domain.call_center_config.case_type
         changed = changed or case.name != fields['name']
 
@@ -59,7 +59,6 @@ def sync_user_cases(commcare_user):
                 create=False,
                 case_id=case._id,
                 version=V2,
-                owner_id=owner_id,
                 case_type=domain.call_center_config.case_type,
                 close=close,
                 update=fields

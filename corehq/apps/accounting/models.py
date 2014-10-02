@@ -1299,14 +1299,14 @@ class Invoice(models.Model):
             admins = WebUser.get_admins_by_domain(
                 self.subscription.subscriber.domain
             )
+            contact_emails = [a.email if a.email else a.username for a in admins]
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
                 "email to for the domain %s. Sending to domain admins instead: "
                 "%s." %
-                (self.subscription.subscriber.domain, ', '.join(admins))
+                (self.subscription.subscriber.domain, ', '.join(contact_emails))
             )
-            contact_emails = [a.email if a.email else a.username for a in admins]
         return contact_emails
 
 

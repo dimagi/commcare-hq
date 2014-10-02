@@ -1,9 +1,10 @@
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django.views.generic import *
 
 
 def styleguide_default(request):
-    return HttpResponse("woot")
+    return HttpResponseRedirect(reverse(MainStyleGuideView.urlname))
 
 
 class MainStyleGuideView(TemplateView):
@@ -13,6 +14,11 @@ class MainStyleGuideView(TemplateView):
 
 class BaseStyleGuideArticleView(TemplateView):
     template_name = 'styleguide/base_section.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        # todo remove after bootstrap 3 migration is over
+        request.preview_bootstrap3 = True
+        return super(BaseStyleGuideArticleView, self).dispatch(request, *args, **kwargs)
 
     @property
     def sections(self):
@@ -45,8 +51,17 @@ class BaseStyleGuideArticleView(TemplateView):
                            % self.navigation_name),
         }
 
+    @property
+    def page_context(self):
+        """It's intended that you override this method when necessary to provide
+        any additional content that's relevant to the view specifically.
+        :return: a dict
+        """
+        return {}
+
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
+        context.update(self.page_context)
         return super(BaseStyleGuideArticleView, self).render_to_response(
             context, **response_kwargs)
 
@@ -58,10 +73,5 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def sections(self):
         return [
-            'forms/code_organization',
-            'forms/crispy_forms',
-            'forms/knockout_js',
-            'forms/ui_components',
+            'forms/anatomy',
         ]
-
-
