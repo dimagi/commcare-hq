@@ -72,6 +72,7 @@ branches:
   - status-only-celery # ts 9/30
   - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
   - ota-restore-caching  # cory 10/3
+  - deploy-certain-pillows # ts 10/3
 submodules:
   submodules/couchlog-src:
     branches:
