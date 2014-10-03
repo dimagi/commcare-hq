@@ -2,7 +2,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
 from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
@@ -28,8 +27,6 @@ import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
-from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 
 
 
@@ -615,51 +612,6 @@ class EditProgramView(NewProgramView):
         return reverse(self.urlname, args=[self.domain, self.program_id])
 
 
-class ILSConfigView(BaseCommTrackManageView):
-    urlname = 'ils_config'
-    sync_urlname = 'sync_ilsgateway'
-    page_title = ugettext_noop("ILSGateway")
-    template_name = 'locations/facility_sync.html'
-    source = 'ilsgateway'
-
-    @cls_require_superuser_or_developer
-    def dispatch(self, request, *args, **kwargs):
-        return super(ILSConfigView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'settings': self.settings_context,
-            'source': self.source,
-            'sync_url': self.sync_urlname,
-            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username)
-        }
-
-    @property
-    def settings_context(self):
-        config = ILSGatewayConfig.for_domain(self.domain_object.name)
-
-        if config:
-            return {
-                "source_config": config._doc,
-            }
-        else:
-            return {
-                "source_config": ILSGatewayConfig()._doc
-            }
-
-    def post(self, request, *args, **kwargs):
-        payload = json.loads(request.POST.get('json'))
-        ils = ILSGatewayConfig.wrap(self.settings_context['source_config'])
-        ils.enabled = payload['source_config'].get('enabled', None)
-        ils.domain = self.domain_object.name
-        ils.url = payload['source_config'].get('url', None)
-        ils.username = payload['source_config'].get('username', None)
-        ils.password = payload['source_config'].get('password', None)
-        ils.save()
-        return self.get(request, *args, **kwargs)
-
-
 class FetchProductForProgramListView(EditProgramView):
     urlname = 'commtrack_product_for_program_fetch'
 
@@ -748,10 +700,3 @@ class SMSSettingsView(BaseCommTrackManageView):
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
-
-
-@domain_admin_required
-@require_POST
-def sync_ilsgateway(request, domain):
-    ils_bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')

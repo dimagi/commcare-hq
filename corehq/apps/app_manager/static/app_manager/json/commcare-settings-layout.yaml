@@ -59,6 +59,7 @@
     - properties.cc-show-saved
     - properties.cc-show-incomplete
     - properties.cc-resize-images
+    - properties.cc-fuzzy-search-enabled
     - hq.auto_gps_capture
 
 - title: 'Advanced'

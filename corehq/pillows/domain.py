@@ -1,3 +1,5 @@
+import copy
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.pillows.base import HQPillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
@@ -42,3 +44,12 @@ class DomainPillow(HQPillow):
         """
         return self.calc_mapping_hash({"es_meta": self.es_meta,
                                        "mapping": self.default_mapping})
+
+    def change_transform(self, doc_dict):
+        doc_ret = copy.deepcopy(doc_dict)
+        sub =  Subscription.objects.filter(
+                subscriber__domain=doc_dict['name'],
+                is_active=True)
+        if sub:
+            doc_ret['subscription'] = sub[0].plan_version.plan.edition
+        return doc_ret
