@@ -17,11 +17,10 @@ class CaseDataTests(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-        self.parent_case_id = 'mother_case_id'
         post_case_blocks([
             CaseBlock(
                 create=True,
-                case_id=self.parent_case_id,
+                case_id='mother_case_id',
                 case_type='mother-case',
                 version=V2,
             ).as_xml(format_datetime=None)
@@ -42,7 +41,7 @@ class CaseDataTests(TestCase):
                 date_modified=self.date_modified,
                 version=V2,
                 update={'foo': 'bar'},
-                index={'mom': ('mother-case', self.parent_case_id)}
+                index={'mom': ('mother-case', 'mother_case_id')}
             ).as_xml(format_datetime=None)
         ], {'domain': TEST_DOMAIN})
 
@@ -128,6 +127,17 @@ class CaseDataTests(TestCase):
         self.assertEqual('mother_case_id', indices[1].referenced_id)
 
     def test_empty_name(self):
-        parent_instance = CommCareCase.get(self.parent_case_id)
-        parent_casedata = CaseData.create_or_update_from_instance(parent_instance)
-        self.assertIsNotNone(parent_casedata)
+        case_id = 'case_with_no_name'
+        post_case_blocks([
+            CaseBlock(
+                create=True,
+                case_id=case_id,
+                case_type='nameless',
+                version=V2,
+            ).as_xml(format_datetime=None)
+        ], {'domain': TEST_DOMAIN})
+
+        instance = CommCareCase.get(case_id)
+        casedata = CaseData.create_or_update_from_instance(instance)
+        self.assertIsNotNone(casedata)
+        self.assertIsNone(casedata.name)
