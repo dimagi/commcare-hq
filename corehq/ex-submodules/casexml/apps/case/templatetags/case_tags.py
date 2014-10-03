@@ -204,15 +204,16 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
 def get_case_hierarchy(case, type_info):
     def get_children(case, referenced_type=None, seen=None):
         seen = seen or set()
+
+        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
+        if referenced_type and referenced_type in ignore_types:
+            return None
+
         seen.add(case._id)
         children = [
             get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
             if i.referenced_id not in seen
         ]
-
-        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
-        if referenced_type and referenced_type in ignore_types:
-            return None
 
         children = [c for c in children if c is not None]
 
