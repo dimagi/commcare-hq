@@ -24,6 +24,9 @@ class RebuildTableException(Exception):
 
 
 def catch_signal(app, **kwargs):
+    if settings.UNIT_TESTING:
+        return
+
     app_name = app.__name__.rsplit('.', 1)[0]
     if app_name == 'fluff':
         from fluff import FluffPillow
