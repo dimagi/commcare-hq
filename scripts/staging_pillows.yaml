@@ -1,0 +1,7 @@
+# This file can be used to include and exclude pillows from the _staging_ environment
+# The base list of pillows is the setting for PILLOWTOPS
+# During a deploy the blacklisted pillows will not have .conf files written for them
+
+# Add to this to prevent groups of pillows from running
+pillowtop_blacklist:
+  - fluff
