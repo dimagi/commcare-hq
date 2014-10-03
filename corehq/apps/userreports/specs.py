@@ -1,11 +1,10 @@
-from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
-
-# todo: all spec definitions will go here. moving them over piece meal when touched.
+from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty, JsonProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
 
 
+# todo: all spec definitions will go here. moving them over piece meal when touched.
 class IndicatorSpecBase(JsonObject):
     """
     Base class for indicator specs. All specs (for now) are assumed to have a column_id and
@@ -56,6 +55,15 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
 
 
+class FlexibleProperty(JsonProperty):
+
+    def wrap(self, obj):
+        return obj
+
+    def unwrap(self, obj):
+        return obj, obj
+
+
 def TypeProperty(value):
     """
     Shortcut for making a required property and restricting it to a single specified
@@ -73,7 +81,7 @@ class PropertyMatchFilterSpec(BaseFilterSpec):
     type = TypeProperty('property_match')
     property_name = StringProperty()
     property_path = ListProperty()
-    property_value = StringProperty(required=True)
+    property_value = FlexibleProperty(required=True)
 
     @property
     def getter(self):
