@@ -15,7 +15,8 @@ SQLAlchemy. Here's an example usage:
         .fields(['xmlns', 'domain', 'app_id'])\\
         .sort('received_on', desc=False)\\
         .size(self.pagination.count)\\
-        .start(self.pagination.start)
+        .start(self.pagination.start)\\
+        .terms_facet('babies.count', 'babies_saved', size=10)
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -166,6 +167,9 @@ class ESQuery(object):
 
     def terms_facet(self, term, name, size=None):
         return self.facet(facets.TermsFacet(term, name, size))
+
+    def date_histogram(self, name, datefield, interval):
+        return self.facet(facets.DateHistogram(name, datefield, interval))
 
     @property
     def _query(self):

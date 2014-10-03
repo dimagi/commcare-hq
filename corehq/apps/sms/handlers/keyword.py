@@ -4,6 +4,7 @@ from corehq.apps.sms.api import (
     add_msg_tags,
     send_sms_to_verified_number,
 )
+from dimagi.utils.logging import notify_exception
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.messages import *
@@ -318,8 +319,8 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
                 (field_name,))
         error_msg = "%s%s" % (error_msg, sse.response_text)
     except Exception:
-        logging.exception("Could not process structured sms for contact %s, "
-            "domain %s, keyword %s" % (contact_id, domain, keyword))
+        notify_exception(None, message=("Could not process structured sms for"
+            "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
         error_occurred = True
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
 

@@ -3,6 +3,7 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter)
 
 from django.utils.translation import ugettext_noop
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -30,57 +31,71 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     template = "opm/drilldown_options.html"
 
     @property
-    def filter_context(self):
-        context = super(OpmBaseDrilldownOptionFilter, self).filter_context
-        context.update({'single_option_select': self.single_option_select})
-        return context
-
-    hierarchy_config = {
-        'lvl_1': {
-            'prop': 'block',
-            'name': 'Block'
-        },
-        'lvl_2': {
-            'prop': 'gp',
-            'name': 'Gram Panchayat'
-        },
-        'lvl_3': {
-            'prop': 'awc',
-            'name': 'AWC'
-        }
-    }
+    def selected(self):
+        selected = super(OpmBaseDrilldownOptionFilter, self).selected
+        if selected:
+            return selected
+        return [["Atri"], ["0"]]
 
     @property
-    def drilldown_map(self):
-        hierarchy = helper = []
-        data = HierarchySqlData().get_data()
-        for val in data:
-            for lvl in ['block', 'gp', 'awc']:
-                tmp = dict(val=val[lvl], text=val[lvl], next=[])
-                tmp_next = []
-                exist = False
-                for item in hierarchy:
-                    if item['val'] == val[lvl]:
-                        exist = True
-                        tmp_next = item['next']
-                        break
-                if not exist:
-                    hierarchy.append(tmp)
-                    hierarchy = tmp['next']
-                else:
-                    hierarchy = tmp_next
-            hierarchy = helper
+    def filter_context(self):
+        controls = []
+        for level, label in enumerate(self.rendered_labels):
+            controls.append({
+                'label': label[0],
+                'slug': label[1],
+                'level': level,
+            })
+
+        return {
+            'option_map': self.drilldown_map,
+            'controls': controls,
+            'selected': self.selected,
+            'use_last': self.use_only_last,
+            'notifications': self.final_notifications,
+            'empty_text': self.drilldown_empty_text,
+            'is_empty': not self.drilldown_map,
+            'single_option_select': self.single_option_select
+        }
+
+    def get_hierarchy(self):
+        """
+        Creates a location hierarchy structured as follows:
+        hierarchy = {"Atri": {
+                        "Sahora": {
+                            "Sohran Bigha": None}}}
+        """
+        hierarchy = {}
+        for location in HierarchySqlData().get_data():
+            block = location['block']
+            gp = location['gp']
+            awc = location['awc']
+            if not (awc and gp and block):
+                continue
+            hierarchy[block] = hierarchy.get(block, {})
+            hierarchy[block][gp] = hierarchy[block].get(gp, {})
+            hierarchy[block][gp][awc] = None
         return hierarchy
+
+    @property
+    @memoized
+    def drilldown_map(self):
+        def make_drilldown(hierarchy):
+            return [{"val": "0", "text": "All", "next": []}] + [{
+                "val": current,
+                "text": current,
+                "next": make_drilldown(next_level) if next_level else []
+            } for current, next_level in hierarchy.items()]
+        return make_drilldown(self.get_hierarchy())
 
     @classmethod
     def get_labels(cls):
-        return [('Block', 'All', 'block'), ('Gram Panchayat', 'All', 'gp'), ('AWC', 'All', 'awc')]
-
+        return [('Block', 'block'), ('Gram Panchayat', 'gp'), ('AWC', 'awc')]
 
     @classmethod
     def _get_label_value(cls, request, label):
-        slug = str(label[2])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
         return {
             'slug': slug,
             'value': val,
@@ -91,6 +106,12 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
+    @property
+    def selected(self):
+        selected = super(OpmBaseDrilldownOptionFilter, self).selected
+        if selected:
+            return selected
+        return [["0"]]
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
@@ -98,15 +119,12 @@ class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
-    @classmethod
-    def get_labels(cls):
-        return [('Block', '', 'block'), ('Gram Panchayat', 'All', 'gp'), ('AWC', 'All', 'awc')]
-
     @property
     def drilldown_map(self):
         hierarchy = super(MetHierarchyFilter, self).drilldown_map
         met_hierarchy = [x for x in hierarchy if x['val'].lower() in ['atri', 'wazirganj']]
         return met_hierarchy
+
 
 class SelectBlockFilter(BaseSingleOptionFilter):
     slug = "block"
