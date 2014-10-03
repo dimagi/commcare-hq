@@ -61,6 +61,12 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
         else:
             return []
 
+    def validate(self, required=True):
+        super(IndicatorConfiguration, self).validate(required)
+        # these two functions implicitly call other validation
+        self.filter
+        self.indicators
+
     @classmethod
     def by_domain(cls, domain):
         return sorted(

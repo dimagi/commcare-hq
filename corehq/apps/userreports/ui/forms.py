@@ -83,9 +83,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 return
         try:
             config = self.populate_instance(self.instance, cleaned_data)
-            # these two functions will do all the validation we need
-            config.filter
-            config.indicators
+            config.validate()
         except Exception, e:
             raise ValidationError(_(u'Problem with data source spec: {}').format(e))
         return cleaned_data
