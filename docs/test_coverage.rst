@@ -4,7 +4,7 @@ Analyzing Test Coverage
 This page goes over some basic ways to analyze code coverage locally.
 
 Using coverage.py
---------------
+-----------------
 
 First thing is to install the coverage.py library::
 
