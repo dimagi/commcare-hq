@@ -1336,7 +1336,7 @@ class SQLProduct(models.Model):
     This is used to efficiently filter StockState and other
     SQL based queries to exclude data for archived products.
     """
-    domain = models.CharField(max_length=100, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
