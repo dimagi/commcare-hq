@@ -20,10 +20,20 @@ register = template.Library()
 
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
+
 def wrapped_case(case):
     json = case.to_json()
     case_class = CommCareCase.get_wrap_class(json)
     return case_class.wrap(case.to_json())
+
+
+def normalize_date(val):
+    # Can't use isinstance since datetime is a subclass of date.
+    if type(val) == datetime.date:
+        return datetime.datetime.combine(val, datetime.time.min)
+
+    return val
+
 
 @register.simple_tag
 def render_case(case, options):
@@ -111,10 +121,7 @@ def sortkey(child, type_info=None):
         key = [1]
         try:
             for attr, direction in type_info[case.type]['closed_sortkeys']:
-                val = getattr(case, attr)
-                if isinstance(val, datetime.date):
-                    val = datetime.datetime.combine(val, datetime.datetime.min.time())
-
+                val = normalize_date(getattr(case, attr))
                 if direction.lower() == 'desc':
                     val = get_inverse(val)
                 key.append(val)
@@ -124,10 +131,7 @@ def sortkey(child, type_info=None):
         key = [0]
         try:
             for attr, direction in type_info[case.type]['open_sortkeys']:
-                val = getattr(case, attr)
-                if isinstance(val, datetime.date):
-                    val = datetime.datetime.combine(val, datetime.datetime.min.time())
-
+                val = normalize_date(getattr(case, attr))
                 if direction.lower() == 'desc':
                     val = get_inverse(val)
                 key.append(val)
