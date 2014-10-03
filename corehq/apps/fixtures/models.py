@@ -21,13 +21,20 @@ class FixtureDataType(Document):
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
+    item_attributes = StringListProperty()
 
     @classmethod
     def wrap(cls, obj):
         if not obj["doc_type"] == "FixtureDataType":
             raise ResourceNotFound
+        # Migrate fixtures without attributes on item-fields to fields with attributes
         if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
+        
+        # Migrate fixtures without attributes on items to items with attributes
+        if 'item_attributes' not in obj:
+            obj['item_attributes'] = []
+
         return super(FixtureDataType, cls).wrap(obj)
 
     # support for old fields
@@ -131,6 +138,7 @@ class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
     fields = DictProperty(FieldList)
+    item_attributes = DictProperty()
     sort_key = IntegerProperty()
 
     @classmethod
@@ -140,6 +148,8 @@ class FixtureDataItem(Document):
         if not obj["fields"]:
             return super(FixtureDataItem, cls).wrap(obj)
         
+        # Migrate old basic fields to fields with attributes
+
         is_of_new_type = False
         fields_dict = {}
 
@@ -161,6 +171,11 @@ class FixtureDataItem(Document):
             }
         if not is_of_new_type:
             obj['fields'] = fields_dict
+
+        # Migrate fixture-items to have attributes
+        if 'item_attributes' not in obj:
+            obj['item_attributes'] = {}
+
         return super(FixtureDataItem, cls).wrap(obj)
 
     @property
@@ -242,6 +257,16 @@ class FixtureDataItem(Document):
 
     def to_xml(self):
         xData = ElementTree.Element(self.data_type.tag)
+        for attribute in self.data_type.item_attributes:
+            try:
+                xData.attrib[attribute] = self.item_attributes[attribute]
+            except KeyError as e:
+                # This should never occur, buf if it does, the OTA restore on mobile will fail and
+                # this error would have been raised and email-logged.
+                raise FixtureTypeCheckError(
+                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
+                    % (self.data_type.tag, self.get_id)
+                )
         for field in self.data_type.fields:
             if not self.fields.has_key(field.field_name):
                 xField = ElementTree.SubElement(xData, field.field_name)
