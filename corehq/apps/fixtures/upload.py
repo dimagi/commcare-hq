@@ -73,7 +73,7 @@ class FixtureUploadResult(object):
         self.number_of_fixtures = 0
 
 
-class FixtureTableDefinitition(object):
+class FixtureTableDefinition(object):
 
     def __init__(self, table_id, fields, item_attributes, is_global, uid, delete):
         self.table_id = table_id
@@ -120,10 +120,10 @@ class FixtureTableDefinitition(object):
             ) for i, field in enumerate(field_names)
         ]
 
-        return FixtureTableDefinitition(
+        return FixtureTableDefinition(
             table_id=tag,
             fields=fields,
-            item_attributes = item_attributes,
+            item_attributes=item_attributes,
             is_global=row_dict.get('is_global', False),
             uid=row_dict.get('UID'),
             delete=(row_dict.get(DELETE_HEADER) or '').lower() == 'y',
@@ -157,7 +157,7 @@ class FixtureWorkbook(object):
         type_sheets = []
         seen_tags = set()
         for number_of_fixtures, dt in enumerate(self.get_types_sheet()):
-            table_definition = FixtureTableDefinitition.from_row(dt)
+            table_definition = FixtureTableDefinition.from_row(dt)
             if table_definition.table_id in seen_tags:
                 raise DuplicateFixtureTagException(
                     _(FAILURE_MESSAGES['duplicate_tag']).format(tag=table_definition.table_id))
