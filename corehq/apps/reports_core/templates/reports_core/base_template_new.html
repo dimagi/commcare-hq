@@ -54,7 +54,6 @@
                 data: postData,
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
-                    reportTables.render();
                     if (graphSpecs !== null && graphSpecs.length > 0) {
                         // draw graph
                         charts.render(graphSpecs, data.aaData, $("#chart-container"));
