@@ -191,6 +191,7 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:
+        raise
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
@@ -358,7 +359,7 @@ def run_upload(domain, workbook, replace=False, task=None):
                             field_list=field_list
                         )
 
-                item_attributes = di.get('property', [])
+                item_attributes = di.get('property', {})
                 new_data_item = FixtureDataItem(
                     domain=domain,
                     data_type_id=data_type.get_id,
