@@ -182,7 +182,7 @@ class CaseData(BaseDataIndex):
                 "case id %s!" % (self.case_id, case_id)
             )
 
-        if len(case.name) > CASE_NAME_LEN:
+        if case.name and len(case.name) > CASE_NAME_LEN:
             name = case.name[:CASE_NAME_LEN-3] + '...'
         else:
             name = case.name
