@@ -129,6 +129,18 @@ class ConventureData(BaseSqlData):
             self.show_total = True
         return columns
 
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+
+        #Months are displayed in chronological order
+        if 'month' in self.group_by:
+            from custom.intrahealth.reports import get_localized_months
+            return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
+
+        return rows
+
     def calculate_total_row(self, rows):
         total_row = super(ConventureData, self).calculate_total_row(rows)
         if len(total_row) != 0:

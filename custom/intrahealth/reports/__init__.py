@@ -1,9 +1,18 @@
 # coding=utf-8
+import calendar
 from corehq.apps.commtrack.models import Product
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
+from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
+from django.utils.translation import ugettext as _
+
+
+def get_localized_months():
+    #Returns chronological list of months in french language
+    with localize('fr'):
+        return [(_(calendar.month_name[i])).title() for i in xrange(1, 13)]
 
 
 class IntraHealthLocationMixin(object):
