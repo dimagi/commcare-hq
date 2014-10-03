@@ -125,3 +125,19 @@ class CaseDataTests(TestCase):
         self.assertEqual('mom', indices[1].identifier)
         self.assertEqual('mother-case', indices[1].referenced_type)
         self.assertEqual('mother_case_id', indices[1].referenced_id)
+
+    def test_empty_name(self):
+        case_id = 'case_with_no_name'
+        post_case_blocks([
+            CaseBlock(
+                create=True,
+                case_id=case_id,
+                case_type='nameless',
+                version=V2,
+            ).as_xml(format_datetime=None)
+        ], {'domain': TEST_DOMAIN})
+
+        instance = CommCareCase.get(case_id)
+        casedata = CaseData.create_or_update_from_instance(instance)
+        self.assertIsNotNone(casedata)
+        self.assertIsNone(casedata.name)
