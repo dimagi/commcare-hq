@@ -3,11 +3,11 @@ from collections import defaultdict
 from copy import deepcopy
 import json
 import uuid
-from casexml.apps.case import const
-from casexml.apps.phone.xml import get_case_xml
-from corehq.apps.hqcase.utils import submit_case_blocks
+
+from corehq.apps.hqcase.utils import submit_case_blocks, make_creating_casexml
 from corehq.apps.users.models import CommCareUser
 from django.contrib import messages
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -64,13 +64,11 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
                 include_docs=True,
                 reduce=False
             ):
-                # we'll be screwing with this guy, so make him unsaveable
-                case.save = None
                 for i in range(factor - 1):
+                    new_case_id = uuid.uuid4().hex
+                    case_block, attachments = make_creating_casexml(case, new_case_id)
+                    submit_case_blocks(case_block, domain, attachments=attachments)
 
-                    case._id = uuid.uuid4().hex
-                    case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
-                    submit_case_blocks(case_block, domain)
             messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
 
     return render(request, template, {

@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>Doc {{ doc_id }} {{ status }}</title>
+    </head>
+    <body>
+        <h1>Enter a doc id</h1>
+        <form method="GET" action="">
+            <input name="id" type="text"/>
+            <input type="submit"/>
+        </form>
+        <hr/>
+        {% if doc_id %}
+            <h3>Doc {{ doc_id }} {{ status }}</h3>
+            <p>
+                Doc type: {{ doc_type }}
+            </p>
+            <h3>
+                Elasticsearch Doc:
+            </h3>
+            <pre>{{ es_doc }}</pre>
+            <h3>
+                Couch Doc:
+            </h3>
+            <pre>{{ couch_doc }}</pre>
+        {% endif %}
+    </body>
+</html>

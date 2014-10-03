@@ -34,7 +34,10 @@ class Command(BaseCommand):
         deploy.save()
 
         #  reset PillowTop errors in the hope that a fix has been deployed
-        PillowError.bulk_reset_attempts(datetime.utcnow())
+        rows_updated = PillowError.bulk_reset_attempts(datetime.utcnow())
+        if rows_updated:
+            print "\n---------------- Pillow Errors Reset ----------------\n" \
+                  "{} pillow errors queued for retry\n".format(rows_updated)
 
         if options['mail_admins']:
             snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})

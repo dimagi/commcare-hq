@@ -274,28 +274,24 @@ var AdvancedCase = (function () {
             return action;
         }));
 
-        self.actionOptions = ko.computed(function () {
-            var options = [];
-            if (self.load_update_cases().length <= 2) {
-                options.push({
-                    display: 'Load / Update / Close a case',
-                    value: 'load'
-                });
-                options.push({
-                    display: 'Automatic Case Selection',
-                    value: 'auto_select'
-                });
-                options.push({
-                    display: '---',
-                    value: 'separator'
-                });
-            }
-            options.push({
+        self.actionOptions = ko.observableArray([
+            {
+                display: 'Load / Update / Close a case',
+                value: 'load'
+            },
+            {
+                display: 'Automatic Case Selection',
+                value: 'auto_select'
+            },
+            {
+                display: '---',
+                value: 'separator'
+            },
+            {
                 display: 'Open a Case',
                 value: 'open'
-            });
-            return options;
-        });
+            }
+        ]);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.open_cases();

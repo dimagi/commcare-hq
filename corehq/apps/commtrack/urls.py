@@ -5,7 +5,7 @@ from corehq.apps.commtrack.views import (
     ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,
     FetchProductForProgramListView, DefaultConsumptionView, UploadProductView,
     ProductImportStatusView, SMSSettingsView, CommTrackSettingsView,
-    ILSConfigView)
+)
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
     url(r'^api/supply_point_query/$', 'api_query_supply_point'),
@@ -33,6 +33,4 @@ settings_urls = patterns('corehq.apps.commtrack.views',
         name=FetchProductForProgramListView.urlname),
     url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
     url(r'^sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
-    url(r'^ils_config/$', ILSConfigView.as_view(), name=ILSConfigView.urlname),
-    url(r'^sync_ilsgateway/$', 'sync_ilsgateway', name='sync_ilsgateway'),
 )
