@@ -21,7 +21,7 @@ setup(
         'alembic==0.6.0'
     ],
     tests_require=[
-        'django',
+        'django==1.5.6',
         'unittest2',
         'fakecouch>=0.0.3',
         'psycopg2>=2.4.1',
