@@ -33,6 +33,7 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 # for rapid iteration on fixtures/cases/etc.
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
+
 class StockSettings(object):
 
     def __init__(self, section_to_consumption_types=None, consumption_config=None,
