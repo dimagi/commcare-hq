@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.reports.views import calculate_hour, recalculate_hour, calculate_day
 
 
