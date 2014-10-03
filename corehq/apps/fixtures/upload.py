@@ -191,7 +191,6 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:
-        raise
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
