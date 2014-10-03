@@ -9,7 +9,7 @@ class Command(LabelCommand):
 
     def handle(self, *args, **options):
         if len(args) < 1:
-            raise CommandError('Usage is copy_doc %s' % self.args)
+            raise CommandError('Usage is rebuild_indicator_table %s' % self.args)
 
         config_id = args[0]
         tasks.rebuild_indicators(config_id)
