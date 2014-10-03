@@ -1,8 +1,5 @@
-from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
-from django.http import Http404
-from jsonobject.exceptions import WrappingAttributeError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
