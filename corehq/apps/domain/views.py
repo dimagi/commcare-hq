@@ -276,7 +276,6 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
-            'ota_restore_caching': self.domain_object.ota_restore_caching,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
@@ -343,7 +342,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'restrict_superusers',
-                'ota_restore_caching',
                 'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)

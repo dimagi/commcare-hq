@@ -428,16 +428,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
-    ota_restore_caching = BooleanField(
-        label=_("Enable Restore Caching (beta)"),
-        required=False,
-        help_text=_(
-            "Speed up phone restores. Useful if you have users with "
-            "large case lists and are getting timeouts during restore. "
-            "This feature is still in testing. Don't enable unless "
-            "you are an advanced user."
-        )
-    )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
         required=False,
@@ -519,7 +509,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-            domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
