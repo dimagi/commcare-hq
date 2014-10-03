@@ -1,3 +1,4 @@
+import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
@@ -49,7 +50,10 @@ class FilterFactory(object):
         try:
             return cls.constructor_map[spec['type']](spec)
         except (AssertionError, BadValueError), e:
-            raise BadSpecError(str(e))
+            raise BadSpecError(_('Problem creating filter from spec: {}, message is {}').format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
 
     @classmethod
     def validate_spec(self, spec):
