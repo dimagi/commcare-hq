@@ -19,11 +19,6 @@ $(function() {
             moment().subtract('days', '30').startOf('days')
         ];
 
-        ranges[range_labels['last_quarter']] = [
-            moment().subtract('days', '1').endOf('days').subtract('months', '2').startOf('month')
-        ];
-
-
         $(this).daterangepicker({
             format: 'YYYY-MM-DD',
             showDropdowns: true,

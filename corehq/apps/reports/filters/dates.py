@@ -1,3 +1,6 @@
+from dateutil import parser
+import datetime
+import logging
 import simplejson
 from corehq.apps.reports.filters.base import BaseReportFilter
 
@@ -5,6 +8,9 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from dimagi.utils.dates import DateSpan
+from corehq.elastic import es_query
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+
 
 class DatespanFilter(BaseReportFilter):
     """
@@ -40,6 +46,35 @@ class DatespanFilter(BaseReportFilter):
         return simplejson.dumps({
                     'last_7_days': _('Last 7 Days'),
                     'last_month': _('Last Month'),
-                    'last_30_days': _('Last 30 Days'),
-                    'last_quarter': _('Last Quarter')
+                    'last_30_days': _('Last 30 Days')
                 })
+
+
+class SubmitHistoryDatespanFilter(DatespanFilter):
+
+    @property
+    def default_days(self):
+        days = 30
+        q = { "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "and": [
+                            {"term": { "domain.exact": self.domain }},
+                        ]
+                    }
+                }
+            },
+            'sort': [{'received_on': {"order": "asc"}}]
+        }
+        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
+        es_results = es_query(q=q, es_url=XFORM_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+
+        if len(es_results) > 0:
+            print 1
+            start_date = parser.parse(es_results[0]['_source']['received_on']).replace(tzinfo=self.timezone)
+            end_date = datetime.datetime.now(self.timezone)
+            days = (end_date - start_date).days
+        return days
