@@ -54,7 +54,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 return
         try:
             config = self.populate_instance(self.instance, cleaned_data)
-            ReportFactory.from_spec(config)
+            config.validate()
         except Exception, e:
             raise ValidationError(_(u'Problem with report spec: {}').format(e))
         return cleaned_data
