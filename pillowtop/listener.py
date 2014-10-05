@@ -373,7 +373,8 @@ class PythonPillow(BasicPillow):
     """
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
-                 checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY):
+                 checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
+                 couch_db=None):
         """
         Use chunk_size = 0 to disable chunking
         """
@@ -383,7 +384,9 @@ class PythonPillow(BasicPillow):
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
-        if self.document_class:
+        if couch_db:
+            self.couch_db = couch_db
+        elif self.document_class:
             if self.use_chunking:
                 self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
             else:
