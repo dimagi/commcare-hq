@@ -22,10 +22,15 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
     display_name = StringProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
+    named_filters = DictProperty()
 
     @property
     def filter(self):
-        extras = [FilterFactory.from_spec(self.configured_filter)] if self.configured_filter else []
+        extras = (
+            [FilterFactory.from_spec(self.configured_filter,
+                                     self.named_filter_objects)]
+            if self.configured_filter else []
+        )
         return ANDFilter([
             SinglePropertyValueFilter(
                 getter=DictGetter('domain'),
@@ -41,6 +46,12 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
         )
 
     @property
+    @memoized
+    def named_filter_objects(self):
+        return {name: FilterFactory.from_spec(filter, {})
+                for name, filter in self.named_filters.items()}
+
+    @property
     def indicators(self):
         doc_id_indicator = IndicatorFactory.from_spec({
             "column_id": "doc_id",
@@ -50,10 +61,13 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
             "property_name": "_id",
             "is_nullable": False,
             "is_primary_key": True,
-        })
+        }, self.named_filter_objects)
         return CompoundIndicator(
             self.display_name,
-            [doc_id_indicator] + [IndicatorFactory.from_spec(indicator) for indicator in self.configured_indicators]
+            [doc_id_indicator] + [
+                IndicatorFactory.from_spec(indicator, self.named_filter_objects)
+                for indicator in self.configured_indicators
+            ]
         )
 
     def get_columns(self):

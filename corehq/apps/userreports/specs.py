@@ -56,17 +56,17 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
 
 
-def TypeProperty(value):
-    """
-    Shortcut for making a required property and restricting it to a single specified
-    value. This adds additional validation that the objects are being wrapped as expected
-    according to the type.
-    """
-    return StringProperty(required=True, choices=[value])
-
-
 class BaseFilterSpec(JsonObject):
     _allow_dynamic_properties = False
+
+
+def _getter_from_property_reference(spec):
+    if spec.property_name:
+        assert not spec.property_path
+        return DictGetter(property_name=spec.property_name)
+    else:
+        assert spec.property_path
+        return NestedDictGetter(property_path=spec.property_path)
 
 
 class PropertyMatchFilterSpec(BaseFilterSpec):
@@ -85,10 +85,6 @@ class NotFilterSpec(BaseFilterSpec):
     filter = DictProperty()  # todo: validators=FilterFactor.validate_spec
 
 
-def _getter_from_property_reference(spec):
-    if spec.property_name:
-        assert not spec.property_path
-        return DictGetter(property_name=spec.property_name)
-    else:
-        assert spec.property_path
-        return NestedDictGetter(property_path=spec.property_path)
+class NamedFilterSpec(BaseFilterSpec):
+    type = TypeProperty('named')
+    name = StringProperty(required=True)

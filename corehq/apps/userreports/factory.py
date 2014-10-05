@@ -2,7 +2,7 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec
+    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
@@ -10,7 +10,7 @@ from corehq.apps.userreports.logic import EQUAL
 from fluff.filters import ANDFilter, ORFilter, CustomFilter, NOTFilter
 
 
-def _build_compound_filter(spec):
+def _build_compound_filter(spec, context):
     compound_type_map = {
         'or': ORFilter,
         'and': ANDFilter,
@@ -23,16 +23,16 @@ def _build_compound_filter(spec):
     elif not isinstance(spec.get('filters'), list):
         raise BadSpecError(_('{0} filter type must include a "filters" list'.format(spec['type'])))
 
-    filters = [FilterFactory.from_spec(subspec) for subspec in spec['filters']]
+    filters = [FilterFactory.from_spec(subspec, context) for subspec in spec['filters']]
     return compound_type_map[spec['type']](filters)
 
 
-def _build_not_filter(spec):
+def _build_not_filter(spec, context):
     wrapped = NotFilterSpec.wrap(spec)
-    return NOTFilter(FilterFactory.from_spec(wrapped.filter))
+    return NOTFilter(FilterFactory.from_spec(wrapped.filter, context))
 
 
-def _build_property_match_filter(spec):
+def _build_property_match_filter(spec, context):
     wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
         getter=wrapped.getter,
@@ -41,19 +41,25 @@ def _build_property_match_filter(spec):
     )
 
 
+def _build_named_filter(spec, context):
+    wrapped = NamedFilterSpec.wrap(spec)
+    return context[wrapped.name]
+
+
 class FilterFactory(object):
     constructor_map = {
         'property_match': _build_property_match_filter,
         'and': _build_compound_filter,
         'or': _build_compound_filter,
         'not': _build_not_filter,
+        'named': _build_named_filter,
     }
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, context=None):
         cls.validate_spec(spec)
         try:
-            return cls.constructor_map[spec['type']](spec)
+            return cls.constructor_map[spec['type']](spec, context)
         except (AssertionError, BadValueError) as e:
             raise BadSpecError(_('Problem creating filter from spec: {}, message is {}').format(
                 json.dumps(spec, indent=2),
@@ -70,7 +76,7 @@ class FilterFactory(object):
             )))
 
 
-def _build_count_indicator(spec):
+def _build_count_indicator(spec, context):
     wrapped = IndicatorSpecBase.wrap(spec)
     return BooleanIndicator(
         wrapped.display_name,
@@ -79,7 +85,7 @@ def _build_count_indicator(spec):
     )
 
 
-def _build_raw_indicator(spec):
+def _build_raw_indicator(spec, context):
     wrapped = RawIndicatorSpec.wrap(spec)
     column = Column(
         id=wrapped.column_id,
@@ -94,16 +100,16 @@ def _build_raw_indicator(spec):
     )
 
 
-def _build_boolean_indicator(spec):
+def _build_boolean_indicator(spec, context):
     wrapped = BooleanIndicatorSpec.wrap(spec)
     return BooleanIndicator(
         wrapped.display_name,
         wrapped.column_id,
-        FilterFactory.from_spec(wrapped.filter),
+        FilterFactory.from_spec(wrapped.filter, context),
     )
 
 
-def _build_choice_list_indicator(spec):
+def _build_choice_list_indicator(spec, context):
     wrapped_spec = ChoiceListIndicatorSpec.wrap(spec)
     base_display_name = wrapped_spec.display_name
 
@@ -136,10 +142,10 @@ class IndicatorFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, context=None):
         cls.validate_spec(spec)
         try:
-            return cls.constructor_map[spec['type']](spec)
+            return cls.constructor_map[spec['type']](spec, context)
         except BadValueError, e:
             # for now reraise jsonobject exceptions as BadSpecErrors
             raise BadSpecError(str(e))

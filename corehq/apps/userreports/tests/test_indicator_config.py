@@ -131,3 +131,51 @@ class IndicatorConfigurationDbTest(TestCase):
             BadValueError,
             IndicatorConfiguration(domain='domain', table_id='table').save
         )
+
+
+class IndicatorNamedFilterTest(SimpleTestCase):
+    def setUp(self):
+        self.indicator_configuration = IndicatorConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'IndicatorConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_filters': {
+                'pregnant': {
+                    'type': 'property_match',
+                    'property_name': 'mother_state',
+                    'property_value': 'pregnant',
+                }
+            },
+            'configured_filter': {
+                'type': 'and',
+                'filters': [
+                    {
+                        'property_name': 'type',
+                        'property_value': 'ttc_mother',
+                        'type': 'property_match',
+                    },
+                    {
+                        'type': 'named',
+                        'name': 'pregnant',
+                    }
+                ]
+            }
+        })
+
+    def test_match(self):
+        self.assertTrue(self.indicator_configuration.filter.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant'
+        }))
+
+    def test_no_match(self):
+        self.assertFalse(self.indicator_configuration.filter.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'not pregnant'
+        }))

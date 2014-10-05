@@ -221,3 +221,28 @@ class ConfigurableNOTFilterTest(SimpleTestCase):
 
     def testFilterNoMatch(self):
         self.assertFalse(self.filter.filter(dict(foo='bar')))
+
+
+class ConfigurableNamedFilterTest(SimpleTestCase):
+
+    def setUp(self):
+        self.filter = FilterFactory.from_spec(
+            {'type': 'named', 'name': 'foo'},
+            {
+                'foo': FilterFactory.from_spec({
+                    "type": "not",
+                    "filter": {
+                        "type": "property_match",
+                        "property_name": "foo",
+                        "property_value": "bar"
+                    }
+                })
+            }
+        )
+        self.assertTrue(isinstance(self.filter, NOTFilter))
+
+    def testFilterMatch(self):
+        self.assertTrue(self.filter.filter(dict(foo='not bar')))
+
+    def testFilterNoMatch(self):
+        self.assertFalse(self.filter.filter(dict(foo='bar')))
