@@ -6,11 +6,16 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
-from corehq.apps.userreports.sql import get_indicator_table
+from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
 from corehq.util.couch import get_document_or_404
+
+
+@domain_admin_required
+def configurable_reports_home(request, domain):
+    return render(request, 'userreports/configurable_reports_home.html', _shared_context(domain))
 
 
 @domain_admin_required
@@ -30,7 +35,7 @@ def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
     config.delete()
     messages.success(request, _(u'Report "{}" deleted!').format(config.display_name))
-    return HttpResponseRedirect(reverse('create_configurable_report', args=[domain]))
+    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
 def _edit_report_shared(request, domain, config):
@@ -79,13 +84,24 @@ def _edit_data_source_shared(request, domain, config):
 
 @domain_admin_required
 @require_POST
+def delete_data_source(request, domain, config_id):
+    config = get_document_or_404(IndicatorConfiguration, domain, config_id)
+    adapter = IndicatorSqlAdapter(get_engine(), config)
+    adapter.drop_table()
+    config.delete()
+    messages.success(request,
+                     _('Data source "{}" has been deleted.'.format(config.display_name)))
+    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+
+
+@domain_admin_required
+@require_POST
 def rebuild_data_source(request, domain, config_id):
     config = get_document_or_404(IndicatorConfiguration, domain, config_id)
     messages.success(request,
                      _('Table "{}" is now being rebuilt. Data should start showing up soon'.format(config.display_name)))
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
-
 
 @domain_admin_required
 def preview_data_source(request, domain, config_id):
