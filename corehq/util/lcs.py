@@ -1,6 +1,7 @@
 class LCSCache(object):
     def __init__(self):
         self.d = {}
+
     def get(self, i, j):
         key = str(i)+' '+str(j)
         try:
@@ -11,17 +12,19 @@ class LCSCache(object):
             }
         except KeyError:
             return None
+
     def set(self, i, j, val):
         key = str(i)+' '+str(j)
         self.d[key] = val
 
+
 def lcsMerge(X, Y, equality_func=None):
     # Duplicated from here:
     # https://github.com/dimagi/commcare-hq/blob/7cec2e62ea84e996ec1bb5fa2dda128be304ae1c/corehq/apps/app_manager/static/app_manager/js/lcs-merge.js
-    if equality_func == None:
+    if equality_func is None:
         equality_func = lambda x, y: x == y
-
     cache = LCSCache()
+
     def recLcsMerge(i, j):
         recur = recLcsMerge
         val = cache.get(i,j)
@@ -34,10 +37,10 @@ def lcsMerge(X, Y, equality_func=None):
             }
         elif i == 0:
             val = recur(i, j-1)
-            val['merge'].append({"x":False, "y":True, "token": Y[j-1]})
+            val['merge'].append({"x": False, "y": True, "token": Y[j-1]})
         elif j == 0:
             val = recur(i-1, j)
-            val['merge'].append({'x':True, 'y': False, 'token': X[i - 1]})
+            val['merge'].append({'x': True, 'y': False, 'token': X[i - 1]})
         elif equality_func(X[i-1], Y[j-1]):
             val = recur(i - 1, j - 1);
             val['lcs_length'] = val['lcs_length'] + 1
@@ -45,12 +48,12 @@ def lcsMerge(X, Y, equality_func=None):
         else:
             val1 = recur(i, j-1)
             val2 = recur(i -1, j)
-            if (val2['lcs_length'] > val1['lcs_length']):
+            if val2['lcs_length'] > val1['lcs_length']:
                 val = val2
-                val['merge'].append({"x":True, "y":False, "token": X[i-1]})
+                val['merge'].append({"x": True, "y": False, "token": X[i-1]})
             else:
                 val = val1
-                val['merge'].append({'x': False, 'y':True, 'token': Y[j-1]})
+                val['merge'].append({'x': False, 'y': True, 'token': Y[j-1]})
         cache.set(i, j, val)
         return cache.get(i, j)
     return recLcsMerge(len(X), len(Y))['merge']
