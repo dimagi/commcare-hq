@@ -42,3 +42,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
         for table in self.tables:
             if table.config.filter.filter(doc):
                 table.save(doc)
+
+    def set_checkpoint(self, change):
+        # override this to rebootstrap the tables
+        super(ConfigurableIndicatorPillow, self).set_checkpoint(change)
+
+        # todo: may want to consider adjusting the frequency or using another mechanism for this
+        self.bootstrap()
