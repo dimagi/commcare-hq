@@ -22,6 +22,8 @@ import logging
 
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 
+
+
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
@@ -293,5 +295,5 @@ TABS = (
     AdminTab,
     SGExampleTab,
 )
-
+    
 from corehq.db import Session
