@@ -3,8 +3,10 @@
 {% load crispy_forms_tags_b3 %}
 {% block main_column %}
     {% crispy_b3 form %}
+{% if data_source.get_id %}
 <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
     <input type="submit" value="{% trans 'Rebuild Data Source'%}" class="btn disable-on-submit">
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn">{% trans 'Preview data' %}</a>
 </form>
+{% endif %}
 {% endblock %}
