@@ -1308,17 +1308,17 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 @require_can_edit_apps
 def edit_module_detail_screens(req, domain, app_id, module_id):
     """
-    Called to over write entire detail screens at a time
-
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
     """
     params = json_request(req.POST)
     detail_type = params.get('type')
-    screens = params.get('screens')
-    parent_select = params.get('parent_select')
-    sort_elements = screens['sort_elements']
-
-    if not screens:
-        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    short = params.get('short', None)
+    long = params.get('long', None)
+    filter = params.get('filter', None)
+    parent_select = params.get('parent_select', None)
+    sort_elements = params.get('sort_elements', None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1335,8 +1335,20 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         except AttributeError:
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-    detail.short.columns = map(DetailColumn.wrap, screens['short'])
-    detail.long.columns = map(DetailColumn.wrap, screens['long'])
+    if short:
+        #TODO: Filter might get erased!
+        #      If short is provided but filter is not, then the filter will be lost.
+        detail.short.columns = map(DetailColumn.wrap, short)
+    if long:
+        detail.long.columns = map(DetailColumn.wrap, long)
+    if filter and filter.get('filter_xpath', None):
+        # TODO: Might add multiple filters by mistake!
+        #       If short is not provided and there was already a filter in the short list,
+        #       then a second filter will be appended to the list.
+        # TODO: Filter should probably take a field and header as well?
+        column = DetailColumn.wrap(filter)
+        column.model = detail_type
+        detail.short.columns.append(column)
 
     detail.short.sort_elements = []
     for sort_element in sort_elements:

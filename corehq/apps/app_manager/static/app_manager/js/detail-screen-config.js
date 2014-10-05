@@ -282,9 +282,6 @@ var DetailScreenConfig = (function () {
             this.screen = screen;
             this.lang = screen.lang;
 
-            this.includeInShort = uiElement.checkbox().val(orDefault(this.original.includeInShort, true));
-            this.includeInLong = uiElement.checkbox().val(orDefault(this.original.includeInLong, true));
-
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
@@ -344,8 +341,6 @@ var DetailScreenConfig = (function () {
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
             elements = [
-                'includeInShort',
-                'includeInLong',
                 'model',
                 'field',
                 'header',
@@ -428,9 +423,8 @@ var DetailScreenConfig = (function () {
             duplicate: function () {
                 this.screen.fire('add-column', this);
             },
-            serialize: function (keepShortLong) {
+            serialize: function () {
                 var column = this.original;
-//                column.model = this.model.val();
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
@@ -439,13 +433,6 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
-                if (!keepShortLong) {
-                    delete column.includeInShort;
-                    delete column.includeInLong;
-                } else {
-                    column.includeInShort = this.includeInShort.val();
-                    column.includeInLong = this.includeInLong.val();
-                }
                 return column;
             },
             setGrip: function (grip) {
@@ -491,7 +478,10 @@ var DetailScreenConfig = (function () {
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
-            this.columnType = options.columnType;
+            // The column key is used to retreive the columns from the spec and
+            // as the name of the key in the data object that is sent to the
+            // server on save.
+            this.columnKey = options.columnKey;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -505,8 +495,6 @@ var DetailScreenConfig = (function () {
             //      going on here?
 
             this.initColumnAsColumn = function (column) {
-                column.includeInShort.setEdit(that.edit);
-                column.includeInLong.setEdit(that.edit);
                 column.model.setEdit(false);
                 column.field.setEdit(that.edit);
                 column.header.setEdit(that.edit);
@@ -519,7 +507,6 @@ var DetailScreenConfig = (function () {
                 column.setGrip(true);
                 column.on('change', that.fireChange);
 
-                // Set up autocomplete
                 column.field.on('change', function () {
                     column.header.val(getPropertyTitle(this.val()));
                     if (this.val() && !field_val_re.test(this.val())) {
@@ -532,26 +519,17 @@ var DetailScreenConfig = (function () {
                 return column;
             };
 
-            var longColumns = spec.long ? spec.long.columns : [];
-            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
-            // Only display columns from the long list or the short list (as is
-            // appropriate given this.columnType)
+            columns = spec[this.columnKey].columns;
+
+            // Filters are a type of DetailColumn on the server. Don't display
+            // them with the other columns though
             columns = _.filter(columns, function(col){
-                if (this.columnType == "short" && col.x){
-                    return true;
-                } else if (this.columnType == "long" && col.y){
-                    return true;
-                }
-                return false;
-            }, this);
+                return col.format != "filter";
+            });
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
-                column = columns[i].token;
-                column.includeInShort = columns[i].x;
-                column.includeInLong = columns[i].y;
-
-                this.columns[i] = Column.init(column, this);
+                this.columns[i] = Column.init(columns[i], this);
                 that.initColumnAsColumn(this.columns[i]);
             }
 
@@ -612,22 +590,11 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
-                var parentSelect;
-                if (this.config.hasOwnProperty('parentSelect')) {
-                    parentSelect = JSON.stringify({
-                        module_id: this.config.parentSelect.moduleId(),
-                        relationship: 'parent',
-                        active: this.config.parentSelect.active()
-                    });
-                }
+
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
-                    data: {
-                        type: this.type,
-                        screens: JSON.stringify(this.serialize()),
-                        parent_select: parentSelect
-                    },
+                    data: this.serialize(),
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -635,23 +602,24 @@ var DetailScreenConfig = (function () {
                 });
             },
             serialize: function () {
-                var i, column,
-                    shortColumns = [],
-                    longColumns = [];
-                for (i = 0; i < this.columns.length; i += 1) {
-                    column = this.columns[i];
-                    if (column.includeInShort.val()) {
-                        shortColumns.push(column.serialize());
-                    }
-                    if (column.includeInLong.val()) {
-                        longColumns.push(column.serialize());
-                    }
+                var data =  {};
+
+                var parentSelect;
+                if (this.config.hasOwnProperty('parentSelect')) {
+                    parentSelect = {
+                        module_id: this.config.parentSelect.moduleId(),
+                        relationship: 'parent',
+                        active: this.config.parentSelect.active()
+                    };
                 }
-                return {
-                    short: shortColumns,
-                    long: longColumns,
-                    sort_elements: ko.toJS(this.config.sortRows.sortRows)
-                };
+
+                data.type = JSON.stringify(this.type);
+                data.parent_select = JSON.stringify(parentSelect);
+                data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+                data[this.columnKey] = JSON.stringify(_.map(this.columns, function(c){return c.serialize();}));
+                data.filter = JSON.stringify(this.config.filter.serialize());
+                console.log(data);
+                return data;
             },
             addColumn: function (column, $tbody, i) {
                 var $tr = $('<tr/>').data('index', i).appendTo($tbody);
@@ -777,10 +745,7 @@ var DetailScreenConfig = (function () {
                     var addItem = function(autoComplete){
                         var col;
                         col = that.initColumnAsColumn(
-                            Column.init(
-                                {includeInShort: true, includeInLong: false},
-                                that
-                            )
+                            Column.init({}, that)
                             //TODO: Actually do something different if autoComplete == false
                         );
                         that.fire('add-column', col);
@@ -869,7 +834,7 @@ var DetailScreenConfig = (function () {
                         edit: that.edit,
                         properties: that.properties,
                         saveUrl: that.saveUrl,
-                        columnType: columnType
+                        columnKey: columnType
                     }
                 );
                 that.screens.push(screen);
