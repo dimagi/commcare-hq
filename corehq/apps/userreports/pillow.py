@@ -1,13 +1,17 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.models import IndicatorConfiguration
 from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter
+from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
 
 class ConfigurableIndicatorPillow(PythonPillow):
 
     def __init__(self):
-        # config should be an of IndicatorConfiguration document.
-        # todo: should this be a list of configs or some other relationship?
+        # run_ptop never passes args to __init__ so make that explicit by not supporting any
+        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
+        couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
+        super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db)
         self.bootstrapped = False
 
     @classmethod
