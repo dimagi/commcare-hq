@@ -325,6 +325,7 @@ def get_apps_api(request, domain):
 @cloudcare_api
 def get_app_api(request, domain, app_id):
     return json_response(look_up_app_json(domain, app_id))
+    #Uhh... raise 404?
 
 @cloudcare_api
 @cache_page(60 * 30)
