@@ -1,11 +1,14 @@
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
 from corehq.apps.userreports.reports.factory import ReportFactory
+from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from fluff.filters import ANDFilter
@@ -95,13 +98,17 @@ class ReportConfiguration(Document):
     @property
     @memoized
     def config(self):
-        return IndicatorConfiguration.get(self.config_id)
+        try:
+            return IndicatorConfiguration.get(self.config_id)
+        except ResourceNotFound:
+            raise BadSpecError(_('The data source referenced by this report could not be found.'))
 
     @property
     def table_id(self):
         return self.config.table_id
 
     def validate(self, required=True):
+        super(ReportConfiguration, self).validate(required)
         # this implicitly does validation
         ReportFactory.from_spec(self)
 

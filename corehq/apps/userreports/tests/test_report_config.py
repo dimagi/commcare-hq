@@ -2,7 +2,8 @@ import json
 import os
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
 
 
 class ReportConfigurationTest(SimpleTestCase):
@@ -25,12 +26,21 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        shared_kwargs = {
+            'referenced_doc_type': 'doc',
+            'table_id': 'table',
+        }
+        IndicatorConfiguration(domain='foo', _id='foo1', **shared_kwargs).save()
+        IndicatorConfiguration(domain='foo', _id='foo2', **shared_kwargs).save()
+        IndicatorConfiguration(domain='bar', _id='bar1', **shared_kwargs).save()
         ReportConfiguration(domain='foo', config_id='foo1').save()
         ReportConfiguration(domain='foo', config_id='foo2').save()
         ReportConfiguration(domain='bar', config_id='bar1').save()
 
     @classmethod
     def tearDownClass(cls):
+        for config in IndicatorConfiguration.all():
+            config.delete()
         for config in ReportConfiguration.all():
             config.delete()
 
@@ -47,13 +57,13 @@ class ReportConfigurationDbTest(TestCase):
         self.assertEqual(3, len(list(ReportConfiguration.all())))
 
     def testDomainIsRequired(self):
-        self.assertRaises(
-            BadValueError,
-            ReportConfiguration(config_id='config').save
-        )
+        with self.assertRaises(BadValueError):
+            ReportConfiguration(config_id='foo').save()
 
     def testConfigIdIsRequired(self):
-        self.assertRaises(
-            BadValueError,
-            ReportConfiguration(config_id='config').save
-        )
+        with self.assertRaises(BadValueError):
+            ReportConfiguration(domain='foo').save()
+
+    def testConfigMustExist(self):
+        with self.assertRaises(BadSpecError):
+            ReportConfiguration(domain='foo', config_id='notreal').save()
