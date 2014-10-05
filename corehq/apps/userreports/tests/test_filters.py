@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory
-from fluff.filters import ANDFilter, ORFilter
+from fluff.filters import ANDFilter, ORFilter, NOTFilter
 
 
 class PropertyMatchFilterTest(SimpleTestCase):
@@ -201,3 +201,23 @@ class ComplexFilterTest(SimpleTestCase):
         self.assertFalse(filter.filter(dict(foo1='bar1', foo2='not bar2', foo3='bar3')))
         # last and not right
         self.assertFalse(filter.filter(dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4')))
+
+
+class ConfigurableNOTFilterTest(SimpleTestCase):
+
+    def setUp(self):
+        self.filter = FilterFactory.from_spec({
+            "type": "not",
+            "filter": {
+                "type": "property_match",
+                "property_name": "foo",
+                "property_value": "bar"
+            }
+        })
+        self.assertTrue(isinstance(self.filter, NOTFilter))
+
+    def testFilterMatch(self):
+        self.assertTrue(self.filter.filter(dict(foo='not bar')))
+
+    def testFilterNoMatch(self):
+        self.assertFalse(self.filter.filter(dict(foo='bar')))

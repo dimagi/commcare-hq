@@ -80,6 +80,11 @@ class PropertyMatchFilterSpec(BaseFilterSpec):
         return _getter_from_property_reference(self)
 
 
+class NotFilterSpec(BaseFilterSpec):
+    type = TypeProperty('not')
+    filter = DictProperty()  # todo: validators=FilterFactor.validate_spec
+
+
 def _getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path

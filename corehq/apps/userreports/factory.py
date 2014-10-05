@@ -2,13 +2,13 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase, PropertyMatchFilterSpec
+    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
 from corehq.apps.userreports.logic import EQUAL
-from fluff.filters import ANDFilter, ORFilter, CustomFilter
+from fluff.filters import ANDFilter, ORFilter, CustomFilter, NOTFilter
 
 
 def _build_compound_filter(spec):
@@ -28,6 +28,11 @@ def _build_compound_filter(spec):
     return compound_type_map[spec['type']](filters)
 
 
+def _build_not_filter(spec):
+    wrapped = NotFilterSpec.wrap(spec)
+    return NOTFilter(FilterFactory.from_spec(wrapped.filter))
+
+
 def _build_property_match_filter(spec):
     wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
@@ -42,6 +47,7 @@ class FilterFactory(object):
         'property_match': _build_property_match_filter,
         'and': _build_compound_filter,
         'or': _build_compound_filter,
+        'not': _build_not_filter,
     }
 
     @classmethod
