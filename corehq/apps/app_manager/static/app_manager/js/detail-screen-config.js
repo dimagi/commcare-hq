@@ -179,6 +179,14 @@ var filterViewModel = function(filterText){
     var self = this;
     self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
     self.showing = ko.observable(self.filterText() != "");
+
+    self.filterText.subscribe(function(){
+        window.filterSaveButton.fire('change');
+    });
+    self.showing.subscribe(function(){
+        window.filterSaveButton.fire('change');
+    });
+
     self.serialize = function(){
         if (self.showing()) {
             return {
@@ -189,7 +197,7 @@ var filterViewModel = function(filterText){
             };
         }
         return null;
-    }
+    };
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
@@ -565,6 +573,9 @@ var DetailScreenConfig = (function () {
 
             if (this.containsSortConfiguration){
                 window.sortRowSaveButton = this.saveButton;
+            }
+            if (this.containsFilterConfiguration){
+                window.filterSaveButton = this.saveButton;
             }
 
             this.render();
