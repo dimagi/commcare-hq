@@ -28,55 +28,61 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         self.assertEqual(1, len(self.indicator.get_columns()))
 
     def testNoColumnId(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'filter': {
-                'type': 'property_match',
-                'property_name': 'foo',
-                'property_value': 'bar',
-            }
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'filter': {
+                    'type': 'property_match',
+                    'property_name': 'foo',
+                    'property_value': 'bar',
+                }
+            })
 
     def testEmptyColumnId(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'column_id': '',
-            'filter': {
-                'type': 'property_match',
-                'property_name': 'foo',
-                'property_value': 'bar',
-            }
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'column_id': '',
+                'filter': {
+                    'type': 'property_match',
+                    'property_name': 'foo',
+                    'property_value': 'bar',
+                }
+            })
 
     def testNoFilter(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'column_id': 'col',
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'column_id': 'col',
+            })
 
     def testEmptyFilter(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'column_id': 'col',
-            'filter': None,
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'column_id': 'col',
+                'filter': None,
+            })
 
     def testBadFilterType(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'column_id': 'col',
-            'filter': 'wrong type',
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'column_id': 'col',
+                'filter': 'wrong type',
+            })
 
     def testInvalidFilter(self):
-        self.assertRaises(BadSpecError, IndicatorFactory.from_spec, {
-            'type': 'boolean',
-            'column_id': 'col',
-            'filter': {
-                'type': 'property_match',
-                'property_value': 'bar',
-            }
-        })
+        with self.assertRaises(BadSpecError):
+            IndicatorFactory.from_spec({
+                'type': 'boolean',
+                'column_id': 'col',
+                'filter': {
+                    'type': 'property_match',
+                    'property_value': 'bar',
+                }
+            })
 
     def testIndicatorMatch(self):
         self._check_result(self.indicator, dict(foo='bar'), 1)

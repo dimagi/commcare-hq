@@ -29,30 +29,34 @@ class PropertyMatchFilterTest(SimpleTestCase):
         self.get_path_filter()
 
     def testNoNameOrPath(self):
-        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
-            'type': 'property_match',
-            'property_value': 'bar',
-        })
+        with self.assertRaises(BadSpecError):
+            FilterFactory.from_spec({
+                'type': 'property_match',
+                'property_value': 'bar',
+            })
 
     def testEmptyName(self):
-        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
-            'type': 'property_match',
-            'property_name': '',
-            'property_value': 'bar',
-        })
+        with self.assertRaises(BadSpecError):
+            FilterFactory.from_spec({
+                'type': 'property_match',
+                'property_name': '',
+                'property_value': 'bar',
+            })
 
     def testNameNoValue(self):
-        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
-            'type': 'property_match',
-            'property_name': 'foo',
-        })
+        with self.assertRaises(BadSpecError):
+            FilterFactory.from_spec({
+                'type': 'property_match',
+                'property_name': 'foo',
+            })
 
     def testEmptyPath(self):
-        self.assertRaises(BadSpecError, FilterFactory.from_spec, {
-            'type': 'property_match',
-            'property_path': [],
-            'property_value': 'bar',
-        })
+        with self.assertRaises(BadSpecError):
+            FilterFactory.from_spec({
+                'type': 'property_match',
+                'property_path': [],
+                'property_value': 'bar',
+            })
 
     def testFilterMatch(self):
         self.assertTrue(self.get_filter().filter(dict(foo='bar')))

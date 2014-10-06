@@ -115,22 +115,18 @@ class IndicatorConfigurationDbTest(TestCase):
         self.assertEqual(3, len(list(IndicatorConfiguration.all())))
 
     def testDomainIsRequired(self):
-        self.assertRaises(
-            BadValueError,
-            IndicatorConfiguration(table_id='table', referenced_doc_type='doc').save
-        )
+        with self.assertRaises(BadValueError):
+            IndicatorConfiguration(table_id='table',
+                                   referenced_doc_type='doc').save()
 
     def testTableIdIsRequired(self):
-        self.assertRaises(
-            BadValueError,
-            IndicatorConfiguration(domain='domain', referenced_doc_type='doc').save
-        )
+        with self.assertRaises(BadValueError):
+            IndicatorConfiguration(domain='domain',
+                                   referenced_doc_type='doc').save()
 
     def testDocTypeIsRequired(self):
-        self.assertRaises(
-            BadValueError,
-            IndicatorConfiguration(domain='domain', table_id='table').save
-        )
+        with self.assertRaises(BadValueError):
+            IndicatorConfiguration(domain='domain', table_id='table').save()
 
 
 class IndicatorNamedFilterTest(SimpleTestCase):
