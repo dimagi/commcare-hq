@@ -334,7 +334,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'users_list': {
+            'data_list': {
                 'page': self.users_list_page,
                 'limit': self.users_list_limit,
                 'total': self.users_list_total,
@@ -479,8 +479,8 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
-            'users_list_total': self.users_list_total,
-            'users_list': self.users_list,
+            'data_list_total': self.users_list_total,
+            'data_list': self.users_list,
         }))
 
 
