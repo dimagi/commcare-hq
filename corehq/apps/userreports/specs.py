@@ -5,12 +5,25 @@ from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
 
 
+def TypeProperty(value):
+    """
+    Shortcut for making a required property and restricting it to a single specified
+    value. This adds additional validation that the objects are being wrapped as expected
+    according to the type.
+    """
+    return StringProperty(required=True, choices=[value])
+
+
 # todo: all spec definitions will go here. moving them over piece meal when touched.
 class IndicatorSpecBase(JsonObject):
     """
     Base class for indicator specs. All specs (for now) are assumed to have a column_id and
     a display_name, which defaults to the column_id.
     """
+    _allow_dynamic_properties = False
+
+    type = StringProperty(required=True)
+
     column_id = StringProperty(required=True)
     display_name = StringProperty()
 
@@ -38,10 +51,12 @@ class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
 
 
 class BooleanIndicatorSpec(IndicatorSpecBase):
+    type = TypeProperty('boolean')
     filter = DictProperty(required=True)
 
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
+    type = TypeProperty('raw')
     datatype = StringProperty(required=True,
                               choices=['date', 'string', 'integer'])
     is_nullable = BooleanProperty(default=True)
@@ -49,6 +64,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
+    type = TypeProperty('choice_list')
     choices = ListProperty(required=True)
     select_style = StringProperty()
 
