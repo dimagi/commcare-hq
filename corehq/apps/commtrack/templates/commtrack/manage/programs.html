@@ -92,8 +92,8 @@
                                     </div>
                                     <div class="modal-footer">
                                         <a href="#" class="btn btn-warning"
-                                           data-unsuccessful-text="Delete unsuccessful. Try Again?"
-                                           data-loading-text="Deleting Program..."
+                                           data-unsuccessful-text={% trans "Delete unsuccessful. Try Again?" %}
+                                           data-loading-text={% trans "Deleting Program..." %}
                                            data-bind="click: function (data, event) { $parent.take_archive_action(delete_url, event.currentTarget, $index) }">
                                            {% trans "Delete" %}
                                         </a>
