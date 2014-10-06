@@ -30,7 +30,7 @@ class MockExcelFile(object):
 
 def default_row_generator(excel_file, index):
     # by default, just return [propertyname-rowid] for every cell
-    return ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
+    return [u'{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
 
 def blank_row_generator(excel_file, index):
     return [''.format(row=index, col=col) for col in excel_file.header_columns]
@@ -112,6 +112,18 @@ class ImporterTest(TestCase):
         # we create 1 less since we knock off the header column
         self.assertEqual(4, res['created_count'])
         self.assertEqual(4, len(get_case_ids_in_domain(self.domain)))
+
+    def testImportTrailingWhitespace(self):
+        cols = ['case_id', 'age', u'sex\xa0', 'location']
+        config = self._config(cols, named_columns=True)
+        file = MockExcelFile(header_columns=cols, num_rows=2)
+        res = do_import(file, config, self.domain)
+        # we create 1 less since we knock off the header column
+        self.assertEqual(1, res['created_count'])
+        case_ids = get_case_ids_in_domain(self.domain)
+        self.assertEqual(1, len(case_ids))
+        case = CommCareCase.get(case_ids[0])
+        self.assertTrue(bool(case.sex))  # make sure the value also got properly set
 
     def testCaseIdMatching(self):
         # bootstrap a stub case

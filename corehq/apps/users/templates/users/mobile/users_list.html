@@ -4,6 +4,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
     <script src="{% static 'users/ko/commcare_users.async.js' %}"></script>
 {% endblock %}
 
@@ -30,9 +31,9 @@
                 }
             });
             $('#commcare-users-list').asyncUsersList({
-                total: {{ users_list.total }},
-                start_page: {{ users_list.page }},
-                limit: {{ users_list.limit }},
+                total: {{ data_list.total }},
+                start_page: {{ data_list.page }},
+                limit: {{ data_list.limit }},
                 cannot_share: {{ cannot_share|yesno:"true,false" }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
                 more_columns: {{ more_columns|yesno:"true,false" }},
@@ -148,7 +149,7 @@
         </div>
     </div>
     <hr />
-    {% if users_list.total > 0 %}
+    {% if data_list.total > 0 %}
     <form data-bind="submit: function () { change_page(-1); }">
         <div class="input-append">
             <input data-bind="value: search_string" class="span4" type="text" placeholder="{% trans "Search for Mobile Workers" %}">
@@ -169,7 +170,7 @@
     </div>
 
     <div class="hide hide-until-load">
-    <div class="row-fluid" data-bind="visible: !currently_searching() && (users_list().length || archive_action_users().length)">
+    <div class="row-fluid" data-bind="visible: !currently_searching() && (data_list().length || archive_action_items().length)">
         <div class="span4">
             <div class="form-inline" style="margin: 1.6em 0;">
                 <label for="pagination-limit">{% trans "Show" %}</label>
@@ -189,7 +190,7 @@
 
     <div class="row-fluid">
         <div class="span12">
-            <div id="user-list-notification" data-bind="visible: !(users_list().length || archive_action_users().length)" class="alert alert-info">
+            <div id="user-list-notification" data-bind="visible: !(data_list().length || archive_action_items().length)" class="alert alert-info">
             <div data-bind="visible: from_search() === false">
                 {% if show_inactive %}
                     {% trans "You have no inactive Mobile Workers in this project." %}
@@ -202,7 +203,7 @@
             </div>
             </div>
 
-            <table data-bind="visible: !currently_searching() && (users_list().length || archive_action_users().length)" class="table table-striped table-bordered" style="margin-bottom:0">
+            <table data-bind="visible: !currently_searching() && (data_list().length || archive_action_items().length)" class="table table-striped table-bordered" style="margin-bottom:0">
                 <thead>
                     <tr>
                         <th></th>
@@ -227,9 +228,9 @@
                         {% endif %}
                     </tr>
                 </thead>
-                <tbody data-bind="foreach: users_list">
+                <tbody data-bind="foreach: data_list">
                     <tr>
-                        <td data-bind="text: $parent.get_user_index($index)"></td>
+                        <td data-bind="text: $parent.get_data_index($index)"></td>
                         {% include 'users/mobile/partials/base_users_table.html' %}
                     {% if can_edit_user_archive %}
                         <td data-bind="visible: !archive_action_complete">
@@ -269,7 +270,7 @@
                     </tr>
                 </tbody>
             {% if couch_user.can_edit_commcare_users %}
-                <tbody data-bind="fadeVisible: archive_action_users().length > 0">
+                <tbody data-bind="fadeVisible: archive_action_items().length > 0">
                     <tr>
                         <th data-bind="attr: {colspan: colspan()
                             {% if show_case_sharing %}+1{% endif %}}">
@@ -281,7 +282,7 @@
                         </th>
                     </tr>
                 </tbody>
-                <tbody data-bind="foreach: archive_action_users, fadeVisible: archive_action_users().length">
+                <tbody data-bind="foreach: archive_action_items, fadeVisible: archive_action_items().length">
                 <tr>
                     <td data-bind="text: $index()+1"></td>
                     {% include 'users/mobile/partials/base_users_table.html' %}

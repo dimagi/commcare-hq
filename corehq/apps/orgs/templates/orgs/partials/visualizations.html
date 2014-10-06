@@ -3,8 +3,10 @@
 {% load i18n %}
 <ul id="{{ chart_name }}-chart-tabs" class="nav nav-tabs">
     <li class="active"><a href="#{{ chart_name }}-bar-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Bar Chart" %}</a></li>
+    {% if not hide_cumulative_charts %}
     <li><a href="#{{ chart_name }}-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Cumulative Chart" %}</a></li>
     <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Stacked Cumulative Chart" %}</a></li>
+    {% endif %}
     <form data-chart="{{ chart_name }}" style="margin: 0;" class="form-inline pull-right reload-graph-form">
         <span class="pull-right">
             {% if date_field_opts %}
@@ -49,6 +51,7 @@
             <svg style='height:320px'> </svg>
         </div>
     </div>
+    {% if not hide_cumulative_charts %}
     <div class="tab-pane" id="{{ chart_name }}-cumulative-chart">
         <div style="height: 320px; min-height: 320px;" class="loading">
             <div{% if hq_loading %} class="hq-loading"{% endif %}>
@@ -83,4 +86,5 @@
             <svg style='height:320px'> </svg>
         </div>
     </div>
+    {% endif %}
 </div>

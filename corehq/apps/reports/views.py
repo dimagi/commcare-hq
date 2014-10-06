@@ -26,6 +26,7 @@ import pytz
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.util.couch import get_document_or_404
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -102,6 +103,9 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
 def default(request, domain):
+    module = Domain.get_module_by_name(domain)
+    if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+        return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
 
 @login_and_domain_required
@@ -547,7 +551,7 @@ def normalize_hour(hour):
     if hour < 0:
         day_change = -1
         hour += 24
-    elif hour > 24:
+    elif hour >= 24:
         day_change = 1
         hour -= 24
 
@@ -786,7 +790,7 @@ def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user, domain)
 
     try:
-        case = _get_case_or_404(domain, case_id)
+        case = get_document_or_404(CommCareCase, domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
@@ -832,7 +836,7 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_xml(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
@@ -841,7 +845,7 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     rebuild_case(case_id)
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
@@ -851,7 +855,7 @@ def rebuild_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     if case.closed:
         messages.info(request, u'Case {} is already closed.'.format(case.name))
     else:
@@ -876,7 +880,7 @@ def close_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_document_or_404(CommCareCase, domain, case_id)
     if not case.closed:
         messages.info(request, u'Case {} is not closed.'.format(case.name))
     else:
@@ -887,15 +891,6 @@ def undo_close_case_view(request, domain, case_id):
         messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
-
-def _get_case_or_404(domain, case_id):
-    try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-    if case is None or case.doc_type != "CommCareCase" or case.domain != domain:
-        raise Http404
-    return case
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """

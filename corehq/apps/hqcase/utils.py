@@ -2,6 +2,8 @@ import datetime
 import uuid
 from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
+from django.core.files.uploadedfile import UploadedFile
+from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -12,6 +14,10 @@ from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 
 from corehq.apps.receiverwrapper import submit_form_locally
+import xml.etree.ElementTree as ET
+import re
+from casexml.apps.case import const
+
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
@@ -20,7 +26,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case'):
+                       xmlns='http://commcarehq.org/case', attachments={}):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -41,6 +47,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
     submit_form_locally(
         instance=form_xml,
         domain=domain,
+        attachments=attachments,
     )
     return form_id
 
@@ -183,3 +190,47 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
                            user_id=user_id)
 
     return [c._id for c in filtered_cases]
+
+
+def make_creating_casexml(case, new_case_id):
+    old_case_id = case._id
+    case._id = new_case_id
+    try:
+        case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
+        case_block, attachments = _process_case_block(case_block, case.case_attachments, old_case_id)
+    finally:
+        case._id = old_case_id
+    return case_block, attachments
+
+
+def _process_case_block(case_block, attachments, old_case_id):
+    def get_namespace(element):
+        m = re.match('\{.*\}', element.tag)
+        return m.group(0)[1:-1] if m else ''
+
+    def local_attachment(attachment, old_case_id, tag):
+        mime = attachment['server_mime']
+        size = attachment['attachment_size']
+        src = attachment['attachment_src']
+        attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(old_case_id, tag)
+        return UploadedFile(attachment_stream, src, size=size, content_type=mime)
+
+    # Remove namespace because it makes looking up tags a pain
+    root = ET.fromstring(case_block)
+    xmlns = get_namespace(root)
+    case_block = re.sub(' xmlns="[^"]+"', '', case_block, count=1)
+
+    root = ET.fromstring(case_block)
+    tag = "attachment"
+    xml_attachments = root.find(tag)
+    ret_attachments = {}
+
+    if xml_attachments:
+        for attach in xml_attachments:
+            attach.attrib['from'] = 'local'
+            attach.attrib['src'] = attachments[attach.tag]['attachment_src']
+            ret_attachments[attach.attrib['src']] = local_attachment(attachments[attach.tag], old_case_id, attach.tag)
+
+    # Add namespace back in without { } added by ET
+    root.attrib['xmlns'] = xmlns
+    return ET.tostring(root), ret_attachments

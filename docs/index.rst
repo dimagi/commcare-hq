@@ -29,6 +29,8 @@ Welcome to CommCareHQ's documentation!
    cloudcare
    translations
    profiling
+   elasticsearch
+   test_coverage
 
 Tips for documenting
 --------------------
