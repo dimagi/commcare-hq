@@ -243,8 +243,11 @@ def password_change(req):
 
 
 def server_up(req):
-    '''View that just returns "success", which can be hooked into server
-       monitoring tools like: pingdom'''
+    '''
+    Hit serverup.txt to check any of the below item with always_check: True
+    Hit serverup.txt?celery (or heartbeat) to check a specific service
+    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
+    '''
 
 
     checkers = {
