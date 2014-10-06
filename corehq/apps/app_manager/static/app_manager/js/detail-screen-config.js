@@ -288,6 +288,7 @@ var DetailScreenConfig = (function () {
             }
             this.original.model = this.original.model || screen.model;
             this.original.field = this.original.field || "";
+            this.original.hasAutocomplete = orDefault(this.original.hasAutocomplete, true);
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || [];
@@ -546,7 +547,9 @@ var DetailScreenConfig = (function () {
                         column.format_warning.hide().parent().removeClass('error');
                     }
                 });
-                CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
+                if (column.original.hasAutocomplete) {
+                    CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
+                }
                 return column;
             };
 
@@ -784,19 +787,17 @@ var DetailScreenConfig = (function () {
                             <td class="detail-screen-icon"></td> \
                         </tr>'
                     );
-                    var addItem = function(autoComplete){
+                    var addItem = function(autocomplete){
                         var col;
                         col = that.initColumnAsColumn(
-                            Column.init({}, that)
-                            //TODO: Actually do something different if autoComplete == false
+                            Column.init({hasAutocomplete: autocomplete}, that)
                         );
                         that.fire('add-column', col);
-                    }
+                    };
                     $(".add-property-item", $buttonRow).click(function () {
                         addItem(true);
                     });
                     $(".add-calculation-item", $buttonRow).click(function () {
-                        console.log("boom");
                         addItem(false);
                     });
                     var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
