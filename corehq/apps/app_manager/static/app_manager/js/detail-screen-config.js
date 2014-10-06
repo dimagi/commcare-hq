@@ -702,7 +702,9 @@ var DetailScreenConfig = (function () {
             },
             render: function () {
                 var that = this;
-                var $table, $columns, $thead, $tr, i, $box, $buttonRow;
+                var $table, $columns, $thead, $tr, i, $box, $buttonRow, $addButton;
+
+                this.$home.empty();
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -732,79 +734,96 @@ var DetailScreenConfig = (function () {
                                 .prependTo($box);
                         }
                     }
-                    $table = $('<table class="table table-condensed"/>'
-                        ).addClass('detail-screen-table'
-                    ).appendTo($box);
-                    $thead = $('<thead/>').appendTo($table);
 
-                    $tr = $('<tr/>').appendTo($thead);
-
-                    // grip
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
-
-                    // TODO: Remove properties from DetailScreenConfig that are no longer needed
-                    //       (Note: do some searching first to ensure these won't be required)
-                    //       DetailScreenConfig.message.SHORT
-                    //       DetailScreenConfig.message.LONG
-                    //       DetailScreenConfig.message.SHORT_POPOVER
-                    //       DetailScreenConfig.message.LONG_POPOVER
-                    // TODO: Remove css classes that are not longer needed:
-                    //       detail-screen-checkbox
-                    //       detail-screen-extra
-                    $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
-
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
-
-                    $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
-
-                    for (i = 0; i < this.columns.length; i += 1) {
-                        this.addColumn(this.columns[i], $columns, i);
-                    }
-
-                    this.$columns = $columns;
-
-                    // Add the button
-                    //TODO: Should this be in ui-element.js?
-                    $buttonRow = $(
-                        '<tr> \
-                            <td class="detail-screen-icon"></td> \
-                            <td class="detail-screen-field">\
-                                <div class="btn-group"> \
-                                    <button class="btn add-property-item">Add Property</button> \
-                                    <button class="btn dropdown-toggle" data-toggle="dropdown"> \
-                                        <span class="caret"></span> \
-                                    </button> \
-                                    <ul class="dropdown-menu">\
-                                       <li class="add-property-item"><a>Property</a></li>\
-                                       <li class="add-calculation-item"><a>Calculation</a></li>\
-                                    </ul> \
-                                </div> \
-                            </td> \
-                            <td class="detail-screen-header"></td> \
-                            <td class="detail-screen-format"></td> \
-                            <td class="detail-screen-icon"></td> \
-                        </tr>'
+                    this.$columns = $('</tbody>');
+                    $addButton = $(
+                        '<div class="btn-group"> \
+                            <button class="btn add-property-item">Add Property</button> \
+                            <button class="btn dropdown-toggle" data-toggle="dropdown"> \
+                                <span class="caret"></span> \
+                            </button> \
+                            <ul class="dropdown-menu">\
+                               <li class="add-property-item"><a>Property</a></li>\
+                               <li class="add-calculation-item"><a>Calculation</a></li>\
+                            </ul> \
+                        </div> '
                     );
-                    var addItem = function(autocomplete){
+                    var addItem = function(autocomplete) {
                         var col;
+                        var redraw = false;
+                        if (_.isEmpty(that.columns)) {
+                            // Only the button has been drawn, so we want to
+                            // render again, this time with a table.
+                            redraw = true;
+                        }
                         col = that.initColumnAsColumn(
                             Column.init({hasAutocomplete: autocomplete}, that)
                         );
                         that.fire('add-column', col);
+                        if (redraw) {
+                            that.render();
+                        }
                     };
-                    $(".add-property-item", $buttonRow).click(function () {
+                    $(".add-property-item", $addButton).click(function () {
                         addItem(true);
                     });
-                    $(".add-calculation-item", $buttonRow).click(function () {
+                    $(".add-calculation-item", $addButton).click(function () {
                         addItem(false);
                     });
-                    var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
-                    $specialTableBody.append($buttonRow);
 
-                    // init UI events
-                    this.initUI($columns);
+                    if (! _.isEmpty(this.columns)) {
+                        $table = $('<table class="table table-condensed"/>'
+                        ).addClass('detail-screen-table'
+                        ).appendTo($box);
+                        $thead = $('<thead/>').appendTo($table);
+
+                        $tr = $('<tr/>').appendTo($thead);
+
+                        // grip
+                        $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+
+                        // TODO: Remove properties from DetailScreenConfig that are no longer needed
+                        //       (Note: do some searching first to ensure these won't be required)
+                        //       DetailScreenConfig.message.SHORT
+                        //       DetailScreenConfig.message.LONG
+                        //       DetailScreenConfig.message.SHORT_POPOVER
+                        //       DetailScreenConfig.message.LONG_POPOVER
+                        // TODO: Remove css classes that are not longer needed:
+                        //       detail-screen-checkbox
+                        //       detail-screen-extra
+                        $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
+                        $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
+                        $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
+
+                        $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+                        $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
+
+                        for (i = 0; i < this.columns.length; i += 1) {
+                            this.addColumn(this.columns[i], $columns, i);
+                        }
+
+                        this.$columns = $columns;
+
+                        // Add the button
+                        //TODO: Should this be in ui-element.js?
+                        $buttonRow = $(
+                            '<tr> \
+                                <td class="detail-screen-icon"></td> \
+                                <td class="detail-screen-field button-cell">\
+                                </td> \
+                                <td class="detail-screen-header"></td> \
+                                <td class="detail-screen-format"></td> \
+                                <td class="detail-screen-icon"></td> \
+                            </tr>'
+                        );
+                        $('.button-cell', $buttonRow).append($addButton);
+                        var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
+                        $specialTableBody.append($buttonRow);
+                        // init UI events
+                        this.initUI($columns);
+                    } else {
+                        $addButton.appendTo($box);
+                    }
                 }
             },
             initUI: function (rows) {
