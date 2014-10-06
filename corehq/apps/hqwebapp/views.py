@@ -99,7 +99,7 @@ def celery_check():
     return chk
 
 
-def hb_check(check_heartbeat=True):
+def hb_check():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
         try:
@@ -113,10 +113,7 @@ def hb_check(check_heartbeat=True):
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
-                if check_heartbeat:
-                    hb = heartbeat.is_alive()
-                else:
-                    hb = False # Might need to check for no workers here
+                hb = heartbeat.is_alive()
         except:
             hb = False
     else:
