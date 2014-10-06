@@ -4,7 +4,8 @@ import os
 
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.views import _process_bulk_app_translation_upload
+from corehq.apps.app_manager.translations import \
+    process_bulk_app_translation_upload
 
 
 class BulkAppTranslationTest(SimpleTestCase):
@@ -32,7 +33,7 @@ class BulkAppTranslationTest(SimpleTestCase):
         with codecs.open(os.path.join(
                 os.path.dirname(__file__), "data",
                 "bulk_app_translations_no_change.xlsx")) as f:
-            messages = _process_bulk_app_translation_upload(self.app, f)
+            messages = process_bulk_app_translation_upload(self.app, f)
 
         self.assertListEqual(
             [m[1] for m in messages], ["App Translations Updated!"]
@@ -42,7 +43,7 @@ class BulkAppTranslationTest(SimpleTestCase):
         with codecs.open(os.path.join(
                 os.path.dirname(__file__), "data",
                 "bulk_app_translations.xlsx")) as f:
-            messages = _process_bulk_app_translation_upload(self.app, f)
+            messages = process_bulk_app_translation_upload(self.app, f)
             self.assertListEqual(
                 [m[1] for m in messages],
                 ["App Translations Updated!"]
