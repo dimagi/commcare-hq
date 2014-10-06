@@ -34,9 +34,9 @@ class BaseSqlData(SqlData):
     fix_left_col = False
 
     def percent_fn(self, x, y):
-        return "%(p)s%%" % \
+        return "%(p).2f%%" % \
             {
-                "p": (100 * int(y or 0) / (x or 1))
+                "p": (100 * float(y or 0) / (x or 1))
             }
 
     @property

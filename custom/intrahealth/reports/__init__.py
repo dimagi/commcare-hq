@@ -95,12 +95,27 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
                     helper_tuple = (k[3], k[2], k[1])
                 else:
                     helper_tuple = (k[2], k[1])
-                if helper_tuple in result:
-                    r = result[helper_tuple]
-                    if r['date'] <= v['date']:
-                        result[helper_tuple] = v
+                if isinstance(self.data_source, TauxConsommationData):
+                    if helper_tuple in result:
+                        result[helper_tuple][0]['consumption'] += v['consumption']
+                        result[helper_tuple][0]['stock'] += v['stock']
+                        result[helper_tuple][1] += 1
+                    else:
+                        result[helper_tuple] = [v, 1]
                 else:
-                    result[helper_tuple] = v
+                    if helper_tuple in result:
+                        r = result[helper_tuple]
+                        if r['date'] <= v['date']:
+                            result[helper_tuple] = v
+                    else:
+                        result[helper_tuple] = v
+
+            if isinstance(self.data_source, TauxConsommationData):
+                for k, v in result.iteritems():
+                    v[0]['consumption'] = float(v[0]['consumption']) / float(v[1])
+                    v[0]['stock'] = float(v[0]['stock']) / float(v[1])
+                    result[k] = v[0]
+
             if 'region_id' in self.data_source.config:
                 result_sum = {}
                 for localization in localizations:
