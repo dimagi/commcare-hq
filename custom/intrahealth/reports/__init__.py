@@ -95,26 +95,26 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
                     helper_tuple = (k[3], k[2], k[1])
                 else:
                     helper_tuple = (k[2], k[1])
-                if isinstance(self.data_source, TauxConsommationData):
-                    if helper_tuple in result:
+
+                if helper_tuple in result:
+                    if isinstance(self.data_source, TauxConsommationData):
                         result[helper_tuple][0]['consumption'] += v['consumption']
                         result[helper_tuple][0]['stock'] += v['stock']
-                        result[helper_tuple][1] += 1
                     else:
-                        result[helper_tuple] = [v, 1]
+                        result[helper_tuple][0]['quantity'] += v['quantity']
+                        result[helper_tuple][0]['cmm'] += v['cmm']
+                    result[helper_tuple][1] += 1
                 else:
-                    if helper_tuple in result:
-                        r = result[helper_tuple]
-                        if r['date'] <= v['date']:
-                            result[helper_tuple] = v
-                    else:
-                        result[helper_tuple] = v
+                    result[helper_tuple] = [v, 1]
 
-            if isinstance(self.data_source, TauxConsommationData):
-                for k, v in result.iteritems():
+            for k, v in result.iteritems():
+                if isinstance(self.data_source, TauxConsommationData):
                     v[0]['consumption'] = float(v[0]['consumption']) / float(v[1])
                     v[0]['stock'] = float(v[0]['stock']) / float(v[1])
-                    result[k] = v[0]
+                else:
+                    v[0]['quantity'] = float(v[0]['quantity']) / float(v[1])
+                    v[0]['cmm'] = float(v[0]['cmm']) / float(v[1])
+                result[k] = v[0]
 
             if 'region_id' in self.data_source.config:
                 result_sum = {}

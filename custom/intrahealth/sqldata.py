@@ -518,7 +518,7 @@ class NombreData(BaseSqlData):
 
     @property
     def columns(self):
-        div = lambda x, y: "%0.3f" % (x / (float(y) or 1.0))
+        div = lambda x, y: "%0.3f" % (float(x) / (float(y) or 1.0))
         columns = []
         if 'region_id' in self.config:
             columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
@@ -541,7 +541,7 @@ class NombreData(BaseSqlData):
                     total_row.append("%0.3f" % (cp[0] / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
