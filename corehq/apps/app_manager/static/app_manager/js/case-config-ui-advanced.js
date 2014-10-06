@@ -346,6 +346,7 @@ var AdvancedCase = (function () {
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
+                    parent_reference_id: '',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -582,8 +583,9 @@ var AdvancedCase = (function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var parent = self.config.caseConfigViewModel.load_update_cases()[0];
-                        if (parent) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        if (index > 0) {
+                            var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
                             self.parent_tag(parent.case_tag());
                         }
                     } else {
