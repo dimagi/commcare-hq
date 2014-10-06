@@ -1,0 +1,16 @@
+{% extends 'style/base.html' %}
+{% load hq_shared_tags %}
+
+{% block stylesheets %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% new_static 'dashboard/less/dashboard.less' %}" />
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container" id="hq-content">
+    {% block dashboard-content %}
+    {% endblock dashboard-content %}
+</div>
+{% endblock content %}

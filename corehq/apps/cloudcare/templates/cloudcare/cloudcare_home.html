@@ -59,6 +59,7 @@
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
+        var initialParent = {{ parent|JSON }};
         var sessionsEnabled = {{ sessions_enabled|JSON }};
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
@@ -70,6 +71,7 @@
             submitUrlRoot: submitUrlRoot,
             initialApp: initialApp,
             initialCase: initialCase,
+            initialParent: initialParent,
             sessionsEnabled: sessionsEnabled
         });
         // TODO: when we figure out what to do about get params, use this
@@ -147,21 +149,57 @@
     <div id="cloudcare-main" style="position:relative;">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
-            <p>
-                {% blocktrans %}
+            {% blocktrans %}
+                <p>
                     Sorry, it doesn't look like you have any CloudCare apps
                     available. To learn more about how to enable and use
                     CloudCare, please check out our
                     <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
+                </p>
+            {% endblocktrans %}
+            {% if use_cloudcare_releases %}
+                {% blocktrans %}
+                <p>
+                    CloudCare displays the latest starred version of the
+                    application. Make sure you have enabled CloudCare and
+                    starred a version of your application.
+                </p>
                 {% endblocktrans %}
-            </p>
+            {% endif %}
         {% endif %}
         <section id="cloudcare-notifications"></section>
         <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
         </div>
+        <section id="case-crumbs"></section>
         <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
+
+    <script type="text/html" id="template-crumbs">
+        <% if (childCase || parentCase ){ %>
+        <ul class='breadcrumb'>
+            <li>Selected Case:</li>
+                <% if (parentCase){ %>
+                <li <% if (childCase == null){ %> class="active" <% } %>>
+                    <% if (parentCase.href){ %>
+                    <a href="<%= parentCase.href %>">
+                        <%= parentCase.text %>
+                    </a>
+                    <% } else { %>
+                        <%= parentCase.text %>
+                    <% } %>
+                    <% if (parentCase && childCase) { %>
+                    <span class="divider">/</span>
+                    <% } %>
+                </li>
+                <% } %>
+            <% if (childCase) { %>
+            <li class="active"><%= childCase.text %></li>
+            <% } %>
+        </ul>
+        <% } %>
+    </script>
+
 {% endblock %}

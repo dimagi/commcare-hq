@@ -88,9 +88,8 @@ $ `npm bin`/http-server
 $ chromium-browser http://localhost:8080
 ```
 
-By default, the test page will load the non-built version on 'localhost' and the
-built version otherwise.  Append `?built` or `?async` to the URL to override this
-behavior.
+By default, the test page will load the non-built version unless a `built`
+parameter is present in the query string.
 
 Commands to run tests headlessly:
 ```

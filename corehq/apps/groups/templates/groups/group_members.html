@@ -71,7 +71,8 @@
                     $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
                     $('.alert')[0].innerHTML = name + " was successfully saved";
                     $('.alert').show();
-                    $(id).find(':button').removeAttr('disabled');
+                    $(id).find(':button').enableButton();
+                    $('#editGroupSettings').modal('hide')
                 }
             }
 
@@ -84,7 +85,8 @@
                     $('.alert').removeClass('alert-success alert-info').addClass('alert-error');
                     $('.alert')[0].innerHTML = name + " was not successfully saved";
                     $('.alert').show();
-                    $(id).find(':button').removeAttr('disabled');
+                    $(id).find(':button').enableButton();
+                    $('#editGroupSettings').modal('hide')
                 }
             }
 
@@ -102,13 +104,20 @@
                     return false;
                 });
                 $('#edit-group-settings').submit(function() {
-                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).find(':button').disableButton();
                     $(this).ajaxSubmit({
                         success: edit_settings_succ,
                         error: edit_settings_fail
                     });
                     return false;
                 });
+                $('#group-case-sharing-input').change(function() {
+                    if($('#group-case-sharing-input').val() == 'true') {
+                        $('#group-case-sharing-warning').removeAttr("hidden")
+                    } else {
+                        $('#group-case-sharing-warning').attr('hidden', 'hidden')
+                    }
+                })
                 $('#group-data-form').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
@@ -136,7 +145,7 @@
 {% else %}
 <div class="row-fluid">
     <div class="span12">
-        <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count group.users|length as num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
+        <h2>Group "{{ group.name }}"{% if group.case_sharing %} (Case Sharing){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})</h2>
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> {% trans "Edit Settings" %}</a>
             <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
@@ -172,6 +181,12 @@
                                 <option value="false">{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Whether users within this group will share cases with other members of this group" %}</p>
+                            <div id="group-case-sharing-warning" hidden="hidden">
+                                <p class="help-block alert alert-warning">
+                                    {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
+                                    <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div class="control-group">
@@ -207,7 +222,7 @@
     <h3>{% trans "Group Data" %}</h3>
     <form id="group-data-form" class="form form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
         <input name="group-data" id="group-data" type="hidden" value='{{ group.metadata|JSON }}'></input>
-        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Information" %}</button></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button></div>
     </form>
 {% endblock %}
 

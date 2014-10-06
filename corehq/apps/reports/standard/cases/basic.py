@@ -8,6 +8,9 @@ from couchdbkit import RequestFailed
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.api.es import CaseES
+from corehq.apps.es import filters
+from corehq.apps.es import users as user_es
+from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -92,9 +95,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         case_es = self.case_es
-        user_ids, owner_ids = self.case_users_and_owners
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
-                                 status=self.case_status, owner_ids=owner_ids+user_ids,
+                                 status=self.case_status, owner_ids=self.case_owners,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
 
         query_results = case_es.run_query(query)
@@ -113,19 +115,59 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     @memoized
-    def case_users_and_owners(self):
-        user_query = EMWF.user_es_query(self.domain, self.request).fields([])
-        user_ids = user_query.run().doc_ids
-        group_owner_ids = []
-        for user_id in user_ids:
-            group_owner_ids.extend([
-                group._id
-                for group in Group.by_user(user_id)
-                if group.case_sharing
-            ])
+    def case_owners(self):
+
+        # Get user ids for each user that match the demo_user, admin, Unknown Users, or All Mobile Workers filters
+        user_types = EMWF.selected_user_types(self.request)
+        user_type_filters = []
+        if HQUserType.ADMIN in user_types:
+            user_type_filters.append(user_es.admin_users())
+        if HQUserType.UNKNOWN in user_types:
+            user_type_filters.append(user_es.unknown_users())
+            user_type_filters.append(user_es.web_users())
+        if HQUserType.DEMO_USER in user_types:
+            user_type_filters.append(user_es.demo_users())
+        if HQUserType.REGISTERED in user_types:
+            user_type_filters.append(user_es.mobile_users())
+
+        if len(user_type_filters) > 0:
+            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters)
+            special_user_ids = special_q.run().doc_ids
+        else:
+            special_user_ids = []
+
+        # Get user ids for each user that was specifically selected
+        selected_user_ids = EMWF.selected_user_ids(self.request)
+
+        # Get group ids for each group that was specified
+        selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
+        selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
+
+        # Get user ids for each user in specified reporting groups
+        report_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                           .doc_type("Group")\
+                                           .filter(filters.term("_id", selected_reporting_group_ids))\
+                                           .fields(["users"])
+        user_lists = [group["users"] for group in report_group_q.run().hits]
+        selected_reporting_group_users = list(set().union(*user_lists))
+
+        # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
+        share_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                                .doc_type("Group")\
+                                                .filter(filters.term("case_sharing", True))\
+                                                .filter(filters.term("users", selected_reporting_group_users+selected_user_ids+special_user_ids))\
+                                                .fields([])
+        sharing_group_ids = share_group_q.run().doc_ids
+
+        owner_ids = list(set().union(special_user_ids,
+                                selected_user_ids,
+                                selected_sharing_group_ids,
+                                selected_reporting_group_users,
+                                sharing_group_ids))
         if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
-            user_ids.append("commtrack-system")
-        return user_ids, filter(None, group_owner_ids)
+            owner_ids.append("commtrack-system")
+        return owner_ids
+
 
     def get_case(self, row):
         if '_source' in row:
@@ -156,15 +198,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_noop('Case List')
     slug = 'case_list'
-
-    @property
-    @memoized
-    def rendered_report_title(self):
-        self.name = _("%(report_name)s for %(worker_type)s") % {
-            "report_name": _(self.name),
-            "worker_type": _(SelectMobileWorkerFilter.get_default_text(self.user_filter))
-        }
-        return self.name
 
     def slugs(self):
         return [

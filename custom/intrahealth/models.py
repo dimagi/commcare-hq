@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter, RAPTURE_XMLNSES, \
-    get_rupture_products, LIVRAISON_XMLNSES
+    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month
 
 from custom.utils.utils import flat_field
 
@@ -28,6 +28,9 @@ class CouvertureFluff(fluff.IndicatorDocument):
     location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+    pps_name = flat_field(lambda f: get_pps_name(f))
+    district_name = flat_field(lambda f: get_district_name(f))
+    month = flat_field(lambda f: get_month(f, 'real_date'))
     real_date_repeat = flat_field(get_real_date)
     registered = report_calcs.PPSRegistered()
     planned = report_calcs.PPSPlaned()
@@ -61,13 +64,14 @@ class IntraHealthFluff(fluff.IndicatorDocument):
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    PPS_name = flat_field(lambda f: f.form['PPS_name'])
-    district_name = flat_field(lambda f: f.form['district_name'])
+    PPS_name = flat_field(lambda f: get_pps_name(f))
+    district_name = flat_field(lambda f: get_district_name(f))
     location_id = flat_field(get_location_id)
 
     actual_consumption = report_calcs.PPSConsumption()
     billed_consumption = report_calcs.PPSConsumption(field='billed_consumption')
     stock = report_calcs.PPSConsumption('old_stock_total')
+    total_stock = report_calcs.PPSConsumption('total_stock')
     quantity = report_calcs.PPSConsumption('display_total_stock')
     cmm = report_calcs.PPSConsumption('default_consumption')
 
@@ -95,7 +99,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district')
+        IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
     ])
     domains = INTRAHEALTH_DOMAINS
     save_direct_to_sql = True
@@ -106,7 +110,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     district_name = flat_field(lambda f: f.form['district'])
     PPS_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
 
-    stock = report_calcs.RupturesDeStocks('pps_stocked_out')
+    total_stock = report_calcs.RupturesDeStocks('pps_stocked_out')
 
 
 class LivraisonFluff(fluff.IndicatorDocument):
@@ -117,12 +121,11 @@ class LivraisonFluff(fluff.IndicatorDocument):
     group_by = ('domain', )
     save_direct_to_sql = True
 
-    date_prevue_livraison = flat_field(lambda f: f.form['date_prevue_livraison'])
-    date_effective_livraison = flat_field(lambda f: f.form['date_effective_livraison'])
+    month = flat_field(lambda f: get_month(f, 'mois_visite'))
     duree_moyenne_livraison = report_calcs.DureeMoyenneLivraison()
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
+    district_id = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).location_id)
     district_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
 
 

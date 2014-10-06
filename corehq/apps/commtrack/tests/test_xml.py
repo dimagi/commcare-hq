@@ -145,10 +145,8 @@ class CommTrackOTATest(CommTrackTest):
         # self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         self.ct_settings.ota_restore_config.force_consumption_case_types = [const.SUPPLY_POINT_CASE_TYPE]
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
-        self.assertEqual(1, len(balance_blocks))
-        [balance_block] = balance_blocks
-        element = etree.fromstring(balance_block)
-        self.assertEqual(0, len([child for child in element]))
+        # with no data, there should be no consumption block
+        self.assertEqual(0, len(balance_blocks))
 
         self.ct_settings.ota_restore_config.use_dynamic_product_list = True
         balance_blocks = _get_ota_balance_blocks(self.ct_settings, self.user)
@@ -230,6 +228,24 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
             self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
             self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
+
+    def test_archived_product_submissions(self):
+        """
+        This is basically the same as above, but separated to be
+        verbose about what we are checking (and to make it easy
+        to change the expected behavior if the requirements change
+        soon.
+        """
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+
+        self.submit_xml_form(balance_submission(initial_amounts))
+        self.products[1].archive()
+        self.submit_xml_form(balance_submission(final_amounts))
+
+        for product, amt in final_amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
 
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():

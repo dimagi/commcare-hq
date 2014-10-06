@@ -31,7 +31,8 @@ class FixtureDataTest(TestCase):
                     field_name="district_id",
                     properties=[]
                 )            
-            ]
+            ],
+            item_attributes=[],
         )
         self.data_type.save()
 
@@ -67,7 +68,8 @@ class FixtureDataTest(TestCase):
                         )
                     ]
                 )
-            }
+            },
+            item_attributes={},
         )
         self.data_item.save()
 

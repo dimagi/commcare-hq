@@ -4,6 +4,7 @@ import json
 import csv
 import io
 import uuid
+import re
 
 from couchdbkit import ResourceNotFound
 
@@ -70,6 +71,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            if not user:
+                raise Http404()
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
@@ -331,7 +334,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'users_list': {
+            'data_list': {
                 'page': self.users_list_page,
                 'limit': self.users_list_limit,
                 'total': self.users_list_total,
@@ -348,6 +351,21 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_edit_user_archive': self.can_edit_user_archive,
             'is_billing_admin': self.is_billing_admin,
         }
+
+
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return "*{}*".format("* *".join(tokens))
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
@@ -386,8 +404,12 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
+        query = smart_query_string(self.query)
         q = {
-            "query": { "query_string": { "query": self.query }},
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
@@ -457,8 +479,8 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
-            'users_list_total': self.users_list_total,
-            'users_list': self.users_list,
+            'data_list_total': self.users_list_total,
+            'data_list': self.users_list,
         }))
 
 
