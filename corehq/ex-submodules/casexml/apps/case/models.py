@@ -271,7 +271,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
     # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
-    location_ = StringListProperty()
+    location_id = StringProperty()
 
     server_modified_on = DateTimeProperty()
 
