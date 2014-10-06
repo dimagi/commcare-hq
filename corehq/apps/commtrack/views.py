@@ -19,6 +19,7 @@ from corehq import toggles
 from soil.util import expose_download, get_download_context
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
