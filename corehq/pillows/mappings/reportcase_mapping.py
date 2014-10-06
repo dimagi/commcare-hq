@@ -1,4 +1,4 @@
-REPORT_CASE_INDEX="report_cases_ae5ce2b30b6c42dea585a223333290f1"
+REPORT_CASE_INDEX="report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
@@ -99,7 +99,7 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
                                            'referenced_type': {'type': 'string'}},
                             'type': 'object'},
                 'initial_processing_complete': {'type': 'boolean'},
-                'location_': {'type': 'string'},
+                'location_id': {'type': 'string'},
                 'modified_on': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                 'type': 'date'},
                 'name': {'fields': {'exact': {'index': 'not_analyzed',
