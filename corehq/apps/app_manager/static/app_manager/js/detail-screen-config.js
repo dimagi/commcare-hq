@@ -425,13 +425,6 @@ var DetailScreenConfig = (function () {
                 }
             }).fire('change');
 
-            this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
-                if (that.field.val() && field_val_re.test(that.field.val())) {
-                    that.duplicate();
-                } else {
-                    that.field.$edit_view.focus();
-                }
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
@@ -518,13 +511,6 @@ var DetailScreenConfig = (function () {
             this.fireChange = function() {
                 that.fire('change');
             };
-
-            //TODO: Add an initColumnAsSortProperty
-            //      at minimum it will do column.filed.setEdit(false)
-            //      (and probably won't do the autocomplete nonsense)
-            //ASIDE:These initColumnAs* functions are odd. Can't this be
-            //      baked into the constructor? Can we get some subclassing
-            //      going on here?
 
             this.initColumnAsColumn = function (column) {
                 column.model.setEdit(false);
@@ -688,10 +674,6 @@ var DetailScreenConfig = (function () {
                 column.format.fire('change');
 
                 if (this.edit) {
-                    // TODO: Get rid of column.$add and perhaps column.$copy
-                    //       Note: If "Filtering and Sorting" uses Column, then
-                    //       we probably want to preserve $add because the spec
-                    //       calls for + signs in that section
                     $('<td/>').addClass('detail-screen-icon').append(
                         column.$delete
                     ).appendTo($tr);
@@ -782,15 +764,6 @@ var DetailScreenConfig = (function () {
                         // grip
                         $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
-                        // TODO: Remove properties from DetailScreenConfig that are no longer needed
-                        //       (Note: do some searching first to ensure these won't be required)
-                        //       DetailScreenConfig.message.SHORT
-                        //       DetailScreenConfig.message.LONG
-                        //       DetailScreenConfig.message.SHORT_POPOVER
-                        //       DetailScreenConfig.message.LONG_POPOVER
-                        // TODO: Remove css classes that are not longer needed:
-                        //       detail-screen-checkbox
-                        //       detail-screen-extra
                         $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
                         $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
                         $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
@@ -937,25 +910,6 @@ var DetailScreenConfig = (function () {
 
     DetailScreenConfig.message = {
         EMPTY_SCREEN: 'No detail screen configured',
-
-        SHORT: 'List',
-        SHORT_POPOVER: {
-            title: 'List View',
-            content: (
-                "Checked properties will be displayed in the case list, where each case is listed as a row on the phone's screen. " +
-                "We recommend using 2-3 case properties that will help the mobile worker identify each case."
-            ),
-            placement: 'top'
-        },
-        LONG: 'Detail',
-        LONG_POPOVER: {
-            title: 'Detail View',
-            content: (
-                "Checked properties will be shown in the detail view that appears after selecting an item in the list view. " +
-                "We recommend that you include all properties that the mobile worker will find relevant. "
-            ),
-            placement: 'top'
-        },
 
         MODEL: 'Model',
         FIELD: 'Property',
