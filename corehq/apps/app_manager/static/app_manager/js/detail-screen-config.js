@@ -84,18 +84,23 @@ ko.bindingHandlers.jqueryElement = {
     }
 };
 
-var SortRow = function (field, type, direction) {
+var SortRow = function(params){
     var self = this;
-    self.field = ko.observable(typeof field !== 'undefined' ? field : "");
-    self.type = ko.observable(typeof type !== 'undefined' ? type : "");
-    self.direction = ko.observable(typeof direction !== 'undefined' ? direction : "");
+    var params = params || {};
+    self.notifyButtonOfChanges =
+            typeof params.notifyButtonOfChanges !== 'undefined' ? params.notifyButtonOfChanges : true;
+    self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
+    self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
+    self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
 
-    self.type.subscribe(function () {
-        window.sortRowSaveButton.fire('change');
-    });
-    self.direction.subscribe(function () {
-        window.sortRowSaveButton.fire('change');
-    });
+    if (self.notifyButtonOfChanges) {
+        self.type.subscribe(function () {
+            window.sortRowSaveButton.fire('change');
+        });
+        self.direction.subscribe(function () {
+            window.sortRowSaveButton.fire('change');
+        });
+    }
 
     self.fieldHtml = ko.computed(function () {
         return CC_DETAIL_SCREEN.getFieldHtml(self.field());
@@ -127,13 +132,14 @@ var SortRow = function (field, type, direction) {
         }
     });
 };
-var SortRowTemplate = function(properties){
+var SortRowTemplate = function(params){
     var self = this;
+    var params = params || {};
     this.textField = uiElement.input().val("");
-    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, properties);
+    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
     // TODO: Give the textField some validation (maybe on the add event actually?)
 };
-SortRowTemplate.prototype = new SortRow();
+SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
 
 var SortRows = function (properties) {
     var self = this;
@@ -141,16 +147,23 @@ var SortRows = function (properties) {
     //TODO: Only add the template if editing is allowed.
     //      User still can't save right now though, so it's not a security issue.
     //      (current case list page let's non-editors edit sorts on the page (but can't save them))
-    self.templateRow = new SortRowTemplate(properties);
+    self.templateRow = new SortRowTemplate({properties: properties});
 
     self.addSortRow = function (field, type, direction) {
-        self.sortRows.push(new SortRow(field, type, direction));
+        self.sortRows.push(new SortRow({
+            field: field,
+            type: type,
+            direction: direction
+        }));
     };
     self.addSortRowFromTemplateRow = function(row) {
-        self.sortRows.push(new SortRow(
-            row.textField.val(), row.type(), row.direction()
-        ));
+        self.sortRows.push(new SortRow({
+            field: row.textField.val(),
+            type: row.type(),
+            direction: row.direction()
+        }));
         row.textField.val("");
+        window.sortRowSaveButton.fire('change');
     };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
