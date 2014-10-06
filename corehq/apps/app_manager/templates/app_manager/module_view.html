@@ -293,7 +293,7 @@
                 <div id="{{ detail.type }}-detail-screen-sort">
                 {% if app.enable_multi_sort %}
                     <div class="ui-sortable">
-                        <table class="table table-condensed detail-screen-table">
+                        <table class="table table-condensed detail-screen-table" data-bind="if: sortRows().concat(templateRow).length">
                             <thead>
                                 <tr>
                                     <th></th>

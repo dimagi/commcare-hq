@@ -137,17 +137,24 @@ var SortRowTemplate = function(params){
     var params = params || {};
     this.textField = uiElement.input().val("");
     CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
-    // TODO: Give the textField some validation (maybe on the add event actually?)
+    // TODO: Maybe give the textField some validation (maybe on the add event actually?)
 };
 SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
 
-var SortRows = function (properties) {
+/**
+ *
+ * @param properties
+ * @param edit is true if the user has permissions to edit the sort rows.
+ * @constructor
+ */
+var SortRows = function (properties, edit) {
     var self = this;
     self.sortRows = ko.observableArray([]);
-    //TODO: Only add the template if editing is allowed.
-    //      User still can't save right now though, so it's not a security issue.
-    //      (current case list page let's non-editors edit sorts on the page (but can't save them))
-    self.templateRow = new SortRowTemplate({properties: properties});
+    if (edit) {
+        self.templateRow = new SortRowTemplate({properties: properties});
+    } else {
+        self.templateRow = []; // Empty list because sortRows.concat([]) == sortRows
+    }
 
     self.addSortRow = function (field, type, direction) {
         self.sortRows.push(new SortRow({
@@ -828,7 +835,7 @@ var DetailScreenConfig = (function () {
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
-            this.sortRows = new SortRows(this.properties);
+            this.sortRows = new SortRows(this.properties, spec.edit);
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
