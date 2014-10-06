@@ -34,8 +34,9 @@
             var details = {{ details|JSON }};
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var $detail_home = $("#" + detail.type + "-detail-screen-config");
-                var detailScreenConfig = DetailScreenConfig.init($detail_home, {
+                var $list_home = $("#" + detail.type + "-detail-screen-config");
+                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config");
+                var detailScreenConfig = DetailScreenConfig.init($list_home, $detail_home, {
                     state: {
                         type: detail.type,
                         short: detail.short,
@@ -120,6 +121,11 @@
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
             {{ detail.label }}
+        </a>
+    </li>
+    <li>
+        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+            {{ detail.detail_label }}
         </a>
     </li>
     {% endfor %}
@@ -393,6 +399,15 @@
                 </div>
              </div>
             {% endif %}
+        </div>
+    </div>
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+        <div id="{{ detail.type }}-detail-screen-detail-config-body">
+            <div id="{{ detail.type }}-detail-screen-detail-config">
+                <legend>
+                    {% trans "Display Properties" %}
+                </legend>
+            </div>
         </div>
     </div>
     {% endfor %}

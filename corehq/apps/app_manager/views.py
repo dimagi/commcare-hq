@@ -767,6 +767,7 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Goal List'),
+                    'detail_label': _('Goal Detail'),
                     'type': 'careplan_goal',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
@@ -776,6 +777,7 @@ def get_module_view_context_and_template(app, module):
                 },
                 {
                     'label': _('Task List'),
+                    'detail_label': _('Task Detail'),
                     'type': 'careplan_task',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
@@ -790,6 +792,7 @@ def get_module_view_context_and_template(app, module):
         def get_details():
             details = [{
                 'label': _('Case List'),
+                'detail_label': _('Case Detail'),
                 'type': 'case',
                 'model': 'case',
                 'properties': sorted(builder.get_properties(case_type)),
@@ -801,6 +804,7 @@ def get_module_view_context_and_template(app, module):
             if app.commtrack_enabled:
                 details.append({
                     'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
                     'type': 'product',
                     'model': 'product',
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
@@ -820,6 +824,7 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Case List'),
+                    'detail_label': _('Case Detail'),
                     'type': 'case',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(case_type)),
@@ -1349,17 +1354,17 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         column = DetailColumn.wrap(filter)
         column.model = detail_type
         detail.short.columns.append(column)
-
-    detail.short.sort_elements = []
-    for sort_element in sort_elements:
-        item = SortElement()
-        item.field = sort_element['field']
-        item.type = sort_element['type']
-        item.direction = sort_element['direction']
-        detail.short.sort_elements.append(item)
-
+    if sort_elements is not None:
+        detail.short.sort_elements = []
+        for sort_element in sort_elements:
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.short.sort_elements.append(item)
     if parent_select:
         module.parent_select = ParentSelect.wrap(parent_select)
+
     resp = {}
     app.save(resp)
     return json_response(resp)

@@ -471,6 +471,8 @@ var DetailScreenConfig = (function () {
             this.type = spec.type;
             this.saveUrl = options.saveUrl;
             this.$home = $home;
+            // $location is the element containing this Screen.
+            this.$location = options.$location;
             this.config = config;
             this.edit = options.edit;
             this.columns = [];
@@ -482,6 +484,14 @@ var DetailScreenConfig = (function () {
             // as the name of the key in the data object that is sent to the
             // server on save.
             this.columnKey = options.columnKey;
+            // Not all Screen instances will handle sorting, parent selection,
+            // and filtering. E.g The "Case Detail" tab only handles the module's
+            // "long" case details. These flags will make sure this instance
+            // doesn't try to save these configurations if it is not in charge
+            // of these configurations.
+            this.containsSortConfiguration = options.containsSortConfiguration;
+            this.containsParentConfiguration = options.containsParentConfiguration;
+            this.containsFilterConfiguration = options.containsFilterConfiguration;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -539,7 +549,10 @@ var DetailScreenConfig = (function () {
                     that.save();
                 }
             });
-            window.sortRowSaveButton = this.saveButton;
+
+            if (this.containsSortConfiguration){
+                window.sortRowSaveButton = this.saveButton;
+            }
 
             this.render();
             this.on('add-column', function (column) {
@@ -590,7 +603,6 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
-
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
@@ -602,23 +614,28 @@ var DetailScreenConfig = (function () {
                 });
             },
             serialize: function () {
-                var data =  {};
-
-                var parentSelect;
-                if (this.config.hasOwnProperty('parentSelect')) {
-                    parentSelect = {
-                        module_id: this.config.parentSelect.moduleId(),
-                        relationship: 'parent',
-                        active: this.config.parentSelect.active()
-                    };
-                }
-
-                data.type = JSON.stringify(this.type);
-                data.parent_select = JSON.stringify(parentSelect);
-                data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+                var data = {
+                    type: JSON.stringify(this.type)
+                };
                 data[this.columnKey] = JSON.stringify(_.map(this.columns, function(c){return c.serialize();}));
-                data.filter = JSON.stringify(this.config.filter.serialize());
-                console.log(data);
+
+                if (this.containsParentConfiguration) {
+                    var parentSelect;
+                    if (this.config.hasOwnProperty('parentSelect')) {
+                        parentSelect = {
+                            module_id: this.config.parentSelect.moduleId(),
+                            relationship: 'parent',
+                            active: this.config.parentSelect.active()
+                        };
+                    }
+                    data.parent_select = JSON.stringify(parentSelect);
+                }
+                if (this.containsSortConfiguration) {
+                    data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+                }
+                if (this.containsFilterConfiguration) {
+                    data.filter = JSON.stringify(this.config.filter.serialize());
+                }
                 return data;
             },
             addColumn: function (column, $tbody, i) {
@@ -628,9 +645,6 @@ var DetailScreenConfig = (function () {
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
-
-                //TODO: Look into removing column.includeInShort.ui from the column objects
-                //      (make sure it is not used elsewhere first)
 
                 if (!column.field.edit) {
                     column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
@@ -677,7 +691,11 @@ var DetailScreenConfig = (function () {
                 } else {
                     if (this.edit) {
                         if (window.enableNewSort) {
-                            var $detailBody = $('#' + this.type + '-detail-screen-config-body');
+
+                            // $location id is in this form: "-detail-screen-config"
+                            // so $detailBody id will be in this form: "-detail-screen-config-body"
+                            var $detailBody = $("#" + this.$location.attr("id") + "-body");
+
                             $('<div id="saveBtn" class="clearfix">')
                                 .append(this.saveButton.ui)
                                 .prependTo($detailBody);
@@ -786,9 +804,10 @@ var DetailScreenConfig = (function () {
         return Screen;
     }());
     DetailScreenConfig = (function () {
-        var DetailScreenConfig = function ($home, spec) {
+        var DetailScreenConfig = function ($listHome, $detailHome, spec) {
             var that = this;
-            this.$home = $home;
+            this.$listHome = $listHome;
+            this.$detailHome = $detailHome;
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
@@ -823,7 +842,8 @@ var DetailScreenConfig = (function () {
              * The type of case properties that this Screen will be displaying,
              * either "short" or "long".
              */
-            function addScreen(pair, columnType) {
+            function addScreen(pair, columnType, $location) {
+
                 var screen = Screen.init(
                     $('<div/>'),
                     pair,
@@ -834,17 +854,26 @@ var DetailScreenConfig = (function () {
                         edit: that.edit,
                         properties: that.properties,
                         saveUrl: that.saveUrl,
-                        columnKey: columnType
+                        $location: $location,
+                        columnKey: columnType,
+                        containsSortConfiguration: columnType == "short",
+                        containsParentConfiguration: columnType == "short",
+                        containsFilterConfiguration: columnType == "short"
                     }
                 );
                 that.screens.push(screen);
-                that.$home.append(screen.$home);
+                $location.append(screen.$home);
             }
 
-            addScreen(spec.state, "short");
+            if (spec.state["short"] !== undefined) {
+                addScreen(spec.state, "short", this.$listHome);
+            }
+            if (spec.state["long"] !== undefined) {
+                addScreen(spec.state, "long", this.$detailHome);
+            }
         };
-        DetailScreenConfig.init = function ($home, spec) {
-            var ds = new DetailScreenConfig($home, spec);
+        DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
+            var ds = new DetailScreenConfig($listHome, $detailHome, spec);
             var type = spec.state.type;
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
             var $filterHome = $('#' + type + '-filter');
