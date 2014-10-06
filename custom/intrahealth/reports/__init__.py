@@ -82,39 +82,21 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     @property
     def rows(self):
         data = self.model.data
-        localizations = sorted(list(set(zip(*data.keys())[1]))) if data.keys() else []
+        localizations = sorted(list(set(zip(*data.keys())[0]))) if data.keys() else []
         rows = []
 
         formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
-        if isinstance(self.data_source, NombreData) or isinstance(self.data_source, TauxConsommationData):
+        if isinstance(self.data_source, (NombreData, TauxConsommationData)):
             result = {}
             ppss = set()
             for k, v in data.iteritems():
-                ppss.add(k[2])
+                ppss.add(k[-2])
                 if 'region_id' in self.data_source.config:
-                    helper_tuple = (k[3], k[2], k[1])
+                    helper_tuple = (k[2], k[1], k[0])
                 else:
-                    helper_tuple = (k[2], k[1])
+                    helper_tuple = (k[1], k[0])
 
-                if helper_tuple in result:
-                    if isinstance(self.data_source, TauxConsommationData):
-                        result[helper_tuple][0]['consumption'] += v['consumption']
-                        result[helper_tuple][0]['stock'] += v['stock']
-                    else:
-                        result[helper_tuple][0]['quantity'] += v['quantity']
-                        result[helper_tuple][0]['cmm'] += v['cmm']
-                    result[helper_tuple][1] += 1
-                else:
-                    result[helper_tuple] = [v, 1]
-
-            for k, v in result.iteritems():
-                if isinstance(self.data_source, TauxConsommationData):
-                    v[0]['consumption'] = float(v[0]['consumption']) / float(v[1])
-                    v[0]['stock'] = float(v[0]['stock']) / float(v[1])
-                else:
-                    v[0]['quantity'] = float(v[0]['quantity']) / float(v[1])
-                    v[0]['cmm'] = float(v[0]['cmm']) / float(v[1])
-                result[k] = v[0]
+                result[helper_tuple] = v
 
             if 'region_id' in self.data_source.config:
                 result_sum = {}
