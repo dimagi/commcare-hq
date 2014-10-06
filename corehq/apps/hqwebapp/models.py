@@ -1,9 +1,11 @@
+from urllib import urlencode
+
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles, privileges
+from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.accounting.utils import is_accounting_admin
@@ -289,8 +291,14 @@ class DashboardTab(UITab):
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.saved_reports"
     subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
+
+    @property
+    def view(self):
+        module = Domain.get_module_by_name(self.domain)
+        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+            return "corehq.apps.reports.views.default"
+        return "corehq.apps.reports.views.saved_reports"
 
 
 class ProjectInfoTab(UITab):
@@ -356,7 +364,6 @@ class CommTrackSetupTab(UITab):
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
-            ILSConfigView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -368,9 +375,8 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        items = []
 
-        items.append([_('CommTrack Setup'), [
+        return [[_('CommTrack Setup'), [
             # products
             {
                 'title': ProductListView.page_title,
@@ -449,13 +455,7 @@ class CommTrackSetupTab(UITab):
                 'title': FacilitySyncView.page_title,
                 'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
             },
-        ]])
-        if self.couch_user and (self.couch_user.is_superuser or IS_DEVELOPER.enabled(self.couch_user.username)):
-            items[0][1].append({
-                'title': ILSConfigView.page_title,
-                'url': reverse(ILSConfigView.urlname, args=[self.domain]),
-            })
-        return items
+        ]]]
 
 
 class ProjectDataTab(UITab):
@@ -1231,7 +1231,8 @@ class AdminReportsTab(UITab):
                 {
                     'title': report.name,
                     'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                   args=(report.slug,)), report.default_params)
+                                   args=(report.slug,)),
+                                   urlencode(report.default_params))
                 } for report in [
                     RealProjectSpacesReport,
                     CommConnectProjectSpacesReport,

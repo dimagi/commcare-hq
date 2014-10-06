@@ -168,9 +168,16 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     # Followups
+    under5_danger_signs_referral_proportion=dict(
+        description="Proportion of Under-5s Referred for Danger Signs",
+        title="% Under-5s Referred for Danger Signs",
+        numerator_slug="under5_danger_signs_referred",
+        denominator_slug="under5_danger_signs",
+    ),
     urgent_referrals_proportion=dict(
-        description="Proportion of urgent referrals (codes A, E, B) or treatment receiving CHW " \
-                    "follow-up within 2 days of referral / treatment during the time period",
+        description="Proportion of urgent referrals (emergency, take to clinic,"\
+                    " basic) or treatment receiving CHW follow-up within "\
+                    "2 days of referral / treatment during the time period",
         title="% Referred / Treated receiving on-time follow-up (within 2 days)",
         numerator_slug="urgent_referral_followups",
         denominator_slug="num_urgent_referrals"

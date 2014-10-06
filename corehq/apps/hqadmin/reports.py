@@ -27,61 +27,56 @@ INDICATOR_DATA = {
     "active_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domains",
-        "chart_title": "Active Project Spaces",
+        "chart_title": "Active Project Spaces (last 30 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_domain_count_forms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domain_count_forms",
-        "chart_title": "Active Project Spaces (via Mobile Worker)",
+        "chart_title": "Active Project Spaces (via Mobile Worker) (last 30 days)",
         "get_request_params": {
             "add_sms_domains": False,
             "restrict_to_mobile_submissions": True,
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_domain_count_sms": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_domain_count_sms",
-        "chart_title": "Active Project Spaces (via SMS)",
+        "chart_title": "Active Project Spaces (via SMS) (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_community_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_community_domain_count",
-        "chart_title": "Active Community Project Spaces",
+        "chart_title": "Active Community Project Spaces (last 30 days)",
         "get_request_params": {
             "software_plan_edition": SoftwarePlanEdition.COMMUNITY,
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_self_started_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_self_started_domains",
-        "chart_title": "Active Self Started Project Spaces",
+        "chart_title": "Active Self Started Project Spaces (last 30 days)",
         "get_request_params": {
             "domain_params_es": {
-                "self_started": ["T"],
+                "internal.self_started": ["T"],
             },
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "domain_count": {
@@ -89,7 +84,6 @@ INDICATOR_DATA = {
         "chart_name": "domains",
         "chart_title": "Total Project Spaces",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "commtrack_domain_count": {
@@ -97,7 +91,6 @@ INDICATOR_DATA = {
         "chart_name": "domains",
         "chart_title": "Total CommTrack Project Spaces",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "domain_self_started_count": {
@@ -110,7 +103,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "subscriptions": {
@@ -119,7 +111,6 @@ INDICATOR_DATA = {
         "chart_title": "Subscriptions",
         "hide_cumulative_charts": True,
         "histogram_type": "subscriptions",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# domains on subscription",
     },
@@ -128,7 +119,6 @@ INDICATOR_DATA = {
         "chart_name": "forms",
         "chart_title": "Forms Submitted by All Users",
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_mobile": {
@@ -139,7 +129,6 @@ INDICATOR_DATA = {
             "user_type_mobile": True,
         },
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "forms_web": {
@@ -150,15 +139,13 @@ INDICATOR_DATA = {
             "user_type_mobile": False,
         },
         "histogram_type": "forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "users": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
         "chart_title": "Total Users",
-        "histogram_type": "users",
-        "interval": "week",
+        "histogram_type": "users_all",
         "xaxis_label": "# users",
     },
     "users_mobile": {
@@ -168,8 +155,7 @@ INDICATOR_DATA = {
         "get_request_params": {
             "user_type_mobile": True,
         },
-        "histogram_type": "users",
-        "interval": "week",
+        "histogram_type": "users_all",
         "xaxis_label": "# users",
     },
     "users_web": {
@@ -179,8 +165,7 @@ INDICATOR_DATA = {
         "get_request_params": {
             "user_type_mobile": False,
         },
-        "histogram_type": "users",
-        "interval": "week",
+        "histogram_type": "users_all",
         "xaxis_label": "# users",
     },
     "commtrack_users_web": {
@@ -191,8 +176,7 @@ INDICATOR_DATA = {
             "require_submissions": False,
             "user_type_mobile": False,
         },
-        "histogram_type": "users",
-        "interval": "week",
+        "histogram_type": "users_all",
         "xaxis_label": "# users",
     },
     "active_users_mobile": {
@@ -203,8 +187,7 @@ INDICATOR_DATA = {
             "user_type_mobile": True,
         },
         "hide_cumulative_charts": True,
-        "histogram_type": "users",
-        "interval": "month",
+        "histogram_type": "users_all",
         "is_cumulative": False,
         "xaxis_label": "# users",
     },
@@ -214,7 +197,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Cases (last 90 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_cases",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
@@ -223,7 +205,6 @@ INDICATOR_DATA = {
         "chart_name": "sms_domains",
         "chart_title": "Total Projects That Have Used SMS",
         "histogram_type": "sms_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "commconnect_domain_count": {
@@ -231,7 +212,6 @@ INDICATOR_DATA = {
         "chart_name": "commconnect_domains",
         "chart_title": "Total CommConnect Enabled Domains",
         "histogram_type": "domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "incoming_sms_domain_count": {
@@ -244,7 +224,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "sms_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "sms_only_domain_count": {
@@ -252,19 +231,17 @@ INDICATOR_DATA = {
         "chart_name": "sms_only_domains",
         "chart_title": "Total Projects Using Only SMS",
         "histogram_type": "sms_only_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "active_commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_commconnect_domains",
-        "chart_title": "Active CommConnect Project Spaces",
+        "chart_title": "Active CommConnect Project Spaces (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_domains",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_outgoing_sms": {
@@ -277,7 +254,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_incoming_sms": {
@@ -290,7 +266,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_outgoing_client_sms": {
@@ -304,7 +279,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_incoming_client_sms": {
@@ -318,7 +292,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_mobile_workers": {
@@ -326,13 +299,12 @@ INDICATOR_DATA = {
         "chart_name": "total_mobile_workers",
         "chart_title": "Total Mobile Workers",
         "histogram_type": "mobile_workers",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_mobile_workers": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_workers",
-        "chart_title": "Active Mobile Workers",
+        "chart_title": "Active Mobile Workers (last 30 days)",
         "get_request_params": {
             "additional_params_es": {
                 "couch_recipient_doc_type": ["commcareuser"],
@@ -340,16 +312,14 @@ INDICATOR_DATA = {
         },
         "hide_cumulative_charts": True,
         "histogram_type": "active_mobile_users",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_dimagi_owned_gateways": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_dimagi_owned_gateways",
-        "chart_title": "Active Projects Using Dimagi Owned Gateways",
+        "chart_title": "Active Projects Using Dimagi Owned Gateways (last 30 days)",
         "hide_cumulative_charts": True,
         "histogram_type": "active_dimagi_gateways",
-        "interval": "week",
         "xaxis_label": "# domains",
     },
     "total_clients": {
@@ -357,13 +327,12 @@ INDICATOR_DATA = {
         "chart_name": "total_clients",
         "chart_title": "Total Mobile Clients",
         "histogram_type": "mobile_clients",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_clients": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_mobile_clients",
-        "chart_title": "Active Mobile Clients",
+        "chart_title": "Active Mobile Clients (last 30 days)",
         "hide_cumulative_charts": True,
         "get_request_params": {
             "additional_params_es": {
@@ -371,7 +340,6 @@ INDICATOR_DATA = {
             },
         },
         "histogram_type": "active_mobile_users",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "active_countries": {
@@ -380,7 +348,6 @@ INDICATOR_DATA = {
         "chart_title": "Active Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "active_countries",
-        "interval": "week",
         "xaxis_label": "# workers",
     },
     "countries": {
@@ -389,7 +356,6 @@ INDICATOR_DATA = {
         "chart_title": "Total Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "countries",
-        "interval": "week",
         "xaxis_label": "# countries",
     },
     "commtrack_total_outgoing_sms": {
@@ -403,7 +369,6 @@ INDICATOR_DATA = {
             "is_commtrack": True,
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# SMS",
     },
     "commtrack_total_incoming_sms": {
@@ -417,7 +382,6 @@ INDICATOR_DATA = {
             "is_commtrack": True,
         },
         "histogram_type": "real_sms_messages",
-        "interval": "week",
         "xaxis_label": "# SMS",
     },
     "commtrack_forms": {
@@ -425,7 +389,6 @@ INDICATOR_DATA = {
         "chart_name": "commtrack_forms",
         "chart_title": "Total CommTrack Form Submissions",
         "histogram_type": "commtrack_forms",
-        "interval": "week",
         "xaxis_label": "# forms",
     },
     "active_supply_points": {
@@ -437,7 +400,6 @@ INDICATOR_DATA = {
             "supply_points": True
         },
         "histogram_type": "active_cases",
-        "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
@@ -450,6 +412,13 @@ INDICATOR_DATA = {
         "interval": "month",
         "is_cumulative": False,
         "xaxis_label": "# products",
+    },
+    "stock_transactions": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "stock_transactions",
+        "chart_title": "Total Stock Transactions",
+        "histogram_type": "stock_transactions",
+        "xaxis_label": "# stock transactions",
     },
 }
 
@@ -464,7 +433,7 @@ DOMAIN_FACETS = [
     "case_sharing",
     "customer_type",
     "deployment.city.exact",
-    "deployment.country.exact",
+    "deployment.countries.exact",
     "deployment.date",
     "deployment.public",
     "deployment.region.exact",
@@ -513,7 +482,7 @@ FACET_MAPPING = [
         {"facet": "internal.project_state", "name": "Scale", "expanded": False},
     ]),
     ("Location", True, [
-        {"facet": "deployment.country.exact", "name": "Country", "expanded": True},
+        {"facet": "deployment.countries.exact", "name": "Country", "expanded": True},
         {"facet": "deployment.region.exact", "name": "Region", "expanded": False},
         {"facet": "deployment.city.exact", "name": "City", "expanded": False},
         {"facet": "internal.workshop_region.exact", "name": "Workshop Region", "expanded": False},
@@ -682,7 +651,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn("Project", prop_name="name.exact"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
-            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country.exact"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
@@ -711,7 +680,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
-            DataTablesColumn(_("Active?"), prop_name="is_active"),
+            DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
             DataTablesColumn(_("CommConnect?"), prop_name="internal.commconnect_domain"),
             DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
         )
@@ -767,7 +736,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     self.get_name_or_link(dom, internal_settings=True),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date((dom.get('deployment') or {}).get('date'), _('No date')),
-                    (dom.get("deployment") or {}).get('country') or _('No country'),
+                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_users_submitted_form", _("Not yet calculated")),
@@ -789,7 +758,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info'),
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
-                    format_bool(dom.get('is_active') or _('No info')),
+                    format_bool(dom.get('cp_is_active') or _('No info')),
                     format_bool(dom.get('internal', {}).get('commconnect_domain')),
                     format_bool(dom.get('internal', {}).get('commtrack_domain')),
                 ]
@@ -933,16 +902,14 @@ class GlobalAdminReports(AdminDomainStatsReport):
             indicator_data[key]["get_request_params"] = json.dumps(
                 indicator_data[key]["get_request_params"]
             )
+            if not ("interval" in indicator_data[key]):
+                indicator_data[key]["interval"] = "month"
         context.update({
             'indicator_data': indicator_data,
             'indicators': self.indicators,
             'report_breadcrumbs': '<a href=".">%s</a>' % self.name,
         })
         return context
-
-    @property
-    def domains(self):
-        return Domain.get_all()
 
     @property
     def indicators(self):
@@ -952,7 +919,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
     name = ugettext_noop('All Project Spaces')
-    default_params = 'es_is_test=false&'
+    default_params = {'es_is_test': 'false'}
     indicators = [
         'domain_count',
         'domain_self_started_count',
@@ -976,7 +943,10 @@ class RealProjectSpacesReport(GlobalAdminReports):
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('CommConnect Project Spaces')
-    default_params = 'es_is_test=false&es_internal.commconnect_domain=true'
+    default_params = {
+        'es_is_test': 'false',
+        'es_internal.commconnect_domain': 'true',
+    }
     indicators = [
         'commconnect_domain_count',
         'sms_domain_count',
@@ -998,7 +968,10 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
     name = ugettext_noop('CommTrack Project Spaces')
-    default_params = 'es_is_test=false&es_internal.commtrack_domain=true'
+    default_params = {
+        'es_is_test': 'false',
+        'es_internal.commtrack_domain': 'true',
+    }
     indicators = [
         'commtrack_domain_count',
         'active_domain_count',
@@ -1012,4 +985,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'commtrack_users_web',
         'active_supply_points',
         'total_products',
+        'stock_transactions',
     ]

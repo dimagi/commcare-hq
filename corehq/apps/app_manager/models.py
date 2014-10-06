@@ -1600,7 +1600,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     subcase.case_properties.keys()
                 )
                 parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                if parent:
+                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -2514,13 +2515,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            for form in self.get_forms():
-                if form.has_fixtures:
-                    raise PermissionDenied(_(
-                        "Usage of lookup tables is not supported by your "
-                        "current subscription. Please upgrade your "
-                        "subscription before using this feature."
-                    ))
+            # remote apps don't support get_forms yet.
+            # for now they can circumvent the fixture limitation. sneaky bastards.
+            if hasattr(self, 'get_forms'):
+                for form in self.get_forms():
+                    if form.has_fixtures:
+                        raise PermissionDenied(_(
+                            "Usage of lookup tables is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
 
     def validate_jar_path(self):
         build = self.get_build()
@@ -3328,9 +3332,38 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
+        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+            errors.append({'type': 'parent cycle'})
+
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
+
+    def _has_parent_child_selection_cycle(self, modules):
+        """
+        :param modules: A mapping of module unique_ids to Module objects
+        :return: True if there is a cycle in the parent-child selection graph
+        """
+        visited = set()
+        completed = set()
+
+        def cycle_helper(m):
+            if m.id in visited:
+                if m.id in completed:
+                    return False
+                return True
+            visited.add(m.id)
+            if hasattr(m, 'parent_select') and m.parent_select.active:
+                parent = modules.get(m.parent_select.module_id, None)
+                if parent != None and cycle_helper(parent):
+                    return True
+            completed.add(m.id)
+            return False
+        for module in modules.values():
+            if cycle_helper(module):
+                return True
+        return False
+
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
@@ -3351,6 +3384,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
+        if self.build_version < yaml_setting.get("since", "0"):
+            setting = yaml_setting.get("disabled_default", None)
+            if setting is not None:
+                return setting
         return yaml_setting.get("default")
 
     @property

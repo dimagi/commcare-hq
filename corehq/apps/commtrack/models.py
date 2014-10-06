@@ -659,7 +659,12 @@ class NewStockReport(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
+        report = DbStockReport.objects.create(
+            form_id=self.form_id,
+            date=self.timestamp,
+            type=self.tag,
+            domain=self._form.domain,
+        )
         for txn in self.transactions:
             db_txn = DbStockTransaction(
                 report=report,
@@ -1331,7 +1336,7 @@ class SQLProduct(models.Model):
     This is used to efficiently filter StockState and other
     SQL based queries to exclude data for archived products.
     """
-    domain = models.CharField(max_length=100, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)

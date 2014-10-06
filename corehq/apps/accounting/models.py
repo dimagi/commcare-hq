@@ -748,13 +748,14 @@ class Subscription(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Overloaded to update pillow with subscription information
+        Overloaded to update domain pillow with subscription information
         """
         super(Subscription, self).save(*args, **kwargs)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception as e:
-            # Subscriber can have a null domain value
+            # If a subscriber doesn't have a valid domain associated with it 
+            # we don't care the pillow won't be updated
             pass
 
     @property
@@ -1311,14 +1312,14 @@ class Invoice(models.Model):
             admins = WebUser.get_admins_by_domain(
                 self.subscription.subscriber.domain
             )
+            contact_emails = [a.email if a.email else a.username for a in admins]
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
                 "email to for the domain %s. Sending to domain admins instead: "
                 "%s." %
-                (self.subscription.subscriber.domain, ', '.join(admins))
+                (self.subscription.subscriber.domain, ', '.join(contact_emails))
             )
-            contact_emails = [a.email if a.email else a.username for a in admins]
         return contact_emails
 
 
