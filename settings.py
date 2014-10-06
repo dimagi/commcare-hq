@@ -321,6 +321,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
+
     'custom.care_pathways',
     'bootstrap3_crispy',
 )
@@ -994,6 +996,7 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('wvindia2', 'wvindia2')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1149,7 +1152,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow'
+        'custom.care_pathways.models.FarmerRecordFluffPillow',
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1255,6 +1262,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
+    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
 }

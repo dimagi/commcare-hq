@@ -63,15 +63,16 @@ branches:
   - custom_user_data  # tw+Ethan 9/9
   - custom_product_data  # tw+Ethan 10/1
   - lwyszomi:better_date_filters_improvment
-  - master+uservoice-pending-invitations # Nick P 9/24
-  - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
-  - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
   - status-only-celery # ts 9/30
+  - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
+  - ota-restore-caching  # cory 10/3
+  - deploy-certain-pillows # ts 10/3
+  - submit-history  # Ethan 10/3
 submodules:
   submodules/couchlog-src:
     branches:
@@ -95,6 +96,3 @@ submodules:
       # Danny 8/12. If there's weird errors or issues in saving forms
       # or saving apps, just remove this
       - faster-lazy-attachments
-  submodules/pillowtop-src:
-   branches:
-      - save-to-es  # Ethan 9/24

@@ -198,7 +198,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Follow-up",
                 indicators=[
-                    dict(slug="under5_danger_signs", expected="--"),
+                    dict(slug="under5_danger_signs_referral_proportion", expected="100%"),
                     dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
                     dict(slug="urgent_referrals_proportion", expected="100%"), # MVIS Indicator
                     dict(slug="median_days_referral_followup", expected="<=2"),

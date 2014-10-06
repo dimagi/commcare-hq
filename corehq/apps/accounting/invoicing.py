@@ -19,8 +19,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.django.email import send_HTML_email
-import settings
 
 logger = logging.getLogger('accounting')
 
@@ -102,25 +100,10 @@ class DomainInvoiceFactory(object):
             self.domain.name, created_by=self.__class__.__name__,
             created_by_invoicing=True)[0]
         if account.date_confirmed_extra_charges is None:
-            if self.domain.is_active:
-                subject = "[%s] Invoice Generation Issue" % self.domain.name
-                email_content = render_to_string(
-                    'accounting/invoice_error_email.html', {
-                        'project': self.domain.name,
-                        'error_msg': "This project is incurring charges on their "
-                                     "Community subscription, but they haven't "
-                                     "agreed to the charges yet. Someone should "
-                                     "follow up with this project to see if everything "
-                                     "is configured correctly or if communication "
-                                     "needs to happen between Dimagi and the project's"
-                                     "admins. For now, the invoices generated are "
-                                     "marked as Do Not Invoice.",
-                    }
-                )
-                send_HTML_email(
-                    subject, settings.BILLING_EMAIL, email_content,
-                    email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
-                )
+            logger.info(
+                "Did not generate invoice because date_confirmed_extra_charges "
+                "was null for domain %s" % self.domain.name
+            )
             do_not_invoice = True
         if not BillingContactInfo.objects.filter(account=account).exists():
             # No contact information exists for this account.
@@ -128,8 +111,7 @@ class DomainInvoiceFactory(object):
             # with the invoice generation.
             raise BillingContactInfoError(
                 "Project %s has incurred charges, but does not have their "
-                "Billing Contact Info filled out. Someone should follow up "
-                "on this." % self.domain.name
+                "Billing Contact Info filled out." % self.domain.name
             )
         # First check to make sure none of the existing subscriptions is set
         # to do not invoice. Let's be on the safe side and not send a

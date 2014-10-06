@@ -1,4 +1,4 @@
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 import simplejson
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
