@@ -82,7 +82,11 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     @property
     def rows(self):
         data = self.model.data
-        localizations = sorted(list(set(zip(*data.keys())[0]))) if data.keys() else []
+        if isinstance(self.model, (NombreData, TauxConsommationData)):
+            localizations = sorted(set(key[0] for key in data))
+        else:
+            localizations = sorted(set(key[1] for key in data))
+
         rows = []
 
         formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
