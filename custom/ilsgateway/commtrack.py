@@ -110,6 +110,7 @@ def add_location(user, location_id):
         commtrack_user.clear_locations()
         commtrack_user.add_location(loc, create_sp_if_missing=True)
 
+
 @retry(5)
 def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
     domain_part = "%s.commcarehq.org" % domain
@@ -245,6 +246,7 @@ def save_checkpoint(checkpoint, api, limit, offset, date):
     checkpoint.date = date
     checkpoint.save()
 
+
 def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
     save_checkpoint(checkpoint, "product", limit, offset, kwargs.get('date', None))
     for product in endpoint.get_products(**kwargs):
@@ -258,12 +260,15 @@ def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
             sync_ilsgateway_webuser(project, user)
 
 
-def smsusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
+def smsusers_sync(project, endpoint, checkpoint, **kwargs):
     has_next = True
-    next_url = "limit=%d&offset=%d" % (limit, offset)
+    next_url = ""
+
     while has_next:
         meta, users = endpoint.get_smsusers(next_url_params=next_url, **kwargs)
-        save_checkpoint(checkpoint, "smsuser", meta['limit'], meta['offset'], kwargs.get('date', None))
+        save_checkpoint(checkpoint, "smsuser",
+                        meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
+                        kwargs.get('date', None))
         for user in users:
             sync_ilsgateway_smsuser(project, user)
 
@@ -273,12 +278,14 @@ def smsusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
             next_url = meta['next'].split('?')[1] if meta['next'] else None
 
 
-def locations_sync(project, endpoint, checkpoint, location_type, limit, offset, **kwargs):
+def locations_sync(project, endpoint, checkpoint, **kwargs):
     has_next = True
-    next_url = "loc_type=%s&limit=%d&offset=%d" % (location_type, limit, offset)
+    next_url = None
+
     while has_next:
-        meta, locations = endpoint.get_locations(type=location_type, next_url_params=next_url, **kwargs)
-        save_checkpoint(checkpoint, 'location_%s' % location_type.lower(), meta['limit'], meta['offset'],
+        meta, locations = endpoint.get_locations(next_url_params=next_url, **kwargs)
+        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['type'],
+                        meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:
             sync_ilsgateway_location(project, endpoint, location)
@@ -330,12 +337,17 @@ def bootstrap_domain(ilsgateway_config):
         commtrack_settings_sync(domain)
 
     apis = [
-        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
-        ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, 'facility', date=date)),
-        ('location_district', partial(locations_sync, domain, endpoint, checkpoint, 'district', date=date)),
-        ('location_region', partial(locations_sync, domain, endpoint, checkpoint, 'region', date=date)),
-        ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date)),
-        ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date))
+        ('product', partial(products_sync, domain, endpoint, checkpoint)),
+        ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
+                                      filters=dict(date_updated__gte=date, type='facility'))),
+        ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
+                                      filters=dict(date_updated__gte=date, type='district'))),
+        ('location_region', partial(locations_sync, domain, endpoint, checkpoint, date=date,
+                                    filters=dict(date_updated__gte=date, type='region'))),
+        ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date,
+                            filters=dict(user__date_joined__gte=date))),
+        ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date,
+                            filters=dict(date_updated__gte=date)))
     ]
 
     try:
