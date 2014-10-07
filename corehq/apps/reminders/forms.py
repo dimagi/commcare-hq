@@ -806,7 +806,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
         required=False,
-        label=ugettext_noop("Case Property"),
+        label=ugettext_noop("Enter a Case Property"),
     )
     start_date_offset_type = forms.ChoiceField(
         required=False,
@@ -847,7 +847,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
-        label=ugettext_noop("Case Property"),
+        label=ugettext_noop("Enter a Case Property"),
         required=False
     )
     recipient_case_match_type = forms.ChoiceField(
@@ -1064,8 +1064,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
-                data_bind="value: case_type",
-                data_placeholder=_("Enter a Case Type"),
+                data_bind="value: case_type, typeahead: available_case_types",
+                placeholder=_("Enter a Case Type"),
                 help_bubble_text=_(
                     "Choose which case type this reminder will be "
                     "sent out for."
@@ -1085,6 +1085,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'start_property',
                         css_class="input-xlarge",
+                        data_bind="typeahead: getAvailableCaseProperties",
                     ),
                     InlineField(
                         'start_match_type',
@@ -1128,8 +1129,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             crispy.Div(
                 crispy.Field(
                     'start_date',
-                    data_placeholder="Enter a Case Property",
+                    placeholder=_("Enter Case Property"),
                     css_class="input-xlarge",
+                    data_bind="typeahead: getAvailableCaseProperties",
                 ),
                 BootstrapMultiField(
                     "",
@@ -1168,8 +1170,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 _("When Case Property"),
                 InlineField(
                     'recipient_case_match_property',
-                    placeholder="Enter a Case Property",
                     css_class="input-xlarge",
+                    data_bind="typeahead: getAvailableSubcaseProperties",
                 ),
                 InlineField(
                     'recipient_case_match_type',
@@ -1279,6 +1281,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'until',
                         css_class="input-large",
+                        data_bind="typeahead: getAvailableCaseProperties",
                     ),
                     css_class="help-inline",
                     data_bind="visible: isUntilVisible",
@@ -1370,23 +1373,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
         return current_values
-
-    @property
-    def select2_fields(self):
-        case_properties = [
-            'start_property',
-            'start_date',
-            'until',
-            'fire_time_aux',
-        ]
-        subcase_properties = [
-            'recipient_case_match_property',
-        ]
-
-        _fmt_field = lambda name, action: {'name': name, 'action': action}
-        return ([_fmt_field('case_type', 'search_case_type')] +
-                [_fmt_field(cp, 'search_case_property') for cp in case_properties] +
-                [_fmt_field(sp, 'search_subcase_property') for sp in subcase_properties])
 
     @property
     def relevant_choices(self):
