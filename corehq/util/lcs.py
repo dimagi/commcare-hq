@@ -3,7 +3,7 @@ class LCSCache(object):
         self.d = {}
 
     def get(self, i, j):
-        key = str(i)+' '+str(j)
+        key = str(i) + ' ' + str(j)
         try:
             val = self.d[key]
             return {
@@ -14,7 +14,7 @@ class LCSCache(object):
             return None
 
     def set(self, i, j, val):
-        key = str(i)+' '+str(j)
+        key = str(i) + ' ' + str(j)
         self.d[key] = val
 
 
@@ -27,7 +27,7 @@ def lcsMerge(X, Y, equality_func=None):
 
     def recLcsMerge(i, j):
         recur = recLcsMerge
-        val = cache.get(i,j)
+        val = cache.get(i, j)
         if val:
             return val
         if i == 0 and j == 0:
@@ -36,27 +36,28 @@ def lcsMerge(X, Y, equality_func=None):
                 'merge': []
             }
         elif i == 0:
-            val = recur(i, j-1)
-            val['merge'].append({"x": False, "y": True, "token": Y[j-1]})
+            val = recur(i, j - 1)
+            val['merge'].append({"x": False, "y": True, "token": Y[j - 1]})
         elif j == 0:
-            val = recur(i-1, j)
+            val = recur(i - 1, j)
             val['merge'].append({'x': True, 'y': False, 'token': X[i - 1]})
-        elif equality_func(X[i-1], Y[j-1]):
-            val = recur(i - 1, j - 1);
+        elif equality_func(X[i - 1], Y[j - 1]):
+            val = recur(i - 1, j - 1)
             val['lcs_length'] = val['lcs_length'] + 1
             val['merge'].append({'x': True, 'y': True, 'token': X[i - 1]})
         else:
-            val1 = recur(i, j-1)
-            val2 = recur(i -1, j)
+            val1 = recur(i, j - 1)
+            val2 = recur(i - 1, j)
             if val2['lcs_length'] > val1['lcs_length']:
                 val = val2
-                val['merge'].append({"x": True, "y": False, "token": X[i-1]})
+                val['merge'].append({"x": True, "y": False, "token": X[i - 1]})
             else:
                 val = val1
-                val['merge'].append({'x': False, 'y': True, 'token': Y[j-1]})
+                val['merge'].append({'x': False, 'y': True, 'token': Y[j - 1]})
         cache.set(i, j, val)
         return cache.get(i, j)
     return recLcsMerge(len(X), len(Y))['merge']
+
 
 def _test():
     spec = {
@@ -83,7 +84,11 @@ def _test():
         "name", "name", "quarter", "date_last_visit", "phone_number",
         "parent/parent/phone_number", "dob", "nutrition_status"
     ]
-    fields = [x['token']['field'] for x in lcsMerge(spec['short']['columns'], spec['long']['columns'])]
+    fields = [
+        x['token']['field'] for x in lcsMerge(
+            spec['short']['columns'], spec['long']['columns']
+        )
+    ]
     if not fields == expectedFields:
         print "bad"
     else:
