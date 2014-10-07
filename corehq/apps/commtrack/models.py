@@ -108,7 +108,7 @@ class Program(Document):
     def delete(self):
         # you cannot delete the default program
         if self.default:
-            return
+            raise Exception(_('You cannot delete the default product'))
 
         default = Program.default_for_domain(self.domain)
 
