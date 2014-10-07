@@ -447,26 +447,37 @@ def development():
 
     _setup_path()
 
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
-        'django_celery': [],
-        'sms_queue': [],
-        'reminder_queue': [],
-        'pillow_retry_queue': [],
-        'django_app': [],
-        'django_pillowtop': [],
-        'formsplayer': [],
-        'staticfiles': [],
-        'lb': [],
-        'deploy': [],
+    webworkers = ['192.168.33.15']
 
-        'django_monolith': env.hosts
+    postgresql = ['192.168.33.16']
+    couchdb = ['192.168.33.16']
+    redis = ['192.168.33.16']
+    memcached = ['192.168.33.16']
+
+    proxy = ['192.168.33.17']
+
+
+    env.roledefs = {
+        'couch': couchdb,
+        'pg': postgresql,
+        'rabbitmq': postgresql,
+        'django_celery': postgresql,
+        'sms_queue': postgresql,
+        'reminder_queue': postgresql,
+        'pillow_retry_queue': postgresql,
+        'django_app': webworkers,
+        'django_pillowtop': postgresql,
+        'formsplayer': postgresql,
+        'staticfiles': proxy,
+        'lb': [],
+        'deploy': postgresql,
+
+        'django_monolith': []
     }
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
     env.flower_port = 5555
+    env.hosts = env.roledefs['deploy']
 
 @task
 @roles(ROLES_ALL_SRC)
