@@ -42,7 +42,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 DatabaseColumn("New registrations during last 30 days",
                         CountUniqueColumn('doc_id',
                             alias="new_registrations",
-                            filters=self.filters + [AND([LTE('opened_on', "last_month"), GTE('opened_on', "today")])]
+                            filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
                         )
                 )
             ])
@@ -57,7 +57,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 DatabaseColumn("Children cases closed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="closed",
-                        filters=self.filters + [AND([NOTEQ('closed_on', 'empty'), LTE('opened_on', "stred"), LTE('closed_on', "stred")])]
+                        filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
                 DatabaseColumn("Total children followed during the time period",
@@ -271,7 +271,8 @@ class NutritionBirthWeightDetails(BaseSqlData):
                 percent = self.percent_fn(self.data['total_birthweight_known'], self.data[column.slug])
 
             result.append([{'sort_key': column.header, 'html': column.header},
-                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug],
+                            'color': 'red' if column.slug == 'total_birthweight_lt_25' else 'green'},
                            {'sort_key': 'percentage', 'html': percent}]
             )
         return result

@@ -140,7 +140,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
             chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, NutritionBirthWeightDetails):
-            chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]], ['red', 'green'])
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
             chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):

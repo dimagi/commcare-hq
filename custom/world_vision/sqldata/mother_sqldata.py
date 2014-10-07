@@ -14,11 +14,7 @@ class MotherRegistrationDetails(BaseSqlData):
 
     @property
     def filters(self):
-        #TODO: if date_not_selected:
-        if 'startdate' not in self.config and 'enddate' not in self.config:
-            return super(MotherRegistrationDetails, self).filters[1:]
-        else:
-            return super(MotherRegistrationDetails, self).filters
+        return super(MotherRegistrationDetails, self).filters[1:]
 
     @property
     def rows(self):
@@ -59,7 +55,7 @@ class MotherRegistrationDetails(BaseSqlData):
                 DatabaseColumn("New registrations during last 30 days",
                         CountUniqueColumn('doc_id',
                             alias="new_registrations",
-                            filters=self.filters + [AND([LTE('opened_on', "last_month"), GTE('opened_on', "today")])]
+                            filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
                         )
                 )
             ])
@@ -74,7 +70,7 @@ class MotherRegistrationDetails(BaseSqlData):
                 DatabaseColumn("Mother cases closed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="closed",
-                        filters=self.filters + [AND([NOTEQ('closed_on', 'empty'), LTE('opened_on', "stred"), LTE('closed_on', "stred")])]
+                        filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
                 DatabaseColumn("Total mothers followed during the time period",
@@ -178,13 +174,13 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
             DatabaseColumn("Trimester 1",
                 CountUniqueColumn('doc_id',
                     alias="trimester_1",
-                    filters=self.filters + [AND([LTE('lmp', "today"), GTE('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
+                    filters=self.filters + [AND([LTE('lmp', "today"), GT('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
                 )
             ),
             DatabaseColumn("Trimester 2",
                 CountUniqueColumn('doc_id',
                     alias="trimester_2",
-                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GTE('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
+                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GT('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
                 )
             ),
             DatabaseColumn("Trimester 3",
@@ -340,7 +336,7 @@ class DeliveryLiveBirthDetails(BaseSqlData):
 
     @property
     def rows(self):
-        total = sum(v for v in self.data.values())
+        total = sum(v if v else 0 for v in self.data.values())
         result = []
         for column in self.columns:
             percent = self.percent_fn(total, self.data[column.slug])
