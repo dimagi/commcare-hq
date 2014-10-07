@@ -2,6 +2,7 @@ import json
 from django.utils import html
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
@@ -358,12 +359,14 @@ def get_app_json(app):
     app_json['post_url'] = app.post_url
     return app_json
 
+
 def look_up_app_json(domain, app_id):
-    print "WE GOT IT YEAH!!"
-    assert(False)
     app = get_app(domain, app_id)
+    if app.is_remote_app():
+        raise RemoteAppError()
     assert(app.domain == domain)
     return get_app_json(app)
+
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)
