@@ -123,11 +123,13 @@
             {{ detail.label }}
         </a>
     </li>
+    {% if detail.long %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
             {{ detail.detail_label }}
         </a>
     </li>
+    {% endif %}
     {% endfor %}
 </ul>
 <div class="tab-content">
