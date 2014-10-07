@@ -18,7 +18,7 @@
                 {% trans 'Exchange' %}
             </div>
             <div class="panel-body">
-                <p><a href="{% url 'appstore' %}" class="dashboard-link">
+                <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link">
                     <span class="dashboard-icon dashboard-icon-exchange"></span>
                     <span class="lead">{% blocktrans %}
                         Start with an existing application
@@ -37,7 +37,7 @@
                 {% endif %}
             </div>
             <div class="panel-body">
-                <form action="/a/biyeun/apps/new_app/" method="post"><p>
+                <form action="/a/biyeun/apps/new_app/" method="post"><p class="text-center">
                     <input type="hidden" name="type" value="Application">
                     <input type="hidden" name="application_version" value="2.0">
                     <button href="#" type="submit" class="dashboard-button">
@@ -62,7 +62,7 @@
         <div class="panel panel-dashboard">
             <div class="panel-heading">{% trans 'Help Site' %}</div>
             <div class="panel-body">
-                <p><a href="http://help.commcarehq.org/"
+                <p class="text-center"><a href="http://help.commcarehq.org/"
                       class="dashboard-link"
                       target="_blank">
                     <span class="dashboard-icon dashboard-icon-help"></span>
