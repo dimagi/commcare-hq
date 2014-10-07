@@ -120,7 +120,7 @@ class TestPillowTopFiltering(TestCase):
         self.assertEqual(reject, expected_reject)
 
     def test_loading_no_existing_conf_file(self):
-        expected_reject = None
+        expected_reject = []
 
         reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'production')
         self.assertEqual(reject, expected_reject)

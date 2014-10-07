@@ -29,7 +29,7 @@ class Command(SupervisorConfCommand):
                 yml = yaml.load(f)
                 return yml['pillowtop_blacklist']
 
-        return None
+        return []
 
     def render_configuration_file(self, conf_template_string):
         """
