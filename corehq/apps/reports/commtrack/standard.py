@@ -1,5 +1,4 @@
 from corehq.apps.api.es import CaseES
-from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -15,10 +14,6 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-
-
-def _enabled_hack(domain):
-    return not is_psi_domain(domain)
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -55,9 +50,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
         if not any(a.action_type == 'consumption' for a in actions):
             # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
             actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
-        if is_psi_domain(self.domain):
-            ordering = ['sales', 'receipts', 'consumption']
-            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
         return actions
 
     @property
@@ -79,13 +71,21 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
+    @property
+    @memoized
+    def archived_products(self):
+        return self.request.GET.get('archived_products', False)
+
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+    ]
     exportable = True
     emailable = True
 
@@ -136,12 +136,18 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.objects.filter(
+        stock_states = StockState.include_archived.filter(
             case_id__in=sp_ids,
             last_modified_date__lte=self.datespan.enddate_utc,
             last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
-        ).order_by('product_id')
+        )
+        if not self.archived_products:
+            stock_states = stock_states.exclude(
+                sql_product__is_archived=True
+            )
+
+        stock_states = stock_states.order_by('product_id')
 
         if self.program_id:
             stock_states = stock_states.filter(
@@ -212,19 +218,23 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart.data = self.get_data_for_graph()
             return [chart]
 
+
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+    ]
     exportable = True
     emailable = True
 
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(InventoryReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):
@@ -257,6 +267,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                 'program_id': self.request.GET.get('program'),
                 'startdate': self.datespan.startdate_utc,
                 'enddate': self.datespan.enddate_utc,
+                'archived_products': self.archived_products,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -289,16 +300,18 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
     exportable = True
     emailable = True
 
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
+        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
 
     @property
     def headers(self):

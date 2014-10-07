@@ -274,28 +274,24 @@ var AdvancedCase = (function () {
             return action;
         }));
 
-        self.actionOptions = ko.computed(function () {
-            var options = [];
-            if (self.load_update_cases().length <= 2) {
-                options.push({
-                    display: 'Load / Update / Close a case',
-                    value: 'load'
-                });
-                options.push({
-                    display: 'Automatic Case Selection',
-                    value: 'auto_select'
-                });
-                options.push({
-                    display: '---',
-                    value: 'separator'
-                });
-            }
-            options.push({
+        self.actionOptions = ko.observableArray([
+            {
+                display: 'Load / Update / Close a case',
+                value: 'load'
+            },
+            {
+                display: 'Automatic Case Selection',
+                value: 'auto_select'
+            },
+            {
+                display: '---',
+                value: 'separator'
+            },
+            {
                 display: 'Open a Case',
                 value: 'open'
-            });
-            return options;
-        });
+            }
+        ]);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.open_cases();
@@ -350,6 +346,7 @@ var AdvancedCase = (function () {
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
+                    parent_reference_id: '',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -586,8 +583,9 @@ var AdvancedCase = (function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var parent = self.config.caseConfigViewModel.load_update_cases()[0];
-                        if (parent) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        if (index > 0) {
+                            var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
                             self.parent_tag(parent.case_tag());
                         }
                     } else {

@@ -5,8 +5,8 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
-from django.dispatch import receiver
 from datetime import datetime
+
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()

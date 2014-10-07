@@ -2,6 +2,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import logging
 import numpy
+import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
@@ -197,12 +198,9 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Follow-up",
                 indicators=[
-                    dict(slug="under5_danger_signs", expected="--"),
+                    dict(slug="under5_danger_signs_referral_proportion", expected="100%"),
                     dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
-                    dict(slug="num_urgent_referrals", expected="--"), # denominator for MVIS indicator
                     dict(slug="urgent_referrals_proportion", expected="100%"), # MVIS Indicator
-                    dict(slug="late_followups_proportion", expected="--"),
-                    dict(slug="no_followups_proportion", expected="--"),
                     dict(slug="median_days_referral_followup", expected="<=2"),
                 ]
             ),
@@ -232,6 +230,10 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 ]
             )
         ]
+
+    @property
+    def timezone(self):
+        return pytz.utc
 
     def get_response_for_indicator(self, indicator):
         raw_values = {}

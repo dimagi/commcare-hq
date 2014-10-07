@@ -179,22 +179,26 @@
                 {% endif %}
 
                 {% if allow_form_workflow %}
-                ko.applyBindings({
-                        workflow: ko.observable('{{ form.post_form_workflow }}'),
-                        form_workflow_options: [
-                            {value: "default", label: "{% trans "* Home Screen" %}" },
-                            {value: "module", label: "{% trans "Module:" %} {{ module.name|trans:langs }}" },
-                            {value: "previous_screen", label: "{% trans "Previous Screen" %}" }
-                        ]
-                    },
-                    $('#form-workflow').get(0)
-                );
+                    var workflow_labels = {
+                        default: "{% trans "Home Screen" %}",
+                        module: "{% trans "Module:" %} {{ module.name|trans:langs }}",
+                        previous_screen: "{% trans "Previous Screen" %}"
+                    };
+                    var workflow_options = _.map(workflow_labels, function (label, value) {
+                        return {value: value, label: (value === 'default' ? '* ' + label : label)};
+                    });
+                    ko.applyBindings({
+                            workflow: ko.observable('{{ form.post_form_workflow }}'),
+                            form_workflow_options: workflow_options,
+                            workflow_display: workflow_labels["{{ form.post_form_workflow }}"]
+                        },
+                        $('#form-workflow').get(0)
+                    );
+                {% endif %}
 
                 ko.applyBindings({
                     auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }}),
                 }, $('#auto-gps-capture').get(0));
-
-                {% endif %}
             {% endif %}
 
             {% if allow_cloudcare %}

@@ -141,12 +141,20 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
+        stock_states = StockState.include_archived.filter(
+            section_id=STOCK_SECTION_TYPE,
+            last_modified_date__lte=self.end_date,
+            last_modified_date__gte=self.start_date,
+        )
+
+        if not self.config.get('archived_products', False):
+            stock_states = stock_states.exclude(
+                sql_product__is_archived=True
+            )
+
         if len(sp_ids) == 1:
-            stock_states = StockState.objects.filter(
+            stock_states = stock_states.filter(
                 case_id=sp_ids[0],
-                section_id=STOCK_SECTION_TYPE,
-                last_modified_date__lte=self.end_date,
-                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -154,11 +162,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return self.leaf_node_data(stock_states)
         else:
-            stock_states = StockState.objects.filter(
+            stock_states = stock_states.filter(
                 case_id__in=sp_ids,
-                section_id=STOCK_SECTION_TYPE,
-                last_modified_date__lte=self.end_date,
-                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:

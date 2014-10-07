@@ -120,3 +120,8 @@ VISIT_SCHEDULER = StaticToggle(
     'Visit Scheduler',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+DASHBOARD_PREVIEW = StaticToggle(
+    'dashboard_preview',
+    'HQ Dashboard Preview'
+)

@@ -2,11 +2,9 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
-from corehq.apps.commtrack.helpers import psi_one_time_setup
 from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer, login_and_domain_required, \
+from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
     cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
@@ -18,22 +16,18 @@ from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from soil.util import expose_download, get_download_context
-import uuid
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import import_stock_reports_async, import_products_async, \
-    recalculate_domain_consumption_task
+from django.views.decorators.http import require_POST
+from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
-import csv
 from dimagi.utils.couch.database import iter_docs
 import itertools
 import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
-from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
 
 
 
@@ -178,6 +172,40 @@ class DefaultConsumptionView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
+@require_POST
+@domain_admin_required
+def archive_product(request, domain, prod_id, archive=True):
+    """
+    Archive product
+    """
+    product = Product.get(prod_id)
+    product.archive()
+    return HttpResponse(json.dumps(dict(
+        success=True,
+        message=_("Product '{product_name}' has successfully been {action}.").format(
+            product_name=product.name,
+            action="archived",
+        )
+    )))
+
+
+@require_POST
+@domain_admin_required
+def unarchive_product(request, domain, prod_id, archive=True):
+    """
+    Unarchive product
+    """
+    product = Product.get(prod_id)
+    product.unarchive()
+    return HttpResponse(json.dumps(dict(
+        success=True,
+        message=_("Product '{product_name}' has successfully been {action}.").format(
+            product_name=product.name,
+            action="unarchived",
+        )
+    )))
+
+
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
@@ -211,6 +239,12 @@ class ProductListView(BaseCommTrackManageView):
                 'limit': self.limit,
                 'total': self.total
             },
+            'archive_help_text': _(
+                "Archive a product to stop showing data for it in \
+                reports and on mobile applications. Archiving is \
+                completely reversible, so you can always reactivate \
+                it later."
+            ),
             'show_inactive': self.show_inactive,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
         }
@@ -222,10 +256,29 @@ class FetchProductListView(ProductListView):
     def skip(self):
         return (int(self.page) - 1) * int(self.limit)
 
+    def get_archive_text(self, is_archived):
+        if is_archived:
+            return _("This will re-activate the product, and the product will show up in reports again.")
+        return _("As a result of archiving, this product will no longer appear in reports. "
+                 "This action is reversable; you can reactivate this product by viewing "
+                 "Show Archived Products and clicking 'Unarchive'.")
+
     @property
     def product_data(self):
         data = []
-        products = Product.by_domain(domain=self.domain, limit=self.limit, skip=self.skip())
+        if self.show_inactive:
+            products = Product.archived_by_domain(
+                domain=self.domain,
+                limit=self.limit,
+                skip=self.skip(),
+            )
+        else:
+            products = Product.by_domain(
+                domain=self.domain,
+                limit=self.limit,
+                skip=self.skip(),
+            )
+
         for p in products:
             if p.program_id:
                 program = Program.get(p.program_id)
@@ -237,6 +290,12 @@ class FetchProductListView(ProductListView):
             info = p._doc
             info['program'] = program.name
             info['edit_url'] = reverse('commtrack_product_edit', kwargs={'domain': self.domain, 'prod_id': p._id})
+            info['archive_action_desc'] = self.get_archive_text(self.show_inactive)
+            info['archive_action_text'] = _("Un-Archive") if self.show_inactive else _("Archive")
+            info['archive_url'] = reverse(
+                'unarchive_product' if self.show_inactive else 'archive_product',
+                kwargs={'domain': self.domain, 'prod_id': p._id}
+            )
             data.append(info)
         return data
 
@@ -379,7 +438,9 @@ def product_importer_job_poll(request, domain, download_id, template="hqwebapp/p
 def download_products(request, domain):
     def _get_products(domain):
         for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
-            yield Product.wrap(p_doc)
+            # filter out archived products from export
+            if not ('is_archived' in p_doc and p_doc['is_archived']):
+                yield Product.wrap(p_doc)
 
     def _build_row(keys, product):
         row = []
@@ -461,115 +522,6 @@ class EditProductView(NewProductView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.product_id])
 
-
-@require_superuser
-def bootstrap(request, domain):
-    if request.method == "POST":
-        D = Domain.get_by_name(domain)
-
-        if D.commtrack_enabled:
-            return HttpResponse('already configured', 'text/plain')
-        else:
-            psi_one_time_setup(D)
-            return HttpResponse('set up successfully', 'text/plain')
-
-    return render(request, 'commtrack/debug/bootstrap.html', {
-        'domain': domain,
-        }
-    )
-
-@require_superuser
-def historical_import(request, domain):
-    if request.method == "POST":
-        file_ref = expose_download(request.FILES['history'].read(),
-                                   expiry=1*60*60)
-        download_id = uuid.uuid4().hex
-        import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
-        return _async_in_progress(request, domain, download_id)
-
-    return HttpResponse("""
-<form method="post" action="" enctype="multipart/form-data">
-  <div><input type="file" name="history" /></div>
-  <div><button type="submit">Import historical stock reports</button></div>
-</form>
-""")
-
-def _async_in_progress(request, domain, download_id):
-    messages.success(request,
-        'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
-        (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
-        extra_tags="html")
-    return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
-
-
-@require_previewer
-def charts(request, domain, template="commtrack/charts.html"):
-    products = Product.by_domain(domain)
-    prod_codes = [p.code for p in products]
-    prod_codes.extend(range(20))
-
-    from random import randint
-    num_facilities = randint(44, 444)
-
-
-    ### gen fake data
-    def vals():
-        tot = 0
-        l = []
-        for i in range(4):
-            v = randint(0, num_facilities - tot)
-            l.append(v)
-            tot += v
-        l.append(num_facilities - tot)
-        return l
-
-    statuses = [
-        {"key": "stocked out", "color": "#e00707"},
-        {"key": "under stock", "color": "#ffb100"},
-        {"key": "adequate stock", "color": "#4ac925"},
-        {"key": "overstocked", "color": "#b536da"},
-        {"key": "unknown", "color": "#ABABAB"}
-    ]
-
-    for s in statuses:
-        s["values"] = []
-
-    for i, p in enumerate(prod_codes):
-        vs = vals()
-        for j in range(5):
-            statuses[j]["values"].append({"x": p, "y": vs[j]})
-
-    # colors don't actually work correctly for pie charts
-    resp_values = [
-        {"label": "Submitted on Time", "color": "#4ac925", "value": randint(0, 40)},
-        {"label": "Didn't respond", "color": "#ABABAB", "value": randint(0, 20)},
-        {"label": "Submitted Late", "color": "#e00707", "value": randint(0, 8)},
-    ]
-    response_data = [{
-        "key": "Current Late Report",
-        "values": resp_values
-    }]
-
-    ctxt = {
-        "domain": domain,
-        "stock_data": statuses,
-        "response_data": response_data,
-    }
-    return render(request, template, ctxt)
-
-@require_superuser
-def location_dump(request, domain):
-    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
-    
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
-
-    w = csv.writer(resp)
-    w.writerow(['UUID', 'Location Type', 'SMS Code'])
-    for raw in iter_docs(Location.get_db(), loc_ids):
-        loc = Location.wrap(raw)
-        w.writerow([loc._id, loc.location_type, loc.site_code])
-    return resp
 
 @login_and_domain_required
 def api_query_supply_point(request, domain):
@@ -728,51 +680,6 @@ class EditProgramView(NewProgramView):
         return reverse(self.urlname, args=[self.domain, self.program_id])
 
 
-class ILSConfigView(BaseCommTrackManageView):
-    urlname = 'ils_config'
-    sync_urlname = 'sync_ilsgateway'
-    page_title = ugettext_noop("ILSGateway")
-    template_name = 'locations/facility_sync.html'
-    source = 'ilsgateway'
-
-    @cls_require_superuser_or_developer
-    def dispatch(self, request, *args, **kwargs):
-        return super(ILSConfigView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'settings': self.settings_context,
-            'source': self.source,
-            'sync_url': self.sync_urlname,
-            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username)
-        }
-
-    @property
-    def settings_context(self):
-        config = ILSGatewayConfig.for_domain(self.domain_object.name)
-
-        if config:
-            return {
-                "source_config": config._doc,
-            }
-        else:
-            return {
-                "source_config": ILSGatewayConfig()._doc
-            }
-
-    def post(self, request, *args, **kwargs):
-        payload = json.loads(request.POST.get('json'))
-        ils = ILSGatewayConfig.wrap(self.settings_context['source_config'])
-        ils.enabled = payload['source_config'].get('enabled', None)
-        ils.domain = self.domain_object.name
-        ils.url = payload['source_config'].get('url', None)
-        ils.username = payload['source_config'].get('username', None)
-        ils.password = payload['source_config'].get('password', None)
-        ils.save()
-        return self.get(request, *args, **kwargs)
-
-
 class FetchProductForProgramListView(EditProgramView):
     urlname = 'commtrack_product_for_program_fetch'
 
@@ -861,10 +768,3 @@ class SMSSettingsView(BaseCommTrackManageView):
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
-
-
-@domain_admin_required
-@require_POST
-def sync_ilsgateway(request, domain):
-    ils_bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')

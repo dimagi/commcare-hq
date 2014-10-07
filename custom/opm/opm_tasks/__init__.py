@@ -1,1 +1,0 @@
-DEVELOPERS_EMAILS = ['esoergel@dimagi.com', 'sreddy@dimagi.com']

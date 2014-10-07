@@ -123,7 +123,6 @@ class CustomExportHelper(object):
         schema_id = self.custom_export.schema_id
         schema = ExportSchema.get(schema_id)
         self.custom_export.index = schema.index
-
         self.presave = post_data['presave']
         self.export_stock = post_data['export_stock']
 

@@ -4,6 +4,7 @@ from celery.task import task
 import math
 
 from dimagi.utils.modules import to_function
+from dimagi.utils.logging import notify_exception
 from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
@@ -49,6 +50,16 @@ def add_msg_tags(msg, metadata):
         msg.chat_user_id = metadata.chat_user_id
         msg.save()
 
+def log_sms_exception(msg):
+    direction = "OUT" if msg.direction == OUTGOING else "IN"
+    if msg._id:
+        message = "[SMS %s] Error processing SMS %s" % (direction, msg._id)
+    else:
+        message = ("[SMS %s] Error processing SMS for domain %s on %s" %
+            (direction, msg.domain, msg.date))
+    notify_exception(None, message=message)
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -72,9 +83,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, metadata)
 
-    def onerror():
-        logging.exception("Problem sending SMS to %s" % phone_number)
-    return queue_outgoing_sms(msg, onerror=onerror)
+    return queue_outgoing_sms(msg)
 
 def send_sms_to_verified_number(verified_number, text, metadata=None):
     """
@@ -98,9 +107,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None):
     )
     add_msg_tags(msg, metadata)
 
-    def onerror():
-        logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
-    return queue_outgoing_sms(msg, onerror=onerror)
+    return queue_outgoing_sms(msg)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
@@ -114,9 +121,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
     )
     add_msg_tags(msg, metadata)
 
-    def onerror():
-        logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-    return queue_outgoing_sms(msg, onerror=onerror)
+    return queue_outgoing_sms(msg)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
@@ -131,9 +136,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
     )
     add_msg_tags(msg, metadata)
 
-    def onerror():
-        logging.exception("Exception while sending SMS to %s with backend name %s from domain %s" % (phone_number, backend_name, domain))
-    return queue_outgoing_sms(msg, onerror=onerror)
+    return queue_outgoing_sms(msg)
 
 def enqueue_directly(msg):
     try:
@@ -144,7 +147,7 @@ def enqueue_directly(msg):
         # shortly.
         pass
 
-def queue_outgoing_sms(msg, onerror=lambda: None):
+def queue_outgoing_sms(msg):
     if settings.SMS_QUEUE_ENABLED:
         try:
             msg.processed = False
@@ -152,19 +155,18 @@ def queue_outgoing_sms(msg, onerror=lambda: None):
             msg.queued_timestamp = datetime.utcnow()
             msg.save()
         except:
-            onerror()
+            log_sms_exception(msg)
             return False
 
         enqueue_directly(msg)
         return True
     else:
         msg.processed = True
-        msg_sent = send_message_via_backend(msg, onerror=onerror)
+        msg_sent = send_message_via_backend(msg)
         return msg_sent
 
 
-def send_message_via_backend(msg, backend=None, orig_phone_number=None,
-    onerror=lambda: None):
+def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     """send sms using a specific backend
 
     msg - outbound message object
@@ -172,8 +174,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None,
       msg.outbound_backend
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
-    onerror - error handler; mostly useful for logging a custom message to the
-      error log
     """
     try:
         msg.text = clean_text(msg.text)
@@ -202,7 +202,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None,
         create_billable_for_sms(msg)
         return True
     except Exception:
-        onerror()
+        log_sms_exception(msg)
         return False
 
 def process_sms_registration(msg):
@@ -327,13 +327,13 @@ def process_incoming(msg, delay=True):
             try:
                 handler = to_function(h)
             except:
-                logging.exception('error loading sms handler: %s' % h)
+                notify_exception(None, message=('error loading sms handler: %s' % h))
                 continue
 
             try:
                 was_handled = handler(v, msg.text, msg=msg)
             except Exception, e:
-                logging.exception('unhandled error in sms handler %s for message [%s]: %s' % (h, msg._id, e))
+                log_sms_exception(msg)
                 was_handled = False
 
             if was_handled:
@@ -347,6 +347,8 @@ def process_incoming(msg, delay=True):
 
 
 def create_billable_for_sms(msg, delay=True):
+    if not msg.domain:
+        return
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
