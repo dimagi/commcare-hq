@@ -10,12 +10,26 @@ class Command(SupervisorConfCommand):
 
 
     @staticmethod
-    def get_pillows_from_settings(self, pillowtops, reject_types=[]):
+    def get_pillows_from_settings(pillowtops, reject_types=[]):
         """
         Reduce the number of pillows started if there are certain types passed in to reject
         """
         return [pillow for group_key, items in pillowtops.items() for pillow in items if
                 group_key not in reject_types]
+
+    @staticmethod
+    def get_rejected_pillow_types(code_root, environment):
+        """
+        Check if a file exists for this environment, then load the rejected pillow types from that file
+        Return: None or []
+        """
+        fpath = os.path.join(code_root, "scripts", "%s_pillows.yaml" % environment)
+        if os.path.isfile(fpath):
+            with open(fpath, 'r') as f:
+                yml = yaml.load(f)
+                return yml['pillowtop_blacklist']
+
+        return None
 
     def render_configuration_file(self, conf_template_string):
         """
@@ -24,13 +38,10 @@ class Command(SupervisorConfCommand):
         environment = self.params['environment']
         code_root = self.params['code_root']
 
-        if environment in ['staging']:
-            with open(os.path.join(code_root, "scripts", "staging_pillows.yaml"), 'r') as f:
-                yml = yaml.load(f)
-                reject = yml['pillowtop_blacklist']
+        reject = self.get_rejected_pillow_types(code_root, environment)
 
         configs = []
-        all_pillows = self.get_pillows_from_settings(self, settings.PILLOWTOPS, reject)
+        all_pillows = self.get_pillows_from_settings(settings.PILLOWTOPS, reject)
         for full_name in all_pillows:
             pillow_name = full_name.split('.')[-1]
             pillow_params = {
