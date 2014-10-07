@@ -99,10 +99,10 @@ class Program(Document):
             return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
 
     @classmethod
-    def default_for_domain(cls, domain, wrap=True):
-        programs = cls.by_domain(domain, wrap=wrap)
+    def default_for_domain(cls, domain):
+        programs = cls.by_domain(domain)
         for p in programs:
-            if (wrap and p.default) or (not wrap and p.get('default', False)):
+            if p.default:
                 return p
 
     def delete(self):
