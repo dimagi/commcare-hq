@@ -68,7 +68,6 @@ branches:
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
-  - status-only-celery # ts 9/30
   - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
   - ota-restore-caching  # cory 10/3
   - submit-history  # Ethan 10/3
