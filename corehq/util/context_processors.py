@@ -16,6 +16,7 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
+        'less_watch': settings.LESS_WATCH,
     }
 
 
