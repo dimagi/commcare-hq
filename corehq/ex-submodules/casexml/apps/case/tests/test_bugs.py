@@ -2,7 +2,6 @@ import uuid
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
