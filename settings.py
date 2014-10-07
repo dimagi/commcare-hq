@@ -300,8 +300,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -324,6 +323,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
+
     'custom.care_pathways',
     'bootstrap3_crispy',
 )
@@ -979,7 +980,6 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -994,12 +994,13 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('wvindia2', 'wvindia2')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1133,12 +1134,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
-        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1155,7 +1156,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow'
+        'custom.care_pathways.models.FarmerRecordFluffPillow',
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1215,6 +1220,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1245,7 +1251,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
@@ -1260,6 +1266,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
+    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
 }

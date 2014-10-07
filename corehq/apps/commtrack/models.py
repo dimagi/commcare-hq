@@ -39,6 +39,7 @@ from django.db.models.signals import post_save, post_delete
 from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
+import json_field
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -102,6 +103,7 @@ class Program(Document):
                           limit=1).first()
         return result
 
+
 class Product(Document):
     """
     A product, e.g. "coartem" or "tylenol"
@@ -115,11 +117,51 @@ class Product(Document):
     program_id = StringProperty()
     cost = DecimalProperty()
     product_data = DictProperty()
+    is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
 
     def save(self, *args, **kwargs):
+        """
+        Saving a couch version of Product will trigger
+        one way syncing to the SQLProduct version of this
+        product.
+        """
+        properties_to_sync = [
+            ('product_id', '_id'),
+            'domain',
+            'name',
+            'is_archived',
+            ('code', 'code_'),
+            'description',
+            'category',
+            'program_id',
+            'cost',
+            ('units', 'unit'),
+            'product_data',
+        ]
+
+        # mark modified time stamp for selective syncing
         self.last_modified = datetime.now()
-        return super(Product, self).save(*args, **kwargs)
+
+        result = super(Product, self).save(*args, **kwargs)
+
+        # sync properties to SQL version
+        sql_product, _ = SQLProduct.objects.get_or_create(
+            product_id=self._id
+        )
+
+        for prop in properties_to_sync:
+            if isinstance(prop, tuple):
+                sql_prop, couch_prop = prop
+            else:
+                sql_prop = couch_prop = prop
+
+            if hasattr(self, couch_prop):
+                setattr(sql_product, sql_prop, getattr(self, couch_prop))
+
+        sql_product.save()
+
+        return result
 
     @property
     def code(self):
@@ -152,9 +194,11 @@ class Product(Document):
             return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
 
     @classmethod
-    def by_domain(cls, domain, wrap=True, **kwargs):
+    def by_domain(cls, domain, wrap=True, include_archived=False, **kwargs):
         """
         Gets all products in a domain.
+
+        By default this filters out any archived products.
         """
         kwargs.update(dict(
             view_name='commtrack/products',
@@ -163,9 +207,34 @@ class Product(Document):
             include_docs=True
         ))
         if wrap:
-            return Product.view(**kwargs)
+            products = Product.view(**kwargs)
+            if not include_archived:
+                return filter(lambda p: not p.is_archived, products)
+            else:
+                return products
         else:
-            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+            if not include_archived:
+                return [
+                    row["doc"] for row in Product.view(
+                        wrap_doc=False,
+                        **kwargs
+                    ) if not row["doc"].get('is_archived', False)
+                ]
+            else:
+                return [
+                    row["doc"] for row in Product.view(
+                        wrap_doc=False,
+                        **kwargs
+                    )
+                ]
+
+    @classmethod
+    def archived_by_domain(cls, domain, wrap=True, **kwargs):
+        products = cls.by_domain(domain, wrap, kwargs)
+        if wrap:
+            return filter(lambda p: p.is_archived, products)
+        else:
+            return [p for p in products if p.get('is_archived', False)]
 
     @classmethod
     def ids_by_domain(cls, domain):
@@ -221,6 +290,22 @@ class Product(Document):
             property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict
+
+    def archive(self):
+        """
+        Mark a product as archived. This will cause it (and its data)
+        to not show up in default Couch and SQL views.
+        """
+        self.is_archived = True
+        self.save()
+
+    def unarchive(self):
+        """
+        Unarchive a product, causing it (and its data) to show
+        up in Couch and SQL views again.
+        """
+        self.is_archived = False
+        self.save()
 
     @classmethod
     def from_excel(cls, row):
@@ -574,7 +659,12 @@ class NewStockReport(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
+        report = DbStockReport.objects.create(
+            form_id=self.form_id,
+            date=self.timestamp,
+            type=self.tag,
+            domain=self._form.domain,
+        )
         for txn in self.transactions:
             db_txn = DbStockTransaction(
                 report=report,
@@ -1239,6 +1329,45 @@ class CommTrackUser(CommCareUser):
             self.submit_location_block(caseblock)
 
 
+class SQLProduct(models.Model):
+    """
+    A SQL based clone of couch Products.
+
+    This is used to efficiently filter StockState and other
+    SQL based queries to exclude data for archived products.
+    """
+    domain = models.CharField(max_length=255, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True)
+    name = models.CharField(max_length=100, null=True)
+    is_archived = models.BooleanField(default=False)
+    code = models.CharField(max_length=100, default='', null=True)
+    description = models.CharField(max_length=100, null=True, default='')
+    category = models.CharField(max_length=100, null=True, default='')
+    program_id = models.CharField(max_length=100, null=True, default='')
+    cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
+    units = models.CharField(max_length=100, null=True, default='')
+    product_data = json_field.JSONField(
+        default={},
+    )
+
+    def __repr__(self):
+        return "<SQLProduct(domain=%s, name=%s)>" % (
+            self.domain,
+            self.name
+        )
+
+
+class ActiveManager(models.Manager):
+    """
+    Filter any object that is associated to an archived product.
+    """
+
+    def get_query_set(self):
+        return super(ActiveManager, self).get_query_set().exclude(
+            sql_product__is_archived=True
+        )
+
+
 class StockState(models.Model):
     """
     Read only reporting model for keeping computed stock states per case/product
@@ -1249,6 +1378,13 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
+    sql_product = models.ForeignKey(SQLProduct)
+
+    # override default model manager to only include unarchived data
+    objects = ActiveManager()
+
+    # leave a way to get unfiltered data
+    include_archived = models.Manager()
 
     @property
     def months_remaining(self):
@@ -1382,25 +1518,29 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
+    domain = Domain.get_by_name(
+        CommCareCase.get(instance.case_id).domain
+    )
+
+    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
+
     try:
-        state = StockState.objects.get(
+        state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
+            sql_product=sql_product,
         )
     except StockState.DoesNotExist:
         state = StockState(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
+            sql_product=sql_product,
         )
 
     state.last_modified_date = instance.report.date
     state.stock_on_hand = instance.stock_on_hand
-
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
 
     if domain and domain.commtrack_settings:
         consumption_calc = domain.commtrack_settings.get_consumption_config()
@@ -1465,6 +1605,7 @@ def remove_data(sender, xform, *args, **kwargs):
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
     process_stock(xform)
+
 
 # import signals
 from . import signals

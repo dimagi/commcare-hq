@@ -79,6 +79,26 @@ def couch_check():
     return (isinstance(xforms, list), None)
 
 
+def celery_check():
+    try:
+        from celery import Celery
+        from django.conf import settings
+        app = Celery()
+        app.config_from_object(settings)
+        i = app.control.inspect()
+        ping = i.ping()
+        if not ping:
+            chk = (False, 'No running Celery workers were found.')
+        else:
+            chk = (True, None)
+    except IOError as e:
+        chk = (False, "Error connecting to the backend: " + str(e))
+    except ImportError as e:
+        chk = (False, str(e))
+
+    return chk
+
+
 def hb_check():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
@@ -223,8 +243,11 @@ def password_change(req):
 
 
 def server_up(req):
-    '''View that just returns "success", which can be hooked into server
-       monitoring tools like: pingdom'''
+    '''
+    Hit serverup.txt to check any of the below item with always_check: True
+    Hit serverup.txt?celery (or heartbeat) to check a specific service
+    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
+    '''
 
 
     checkers = {
@@ -232,6 +255,11 @@ def server_up(req):
             "always_check": False,
             "message": "* celery heartbeat is down",
             "check_func": hb_check
+        },
+        "celery": {
+            "always_check": False,
+            "message": "* celery is down",
+            "check_func": celery_check
         },
         "postgres": {
             "always_check": True,
@@ -298,7 +326,7 @@ def _login(req, domain, template_name):
         req.POST._mutable = True
         req.POST['username'] = format_username(req.POST['username'], domain)
         req.POST._mutable = False
-    
+
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
@@ -349,7 +377,7 @@ def logout(req):
 
     # we don't actually do anything with the response here:
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
-    
+
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
         mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
