@@ -34,7 +34,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
-        self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
+        self.assertEqual(datetime(2011, 12, 6, 18, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
         self.assertEqual(1, len(case.actions))
@@ -55,7 +55,7 @@ class Version2CaseParsingTest(TestCase):
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
-        self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
+        self.assertEqual(datetime(2011, 12, 7, 18, 42, 50), case.modified_on)
         self.assertEqual("updated_v2_case_type", case.type)
         self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic)
@@ -127,7 +127,7 @@ class Version2CaseParsingTest(TestCase):
         # quick test for ota restore
         v2response = phone_views.xml_for_case(HttpRequest(), case.get_id, version="2.0")
         expected_v2_response = """
-        <case case_id="foo-case-id" date_modified="2011-12-07T13:42:50Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+        <case case_id="foo-case-id" date_modified="2011-12-07T18:42:50Z" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
                 <create>
                     <case_type>v2_case_type</case_type>
                     <case_name>test case name</case_name>
