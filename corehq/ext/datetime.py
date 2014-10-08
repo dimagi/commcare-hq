@@ -5,6 +5,33 @@ import re
 
 
 class UTCDateTime(datetime.datetime):
+    """
+    UTCDateTime acts like a tz-naive datetime
+    but keeps track of an original_offset
+
+    If you have a convention of using timezone-naive datetimes
+    to implicitly mean UTC, then you can use UTCDateTimes to do so
+    while still preserving original timezone information.
+
+    Comparison between tz-aware datetimes and UTCDateTimes:
+
+    >>> import pytz
+    >>> # timezone-aware datetime
+    >>> datetime.datetime(2014, 10, 8, 15, 30, 20, 239874,
+    ...                   pytz.FixedOffset(-4 * 60))
+    datetime.datetime(2014, 10, 8, 15, 30, 20, 239874, tzinfo=pytz.FixedOffset(-240))
+    >>> # UTCDateTime
+    >>> UTCDateTime.from_datetime(_)
+    UTCDateTime(2014, 10, 8, 19, 30, 20, 239874, original_offset='-04:00')
+
+
+    Notes that in the UTCDateTime example,
+    the numbers for hours, minutes, etc. are in UTC time
+    but the offset is preserved as original_offset,
+    whereas in the timezone-aware datetime,
+    the hours & minutes are localized to the timezone
+
+    """
 
     __ATTRS = ('year', 'month', 'day', 'hour', 'minute', 'second',
                'microsecond', 'original_offset')
