@@ -2,6 +2,7 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.locations.models import SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
@@ -152,3 +153,26 @@ class LocationsTest(CommTrackTest):
         self.assertEqual(1, len(ct_user.locations))
         self.assertEqual('someloc', ct_user.locations[0].name)
         self.assertFalse(hasattr(ct_user, 'commtrack_location'))
+
+    def test_sync(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_village = make_loc(
+            'testvillage',
+            type='village',
+            parent=test_state
+        )
+
+        try:
+            sql_village = SQLLocation.objects.get(
+                name='testvillage',
+                domain=self.domain.name,
+            )
+
+            self.assertEqual(sql_village.name, test_village.name)
+            self.assertEqual(sql_village.domain, test_village.domain)
+        except SQLLocation.DoesNotExist:
+            self.fail("Synced SQL object does not exist")

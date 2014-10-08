@@ -6,6 +6,31 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 from datetime import datetime
+from django.db import models
+import json_field
+
+
+class SQLLocation(models.Model):
+    domain = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=100, null=True)
+    location_id = models.CharField(max_length=100, db_index=True)
+    location_type = models.CharField(max_length=255)
+    site_code = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
+    metadata = json_field.JSONField(default={})
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+
+    def __repr__(self):
+        return "<SQLLocation(domain=%s, name=%s)>" % (
+            self.domain,
+            self.name
+        )
 
 
 class Location(CachedCouchDocumentMixin, Document):
@@ -46,7 +71,39 @@ class Location(CachedCouchDocumentMixin, Document):
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
 
+    def _sync_location(self):
+        properties_to_sync = [
+            ('location_id', '_id'),
+            'domain',
+            'name',
+            'location_type',
+            'site_code',
+            'external_id',
+            'latitude',
+            'longitude',
+        ]
+
+        sql_location, _ = SQLLocation.objects.get_or_create(
+            location_id=self._id
+        )
+
+        for prop in properties_to_sync:
+            if isinstance(prop, tuple):
+                sql_prop, couch_prop = prop
+            else:
+                sql_prop = couch_prop = prop
+
+            if hasattr(self, couch_prop):
+                setattr(sql_location, sql_prop, getattr(self, couch_prop))
+
+        sql_location.save()
+
     def save(self, *args, **kwargs):
+        """
+        Saving a couch version of Location will trigger
+        one way syncing to the SQLLocation version of this
+        location.
+        """
         self.last_modified = datetime.now()
 
         # lazy migration for site_code
@@ -57,7 +114,11 @@ class Location(CachedCouchDocumentMixin, Document):
                 Location.site_codes_for_domain(self.domain)
             )
 
-        return super(Location, self).save(*args, **kwargs)
+        result = super(Location, self).save(*args, **kwargs)
+
+        self._sync_location()
+
+        return result
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
