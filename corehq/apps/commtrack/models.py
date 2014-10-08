@@ -423,8 +423,11 @@ class CommtrackRequisitionConfig(DocumentSchema):
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
         sorted_types = [a.action for a in sorted_actions]
-        next_index = sorted_types.index(previous_action_type) + 1
-        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        if previous_action_type in sorted_types:
+            next_index = sorted_types.index(previous_action_type) + 1
+            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        else:
+            return None
 
 
 class ConsumptionConfig(DocumentSchema):
