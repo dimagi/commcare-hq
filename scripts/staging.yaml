@@ -53,12 +53,10 @@ branches:
   - logos+master # tw
   - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
-  - increase-es-timeout # Nick P 8/11
   - archive-products+custom_product_data # tw 8/14
   - archive-programs # tw 9/30 (branched from archive-products)
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
-  - fix-timeout # Nick P 8/26
   - custom_user_data  # tw+Ethan 9/9
   - custom_product_data  # tw+Ethan 10/1
   - lwyszomi:better_date_filters_improvment
@@ -72,6 +70,7 @@ branches:
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8
   - masterlist-workflow # j$  10/8
+  - domain-metadata # Nick P 10/8
 submodules:
   submodules/couchlog-src:
     branches:
