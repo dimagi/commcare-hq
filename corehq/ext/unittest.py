@@ -77,6 +77,25 @@ class CorpusMeta(type):
 
 
 class Call(object):
+    """
+    Call objects have the following property:
+
+    Call(*args, **kwargs)(fn) == fn(*args, **kwargs)
+
+    In other words, Call objects can be used
+    to store the 'call context', e.g. args and kwargs,
+    deferring the actual call.
+
+    This can be useful for calling the same function in a bunch of ways:
+
+    >>> hypotenuse = lambda x, y: (x**2 + y**2) ** .5
+    >>> calls = [Call(1, 1), Call(3, 4), Call(4, 3), Call(6, 8)]
+    >>> [call(hypotenuse) for call in calls]
+    [1.4142135623730951, 5.0, 5.0, 10.0]
+
+    Call was designed for use as Corpus input
+
+    """
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
@@ -93,6 +112,12 @@ class Call(object):
 
 
 class CallResult(object):
+    """
+    Abstract base class
+
+    Designed for use as Corpus output
+    """
+
     def __init__(self, value):
         self.value = value
 
@@ -104,11 +129,32 @@ class CallResult(object):
 
 
 class Return(CallResult):
+    """
+    Can be used with Corpus as follows
+
+    class MyTest(unittest.TestCase):
+        ...
+        test_hypotenuse = Corpus(hypotenuse, {
+            '3_4_5': (Call(3, 4), Return(5.0)),
+        })
+
+    """
     def check(self, test_instance, input_call, fn):
         test_instance.assertEqual(input_call(fn), self.value)
 
 
 class Raise(CallResult):
+    """
+    Can be used with Corpus as follows
+
+    class MyTest(unittest.TestCase):
+        ...
+        test_hypotenuse = Corpus(hypotenuse, {
+            '3_4_5': (Call('3', 4), Raises(TypeError)),
+        })
+
+    """
+
     def __init__(self, value):
         super(Raise, self).__init__(value)
         assert issubclass(value, Exception)
