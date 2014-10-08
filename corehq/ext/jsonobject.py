@@ -44,6 +44,15 @@ class GeoPointProperty(JsonProperty):
 
 
 class UTCDateTimeProperty(DateTimeProperty):
+    """
+    `UTCDateTimeProperty` uses `UTCDateTime`s exclusively
+
+    It reads in any ISO 8601 datetime,
+    but strictly writes out ISO 8601 unicode datetimes,
+    with microseconds (and the 'Z' ending),
+    followed by a space and the UTC offset string (e.g. '-04:00').
+
+    """
     UTC_DATE_TIME_RE = re.compile(
         r'^'
         r'\d\d\d\d-(0[1-9]|1[0-2])-([12]\d|0[1-9]|3[01])T'
