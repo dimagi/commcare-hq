@@ -8,7 +8,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
 from corehq.util.lcs import lcsMerge
-from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -32,11 +32,20 @@ def process_bulk_app_translation_upload(app, f):
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
 
-    workbook = WorkbookJSONReader(f)
+    try:
+        workbook = WorkbookJSONReader(f)
+    except HeaderValueError, e:
+        msgs.append(
+            (messages.error, _("App Translation Failed! " + str(e)))
+        )
+        return msgs
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
         rows = [row for row in sheet]
+        # Convert every key and value to a string
+        for i in xrange(len(rows)):
+            rows[i] = {unicode(k): unicode(v) for k, v in rows[i].iteritems()}
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
