@@ -43,6 +43,14 @@ class UTCDateTimeTest(SimpleTestCase):
         ),
     })
 
+    to_datetime = Corpus(UTCDateTime.to_datetime, {
+        'basic': (
+            UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+            datetime.datetime(2014, 12, 10, 22, 5, 18,
+                              tzinfo=FixedOffset(3, 0, None))
+        ),
+    })
+
     test_equal = Corpus(UTCDateTime.__eq__, {
         'equal': (
             Call(

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import datetime
-import iso8601
+import pytz
 import re
 
 
@@ -51,11 +51,22 @@ class UTCDateTime(datetime.datetime):
             utc_dt = dt
         else:
             original_offset = dt.utcoffset()
-            utc_dt = dt.astimezone(iso8601.iso8601.UTC).replace(tzinfo=None)
+            utc_dt = dt.astimezone(pytz.UTC).replace(tzinfo=None)
         self = cls(utc_dt.year, utc_dt.month, utc_dt.day, utc_dt.hour,
                    utc_dt.minute, utc_dt.second, utc_dt.microsecond,
                    original_offset=original_offset)
         return self
+
+    def to_datetime(self):
+        """
+        convert to a timezone-aware datetime
+
+        """
+        # this should have been checked at creation time
+        assert self.original_offset.total_seconds() % 60 == 0
+        return self.replace(tzinfo=pytz.UTC).astimezone(
+            pytz.FixedOffset(self.original_offset.total_seconds() / 60)
+        )
 
     @property
     def tz_string(self):
