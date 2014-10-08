@@ -152,6 +152,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def site_codes_for_domain(cls, domain):
+        """
+        This method is only used in management commands and lazy
+        migrations so DOES NOT exclude archived locations.
+        """
         return set([r['key'][1] for r in cls.get_db().view(
             'locations/prop_index_site_code',
             reduce=False,
@@ -161,6 +165,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_site_code(cls, domain, site_code):
+        """
+        This method directly looks up a single location
+        and can return archived locations.
+        """
         result = cls.get_db().view(
             'locations/prop_index_site_code',
             reduce=False,
@@ -171,6 +179,9 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def root_locations(cls, domain):
+        """
+        Return all active top level locations for this domain
+        """
         return root_locations(domain)
 
     @classmethod
