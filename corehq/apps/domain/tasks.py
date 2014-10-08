@@ -43,7 +43,7 @@ def _domains_to_email():
     email_domains = []
     for domain in domains:
         users = list(WebUser.get_dimagi_emails_by_domain(domain))
-        if len(users) > 0:
+        if users:
             email_domains.append(
                 {
                     "domain_name": domain,
@@ -93,7 +93,7 @@ def _self_started_domains():
     email_domains = []
     for domain in domains:
         users = list(WebUser.get_dimagi_emails_by_domain(domain))
-        if len(users) == 0:
+        if not users:
             email_domains.append(domain)
 
     return email_domains
