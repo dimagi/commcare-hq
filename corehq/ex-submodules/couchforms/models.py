@@ -27,7 +27,7 @@ from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
 from corehq.ext.couchdbkit import (
     GeoPointProperty,
-    ISO8601Property as DateTimeProperty,
+    UTCDateTimeProperty as DateTimeProperty,
     ISOSafeSaveDocument as SafeSaveDocument,
     ISODocumentSchema as DocumentSchema,
 )
