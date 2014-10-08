@@ -1,68 +1,13 @@
-import datetime
 from django.test import SimpleTestCase
-from iso8601.iso8601 import FixedOffset
-from corehq.ext.jsonobject import UTCDateTimeProperty, UTCDateTime
-from corehq.ext.unittest import Corpus, Raise, CorpusMeta, Call
+
+import datetime
+from corehq.ext.datetime import UTCDateTime
+
+from corehq.ext.jsonobject import UTCDateTimeProperty
+from corehq.ext.unittest import Corpus, CorpusMeta
 
 
-class UTCDateTimeTest(SimpleTestCase):
-    __metaclass__ = CorpusMeta
-
-    format_tz_string = Corpus(UTCDateTime.format_tz_string, {
-        'negative': (-datetime.timedelta(hours=4), '-04:00'),
-        'minutes': (datetime.timedelta(hours=5, minutes=30), '+05:30'),
-        'two_digit': (datetime.timedelta(hours=14), '+14:00'),
-        'zero': (datetime.timedelta(hours=0), '+00:00'),
-        'too_large': (datetime.timedelta(hours=16), Raise(AssertionError)),
-        'seconds_wrong': (datetime.timedelta(seconds=5), Raise(AssertionError)),
-        'minutes_wrong': (datetime.timedelta(minutes=15), Raise(AssertionError)),
-    })
-
-    from_datetime = Corpus(UTCDateTime.from_datetime, {
-        'fixed_offset': (
-            datetime.datetime(2014, 12, 10, 22, 5, 18,
-                              tzinfo=FixedOffset(3, 0, None)),
-            UTCDateTime(2014, 12, 10, 19, 5, 18,
-                        original_offset=datetime.timedelta(hours=3))
-        ),
-        'tz_naive': (
-            datetime.datetime(2014, 10, 8, 16, 23, 9, tzinfo=None),
-            UTCDateTime(2014, 10, 8, 16, 23, 9),
-        ),
-    })
-
-    test_equal = Corpus(UTCDateTime.__eq__, {
-        'equal': (
-            Call(
-                UTCDateTime(2014, 12, 10, 19, 5, 18,
-                            original_offset=datetime.timedelta(hours=3)),
-                UTCDateTime(2014, 12, 10, 19, 5, 18,
-                            original_offset=datetime.timedelta(hours=3))
-            ),
-            True
-        ),
-        'ms_not_equal': (
-            Call(
-                UTCDateTime(2014, 12, 10, 19, 5, 18,
-                            original_offset=datetime.timedelta(hours=3)),
-                UTCDateTime(2014, 12, 10, 19, 5, 17,
-                            original_offset=datetime.timedelta(hours=3))
-            ),
-            False
-        ),
-        'offset_not_equal': (
-            Call(
-                UTCDateTime(2014, 12, 10, 19, 5, 18,
-                            original_offset=datetime.timedelta(hours=3)),
-                UTCDateTime(2014, 12, 10, 19, 5, 18,
-                            original_offset=datetime.timedelta(hours=1))
-            ),
-            False
-        )
-    })
-
-
-class UTCDateTimeProperty(SimpleTestCase):
+class UTCDateTimePropertyTest(SimpleTestCase):
     __metaclass__ = CorpusMeta
 
     wrap = Corpus(UTCDateTimeProperty().wrap, {
@@ -72,6 +17,11 @@ class UTCDateTimeProperty(SimpleTestCase):
                         original_offset=datetime.timedelta(hours=3))
         ),
         'date_only': ('2014-12-11', UTCDateTime(2014, 12, 11)),
+        'utc_datetime_with_offset': (
+            '2014-12-10T22:05:18.000000Z +03:00',
+            UTCDateTime(2014, 12, 10, 22, 5, 18,
+                        original_offset=datetime.timedelta(hours=3))
+        ),
     })
 
     unwrap = Corpus(UTCDateTimeProperty().unwrap, {
@@ -90,3 +40,31 @@ class UTCDateTimeProperty(SimpleTestCase):
              '2014-12-11T00:00:00.000000Z +00:00')
         ),
     })
+
+    round_trip = Corpus(
+        lambda string: UTCDateTimeProperty().unwrap(
+            UTCDateTimeProperty().wrap(string))[1],
+        {
+            'no_tz': (
+                '2014-10-08T21:51:04.568554',
+                '2014-10-08T21:51:04.568554Z +00:00'
+            ),
+            'milliseconds': (
+                '2014-10-08T21:51:04.568',
+                '2014-10-08T21:51:04.568000Z +00:00'
+            ),
+            'Z': (
+                '2014-10-08T21:51:04.568554Z',
+                '2014-10-08T21:51:04.568554Z +00:00'
+            ),
+            'tz': (
+                '2014-10-08T17:51:04.568554-04:00',
+                '2014-10-08T21:51:04.568554Z -04:00'
+            ),
+            'same': (
+                '2014-10-08T21:51:04.568554Z -04:00',
+                '2014-10-08T21:51:04.568554Z -04:00'
+            )
+
+        }
+    )

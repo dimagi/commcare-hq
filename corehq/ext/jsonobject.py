@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from decimal import Decimal
 import datetime
 import iso8601
-from jsonobject import JsonProperty, DateTimeProperty
+from jsonobject import JsonProperty, DateTimeProperty, JsonObject
 from jsonobject.exceptions import BadValueError
 from collections import namedtuple
+import re
+from corehq.ext.datetime import UTCDateTime
 
 
 def _canonical_decimal(n):
@@ -41,77 +43,17 @@ class GeoPointProperty(JsonProperty):
         return obj, '{} {} {} {}'.format(*obj)
 
 
-class UTCDateTime(datetime.datetime):
-
-    __ATTRS = ('year', 'month', 'day', 'hour', 'minute', 'second',
-               'microsecond', 'original_offset')
-
-    def __new__(cls, year, month, day, hour=0, minute=0, second=0,
-                microsecond=0, original_offset=datetime.timedelta(0)):
-
-        self = super(UTCDateTime, cls).__new__(cls, year, month, day, hour,
-                                               minute, second, microsecond)
-        assert isinstance(original_offset, datetime.timedelta)
-        self.__original_offset = original_offset
-        return self
-
-    @property
-    def original_offset(self):
-        return self.__original_offset
-
-    @classmethod
-    def from_datetime(cls, dt):
-        if isinstance(dt, UTCDateTime):
-            return dt
-        if dt.tzinfo is None:
-            original_offset = datetime.timedelta(0)
-            utc_dt = dt
-        else:
-            original_offset = dt.utcoffset()
-            utc_dt = dt.astimezone(iso8601.iso8601.UTC).replace(tzinfo=None)
-        self = cls(utc_dt.year, utc_dt.month, utc_dt.day, utc_dt.hour,
-                   utc_dt.minute, utc_dt.second, utc_dt.microsecond,
-                   original_offset=original_offset)
-        return self
-
-    @property
-    def tz_string(self):
-        return self.format_tz_string(self.__original_offset)
-
-    @staticmethod
-    def format_tz_string(offset):
-        if offset is None:
-            return ''
-        seconds = offset.total_seconds()
-        assert seconds - int(seconds) == 0
-        seconds = int(seconds)
-        if seconds < 0:
-            sign = '-'
-            seconds = -seconds
-        else:
-            sign = '+'
-        minutes, seconds = divmod(seconds, 60)
-        hours, minutes = divmod(minutes, 60)
-        assert seconds == 0
-        assert minutes in (0, 30)
-        assert 0 <= hours < 15
-        return '{}{:02d}:{:02d}'.format(sign, hours, minutes)
-
-    def __eq__(self, other):
-        for attr in self.__ATTRS:
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-        else:
-            return True
-
-    def __repr__(self):
-        return u'{}({})'.format(
-            self.__class__.__name__,
-            u', '.join(repr(getattr(self, attr)) for attr in self.__ATTRS)
-        )
-
-
 class UTCDateTimeProperty(DateTimeProperty):
+    UTC_DATE_TIME_RE = re.compile(
+        r'^'
+        r'\d\d\d\d-(0[1-9]|1[0-2])-([12]\d|0[1-9]|3[01])T'
+        r'([01]\d|2[0-3]):([0-5]\d):([0-5]\d).\d\d\d\d\d\dZ '
+        # encode the UTCDateTime's timezone rules: no more than +/-14 hours
+        # minutes in increments of 15
+        r'[\+-](0\d|1[0-4]):(00|15|30|45)'
+        r'$'
+    )
+
     def __init__(self, **kwargs):
         if 'exact' in kwargs:
             assert kwargs['exact'] is True
@@ -119,14 +61,25 @@ class UTCDateTimeProperty(DateTimeProperty):
         super(UTCDateTimeProperty, self).__init__(**kwargs)
 
     def _wrap(self, value):
-        dt = iso8601.parse_date(value)
-        return UTCDateTime.from_datetime(dt)
+        if self.UTC_DATE_TIME_RE.match(value):
+            dt_string, tz_string = value.split(' ')
+            dt = iso8601.parse_date(dt_string)
+            assert dt.utcoffset() == datetime.timedelta(0)
+            return UTCDateTime.from_datetime(dt.replace(tzinfo=None),
+                                             original_offset=tz_string)
+        else:
+            dt = iso8601.parse_date(value)
+            return UTCDateTime.from_datetime(dt)
 
     def _unwrap(self, value):
         utc_dt = UTCDateTime.from_datetime(value)
         _, unwrapped = super(UTCDateTimeProperty, self)._unwrap(utc_dt)
-        return utc_dt, '{} {}'.format(unwrapped, utc_dt.tz_string).rstrip()
+        assert utc_dt.tz_string
+        return utc_dt, '{} {}'.format(unwrapped, utc_dt.tz_string)
 
 
 class ISOMeta(object):
     update_properties = {datetime.datetime: UTCDateTimeProperty}
+    string_conversions = JsonObject.Meta.string_conversions + (
+        (UTCDateTimeProperty.UTC_DATE_TIME_RE, datetime.datetime),
+    )
