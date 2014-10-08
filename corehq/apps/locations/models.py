@@ -20,11 +20,11 @@ class SQLLocation(models.Model):
     metadata = json_field.JSONField(default={})
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-
-    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
-
+    is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+
+    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
@@ -42,6 +42,7 @@ class Location(CachedCouchDocumentMixin, Document):
     external_id = StringProperty()
     metadata = DictProperty()
     last_modified = DateTimeProperty()
+    is_archived = BooleanProperty(default=False)
 
     latitude = FloatProperty()
     longitude = FloatProperty()
@@ -81,6 +82,7 @@ class Location(CachedCouchDocumentMixin, Document):
             'external_id',
             'latitude',
             'longitude',
+            'is_archived',
         ]
 
         sql_location, _ = SQLLocation.objects.get_or_create(
@@ -97,6 +99,14 @@ class Location(CachedCouchDocumentMixin, Document):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
 
         sql_location.save()
+
+    def archive(self):
+        """
+        Mark a location as archived. This will cause it (and its data)
+        to not show up in default Couch and SQL views.
+        """
+        self.is_archived = True
+        self.save()
 
     def save(self, *args, **kwargs):
         """
@@ -148,7 +158,10 @@ class Location(CachedCouchDocumentMixin, Document):
             startkey=[domain],
             endkey=[domain, {}],
         ).all()])
-        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
+        return (
+            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+            if not l.get('is_archived', False)
+        )
 
     @classmethod
     def site_codes_for_domain(cls, domain):
@@ -265,7 +278,8 @@ def root_locations(domain):
                                      reduce=True, group_level=2)
 
     ids = [res['key'][-1] for res in results]
-    return [Location.get(id) for id in ids]
+    locs = [Location.get(id) for id in ids]
+    return [loc for loc in locs if not loc.is_archived]
 
 def all_locations(domain):
     return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
