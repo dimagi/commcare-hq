@@ -21,14 +21,12 @@ from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_cate
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.loosechange import map_reduce
-from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
@@ -1363,9 +1361,9 @@ class ActiveManager(models.Manager):
     """
 
     def get_query_set(self):
-        return super(ActiveManager, self).get_query_set().exclude(
-            sql_product__is_archived=True
-        )
+        return super(ActiveManager, self).get_query_set() \
+            .exclude(sql_product__is_archived=True) \
+            .exclude(sql_location__is_archived=True)  # TODO TEST THIS
 
 
 class StockState(models.Model):
@@ -1379,6 +1377,7 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
     sql_product = models.ForeignKey(SQLProduct)
+    sql_location = models.ForeignKey(SQLLocation, null=True)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()
@@ -1525,11 +1524,17 @@ def update_stock_state_for_transaction(instance):
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
     try:
+        sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
+    except SQLLocation.DoesNotExist:
+        sql_location = None
+
+    try:
         state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
             sql_product=sql_product,
+            sql_location=sql_location,
         )
     except StockState.DoesNotExist:
         state = StockState(
@@ -1537,6 +1542,7 @@ def update_stock_state_for_transaction(instance):
             case_id=instance.case_id,
             product_id=instance.product_id,
             sql_product=sql_product,
+            sql_location=sql_location,
         )
 
     state.last_modified_date = instance.report.date

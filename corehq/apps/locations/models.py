@@ -98,6 +98,10 @@ class Location(CachedCouchDocumentMixin, Document):
             if hasattr(self, couch_prop):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
 
+        sp = self.linked_supply_point()
+        if sp:
+            sql_location.supply_point_id = sp._id
+
         sql_location.save()
 
     def archive(self):
@@ -148,7 +152,6 @@ class Location(CachedCouchDocumentMixin, Document):
             startkey=[domain, loc_type, loc_id],
             endkey=[domain, loc_type, loc_id, {}],
         ).one()['value']
-
 
     @classmethod
     def by_domain(cls, domain):
