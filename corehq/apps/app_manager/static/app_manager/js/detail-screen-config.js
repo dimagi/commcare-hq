@@ -729,6 +729,7 @@ var DetailScreenConfig = (function () {
                             <ul class="dropdown-menu">\
                                <li class="add-property-item"><a>Property</a></li>\
                                <li class="add-calculation-item"><a>Calculation</a></li>\
+                               <li class="add-graph-item"><a>Graph</a></li>\
                             </ul> \
                         </div> '
                     );
@@ -753,6 +754,9 @@ var DetailScreenConfig = (function () {
                     });
                     $(".add-calculation-item", $addButton).click(function () {
                         addItem(false);
+                    });
+                    $(".add-graph-item", $addButton).click(function() {
+                        openGraphConfigurationModal();
                     });
 
                     if (! _.isEmpty(this.columns)) {

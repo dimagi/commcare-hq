@@ -1,0 +1,14 @@
+/* http://stackoverflow.com/questions/10169432/how-can-i-change-the-default-width-of-a-twitter-bootstrap-modal-box */
+.modal.graph-config {
+    width: 750px;
+    /* must be half of the width, minus scrollbar on the left (30px) */
+    /* TODO: Can we use less for some variable action here? */
+    margin-left: -375px;
+}
+
+/*
+.graph-config .form-horizontal .control-label {
+    width: auto;
+    background-color: red;
+}
+*/
