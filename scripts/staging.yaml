@@ -71,6 +71,7 @@ branches:
   - ota-restore-caching  # cory 10/3
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8
+  - masterlist-workflow # j$  10/8
 submodules:
   submodules/couchlog-src:
     branches:
