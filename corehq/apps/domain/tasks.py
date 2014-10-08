@@ -1,6 +1,7 @@
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 
@@ -11,9 +12,6 @@ from corehq.apps.users.models import WebUser
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
-
-
-MASTER_EMAIL = "master-list@dimagi.com"
 
 
 def _domains_over_x_forms(num_forms=200):
@@ -78,9 +76,9 @@ def fm_reminder_email():
                 "Please update your domain",
                 email,
                 email_content,
-                email_from=MASTER_EMAIL,
+                email_from=settings.MASTER_LIST_EMAIL,
                 text_content=email_content_plaintext,
-                cc=[MASTER_EMAIL],
+                cc=[settings.MASTER_LIST_EMAIL],
             )
 
 
@@ -104,7 +102,7 @@ def _self_started_domains():
 @periodic_task(run_every=crontab(minute=0, hour=0, day_of_week="monday"))
 def self_starter_email():
     """
-    Emails master-list@dimagi.com incomplete self started domains
+    Emails MASTER_LIST_EMAIL incomplete self started domains
 
     Doesn't actually look at self-started attribute.
     """
@@ -116,7 +114,7 @@ def self_starter_email():
             'domain/email/self_starter.txt', domains)
     send_HTML_email(
         "Incomplete Self Started Domains",
-        MASTER_EMAIL,
+        settings.MASTER_LIST_EMAIL,
         email_content,
         text_content=email_content_plaintext,
     )

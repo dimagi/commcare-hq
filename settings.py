@@ -437,6 +437,7 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
