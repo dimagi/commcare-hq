@@ -1,10 +1,9 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop
 from corehq import privileges
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.views import DefaultProjectSettingsView
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.users.views import DefaultProjectUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
@@ -52,17 +51,22 @@ class BaseTile(object):
         }
 
 
-class NgPaginatedTileProviderMixin(object):
+class BaseNgPaginatedTileResource(object):
     """A resource for serving data to the Angularjs PaginatedTileController
     for the hq.dashboard module.
     """
+
+    def __init__(self, request, in_data):
+        self.request = request
+        self.in_data = in_data
+
 
     @property
     def request_data(self):
         """The data generally from a GET or POST request
         :return: dict
         """
-        raise NotImplementedError('request_data should return a dict')
+        return self.in_data['pagination']
 
     @property
     def limit(self):
@@ -77,13 +81,6 @@ class NgPaginatedTileProviderMixin(object):
         return (self.current_page - 1) * self.limit
 
     @property
-    def total(self):
-        """The total number of objects being paginated over
-        :return: integer
-        """
-        raise NotImplementedError('total must return an int')
-
-    @property
     def pagination_context(self):
         return {
             'total': self.total,
@@ -93,11 +90,18 @@ class NgPaginatedTileProviderMixin(object):
         }
 
     @property
+    def total(self):
+        """The total number of objects being paginated over
+        :return: integer
+        """
+        raise NotImplementedError('total must return an int')
+
+    @property
     def paginated_items(self):
-        return []
+        raise NotImplementedError('pagination must be overridden')
 
 
-class BasePaginatedTile(BaseTile, NgPaginatedTileProviderMixin):
+class BasePaginatedTile(BaseTile, BaseNgPaginatedTileResource):
     ng_directive = 'paginate'
     default_icon = None
 
@@ -139,7 +143,7 @@ class AppsTile(BasePaginatedTile):
     @property
     def is_visible(self):
         return (
-            self.couch_user.is_web_user() or self.couch_user.can_edit_apps()
+
         )
 
     @property
@@ -226,6 +230,129 @@ class ReportsTile(BasePaginatedTile):
         return reverse('reports_home', args=[self.domain])
 
 
+class TileConfiguration(object):
+
+    def __init__(self, tile_type, title, slug, icon, url_generator, visibility_check=None,
+                 is_external_link=False):
+        self.tile_type = tile_type
+        self.title = title
+        self.slug = slug
+        self.icon = icon
+        self.url_generator = url_generator
+        self.visibility_check = visibility_check
+        # this makes the url open in a new window/tab
+        self.is_external_link = is_external_link
+
+    @property
+    def ng_directive(self):
+        # this is how angular knows what directives to map this to
+        return self.tile_type
+
+class PaginatedTileConfiguration(TileConfiguration):
+    def __init__(self, tile_type, title, slug, icon, url_generator, paginator_class,
+                 visibility_check=None, is_external_link=False):
+        self.paginator_class = paginator_class
+        super(PaginatedTileConfiguration, self).__init__(tile_type, title, slug, icon, url_generator,
+                                                         visibility_check, is_external_link)
+
+
+class ConfigurableIconTile(BaseTile):
+
+    def __init__(self, tile_config, domain, request, in_data):
+        self.tile_config = tile_config
+        super(ConfigurableIconTile, self).__init__(domain, request, in_data)
+
+    @property
+    def url(self):
+        return self.tile_config.url_generator(self.request)
+
+    @property
+    def is_visible(self):
+        return self.tile_config.visibility_check(self.request)
+
+    @property
+    def context(self):
+        context = super(ConfigurableIconTile, self).context
+        context.update({
+            'url': self.url,
+            'icon': self.tile_config.icon,
+            'isExternal': self.tile_config.is_external_link,
+        })
+        return context
+
+
+class MockPaginator(BaseNgPaginatedTileResource):
+
+    @property
+    def total(self):
+        return 7
+
+    @property
+    def paginated_items(self):
+        return [{'name': 'item {}'.format(i), 'url': 'google.com'} for i in range(7)][self.skip:self.skip + self.limit]
+
+
+class AppsPaginator(BaseNgPaginatedTileResource):
+
+    @property
+    def total(self):
+        # todo: optimize this at some point. unfortunately applications_brief
+        # doesn't have a reduce view and for now we'll avoid refactoring.
+        return len(self.applications)
+
+    @property
+    @memoized
+    def applications(self):
+        key = [self.request.domain]
+        return Application.get_db().view(
+            'app_manager/applications_brief',
+            reduce=False,
+            startkey=key,
+            endkey=key+[{}],
+        ).all()
+
+    @property
+    def paginated_items(self):
+        def _get_app_url(app):
+            return (
+                reverse('view_app', args=[self.request.domain, app['id']])
+                if self.request.couch_user.can_edit_apps()
+                else reverse('release_manager', args=[self.request.domain, app['id']])
+            )
+
+        apps = self.applications[self.skip:self.skip + self.limit]
+        return [{
+            'name': a['key'][1],
+            'url': _get_app_url(a),
+        } for a in apps]
+
+
+class ConfigurablePaginatedTile(BaseTile):
+    ng_directive = 'paginate'
+    default_icon = None
+
+    def __init__(self, tile_config, paginator_class, domain, request, in_data):
+        self.tile_config = tile_config
+        super(ConfigurablePaginatedTile, self).__init__(domain, request, in_data)
+        self.paginator = paginator_class(request, in_data)
+
+    @property
+    def context(self):
+        context = super(ConfigurablePaginatedTile, self).context
+        # todo: reconcile with icon tiles?
+        context.update({
+            'pagination': self.paginator.pagination_context,
+            'default': {
+                'show': self.tile_config.icon is not None,
+                'icon': self.tile_config.icon,
+                'url': self.tile_config.url_generator(self.request),
+            },
+        })
+        return context
+
+
+# todo: kill everything below here
+
 class BaseIconTile(BaseTile):
     ng_directive = 'icon'
     icon = None
@@ -244,40 +371,6 @@ class BaseIconTile(BaseTile):
     @property
     def url(self):
         raise NotImplementedError("you must implement url")
-
-
-class DataTile(BaseIconTile):
-    title = ugettext_noop("Data")
-    slug = 'data'
-    icon = 'dashboard-icon-data'
-
-    @property
-    def is_visible(self):
-        return (
-            self.couch_user.can_edit_data() or self.couch_user.can_export_data()
-        )
-
-    @property
-    def url(self):
-        return reverse('data_interfaces_default', args=[self.domain])
-
-
-class UsersTile(BaseIconTile):
-    title = ugettext_noop("Users")
-    slug = 'users'
-    icon = 'dashboard-icon-users'
-
-    @property
-    def is_visible(self):
-        return (
-            self.couch_user.can_edit_commcare_users()
-            or self.couch_user.can_edit_web_users()
-        )
-
-    @property
-    def url(self):
-        return reverse(DefaultProjectUserSettingsView.urlname,
-                       args=[self.domain])
 
 
 class SettingsTile(BaseIconTile):

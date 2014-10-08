@@ -9,16 +9,16 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.dashboard.models import (
     AppsTile,
     ReportsTile,
-    DataTile,
-    UsersTile,
     SettingsTile,
     MessagingTile,
     ExchangeTile,
     HelpTile,
-)
+    TileConfiguration, ConfigurableIconTile, ConfigurablePaginatedTile, PaginatedTileConfiguration, MockPaginator,
+    AppsPaginator)
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.style.decorators import preview_boostrap3
+from corehq.apps.users.views import DefaultProjectUserSettingsView
 
 
 @toggles.DASHBOARD_PREVIEW.required_decorator()
@@ -69,19 +69,32 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_domain.html'
     tiles = [
-        AppsTile,
-        ReportsTile,
-        DataTile,
-        UsersTile,
-        MessagingTile,
-        ExchangeTile,
-        SettingsTile,
-        HelpTile,
+        # AppsTile,
+        # ReportsTile,
+        # DataTile,
+        # UsersTile,
+        # MessagingTile,
+        # ExchangeTile,
+        # SettingsTile,
+        # HelpTile,
     ]
+
+    def get_tile_configs(self):
+        return _get_default_tile_configurations()
 
     @property
     def slug_to_tile(self):
-        return dict([(a.slug, a) for a in self.tiles])
+        return dict([(a.slug, a) for a in self.get_tile_configs()])
+
+    def make_tile(self, slug, in_data):
+        config = self.slug_to_tile[slug]
+        # todo: could clean this up or move to factory
+        if config.tile_type == 'icon':
+            return ConfigurableIconTile(config, self.domain, self.request, in_data)
+        else:
+            assert config.tile_type == 'paginate'
+            assert isinstance(config, PaginatedTileConfiguration)
+            return ConfigurablePaginatedTile(config, config.paginator_class, self.domain, self.request, in_data)
 
     @property
     def page_context(self):
@@ -90,16 +103,12 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
                 'title': d.title,
                 'slug': d.slug,
                 'ng_directive': d.ng_directive,
-            } for d in self.tiles],
+            } for d in self.get_tile_configs()],
         }
 
     @allow_remote_invocation
     def update_tile(self, in_data):
-        tile_class = self.slug_to_tile.get(in_data.get('slug'))
-        tile = tile_class(
-            self.domain, self.request,
-            in_data=in_data
-        )
+        tile = self.make_tile(in_data['slug'], in_data)
         if not tile.is_visible:
             return {
                 'success': False,
@@ -112,12 +121,42 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
 
     @allow_remote_invocation
     def check_permissions(self, in_data):
-        tile_class = self.slug_to_tile.get(in_data.get('slug'))
-        tile = tile_class(
-            self.domain, self.request,
-            in_data=in_data
-        )
+        tile = self.make_tile(in_data['slug'], in_data)
         return {
             'success': True,
             'hasPermissions': tile.is_visible,
         }
+
+
+def _get_default_tile_configurations():
+    can_edit_data = lambda request: request.couch_user.can_edit_data() or request.couch_user.can_export_data()
+    can_edit_apps = lambda request: request.couch_user.is_web_user() or request.couch_user.can_edit_apps()
+    USER_CONFIG = {
+        'tile_type': 'icon',
+        'title': _('Users'),
+        'slug': 'users',
+        'icon': 'dashboard-icon-users',
+        'url_generator': lambda request: reverse(DefaultProjectUserSettingsView.urlname, args=[request.domain]),
+        'visibility_check': lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()
+    }
+
+    return [
+        TileConfiguration(
+            tile_type='icon',
+            title=_('Data'),
+            slug='data',
+            icon='dashboard-icon-data',
+            url_generator=lambda request: reverse('data_interfaces_default', args=[request.domain]),
+            visibility_check=can_edit_data,
+        ),
+        TileConfiguration(**USER_CONFIG),
+        PaginatedTileConfiguration(
+            tile_type='paginate',
+            title=_('Applications'),
+            slug='applications',
+            icon='dashboard-icon-applications',
+            paginator_class=AppsPaginator,
+            url_generator=lambda request: None,
+            visibility_check=can_edit_apps,
+        )
+    ]
