@@ -1,6 +1,6 @@
 import datetime
 from django.test import SimpleTestCase
-from iso8601.iso8601 import FixedOffset
+from pytz import FixedOffset
 from corehq.ext.datetime import UTCDateTime
 from corehq.ext.unittest import CorpusMeta, Corpus, Raise, Call
 
@@ -34,7 +34,7 @@ class UTCDateTimeTest(SimpleTestCase):
     from_datetime = Corpus(UTCDateTime.from_datetime, {
         'fixed_offset': (
             datetime.datetime(2014, 12, 10, 22, 5, 18,
-                              tzinfo=FixedOffset(3, 0, None)),
+                              tzinfo=FixedOffset(3 * 60)),
             UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
         ),
         'tz_naive': (
@@ -47,7 +47,7 @@ class UTCDateTimeTest(SimpleTestCase):
         'basic': (
             UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
             datetime.datetime(2014, 12, 10, 22, 5, 18,
-                              tzinfo=FixedOffset(3, 0, None))
+                              tzinfo=FixedOffset(3 * 60))
         ),
     })
 
