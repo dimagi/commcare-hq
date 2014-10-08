@@ -1,11 +1,11 @@
 from __future__ import absolute_import
-from corehq.ext.jsonobject import ISOMeta, GeoPointProperty, ISO8601Property
+from corehq.ext.jsonobject import ISOMeta, GeoPointProperty, UTCDateTimeProperty
 from couchdbkit import Document, DocumentSchema
 from dimagi.utils.couch.database import SafeSaveDocument
 
 __all__ = [
     'GeoPointProperty',
-    'ISO8601Property',
+    'UTCDateTimeProperty',
     'SafeSaveDocument',
     'ISODocument',
     'ISODocumentSchema',
