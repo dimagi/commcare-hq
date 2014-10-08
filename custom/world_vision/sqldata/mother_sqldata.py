@@ -18,9 +18,11 @@ class MotherRegistrationDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for column in self.columns:
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['mother_registration_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}])
         return result
 
@@ -38,23 +40,23 @@ class MotherRegistrationDetails(BaseSqlData):
                 )
             ),
         ]
-        if 'startdate' not in self.config and 'enddate' not in self.config:
+        if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
                 DatabaseColumn("Total open mother cases",
                     CountUniqueColumn('doc_id',
-                        alias="opened",
+                        alias="no_date_opened",
                         filters=self.filters + [EQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("Total closed mother cases",
                     CountUniqueColumn('doc_id',
-                        alias="closed",
+                        alias="no_date_closed",
                         filters=self.filters +  [NOTEQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("New registrations during last 30 days",
                         CountUniqueColumn('doc_id',
-                            alias="new_registrations",
+                            alias="no_date_new_registrations",
                             filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
                         )
                 )
@@ -199,12 +201,14 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
         for i in range(1,15):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 14].slug], 'html': self.data[self.columns[i + 14].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug]),
@@ -371,9 +375,11 @@ class DeliveryStillBirthDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for column in self.columns:
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['delivery_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}]
             )
         return result
@@ -394,9 +400,11 @@ class PostnatalCareOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for i in range(0,4):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
