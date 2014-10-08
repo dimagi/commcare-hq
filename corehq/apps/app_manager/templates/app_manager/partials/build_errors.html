@@ -66,8 +66,8 @@
                             case type defined.
                         {% endif %}
                         {% if error.type == "invalid filter xpath" %}
-                            {% if error.column.filter_xpath %}
-                                Case List has invalid filter xpath <code>{{ error.column.filter_xpath }}</code> in module
+                            {% if error.filter %}
+                                Case List has invalid filter xpath <code>{{ error.filter }}</code> in module
                             {% else %}
                                 Case List has blank filter in module
                             {% endif %}
