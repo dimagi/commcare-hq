@@ -37,7 +37,7 @@ def _real_incomplete_domains():
     return {x['fields']['name'] for x in incomplete_domains}
 
 
-def _domains_to_email():
+def incomplete_domains_to_email():
     domains = _real_incomplete_domains() & _domains_over_x_forms()
 
     email_domains = []
@@ -82,13 +82,12 @@ def fm_reminder_email():
             )
 
 
-def _self_started_domains():
+def incomplete_self_started_domains():
     """
     Returns domains that have submitted 200 forms, but haven't filled out any
     project information
     """
     domains = list(_real_incomplete_domains() & _domains_over_x_forms())
-    domains = {"domains": domains}
 
     email_domains = []
     for domain in domains:
