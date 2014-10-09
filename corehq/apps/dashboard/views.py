@@ -155,7 +155,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Reports'),
             slug='reports',
-            icon='dashboard-icon-reports',
+            icon='dashboard-icon-report',
             context_processor_class=ReportsPaginatedContext,
             urlname='reports_home',
             visibility_check=can_view_reports,
