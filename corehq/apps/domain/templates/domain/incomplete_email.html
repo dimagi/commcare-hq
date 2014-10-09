@@ -23,7 +23,7 @@
             {% for domain in dimagi_owned %}
             <tr>
                 <td><a href='{{ domain.settings_link }}'>{{domain.domain_name}}</a></td>
-                <td>{{ domain.email_to }}</td>
+                <td>{{ domain.email_to|join:", " }}</td>
             </tr>
             {% endfor %}
         </table>
