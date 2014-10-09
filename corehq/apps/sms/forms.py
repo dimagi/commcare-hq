@@ -8,7 +8,8 @@ from django.forms.forms import Form
 from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
+    FieldWithHelpBubble)
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
@@ -22,6 +23,22 @@ from django.conf import settings
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
     (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
+)
+
+ENABLED = "ENABLED"
+DISABLED = "DISABLED"
+
+ENABLED_DISABLED_CHOICES = (
+    (ENABLED, ugettext_noop("Enabled")),
+    (DISABLED, ugettext_noop("Disabled")),
+)
+
+ANY_TIME = "ANY_TIME"
+SPECIFIC_TIMES = "SPECIFIC_TIMES"
+
+ALLOWED_SMS_TIME_CHOICES = (
+    (ANY_TIME, ugettext_noop("any day, at any time")),
+    (SPECIFIC_TIMES, ugettext_noop("only specific days and times")),
 )
 
 SMS_CONVERSATION_LENGTH_CHOICES = (
@@ -225,7 +242,86 @@ class LoadBalancingBackendFormMixin(Form):
             validate_phone_number(phone_number)
 
         return result
-    
+
+
+class SettingsForm(Form):
+    use_default_sms_response = ChoiceField(
+        required=True,
+        label=ugettext_noop("Default SMS Response"),
+        choices=ENABLED_DISABLED_CHOICES,
+    )
+    default_sms_response = TrimmedCharField(
+        required=False,
+        label="",
+    )
+    use_restricted_sms_times = ChoiceField(
+        required=True,
+        label=ugettext_noop("Send SMS on..."),
+        choices=ALLOWED_SMS_TIME_CHOICES,
+    )
+    send_to_duplicated_case_numbers = ChoiceField(
+        required=True,
+        label=ugettext_noop("Send Messages to Non-Unique Phone Numbers"),
+        choices=ENABLED_DISABLED_CHOICES,
+    )
+    restricted_sms_times_json = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(SettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("General Settings"),
+                FieldWithHelpBubble(
+                    "use_default_sms_response",
+                    data_bind="value: use_default_sms_response",
+                    help_bubble_text=_("Enable this option to provide a "
+                        "default response when a user's incoming SMS does not "
+                        "answer an open survey or match a known keyword."),
+                ),
+                crispy.Field(
+                    "default_sms_response",
+                    css_class="input-xxlarge",
+                    placeholder=_("Enter Default Response"),
+                    data_bind="visible: showDefaultSMSResponse",
+                ),
+                FieldWithHelpBubble(
+                    "use_restricted_sms_times",
+                    data_bind="value: use_restricted_sms_times",
+                    help_bubble_text=_("Use this option to limit the times "
+                        "that SMS messages can be sent to users. Messages that "
+                        "are sent outside these windows will remained queued "
+                        "and will go out as soon as another window opens up."),
+                ),
+                BootstrapMultiField(
+                    ErrorsOnlyField("restricted_sms_times_json"),
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'ko-template-restricted-sms-times', "
+                                  " data: $data"
+                                  "}",
+                    ),
+                    data_bind="visible: showRestrictedSMSTimes",
+                ),
+                FieldWithHelpBubble(
+                    "send_to_duplicated_case_numbers",
+                    help_bubble_text=_("Enabling this option will send "
+                        "outgoing-only messages to phone numbers registered "
+                        "with more than one mobile worker or case. SMS surveys "
+                        "and keywords will still only work for unique phone "
+                        "numbers in your project."),
+                ),
+            ),
+            FormActions(
+                StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
+
 
 class BackendForm(Form):
     _cchq_domain = None

@@ -38,7 +38,9 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
+from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
+    InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm,
+    SettingsForm)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
@@ -1323,6 +1325,43 @@ def upload_sms_translations(request, domain):
         messages.error(request, _("Update failed. We're looking into it."))
 
     return HttpResponseRedirect(reverse('sms_languages', args=[domain]))
+
+
+class SMSSettingsView(BaseMessagingSectionView):
+    urlname = 'sms_settings_new'
+    template_name = 'sms/settings_new.html'
+    page_title = ugettext_noop("SMS Settings")
+
+    @property
+    def page_name(self):
+        return _("SMS Settings")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            form = SettingsForm(self.request.POST)
+        else:
+            form = SettingsForm()
+        return form
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
 
 @domain_admin_required
