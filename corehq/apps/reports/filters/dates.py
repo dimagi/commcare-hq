@@ -8,8 +8,7 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from dimagi.utils.dates import DateSpan
-from corehq.elastic import es_query
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.elastic import es_query, ES_URLS
 
 
 class DatespanFilter(BaseReportFilter):
@@ -44,10 +43,10 @@ class DatespanFilter(BaseReportFilter):
     @property
     def report_labels(self):
         return simplejson.dumps({
-                    'last_7_days': _('Last 7 Days'),
-                    'last_month': _('Last Month'),
-                    'last_30_days': _('Last 30 Days')
-                })
+            'last_7_days': _('Last 7 Days'),
+            'last_month': _('Last Month'),
+            'last_30_days': _('Last 30 Days')
+        })
 
 
 class SubmitHistoryDatespanFilter(DatespanFilter):
@@ -55,6 +54,8 @@ class SubmitHistoryDatespanFilter(DatespanFilter):
     @property
     def default_days(self):
         days = 30
+        # This query will obtain earliest submission form date in current domain,
+        # otherwiste it will return default datespan(30days)
         q = { "query": {
                 "filtered": {
                     "query": {
@@ -67,13 +68,13 @@ class SubmitHistoryDatespanFilter(DatespanFilter):
                     }
                 }
             },
-            'sort': [{'received_on': {"order": "asc"}}]
+            'sort': [{'received_on': {"order": "asc"}}],
+            'size': 1
         }
         logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        es_results = es_query(q=q, es_url=XFORM_INDEX + '/_search', dict_only=False)['hits'].get('hits', [])
+        es_results = es_query(q=q, es_url=ES_URLS['forms'], dict_only=False)['hits'].get('hits', [])
 
         if len(es_results) > 0:
-            print 1
             start_date = parser.parse(es_results[0]['_source']['received_on']).replace(tzinfo=self.timezone)
             end_date = datetime.datetime.now(self.timezone)
             days = (end_date - start_date).days
