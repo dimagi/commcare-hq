@@ -115,8 +115,11 @@ def new_update_case_properties():
                 owner_id = get_group_id(domain, "cati", facility_id)
                 if not owner_id:
                     continue
+                owner_group = GROUPS_BY_ID[domain].get(owner_id, None)
+                cati_name = owner_group.metadata.get('name', None) if owner_group else None
                 update = {
-                    "current_assignment": "cati"
+                    "current_assignment": "cati",
+                    "cati_name": cati_name
                 }
                 cases_to_modify.append({
                     "case_id": case._id,
