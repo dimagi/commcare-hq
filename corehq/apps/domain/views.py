@@ -314,7 +314,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
-            'commtrack_enabled': self.domain_object.commtrack_enabled
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'secure_submissions': self.domain_object.secure_submissions,
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -344,7 +345,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_user_id',
                 'restrict_superusers',
                 'ota_restore_caching',
-                'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
