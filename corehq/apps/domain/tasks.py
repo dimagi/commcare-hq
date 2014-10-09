@@ -14,13 +14,12 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
 
 
-def _domains_over_x_forms(num_forms=200):
-    form_domains = (
-            FormES()
-            .domain_facet()
-            .run()
-            .facet('domain', 'terms')
-    )
+def _domains_over_x_forms(num_forms=200, domains=None):
+    form_domains = FormES().domain_facet()
+    if not domains:
+        form_domains = form_domains.domain(domains)
+    form_domains = form_domains.run().facet('domain', 'terms')
+
     return {x['term'] for x in form_domains if x['count'] > num_forms}
 
 
@@ -38,7 +37,8 @@ def _real_incomplete_domains():
 
 
 def incomplete_domains_to_email():
-    domains = _real_incomplete_domains() & _domains_over_x_forms()
+    domains = _real_incomplete_domains()
+    domains = _domains_over_x_forms(domains=list(domains))
 
     email_domains = []
     for domain in domains:
@@ -87,7 +87,8 @@ def incomplete_self_started_domains():
     Returns domains that have submitted 200 forms, but haven't filled out any
     project information
     """
-    domains = list(_real_incomplete_domains() & _domains_over_x_forms())
+    domains = _real_incomplete_domains()
+    domains = list(_domains_over_x_forms(domains=domains))
 
     email_domains = []
     for domain in domains:
