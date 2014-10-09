@@ -23,7 +23,7 @@ class FormES(HQESQuery):
         return self.terms_facet('form.meta.userID', 'user')
 
     def domain_facet(self):
-        return self.terms_facet('domain', 'domain')
+        return self.terms_facet('domain', 'domain', 1000000)
 
 
 def xmlns(xmlns):
