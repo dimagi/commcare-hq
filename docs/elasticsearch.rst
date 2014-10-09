@@ -75,6 +75,9 @@ Sometimes things get in a weird state and (locally!) it's easiest to just
 blow away the index and start over.
 
 1. Delete the affected index.  The easiest way to do this is with `elasticsearch-head`_.
+   You can delete multiple affected indices with
+   ``curl -X DELETE http://localhost:9200/*``. ``*`` can be replaced with any regex to
+   delete matched indices, similar to bash regex.
 2. Run ``$ ./manage.py ptop_preindex && ./manage.py ptop_es_manage --flip_all_aliases``.
 3. Try again
 
