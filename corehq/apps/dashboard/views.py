@@ -42,6 +42,7 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @method_decorator(preview_boostrap3())
     @method_decorator(toggles.DASHBOARD_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
+        request.preview_bootstrap3 = True
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
