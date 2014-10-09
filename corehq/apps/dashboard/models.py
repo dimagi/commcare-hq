@@ -1,83 +1,197 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop
-from corehq import privileges
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.views import DefaultProjectSettingsView
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
 
 
-class BaseTile(object):
-    """This class defines the context and template for one of the squares
-    in the returning user dashboard.
+class TileConfigurationError(Exception):
+    pass
+
+
+class TileType(object):
+    ICON = 'icon'
+    PAGINATE = 'paginate'
+
+
+class Tile(object):
+    """This class creates the tile and its context
+    when it's called by Django Angular's Remote Method Invocation.
     """
-    title = None
-    slug = None
-    ng_directive = None
 
-    def __init__(self, domain, request, in_data=None):
-        super(BaseTile, self).__init__()
-        self.domain = domain
-        self.couch_user = request.couch_user
+    def __init__(self, tile_config, request, in_data):
+        if not isinstance(tile_config, TileConfiguration):
+            raise TileConfigurationError(
+                "tile_config must be an instance of TileConfiguration"
+            )
+        self.tile_config = tile_config
         self.request = request
+
+        # this is the data provided by Django Angular's Remote Method Invocation
         self.in_data = in_data
 
     @property
     def is_visible(self):
-        """Override this to hide tiles from the dashboard.
+        """Whether or not the tile is visible on the dashboard (permissions).
         :return: Boolean
         """
-        return True
+        return self.tile_config.visibility_check(self.request)
+
+    @property
+    @memoized
+    def context_processor(self):
+        return self.tile_config.context_processor_class(
+            self.tile_config, self.request, self.in_data
+        )
 
     @property
     def context(self):
-        """This is the context that's used to initialize the angular controller.
+        """This is sent back to the Angular JS controller created the remote
+        Remote Method Invocation of the Dashboard view.
         :return: dict
         """
-        return {}
+        tile_context = {
+            'slug': self.tile_config.slug,
+        }
+        tile_context.update(self.context_processor.context)
+        return tile_context
 
-    @classmethod
-    def get_init_context(cls):
-        """This is the context that's used by the django template to initialize
-        the tiles.
+
+class TileConfiguration(object):
+    """This is used by
+    """
+
+    def __init__(self, title, slug, icon, context_processor_class,
+                 url=None, urlname=None, is_external_link=False,
+                 visibility_check=None, url_generator=None):
+        """
+        :param title: The title of the tile
+        :param slug: The tile's slug
+        :param icon: The class of the icon
+        :param context_processor: A Subclass of BaseTileContextProcessor
+        :param url: the url that the icon will link to
+        :param urlname: the urlname of the view that the icon will link to
+        :param is_external_link: True if the tile opens links in new window/tab
+        :param visibility_check: (optional) a lambda that accepts a request
+        and urlname and returns a boolean value if the tile is visible to the
+        user.
+        :param url_generator: a labmda that accepts a request and returns
+        a string that is the url the tile will take the user to if it's clicked
+        """
+        if not issubclass(context_processor_class, BaseTileContextProcessor):
+            raise TileConfigurationError(
+                "context processor must be subclass of BaseTileContextProcessor"
+            )
+        self.context_processor_class = context_processor_class
+        self.title = title
+        self.slug = slug
+        self.icon = icon
+        self.url = url
+        self.urlname = urlname
+        self.is_external_link = is_external_link
+        self.visibility_check = (visibility_check
+                                 or self._default_visibility_check)
+        self.url_generator = url_generator or self._default_url_generator
+
+    @property
+    def ng_directive(self):
+        return self.context_processor_class.tile_type
+
+    def get_url(self, request):
+        if self.urlname is not None:
+            return self.url_generator(self.urlname, request)
+        return self.url
+
+    @staticmethod
+    def _default_url_generator(urlname, request):
+        return reverse(urlname, args=[request.domain])
+
+    @staticmethod
+    def _default_visibility_check(request):
+        return True
+
+
+class BaseTileContextProcessor(object):
+    tile_type = None
+
+    def __init__(self, tile_config, request, in_data):
+        """
+        :param tile_config: An instance of TileConfiguration
+        :param request: An instance of HttpRequest
+        :param in_data: A dictionary provided by Django Angular's
+        Remote Method Invocation
+        """
+        self.request = request
+        self.tile_config = tile_config
+        self.in_data = in_data
+
+    @property
+    def context(self):
+        """This is the context specific to the type of tile we're creating.
         :return: dict
         """
+        raise NotImplementedError('context must be overridden')
+
+
+class IconContext(BaseTileContextProcessor):
+    """This type of tile is just an icon with a link to another page on HQ
+    or an external link (like the help site).
+    """
+    tile_type = TileType.ICON
+
+    @property
+    def context(self):
         return {
-            'title': cls.title,
-            'slug': cls.slug,
-            'ng_directive': cls.ng_directive,
+            'url': self.tile_config.get_url(self.request),
+            'icon': self.tile_config.icon,
+            'isExternal': self.tile_config.is_external_link,
         }
 
 
-class BaseNgPaginatedTileResource(object):
+class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
     """A resource for serving data to the Angularjs PaginatedTileController
-    for the hq.dashboard module.
+    for the hq.dashboard Angular JS module.
+    To use, subclass this and override :total: and :paginated_items: properties.
     """
-
-    def __init__(self, request, in_data):
-        self.request = request
-        self.in_data = in_data
-
+    tile_type = TileType.PAGINATE
 
     @property
-    def request_data(self):
-        """The data generally from a GET or POST request
+    def context(self):
+        return {
+            'pagination': self.pagination_context,
+            'default': {
+                'show': self.tile_config.icon is not None,
+                'icon': self.tile_config.icon,
+                'url': self.tile_config.get_url(self.request),
+            },
+        }
+
+    @property
+    def pagination_data(self):
+        """The data we READ to figure out the current pagination state.
         :return: dict
         """
         return self.in_data['pagination']
 
     @property
     def limit(self):
-        return self.request_data.get('limit', 5)
+        """The maximum number of items for this page.
+        :return: integer
+        """
+        return self.pagination_data.get('limit', 5)
 
     @property
     def current_page(self):
-        return self.request_data.get('currentPage', 1)
+        """The current page that the paginator is on.
+        :return: integer
+        """
+        return self.pagination_data.get('currentPage', 1)
 
     @property
     def skip(self):
+        """The number of items to skip over to get to the current page in
+        the list of paginated items (or in the queryset).
+        :return: integer
+        """
         return (self.current_page - 1) * self.limit
 
     @property
@@ -86,119 +200,56 @@ class BaseNgPaginatedTileResource(object):
             'total': self.total,
             'limit': self.limit,
             'currentPage': self.current_page,
-            'paginatedItems': self.paginated_items,
+            'paginatedItems': list(self.paginated_items),
+        }
+
+    @staticmethod
+    def _fmt_item(name, url, description=None, full_name=None):
+        """This is the format that the paginator expects items to be in
+        so that the template can be fully rendered.
+        :param name: string
+        :param url: string
+        :param description: string. optional.
+        If present, a popover will appear to the left of the list item.
+        :return:
+        """
+
+        def _fmt_item_name(n):
+            if len(n) > 38:
+                return "%s..." % n[0:36]
+            return n
+
+        return {
+            'name_full': full_name or name,
+            'name': _fmt_item_name(name),
+            'description': description,
+            'url': url,
         }
 
     @property
     def total(self):
-        """The total number of objects being paginated over
+        """The total number of objects being paginated over.
         :return: integer
         """
         raise NotImplementedError('total must return an int')
 
     @property
     def paginated_items(self):
+        """The items (as dictionaries/objects) to be passed to the angularjs
+        template for rendering. It's recommended that you use the
+        _fmt_item() helper function to return the correctly formatted dict
+        for each item.
+        :return: list of dicts formatted with _fmt_item
+        """
         raise NotImplementedError('pagination must be overridden')
 
 
-class BasePaginatedTile(BaseTile, BaseNgPaginatedTileResource):
-    ng_directive = 'paginate'
-    default_icon = None
-
-    @property
-    def request_data(self):
-        return self.in_data.get('pagination', {}) if self.in_data else {}
-
-    @property
-    def context(self):
-        context = super(BasePaginatedTile, self).context
-        context.update({
-            'pagination': self.pagination_context,
-            'default': {
-                'show': self.default_icon is not None,
-                'icon': self.default_icon,
-                'url': self.default_url,
-            },
-        })
-        return context
-
-    @property
-    def default_url(self):
-        """ Returns the default url if the paginated list is not visible.
-        :return: string
-        """
-        return ''
-
-    @staticmethod
-    def _fmt_item_name(name):
-        if len(name) > 38:
-            return "%s..." % name[0:36]
-        return name
-
-
-class AppsTile(BasePaginatedTile):
-    title = ugettext_noop("Applications")
-    slug = 'applications'
-
-    @property
-    def is_visible(self):
-        return (
-
-        )
-
-    @property
-    def default_icon(self):
-        if self.request.project.commtrack_enabled:
-            return 'dashboard-icon-commtrack'
-        return 'dashboard-icon-applications'
-
+class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
+    """Generates the Paginated context for the Reports Tile.
+    """
     @property
     def total(self):
-        # todo: optimize this at some point. unfortunately applications_brief
-        # doesn't have a reduce view and for now we'll avoid refactoring.
-        return len(self.applications)
-
-    @property
-    @memoized
-    def applications(self):
-        key = [self.domain]
-        return Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-        ).all()
-
-    @property
-    def paginated_items(self):
-        def _get_app_url(app):
-            return (
-                reverse('view_app', args=[self.domain, app['id']])
-                if self.couch_user.can_edit_apps()
-                else reverse('release_manager', args=[self.domain, app['id']])
-            )
-
-        apps = self.applications[self.skip:self.skip + self.limit]
-        return [{
-            'name': a['key'][1],
-            'url': _get_app_url(a),
-        } for a in apps]
-
-
-class ReportsTile(BasePaginatedTile):
-    title = ugettext_noop("Reports")
-    slug = 'reports'
-    blank_template_name = 'icon_tile.html'
-    default_icon = 'dashboard-icon-report'
-
-    @property
-    def is_visible(self):
-        return (self.couch_user.can_view_reports()
-                or self.couch_user.get_viewable_reports())
-
-    @property
-    def total(self):
-        key = ["name", self.domain, self.couch_user._id]
+        key = ["name", self.request.domain, self.request.couch_user._id]
         results = ReportConfig.get_db().view(
             'reportconfig/configs_by_domain',
             include_docs=False,
@@ -211,89 +262,24 @@ class ReportsTile(BasePaginatedTile):
     @property
     def paginated_items(self):
         reports = ReportConfig.by_domain_and_owner(
-            self.domain, self.couch_user._id,
+            self.request.domain, self.request.couch_user._id,
             limit=self.limit, skip=self.skip
         )
-
-        return [{
-            'name': self._fmt_item_name(r.name),
-            'name_full': r.full_name,
-            'description': "%(desc)s (%(date)s)" % {
-                'desc': r.description,
-                'date': r.date_description,
-            },
-            'url': r.url,
-        } for r in reports]
-
-    @property
-    def default_url(self):
-        return reverse('reports_home', args=[self.domain])
+        for report in reports:
+            yield self._fmt_item(
+                report.name,
+                report.url,
+                description="%(desc)s (%(date)s)" % {
+                    'desc': report.description,
+                    'date': report.date_description,
+                },
+                full_name=report.full_name
+            )
 
 
-class TileConfiguration(object):
-
-    def __init__(self, tile_type, title, slug, icon, url_generator, visibility_check=None,
-                 is_external_link=False):
-        self.tile_type = tile_type
-        self.title = title
-        self.slug = slug
-        self.icon = icon
-        self.url_generator = url_generator
-        self.visibility_check = visibility_check
-        # this makes the url open in a new window/tab
-        self.is_external_link = is_external_link
-
-    @property
-    def ng_directive(self):
-        # this is how angular knows what directives to map this to
-        return self.tile_type
-
-class PaginatedTileConfiguration(TileConfiguration):
-    def __init__(self, tile_type, title, slug, icon, url_generator, paginator_class,
-                 visibility_check=None, is_external_link=False):
-        self.paginator_class = paginator_class
-        super(PaginatedTileConfiguration, self).__init__(tile_type, title, slug, icon, url_generator,
-                                                         visibility_check, is_external_link)
-
-
-class ConfigurableIconTile(BaseTile):
-
-    def __init__(self, tile_config, domain, request, in_data):
-        self.tile_config = tile_config
-        super(ConfigurableIconTile, self).__init__(domain, request, in_data)
-
-    @property
-    def url(self):
-        return self.tile_config.url_generator(self.request)
-
-    @property
-    def is_visible(self):
-        return self.tile_config.visibility_check(self.request)
-
-    @property
-    def context(self):
-        context = super(ConfigurableIconTile, self).context
-        context.update({
-            'url': self.url,
-            'icon': self.tile_config.icon,
-            'isExternal': self.tile_config.is_external_link,
-        })
-        return context
-
-
-class MockPaginator(BaseNgPaginatedTileResource):
-
-    @property
-    def total(self):
-        return 7
-
-    @property
-    def paginated_items(self):
-        return [{'name': 'item {}'.format(i), 'url': 'google.com'} for i in range(7)][self.skip:self.skip + self.limit]
-
-
-class AppsPaginator(BaseNgPaginatedTileResource):
-
+class AppsPaginatedContext(BasePaginatedTileContextProcessor):
+    """Generates the Paginated context for the Applications Tile.
+    """
     @property
     def total(self):
         # todo: optimize this at some point. unfortunately applications_brief
@@ -325,126 +311,3 @@ class AppsPaginator(BaseNgPaginatedTileResource):
             'name': a['key'][1],
             'url': _get_app_url(a),
         } for a in apps]
-
-
-class ConfigurablePaginatedTile(BaseTile):
-    ng_directive = 'paginate'
-    default_icon = None
-
-    def __init__(self, tile_config, paginator_class, domain, request, in_data):
-        self.tile_config = tile_config
-        super(ConfigurablePaginatedTile, self).__init__(domain, request, in_data)
-        self.paginator = paginator_class(request, in_data)
-
-    @property
-    def context(self):
-        context = super(ConfigurablePaginatedTile, self).context
-        # todo: reconcile with icon tiles?
-        context.update({
-            'pagination': self.paginator.pagination_context,
-            'default': {
-                'show': self.tile_config.icon is not None,
-                'icon': self.tile_config.icon,
-                'url': self.tile_config.url_generator(self.request),
-            },
-        })
-        return context
-
-
-# todo: kill everything below here
-
-class BaseIconTile(BaseTile):
-    ng_directive = 'icon'
-    icon = None
-    is_external_link = False
-
-    @property
-    def context(self):
-        context = super(BaseIconTile, self).context
-        context.update({
-            'url': self.url,
-            'icon': self.icon,
-            'isExternal': self.is_external_link,
-        })
-        return context
-
-    @property
-    def url(self):
-        raise NotImplementedError("you must implement url")
-
-
-class SettingsTile(BaseIconTile):
-    title = ugettext_noop("Settings")
-    slug = 'settings'
-    icon = 'dashboard-icon-settings'
-
-    @property
-    def is_visible(self):
-        return self.couch_user.is_domain_admin(self.domain)
-
-    @property
-    def url(self):
-        return reverse(DefaultProjectSettingsView.urlname,
-                       args=[self.domain])
-
-
-class MessagingTile(BaseIconTile):
-    title = ugettext_noop("Messaging")
-    slug = 'messages'
-    icon = 'dashboard-icon-messaging'
-
-    @property
-    def url(self):
-        return reverse('sms_default',
-                       args=[self.domain])
-
-    @property
-    def is_visible(self):
-        return (
-            (self.can_access_reminders or self.can_access_sms)
-            and not self.couch_user.is_commcare_user()
-            and self.couch_user.can_edit_data()
-        )
-
-    @property
-    @memoized
-    def can_access_sms(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.OUTBOUND_SMS)
-        except PermissionDenied:
-            return False
-        return True
-
-    @property
-    @memoized
-    def can_access_reminders(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.REMINDERS_FRAMEWORK)
-            return True
-        except PermissionDenied:
-            return False
-
-
-class ExchangeTile(BaseIconTile):
-    title = ugettext_noop("Exchange")
-    slug = 'exchange'
-    icon = 'dashboard-icon-exchange'
-
-    @property
-    def is_visible(self):
-        return self.couch_user.can_edit_apps()
-
-    @property
-    def url(self):
-        return reverse('appstore')
-
-
-class HelpTile(BaseIconTile):
-    title = ugettext_noop("Help Site")
-    slug = 'help'
-    icon = 'dashboard-icon-help'
-    is_external_link = True
-
-    @property
-    def url(self):
-        return "http://help.commcarehq.org/"

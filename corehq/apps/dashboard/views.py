@@ -4,21 +4,20 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.app_manager.models import Application
 from corehq.apps.dashboard.models import (
-    AppsTile,
-    ReportsTile,
-    SettingsTile,
-    MessagingTile,
-    ExchangeTile,
-    HelpTile,
-    TileConfiguration, ConfigurableIconTile, ConfigurablePaginatedTile, PaginatedTileConfiguration, MockPaginator,
-    AppsPaginator)
-from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin
+    TileConfiguration,
+    AppsPaginatedContext,
+    IconContext,
+    ReportsPaginatedContext, Tile)
+from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
+    DefaultProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.style.decorators import preview_boostrap3
 from corehq.apps.users.views import DefaultProjectUserSettingsView
+from django_prbac.exceptions import PermissionDenied
+from django_prbac.utils import ensure_request_has_privilege
 
 
 @toggles.DASHBOARD_PREVIEW.required_decorator()
@@ -68,33 +67,14 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_domain.html'
-    tiles = [
-        # AppsTile,
-        # ReportsTile,
-        # DataTile,
-        # UsersTile,
-        # MessagingTile,
-        # ExchangeTile,
-        # SettingsTile,
-        # HelpTile,
-    ]
 
-    def get_tile_configs(self):
+    @property
+    def tile_configs(self):
         return _get_default_tile_configurations()
 
     @property
     def slug_to_tile(self):
-        return dict([(a.slug, a) for a in self.get_tile_configs()])
-
-    def make_tile(self, slug, in_data):
-        config = self.slug_to_tile[slug]
-        # todo: could clean this up or move to factory
-        if config.tile_type == 'icon':
-            return ConfigurableIconTile(config, self.domain, self.request, in_data)
-        else:
-            assert config.tile_type == 'paginate'
-            assert isinstance(config, PaginatedTileConfiguration)
-            return ConfigurablePaginatedTile(config, config.paginator_class, self.domain, self.request, in_data)
+        return dict([(a.slug, a) for a in self.tile_configs])
 
     @property
     def page_context(self):
@@ -103,8 +83,12 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
                 'title': d.title,
                 'slug': d.slug,
                 'ng_directive': d.ng_directive,
-            } for d in self.get_tile_configs()],
+            } for d in self.tile_configs],
         }
+
+    def make_tile(self, slug, in_data):
+        config = self.slug_to_tile[slug]
+        return Tile(config, self.request, in_data)
 
     @allow_remote_invocation
     def update_tile(self, in_data):
@@ -129,34 +113,99 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
 
 
 def _get_default_tile_configurations():
-    can_edit_data = lambda request: request.couch_user.can_edit_data() or request.couch_user.can_export_data()
-    can_edit_apps = lambda request: request.couch_user.is_web_user() or request.couch_user.can_edit_apps()
-    USER_CONFIG = {
-        'tile_type': 'icon',
-        'title': _('Users'),
-        'slug': 'users',
-        'icon': 'dashboard-icon-users',
-        'url_generator': lambda request: reverse(DefaultProjectUserSettingsView.urlname, args=[request.domain]),
-        'visibility_check': lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()
-    }
+    can_edit_data = lambda request: (request.couch_user.can_edit_data()
+                                     or request.couch_user.can_export_data())
+    can_edit_apps = lambda request: (request.couch_user.is_web_user()
+                                     or request.couch_user.can_edit_apps())
+    can_view_reports = lambda request: (request.couch_user.can_view_reports()
+                                        or request.couch_user.get_viewable_reports())
+    can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
+                                      or request.couch_user.can_edit_web_users())
+
+    def _can_access_sms(request):
+        try:
+            ensure_request_has_privilege(request, privileges.OUTBOUND_SMS)
+        except PermissionDenied:
+            return False
+        return True
+
+    def _can_access_reminders(request):
+        try:
+            ensure_request_has_privilege(request, privileges.REMINDERS_FRAMEWORK)
+            return True
+        except PermissionDenied:
+            return False
+
+    can_use_messaging = lambda request: (
+        (_can_access_reminders or _can_access_sms)
+        and not request.couch_user.is_commcare_user()
+        and request.couch_user.can_edit_data()
+    )
+
+    is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
 
     return [
         TileConfiguration(
-            tile_type='icon',
-            title=_('Data'),
-            slug='data',
-            icon='dashboard-icon-data',
-            url_generator=lambda request: reverse('data_interfaces_default', args=[request.domain]),
-            visibility_check=can_edit_data,
-        ),
-        TileConfiguration(**USER_CONFIG),
-        PaginatedTileConfiguration(
-            tile_type='paginate',
             title=_('Applications'),
             slug='applications',
             icon='dashboard-icon-applications',
-            paginator_class=AppsPaginator,
-            url_generator=lambda request: None,
+            context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
-        )
+        ),
+        TileConfiguration(
+            title=_('Reports'),
+            slug='reports',
+            icon='dashboard-icon-reports',
+            context_processor_class=ReportsPaginatedContext,
+            urlname='reports_home',
+            visibility_check=can_view_reports,
+        ),
+        TileConfiguration(
+            title=_('Data'),
+            slug='data',
+            icon='dashboard-icon-data',
+            context_processor_class=IconContext,
+            urlname='data_interfaces_default',
+            visibility_check=can_edit_data,
+        ),
+        TileConfiguration(
+            title=_('Users'),
+            slug='users',
+            icon='dashboard-icon-users',
+            context_processor_class=IconContext,
+            urlname=DefaultProjectUserSettingsView.urlname,
+            visibility_check=can_edit_users,
+        ),
+        TileConfiguration(
+            title=_('Messaging'),
+            slug='messaging',
+            icon='dashboard-icon-messaging',
+            context_processor_class=IconContext,
+            urlname='sms_default',
+            visibility_check=can_use_messaging,
+        ),
+        TileConfiguration(
+            title=_('Exchange'),
+            slug='exchange',
+            icon='dashboard-icon-exchange',
+            context_processor_class=IconContext,
+            urlname='appstore',
+            visibility_check=can_edit_apps,
+            url_generator=lambda urlname, req: reverse(urlname),
+        ),
+        TileConfiguration(
+            title=_('Settings'),
+            slug='settings',
+            icon='dashboard-icon-settings',
+            context_processor_class=IconContext,
+            urlname=DefaultProjectSettingsView.urlname,
+            visibility_check=is_domain_admin,
+        ),
+        TileConfiguration(
+            title=_('Help Site'),
+            slug='help',
+            icon='dashboard-icon-help',
+            context_processor_class=IconContext,
+            url='http://help.commcarehq.org/',
+        ),
     ]
