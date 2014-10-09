@@ -10,10 +10,11 @@ class Command(SupervisorConfCommand):
 
 
     @staticmethod
-    def get_pillows_from_settings(pillowtops, yml={}):
+    def get_pillows_from_settings(pillowtops, yml=None):
         """
         Reduce the number of pillows started if there are certain types passed in to reject
         """
+        yml = yml or {}
         reject_types = yml.get('pillowtop_blacklist', [])
         reject_pillows = yml.get('pillow_blacklist', [])
 
