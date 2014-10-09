@@ -10,12 +10,16 @@ class Command(SupervisorConfCommand):
 
 
     @staticmethod
-    def get_pillows_from_settings(pillowtops, reject_types=[]):
+    def get_pillows_from_settings(pillowtops, yml=None):
         """
         Reduce the number of pillows started if there are certain types passed in to reject
         """
+        yml = yml or {}
+        reject_types = yml.get('pillowtop_blacklist', [])
+        reject_pillows = yml.get('pillow_blacklist', [])
+
         return [pillow for group_key, items in pillowtops.items() for pillow in items if
-                group_key not in reject_types]
+                group_key not in reject_types and pillow not in reject_pillows]
 
     @staticmethod
     def get_rejected_pillow_types(code_root, environment):
@@ -27,9 +31,9 @@ class Command(SupervisorConfCommand):
         if os.path.isfile(fpath):
             with open(fpath, 'r') as f:
                 yml = yaml.load(f)
-                return yml['pillowtop_blacklist']
+                return yml
 
-        return []
+        return {}
 
     def render_configuration_file(self, conf_template_string):
         """
