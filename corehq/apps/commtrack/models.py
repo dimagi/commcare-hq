@@ -1490,6 +1490,10 @@ class StockExportColumn(ComplexExportColumn):
 
 
 def sync_location_supply_point(loc):
+    """
+    This method syncs the location/supply point connection
+    and is triggered whenever a location is edited or created.
+    """
     # circular import
     from corehq.apps.domain.models import Domain
 
@@ -1506,9 +1510,18 @@ def sync_location_supply_point(loc):
         supply_point = SupplyPointCase.get_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
-            return supply_point
+            updated_supply_point = supply_point
         else:
-            return SupplyPointCase.create_from_location(loc.domain, loc)
+            updated_supply_point = SupplyPointCase.create_from_location(loc.domain, loc)
+
+        # need to sync this sp change to the sql location
+        # but saving the doc will trigger a loop
+        try:
+            sql_loc = SQLLocation.objects.get(location_id=loc._id)
+            sql_loc.supply_point_id = updated_supply_point._id
+            sql_loc.save()
+        except SQLLocation.DoesNotExist:
+            pass
 
 
 @receiver(post_save, sender=DbStockTransaction)
