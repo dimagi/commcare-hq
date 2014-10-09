@@ -11,7 +11,8 @@ from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig
-from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task
+from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task, product_stock_task, \
+    stock_transaction_task
 
 
 class GlobalStats(BaseDomainView):
@@ -108,3 +109,10 @@ def sync_ilsgateway(request, domain):
     ils_bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
 
+
+@domain_admin_required
+@require_POST
+def sync_stock_data(request, domain):
+    product_stock_task.delay(domain)
+    stock_transaction_task.delay(domain)
+    return HttpResponse('OK')

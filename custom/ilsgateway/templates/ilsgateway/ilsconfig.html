@@ -1,5 +1,5 @@
 {% extends 'locations/facility_sync.html' %}
-
+{% load i18n %}
 {% block enabled_section %}
     {% if checkpoint %}
         <table class="table table-bordered">
@@ -26,4 +26,45 @@
         </table>
     {% endif %}
     {{ block.super }}
+    {% if settings.source_config.enabled %}
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="sync_stock_data">
+                        {% trans "Sync stock data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block js-inline %}
+
+    {{ block.super }}
+    <script>
+        var _post = function (elem, url, options) {
+            var options = options || {};
+            var success = options.success || "{% trans "Sync Successful" %}";
+            var error = options.error || "{% trans "Error!" %}";
+            $(elem).prop('disabled', true).html("{% trans "Syncing..." %}");
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function() {
+                    $(elem).html(success);
+                },
+                error: function() {
+                    $(elem).html(error).addClass("btn-danger");
+                }
+            });
+        };
+
+        $("#sync_stock_data").click(function() {
+            var url = '{% url 'sync_stock_data' domain %}';
+            var successMessage = "{% trans "Sync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+    </script>
 {% endblock %}

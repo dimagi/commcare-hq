@@ -123,6 +123,56 @@ class Location(object):
         return str(self.__dict__)
 
 
+class ProductStock(object):
+
+    def __init__(self, supply_point_id, quantity, product_code, last_modified, auto_monthly_consumption):
+        self.supply_point_id = supply_point_id
+        self.quantity = quantity
+        self.product_code = product_code
+        self.last_modified = last_modified
+        self.auto_monthly_consumption = auto_monthly_consumption
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            supply_point_id=json_rep['supply_point'],
+            quantity=json_rep['quantity'],
+            product_code=json_rep['product'],
+            last_modified=json_rep['last_modified'],
+            auto_monthly_consumption=json_rep['auto_monthly_consumption']
+        )
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+
+class StockTransaction(object):
+
+    def __init__(self, beginning_balance, date, ending_balance, product_code, quantity, report_type, supply_point_id):
+        self.beginning_balance = beginning_balance
+        self.date = date
+        self.ending_balance = ending_balance
+        self.product_code = product_code
+        self.quantity = quantity
+        self.report_type = report_type
+        self.supply_point_id = supply_point_id
+
+    @classmethod
+    def from_json(cls, json_rep):
+        return cls(
+            beginning_balance=json_rep['beginning_balance'],
+            date=json_rep['date'],
+            ending_balance=json_rep['ending_balance'],
+            product_code=json_rep['product'],
+            quantity=json_rep['quantity'],
+            report_type=json_rep['report_type'],
+            supply_point_id=json_rep['supply_point']
+        )
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+
 class ILSGatewayEndpoint(EndpointMixin):
 
     def __init__(self, base_uri, username, password):
@@ -133,6 +183,8 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.webusers_url = self._urlcombine(self.base_uri, '/webusers/')
         self.smsusers_url = self._urlcombine(self.base_uri, '/smsusers/')
         self.locations_url = self._urlcombine(self.base_uri, '/locations/')
+        self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
+        self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -183,3 +235,10 @@ class ILSGatewayEndpoint(EndpointMixin):
         meta, locations = self.get_objects(self.locations_url, **kwargs)
         return meta, [Location.from_json(location) for location in locations]
 
+    def get_productstocks(self, **kwargs):
+        meta, product_stocks = self.get_objects(self.productstock_url, **kwargs)
+        return meta, [ProductStock.from_json(product_stock) for product_stock in product_stocks]
+
+    def get_stocktransactions(self, **kwargs):
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+        return meta, [StockTransaction.from_json(stock_transaction) for stock_transaction in stock_transactions]
