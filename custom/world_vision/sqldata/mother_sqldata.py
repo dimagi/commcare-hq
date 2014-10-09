@@ -14,17 +14,15 @@ class MotherRegistrationDetails(BaseSqlData):
 
     @property
     def filters(self):
-        #TODO: if date_not_selected:
-        if 'startdate' not in self.config and 'enddate' not in self.config:
-            return super(MotherRegistrationDetails, self).filters[1:]
-        else:
-            return super(MotherRegistrationDetails, self).filters
+        return super(MotherRegistrationDetails, self).filters[1:]
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for column in self.columns:
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['mother_registration_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}])
         return result
 
@@ -42,24 +40,24 @@ class MotherRegistrationDetails(BaseSqlData):
                 )
             ),
         ]
-        if 'startdate' not in self.config and 'enddate' not in self.config:
+        if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
                 DatabaseColumn("Total open mother cases",
                     CountUniqueColumn('doc_id',
-                        alias="opened",
+                        alias="no_date_opened",
                         filters=self.filters + [EQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("Total closed mother cases",
                     CountUniqueColumn('doc_id',
-                        alias="closed",
+                        alias="no_date_closed",
                         filters=self.filters +  [NOTEQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("New registrations during last 30 days",
                         CountUniqueColumn('doc_id',
-                            alias="new_registrations",
-                            filters=self.filters + [AND([LTE('opened_on', "last_month"), GTE('opened_on', "today")])]
+                            alias="no_date_new_registrations",
+                            filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
                         )
                 )
             ])
@@ -74,7 +72,7 @@ class MotherRegistrationDetails(BaseSqlData):
                 DatabaseColumn("Mother cases closed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="closed",
-                        filters=self.filters + [AND([NOTEQ('closed_on', 'empty'), LTE('opened_on', "stred"), LTE('closed_on', "stred")])]
+                        filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
                 DatabaseColumn("Total mothers followed during the time period",
@@ -178,13 +176,13 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
             DatabaseColumn("Trimester 1",
                 CountUniqueColumn('doc_id',
                     alias="trimester_1",
-                    filters=self.filters + [AND([LTE('lmp', "today"), GTE('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
+                    filters=self.filters + [AND([LTE('lmp', "today"), GT('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
                 )
             ),
             DatabaseColumn("Trimester 2",
                 CountUniqueColumn('doc_id',
                     alias="trimester_2",
-                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GTE('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
+                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GT('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
                 )
             ),
             DatabaseColumn("Trimester 3",
@@ -203,12 +201,14 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
         for i in range(1,15):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 14].slug], 'html': self.data[self.columns[i + 14].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug]),
@@ -340,7 +340,7 @@ class DeliveryLiveBirthDetails(BaseSqlData):
 
     @property
     def rows(self):
-        total = sum(v for v in self.data.values())
+        total = sum(v if v else 0 for v in self.data.values())
         result = []
         for column in self.columns:
             percent = self.percent_fn(total, self.data[column.slug])
@@ -375,9 +375,11 @@ class DeliveryStillBirthDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for column in self.columns:
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['delivery_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}]
             )
         return result
@@ -398,9 +400,11 @@ class PostnatalCareOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for i in range(0,4):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),

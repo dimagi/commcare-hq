@@ -59,8 +59,8 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     number_of_girls = user_calcs.NumberGirls()
     number_of_children_born_dead = user_calcs.StillBirth()
 
-    opened_on = flat_field(lambda case: case.opened_on)
-    closed_on = flat_field(lambda case: case.closed_on)
+    opened_on = flat_field(lambda case: case.opened_on.date() if case.opened_on else None)
+    closed_on = flat_field(lambda case: case.closed_on.date() if case.closed_on else None)
 
     women_registered = user_calcs.MotherRegistered()
 
