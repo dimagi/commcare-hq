@@ -184,5 +184,7 @@
         {% compress js %}
         {% block js-inline %}{% endblock js-inline %}
         {% endcompress %}
+        {% block uncompressed-js %}{% endblock uncompressed-js %}
+
     </body>
 </html>
