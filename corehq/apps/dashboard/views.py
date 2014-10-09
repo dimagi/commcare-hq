@@ -39,9 +39,9 @@ def dashboard_default(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
-    @method_decorator(preview_boostrap3())
     @method_decorator(toggles.DASHBOARD_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
+        request.preview_bootstrap3 = True
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -155,7 +155,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Reports'),
             slug='reports',
-            icon='dashboard-icon-reports',
+            icon='dashboard-icon-report',
             context_processor_class=ReportsPaginatedContext,
             urlname='reports_home',
             visibility_check=can_view_reports,
