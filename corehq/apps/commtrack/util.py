@@ -289,7 +289,7 @@ def generate_code(object_name, existing_codes):
     matcher = re.compile("[\W\d]+")
     name_slug = matcher.sub(
         '_',
-        unidecode(object_name.lower())
+        unicode_slug(object_name.lower())
     ).strip('_')
     postfix = ''
 
