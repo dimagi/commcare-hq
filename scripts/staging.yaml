@@ -89,8 +89,3 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
-  submodules/dimagi-utils-src:
-    branches:
-      # Danny 8/12. If there's weird errors or issues in saving forms
-      # or saving apps, just remove this
-      - faster-lazy-attachments
