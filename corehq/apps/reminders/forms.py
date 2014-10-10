@@ -1121,7 +1121,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'start_day_of_week',
                         css_class='input-medium',
-                        style="margin-left: 5px;",
                         data_bind="visible: isStartDayOfWeekVisible",
                     ),
                 ),

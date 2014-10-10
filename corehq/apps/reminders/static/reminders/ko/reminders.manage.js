@@ -128,7 +128,7 @@ var ManageRemindersViewModel = function (
 
     self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
 
-    self.available_case_types = ko.observableArray([]);
+    self.available_case_types = ko.observableArray();
     self.available_case_properties = {};
     self.available_subcase_properties = {};
 
