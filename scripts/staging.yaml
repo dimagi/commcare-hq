@@ -43,8 +43,9 @@
 trunk: master
 name: autostaging
 branches:
+  - jsonobject-0.6.0b2  # danny 10/10
   - archive-products+explicit_case_processing # tw 8/14
-  - explicit_case_processing # danny?
+  - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
   - master+schedule+schedule
   - master+schedule # Nick P 9/11
   - schedule # SK 7/17
