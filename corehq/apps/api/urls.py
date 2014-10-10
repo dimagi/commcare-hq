@@ -1,3 +1,4 @@
+from corehq.apps.api.domain_metadata import DomainMetadataAPI
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 from corehq.apps.api.domainapi import DomainAPI
@@ -94,6 +95,7 @@ def api_url_patterns():
         yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
     yield url(r'^case/attachment/(?P<case_id>[\w\-]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^redis_assets/$', RedisAssetsAPI.as_view())
+    yield url(r'^project_space_metadata/$', DomainMetadataAPI.as_view())
 
 
 urlpatterns = patterns('',
