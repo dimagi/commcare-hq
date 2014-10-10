@@ -646,7 +646,7 @@ class IndicatorDocument(schema.Document):
             'domains': cls.domains,
             'doc_type': doc_type,
             'save_direct_to_sql': cls().save_direct_to_sql,
-            'actions': cls.deleted_types
+            'deleted_types': cls.deleted_types
         })
 
     @classmethod
