@@ -16,6 +16,16 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
     title = 'Child Registration Details'
 
     @property
+    def rows(self):
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
+        result = []
+        for column in self.columns:
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_registration_details'], column.slug)},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}])
+        return result
+
+    @property
     def columns(self):
         columns = [
             DatabaseColumn("Total children registered ever",
@@ -25,24 +35,24 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 )
             ),
         ]
-        if 'startdate' not in self.config and 'enddate' not in self.config:
+        if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
                 DatabaseColumn("Total open children cases",
                     CountUniqueColumn('doc_id',
-                        alias="opened",
+                        alias="no_date_opened",
                         filters=self.filters + [EQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("Total closed children cases",
                     CountUniqueColumn('doc_id',
-                        alias="closed",
+                        alias="no_date_closed",
                         filters=self.filters +  [NOTEQ('closed_on', 'empty')]
                     )
                 ),
                 DatabaseColumn("New registrations during last 30 days",
                         CountUniqueColumn('doc_id',
-                            alias="new_registrations",
-                            filters=self.filters + [AND([LTE('opened_on', "last_month"), GTE('opened_on', "today")])]
+                            alias="no_date_new_registrations",
+                            filters=self.filters + [AND([GTE('opened_on', "last_month"), LTE('opened_on', "today")])]
                         )
                 )
             ])
@@ -57,7 +67,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
                 DatabaseColumn("Children cases closed during the time period",
                     CountUniqueColumn('doc_id',
                         alias="closed",
-                        filters=self.filters + [AND([NOTEQ('closed_on', 'empty'), LTE('opened_on', "stred"), LTE('closed_on', "stred")])]
+                        filters=self.filters + [AND([GTE('closed_on', "strsd"), LTE('closed_on', "stred")])]
                     )
                 ),
                 DatabaseColumn("Total children followed during the time period",
@@ -271,7 +281,8 @@ class NutritionBirthWeightDetails(BaseSqlData):
                 percent = self.percent_fn(self.data['total_birthweight_known'], self.data[column.slug])
 
             result.append([{'sort_key': column.header, 'html': column.header},
-                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug],
+                            'color': 'red' if column.slug == 'total_birthweight_lt_25' else 'green'},
                            {'sort_key': 'percentage', 'html': percent}]
             )
         return result
@@ -314,11 +325,14 @@ class NutritionFeedingDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
         for i in range(0,4):
-            result.append([{'sort_key': self.columns[2*i].header, 'html': self.columns[2*i].header},
+            result.append([{'sort_key': self.columns[2*i].header, 'html': self.columns[2*i].header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['nutrition_details'], self.columns[2*i].slug)},
                            {'sort_key': self.data[self.columns[2*i].slug], 'html': self.data[self.columns[2*i].slug]},
-                           {'sort_key': self.data[self.columns[2*i+1].slug], 'html': self.data[self.columns[2*i + 1].slug]},
+                           {'sort_key': self.data[self.columns[2*i+1].slug], 'html': self.data[self.columns[2*i + 1].slug],
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['nutrition_details'], self.columns[2*i+1].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[2*i + 1].slug], self.data[self.columns[2*i].slug]),
                            'html': self.percent_fn(self.data[self.columns[2*i + 1].slug], self.data[self.columns[2*i].slug])}
 
@@ -389,12 +403,16 @@ class ChildHealthIndicators(BaseSqlData):
 
     @property
     def rows(self):
-        result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
+        result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header,
+                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[0].slug)},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]}],
-                  [{'sort_key': self.columns[1].header, 'html': self.columns[1].header},
+                  [{'sort_key': self.columns[1].header, 'html': self.columns[1].header,
+                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[1].slug)},
                   {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]}]]
         for i in range(2,4):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug])}])
@@ -527,9 +545,12 @@ class ChildDeworming(BaseSqlData):
 
     @property
     def rows(self):
-        return [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
+        return [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header,
+                  'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[0].slug)},
                {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
-               {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]},
+               {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug],
+                'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[1].slug)},
                {'sort_key': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[0].slug]),
                'html': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[0].slug])}
             ]]
@@ -568,11 +589,13 @@ class EBFStoppingDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         total = sum(v for v in self.data.values())
         result = []
         for column in self.columns:
             percent = self.percent_fn(total, self.data[column.slug])
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['ebf_stopping_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
                            {'sort_key': 'percentage', 'html': percent}
             ])

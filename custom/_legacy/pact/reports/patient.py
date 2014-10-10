@@ -1,3 +1,4 @@
+import logging
 from django.core.urlresolvers import reverse
 from django.http import Http404
 import simplejson
@@ -27,21 +28,26 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     name = "Patient Info"
 
+    @property
+    def patient_id(self):
+        return self.request.GET.get('patient_id')
+
     def get_case(self):
-        if self.request.GET.get('patient_id', None) is None:
+        if self.patient_id is None:
             return None
-        return PactPatientCase.get(self.request.GET['patient_id'])
+        return PactPatientCase.get(self.patient_id)
 
     @property
     def report_context(self):
         from pact import api
         ret = {}
-
         try:
             patient_doc = self.get_case()
             has_error = False
         except Exception, ex:
-            #eww, but we don't want to make a habit of returning exceptions as return values
+            logging.exception(u'problem getting pact patient data for patient {}. {}'.format(
+                self.patient_id, ex
+            ))
             has_error = True
             patient_doc = None
 
@@ -109,11 +115,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     @property
     def es_results(self):
-        if not self.request.GET.has_key('patient_id'):
+        if not self.patient_id:
             return None
 
         #a fuller query doing filtered+query vs simpler base_query filter
-
         full_query = {
             'query': {
                 "filtered": {
@@ -128,13 +133,12 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                                         "or": [
                                             {
                                                 "term": {
-                                                    "@case_id": "%s" % self.request.GET[
-                                                        'patient_id']
+                                                    "@case_id": "%s" % self.patient_id
                                                 }
                                             },
                                             {
                                                 "term": {
-                                                    "case_id": "%s" % self.request.GET['patient_id']
+                                                    "case_id": "%s" % self.patient_id
                                                 }
                                             },
 
@@ -166,7 +170,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     @property
     def rows(self):
-        if self.request.GET.has_key('patient_id'):
+        if self.patient_id:
             def _format_row(row_field_dict):
                 yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
                 reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
@@ -185,6 +189,3 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             else:
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
-
-
-

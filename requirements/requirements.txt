@@ -70,7 +70,7 @@ reportlab==3.0
 stripe==1.12.2
 mailchimp==2.0.7
 django-compressor==1.4
-django-angular==0.7.5
+django-angular==0.7.8
 Pycco==0.3.0
 
 # required by ctable

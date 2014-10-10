@@ -43,23 +43,21 @@
 trunk: master
 name: autostaging
 branches:
+  - jsonobject-0.6.0b2  # danny 10/10
   - archive-products+explicit_case_processing # tw 8/14
-  - explicit_case_processing # danny?
+  - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
+  - master+schedule+schedule
   - master+schedule # Nick P 9/11
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - logos+master # tw
   - logos # Nick P 5/28
-  - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
-  - increase-es-timeout # Nick P 8/11
   - archive-products+custom_product_data # tw 8/14
-  - archive-products # tw 8/14
   - archive-programs # tw 9/30 (branched from archive-products)
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
-  - fix-timeout # Nick P 8/26
   - custom_user_data  # tw+Ethan 9/9
   - custom_product_data  # tw+Ethan 10/1
   - lwyszomi:better_date_filters_improvment
@@ -68,11 +66,12 @@ branches:
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
-  - status-only-celery # ts 9/30
   - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
   - ota-restore-caching  # cory 10/3
-  - deploy-certain-pillows # ts 10/3
-  - submit-history  # Ethan 10/3
+  - reduce-location_ # tw 10/6
+  - help-text # j$  10/8
+  - masterlist-workflow # j$  10/8
+  - domain-metadata # Nick P 10/8
 submodules:
   submodules/couchlog-src:
     branches:
