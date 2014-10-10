@@ -1352,6 +1352,8 @@ class SQLProduct(models.Model):
     product_data = json_field.JSONField(
         default={},
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (
