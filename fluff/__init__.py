@@ -361,6 +361,11 @@ class IndicatorDocument(schema.Document):
     group_by = ()
     save_direct_to_sql = None
 
+    # If doc_type is changed to one of types in tuple, It should be deleted by fluff from SQL table.
+    # eg, doc_type = XFormInstance
+    # deleted_types = ('XFormArchived', 'XFormDuplicate', 'XFormArchived', 'XFormError')
+    deleted_types = None
+
     # Mapping of group_by field to type. Used to communicate expected type in fluff diffs.
     # See ALL_TYPES
     group_by_type_map = None
@@ -641,6 +646,7 @@ class IndicatorDocument(schema.Document):
             'domains': cls.domains,
             'doc_type': doc_type,
             'save_direct_to_sql': cls().save_direct_to_sql,
+            'actions': cls.deleted_types
         })
 
     @classmethod
@@ -679,6 +685,12 @@ class FluffPillow(PythonPillow):
     doc_type = None
     save_direct_to_sql = False
 
+    # If doc_type is changed to one of types in tuple, It should be deleted by fluff from SQL table.
+    # eg, doc_type = XFormInstance
+    # deleted_types = ('XFormArchived', 'XFormDuplicate', 'XFormArchived', 'XFormError')
+    deleted_types = None
+
+
     @classmethod
     def get_sql_engine(cls):
         engine = getattr(cls, '_engine', None)
@@ -693,6 +705,9 @@ class FluffPillow(PythonPillow):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
+        if self.deleted_types and doc.get('doc_type', None) != self.doc_type:
+            return doc.get('domain', None) in self.domains and doc.get('doc_type', None) in self.deleted_types
+
         return doc.get('domain', None) in self.domains and doc.get('doc_type', None) == self.doc_type
 
     def change_transform(self, doc_dict):
@@ -700,6 +715,16 @@ class FluffPillow(PythonPillow):
         doc = ReadOnlyObject(doc)
 
         if self.document_filter and not self.document_filter.filter(doc):
+            return None
+
+        if self.deleted_types and doc_dict.get('doc_type', None) in self.deleted_types and self.save_direct_to_sql:
+            engine = self.get_sql_engine()
+            connection = engine.connect()
+            try:
+                delete = self.indicator_class._table.delete(self.indicator_class._table.c.doc_id == doc.get_id)
+                connection.execute(delete)
+            finally:
+                connection.close()
             return None
 
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
