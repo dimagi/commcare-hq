@@ -12,7 +12,6 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
     ResponseNature,
@@ -21,7 +20,7 @@ from couchforms.xml import (
 )
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
@@ -109,10 +108,12 @@ class RestoreConfig(object):
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
-            for section_id, transactions_map in current_ledgers.items():
-                transactions = transactions_map.values()
+            for section_id in sorted(current_ledgers.keys()):
+                transactions_map = current_ledgers[section_id]
+                sorted_product_ids = sorted(transactions_map.keys())
+                transactions = [transactions_map[p] for p in sorted_product_ids]
                 as_of = json_format_datetime(max(txn.report.date for txn in transactions))
-                section_product_map[section_id] = transactions_map.keys()
+                section_product_map[section_id] = sorted_product_ids
                 section_timestamp_map[section_id] = as_of
                 yield E.balance(*(transaction_to_xml(e) for e in transactions),
                                 **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': section_id})
