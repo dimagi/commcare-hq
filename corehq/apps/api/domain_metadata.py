@@ -3,6 +3,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 
 from corehq import Domain
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import login_or_digest_ex
 from corehq.apps.es.domains import DomainES
 
@@ -11,8 +12,20 @@ from dimagi.utils.web import json_response
 
 def _get_metadata(domain):
     return {
+        "billing_data": _get_billing_data(domain),
         "calculated_properties": _get_calculated_properties(domain),
         "domain_properties": _get_domain_properties(domain),
+    }
+
+
+def _get_billing_data(domain):
+    return {
+        "plan_version": [
+            str(subscription) for subscription in Subscription.objects.filter(
+                subscriber__domain=domain.name,
+                is_active=True,
+            )
+        ]
     }
 
 
