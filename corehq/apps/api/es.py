@@ -266,6 +266,7 @@ class XFormES(ESView):
                         pass
 
                 res['_source']['es_readable_name'] = name
+
         return es_results
 
 

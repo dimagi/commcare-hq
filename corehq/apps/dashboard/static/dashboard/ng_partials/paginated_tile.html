@@ -1,0 +1,35 @@
+<div class="col-md-3">
+    <div class="panel panel-dashboard panel-dashboard-medium">
+        <div class="panel-heading">{{ title }}</div>
+        <div class="panel-body">
+            <i class="fa fa-spinner fa-spin fa-5x" ng-show="showSpinner()"></i>
+            <div class="list-group" ng-show="showItemList()">
+                <a class="list-group-item"
+                   href="{{ item.url }}"
+                   data-ng-repeat="item in paginatedItems"
+                   popover-placement="right"
+                   popover-title="{{ item.name_full }}"
+                   popover="{{ item.description }}"
+                   popover-trigger="mouseenter"
+                   track-analytics="">
+                    {{ item.name }}
+                </a>
+            </div>
+            <pagination direction-links="true"
+                        total-items="total"
+                        items-per-page="limit"
+                        previous-text="&laquo;"
+                        next-text="&raquo;"
+                        max-size="maxSize"
+                        ng-model="currentPage"
+                        ng-change="pageChanged()"
+                        ng-show="paginationIsActive()"></pagination>
+            <a href="{{ default.url }}"
+               class="dashboard-link"
+               ng-show="showDefault()"
+               track-analytics="">
+                <span class="dashboard-icon dashboard-icon-medium {{ default.icon }}"></span>
+            </a>
+        </div>
+    </div>
+</div>

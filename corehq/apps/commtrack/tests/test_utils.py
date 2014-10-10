@@ -2,7 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 from django.test import TestCase
-from corehq.apps.commtrack.util import unicode_slug
+import unittest
+from corehq.apps.commtrack.util import unicode_slug, generate_code
 
 
 class CommtrackUtilsTest(TestCase):
@@ -17,3 +18,50 @@ class CommtrackUtilsTest(TestCase):
         )
         for input, output in test_cases:
             self.assertEqual(output, unicode_slug(input))
+
+
+class GenerateCodeTest(unittest.TestCase):
+    def test_no_change_needed(self):
+        name = 'turtle'
+        existing = []
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'turtle'
+        )
+
+    def test_sluggifies(self):
+        name = u'türtłę'
+        existing = []
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'turtle'
+        )
+
+    def test_strips_spaces(self):
+        name = 'pizza cat'
+        existing = []
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'pizza_cat'
+        )
+
+    def test_adds_1(self):
+        name = 'turtle'
+        existing = ['turtle']
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'turtle1'
+        )
+
+    def test_increments_number(self):
+        name = 'taco'
+        existing = ['taco', 'taco1', 'taco2', 'taco3']
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'taco4'
+        )
