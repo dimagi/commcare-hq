@@ -25,7 +25,6 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
-from corehq.apps.cloudcare import touchforms_api
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -294,7 +293,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             status=CASE_STATUS_OPEN,
             case_type=case_type,
             user_id=request.couch_user._id,
-            ids_only=True
+            footprint=True,
+            ids_only=True,
         )]
 
     cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
