@@ -629,6 +629,14 @@ class IndicatorDocument(schema.Document):
         finally:
             connection.close()
 
+    def delete_from_sql(self, engine):
+        connection = engine.connect()
+        try:
+            delete = self._table.delete(self._table.c.doc_id == self.id)
+            connection.execute(delete)
+        finally:
+            connection.close()
+
     @classmethod
     def pillow(cls):
         wrapper = cls.wrapper or cls.document_class
@@ -705,30 +713,21 @@ class FluffPillow(PythonPillow):
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
         if doc.get('domain') in self.domains:
-            return self._is_doc_type_match(doc) or self._is_doc_type_deleted_match(doc)
+            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 
-    def _is_doc_type_match(self, doc):
-        return doc.get('doc_type') == self.doc_type
+    def _is_doc_type_match(self, type):
+        return type == self.doc_type
 
-    def _is_doc_type_deleted_match(self, doc):
-        return doc.get('doc_type') in self.deleted_types
+    def _is_doc_type_deleted_match(self, type):
+        return type in self.deleted_types
 
     def change_transform(self, doc_dict):
+        delete = False
+
         doc = self.wrapper.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
 
         if self.document_filter and not self.document_filter.filter(doc):
-            return None
-
-        if self._is_doc_type_deleted_match(doc):
-            if self.save_direct_to_sql:
-                engine = self.get_sql_engine()
-                connection = engine.connect()
-                try:
-                    delete = self.indicator_class._table.delete(self.indicator_class._table.c.doc_id == doc.get_id)
-                    connection.execute(delete)
-                finally:
-                    connection.close()
             return None
 
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
@@ -743,11 +742,15 @@ class FluffPillow(PythonPillow):
         else:
             indicator = current_indicator
 
-        indicator.calculate(doc)
+        if not self._is_doc_type_deleted_match(doc.doc_type):
+            indicator.calculate(doc)
+        else:
+            delete = True
 
         return {
             'doc_dict': doc_dict,
             'indicators': indicator,
+            'delete': delete
         }
 
     def change_transport(self, data):
@@ -755,9 +758,15 @@ class FluffPillow(PythonPillow):
 
         diff = indicators.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
-            indicators.save_to_sql(diff, self.get_sql_engine())
+            if not data['delete']:
+                indicators.save_to_sql(diff, self.get_sql_engine())
+            else:
+                indicators.delete_from_sql(self.get_sql_engine())
         else:
-            indicators.save()
+            if not data['delete']:
+                indicators.save()
+            else:
+                indicators.delete()
 
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
         indicator_document_updated.send(
