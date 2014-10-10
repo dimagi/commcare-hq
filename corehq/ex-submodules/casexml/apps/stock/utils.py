@@ -41,7 +41,7 @@ def state_stock_category(state):
     )
 
 
-def get_current_ledger_transactions(case):
+def get_current_ledger_transactions(case_id):
     """
     Given a case returns a dict of all current ledger data of the following format:
     {
@@ -55,16 +55,16 @@ def get_current_ledger_transactions(case):
     Where you get one stock transaction per product/section which is the last one seen.
     """
     relevant_sections = sorted(StockTransaction.objects.filter(
-        case_id=case._id,
+        case_id=case_id,
     ).values_list('section_id', flat=True).distinct())
     ret = {}
     for section_id in relevant_sections:
         relevant_reports = StockTransaction.objects.filter(
-            case_id=case._id,
+            case_id=case_id,
             section_id=section_id,
         )
         product_ids = relevant_reports.values_list('product_id', flat=True).distinct()
-        transactions = {p: StockTransaction.latest(case._id, section_id, p) for p in product_ids}
+        transactions = {p: StockTransaction.latest(case_id, section_id, p) for p in product_ids}
         ret[section_id] = transactions
 
     return ret
