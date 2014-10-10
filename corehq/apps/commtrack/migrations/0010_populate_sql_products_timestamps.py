@@ -12,8 +12,12 @@ class Migration(DataMigration):
         ).all()]
 
         for product in iter_docs(Product.get_db(), product_ids):
-            sql_product = SQLProduct.objects.filter(code=product['code_'],
-                    name=product['name'], domain=product['domain'])[0]
+            try:
+                sql_product = SQLProduct.objects.get(product_id=product['_id'])
+            except SQLProduct.DoesNotExist:
+                # weird - something failed syncing products. force creation now by resaving it.
+                Product.wrap(product).save()
+                sql_product = SQLProduct.objects.get(product_id=product['_id'])
 
             if 'last_modified' in product.keys():
                 sql_product.created_at = product['last_modified']
