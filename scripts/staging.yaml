@@ -44,7 +44,6 @@ trunk: master
 name: autostaging
 branches:
   - jsonobject-0.6.0b2  # danny 10/10
-  - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
   - master+schedule+schedule
   - master+schedule # Nick P 9/11
@@ -54,8 +53,7 @@ branches:
   - logos+master # tw
   - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
-  - archive-products+custom_product_data # tw 8/14
-  - archive-programs # tw 9/30 (branched from archive-products)
+  - archive-programs # tw 9/30
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - custom_user_data  # tw+Ethan 9/9
