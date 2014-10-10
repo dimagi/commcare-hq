@@ -304,6 +304,14 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
+
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -434,6 +442,16 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("Turn this on to prevent others from impersonating your "
                     "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
+    )
+    ota_restore_caching = BooleanField(
+        label=_("Enable Restore Caching (beta)"),
+        required=False,
+        help_text=_(
+            "Speed up phone restores. Useful if you have users with "
+            "large case lists and are getting timeouts during restore. "
+            "This feature is still in testing. Don't enable unless "
+            "you are an advanced user."
+        )
     )
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),

@@ -45,6 +45,21 @@ def indexed_facilities():
         facility_index[domain] = current_domain_index
     return facility_index
 
+
+def update_groups_index(domain):
+    groups = Group.by_domain(domain)
+    for group in groups:
+        GROUPS_BY_ID[domain][group._id] = group
+        if group.case_sharing and group.metadata.get("main_user", None):
+            INDEXED_GROUPS[domain][group.metadata["main_user"]] = group
+
+
+def setup_indices():
+    for domain in DOMAINS:
+        update_groups_index(domain)
+    facility_index = indexed_facilities()
+
+
 def get_owner_username(domain, owner_type, facility_id):
     if not owner_type:
         return ''
@@ -54,12 +69,6 @@ def get_owner_username(domain, owner_type, facility_id):
     except KeyError:
         return None
 
-def update_groups_index(domain):
-    groups = Group.by_domain(domain)
-    for group in groups:
-        GROUPS_BY_ID[domain][group._id] = group
-        if group.case_sharing and group.metadata.get("main_user", None):
-            INDEXED_GROUPS[domain][group.metadata["main_user"]] = group
 
 def get_group_id(domain, owner_type, facility_id):
     owner_username = get_owner_username(domain, owner_type, facility_id)
@@ -84,8 +93,8 @@ def new_update_case_properties():
     time_zone = pytz.timezone(time_zone)
     past_21_date = past_x_date(time_zone, 21)
     past_42_date = past_x_date(time_zone, 42)
+    setup_indices()
     for domain in DOMAINS:
-        update_groups_index(domain)
         case_list = list(get_cases_in_domain(domain, type=BIRTH_TYPE))
         case_list = case_list + list(get_cases_in_domain(domain, type=CATI_FIDA_CHECK_TYPE))
         cases_to_modify = []
@@ -106,8 +115,11 @@ def new_update_case_properties():
                 owner_id = get_group_id(domain, "cati", facility_id)
                 if not owner_id:
                     continue
+                owner_group = GROUPS_BY_ID[domain].get(owner_id, None)
+                cati_name = owner_group.metadata.get('name', None) if owner_group else None
                 update = {
-                    "current_assignment": "cati"
+                    "current_assignment": "cati",
+                    "cati_name": cati_name
                 }
                 cases_to_modify.append({
                     "case_id": case._id,
