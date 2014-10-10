@@ -68,7 +68,7 @@ branches:
   - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
   - ota-restore-caching  # cory 10/3
   - reduce-location_ # tw 10/6
-  - help-text # j$  10/8
+  - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
   - domain-metadata # Nick P 10/8
 submodules:
