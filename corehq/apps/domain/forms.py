@@ -380,7 +380,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
                     user.save()
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in ApplicationBase.by_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
             domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -525,17 +536,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
                 domain.cloudcare_releases = cloudcare_releases
-            secure_submissions = self.cleaned_data.get('secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception, e:
             logging.exception("couldn't save project settings - error is %s" % e)
