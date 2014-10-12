@@ -211,7 +211,7 @@ class McctProjectReview(BaseReport):
                                 if (mcct_status.status != "eligible" or
                                     (mcct_status.immunized == False and
                                     (date.today() - mcct_status.registration_date).days < 272 and
-                                     mcct_status.is_booking == False))]
+                                     mcct_status.is_booking == False and mcct_status.is_stillbirth == False))]
             location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
                                                         CCT_only=True)
             q = _get_report_query(start_date, end_date, filtered_case_ids, location_ids)
