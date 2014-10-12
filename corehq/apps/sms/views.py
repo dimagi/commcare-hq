@@ -1328,8 +1328,8 @@ def upload_sms_translations(request, domain):
 
 
 class SMSSettingsView(BaseMessagingSectionView):
-    urlname = 'sms_settings_new'
-    template_name = 'sms/settings_new.html'
+    urlname = "sms_settings_new"
+    template_name = "sms/settings_new.html"
     page_title = ugettext_noop("SMS Settings")
 
     @property
@@ -1343,7 +1343,7 @@ class SMSSettingsView(BaseMessagingSectionView):
     @property
     @memoized
     def form(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             form = SettingsForm(self.request.POST)
         else:
             form = SettingsForm()
@@ -1352,7 +1352,7 @@ class SMSSettingsView(BaseMessagingSectionView):
     @property
     def page_context(self):
         return {
-            'form': self.form,
+            "form": self.form,
         }
 
     def post(self, request, *args, **kwargs):

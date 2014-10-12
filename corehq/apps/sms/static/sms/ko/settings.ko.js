@@ -33,13 +33,26 @@ function SettingsViewModel(initial) {
     self.use_default_sms_response = ko.observable();
     self.use_restricted_sms_times = ko.observable();
     self.restricted_sms_times = ko.observableArray();
+    self.use_custom_case_username = ko.observable();
+    self.use_custom_message_count_threshold = ko.observable();
+    self.use_sms_conversation_times = ko.observable();
+    self.sms_conversation_times = ko.observableArray();
+    self.use_custom_chat_template = ko.observableArray();
 
     self.showDefaultSMSResponse = ko.computed(function() {
         return self.use_default_sms_response() === "ENABLED";
     });
 
+    self.showCustomCaseUsername = ko.computed(function() {
+        return self.use_custom_case_username() === "CUSTOM";
+    });
+
+    self.showCustomMessageCountThreshold = ko.computed(function() {
+        return self.use_custom_message_count_threshold() === "CUSTOM";
+    });
+
     self.showRestrictedSMSTimes = ko.computed(function() {
-        return self.use_restricted_sms_times() === "SPECIFIC_TIMES";
+        return self.use_restricted_sms_times() === "ENABLED";
     });
 
     self.addRestrictedSMSTime = function() {
@@ -50,6 +63,23 @@ function SettingsViewModel(initial) {
     self.removeRestrictedSMSTime = function() {
         self.restricted_sms_times.remove(this);
     };
+
+    self.showSMSConversationTimes = ko.computed(function() {
+        return self.use_sms_conversation_times() === "ENABLED";
+    });
+
+    self.addSMSConversationTime = function() {
+        self.sms_conversation_times.push(new DayTimeWindow(-1, null, null));
+        self.refreshTimePickers();
+    };
+
+    self.removeSMSConversationTime = function() {
+        self.sms_conversation_times.remove(this);
+    };
+
+    self.showCustomChatTemplate = ko.computed(function() {
+        return self.use_custom_chat_template() === "CUSTOM";
+    });
 
     self.refreshTimePickers = function() {
         $('[data-timeset="true"]').each(function () {
