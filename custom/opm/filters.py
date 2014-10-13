@@ -147,6 +147,6 @@ class FromDatespanFilter(DatespanFilter):
 
     @property
     def datespan(self):
-        datespan = super(TillDatespanFilter, self).datespan
+        datespan = super(FromDatespanFilter, self).datespan
         datespan.startdate = REPORT_START_DATE
         return DateSpan(REPORT_START_DATE, datetime.datetime.now(), timezone=self.timezone)
