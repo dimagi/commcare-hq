@@ -710,7 +710,7 @@ class FluffPillow(PythonPillow):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
-        assert self._is_doc_type_deleted_match(doc.get('doc_type'))
+        assert not self._is_doc_type_deleted_match(self.doc_type)
         if doc.get('domain') in self.domains:
             return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 
