@@ -1098,9 +1098,9 @@ class HealthMapSource(HealthStatusReport):
         users = self.get_users
         mapping = {}
         for user in users:
-            user_src = user['_source']
-            aww_name = user_src['first_name'] + " " + user_src['last_name']
-            meta_data = user_src['user_data']
+            user_src = user.get('_source', {})
+            aww_name = user_src.get('first_name', "") + " " + user_src.get('last_name', "")
+            meta_data = user_src.get('user_data', {})
             awc = meta_data.get("awc", "")
             block = meta_data.get("block", "")
             gp = meta_data.get("gp", "")
