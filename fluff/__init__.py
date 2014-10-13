@@ -630,12 +630,11 @@ class IndicatorDocument(schema.Document):
             connection.close()
 
     def delete_from_sql(self, engine):
-        connection = engine.connect()
         try:
             delete = self._table.delete(self._table.c.doc_id == self.id)
-            connection.execute(delete)
+            engine.execute(delete)
         finally:
-            connection.close()
+            engine.close()
 
     @classmethod
     def pillow(cls):
@@ -711,7 +710,7 @@ class FluffPillow(PythonPillow):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
-        assert self.doc_type not in self.deleted_types
+        assert self._is_doc_type_deleted_match(doc.get('doc_type'))
         if doc.get('domain') in self.domains:
             return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 

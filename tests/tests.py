@@ -504,9 +504,36 @@ class Test(TestCase):
             for row in rows:
                 self.assertIn(row, expected)
 
+    def test_deleting_on_doc_type_change(self):
+        actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
+        doc = dict(
+            actions=actions,
+            get_id="123",
+            domain="mock",
+            owner_id="test_owner",
+            doc_type='MockDoc'
+        )
+        for cls in [MockIndicators, MockIndicatorsWithGetters]:
+            classname = cls.__name__
+            pillow = cls.pillow()(chunk_size=0)
+            pillow.processor({'changes': [], 'id': '123', 'seq': 1, 'doc': doc})
+            indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
+            self.assertIsNotNone(indicator)
+
+        doc['doc_type'] = ['MockArchive']
+        for cls in [MockIndicators, MockIndicatorsWithGetters]:
+            classname = cls.__name__
+            pillow = cls.pillow()(chunk_size=0)
+            pillow.processor({'changes': [], 'id': '123', 'seq': 1, 'doc': doc})
+            indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
+            self.assertIsNone(indicator)
 
 class MockDoc(Document):
     _doc_type = "Mock"
+
+
+class MockDocArchive(Document):
+    _doc_type = "MockArchive"
 
 
 class ValueCalculator(fluff.Calculator):
@@ -551,6 +578,7 @@ class MockIndicators(fluff.IndicatorDocument):
     group_by = ('domain', 'owner_id')
     group_by_type_map = {'domain': fluff.TYPE_INTEGER}
     domains = ('mock',)
+    deleted_types = ('MockArchive',)
 
     value_week = ValueCalculator(window=WEEK)
 
@@ -567,6 +595,7 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
     )
     group_by_type_map = {'domain': fluff.TYPE_INTEGER}
     domains = ('mock',)
+    deleted_types = ('MockArchive',)
 
     value_week = ValueCalculator(window=WEEK)
 
@@ -581,6 +610,7 @@ class MockIndicatorsSql(fluff.IndicatorDocument):
     group_by_type_map = {'domain': fluff.TYPE_STRING}
     domains = ('mock',)
     save_direct_to_sql = True
+    deleted_types = ('MockArchive',)
 
     value_week = ValueCalculator(window=WEEK)
 
