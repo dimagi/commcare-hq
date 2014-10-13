@@ -2,14 +2,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <label for="{{ css_id }}_startdate" class="sub-label">{% trans 'From' %}</label>
+    <label for="{{ css_id }}_startdate" class="sub-label">{{ default_from_text }}</label>
     <input type="text"
            id="{{ css_id }}_startdate"
            name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
            class="date-picker input-small"
            value="{{ datespan.startdate|date:"Y-m-d" }}">
 
-    <label for="{{ css_id }}_enddate" class="sub-label">{% trans 'To' %}</label>
+    <label for="{{ css_id }}_enddate" class="sub-label">{{ default_to_text }}</label>
     <input type="text"
            id="{{ css_id }}_enddate"
            name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
@@ -33,6 +33,14 @@
         $('#{{ css_id }}_enddate').change(function() {
             $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', $(this).val());
         });
+        {% if not show_startdate %}
+          $('#{{ css_id }}_startdate').hide();
+          $('label[for={{ css_id }}_startdate]').hide();
+        {% endif %}
+        {% if not show_enddate %}
+          $('#{{ css_id }}_enddate').hide();
+          $('label[for={{ css_id }}_enddate]').hide();
+        {% endif %}
     });
 </script>
 {% endifequal %}
