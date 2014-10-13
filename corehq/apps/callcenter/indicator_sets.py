@@ -3,7 +3,7 @@ from datetime import date, timedelta, datetime, time
 from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
-from jsonobject.base import JsonObject
+from jsonobject import JsonObject
 from jsonobject.properties import DictProperty, StringProperty
 import pytz
 from casexml.apps.phone.caselogic import CaseSyncOperation
