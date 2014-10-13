@@ -13,7 +13,7 @@ import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
 from dimagi.utils.parsing import json_format_datetime
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 def get_url_base():
@@ -181,6 +181,8 @@ def json_handler(obj):
         return json_format_datetime(obj)
     elif isinstance(obj, date):
         return obj.isoformat()
+    elif isinstance(obj, time):
+        return obj.strftime('%H:%M:%S')
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     elif isinstance(obj, Promise):
