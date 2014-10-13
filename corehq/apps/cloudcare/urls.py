@@ -27,8 +27,7 @@ api_urls = patterns('corehq.apps.cloudcare.views',
         name='cloudcare_get_fixtures'),
     url(r'^sessions/$', 'get_sessions', name='cloudcare_get_sessions'),
     url(r'^sessions/(?P<session_id>[\w-]*)/$', 'get_session_context', name='cloudcare_get_session_context'),
-
-    
+    url(r'^ledgers/$', 'get_ledgers', name='cloudcare_get_ledgers'),
 )
 
 # used in settings urls

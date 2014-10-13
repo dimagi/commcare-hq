@@ -104,7 +104,7 @@ class RestoreConfig(object):
                 return entry_xml(product_id, consumption_value)
 
         for commtrack_case in cases:
-            current_ledgers = get_current_ledger_transactions(commtrack_case)
+            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))

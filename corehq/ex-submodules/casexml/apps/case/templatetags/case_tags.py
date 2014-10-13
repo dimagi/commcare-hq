@@ -88,7 +88,7 @@ def render_case(case, options):
         except SQLProduct.DoesNotExist:
             return (_('Unknown Product ("{}")').format(product_id))
 
-    ledgers = get_current_ledger_transactions(case)
+    ledgers = get_current_ledger_transactions(case._id)
     for section, product_map in ledgers.items():
         product_tuples = sorted(
             (_product_name(product_id), product_map[product_id]) for product_id in product_map
