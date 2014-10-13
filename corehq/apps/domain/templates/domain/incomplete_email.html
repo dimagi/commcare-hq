@@ -6,7 +6,7 @@
 
 {% block login-content %}
 <div class="row">
-    <div class="span4">
+    <div>
         <h2>{% trans "Self Started Projects" %}</h2>
         <p>Domains that will be emailed to the master list email</p>
         <ul class="nav nav-pills nav-stacked">
@@ -15,7 +15,7 @@
         {% endfor %}
         </ul>
         <h2>{% trans "Dimagi Owned Projects" %}</h2>
-        <table>
+        <table class="table table-condensed">
             <tr>
                 <th>Incomplete domain (with link)</th>
                 <th>Users that will be emailed</th>
