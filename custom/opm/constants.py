@@ -1,3 +1,5 @@
+import datetime
+
 from corehq.apps.fixtures.models import FixtureDataItem
 
 DOMAIN = 'opm'
@@ -18,6 +20,8 @@ CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, CHILD_FOLLOWUP_XMLNS]
 MONTH_AMT = 250
 TWO_YEAR_AMT = 2000
 THREE_YEAR_AMT = 3000
+
+REPORT_START_DATE = datetime.datetime(2013, 01, 01)
 
 def get_fixture_data():
     fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',

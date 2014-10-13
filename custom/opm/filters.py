@@ -1,10 +1,16 @@
+import datetime
+
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter)
+from corehq.apps.reports.filters.dates import DatespanFilter
 
+from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+
+from .constants import REPORT_START_DATE
 
 
 class HierarchySqlData(SqlData):
@@ -134,3 +140,13 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
+
+
+class FromDatespanFilter(DatespanFilter):
+    show_startdate = False
+
+    @property
+    def datespan(self):
+        datespan = super(TillDatespanFilter, self).datespan
+        datespan.startdate = REPORT_START_DATE
+        return DateSpan(REPORT_START_DATE, datetime.datetime.now(), timezone=self.timezone)

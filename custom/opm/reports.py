@@ -45,7 +45,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import HierarchyFilter, MetHierarchyFilter
+from .filters import HierarchyFilter, MetHierarchyFilter, FromDatespanFilter
 from .constants import *
 
 
@@ -942,7 +942,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, SelectOpenCloseFilter, FromDatespanFilter]
 
     @property
     @memoized
