@@ -15,6 +15,10 @@ class DatespanFilter(BaseReportFilter):
     label = ugettext_lazy("Date Range")
     slug = "datespan"
     default_days = 7
+    default_from_text = ugettext_lazy("From")
+    default_to_text = ugettext_lazy("To")
+    show_startdate = True
+    show_enddate = True
 
     @property
     def datespan(self):
@@ -29,4 +33,8 @@ class DatespanFilter(BaseReportFilter):
         return {
             'datespan': self.datespan,
             'timezone': self.timezone.zone,
+            'default_from_text': self.default_from_text, 
+            'default_to_text': self.default_to_text, 
+            'show_startdate': self.show_startdate, 
+            'show_enddate': self.show_enddate,
         }
