@@ -540,21 +540,12 @@ class Test(TestCase):
             doc_type='MockDoc'
         )
 
-        expected = [
-            (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
-            (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(2012, 9, 24), u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
-            (u'123', date(2012, 9, 23), u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
-            (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
-            (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),
-        ]
-
         for cls in [MockIndicatorsSql]:
             pillow = cls.pillow()(chunk_size=0)
             pillow.processor({'changes': [], 'id': '123', 'seq': 1, 'doc': doc})
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
-                self.assertEqual(rows.rowcount, len(expected))
+                self.assertEqual(rows.rowcount, 6)
 
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:
