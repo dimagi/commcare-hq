@@ -1,6 +1,6 @@
 import requests
 from custom.api.utils import EndpointMixin
-from custom.ilsgateway.models import SupplyPointStatus
+from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport
 
 
 class MigrationException(Exception):
@@ -182,7 +182,8 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.locations_url = self._urlcombine(self.base_uri, '/locations/')
         self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
-        self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus')
+        self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus/')
+        self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -244,3 +245,7 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_supplypointstatuses(self, domain, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
         return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, domain) for supplypointstatus in supplypointstatuses]
+
+    def get_deliverygroupreports(self, domain, **kwargs):
+        meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
+        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, domain) for deliverygroupreport in deliverygroupreports]
