@@ -1,4 +1,5 @@
 import json
+from celery import group
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.commtrack.models import Product
 from corehq.apps.domain.views import BaseDomainView
@@ -12,7 +13,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig
 from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task, product_stock_task, \
-    stock_transaction_task
+    stock_transaction_task, supply_point_statuses_task, get_locations_task
 
 
 class GlobalStats(BaseDomainView):
@@ -113,6 +114,8 @@ def sync_ilsgateway(request, domain):
 @domain_admin_required
 @require_POST
 def sync_stock_data(request, domain):
-    product_stock_task.delay(domain)
-    stock_transaction_task.delay(domain)
+    #TODO Add delivery group report
+    (get_locations_task.si(domain) | group(product_stock_task.delay(domain),
+                                           stock_transaction_task.delay(domain),
+                                           supply_point_statuses_task.delay(domain)))
     return HttpResponse('OK')

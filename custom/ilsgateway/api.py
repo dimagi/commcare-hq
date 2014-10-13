@@ -1,5 +1,6 @@
 import requests
 from custom.api.utils import EndpointMixin
+from custom.ilsgateway.models import SupplyPointStatus
 
 
 class MigrationException(Exception):
@@ -7,7 +8,6 @@ class MigrationException(Exception):
 
 
 class Product(object):
-
     def __init__(self, name, units, sms_code, description, is_active):
         self.name = name
         self.units = units
@@ -28,8 +28,8 @@ class Product(object):
     def __repr__(self):
         return str(self.__dict__)
 
-class ILSUser(object):
 
+class ILSUser(object):
     def __init__(self, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login,
                  date_joined, location, supply_point):
         self.username = username
@@ -124,7 +124,6 @@ class Location(object):
 
 
 class ProductStock(object):
-
     def __init__(self, supply_point_id, quantity, product_code, last_modified, auto_monthly_consumption):
         self.supply_point_id = supply_point_id
         self.quantity = quantity
@@ -147,7 +146,6 @@ class ProductStock(object):
 
 
 class StockTransaction(object):
-
     def __init__(self, beginning_balance, date, ending_balance, product_code, quantity, report_type, supply_point_id):
         self.beginning_balance = beginning_balance
         self.date = date
@@ -174,7 +172,6 @@ class StockTransaction(object):
 
 
 class ILSGatewayEndpoint(EndpointMixin):
-
     def __init__(self, base_uri, username, password):
         self.base_uri = base_uri.rstrip('/')
         self.username = username
@@ -185,6 +182,7 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.locations_url = self._urlcombine(self.base_uri, '/locations/')
         self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
+        self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -242,3 +240,7 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_stocktransactions(self, **kwargs):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
         return meta, [StockTransaction.from_json(stock_transaction) for stock_transaction in stock_transactions]
+
+    def get_supplypointstatuses(self, domain, **kwargs):
+        meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
+        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, domain) for supplypointstatus in supplypointstatuses]

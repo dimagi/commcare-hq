@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
+from corehq.apps.commtrack.models import SupplyPointCase
 
 
 class ILSMigrationCheckpoint(models.Model):
@@ -80,8 +81,8 @@ class SupplyPointStatusTypes(object):
                             SupplyPointStatusValues.RECEIVED: "Delivery received",
                             SupplyPointStatusValues.NOT_RECEIVED: "Delivery Not Received"},
         DELIVERY_DISTRICT: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
-                           SupplyPointStatusValues.RECEIVED: "Delivery received",
-                           SupplyPointStatusValues.NOT_RECEIVED: "Delivery not received"},
+                            SupplyPointStatusValues.RECEIVED: "Delivery received",
+                            SupplyPointStatusValues.NOT_RECEIVED: "Delivery not received"},
         R_AND_R_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting R&R sent confirmation",
                            SupplyPointStatusValues.SUBMITTED: "R&R Submitted From Facility to District",
                            SupplyPointStatusValues.NOT_SUBMITTED: "R&R Not Submitted"},
@@ -125,6 +126,15 @@ class SupplyPointStatus(models.Model):
     @property
     def name(self):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
+
+    @classmethod
+    def wrap_from_json(cls, obj, domain):
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[domain, str(obj['supply_point'])],
+                                  reduce=False,
+                                  include_docs=True).first()
+        obj['supply_point'] = sp._id
+        return cls(**obj)
 
     class Meta:
         verbose_name = "Facility Status"
