@@ -17,6 +17,8 @@ from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import get_available_backends, validate_phone_number
 from corehq.apps.domain.models import DayTimeWindow
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from dimagi.utils.django.fields import TrimmedCharField
 from django.conf import settings
 
@@ -328,9 +330,29 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Enter Chat Template Identifier"),
     )
+    sms_case_registration_enabled = ChoiceField(
+        required=False,
+        choices=ENABLED_DISABLED_CHOICES,
+        label=ugettext_noop("Case Self-Registration"),
+    )
+    sms_case_registration_type = TrimmedCharField(
+        required=False,
+        label=ugettext_noop("Default Case Type"),
+    )
+    sms_case_registration_owner_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Default Case Owner"),
+    )
+    sms_case_registration_user_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Registration Submitter"),
+    )
 
-    def __init__(self, *args, **kwargs):
-        super(SettingsForm, self).__init__(*args, **kwargs)
+    def __init__(self, data=None, cchq_domain=None, *args, **kwargs):
+        self._cchq_domain = cchq_domain
+        super(SettingsForm, self).__init__(data, *args, **kwargs)
+        self.populate_dynamic_choices()
+
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.layout = crispy.Layout(
@@ -378,6 +400,37 @@ class SettingsForm(Form):
                         "with more than one mobile worker or case. SMS surveys "
                         "and keywords will still only work for unique phone "
                         "numbers in your project."),
+                ),
+            ),
+            crispy.Fieldset(
+                _("Registration Settings"),
+                FieldWithHelpBubble(
+                    "sms_case_registration_enabled",
+                    help_bubble_text=_("When this option is enabled, a person "
+                        "can send an SMS into the system saying 'join "
+                        "[project]', where [project] is your project "
+                        "space name, and the system will automatically "
+                        "create a case tied to that person's phone number."),
+                    data_bind="value: sms_case_registration_enabled",
+                ),
+                crispy.Div(
+                    FieldWithHelpBubble(
+                        "sms_case_registration_type",
+                        placeholder=_("Enter a Case Type"),
+                        help_bubble_text=_("Cases that self-register over SMS "
+                            "will be given this case type."),
+                    ),
+                    FieldWithHelpBubble(
+                        "sms_case_registration_owner_id",
+                        help_bubble_text=_("Cases that self-register over SMS "
+                            "will be owned by this user or user group."),
+                    ),
+                    FieldWithHelpBubble(
+                        "sms_case_registration_user_id",
+                        help_bubble_text=_("The form submission for a "
+                            "self-registration will belong to this user."),
+                    ),
+                    data_bind="visible: showRegistrationOptions",
                 ),
             ),
             crispy.Fieldset(
@@ -498,6 +551,17 @@ class SettingsForm(Form):
             "remove_window_method": "$parent.removeSMSConversationTime",
             "add_window_method": "addSMSConversationTime",
         }
+
+    def populate_dynamic_choices(self):
+        groups = Group.get_case_sharing_groups(self._cchq_domain)
+        users = CommCareUser.by_domain(self._cchq_domain)
+
+        domain_group_choices = [(group._id, group.name) for group in groups]
+        domain_user_choices = [(user._id, user.raw_username) for user in users]
+        domain_owner_choices = domain_group_choices + domain_user_choices
+
+        self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
+        self.fields["sms_case_registration_user_id"].choices = domain_user_choices
 
 class BackendForm(Form):
     _cchq_domain = None

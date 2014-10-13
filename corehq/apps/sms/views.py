@@ -1344,9 +1344,9 @@ class SMSSettingsView(BaseMessagingSectionView):
     @memoized
     def form(self):
         if self.request.method == "POST":
-            form = SettingsForm(self.request.POST)
+            form = SettingsForm(self.request.POST, cchq_domain=self.domain)
         else:
-            form = SettingsForm()
+            form = SettingsForm(cchq_domain=self.domain)
         return form
 
     @property

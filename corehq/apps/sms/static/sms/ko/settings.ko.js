@@ -37,7 +37,8 @@ function SettingsViewModel(initial) {
     self.use_custom_message_count_threshold = ko.observable();
     self.use_sms_conversation_times = ko.observable();
     self.sms_conversation_times = ko.observableArray();
-    self.use_custom_chat_template = ko.observableArray();
+    self.use_custom_chat_template = ko.observable();
+    self.sms_case_registration_enabled = ko.observable();
 
     self.showDefaultSMSResponse = ko.computed(function() {
         return self.use_default_sms_response() === "ENABLED";
@@ -53,6 +54,10 @@ function SettingsViewModel(initial) {
 
     self.showRestrictedSMSTimes = ko.computed(function() {
         return self.use_restricted_sms_times() === "ENABLED";
+    });
+
+    self.showRegistrationOptions = ko.computed(function() {
+        return self.sms_case_registration_enabled() === "ENABLED";
     });
 
     self.addRestrictedSMSTime = function() {
