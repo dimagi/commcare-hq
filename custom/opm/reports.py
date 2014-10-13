@@ -49,18 +49,8 @@ from .filters import HierarchyFilter, MetHierarchyFilter, FromDatespanFilter
 from .constants import *
 
 
-DATE_FILTER = "date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    ) OR (
-    opened_on <= :enddate AND (
-        closed_on >= :startdate or closed_on <= :enddate
-        )
-    )
-"""
+DATE_FILTER = "date <= :enddate"
+DATE_FILTER_EXTENDED = "opened_on <= :enddate"
 
 
 def ret_val(value):
