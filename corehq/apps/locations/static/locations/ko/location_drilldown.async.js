@@ -183,17 +183,17 @@ function LocationModel(data, root, depth, func, withAllOption) {
 
   //warning: duplicate code with location_tree.async.js
   this.allowed_child_types = ko.computed(function() {
-          var loc = this;
-          var types = [];
-          $.each(root.location_types, function(i, loc_type) {
-                  $.each(loc_type.allowed_parents, function(i, parent_type) {
-                          if (loc.type() == parent_type) {
-                              types.push(loc_type.type);
-                          }
-                      });
-              });
-          return types;
-      }, this);
+      var loc = this;
+      var types = [];
+      $.each(root.location_types, function(i, loc_type) {
+          $.each(loc_type.allowed_parents, function(i, parent_type) {
+              if (loc.type() == parent_type) {
+                  types.push(loc_type.type);
+              }
+          });
+      });
+      return types;
+  }, this);
 
   this.can_have_children = ko.computed(function() {
           return (this.allowed_child_types().length > 0);
