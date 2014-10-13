@@ -919,8 +919,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return self.requires == "referral"
 
     def is_registration_form(self, case_type):
-        return self.requires_case() and 'open_case' in self.active_actions() and \
-               (not case_type or self.get_module().case_type == case_type)
+        return not self.requires_case() and 'open_case' in self.active_actions() and \
+            (not case_type or self.get_module().case_type == case_type)
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []

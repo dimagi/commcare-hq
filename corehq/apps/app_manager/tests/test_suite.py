@@ -214,6 +214,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
+    def test_case_list_registration_form(self):
+        """
+        Ensure form filter gets added correctly and appropriate instances get added to the entry.
+        """
+        app = Application.wrap(self.get_json('app'))
+        module = app.get_module(0)
+        form = module.get_form(0)
+        module.case_list_form = form.get_unique_id()
+        self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
+
 
 class RegexTest(SimpleTestCase):
 
