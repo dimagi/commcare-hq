@@ -23,7 +23,7 @@ setup(
     tests_require=[
         'django>=1.3.1,<1.7',
         'unittest2',
-        'fakecouch>=0.0.3',
+        'fakecouch>=0.0.6',
         'psycopg2>=2.4.1',
     ]
 )

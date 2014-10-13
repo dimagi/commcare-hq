@@ -361,6 +361,12 @@ class IndicatorDocument(schema.Document):
     group_by = ()
     save_direct_to_sql = None
 
+    # A list of doc types to delete from fluff (in case a previously matching document no
+    # longer is relevant)
+    # eg, doc_type = XFormInstance
+    # deleted_types = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
+    deleted_types = ()
+
     # Mapping of group_by field to type. Used to communicate expected type in fluff diffs.
     # See ALL_TYPES
     group_by_type_map = None
@@ -623,6 +629,10 @@ class IndicatorDocument(schema.Document):
         finally:
             connection.close()
 
+    def delete_from_sql(self, engine):
+        delete = self._table.delete(self._table.c.doc_id == self.id)
+        engine.execute(delete)
+
     @classmethod
     def pillow(cls):
         wrapper = cls.wrapper or cls.document_class
@@ -641,6 +651,7 @@ class IndicatorDocument(schema.Document):
             'domains': cls.domains,
             'doc_type': doc_type,
             'save_direct_to_sql': cls().save_direct_to_sql,
+            'deleted_types': cls.deleted_types
         })
 
     @classmethod
@@ -679,6 +690,9 @@ class FluffPillow(PythonPillow):
     doc_type = None
     save_direct_to_sql = False
 
+    # see explanation in IndicatorDocument for how this is used
+    deleted_types = ()
+
     @classmethod
     def get_sql_engine(cls):
         engine = getattr(cls, '_engine', None)
@@ -693,9 +707,19 @@ class FluffPillow(PythonPillow):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
-        return doc.get('domain', None) in self.domains and doc.get('doc_type', None) == self.doc_type
+        assert self.doc_type not in self.deleted_types
+        if doc.get('domain') in self.domains:
+            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
+
+    def _is_doc_type_match(self, type):
+        return type == self.doc_type
+
+    def _is_doc_type_deleted_match(self, type):
+        return type in self.deleted_types
 
     def change_transform(self, doc_dict):
+        delete = False
+
         doc = self.wrapper.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
 
@@ -714,11 +738,16 @@ class FluffPillow(PythonPillow):
         else:
             indicator = current_indicator
 
-        indicator.calculate(doc)
+        if not self._is_doc_type_deleted_match(doc.doc_type):
+            indicator.calculate(doc)
+        else:
+            indicator['id'] = doc.get_id
+            delete = True
 
         return {
             'doc_dict': doc_dict,
             'indicators': indicator,
+            'delete': delete
         }
 
     def change_transport(self, data):
@@ -726,9 +755,15 @@ class FluffPillow(PythonPillow):
 
         diff = indicators.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
-            indicators.save_to_sql(diff, self.get_sql_engine())
+            if not data['delete']:
+                indicators.save_to_sql(diff, self.get_sql_engine())
+            else:
+                indicators.delete_from_sql(self.get_sql_engine())
         else:
-            indicators.save()
+            if not data['delete']:
+                indicators.save()
+            else:
+                indicators.delete()
 
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
         indicator_document_updated.send(
