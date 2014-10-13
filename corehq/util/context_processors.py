@@ -20,7 +20,15 @@ def base_template(request):
 
 
 def get_per_domain_context(project, request=None):
-    if project and project.commtrack_enabled:
+    is_commtrack = False
+    try:
+        if 'commtrack.org' in request.get_host():
+            is_commtrack = True
+    except Exception:
+        # get_host might fail for bad requests, e.g. scheduled reports
+        pass
+
+    if is_commtrack or (project and project.commtrack_enabled):
         domain_type = 'commtrack'
         logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
@@ -38,13 +46,6 @@ def get_per_domain_context(project, request=None):
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
-
-    try:
-        if 'commtrack.org' in request.get_host():
-            logo_url = static('hqstyle/img/commtrack-logo.png')
-    except Exception:
-        # get_host might fail for bad requests, e.g. scheduled reports
-        pass
 
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)
