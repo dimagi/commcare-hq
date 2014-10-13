@@ -19,7 +19,7 @@ class Migration(DataMigration):
                 Product.wrap(product).save()
                 sql_product = SQLProduct.objects.get(product_id=product['_id'])
 
-            if 'last_modified' in product.keys():
+            if 'last_modified' in product.keys() and product['last_modified']:
                 sql_product.created_at = product['last_modified']
                 sql_product.last_modified = product['last_modified']
                 sql_product.save()
