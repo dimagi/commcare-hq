@@ -97,8 +97,8 @@ def stock_transaction_task(domain, endpoint):
 @task
 def supply_point_statuses_task(domain, endpoint):
     for facility in FACILITIES:
-        supplypointstatuses = endpoint.get_supplypointstatuses(domain, filters=dict(supply_point=facility))[1]
-        for sps in supplypointstatuses:
+        supply_point_statuses = endpoint.get_supplypointstatuses(domain, filters=dict(supply_point=facility))[1]
+        for sps in supply_point_statuses:
             try:
                 SupplyPointStatus.objects.get(status_type=sps.status_type, status_value=sps.status_value,
                                               status_date=sps.status_date, supply_point=sps.supply_point)
@@ -109,8 +109,8 @@ def supply_point_statuses_task(domain, endpoint):
 @task
 def delivery_group_reports_task(domain, endpoint):
     for facility in FACILITIES:
-        deliverygroupreports = endpoint.get_deliverygroupreports(domain, filters=dict(supply_point=facility))[1]
-        for dgr in deliverygroupreports:
+        delivery_group_reports = endpoint.get_deliverygroupreports(domain, filters=dict(supply_point=facility))[1]
+        for dgr in delivery_group_reports:
             try:
                 #TODO Avoid duplicating. Should be done better.
                 DeliveryGroupReport.objects.get(supply_point=dgr.supply_point,
@@ -119,6 +119,24 @@ def delivery_group_reports_task(domain, endpoint):
                                                 delivery_group=dgr.delivery_group)
             except DeliveryGroupReport.DoesNotExist:
                 dgr.save()
+
+
+@task
+def groupsummary_task(domain, endpoint):
+    for facility in FACILITIES:
+        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility))[1]
+        for gs in group_summaries:
+            gs.org_summary.save()
+            gs.org_summary_id = gs.org_summary.id
+            gs.save()
+
+
+@task
+def product_availability_task(domain, endpoint):
+    for facility in FACILITIES:
+        product_availability = endpoint.get_productavailabilitydata(domain, filters=dict(supply_point=facility))[1]
+        for pa in product_availability:
+            pa.save()
 
 
 @task
@@ -133,4 +151,8 @@ def stock_data_task(domain):
     group(product_stock_task.delay(domain, endpoint),
           stock_transaction_task.delay(domain, endpoint),
           supply_point_statuses_task.delay(domain, endpoint),
-          delivery_group_reports_task.delay(domain, endpoint))
+          delivery_group_reports_task.delay(domain, endpoint),
+          groupsummary_task.delay(domain, endpoint),
+          product_availability_task.delay(domain, endpoint))
+
+

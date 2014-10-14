@@ -2,7 +2,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase, Product
 
 
 class ILSMigrationCheckpoint(models.Model):
@@ -224,6 +224,18 @@ class GroupSummary(models.Model):
     on_time = models.PositiveIntegerField(default=0)
     complete = models.PositiveIntegerField(default=0) # "complete" = submitted or responded
 
+    @classmethod
+    def wrap_form_json(cls, obj, domain):
+        del obj['org_summary']['id']
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[domain, str(obj['org_summary']['supply_point'])],
+                                  reduce=False,
+                                  include_docs=True).first()
+        obj['org_summary']['supply_point'] = sp._id
+        obj['org_summary'] = OrganizationSummary(**obj['org_summary'])
+        del obj['id']
+        return cls(**obj)
+
     @property
     def late(self):
         return self.complete - self.on_time
@@ -280,6 +292,18 @@ class ProductAvailabilityData(ReportingModel):
     with_stock = models.PositiveIntegerField(default=0)
     without_stock = models.PositiveIntegerField(default=0)
     without_data = models.PositiveIntegerField(default=0)
+
+    @classmethod
+    def wrap_from_json(cls, obj, domain):
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[domain, str(obj['supply_point'])],
+                                  reduce=False,
+                                  include_docs=True).first()
+        obj['supply_point'] = sp._id
+        product = Product.get_by_code(domain, obj['product'])
+        obj['product'] = product._id
+        del obj['id']
+        return cls(**obj)
 
 
 class ProductAvailabilityDashboardChart(object):

@@ -1,6 +1,6 @@
 import requests
 from custom.api.utils import EndpointMixin
-from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport
+from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, GroupSummary, ProductAvailabilityData
 
 
 class MigrationException(Exception):
@@ -184,6 +184,8 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
         self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus/')
         self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
+        self.groupsummary_url = self._urlcombine(self.base_uri, '/groupsummary/')
+        self.productavailabilitydata_url = self._urlcombine(self.base_uri, '/productavailabilitydata/')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -249,3 +251,11 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_deliverygroupreports(self, domain, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
         return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, domain) for deliverygroupreport in deliverygroupreports]
+
+    def get_groupsummary(self, domain, **kwargs):
+        meta, groupsummaries = self.get_objects(self.groupsummary_url, **kwargs)
+        return meta, [GroupSummary.wrap_form_json(gs, domain) for gs in groupsummaries]
+
+    def get_productavailabilitydata(self, domain, **kwargs):
+        meta, productavailabilitydata = self.get_objects(self.productavailabilitydata_url, **kwargs)
+        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain) for pad in productavailabilitydata]
