@@ -1130,7 +1130,6 @@ class HealthMapSource(HealthStatusReport):
         for row in ret:
             awc = row[0]
             awc_map = gps_mapping.get(awc, None) or ""
-            gps = awc_map["gps"] if awc_map else "--"
             extra_columns = ["--"] * 4
             if awc_map:
                 extra_columns = []
@@ -1150,7 +1149,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, SelectOpenCloseFilter, SingleDateFilter]
 
     data_source = {
         'adapter': 'legacyreport',
