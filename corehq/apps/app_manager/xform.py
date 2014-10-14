@@ -1116,12 +1116,17 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
+                case_id = 'uuid()'
+                if form.get_module().case_list_form == form.get_unique_id():
+                    case_id = session_var('case_id')
+
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
+                    case_id=case_id
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id

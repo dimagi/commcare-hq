@@ -172,11 +172,11 @@
     </field>
     <action>
         <display>
-            <text><locale id="forms.m0f1"/></text>
+            <text><locale id="forms.m0f0"/></text>
         </display>
         <stack>
             <create>
-                <command value="forms.m0f1"/>
+                <command>m0-f0</command>
             </create>
         </stack>
     </action>
@@ -299,17 +299,17 @@
         </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="session" src="jr://instance/session"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
         <datum id="case_id" function="uuid()"/>
     </session>
     <stack>
-        <create if="count(instance('casedb')/casedb/case[@case_id=instance('session')/session/data/case_id]) &gt; 0">
-            <command value="m0"/>
-            <datum id="case_id" value="instance('session')/session/data/case_id"/>
+        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
+            <command>m0</command>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         </create>
-        <create if="count(instance('casedb')/casedb/case[@case_id=instance('session')/session/data/case_id]) = 0">
-            <command value="m0"/>
+        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+            <command>m0</command>
         </create>
     </stack>
 </entry>

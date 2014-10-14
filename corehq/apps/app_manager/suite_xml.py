@@ -333,6 +333,14 @@ class Field(OrderedXmlObject):
     sort_node = NodeField('sort', Sort)
 
 
+class Action(OrderedXmlObject):
+    ROOT_NAME = 'action'
+    ORDER = ('display', 'stack')
+
+    text = NodeField('display/text', Text)
+    stack = NodeField('stack', Stack)
+
+
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
     function = XPathField('@function')
@@ -370,6 +378,8 @@ class Detail(IdNode):
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
+    action = NodeField('action', Action)
+
     _variables = NodeField('variables', DetailVariableList)
 
     def _init_variables(self):
@@ -768,6 +778,15 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 ).fields
                                 d.fields.extend(fields)
 
+                            if module.case_list_form and detail_type.endswith('short'):
+                                # add form action to detail
+                                form = module.get_form_by_unique_id(module.case_list_form)
+                                d.action = Action(text=Text(), stack=Stack())
+                                d.action.text.locale_id = self.id_strings.form_locale(form)
+                                frame = CreateFrame()
+                                frame.add_command(self.id_strings.form_command(form))
+                                d.action.stack.add_frame(frame)
+
                             try:
                                 if not self.app.enable_multi_sort:
                                     d.fields[0].sort = 'default'
@@ -1006,6 +1025,20 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
+    def configure_entry_as_case_list_form(self, module, form, entry):
+        entry.datums.append(SessionDatum(id='case_id', function='uuid()'))
+        entry.stack = Stack()
+        case_id = session_var('case_id')
+        case_count = CaseIDXPath(case_id).case().count()
+        frame_case_created = CreateFrame(if_clause='{} > 0'.format(case_count))
+        frame_case_created.add_command(self.id_strings.menu(module))
+        frame_case_created.add_datum(StackDatum(id='case_id', value=case_id))
+        entry.stack.add_frame(frame_case_created)
+
+        frame_case_not_created = CreateFrame(if_clause='{} = 0'.format(case_count))
+        frame_case_not_created.add_command(self.id_strings.menu(module))
+        entry.stack.add_frame(frame_case_not_created)
+
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -1019,6 +1052,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if not form or form.requires == 'case':
             self.configure_entry_module(module, e, use_filter=True)
+        elif form and module.case_list_form and module.case_list_form == form.get_unique_id():
+            self.configure_entry_as_case_list_form(module, form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)

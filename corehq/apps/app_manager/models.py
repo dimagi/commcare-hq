@@ -1278,7 +1278,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     def get_form_by_unique_id(self, unique_id):
         for form in self.get_forms():
-            if form.get_unique_id() == self.case_list_form:
+            if form.get_unique_id() == unique_id:
                 return form
 
     def validate_for_build(self):
