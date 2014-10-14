@@ -14,8 +14,10 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.phone.models import SyncLog
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
+from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -242,7 +244,13 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         """
         node = self.xpath(xpath)
         return node and option in node.split(" ")
-    
+
+    @memoized
+    def get_sync_token(self):
+        if self.last_sync_token:
+            return SyncLog.get(self.last_sync_token)
+        return None
+
     def get_xml(self):
         if ATTACHMENT_NAME in self._attachments and 'data' in self._attachments[ATTACHMENT_NAME]:
             return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])

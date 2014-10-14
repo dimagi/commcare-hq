@@ -96,12 +96,15 @@ def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
 
 def check_user_has_case(testcase, user, case_block, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
-                        caching_enabled=False):
+                        purge_restore_cache=False):
+
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
 
-    payload_string = RestoreConfig(user, restore_id, version=version, caching_enabled=caching_enabled).get_payload()
+    if restore_id and purge_restore_cache:
+        SyncLog.get(restore_id).invalidate_cached_payloads()
+    payload_string = RestoreConfig(user, restore_id, version=version).get_payload()
     payload = ElementTree.fromstring(payload_string)
     
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))

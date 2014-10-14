@@ -14,6 +14,8 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.stock.utils import get_current_ledger_transactions
+from corehq.apps.commtrack.models import SQLProduct
 
 register = template.Library()
 
@@ -79,6 +81,20 @@ def render_case(case, options):
 
     tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
 
+    # ledgers
+    def _product_name(product_id):
+        try:
+            return SQLProduct.objects.get(product_id=product_id).name
+        except SQLProduct.DoesNotExist:
+            return (_('Unknown Product ("{}")').format(product_id))
+
+    ledgers = get_current_ledger_transactions(case._id)
+    for section, product_map in ledgers.items():
+        product_tuples = sorted(
+            (_product_name(product_id), product_map[product_id]) for product_id in product_map
+        )
+        ledgers[section] = product_tuples
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "default_properties_options": {
@@ -96,7 +112,8 @@ def render_case(case, options):
             "show_view_buttons": True,
             "get_case_url": get_case_url,
             "timezone": timezone
-        }
+        },
+        "ledgers": ledgers,
     })
 
 

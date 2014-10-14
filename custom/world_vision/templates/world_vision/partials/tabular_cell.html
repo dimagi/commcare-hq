@@ -1,0 +1,13 @@
+{% if not col.unwrap %}<td {% if not col or col.html != None and not col.html %} class="null-entry"{% endif %}>{% endif %}
+    {% if col.html != None %}
+        <span>{{ col.html|safe }}</span>
+    {% else %}
+        <span>{{ col|safe }}</span>
+    {% endif %}
+    <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
+    {% if col.tooltip != None and col.tooltip != '' %}
+        <span class="hq-help no-click" style="color: #0000ff">
+            <i class="icon-question-sign" data-title="Info" data-content="{{ col.tooltip|safe }}" data-trigger="hover" data-original-title=""></i>
+        </span>
+    {% endif %}
+{% if not col.unwrap %}</td>{% endif %}

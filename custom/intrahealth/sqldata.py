@@ -1,6 +1,6 @@
 # coding=utf-8
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import distinct, func, alias
 from corehq.apps.commtrack.models import Product
 
@@ -34,10 +34,13 @@ class BaseSqlData(SqlData):
     fix_left_col = False
 
     def percent_fn(self, x, y):
-        return "%(p)s%%" % \
+        return "%(p).2f%%" % \
             {
-                "p": (100 * int(y or 0) / (x or 1))
+                "p": (100 * float(y or 0) / float(x or 1))
             }
+
+    def format_data_and_cast_to_float(self, value):
+        return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
 
     @property
     def filters(self):
@@ -454,12 +457,12 @@ class TauxConsommationData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['date']
+        group_by = []
         if 'region_id' in self.config:
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.extend(['product_name', 'consumption', 'stock'])
+        group_by.append('product_name')
         return group_by
 
     @property
@@ -470,8 +473,10 @@ class TauxConsommationData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Consommation reelle"), SimpleColumn('actual_consumption_total', alias="consumption"), format_fn=format_data))
-        columns.append(DatabaseColumn(_("Stock apres derniere livraison"), SimpleColumn('stock_total', alias="stock"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("Consommation reelle"), MeanColumn('actual_consumption_total', alias="consumption"),
+                                      format_fn=self.format_data_and_cast_to_float))
+        columns.append(DatabaseColumn(_("Stock apres derniere livraison"), MeanColumn('stock_total', alias="stock"),
+                                      format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
                                    [AliasColumn('stock'), AliasColumn('consumption')]))
         return columns
@@ -507,26 +512,28 @@ class NombreData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['date']
+        group_by = []
         if 'region_id' in self.config:
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.extend(['product_name', 'quantity', 'cmm'])
+        group_by.append('product_name')
 
         return group_by
 
     @property
     def columns(self):
-        div = lambda x, y: "%0.3f" % (x / (float(y) or 1.0))
+        div = lambda x, y: "%0.3f" % (float(x) / (float(y) or 1.0))
         columns = []
         if 'region_id' in self.config:
             columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"), SimpleColumn('quantity_total', alias="quantity"), format_fn=format_data))
-        columns.append(DatabaseColumn(_("CMM"), SimpleColumn('cmm_total', alias="cmm"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"), MeanColumn('quantity_total', alias="quantity"),
+                                      format_fn=self.format_data_and_cast_to_float))
+        columns.append(DatabaseColumn(_("CMM"), MeanColumn('cmm_total', alias="cmm"),
+                                      format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Nombre mois stock disponible et utilisable"), div,
                                    [AliasColumn('quantity'), AliasColumn('cmm')]))
         return columns
@@ -538,10 +545,10 @@ class NombreData(BaseSqlData):
             for i in range(num_cols):
                 if i != 0 and i % 3 == 0:
                     cp = total_row[-2:]
-                    total_row.append("%0.3f" % (cp[0] / (float(cp[1]) or 1.0)))
+                    total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:

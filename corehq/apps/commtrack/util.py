@@ -1,5 +1,4 @@
 from xml.etree import ElementTree
-from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
@@ -18,6 +17,7 @@ from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
 from dimagi.utils.parsing import json_format_datetime
+import re
 
 
 def all_sms_codes(domain):
@@ -283,3 +283,20 @@ def unicode_slug(text):
 
 def encode_if_needed(val):
     return val.encode("utf8") if isinstance(val, unicode) else val
+
+
+def generate_code(object_name, existing_codes):
+    matcher = re.compile("[\W\d]+")
+    name_slug = matcher.sub(
+        '_',
+        unicode_slug(object_name.lower())
+    ).strip('_')
+    postfix = ''
+
+    while name_slug + postfix in existing_codes:
+        if postfix:
+            postfix = str(int(postfix) + 1)
+        else:
+            postfix = '1'
+
+    return name_slug + postfix

@@ -69,9 +69,8 @@ def process_cases_with_casedb(xform, case_db, config=None):
 
     # handle updating the sync records for apps that use sync mode
 
-    last_sync_token = xform.last_sync_token
-    if last_sync_token:
-        relevant_log = SyncLog.get(last_sync_token)
+    relevant_log = xform.get_sync_token()
+    if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks

@@ -63,6 +63,10 @@ def process_stock(xform, case_db=None):
         case.actions.append(case_action)
         case_db.mark_changed(case)
 
+    # also purge the sync token cache for the same reason
+    if relevant_cases and xform.get_sync_token():
+        xform.get_sync_token().invalidate_cached_payloads()
+
     # create the django models
     for report in stock_reports:
         report.create_models(domain)

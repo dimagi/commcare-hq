@@ -304,6 +304,14 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
+
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -372,7 +380,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
                     user.save()
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in ApplicationBase.by_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
             domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -428,6 +447,13 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
     ota_restore_caching = BooleanField(
         label=_("Enable Restore Caching (beta)"),
         required=False,
@@ -437,13 +463,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             "This feature is still in testing. Don't enable unless "
             "you are an advanced user."
         )
-    )
-    secure_submissions = BooleanField(
-        label=_("Only accept secure submissions"),
-        required=False,
-        help_text=_("Turn this on to prevent others from impersonating your "
-                    "mobile workers. To use, all of your deployed applications "
-                    "must be using secure submissions."),
     )
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),
@@ -519,22 +538,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-            domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
                 domain.cloudcare_releases = cloudcare_releases
-            secure_submissions = self.cleaned_data.get('secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception, e:
             logging.exception("couldn't save project settings - error is %s" % e)

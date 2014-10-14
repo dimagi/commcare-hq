@@ -259,9 +259,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                     if self.phone_has_case(case.get_id):
                         self.archive_case(case.get_id)
         if case_list:
-            self.invalidate_cached_payloads()
             try:
                 self.save()
+                self.invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
