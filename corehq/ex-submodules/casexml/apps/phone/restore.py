@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
-from datetime import datetime
+from datetime import datetime, timedelta
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
@@ -23,6 +23,15 @@ from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
+
+
+# how long a cached payload sits around for (in seconds).
+INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
+
+# the threshold for setting a cached payload on initial sync (in seconds).
+# restores that take less than this time will not be cached to allow
+# for rapid iteration on fixtures/cases/etc.
+INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 
 class StockSettings(object):
@@ -45,12 +54,11 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 caching_enabled=False, items=False, stock_settings=None):
+                 items=False, stock_settings=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
-        self.caching_enabled = caching_enabled
         self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
@@ -152,6 +160,7 @@ class RestoreConfig(object):
         if cached_payload:
             return cached_payload
 
+        start_time = datetime.utcnow()
         sync_operation = user.get_case_updates(last_sync)
         case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
                              for op in sync_operation.actual_cases_to_sync]
@@ -193,7 +202,8 @@ class RestoreConfig(object):
             response.attrib['items'] = '%d' % len(response.getchildren())
 
         resp = xml.tostring(response)
-        self.set_cached_payload_if_enabled(resp)
+        duration = datetime.utcnow() - start_time
+        self.set_cached_payload_if_necessary(resp, duration)
         return resp
 
     def get_response(self):
@@ -216,24 +226,25 @@ class RestoreConfig(object):
         )).hexdigest()
 
     def get_cached_payload(self):
-        if self.caching_enabled:
-            if self.sync_log:
-                return self.sync_log.get_cached_payload(self.version)
-            else:
-                return self.cache.get(self._initial_cache_key())
+        if self.sync_log:
+            return self.sync_log.get_cached_payload(self.version)
+        else:
+            return self.cache.get(self._initial_cache_key())
 
-    def set_cached_payload_if_enabled(self, resp):
-        if self.caching_enabled:
-            if self.sync_log:
-                try:
-                    self.sync_log.set_cached_payload(resp, self.version)
-                except ResourceConflict:
-                    # if one sync takes a long time and another one updates the sync log
-                    # this can fail. in this event, don't fail to respond, since it's just
-                    # a caching optimization
-                    pass
-            else:
-                self.cache.set(self._initial_cache_key(), resp, 60*60)
+    def set_cached_payload_if_necessary(self, resp, duration):
+        if self.sync_log:
+            # if there is a sync token, always cache
+            try:
+                self.sync_log.set_cached_payload(resp, self.version)
+            except ResourceConflict:
+                # if one sync takes a long time and another one updates the sync log
+                # this can fail. in this event, don't fail to respond, since it's just
+                # a caching optimization
+                pass
+        else:
+            # on initial sync, only cache if the duration was longer than the threshold
+            if duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
+                self.cache.set(self._initial_cache_key(), resp, INITIAL_SYNC_CACHE_TIMEOUT)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
