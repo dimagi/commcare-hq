@@ -6,7 +6,7 @@ from corehq.apps.api.resources import JsonResource
 
 class LocationResource(JsonResource):
     type = "location"
-    uuid = fields.CharField(attribute='_id', readonly=True, unique=True)
+    uuid = fields.CharField(attribute='location_id', readonly=True, unique=True)
     location_type = fields.CharField(attribute='location_type', readonly=True)
     name = fields.CharField(attribute='name', readonly=True, unique=True)
 
@@ -17,10 +17,11 @@ class LocationResource(JsonResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        parent_id = bundle.request.GET.get("parent_id", None)
+        parent_id = bundle.request.GET.get('parent_id', None)
+        include_inactive = bundle.request.GET.get('include_inactive', False)
         if parent_id:
             parent = get_object_or_not_exist(Location, parent_id, domain)
-            return parent.children
+            return parent.sql_location.child_locations(include_archive_ancestors=include_inactive)
 
         return root_locations(domain)
 

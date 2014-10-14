@@ -8,9 +8,12 @@ from django.core.urlresolvers import reverse
 from datetime import datetime
 from django.db import models
 import json_field
+from casexml.apps.case.cleanup import close_case
+from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-class SQLLocation(models.Model):
+class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True)
@@ -23,6 +26,7 @@ class SQLLocation(models.Model):
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
@@ -31,6 +35,42 @@ class SQLLocation(models.Model):
             self.domain,
             self.name
         )
+
+    def archived_descendants(self):
+        """
+        Returns a list of archived descendants for this location.
+        """
+        return self.get_descendants().filter(is_archived=True)
+
+    def child_locations(self, include_archive_ancestors=False):
+        """
+        Returns a list of this nodes children.
+        """
+        children = self.get_children()
+        return _filter_for_archived(children, include_archive_ancestors)
+
+    @classmethod
+    def root_locations(cls, domain, include_archive_ancestors=False):
+        roots = cls.objects.root_nodes().filter(domain=domain)
+        return _filter_for_archived(roots, include_archive_ancestors)
+
+
+def _filter_for_archived(locations, include_archive_ancestors):
+    """
+    Perform filtering on a location queryset.
+
+    include_archive_ancestors toggles between selecting only active
+    children and selecting any child that is archived or has
+    archived descendants.
+    """
+    if include_archive_ancestors:
+        return [
+            item for item in locations
+            if item.is_archived or item.archived_descendants()
+        ]
+    else:
+        # TODO bake this into default .objects filter
+        return locations.filter(is_archived=False)
 
 
 class Location(CachedCouchDocumentMixin, Document):
@@ -98,19 +138,56 @@ class Location(CachedCouchDocumentMixin, Document):
             if hasattr(self, couch_prop):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
 
+        # sync supply point id
         sp = self.linked_supply_point()
         if sp:
             sql_location.supply_point_id = sp._id
 
+        # sync parent connection
+        parent_id = self.parent_id
+        if parent_id:
+            sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
+
         sql_location.save()
+
+    @property
+    def sql_location(self):
+        return SQLLocation.objects.get(location_id=self._id)
 
     def archive(self):
         """
-        Mark a location as archived. This will cause it (and its data)
-        to not show up in default Couch and SQL views.
+        Mark a location and its dependants as archived.
+        This will cause it (and its data) to not show up in default
+        Couch and SQL views.
         """
         self.is_archived = True
         self.save()
+
+        sp = self.linked_supply_point()
+        if sp:
+            close_case(sp._id, self.domain, COMMTRACK_USERNAME)
+
+        for loc in self.descendants:
+            loc.archive()
+
+    def unarchive(self):
+        """
+        Unarchive a location and reopen supply point case if it
+        exists.
+        """
+        self.is_archived = False
+        self.save()
+
+        # reopen supply point case if needed
+        sp = self.linked_supply_point()
+        if sp:
+            for action in sp.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user=COMMTRACK_USERNAME)
+                    break
+
+        for loc in self.descendants:
+            loc.unarchive()
 
     def save(self, *args, **kwargs):
         """

@@ -1,6 +1,8 @@
 
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
+    // show_inactive comes from global state
+    params.include_inactive = show_inactive;
     $.getJSON(LOAD_LOCS_URL, params, function(allData) {
             callback(allData.objects);
         });
@@ -8,18 +10,18 @@ function api_get_children(loc_uuid, callback) {
 
 function LocationTreeViewModel(hierarchy) {
     var model = this;
-    
+
     this.root = ko.observable();
-    
+
     // TODO this should reference location type settings for domain
     this.location_types = $.map(hierarchy, function(e) {
-            return {type: e[0], allowed_parents: e[1]};
-        });
+        return {type: e[0], allowed_parents: e[1]};
+    });
 
     // search for a location within the tree by uuid; return path to location if found
     this.find_loc = function(uuid, loc) {
         loc = loc || this.root();
-        
+
         if (loc.uuid() == uuid) {
             return [loc];
         } else {
@@ -35,7 +37,7 @@ function LocationTreeViewModel(hierarchy) {
             return path;
         }
     }
-    
+
     // load location hierarchy and set initial expansion
     this.load = function(locs, selected) {
         this.root(new LocationModel({name: '_root', children: locs}, this));
@@ -54,14 +56,13 @@ function LocationTreeViewModel(hierarchy) {
                 // highlight the initially selected
                 $(sel_path.slice(-1)[0].$e).effect('highlight', {color: '#ff6'}, 15000);
             }
-            
         }
-    }        
+    }
 }
 
 function LocationModel(data, root, depth) {
     var loc = this;
-    
+
     this.name = ko.observable();
     this.type = ko.observable();
     this.uuid = ko.observable();
@@ -69,13 +70,13 @@ function LocationModel(data, root, depth) {
     this.depth = depth || 0;
     this.children_status = ko.observable('not_loaded');
     this.expanded = ko.observable(false);
-    
+
     this.expanded.subscribe(function(val) {
             if (val && this.children_status() == 'not_loaded') {
                 this.load_children_async();
             }
         }, this);
-    
+
     this.toggle = function() {
         this.expanded(!this.expanded() && this.can_have_children());
     }
@@ -88,7 +89,7 @@ function LocationModel(data, root, depth) {
             this.set_children(data.children);
         }
     }
-    
+
     this.set_children = function(data) {
         var children = [];
         if (data) {
@@ -99,7 +100,7 @@ function LocationModel(data, root, depth) {
                 }));
         this.children_status('loaded');
     }
-    
+
     this.load_children_async = function(callback) {
         this.children_status('loading');
         api_get_children(this.uuid(), function(resp) {
@@ -109,7 +110,7 @@ function LocationModel(data, root, depth) {
                 }
             });
     }
-   
+
     this.allowed_child_types = function() {
         var loc = this;
         var types = [];
@@ -137,7 +138,7 @@ function LocationModel(data, root, depth) {
             var top_level = (this.name() == '_root');
             return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + this.name() + ' ' + this.type());
         }, this);
- 
+
     this.no_children_caption = ko.computed(function() {
             var child_type = this.allowed_child_type();
             var top_level = (this.name() == '_root');

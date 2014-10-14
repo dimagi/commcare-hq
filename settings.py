@@ -190,6 +190,7 @@ DEFAULT_APPS = (
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
+    'mptt',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'

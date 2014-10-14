@@ -54,11 +54,18 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @property
+    def show_inactive(self):
+        return json.loads(self.request.GET.get('show_inactive', 'false'))
+
+    @property
     def page_context(self):
         selected_id = self.request.GET.get('selected')
         return {
             'selected_id': selected_id,
-            'locations': load_locs_json(self.domain, selected_id),
+            'locations': load_locs_json(
+                self.domain, selected_id, self.show_inactive
+            ),
+            'show_inactive': self.show_inactive,
         }
 
 
