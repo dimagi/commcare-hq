@@ -95,6 +95,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         """
         If an indicator with the same namespace, domain, and version exists, create a new indicator with the
         version number incremented.
+        # todo, this feels a bit buggy, so replace bulk copy indicators with
+        # copy to domain at some point
         """
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -128,6 +130,43 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
 
         new_indicator.save()
         return new_indicator
+
+    @classmethod
+    def copy_to_domain(cls, domain, doc, override=False):
+        """
+        This copies an indicator doc to the current domain. Intended to be used
+        by the export indicators feature.
+        :param domain: the name of the domain the indicator should be copied to
+        :param doc: the dictionary of kwargs to create the indicator
+        :param override: Whether to override the existing indicator
+        :return: True if indicator was copied, False if not
+        """
+        if '_id' in doc:
+            del doc['_id']
+        if '_rev' in doc:
+            del doc['_rev']
+        if 'last_modified' in doc:
+            del doc['last_modified']
+
+        couch_key = cls._generate_couch_key(
+            domain=domain,
+            reverse=True,
+            **doc
+        )
+        existing_indicator = cls.view(
+            cls.indicator_list_view(),
+            reduce=False,
+            include_docs=False,
+            descending=True,
+            limit=1,
+            **couch_key
+        ).first()
+        if existing_indicator and not override:
+            return False
+        new_indicator = cls(domain=domain, **doc)
+        new_indicator.last_modified = datetime.datetime.utcnow()
+        new_indicator.save()
+        return True
 
     @classmethod
     @memoized
