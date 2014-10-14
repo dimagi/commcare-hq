@@ -137,20 +137,24 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
+        def _get_label_with_percentage(row):
+            return "%s [%s%%]" %(row[0], str(float(row[-1]['html'][:-1])))
+
         if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
-            chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
+            chart = PieChart('', '', [{'label': _get_label_with_percentage(row), 'value':float(row[-1]['html'][:-1])} for row in rows])
         elif isinstance(data_provider, NutritionBirthWeightDetails):
-            chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart('BirthWeight', '', [{'label': "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1]))),
+                                                  'value':float(row[-1]['html'][:-1])} for row in rows[1:]], ['red', 'green'])
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
-            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart('', '', [{'label': _get_label_with_percentage(row), 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             if isinstance(data_provider, ImmunizationOverview):
                 chart.stacked = True
-                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[3]['html'][:-1])/100} for row in rows])
-                chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[3]['html'][:-1])/100} for row in rows], color='green')
+                chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows], color='red')
             else:
                 chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
@@ -171,7 +175,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
                                               'y':float(row[-1]['html'][:-1])/100} for row in rows])
         else:
-            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
+            chart = PieChart('', '', [{'label': "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1]))),
+                                       'value':float(row[-1]['html'][:-1])} for row in rows])
         return [chart]
 
     @property

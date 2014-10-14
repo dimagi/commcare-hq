@@ -23,12 +23,14 @@ class AnteNatalCareServiceOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
         for i in range(1,5):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
@@ -100,6 +102,7 @@ class DeliveryPlaceDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for idx, column in enumerate(self.columns):
             if idx == 0:
@@ -107,7 +110,8 @@ class DeliveryPlaceDetails(BaseSqlData):
             else:
                 percent = self.percent_fn(self.data['total_delivery'], self.data[column.slug])
 
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tootip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['delivery_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
                            {'sort_key': 'percentage', 'html': percent}]
             )
@@ -130,13 +134,16 @@ class ImmunizationOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
         rg = len(self.columns) / 2
         for i in range(0, rg):
             dropout = self.data[self.columns[i + rg].slug] - self.data[self.columns[i].slug]
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['immunization_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + rg].slug], 'html': self.data[self.columns[i + rg].slug]},
+                           {'sort_key': self.data[self.columns[i + rg].slug], 'html': self.data[self.columns[i + rg].slug],
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['immunization_details'], self.columns[i + rg].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug])},
                            {'sort_key': dropout, 'html': dropout},

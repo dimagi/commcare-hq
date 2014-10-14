@@ -10,7 +10,8 @@ from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, IMMU
 from custom.m4change.models import McctStatus
 
 
-def _create_mcct_status_row(form_id, status, domain, received_on, registration_date, immunized, is_booking):
+def _create_mcct_status_row(form_id, status, domain, received_on, registration_date, immunized, is_booking,
+                            is_stillbirth):
     try:
         mcct_status = McctStatus.objects.get(form_id__exact=form_id)
         mcct_status.status = status
@@ -19,11 +20,12 @@ def _create_mcct_status_row(form_id, status, domain, received_on, registration_d
         mcct_status.registration_date = registration_date
         mcct_status.immunized = immunized
         mcct_status.is_booking = is_booking
+        mcct_status.is_stillbirth = is_stillbirth
         mcct_status.save()
     except ObjectDoesNotExist:
         mcct_status = McctStatus(form_id=form_id, status=status, domain=domain,
                                  received_on=received_on, registration_date=registration_date,
-                                 immunized=immunized, is_booking=is_booking)
+                                 immunized=immunized, is_booking=is_booking, is_stillbirth=is_stillbirth)
         mcct_status.save()
 
 
@@ -70,15 +72,22 @@ def _filter_forms(xform, cases):
         registration_date = forms[index][1]
         if form.xmlns in BOOKING_FORMS:
             _create_mcct_status_row(form._id, "eligible", form.domain, form.received_on.date(),
-                                    registration_date, False, True)
+                                    registration_date, False, True, False)
             save_indices.append(index)
         elif form.xmlns in IMMUNIZATION_FORMS + BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS \
                 and len(form.form.get("immunization_given", "")) > 0\
                 and (len(pnc_forms) < 1 or (len(pnc_forms) > 0 and pnc_forms[0][0]._id == form._id)):
             _create_mcct_status_row(form._id, "eligible", form.domain, form.received_on.date(),
-                                    registration_date, True, False)
+                                    registration_date, True, False, False)
             immunized = True
             save_indices.insert(0, index)
+
+        elif form.xmlns in BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS \
+                and form.form.get("pregnancy_outcome", "") == 'still_birth':
+            _create_mcct_status_row(form._id, "eligible", form.domain, form.received_on.date(),
+                                registration_date, False, False, True)
+            save_indices.insert(0, index)
+
     for index in save_indices:
         del forms[index]
     for index in range(0, len(forms)):

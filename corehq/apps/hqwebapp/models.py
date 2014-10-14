@@ -285,7 +285,8 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.couch_user
+        return (self.domain and self.project and not self.project.is_snapshot
+                and self.couch_user
                 and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
 
 

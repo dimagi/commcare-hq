@@ -2,6 +2,7 @@ from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
 from casexml.apps.stock.consumption import compute_consumption_or_default
+from casexml.apps.stock.utils import get_current_ledger_transactions
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -11,7 +12,6 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.xml import (
     ResponseNature,
@@ -20,7 +20,7 @@ from couchforms.xml import (
 )
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.phone.fixtures import generator
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
@@ -103,30 +103,25 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        def _unique_products(stock_transaction_queryset):
-            return sorted(stock_transaction_queryset.values_list('product_id', flat=True).distinct())
-
         for commtrack_case in cases:
-            relevant_sections = sorted(StockTransaction.objects.filter(
-                case_id=commtrack_case._id).values_list('section_id', flat=True).distinct())
+            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
-            for section_id in relevant_sections:
-                relevant_reports = StockTransaction.objects.filter(case_id=commtrack_case._id, section_id=section_id)
-                product_ids = _unique_products(relevant_reports)
-                transactions = [StockTransaction.latest(commtrack_case._id, section_id, p) for p in product_ids]
+            for section_id in sorted(current_ledgers.keys()):
+                transactions_map = current_ledgers[section_id]
+                sorted_product_ids = sorted(transactions_map.keys())
+                transactions = [transactions_map[p] for p in sorted_product_ids]
                 as_of = json_format_datetime(max(txn.report.date for txn in transactions))
-                section_product_map[section_id] = product_ids
+                section_product_map[section_id] = sorted_product_ids
                 section_timestamp_map[section_id] = as_of
                 yield E.balance(*(transaction_to_xml(e) for e in transactions),
                                 **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': section_id})
 
-
             for section_id, consumption_section_id in self.stock_settings.section_to_consumption_types.items():
 
-                if (section_id in relevant_sections or
-                    self.stock_settings.force_consumption_case_filter(commtrack_case)):
+                if (section_id in current_ledgers or
+                        self.stock_settings.force_consumption_case_filter(commtrack_case)):
 
                     consumption_product_ids = self.stock_settings.default_product_list \
                         if self.stock_settings.default_product_list \

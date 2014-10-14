@@ -32,7 +32,7 @@
     {% for row in report_table.rows %}
         <tr>
             {% for col in row %}
-                {% include 'reports/async/partials/tabular_cell.html' %}
+                {% include 'world_vision/partials/tabular_cell.html' %}
             {% endfor %}
         </tr>
     {% endfor %}
@@ -61,7 +61,10 @@
 {% endif %}
 
 <script type="text/javascript">
-   {% if report_table and report_table.datatables %}
+    $(function () {
+        $("[data-toggle='tooltip']").tooltip();
+    });
+    {% if report_table and report_table.datatables %}
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
 
         var params = {
