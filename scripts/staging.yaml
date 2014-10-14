@@ -65,8 +65,6 @@ branches:
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
   - fixture-prop # sravan 9/2e
-  - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
-  - ota-restore-caching  # cory 10/3
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
