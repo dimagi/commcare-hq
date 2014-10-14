@@ -1,13 +1,14 @@
-from dateutil import parser
 import datetime
 import logging
 import simplejson
-from corehq.apps.reports.filters.base import BaseReportFilter
 
-# For translations
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
+
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import string_to_datetime
+
+from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.sofabed.models import FormData
 from corehq.elastic import es_query, ES_URLS
 
 
@@ -53,29 +54,16 @@ class SubmitHistoryDatespanFilter(DatespanFilter):
 
     @property
     def default_days(self):
+        """
+        Return the earliest date of form submission for the domain
+        falling back to 30 days.
+        """
         days = 30
-        # This query will obtain earliest submission form date in current domain,
-        # otherwiste it will return default datespan(30days)
-        q = { "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "filter": {
-                        "and": [
-                            {"term": { "domain.exact": self.domain }},
-                        ]
-                    }
-                }
-            },
-            'sort': [{'received_on': {"order": "asc"}}],
-            'size': 1
-        }
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, simplejson.dumps(q)))
-        es_results = es_query(q=q, es_url=ES_URLS['forms'], dict_only=False)['hits'].get('hits', [])
-
-        if len(es_results) > 0:
-            start_date = parser.parse(es_results[0]['_source']['received_on']).replace(tzinfo=self.timezone)
+        forms = (FormData.objects
+                 .filter(domain=self.domain)
+                 .order_by('received_on'))
+        if forms.count():
+            start_date = forms[0].received_on.replace(tzinfo=self.timezone)
             end_date = datetime.datetime.now(self.timezone)
             days = (end_date - start_date).days
         return days
