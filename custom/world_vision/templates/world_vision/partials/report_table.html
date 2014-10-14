@@ -62,7 +62,7 @@
 
 <script type="text/javascript">
     $(function () {
-        $("[data-toggle='tooltip']").tooltip();
+        $("[data-trigger='hover']").popover({ trigger: "hover" });
     });
     {% if report_table and report_table.datatables %}
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
