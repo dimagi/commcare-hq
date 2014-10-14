@@ -17,6 +17,10 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
+# Enable LESS_WATCH if you want less.js to constantly recompile.
+# Useful if you're making changes to the less files and don't want to refresh
+# your page.
+LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -180,6 +184,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djkombu',
+    'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
@@ -241,7 +246,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -299,8 +303,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -323,6 +326,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
+
     'custom.care_pathways',
     'bootstrap3_crispy',
 )
@@ -459,7 +464,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -950,7 +955,6 @@ COUCHDB_APPS = [
     'pillowtop',
     'pillow_retry',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -977,7 +981,6 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
@@ -992,12 +995,13 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('wvindia2', 'wvindia2')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1117,6 +1121,7 @@ PILLOWTOPS = {
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1130,12 +1135,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
-        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1152,7 +1157,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow'
+        'custom.care_pathways.models.FarmerRecordFluffPillow',
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1212,6 +1221,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1242,7 +1252,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
@@ -1257,6 +1267,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
+    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
 }
@@ -1294,4 +1305,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
+    'less_watch': LESS_WATCH,
 }

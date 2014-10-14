@@ -324,6 +324,7 @@ class McctStatus(models.Model):
     registration_date = models.DateField(null=True)
     immunized = models.BooleanField(null=False, default=False)
     is_booking = models.BooleanField(null=False, default=False)
+    is_stillbirth = models.BooleanField(null=False, default=False)
     modified_on = models.DateTimeField(auto_now=True)
     user = models.CharField(max_length=255, null=True)
 

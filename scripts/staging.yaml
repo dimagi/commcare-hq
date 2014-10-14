@@ -43,29 +43,34 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products+explicit_case_processing # tw 8/14
-  - explicit_case_processing # danny?
+  - jsonobject-0.6.0b2  # danny 10/10
+  - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
+  - master+schedule+schedule
   - master+schedule # Nick P 9/11
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
-  - refactor-domain-copy2  # Brian 5/20
+  - logos+master # tw
   - logos # Nick P 5/28
-  - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
-  - increase-es-timeout # Nick P 8/11
-  - parent-child-select-revised # Noah 8/14
-  - archive-products # tw 8/14
+  - archive-programs+custom_product_data # tw
+  - archive-programs # tw 9/30
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
-  - fix-timeout # Nick P 8/26
-  - caselistmixin-refactor # Noah 8/14
-  - custom_user_data # tw+Ethan 9/9
+  - custom_user_data  # tw+Ethan 9/9
+  - custom_product_data  # tw+Ethan 10/1
   - lwyszomi:better_date_filters_improvment
-  - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - caseindex # SK 9/16
+  - bulk-app-translate # Noah 9/18
+  - callcenter # SK 9/22
+  - fixture-prop # sravan 9/2e
+  - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
+  - ota-restore-caching  # cory 10/3
+  - reduce-location_ # tw 10/6
+  - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
+  - masterlist-workflow # j$  10/8
+  - domain-metadata # Nick P 10/8
 submodules:
   submodules/couchlog-src:
     branches:
@@ -73,10 +78,6 @@ submodules:
   submodules/django-soil-src:
     branches:
       - static-tags # Nick P 5/20
-#  submodules/formdesigner:
-#    branches:
-#      - develop-staging # Daniel 6/12 (major refactor + itemsets?)
-#      - universal-analytics-upgrade # Nick P 7/8
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
@@ -88,11 +89,3 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
-  submodules/dimagi-utils-src:
-    branches:
-      # Danny 8/12. If there's weird errors or issues in saving forms
-      # or saving apps, just remove this
-      - faster-lazy-attachments
-  # submodules/pillowtop-src:
-    # branches:
-      # - request_timeout  # Ethan 9/12

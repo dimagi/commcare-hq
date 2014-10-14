@@ -111,6 +111,13 @@
                     });
                     return false;
                 });
+                $('#group-case-sharing-input').change(function() {
+                    if($('#group-case-sharing-input').val() == 'true') {
+                        $('#group-case-sharing-warning').removeAttr("hidden")
+                    } else {
+                        $('#group-case-sharing-warning').attr('hidden', 'hidden')
+                    }
+                })
                 $('#group-data-form').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
@@ -174,6 +181,12 @@
                                 <option value="false">{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Whether users within this group will share cases with other members of this group" %}</p>
+                            <div id="group-case-sharing-warning" hidden="hidden">
+                                <p class="help-block alert alert-warning">
+                                    {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
+                                    <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div class="control-group">

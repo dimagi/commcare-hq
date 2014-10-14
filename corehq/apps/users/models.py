@@ -2047,10 +2047,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     role = StringProperty()
     doc_type = "Invitation"
 
-    def send_activation_email(self):
+    def send_activation_email(self, remaining_days=30):
         url = "http://%s%s" % (Site.objects.get_current().domain,
                                reverse("domain_accept_invitation", args=[self.domain, self.get_id]))
-        params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name}
+        params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name, 'days': remaining_days}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name

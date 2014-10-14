@@ -314,7 +314,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
-            'commtrack_enabled': self.domain_object.commtrack_enabled
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'secure_submissions': self.domain_object.secure_submissions,
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -344,7 +345,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_user_id',
                 'restrict_superusers',
                 'ota_restore_caching',
-                'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
@@ -386,7 +386,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def autocomplete_fields(self):
-        return ['city', 'country', 'region']
+        return ['city', 'countries', 'region']
 
     @property
     @memoized
@@ -400,7 +400,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
         }
         for attr in [
             'city',
-            'country',
+            'countries',
             'region',
             'description',
         ]:
@@ -1452,7 +1452,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             'form': self.snapshot_settings_form,
             'app_forms': self.app_forms,
             'can_publish_as_org': self.can_publish_as_org,
-            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
         if self.published_snapshot:
             context.update({
@@ -1898,6 +1898,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'phone_model',
             'goal_time_period',
             'goal_followup_rate',
+            'commconnect_domain',
+            'commtrack_domain',
         ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)

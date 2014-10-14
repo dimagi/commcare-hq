@@ -73,7 +73,9 @@ class ApplicationStatusReport(DeploymentsReport):
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Last Sync"),
                              sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Application (Deployed Version)"))
+            DataTablesColumn(_("Application (Deployed Version)"),
+                help_text=_("""Displays application version of the last submitted form;
+                            The currently deployed version may be different."""))
         )
 
     @property

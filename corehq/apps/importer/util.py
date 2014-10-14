@@ -307,12 +307,10 @@ def populate_updated_fields(config, columns, row):
     due to the import. This can be then used to pass to the CaseBlock
     to trigger updates.
     """
-
     field_map = convert_custom_fields_to_struct(config)
     key_column_index = get_key_column_index(config, columns)
     value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
-
     for key in field_map:
         try:
             if key_column_index and key == row[key_column_index]:
@@ -339,7 +337,7 @@ def populate_updated_fields(config, columns, row):
             else:
                 update_value = convert_field_value(update_value)
 
-        fields_to_update[update_field_name] = update_value
+        fields_to_update[update_field_name.strip()] = update_value
 
     return fields_to_update
 

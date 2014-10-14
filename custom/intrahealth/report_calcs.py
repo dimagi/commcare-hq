@@ -1,5 +1,6 @@
 import fluff
 import re
+import logging
 from corehq.apps.locations.models import Location
 from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING
 
@@ -9,6 +10,14 @@ def form_date(form):
 
 def real_date(form):
     return form.form['real_date']
+
+def numeric_value(val):
+    number = 0
+    try:
+        number = int(val)
+    except ValueError:
+        logging.info('Bad value type: %s' %(val))
+    return number
 
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
@@ -103,9 +112,10 @@ class RecapPassage(fluff.Calculator):
     def old_stock_total(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['old_stock_total'])
                 yield {
                     'date': real_date(form),
-                    "value": product['old_stock_total'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -113,9 +123,10 @@ class RecapPassage(fluff.Calculator):
     def total_stock(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['total_stock'])
                 yield {
                     'date': real_date(form),
-                    "value": product['total_stock'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -123,9 +134,10 @@ class RecapPassage(fluff.Calculator):
     def livraison(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['top_up']['transfer']['entry']['value']['@quantity'])
                 yield {
                     'date': real_date(form),
-                    "value": product['top_up']['transfer']['entry']['value']['@quantity'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -133,9 +145,10 @@ class RecapPassage(fluff.Calculator):
     def display_total_stock(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['display_total_stock'])
                 yield {
                     'date': real_date(form),
-                    "value": product['display_total_stock'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -143,9 +156,10 @@ class RecapPassage(fluff.Calculator):
     def old_stock_pps(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['old_stock_pps'])
                 yield {
                     'date': real_date(form),
-                    "value": product['old_stock_pps'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -154,9 +168,10 @@ class RecapPassage(fluff.Calculator):
     def outside_receipts_amount(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['outside_receipts_amt'])
                 yield {
                     "date": real_date(form),
-                    "value": product['outside_receipts_amt'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -164,9 +179,10 @@ class RecapPassage(fluff.Calculator):
     def actual_consumption(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['actual_consumption'])
                 yield {
                     'date': real_date(form),
-                    "value": product['actual_consumption'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -174,9 +190,10 @@ class RecapPassage(fluff.Calculator):
     def billed_consumption(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['billed_consumption'])
                 yield {
                     'date': real_date(form),
-                    "value": product['billed_consumption'],
+                    "value": val,
                     "group_by": [product['product_name']]
                 }
 
@@ -184,9 +201,10 @@ class RecapPassage(fluff.Calculator):
     def pps_restant(self, form):
         for product in form.form['products']:
             if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                val = numeric_value(product['pps_stock'])
                 yield {
                     'date': real_date(form),
-                    "value": int(product['pps_stock']) if int(product['pps_stock']) >= 0 else 0,
+                    "value": val if val >= 0 else 0,
                     "group_by": [product['product_name']]
                 }
 

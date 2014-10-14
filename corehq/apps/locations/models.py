@@ -51,8 +51,8 @@ class Location(CachedCouchDocumentMixin, Document):
 
         # lazy migration for site_code
         if not self.site_code:
-            from corehq.apps.locations.util import generate_site_code
-            self.site_code = generate_site_code(
+            from corehq.apps.commtrack.util import generate_code
+            self.site_code = generate_code(
                 self.name,
                 Location.site_codes_for_domain(self.domain)
             )
