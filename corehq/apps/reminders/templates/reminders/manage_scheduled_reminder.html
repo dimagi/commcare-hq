@@ -6,10 +6,13 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+    <link href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -19,7 +22,6 @@
             {{ form.relevant_choices|JSON }},
             {{ ui_type|JSON }},
             {{ available_languages|JSON }},
-            {{ form.select2_fields|JSON }},
             {{ form.initial_event|JSON }}
         );
         ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
