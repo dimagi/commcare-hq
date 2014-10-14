@@ -1,5 +1,5 @@
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import IN
+from sqlagg.filters import IN, AND, GTE, OR
 from sqlagg.filters import EQ, BETWEEN, LTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
@@ -48,9 +48,9 @@ class BaseSqlData(SqlData):
             self.config['stred'] = self.config['today']
 
         if 'startdate' in self.config:
-            filters = [BETWEEN("date", "startdate", "enddate")]
+            filters = [AND([LTE("date", "enddate"), OR([GTE('closed_on', "startdate"), EQ('closed_on', 'empty')])])]
         elif 'startdate' not in self.config:
-            filters = [LTE("date", 'enddate')]
+            filters = [LTE("date", "enddate")]
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
