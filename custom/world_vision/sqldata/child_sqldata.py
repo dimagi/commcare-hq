@@ -28,12 +28,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("Total children registered ever",
-                CountUniqueColumn('doc_id',
-                    alias="total",
-                    filters=self.filters
-                )
-            ),
+            DatabaseColumn("Total children registered ever", CountUniqueColumn('doc_id', alias="total"))
         ]
         if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([

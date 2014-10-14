@@ -33,12 +33,7 @@ class MotherRegistrationDetails(BaseSqlData):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("Total mothers registered ever",
-                CountUniqueColumn('doc_id',
-                    alias="total",
-                    filters=[NOTEQ('doc_id', 'empty')]
-                )
-            ),
+            DatabaseColumn("Total mothers registered ever",  CountUniqueColumn('doc_id', alias="total")),
         ]
         if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
