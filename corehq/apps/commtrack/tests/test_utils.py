@@ -65,3 +65,14 @@ class GenerateCodeTest(unittest.TestCase):
             generate_code(name, existing),
             'taco4'
         )
+
+    def test_empty_values(self):
+        empty_default = 'no_name'
+        self.assertEqual(
+            generate_code('', []),
+            empty_default,
+        )
+        self.assertEqual(
+            generate_code(None, []),
+            empty_default,
+        )
