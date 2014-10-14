@@ -1246,7 +1246,10 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
-        "case_list_form": None,
+        "case_list_form_id": None,
+        "case_list_form_label": None,
+        "case_list_form_media_image": None,
+        "case_list_form_media_audio": None,
         "parent_module": None,
     }
 
@@ -1268,7 +1271,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    resp = {'update': {}}
+    resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = req.POST.get("case_type", None)
         if is_valid_case_type(case_type):
@@ -1300,8 +1303,18 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
-    if should_edit('case_list_form'):
-        module.case_list_form = req.POST.get('case_list_form')
+
+    if should_edit('case_list_form_id'):
+        module.case_list_form.form_id = req.POST.get('case_list_form_id')
+    if should_edit('case_list_form_label'):
+        module.case_list_form.label[lang] = req.POST.get('case_list_form_label')
+    if should_edit('case_list_form_media_image'):
+        val = _process_media_attribute('case_list_form_media_image', resp, req.POST.get('case_list_form_media_image'))
+        module.case_list_form.media_image = val
+    if should_edit('case_list_form_media_audio'):
+        val = _process_media_attribute('case_list_form_media_audio', resp, req.POST.get('case_list_form_media_audio'))
+        module.case_list_form.media_audio = val
+
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = req.POST.get(attribute, None)
@@ -1390,27 +1403,32 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     return HttpResponse(response_html)
 
 
+def _process_media_attribute(attribute, resp, val):
+    if val:
+        if val.startswith('jr://'):
+            pass
+        elif val.startswith('/file/'):
+            val = 'jr:/' + val
+        elif val.startswith('file/'):
+            val = 'jr://' + val
+        elif val.startswith('/'):
+            val = 'jr://file' + val
+        else:
+            val = 'jr://file/' + val
+        resp['corrections'][attribute] = val
+    else:
+        val = None
+    return val
+
+
 def _handle_media_edits(request, item, should_edit, resp):
     if not resp.has_key('corrections'):
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            val = request.POST.get(attribute)
-            if val:
-                if val.startswith('jr://'):
-                    pass
-                elif val.startswith('/file/'):
-                    val = 'jr:/' + val
-                elif val.startswith('file/'):
-                    val = 'jr://' + val
-                elif val.startswith('/'):
-                    val = 'jr://file' + val
-                else:
-                    val = 'jr://file/' + val
-                resp['corrections'][attribute] = val
-            else:
-                val = None
+            val = _process_media_attribute(attribute, resp, request.POST.get(attribute))
             setattr(item, attribute, val)
+
 
 @no_conflict_require_POST
 @login_or_digest

@@ -333,11 +333,10 @@ class Field(OrderedXmlObject):
     sort_node = NodeField('sort', Sort)
 
 
-class Action(OrderedXmlObject):
+class Action(OrderedXmlObject, DisplayNode):
     ROOT_NAME = 'action'
     ORDER = ('display', 'stack')
 
-    text = NodeField('display/text', Text)
     stack = NodeField('stack', Stack)
 
 
@@ -778,11 +777,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 ).fields
                                 d.fields.extend(fields)
 
-                            if module.case_list_form and detail_type.endswith('short'):
+                            if module.case_list_form.form_id and detail_type.endswith('short'):
                                 # add form action to detail
-                                form = module.get_form_by_unique_id(module.case_list_form)
-                                d.action = Action(text=Text(), stack=Stack())
-                                d.action.text.locale_id = self.id_strings.form_locale(form)
+                                form = module.get_form_by_unique_id(module.case_list_form.form_id)
+                                d.action = Action(
+                                    locale_id=self.id_strings.case_list_form_locale(module),
+                                    media_image=module.case_list_form.media_image,
+                                    media_audio=module.case_list_form.media_audio,
+                                    stack=Stack())
                                 frame = CreateFrame()
                                 frame.add_command(self.id_strings.form_command(form))
                                 d.action.stack.add_frame(frame)
@@ -1052,7 +1054,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if not form or form.requires == 'case':
             self.configure_entry_module(module, e, use_filter=True)
-        elif form and module.case_list_form and module.case_list_form == form.get_unique_id():
+        elif form and module.case_list_form.form_id and module.case_list_form.form_id == form.get_unique_id():
             self.configure_entry_as_case_list_form(module, form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):

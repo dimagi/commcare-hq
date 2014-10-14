@@ -78,7 +78,7 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
     def test_case_list_form(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
-        self.module.case_list_form = self.form.get_unique_id()
+        self.module.case_list_form.form_id = self.form.get_unique_id()
         self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
 
 

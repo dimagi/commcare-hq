@@ -9,11 +9,11 @@
             mediaAudioAllowed: {{ app.profile.features.sense|JSON }} == "true"
         };
 
-        if ($('#media_image').length) {
-            ko.applyBindings(viewModel, $('#media_image').get(0));
+        if ($('#{{ qualifier|default_if_none:"" }}media_image').length) {
+            ko.applyBindings(viewModel, $('#{{ qualifier|default_if_none:"" }}media_image').get(0));
         }
-        if ($('#media_audio').length) {
-            ko.applyBindings(viewModel, $('#media_audio').get(0));
+        if ($('#{{ qualifier|default_if_none:"" }}media_audio').length) {
+            ko.applyBindings(viewModel, $('#{{ qualifier|default_if_none:"" }}media_audio').get(0));
         }
         $(document).on('correction', function (e, key, value) {
             if (viewModel[key] !== undefined) {

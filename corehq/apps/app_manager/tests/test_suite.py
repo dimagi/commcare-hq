@@ -221,7 +221,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app = Application.wrap(self.get_json('app'))
         module = app.get_module(0)
         form = module.get_form(0)
-        module.case_list_form = form.get_unique_id()
+        module.case_list_form.form_id = form.get_unique_id()
+        module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
+        module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
+        module.case_list_form.label = {
+            'en': 'New Case'
+        }
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
 

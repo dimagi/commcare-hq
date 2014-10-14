@@ -1143,8 +1143,7 @@ class CaseList(IndexedSchema):
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
-        for dct in (self.label,):
-            _rename_key(dct, old_lang, new_lang)
+        _rename_key(self.label, old_lang, new_lang)
 
 
 class ParentSelect(DocumentSchema):
@@ -1166,11 +1165,19 @@ class DetailPair(DocumentSchema):
         return self
 
 
+class CaseListForm(NavMenuItemMediaMixin):
+    form_id = StringProperty()
+    label = DictProperty()
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.label, old_lang, new_lang)
+
+
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     name = DictProperty()
     unique_id = StringProperty()
     case_type = StringProperty()
-    case_list_form = StringProperty()
+    case_list_form = SchemaProperty(CaseListForm)
 
     @classmethod
     def wrap(cls, data):

@@ -1117,7 +1117,7 @@ class XForm(WrappedNode):
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
                 case_id = 'uuid()'
-                if form.get_module().case_list_form == form.get_unique_id():
+                if form.get_module().case_list_form.form_id == form.get_unique_id():
                     case_id = session_var('case_id')
 
                 case_block.add_create_block(

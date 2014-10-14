@@ -172,7 +172,8 @@
     </field>
     <action>
         <display>
-            <text><locale id="forms.m0f0"/></text>
+            <text><locale id="case_list_form.m0"/></text>
+            <media image="jr://file/commcare/image/new_case.png" audio="jr://file/commcare/audio/new_case.mp3"/>
         </display>
         <stack>
             <create>
