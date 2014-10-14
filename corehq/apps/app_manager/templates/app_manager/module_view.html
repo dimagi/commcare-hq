@@ -151,7 +151,7 @@
                     <label class="control-label">{% trans "Module Name" %}</label>
                     <div class="controls">
                         {% if edit %}
-                            {{ module.name|input_trans:langs|safe }}
+                            {% input_trans module.name langs %}
                         {% else %}
                             {{ module.name|html_trans:langs|safe }}
                         {% endif %}

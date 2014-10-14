@@ -16,7 +16,7 @@
                 <option value="true">Show</option>
             </select>
             <span id="{{ SLUG }}-label">
-                with label: {{ case_list.label|input_trans:langs|safe }}
+                with label: {% input_trans case_list.label langs %}
             </span>
             <script>
                 $(function () {
