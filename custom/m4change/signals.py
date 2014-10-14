@@ -95,7 +95,7 @@ def _filter_forms(xform, cases):
         registration_date = forms[index][1]
         status = "hidden" if index < len(forms) - 1 or immunized else "eligible"
         _create_mcct_status_row(form._id, status, form.domain, form.received_on.date(),
-                                registration_date, False, False)
+                                registration_date, False, False, False)
 
 
 def handle_m4change_forms(sender, xform, cases, **kwargs):
