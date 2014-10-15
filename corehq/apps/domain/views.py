@@ -344,7 +344,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_user_id',
                 'restrict_superusers',
                 'secure_submissions',
-                'ota_restore_caching',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
             initial.update({
