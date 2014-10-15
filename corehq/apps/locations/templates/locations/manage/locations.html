@@ -91,6 +91,7 @@ $(function() {
     </div>
 </header>
 
+{% if not show_inactive %}
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
@@ -100,6 +101,7 @@ $(function() {
         </div>
     </div>
 </div>
+{% endif %}
 
 <script type="text/html" id="location-template">
 
@@ -158,8 +160,12 @@ $(function() {
 
     </div>
 
-    <!-- create child button -->
-    <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
+    {% if not show_inactive %}
+        <!-- create child button -->
+        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }">
+            <i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span>
+        </a>
+    {% endif %}
 
   </div>
 
