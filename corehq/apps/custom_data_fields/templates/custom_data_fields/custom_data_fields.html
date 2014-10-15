@@ -29,7 +29,9 @@
         {% csrf_token %}
         <fieldset>
             <legend>
-                {{ view.page_name }}
+                {% blocktrans with entity_string=view.entity_string %}
+                    Edit {{ entity_string }} Fields
+                {% endblocktrans %}
             </legend>
 
             {% if custom_fields_form.data_fields.errors %}
@@ -41,7 +43,11 @@
                 {% endfor %}
             {% endif %}
             <div class="control-group">
-                <label class="control-label">{{ view.form_label }}</label>
+                <label class="control-label">
+                    {% blocktrans with entity_string=view.entity_string %}
+                        {{ entity_string }} Fields
+                    {% endblocktrans %}
+                </label>
                 <div class="controls">
                     <p>
                         <button class="btn btn-success"
@@ -55,8 +61,12 @@
                         <thead>
                             <tr>
                                 <th></th>
-                                <th>{% trans "Key" %}</th>
-                                <th>{% trans "Field Label" %}</th>
+                                <th>
+                                    {% blocktrans with entity_string=view.entity_string %}
+                                        {{ entity_string }} Property
+                                    {% endblocktrans %}
+                                </th>
+                                <th>{% trans "Label" %}</th>
                                 <th>{% trans "Required" %}</th>
                                 <th>{% trans "Delete" %}</th>
                             </tr>
