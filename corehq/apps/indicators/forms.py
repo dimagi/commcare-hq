@@ -12,7 +12,7 @@ class ImportIndicatorsFromJsonFileForm(forms.Form):
         required=False,
     )
     override_existing = forms.BooleanField(
-        label=_("Override Existing Indicators"),
+        label=ugettext_noop("Override Existing Indicators"),
         required=False,
     )
 
