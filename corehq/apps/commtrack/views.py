@@ -175,10 +175,9 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 
 
 class ProductFieldsView(CustomDataFieldsMixin, BaseCommTrackManageView):
-    urlname = "product_fields_view"
-    page_name = ugettext_noop("Edit Product Fields")
+    urlname = 'product_fields_view'
     field_type = 'ProductFields'
-    form_label = 'Product Fields'
+    entity_string = _("Product")
 
 
 @require_POST

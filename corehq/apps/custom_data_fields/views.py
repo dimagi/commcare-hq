@@ -3,7 +3,7 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django import forms
 
@@ -73,6 +73,10 @@ class CustomDataFieldsMixin(object):
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
     entity_string = None  # User, Group, Location, Product...
+
+    @classmethod
+    def page_name(cls):
+        return _("Edit {} Fields").format(cls.entity_string)
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
