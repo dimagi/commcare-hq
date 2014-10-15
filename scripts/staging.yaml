@@ -68,7 +68,6 @@ branches:
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
-  - domain-metadata # Nick P 10/8
   - double-management # SK 10/15
 submodules:
   submodules/couchlog-src:
