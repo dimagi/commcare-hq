@@ -88,7 +88,11 @@ class UTCDateTimeProperty(DateTimeProperty):
 
 
 class ISOMeta(object):
-    update_properties = {datetime.datetime: UTCDateTimeProperty}
+    update_properties = {
+        datetime.datetime: UTCDateTimeProperty,
+        UTCDateTime: UTCDateTimeProperty,
+    }
+
     string_conversions = JsonObject.Meta.string_conversions + (
         (UTCDateTimeProperty.UTC_DATE_TIME_RE, datetime.datetime),
     )

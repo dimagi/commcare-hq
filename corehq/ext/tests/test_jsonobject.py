@@ -3,8 +3,9 @@ from django.test import SimpleTestCase
 import datetime
 from corehq.ext.datetime import UTCDateTime
 
-from corehq.ext.jsonobject import UTCDateTimeProperty
+from corehq.ext.jsonobject import UTCDateTimeProperty, ISOMeta
 from corehq.ext.unittest import Corpus, CorpusMeta
+from jsonobject import JsonObject
 
 
 class UTCDateTimePropertyTest(SimpleTestCase):
@@ -68,3 +69,20 @@ class UTCDateTimePropertyTest(SimpleTestCase):
 
         }
     )
+
+
+class TestISOMeta(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        class Foo(JsonObject):
+            Meta = ISOMeta
+
+        cls.Foo = Foo
+
+    def test_dynamic(self):
+        foo = self.Foo.wrap({
+            'datetime': '2014-01-01T00:00:00.123Z',
+        })
+        self.assertEqual(foo.datetime, UTCDateTime(2014, 1, 1, 0, 0, 0, 123000,
+                                                   original_offset='+00:00'))
