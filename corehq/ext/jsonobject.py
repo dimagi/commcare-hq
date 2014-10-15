@@ -91,7 +91,9 @@ class UTCDateTimeProperty(DateTimeProperty):
         if utc_dt.tz_string:
             return utc_dt, '{} {}'.format(unwrapped, utc_dt.tz_string)
         else:
-            return utc_dt, unwrapped
+            # for naive datetimes, strip final Z
+            assert unwrapped[-1] == 'Z'
+            return utc_dt, unwrapped[:-1]
 
 
 class ISOMeta(object):
