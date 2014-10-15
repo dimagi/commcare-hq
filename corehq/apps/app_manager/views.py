@@ -822,7 +822,6 @@ def get_module_view_context_and_template(app, module):
 
         return "app_manager/module_view.html", {
             'details': get_details(),
-            'case_list_form_options': case_list_form_options(case_type)
         }
     else:
         case_type = module.case_type
