@@ -31,8 +31,7 @@ function loc_archive_url(loc_id) {
 }
 
 function loc_unarchive_url(loc_id) {
-    // TODO not the real URL
-    var template = '{% url "archive_location" domain "-locid-" %}';
+    var template = '{% url "unarchive_location" domain "-locid-" %}';
     return template.replace('-locid-', loc_id);
 }
 
@@ -106,7 +105,7 @@ $(function() {
 
     <!-- header bar -->
     <div class="loc_header" data-bind="if: name() != '_root'">
-        <div data-bind="visible: show_edit_buttons">
+        <span data-bind="visible: show_archive_action_button">
             {% if show_inactive %}
             <a class="loc_edit btn btn-primary"
                 data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }">
@@ -118,10 +117,12 @@ $(function() {
                 Archive
             </a>
             {% endif %}
-            <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
-                Edit
-            </a>
-        </div>
+        </span>
+        {% if not show_inactive %}
+        <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+            Edit
+        </a>
+        {% endif %}
 
         <!-- want to make entire row clickable, but overrides click on 'edit' button -->
         <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">

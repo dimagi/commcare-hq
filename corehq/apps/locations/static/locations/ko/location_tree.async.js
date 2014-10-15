@@ -149,8 +149,8 @@ function LocationModel(data, root, depth) {
             return (top_level ? 'No locations created in this project yet' : 'No sub-locations inside ' + this.name());
         }, this);
 
-    this.show_edit_buttons = ko.computed(function() {
-        return !this.is_archived;
+    this.show_archive_action_button = ko.computed(function() {
+        return !show_inactive || this.is_archived();
     }, this);
 
     this.load(data);

@@ -188,6 +188,19 @@ def archive_location(request, domain, loc_id):
     })
 
 
+@domain_admin_required
+def unarchive_location(request, domain, loc_id):
+    loc = Location.get(loc_id)
+    loc.unarchive()
+    return json_response({
+        'success': True,
+        'message': _("Location '{location_name}' has successfully been {action}.").format(
+            location_name=loc.name,
+            action="unarchived",
+        )
+    })
+
+
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")

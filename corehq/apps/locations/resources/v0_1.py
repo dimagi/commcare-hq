@@ -3,6 +3,7 @@ from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
+import json
 
 class LocationResource(JsonResource):
     type = "location"
@@ -19,7 +20,7 @@ class LocationResource(JsonResource):
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         parent_id = bundle.request.GET.get('parent_id', None)
-        include_inactive = bundle.request.GET.get('include_inactive', False)
+        include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         if parent_id:
             parent = get_object_or_not_exist(Location, parent_id, domain)
             return parent.sql_location.child_locations(include_archive_ancestors=include_inactive)
