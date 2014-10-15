@@ -66,6 +66,7 @@ function LocationModel(data, root, depth) {
     this.name = ko.observable();
     this.type = ko.observable();
     this.uuid = ko.observable();
+    this.is_archived = ko.observable();
     this.children = ko.observableArray();
     this.depth = depth || 0;
     this.children_status = ko.observable('not_loaded');
@@ -85,6 +86,7 @@ function LocationModel(data, root, depth) {
         this.name(data.name);
         this.type(data.location_type);
         this.uuid(data.uuid);
+        this.is_archived(data.is_archived);
         if (data.children != null) {
             this.set_children(data.children);
         }
@@ -146,6 +148,10 @@ function LocationModel(data, root, depth) {
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
             return (top_level ? 'No locations created in this project yet' : 'No sub-locations inside ' + this.name());
         }, this);
+
+    this.show_edit_buttons = ko.computed(function() {
+        return !this.is_archived;
+    }, this);
 
     this.load(data);
 }

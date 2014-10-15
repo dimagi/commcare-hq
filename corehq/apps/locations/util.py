@@ -26,6 +26,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
             'name': loc.name,
             'location_type': loc.location_type,
             'uuid': loc.location_id,
+            'is_archived': loc.is_archived,
         }
 
     loc_json = [

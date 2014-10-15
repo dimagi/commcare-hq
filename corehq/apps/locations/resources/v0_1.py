@@ -8,6 +8,7 @@ class LocationResource(JsonResource):
     type = "location"
     uuid = fields.CharField(attribute='location_id', readonly=True, unique=True)
     location_type = fields.CharField(attribute='location_type', readonly=True)
+    is_archived = fields.BooleanField(attribute='is_archived', readonly=True)
     name = fields.CharField(attribute='name', readonly=True, unique=True)
 
     def obj_get(self, bundle, **kwargs):
