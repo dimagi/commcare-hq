@@ -42,18 +42,12 @@ class Corpus(object):
         dct = {}
         fn = self.fn
 
-        def _func_name(fn):
-            try:
-                return fn.func_name
-            except AttributeError:
-                return fn.__name__
-
         def _make_test(input_call, call_result):
             def _test(self):
                 call_result.check(self, input_call, fn)
 
             _test.__doc__ = ('call {}{!r}, expected outcome is {!r}'
-                             .format(_func_name(fn), input_call, call_result))
+                             .format(fn.__name__, input_call, call_result))
             return _test
 
         for name, (input_call, call_result) in self.corpus.items():
