@@ -1,4 +1,5 @@
 import requests
+from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, GroupSummary, ProductAvailabilityData
 
@@ -214,6 +215,13 @@ class ILSGatewayEndpoint(EndpointMixin):
 
         return meta, objects
 
+    def _get_location_id(self, facility, domain):
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[domain, str(facility)],
+                                  reduce=False,
+                                  include_docs=True).first()
+        return sp.location_id
+
     def get_products(self, **kwargs):
         meta, products = self.get_objects(self.products_url, **kwargs)
         for product in products:
@@ -244,18 +252,22 @@ class ILSGatewayEndpoint(EndpointMixin):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
         return meta, [StockTransaction.from_json(stock_transaction) for stock_transaction in stock_transactions]
 
-    def get_supplypointstatuses(self, domain, **kwargs):
+    def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, domain) for supplypointstatus in supplypointstatuses]
+        location_id = self._get_location_id(facility, domain)
+        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in supplypointstatuses]
 
-    def get_deliverygroupreports(self, domain, **kwargs):
+    def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, domain) for deliverygroupreport in deliverygroupreports]
+        location_id = self._get_location_id(facility, domain)
+        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id) for deliverygroupreport in deliverygroupreports]
 
-    def get_groupsummary(self, domain, **kwargs):
+    def get_groupsummary(self, domain, facility, **kwargs):
         meta, groupsummaries = self.get_objects(self.groupsummary_url, **kwargs)
-        return meta, [GroupSummary.wrap_form_json(gs, domain) for gs in groupsummaries]
+        location_id = self._get_location_id(facility, domain)
+        return meta, [GroupSummary.wrap_form_json(gs, location_id) for gs in groupsummaries]
 
-    def get_productavailabilitydata(self, domain, **kwargs):
+    def get_productavailabilitydata(self, domain, facility, **kwargs):
         meta, productavailabilitydata = self.get_objects(self.productavailabilitydata_url, **kwargs)
-        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain) for pad in productavailabilitydata]
+        location_id = self._get_location_id(facility, domain)
+        return meta, [ProductAvailabilityData.wrap_from_json(pad, location_id) for pad in productavailabilitydata]

@@ -3,6 +3,7 @@ from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
 from corehq.apps.commtrack.models import SupplyPointCase, Product
+from dimagi.utils.dates import force_to_datetime
 
 
 class ILSMigrationCheckpoint(models.Model):
@@ -128,12 +129,8 @@ class SupplyPointStatus(models.Model):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
     @classmethod
-    def wrap_from_json(cls, obj, domain):
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[domain, str(obj['supply_point'])],
-                                  reduce=False,
-                                  include_docs=True).first()
-        obj['supply_point'] = sp._id
+    def wrap_from_json(cls, obj, location_id):
+        obj['supply_point'] = location_id
         del obj['id']
         return cls(**obj)
 
@@ -155,12 +152,8 @@ class DeliveryGroupReport(models.Model):
         ordering = ('-report_date',)
 
     @classmethod
-    def wrap_from_json(cls, obj, domain):
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[domain, str(obj['supply_point'])],
-                                  reduce=False,
-                                  include_docs=True).first()
-        obj['supply_point'] = sp._id
+    def wrap_from_json(cls, obj, location_id):
+        obj['supply_point'] = location_id
         del obj['id']
         return cls(**obj)
 
@@ -207,6 +200,7 @@ class SupplyPointWarehouseRecord(models.Model):
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0) # 176
     average_lead_time_in_days = models.FloatField(default=0) # 28
+    external_id = models.PositiveIntegerField(db_index=True)
 
     def __unicode__(self):
         return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
@@ -225,14 +219,18 @@ class GroupSummary(models.Model):
     complete = models.PositiveIntegerField(default=0) # "complete" = submitted or responded
 
     @classmethod
-    def wrap_form_json(cls, obj, domain):
+    def wrap_form_json(cls, obj, location_id):
+        org_summary_id = obj['org_summary']['id']
         del obj['org_summary']['id']
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[domain, str(obj['org_summary']['supply_point'])],
-                                  reduce=False,
-                                  include_docs=True).first()
-        obj['org_summary']['supply_point'] = sp._id
-        obj['org_summary'] = OrganizationSummary(**obj['org_summary'])
+        obj['org_summary']['external_id'] = org_summary_id
+        obj['org_summary']['supply_point'] = location_id
+        obj['org_summary']['create_date'] = force_to_datetime(obj['org_summary']['create_date'])
+        obj['org_summary']['update_date'] = force_to_datetime(obj['org_summary']['update_date'])
+        obj['org_summary']['date'] = force_to_datetime(obj['org_summary']['date'])
+        try:
+            obj['org_summary'] = OrganizationSummary.objects.get(external_id=org_summary_id)
+        except OrganizationSummary.DoesNotExist:
+            obj['org_summary'] = OrganizationSummary.objects.create(**obj['org_summary'])
         del obj['id']
         return cls(**obj)
 
@@ -294,13 +292,8 @@ class ProductAvailabilityData(ReportingModel):
     without_data = models.PositiveIntegerField(default=0)
 
     @classmethod
-    def wrap_from_json(cls, obj, domain):
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[domain, str(obj['supply_point'])],
-                                  reduce=False,
-                                  include_docs=True).first()
-        obj['supply_point'] = sp._id
-        product = Product.get_by_code(domain, obj['product'])
+    def wrap_from_json(cls, obj, location_id):
+        product = Product.get_by_code(location_id, obj['product'])
         obj['product'] = product._id
         del obj['id']
         return cls(**obj)
@@ -327,3 +320,25 @@ class Alert(ReportingModel):
     expires = models.DateTimeField()
 
 
+class DeliveryGroups(object):
+    GROUPS = ('A', 'B', 'C')
+
+    def __init__(self, month=None, facs = None):
+        self.month = month if month else datetime.utcnow().month
+        self.facs = facs
+
+    # Current submitting group: Jan = A
+    # Current processing group: Jan = C
+    # Current delivering group: Jan = B
+
+    def current_submitting_group(self, month=None):
+        month = month if month else self.month
+        return self.GROUPS[(month + 2) % 3]
+
+    def current_processing_group(self, month=None):
+        month = month if month else self.month
+        return self.current_submitting_group(month=(month+2))
+
+    def current_delivering_group(self, month=None):
+        month = month if month else self.month
+        return self.current_submitting_group(month=(month+1))

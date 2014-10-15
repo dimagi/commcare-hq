@@ -97,7 +97,8 @@ def stock_transaction_task(domain, endpoint):
 @task
 def supply_point_statuses_task(domain, endpoint):
     for facility in FACILITIES:
-        supply_point_statuses = endpoint.get_supplypointstatuses(domain, filters=dict(supply_point=facility))[1]
+        supply_point_statuses = endpoint.get_supplypointstatuses(domain, filters=dict(supply_point=facility),
+                                                                 facility=facility)[1]
         for sps in supply_point_statuses:
             try:
                 SupplyPointStatus.objects.get(status_type=sps.status_type, status_value=sps.status_value,
@@ -109,7 +110,8 @@ def supply_point_statuses_task(domain, endpoint):
 @task
 def delivery_group_reports_task(domain, endpoint):
     for facility in FACILITIES:
-        delivery_group_reports = endpoint.get_deliverygroupreports(domain, filters=dict(supply_point=facility))[1]
+        delivery_group_reports = endpoint.get_deliverygroupreports(domain, filters=dict(supply_point=facility),
+                                                                   facility=facility)[1]
         for dgr in delivery_group_reports:
             try:
                 #TODO Avoid duplicating. Should be done better.
@@ -124,17 +126,30 @@ def delivery_group_reports_task(domain, endpoint):
 @task
 def groupsummary_task(domain, endpoint):
     for facility in FACILITIES:
-        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility))[1]
+        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility),
+                                                    facility=facility)[1]
         for gs in group_summaries:
-            gs.org_summary.save()
-            gs.org_summary_id = gs.org_summary.id
+            gs.save()
+
+
+#TODO Remove this task
+@task
+def temporary_task(domain):
+    ilsgateway_config = ILSGatewayConfig.for_domain(domain)
+    domain = ilsgateway_config.domain
+    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    for facility in FACILITIES:
+        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility),
+                                                    facility=facility)[1]
+        for gs in group_summaries:
             gs.save()
 
 
 @task
 def product_availability_task(domain, endpoint):
     for facility in FACILITIES:
-        product_availability = endpoint.get_productavailabilitydata(domain, filters=dict(supply_point=facility))[1]
+        product_availability = endpoint.get_productavailabilitydata(domain, filters=dict(supply_point=facility),
+                                                                    facility=facility)[1]
         for pa in product_availability:
             pa.save()
 
