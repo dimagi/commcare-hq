@@ -25,7 +25,6 @@ class Migration(DataMigration):
         for app_doc in iter_docs(Application.get_db(), application_ids):
 
             if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                # TODO: Is this doc_type logic correct?
                 application = Application.wrap(app_doc)
 
                 filter_combination_func = self.combine_and_interpolate_V2_filters
@@ -37,7 +36,6 @@ class Migration(DataMigration):
                     combined_filter_string = filter_combination_func(detail.get_columns(), application, module, detail)
                     detail.filter = combined_filter_string
 
-                # TODO: Uncomment me when ready!
                 application.save()
 
     @classmethod
@@ -105,18 +103,13 @@ class Migration(DataMigration):
 
                 interpolated_filters.append(interpolated_xpath)
 
-        #if len(interpolated_filters) == 1:
-            # Don't wrap a single filter in parens
-        #    combined_filter = interpolated_filters[0]
-        #else:
-            # AND together the xpaths from each column (and wrap each component in parens)
         combined_filter = ' and '.join('(%s)' % f for f in interpolated_filters)
 
         return combined_filter
 
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        pass
 
     models = {}
     complete_apps = ['app_manager']

@@ -785,7 +785,6 @@ var DetailScreenConfig = (function () {
                         this.$columns = $columns;
 
                         // Add the button
-                        //TODO: Should this be in ui-element.js?
                         $buttonRow = $(
                             '<tr> \
                                 <td class="detail-screen-icon"></td> \
