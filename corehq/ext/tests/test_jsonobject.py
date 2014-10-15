@@ -37,37 +37,49 @@ class UTCDateTimePropertyTest(SimpleTestCase):
         ),
         'date_only': (
             UTCDateTime(2014, 12, 11, 0, 0),
-            (UTCDateTime(2014, 12, 11, 0, 0),
-             '2014-12-11T00:00:00.000000Z')
+            (UTCDateTime(2014, 12, 11, 0, 0), '2014-12-11T00:00:00.000000')
         ),
     })
+
+    ROUND_TRIP_CASES = {
+        'no_tz': (
+            '2014-10-08T21:51:04.568554',
+            '2014-10-08T21:51:04.568554'
+        ),
+        'no_tz_milliseconds': (
+            '2014-10-08T21:51:04.568',
+            '2014-10-08T21:51:04.568000'
+        ),
+        'milliseconds': (
+            '2014-10-08T21:51:04.568Z',
+            '2014-10-08T21:51:04.568000Z +00:00'
+        ),
+        'Z': (
+            '2014-10-08T21:51:04.568554Z',
+            '2014-10-08T21:51:04.568554Z +00:00'
+        ),
+        'tz': (
+            '2014-10-08T17:51:04.568554-04:00',
+            '2014-10-08T21:51:04.568554Z -04:00'
+        ),
+        'same': (
+            '2014-10-08T21:51:04.568554Z -04:00',
+            '2014-10-08T21:51:04.568554Z -04:00'
+        )
+
+    }
 
     round_trip = Corpus(
         lambda string: UTCDateTimeProperty().unwrap(
             UTCDateTimeProperty().wrap(string))[1],
-        {
-            'no_tz': (
-                '2014-10-08T21:51:04.568554',
-                '2014-10-08T21:51:04.568554Z'
-            ),
-            'milliseconds': (
-                '2014-10-08T21:51:04.568',
-                '2014-10-08T21:51:04.568000Z'
-            ),
-            'Z': (
-                '2014-10-08T21:51:04.568554Z',
-                '2014-10-08T21:51:04.568554Z +00:00'
-            ),
-            'tz': (
-                '2014-10-08T17:51:04.568554-04:00',
-                '2014-10-08T21:51:04.568554Z -04:00'
-            ),
-            'same': (
-                '2014-10-08T21:51:04.568554Z -04:00',
-                '2014-10-08T21:51:04.568554Z -04:00'
-            )
+        ROUND_TRIP_CASES,
+    )
 
-        }
+    double_round_trip = Corpus(
+        lambda string: UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(
+            UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(string))[1]
+        ))[1],
+        ROUND_TRIP_CASES,
     )
 
 
