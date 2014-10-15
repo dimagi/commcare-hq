@@ -102,3 +102,113 @@ class UTCDateTimeTest(SimpleTestCase):
             "UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')"
         ),
     })
+
+    test_lt = Corpus(UTCDateTime.__lt__, {
+        'equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            False
+        ),
+        'greater_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00')
+            ),
+            False
+        ),
+        'less_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            True
+        )
+    })
+
+    test_le = Corpus(UTCDateTime.__le__, {
+        'equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            True
+        ),
+        'offset_not_equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+01:00')
+            ),
+            True
+        ),
+        'greater_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00')
+            ),
+            False
+        ),
+        'less_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            True
+        )
+    })
+
+    test_gt = Corpus(UTCDateTime.__gt__, {
+        'equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            False
+        ),
+        'greater_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00')
+            ),
+            True
+        ),
+        'less_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            False
+        )
+    })
+
+    test_ge = Corpus(UTCDateTime.__ge__, {
+        'equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            True
+        ),
+        'offset_not_equal': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+01:00')
+            ),
+            True
+        ),
+        'greater_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00')
+            ),
+            True
+        ),
+        'less_than': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00'),
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00')
+            ),
+            False
+        )
+    })
