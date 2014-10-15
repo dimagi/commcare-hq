@@ -39,7 +39,7 @@ class UTCDateTimeTest(SimpleTestCase):
         ),
         'tz_naive': (
             datetime.datetime(2014, 10, 8, 16, 23, 9, tzinfo=None),
-            UTCDateTime(2014, 10, 8, 16, 23, 9),
+            UTCDateTime(2014, 10, 8, 16, 23, 9, original_offset=None),
         ),
     })
 
@@ -49,6 +49,14 @@ class UTCDateTimeTest(SimpleTestCase):
             datetime.datetime(2014, 12, 10, 22, 5, 18,
                               tzinfo=FixedOffset(3 * 60))
         ),
+        'naive_explicit': (
+            UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset=None),
+            datetime.datetime(2014, 12, 10, 19, 5, 18, tzinfo=None)
+        ),
+        'naive_implicit': (
+            UTCDateTime(2014, 12, 10, 19, 5, 18),
+            datetime.datetime(2014, 12, 10, 19, 5, 18, tzinfo=None)
+        )
     })
 
     test_equal = Corpus(UTCDateTime.__eq__, {

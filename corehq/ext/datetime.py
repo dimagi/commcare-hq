@@ -38,20 +38,22 @@ class UTCDateTime(datetime.datetime):
     __TZ_RE = re.compile(r'^([\+-])(\d\d):(\d\d)$')
 
     def __new__(cls, year, month, day, hour=0, minute=0, second=0,
-                microsecond=0, original_offset=datetime.timedelta(0)):
+                microsecond=0, original_offset=None):
 
         self = super(UTCDateTime, cls).__new__(cls, year, month, day, hour,
                                                minute, second, microsecond,
                                                tzinfo=None)
-        if not isinstance(original_offset, (datetime.timedelta, basestring)):
+        if not isinstance(original_offset,
+                          (type(None), datetime.timedelta, basestring)):
             raise TypeError('original_offset must be a timedelta or string')
-        if isinstance(original_offset, datetime.timedelta):
-            self.__original_offset = original_offset
-            self.__tz_string = self.tz_offset_to_string(original_offset)
-        else:
+
+        if isinstance(original_offset, basestring):
             # they passed in a '+hh:mm' formatted string as original_offset
             self.__original_offset = self.tz_string_to_offset(original_offset)
             self.__tz_string = original_offset
+        else:
+            self.__original_offset = original_offset
+            self.__tz_string = self.tz_offset_to_string(original_offset)
         return self
 
     @property
@@ -73,8 +75,6 @@ class UTCDateTime(datetime.datetime):
         if isinstance(dt, UTCDateTime):
             return dt
         if dt.tzinfo is None:
-            if original_offset is None:
-                original_offset = datetime.timedelta(0)
             utc_dt = dt
         else:
             original_offset = dt.utcoffset()
@@ -89,11 +89,17 @@ class UTCDateTime(datetime.datetime):
         convert to a timezone-aware datetime
 
         """
-        # this should have been checked at creation time
-        assert self.original_offset.total_seconds() % 60 == 0
-        return self.replace(tzinfo=pytz.UTC).astimezone(
-            pytz.FixedOffset(self.original_offset.total_seconds() / 60)
-        )
+        if self.original_offset is not None:
+            # this should have been checked at creation time
+            assert self.original_offset.total_seconds() % 60 == 0
+            return self.replace(tzinfo=pytz.UTC).astimezone(
+                pytz.FixedOffset(self.original_offset.total_seconds() / 60)
+            )
+        else:
+            # make a datetime copy of self
+            return datetime.datetime(self.year, self.month, self.day,
+                                     self.hour, self.minute, self.second,
+                                     self.microsecond, tzinfo=None)
 
     @property
     def tz_string(self):
@@ -127,7 +133,7 @@ class UTCDateTime(datetime.datetime):
     @staticmethod
     def tz_offset_to_string(offset):
         if offset is None:
-            return ''
+            return None
         seconds = offset.total_seconds()
         assert seconds - int(seconds) == 0
         seconds = int(seconds)
@@ -143,6 +149,8 @@ class UTCDateTime(datetime.datetime):
 
     @staticmethod
     def tz_string_to_offset(string):
+        if string is None:
+            return None
         match = UTCDateTime.__TZ_RE.match(string)
         if not match:
             raise ValueError('tz_string must match {}'

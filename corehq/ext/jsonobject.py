@@ -78,13 +78,20 @@ class UTCDateTimeProperty(DateTimeProperty):
                                              original_offset=tz_string)
         else:
             dt = iso8601.parse_date(value)
+            if dt.utcoffset() == datetime.timedelta(0):
+                # UTC might have been inferred
+                # if not explicit, remove it
+                if all(z not in value for z in ('z', 'Z', '+00:00', '-00:00')):
+                    dt = dt.replace(tzinfo=None)
             return UTCDateTime.from_datetime(dt)
 
     def _unwrap(self, value):
         utc_dt = UTCDateTime.from_datetime(value)
         _, unwrapped = super(UTCDateTimeProperty, self)._unwrap(utc_dt)
-        assert utc_dt.tz_string
-        return utc_dt, '{} {}'.format(unwrapped, utc_dt.tz_string)
+        if utc_dt.tz_string:
+            return utc_dt, '{} {}'.format(unwrapped, utc_dt.tz_string)
+        else:
+            return utc_dt, unwrapped
 
 
 class ISOMeta(object):
