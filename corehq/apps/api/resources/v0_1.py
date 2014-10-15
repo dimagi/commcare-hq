@@ -125,6 +125,17 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
+class SuperuserAuthentication(LoginAndDomainAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        permission_check = lambda couch_user, domain: couch_user.is_superuser
+        wrappers = [
+            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
+
+
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
