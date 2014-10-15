@@ -9,7 +9,7 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
-    FieldWithHelpBubble)
+    FieldWithHelpBubble, HiddenFieldWithErrors)
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
@@ -269,7 +269,10 @@ class SettingsForm(Form):
             (ENABLED, ugettext_noop("only specific days and times")),
         ),
     )
-    restricted_sms_times_json = CharField(required=False)
+    restricted_sms_times_json = CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
     send_to_duplicated_case_numbers = ChoiceField(
         required=False,
         label=ugettext_noop("Send Messages to Non-Unique Phone Numbers"),
@@ -298,7 +301,10 @@ class SettingsForm(Form):
         label=ugettext_noop("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
     )
-    sms_conversation_times_json = CharField(required=False)
+    sms_conversation_times_json = CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
     sms_conversation_length = ChoiceField(
         required=False,
         label=ugettext_noop("Conversation Duration"),
@@ -384,7 +390,9 @@ class SettingsForm(Form):
                         "and will go out as soon as another window opens up."),
                 ),
                 BootstrapMultiField(
-                    ErrorsOnlyField("restricted_sms_times_json"),
+                    "",
+                    HiddenFieldWithErrors("restricted_sms_times_json",
+                        data_bind="value: restricted_sms_times_json"),
                     crispy.Div(
                         data_bind="template: {"
                                   " name: 'ko-template-restricted-sms-times', "
@@ -477,7 +485,9 @@ class SettingsForm(Form):
                         "those recipients are in the middle of a conversation."),
                 ),
                 BootstrapMultiField(
-                    ErrorsOnlyField("sms_conversation_times_json"),
+                    "",
+                    HiddenFieldWithErrors("sms_conversation_times_json",
+                        data_bind="value: sms_conversation_times_json"),
                     crispy.Div(
                         data_bind="template: {"
                                   " name: 'ko-template-sms-conversation-times', "
@@ -552,6 +562,21 @@ class SettingsForm(Form):
             "add_window_method": "addSMSConversationTime",
         }
 
+    @property
+    def current_values(self):
+        current_values = {}
+        for field_name in self.fields.keys():
+            value = self[field_name].value()
+            if field_name in ["restricted_sms_times_json",
+                "sms_conversation_times_json"]:
+                if isinstance(value, basestring):
+                    current_values[field_name] = json.loads(value)
+                else:
+                    current_values[field_name] = value
+            else:
+                current_values[field_name] = value
+        return current_values
+
     def populate_dynamic_choices(self):
         groups = Group.get_case_sharing_groups(self._cchq_domain)
         users = CommCareUser.by_domain(self._cchq_domain)
@@ -560,8 +585,152 @@ class SettingsForm(Form):
         domain_user_choices = [(user._id, user.raw_username) for user in users]
         domain_owner_choices = domain_group_choices + domain_user_choices
 
-        self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
-        self.fields["sms_case_registration_user_id"].choices = domain_user_choices
+        choose = [("", _("(Choose)"))]
+        self.fields["sms_case_registration_owner_id"].choices = (
+            choose + domain_owner_choices)
+        self.fields["sms_case_registration_user_id"].choices = (
+            choose + domain_user_choices)
+
+    def _clean_dependent_field(self, bool_field, field):
+        if self.cleaned_data.get(bool_field):
+            value = self.cleaned_data.get(field, None)
+            if not value:
+                raise ValidationError(_("This field is required."))
+            return value
+        else:
+            return None
+
+    def clean_use_default_sms_response(self):
+        return self.cleaned_data.get("use_default_sms_response") == ENABLED
+
+    def clean_default_sms_response(self):
+        return self._clean_dependent_field("use_default_sms_response",
+            "default_sms_response")
+
+    def clean_use_custom_case_username(self):
+        return self.cleaned_data.get("use_custom_case_username") == CUSTOM
+
+    def clean_custom_case_username(self):
+        return self._clean_dependent_field("use_custom_case_username",
+            "custom_case_username")
+
+    def clean_use_custom_message_count_threshold(self):
+        return (self.cleaned_data.get("use_custom_message_count_threshold")
+            == CUSTOM)
+
+    def clean_custom_message_count_threshold(self):
+        value = self._clean_dependent_field("use_custom_message_count_threshold",
+            "custom_message_count_threshold")
+        if value is not None and value <= 0:
+            raise ValidationError(_("Please enter a positive number"))
+        return value
+
+    def clean_use_custom_chat_template(self):
+        return self.cleaned_data.get("use_custom_chat_template") == CUSTOM
+
+    def clean_custom_chat_template(self):
+        value = self._clean_dependent_field("use_custom_chat_template",
+            "custom_chat_template")
+        if value is not None and value not in settings.CUSTOM_CHAT_TEMPLATES:
+            raise ValidationError(_("Unknown custom template identifier."))
+        return value
+
+    def _clean_time_window_json(self, field_name):
+        try:
+            time_window_json = json.loads(self.cleaned_data.get(field_name))
+        except ValueError:
+            raise ValidationError(_("An error has occurred. Please try again, "
+                "and if the problem persists, please report an issue."))
+        result = []
+        for window in time_window_json:
+            day = window.get("day")
+            start_time = window.get("start_time")
+            end_time = window.get("end_time")
+            time_input_relationship = window.get("time_input_relationship")
+
+            try:
+                day = int(day)
+                assert day >= -1 and day <= 6
+            except (ValueError, AssertionError):
+                raise ValidationError(_("Invalid day chosen."))
+
+            if time_input_relationship == TIME_BEFORE:
+                end_time = validate_time(end_time)
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=None,
+                    end_time=end_time,
+                ))
+            elif time_input_relationship == TIME_AFTER:
+                start_time = validate_time(start_time)
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=start_time,
+                    end_time=None,
+                ))
+            else:
+                start_time = validate_time(start_time)
+                end_time = validate_time(end_time)
+                if start_time >= end_time:
+                    raise ValidationError(_("End time must come after start "
+                        "time."))
+                result.append(DayTimeWindow(
+                    day=day,
+                    start_time=start_time,
+                    end_time=end_time,
+                ))
+        return result
+
+    def clean_use_restricted_sms_times(self):
+        return self.cleaned_data.get("use_restricted_sms_times") == ENABLED
+
+    def clean_restricted_sms_times_json(self):
+        if self.cleaned_data.get("use_restricted_sms_times"):
+            return self._clean_time_window_json("restricted_sms_times_json")
+        else:
+            return []
+
+    def clean_use_sms_conversation_times(self):
+        return self.cleaned_data.get("use_sms_conversation_times") == ENABLED
+
+    def clean_sms_conversation_times_json(self):
+        if self.cleaned_data.get("use_sms_conversation_times"):
+            return self._clean_time_window_json("sms_conversation_times_json")
+        else:
+            return []
+
+    def clean_send_to_duplicated_case_numbers(self):
+        return (self.cleaned_data.get("send_to_duplicated_case_numbers")
+            == ENABLED)
+
+    def clean_count_messages_as_read_by_anyone(self):
+        return (self.cleaned_data.get("count_messages_as_read_by_anyone")
+            == ENABLED)
+
+    def clean_sms_case_registration_enabled(self):
+        return (self.cleaned_data.get("sms_case_registration_enabled")
+            == ENABLED)
+
+    def _clean_registration_id_field(self, field_name):
+        if self.cleaned_data.get("sms_case_registration_enabled"):
+            value = self.cleaned_data.get(field_name)
+            if not value:
+                raise ValidationError(_("This field is required."))
+            # Otherwise, the ChoiceField automatically validates that it is
+            # in the list that is dynamically populated in __init__
+            return value
+        else:
+            return None
+
+    def clean_sms_case_registration_owner_id(self):
+        return self._clean_registration_id_field("sms_case_registration_owner_id")
+
+    def clean_sms_case_registration_user_id(self):
+        return self._clean_registration_id_field("sms_case_registration_user_id")
+
+    def clean_sms_conversation_length(self):
+        # Just cast to int, the ChoiceField will validate that it is an integer
+        return int(self.cleaned_data.get("sms_conversation_length"))
 
 class BackendForm(Form):
     _cchq_domain = None

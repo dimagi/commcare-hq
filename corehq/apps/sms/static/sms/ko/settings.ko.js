@@ -1,4 +1,4 @@
-function DayTimeWindow(day, start_time, end_time) {
+function DayTimeWindow(day, start_time, end_time, time_input_relationship) {
     'use strict';
     var self = this;
     self.day = ko.observable(day);
@@ -15,15 +15,9 @@ function DayTimeWindow(day, start_time, end_time) {
         }
     }
 
-    self.time_input_relationship_change = function() {
-        if(self.time_input_relationship() === "BEFORE") {
-            self.start_time(null);
-        } else if(self.time_input_relationship() === "AFTER") {
-            self.end_time(null);
-        }
-    }
-
-    self.time_input_relationship = ko.observable(self.time_input_relationship_initial());
+    self.time_input_relationship = ko.observable(
+        time_input_relationship || self.time_input_relationship_initial()
+    );
 }
 
 function SettingsViewModel(initial) {
@@ -61,7 +55,7 @@ function SettingsViewModel(initial) {
     });
 
     self.addRestrictedSMSTime = function() {
-        self.restricted_sms_times.push(new DayTimeWindow(-1, null, null));
+        self.restricted_sms_times.push(new DayTimeWindow(-1, null, null, null));
         self.refreshTimePickers();
     };
 
@@ -74,7 +68,7 @@ function SettingsViewModel(initial) {
     });
 
     self.addSMSConversationTime = function() {
-        self.sms_conversation_times.push(new DayTimeWindow(-1, null, null));
+        self.sms_conversation_times.push(new DayTimeWindow(-1, null, null, null));
         self.refreshTimePickers();
     };
 
@@ -84,6 +78,14 @@ function SettingsViewModel(initial) {
 
     self.showCustomChatTemplate = ko.computed(function() {
         return self.use_custom_chat_template() === "CUSTOM";
+    });
+
+    self.restricted_sms_times_json = ko.computed(function() {
+        return ko.toJSON(self.restricted_sms_times());
+    });
+
+    self.sms_conversation_times_json = ko.computed(function() {
+        return ko.toJSON(self.sms_conversation_times());
     });
 
     self.refreshTimePickers = function() {
@@ -97,6 +99,38 @@ function SettingsViewModel(initial) {
     };
 
     self.init = function() {
+        self.use_default_sms_response(initial.use_default_sms_response);
+        self.use_restricted_sms_times(initial.use_restricted_sms_times);
+        self.use_custom_case_username(initial.use_custom_case_username);
+        self.use_custom_message_count_threshold(initial.use_custom_message_count_threshold);
+        self.use_sms_conversation_times(initial.use_sms_conversation_times);
+        self.use_custom_chat_template(initial.use_custom_chat_template);
+        self.sms_case_registration_enabled(initial.sms_case_registration_enabled);
+
+        if(initial.restricted_sms_times_json.length > 0) {
+            for(var i = 0; i < initial.restricted_sms_times_json.length; i++) {
+                var window = initial.restricted_sms_times_json[i];
+                self.restricted_sms_times.push(
+                    new DayTimeWindow(window.day, window.start_time, window.end_time,
+                        window.time_input_relationship)
+                );
+            }
+        } else {
+            self.addRestrictedSMSTime();
+        }
+
+        if(initial.sms_conversation_times_json.length > 0) {
+            for(var i = 0; i < initial.sms_conversation_times_json.length; i++) {
+                var window = initial.sms_conversation_times_json[i];
+                self.sms_conversation_times.push(
+                    new DayTimeWindow(window.day, window.start_time, window.end_time,
+                        window.time_input_relationship)
+                );
+            }
+        } else {
+            self.addSMSConversationTime();
+        }
+
         self.refreshTimePickers();
     };
 
