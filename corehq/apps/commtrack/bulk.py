@@ -12,6 +12,7 @@ def import_products(domain, importer):
     messages = []
     to_save = []
     product_count = 0
+    seen_product_ids = set()
 
     for row in importer.worksheet:
         try:

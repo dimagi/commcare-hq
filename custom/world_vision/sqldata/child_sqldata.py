@@ -3,11 +3,11 @@ from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
-from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown
+from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails
 
 
 class ChildRegistrationDetails(MotherRegistrationDetails):
@@ -28,12 +28,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("Total children registered ever",
-                CountUniqueColumn('doc_id',
-                    alias="total",
-                    filters=self.filters
-                )
-            ),
+            DatabaseColumn("Total children registered ever", CountUniqueColumn('doc_id', alias="total"))
         ]
         if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
@@ -85,21 +80,34 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
             ])
         return columns
 
-class ClosedChildCasesBreakdown(ClosedMotherCasesBreakdown):
+class ClosedChildCasesBreakdown(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'closed_child_cases_breakdown'
     title = 'Closed Child Cases Breakdown'
+    show_total = True
     total_row_name = "Children cases closed during the time period"
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
 
     @property
     def group_by(self):
         return ['reason_for_child_closure']
 
     @property
+    def rows(self):
+        from custom.world_vision import CLOSED_CHILD_CASES_BREAKDOWN
+        return self._get_rows(CLOSED_CHILD_CASES_BREAKDOWN, super(ClosedChildCasesBreakdown, self).rows)
+
+    @property
     def filters(self):
-        filter = super(ClosedMotherCasesBreakdown, self).filters
+        filter = super(ClosedChildCasesBreakdown, self).filters
         filter.append(NOTEQ('reason_for_child_closure', 'empty'))
         return filter
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[DataTablesColumn('Reason for closure'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
 
     @property
     def columns(self):
@@ -358,39 +366,39 @@ class NutritionFeedingDetails(BaseSqlData):
             DatabaseColumn("Exclusive Breastfeeding (EBF)",
                 CountUniqueColumn('doc_id',
                     alias="exclusive_breastfeeding",
-                    filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"), LTE('dob', "days_183")])]
+                    filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"), LTE('dob', "today_minus_183")])]
                 )
             ),
             DatabaseColumn("Exclusive Breastfeeding (EBF) Total Eligible",
                 CountUniqueColumn('doc_id',
                     alias="exclusive_breastfeeding_total_eligible",
-                    filters=self.filters + [GTE('dob', 'days_183')]
+                    filters=self.filters + [GTE('dob', 'today_minus_183')]
                 )
             ),
 
             DatabaseColumn("Supplementary feeding",
                 CountUniqueColumn('doc_id',
                     alias="supplementary_feeding",
-                    filters=self.filters + [AND([EQ('supplementary_feeding_baby', 'yes'), GTE('dob', 'days_182')])]
+                    filters=self.filters + [AND([EQ('supplementary_feeding_baby', 'yes'), GTE('dob', 'today_minus_182')])]
                 )
             ),
             DatabaseColumn("Supplementary feeding Total Eligible",
                 CountUniqueColumn('doc_id',
                     alias="supplementary_feeding_total_eligible",
-                    filters=self.filters + [GTE('dob', 'days_182')]
+                    filters=self.filters + [GTE('dob', 'today_minus_182')]
                 )
             ),
 
             DatabaseColumn("Complementary feeding",
                 CountUniqueColumn('doc_id',
                     alias="complementary_feeding",
-                    filters=self.filters + [AND([EQ('comp_breastfeeding', 'yes'), LTE('dob', 'days_183'), GTE('dob', 'days_730')])]
+                    filters=self.filters + [AND([EQ('comp_breastfeeding', 'yes'), LTE('dob', 'today_minus_183'), GTE('dob', 'today_minus_730')])]
                 )
             ),
             DatabaseColumn("Complementary feeding Total Eligible",
                 CountUniqueColumn('doc_id',
                     alias="complementary_feeding_total_eligible",
-                    filters=self.filters + [AND([LTE('dob', 'days_183'), GTE('dob', 'days_730')])]
+                    filters=self.filters + [AND([LTE('dob', 'today_minus_183'), GTE('dob', 'today_minus_730')])]
                 )
             )
         ]
@@ -480,22 +488,22 @@ class ImmunizationDetailsFirstYear(ImmunizationOverview):
                 CountUniqueColumn('doc_id', alias="hep0_eligible", filters=self.filters)
             ),
             DatabaseColumn("OPV1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+                CountUniqueColumn('doc_id', alias="opv1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
             ),
             DatabaseColumn("HEP1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+                CountUniqueColumn('doc_id', alias="hep1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
             ),
             DatabaseColumn("DPT1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt1_eligible", filters=self.filters + [LTE('dob', 'days_40')])
+                CountUniqueColumn('doc_id', alias="dpt1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
             ),
             DatabaseColumn("OPV2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+                CountUniqueColumn('doc_id', alias="opv2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
             ),
             DatabaseColumn("HEP2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+                CountUniqueColumn('doc_id', alias="hep2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
             ),
             DatabaseColumn("DPT2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt2_eligible", filters=self.filters + [LTE('dob', 'days_75')])
+                CountUniqueColumn('doc_id', alias="dpt2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
             )
         ]
         return columns[:1] + cols1 + columns[1:-5] + cols2 + columns[-5:]
@@ -519,16 +527,16 @@ class ImmunizationDetailsSecondYear(ImmunizationOverview):
                 CountUniqueColumn('doc_id', alias="vita3", filters=self.filters + [EQ('vita3', 'yes')])
             ),
             DatabaseColumn("VitA1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita1_eligible", filters=self.filters + [LTE('dob', 'days_273')])
+                CountUniqueColumn('doc_id', alias="vita1_eligible", filters=self.filters + [LTE('dob', 'today_minus_273')])
             ),
             DatabaseColumn("VitA2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita2_eligible", filters=self.filters + [LTE('dob', 'days_547')])
+                CountUniqueColumn('doc_id', alias="vita2_eligible", filters=self.filters + [LTE('dob', 'today_minus_547')])
             ),
             DatabaseColumn("DPT-OPT Booster Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'days_548')])
+                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'today_minus_548')])
             ),
             DatabaseColumn("VitA3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'days_700')])
+                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'today_minus_700')])
             )
 
         ]
@@ -567,7 +575,7 @@ class ChildDeworming(BaseSqlData):
             DatabaseColumn("Deworming Total Eligible",
                 CountUniqueColumn('doc_id',
                     alias="deworming_total_eligible",
-                    filters=self.filters + [LTE('dob', 'days_365')]
+                    filters=self.filters + [LTE('dob', 'today_minus_365')]
                 )
             ),
         ]
@@ -583,7 +591,7 @@ class EBFStoppingDetails(BaseSqlData):
     def filters(self):
         filters = super(EBFStoppingDetails, self).filters
         filters.append(EQ('exclusive_breastfeeding', 'no'))
-        filters.append(LTE('dob', 'days_183'))
+        filters.append(LTE('dob', 'today_minus_183'))
         filters.append(NOTEQ('ebf_stop_age_month', 'empty'))
         return filters
 

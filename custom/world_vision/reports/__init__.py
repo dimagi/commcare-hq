@@ -2,13 +2,12 @@ import calendar
 import datetime
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart, LineChart
 from corehq.apps.reports.sqlreport import calculate_total_row
-from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
-from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails, ClosedChildCasesBreakdown, \
-    ChildrenDeathsByMonth
+from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails,  ChildrenDeathsByMonth
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
-from custom.world_vision.sqldata.mother_sqldata import ClosedMotherCasesBreakdown, DeliveryLiveBirthDetails, \
-    PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, DeliveryPlaceDetailsExtended
+from custom.world_vision.sqldata.mother_sqldata import PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, \
+    DeliveryPlaceDetailsExtended
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -52,6 +51,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             home = 'home',
             on_route = 'on_route',
             other = 'other',
+            male  = 'male',
+            female = 'female',
             health_center_worker = 'health_center_worker',
             trained_traditional_birth_attendant = 'trained_traditional_birth_attendant',
             normal_delivery = 'normal',
@@ -71,17 +72,16 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
 
-        for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 365, 547, 548, 700, 730]:
-            config['days_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+        for d in [35, 56, 84, 85, 112, 196]:
+            config['today_plus_%d' % d] = (today + datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+
+        for d in [2, 4, 21, 25, 40, 75, 106, 182, 183, 273, 365, 547, 548, 700, 730]:
+            config['today_minus_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
 
         for d in [1, 3, 5, 6]:
             config['%d' % d] = '%d' % d
 
         config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
-        config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
-        config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
-        config['third_trimester_start_date'] =  (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
 
         for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
             req_prop = 'location_%s' % v['prop']
@@ -138,11 +138,9 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
     def get_chart(self, rows, x_label, y_label, data_provider):
         def _get_label_with_percentage(row):
-            return "%s [%s%%]" %(row[0], str(float(row[-1]['html'][:-1])))
+            return "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1])))
 
-        if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
-            chart = PieChart('', '', [{'label': _get_label_with_percentage(row), 'value':float(row[-1]['html'][:-1])} for row in rows])
-        elif isinstance(data_provider, NutritionBirthWeightDetails):
+        if isinstance(data_provider, NutritionBirthWeightDetails):
             chart = PieChart('BirthWeight', '', [{'label': "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1]))),
                                                   'value':float(row[-1]['html'][:-1])} for row in rows[1:]], ['red', 'green'])
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):

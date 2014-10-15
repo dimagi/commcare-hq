@@ -1,6 +1,6 @@
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn, SumColumn
-from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR
+from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
 from custom.world_vision.sqldata import BaseSqlData
@@ -33,12 +33,7 @@ class MotherRegistrationDetails(BaseSqlData):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("Total mothers registered ever",
-                CountUniqueColumn('doc_id',
-                    alias="total",
-                    filters=[NOTEQ('doc_id', 'empty')]
-                )
-            ),
+            DatabaseColumn("Total mothers registered ever",  CountUniqueColumn('doc_id', alias="total")),
         ]
         if 'startdate' not in self.config and 'enddate' not in self.config or 'startdate' not in self.config and 'enddate' in self.config:
             columns.extend([
@@ -107,20 +102,13 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
 
     @property
     def rows(self):
-        rows = super(ClosedMotherCasesBreakdown, self).rows
-        total_row = calculate_total_row(rows)
-        total = total_row[-1] if total_row else 0
-        for row in rows:
-            from custom.world_vision import REASON_FOR_CLOSURE_MAPPING
-            row[0] = REASON_FOR_CLOSURE_MAPPING[row[0]]
-            percent = self.percent_fn(total, row[1]['html'])
-            row.append({'sort_key':percent, 'html': percent})
-        return rows
+        from custom.world_vision import REASON_FOR_CLOSURE_MAPPING
+        return self._get_rows(REASON_FOR_CLOSURE_MAPPING, super(ClosedMotherCasesBreakdown, self).rows)
 
     @property
     def filters(self):
         filter = super(ClosedMotherCasesBreakdown, self).filters
-        filter.append(NOTEQ('reason_for_mother_closure', 'empty'))
+        filter.append(NOTEQ('closed_on', 'empty'))
         return filter
 
     @property
@@ -150,13 +138,14 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
         x = self.data['trimester_1'] + self.data['trimester_2'] + self.data['trimester_3']
         return "%(p).2f%%" % \
             {
-                "p": (100 * int(y or 0) / (x or 1))
+                "p": (100 * float(y or 0) / float(x or 1))
             }
 
     @property
     def filters(self):
         filter = super(PregnantMotherBreakdownByTrimester, self).filters
         filter.append(EQ('mother_state', 'pregnant_mother_type'))
+        filter.append(NOTEQ('edd', 'empty'))
         return filter
 
     @property
@@ -175,20 +164,18 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
         return [
             DatabaseColumn("Trimester 1",
                 CountUniqueColumn('doc_id',
-                    alias="trimester_1",
-                    filters=self.filters + [AND([LTE('lmp', "today"), GT('lmp', "first_trimester_start_date"), NOTEQ('lmp', 'empty')])]
+                    alias="trimester_1", filters=self.filters + [GT('edd', "today_plus_196")]
                 )
             ),
             DatabaseColumn("Trimester 2",
                 CountUniqueColumn('doc_id',
                     alias="trimester_2",
-                    filters=self.filters + [AND([LTE('lmp', "second_trimester_start_date"), GT('lmp', "second_trimester_end_date"), NOTEQ('lmp', 'empty')])]
+                    filters=self.filters + [AND([LTE('edd', "today_plus_196"), GT('edd', "today_plus_84")])]
                 )
             ),
             DatabaseColumn("Trimester 3",
                 CountUniqueColumn('doc_id',
-                    alias="trimester_3",
-                    filters=self.filters + [AND([LTE('lmp', 'third_trimester_start_date'), NOTEQ('lmp', 'empty')])]
+                    alias="trimester_3", filters=self.filters + [LTE('edd', 'today_plus_84')]
                 )
             )
         ]
@@ -210,7 +197,8 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + 14].slug], 'html': self.data[self.columns[i + 14].slug]},
+                           {'sort_key': self.data[self.columns[i + 14].slug], 'html': self.data[self.columns[i + 14].slug],
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i+ 14].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[i + 14].slug], self.data[self.columns[i].slug])}])
         return result
@@ -265,22 +253,22 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                 CountUniqueColumn('doc_id', alias="knows_closest_facility", filters=self.filters + [EQ('knows_closest_facility', 'yes')]),
             ),
             DatabaseColumn("No ANC Total Eligible",
-                CountUniqueColumn('doc_id', alias="no_anc_eligible", filters=self.filters + [LTE('lmp', 'days_84')]),
+                CountUniqueColumn('doc_id', alias="no_anc_eligible", filters=self.filters + [LTE('edd', 'today_plus_196')]),
             ),
             DatabaseColumn("ANC1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_1_eligible", filters=self.filters + [LTE('lmp', 'days_84')]),
+                CountUniqueColumn('doc_id', alias="anc_1_eligible", filters=self.filters + [LTE('edd', 'today_plus_196')]),
             ),
             DatabaseColumn("ANC2 Total Eligible",
                 CountUniqueColumn('doc_id', alias="anc_2_eligible",
-                                  filters=self.filters + [AND([EQ('anc_1', 'yes'), LTE('lmp', 'days_168')])]),
+                                  filters=self.filters + [AND([EQ('anc_1', 'yes'), LTE('edd', 'today_plus_112')])]),
             ),
             DatabaseColumn("ANC3 Total Eligible",
                 CountUniqueColumn('doc_id', alias="anc_3_eligible",
-                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('lmp', 'days_224')])]),
+                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('edd', 'today_plus_56')])]),
             ),
             DatabaseColumn("ANC4 Total Eligible",
                 CountUniqueColumn('doc_id', alias="anc_4_eligible",
-                                  filters=self.filters + [AND([EQ('anc_3', 'yes'), LTE('lmp', 'days_245')])]),
+                                  filters=self.filters + [AND([EQ('anc_3', 'yes'), LTE('edd', 'today_plus_35')])]),
             ),
             DatabaseColumn("TT1 Total Eligible",
                 CountUniqueColumn('doc_id', alias="tt_1_eligible", filters=self.filters + [NOTEQ('previous_tetanus', 'yes')]),
@@ -299,7 +287,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                 CountUniqueColumn('doc_id', alias="ifa_tablets_eligible"),
             ),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
+                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('edd', 'today_plus_85')]),
             ),
             DatabaseColumn("Clinically anemic mothers Total Eligible",
                 CountUniqueColumn('doc_id', alias="clinically_anemic_eligible"),
@@ -312,9 +300,30 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
             )
         ]
 
+class DeliveryMothersIds(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+
+    @property
+    def filters(self):
+        filter =  super(DeliveryMothersIds, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('delivery_date', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('delivery_date', 'stred'))
+        return filter
+
+    @property
+    def group_by(self):
+        return ['doc_id']
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Mother ID",  SimpleColumn('doc_id'))
+        ]
 
 class DeliveryLiveBirthDetails(BaseSqlData):
-    table_name = "fluff_WorldVisionMotherFluff"
+    table_name = "fluff_WorldVisionChildFluff"
     slug = 'delivery_live_birth_details'
     title = ''
     show_charts = True
@@ -328,13 +337,18 @@ class DeliveryLiveBirthDetails(BaseSqlData):
         return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number'), DataTablesColumn('Percentage')])
 
     @property
+    def filters(self):
+        self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
+        return [IN('mother_id', 'mother_ids')]
+
+    @property
     def columns(self):
         return [
             DatabaseColumn("Live birth (Male)",
-                SumColumn('number_of_boys_total', alias='girls')
+                CountUniqueColumn('doc_id', alias='girls', filters=self.filters + [EQ('gender', 'female')])
             ),
             DatabaseColumn("Live birth (Female)",
-                SumColumn('number_of_girls_total', alias='boys')
+                CountUniqueColumn('doc_id', alias='boys', filters=self.filters + [EQ('gender', 'male')])
             )
         ]
 
@@ -345,7 +359,8 @@ class DeliveryLiveBirthDetails(BaseSqlData):
         for column in self.columns:
             percent = self.percent_fn(total, self.data[column.slug])
             result.append([{'sort_key': column.header, 'html': column.header},
-                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': self.data[column.slug] if self.data[column.slug] else 0,
+                            'html': self.data[column.slug] if self.data[column.slug] else 0},
                            {'sort_key': 'percentage', 'html': percent}
             ])
 
@@ -357,6 +372,14 @@ class DeliveryStillBirthDetails(BaseSqlData):
     slug = 'delivery_still_birth_details'
     title = ''
 
+    @property
+    def filters(self):
+        filter =  super(DeliveryStillBirthDetails, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('delivery_date', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('delivery_date', 'stred'))
+        return filter
 
     @property
     def headers(self):
@@ -380,7 +403,8 @@ class DeliveryStillBirthDetails(BaseSqlData):
         for column in self.columns:
             result.append([{'sort_key': column.header, 'html': column.header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['delivery_details'], column.slug)},
-                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]}]
+                           {'sort_key': self.data[column.slug] if self.data[column.slug] else 0,
+                            'html': self.data[column.slug] if self.data[column.slug] else 0}]
             )
         return result
 
@@ -392,6 +416,15 @@ class PostnatalCareOverview(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+
+    @property
+    def filters(self):
+        filter =  super(PostnatalCareOverview, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('delivery_date', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('delivery_date', 'stred'))
+        return filter
 
     @property
     def headers(self):
@@ -406,7 +439,8 @@ class PostnatalCareOverview(BaseSqlData):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
+                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug],
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i+4].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug])}])
         return result
@@ -432,15 +466,15 @@ class PostnatalCareOverview(BaseSqlData):
             ),
             DatabaseColumn("PNC 2 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_2_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_2')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_2')])]),
             ),
             DatabaseColumn("PNC 3 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_3_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_5')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_25')])]),
             ),
             DatabaseColumn("PNC 4 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_4_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'days_21')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_21')])]),
             )
         ]
 
@@ -466,8 +500,12 @@ class CauseOfMaternalDeaths(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(CauseOfMaternalDeaths, self).filters
+        filter = super(CauseOfMaternalDeaths, self).filters[1:]
         filter.append(EQ('reason_for_mother_closure', 'death'))
+        if 'strsd' in self.config:
+            filter.append(GTE('date_of_mother_death', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('date_of_mother_death', 'stred'))
         return filter
 
     @property

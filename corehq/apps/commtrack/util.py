@@ -286,6 +286,9 @@ def encode_if_needed(val):
 
 
 def generate_code(object_name, existing_codes):
+    if not object_name:
+        object_name = 'no name'
+
     matcher = re.compile("[\W\d]+")
     name_slug = matcher.sub(
         '_',

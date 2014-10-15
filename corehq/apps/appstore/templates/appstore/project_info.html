@@ -298,7 +298,11 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    {% trans "Please" %} <a href="{% url "login" %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url "register_user" %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
+                    {% blocktrans %}
+                        Please <a href="{% url "login" DOMAIN_TYPE %}">sign in</a>
+                        or <a href="{% url "register_user" %}">register</a>
+                        to download an app from Exchange
+                    {% endblocktrans %}
                 {% endif %}
             </fieldset>
         </form>

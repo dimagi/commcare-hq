@@ -278,6 +278,30 @@ class IndicatorAdminTab(UITab):
         indicator_enabled_projects = get_indicator_domains()
         return self.couch_user.can_edit_data() and self.domain in indicator_enabled_projects
 
+    @property
+    def sidebar_items(self):
+        items = super(IndicatorAdminTab, self).sidebar_items
+        from corehq.apps.indicators.views import (
+            BulkExportIndicatorsView,
+            BulkImportIndicatorsView,
+        )
+        items.append([
+            _("Other Actions"), [
+                {
+                    'title': BulkImportIndicatorsView.page_title,
+                    'url': reverse(BulkImportIndicatorsView.urlname,
+                                   args=[self.domain]),
+                    'urlname': BulkImportIndicatorsView.urlname,
+                },
+                {
+                    'title': _("Download Indicators Export"),
+                    'url': reverse(BulkExportIndicatorsView.urlname,
+                                   args=[self.domain]),
+                }
+            ]
+        ])
+        return items
+
 
 class DashboardTab(UITab):
     title = ugettext_noop("Dashboard")

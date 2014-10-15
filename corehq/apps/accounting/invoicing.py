@@ -410,17 +410,17 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                         'monthly_limit': self.rate.monthly_limit,
                     }
         if self.rate.monthly_limit == 0:
-            return _("%(num_sms)d SMS Message(plural)s" % {
+            return _("%(num_sms)d SMS Message%(plural)s") % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
-            })
+            }
         num_extra = self.rate.monthly_limit - self.num_sms
         return _("%(num_extra_sms)d SMS Message%(plural)s beyond "
-                 "%(monthly_limit)d messages included." % {
+                 "%(monthly_limit)d messages included.") % {
                     'num_extra_sms': num_extra,
                     'plural': '' if num_extra == 0 else 's',
                     'monthly_limit': self.rate.monthly_limit,
-                })
+                 }
 
     @property
     @memoized

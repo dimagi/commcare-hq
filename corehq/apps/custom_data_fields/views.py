@@ -71,9 +71,8 @@ class CustomDataFieldForm(forms.Form):
 class CustomDataFieldsMixin(object):
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
-    page_name = ugettext_noop("Edit Custom Fields")
     field_type = None
-    form_label = None
+    entity_string = None  # User, Group, Location, Product...
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
