@@ -9,9 +9,12 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
 
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+    ]
 
     data_source = {
         'adapter': 'report',
@@ -46,8 +49,14 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
             'category': 'Current Stock Status',
         }
 
-        products = sorted(Product.view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True),
-                          key=lambda p: p.name)
+        products = sorted(
+            Product.by_domain(
+                self.domain,
+                include_archived=self.request.GET.get('archived_products', False)
+            ),
+            key=lambda p: p.name
+        )
+
         if self.program_id:
             products = filter(lambda c: c.program_id == self.program_id, products)
         for p in products:

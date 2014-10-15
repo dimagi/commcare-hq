@@ -1,9 +1,18 @@
 # coding=utf-8
+import calendar
 from corehq.apps.commtrack.models import Product
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
+from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
+from django.utils.translation import ugettext as _
+
+
+def get_localized_months():
+    #Returns chronological list of months in french language
+    with localize('fr'):
+        return [(_(calendar.month_name[i])).title() for i in xrange(1, 13)]
 
 
 class IntraHealthLocationMixin(object):
@@ -73,25 +82,26 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     @property
     def rows(self):
         data = self.model.data
-        localizations = sorted(list(set(zip(*data.keys())[1]))) if data.keys() else []
+        if isinstance(self.model, (NombreData, TauxConsommationData)):
+            localizations = sorted(set(key[0] for key in data))
+        else:
+            localizations = sorted(set(key[1] for key in data))
+
         rows = []
 
         formatter = DataFormatter(DictDataFormat(self.model.columns, no_value=self.no_value))
-        if isinstance(self.data_source, NombreData) or isinstance(self.data_source, TauxConsommationData):
+        if isinstance(self.data_source, (NombreData, TauxConsommationData)):
             result = {}
             ppss = set()
             for k, v in data.iteritems():
-                ppss.add(k[2])
+                ppss.add(k[-2])
                 if 'region_id' in self.data_source.config:
-                    helper_tuple = (k[3], k[2], k[1])
+                    helper_tuple = (k[2], k[1], k[0])
                 else:
-                    helper_tuple = (k[2], k[1])
-                if helper_tuple in result:
-                    r = result[helper_tuple]
-                    if r['date'] <= v['date']:
-                        result[helper_tuple] = v
-                else:
-                    result[helper_tuple] = v
+                    helper_tuple = (k[1], k[0])
+
+                result[helper_tuple] = v
+
             if 'region_id' in self.data_source.config:
                 result_sum = {}
                 for localization in localizations:

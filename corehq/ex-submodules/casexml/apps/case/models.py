@@ -1191,6 +1191,3 @@ def _type_sort(action_type):
     Consistent ordering for action types
     """
     return const.CASE_ACTIONS.index(action_type)
-
-
-

@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.elastic import es_wrapper, send_to_elasticsearch
 
 from corehq.apps.users import xml
 from couchforms.signals import successful_form_received, ReceiverResult, Certainty
@@ -30,6 +31,17 @@ post_save.connect(django_user_post_save_signal, User)
 
 commcare_user_post_save = Signal(providing_args=["couch_user"])
 couch_user_post_save = Signal(providing_args=["couch_user"])
+
+
+def update_user_in_es(sender, couch_user, **kwargs):
+    """
+    Automatically sync the user to elastic directly on save or delete
+    """
+    send_to_elasticsearch("users", couch_user.to_json(),
+                          delete=couch_user.to_be_deleted())
+
+couch_user_post_save.connect(update_user_in_es)
+
 
 """
 This section automatically creates Couch users whenever a registration xform is received

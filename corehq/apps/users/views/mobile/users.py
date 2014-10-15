@@ -305,7 +305,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'users_list': {
+            'data_list': {
                 'page': self.users_list_page,
                 'limit': self.users_list_limit,
                 'total': self.users_list_total,
@@ -328,15 +328,16 @@ def smart_query_string(query):
     """
     If query does not use the ES query string syntax,
     default to doing an infix search for each term.
+    returns (is_simple, query)
     """
     special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
                      '~', '*', '?', ':', '\\', '/']
     for char in special_chars:
         if char in query:
-            return query
+            return False, query
     r = re.compile(r'\w+')
     tokens = r.findall(query)
-    return "*{}*".format("* *".join(tokens))
+    return True, "*{}*".format("* *".join(tokens))
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
@@ -375,11 +376,13 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
-        query = smart_query_string(self.query)
+        is_simple, query = smart_query_string(self.query)
+        default_fields = ["username.exact", "last_name", "first_name"]
         q = {
             "query": {"query_string": {
                 "query": query,
                 "default_operator": "AND",
+                "fields": default_fields if is_simple else None
             }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
@@ -450,8 +453,8 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
-            'users_list_total': self.users_list_total,
-            'users_list': self.users_list,
+            'data_list_total': self.users_list_total,
+            'data_list': self.users_list,
         }))
 
 

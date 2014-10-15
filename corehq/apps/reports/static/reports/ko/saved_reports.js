@@ -184,6 +184,15 @@ var ReportConfigsViewModel = function (options) {
         self.configBeingViewed().filters = filters;
         self.configBeingEdited(self.configBeingViewed());
         self.modalSaveButton.state('save');
+
+        $(".save-date-picker").removeClass('hasDatepicker').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
+        });
     };
 
     self.unsetConfigBeingEdited = function () {

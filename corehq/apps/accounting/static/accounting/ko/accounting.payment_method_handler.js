@@ -222,7 +222,7 @@ var Invoice = function (initData) {
     });
 
     self.showAmountLeftoverError = ko.computed(function () {
-        return ! self.isLeftoverAmountEnough();
+        return (! self.isLeftoverAmountEnough()) && (! self.showAmountRangeError());
     });
 
     self.selectPartialPayment = function () {

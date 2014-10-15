@@ -16,7 +16,7 @@ function HQReportDataTables(options) {
     self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
     self.errorText = options.errorText || "<span class='label label-important'>Sorry!</span> There was an error with your query, it has been logged, please try another query.";
-    self.badRequestErrorText = options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
+    self.badRequestErrorText = options.badRequestErrorText || options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;

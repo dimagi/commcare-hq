@@ -16,7 +16,7 @@
     <tr>
         <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
 		<td>{{ domain.deployment.city|default:"" }}</td>
-		<td>{{ domain.deployment.country|default:"" }}</td>
+		<td>{{ domain.deployment.countries|default:""|join:', '  }}</td>
 		<td>{{ domain.deployment.region|default:"" }}</td>
 		<td>{{ domain.project_type|default:"" }}</td>
 		<td>{{ domain.customer_type|default:"" }}</td>

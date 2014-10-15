@@ -377,7 +377,7 @@ class AdvancedFormActions(DocumentSchema):
             else:
                 parent = self.actions_meta_by_tag[action.parent_tag]['action']
                 if parent.case_type == parent_case_type:
-                    yield parent
+                    yield action
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -1600,7 +1600,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     subcase.case_properties.keys()
                 )
                 parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                if parent:
+                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -2514,13 +2515,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            for form in self.get_forms():
-                if form.has_fixtures:
-                    raise PermissionDenied(_(
-                        "Usage of lookup tables is not supported by your "
-                        "current subscription. Please upgrade your "
-                        "subscription before using this feature."
-                    ))
+            # remote apps don't support get_forms yet.
+            # for now they can circumvent the fixture limitation. sneaky bastards.
+            if hasattr(self, 'get_forms'):
+                for form in self.get_forms():
+                    if form.has_fixtures:
+                        raise PermissionDenied(_(
+                            "Usage of lookup tables is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
 
     def validate_jar_path(self):
         build = self.get_build()

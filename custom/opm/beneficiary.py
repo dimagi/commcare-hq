@@ -95,12 +95,18 @@ class OPMCaseRow(object):
     @property
     @memoized
     def dod(self):
-        return self.case_property('dod')
+        dod = self.case_property('dod')
+        if dod and not isinstance(dod, datetime.date):
+            raise InvalidRow('Delivery date must be a date!')
+        return dod
 
     @property
     @memoized
     def edd(self):
-        return self.case_property('edd')
+        edd = self.case_property('edd')
+        if edd and not isinstance(edd, datetime.date):
+            raise InvalidRow('EDD must be a date!')
+        return edd
 
     @property
     @memoized

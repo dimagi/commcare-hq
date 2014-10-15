@@ -12,6 +12,7 @@ from dimagi.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 
+
 class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     slug = "chw_manager"
     name = "CHW Manager Report"
@@ -84,7 +85,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         )
         return context
 
-
     @property
     def rows(self):
         self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."], ["Totals"]]
@@ -128,7 +128,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
         return rows
 
-
     @property
     @memoized
     def full_rows(self):
@@ -148,7 +147,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 self.statistics_rows[3].append(indicator_stats['total'])
 
         return user_data.values()
-
 
     @property
     def indicator_slugs(self):
@@ -198,12 +196,9 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Follow-up",
                 indicators=[
-                    dict(slug="under5_danger_signs", expected="--"),
+                    dict(slug="under5_danger_signs_referral_proportion", expected="100%"),
                     dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
-                    dict(slug="num_urgent_referrals", expected="--"), # denominator for MVIS indicator
                     dict(slug="urgent_referrals_proportion", expected="100%"), # MVIS Indicator
-                    dict(slug="late_followups_proportion", expected="--"),
-                    dict(slug="no_followups_proportion", expected="--"),
                     dict(slug="median_days_referral_followup", expected="<=2"),
                 ]
             ),
@@ -255,12 +250,20 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         else:
             _fmt_stat = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
 
+        debug_data = {}
         for u, user in enumerate(self.users):
             self.datespan.inclusive = False
-            value = indicator.get_value([user.user_id], self.datespan)
+            value = indicator.get_value([user.user_id], self.datespan,
+                                        is_debug=self.is_debug)
+            if isinstance(value, tuple):
+                debug_data[user.user_id] = value[1]
+                value = value[0]
             raw_values[user.user_id] = value
             user_indices[user.user_id] = u
         all_values = raw_values.values()
+        debug_all = []
+        for data in debug_data.values():
+            debug_all.extend(data)
         if all_values:
             if isinstance(all_values[0], dict):
                 non_zero = [v.get('ratio') * 100 for v in all_values if v.get('ratio') is not None]
@@ -273,7 +276,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             else:
                 non_zero = [v for v in all_values if v > 0]
                 nz_sum = sum(non_zero)
-                total = _formatted_cell(nz_sum, _fmt_stat(nz_sum))
+                total = nz_sum if self.is_debug else _formatted_cell(nz_sum, _fmt_stat(nz_sum))
 
             avg = numpy.average(non_zero)
             median = numpy.median(non_zero)
@@ -300,6 +303,24 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         else:
             total = avg = median = std = 0
 
+        if self.is_debug:
+            filter_nan = lambda num: num if not numpy.isnan(num) else '--'
+            return {
+                'slug': indicator.slug,
+                'values': {
+                    'raw': raw_values,
+                    'contributing_docs': debug_data,
+                },
+                'totals': {
+                    'value': total,
+                    'contributing_docs': debug_all,
+                },
+                'summary': {
+                    'average': filter_nan(avg),
+                    'median': filter_nan(median),
+                    'standard_dev': filter_nan(std),
+                }
+            }
         return {
             'slug': indicator.slug,
             'data': formatted_values,
@@ -307,5 +328,5 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             'total': total,
             'average': _formatted_cell(avg, _fmt_stat(avg)),
             'median': _formatted_cell(median, _fmt_stat(median)),
-            'std': _formatted_cell(std, _fmt_stat(std))
+            'std': _formatted_cell(std, _fmt_stat(std)),
         }

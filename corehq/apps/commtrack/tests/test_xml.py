@@ -229,6 +229,24 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
             self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
 
+    def test_archived_product_submissions(self):
+        """
+        This is basically the same as above, but separated to be
+        verbose about what we are checking (and to make it easy
+        to change the expected behavior if the requirements change
+        soon.
+        """
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+
+        self.submit_xml_form(balance_submission(initial_amounts))
+        self.products[1].archive()
+        self.submit_xml_form(balance_submission(final_amounts))
+
+        for product, amt in final_amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
+
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():
             return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]

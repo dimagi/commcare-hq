@@ -199,15 +199,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     name = ugettext_noop('Case List')
     slug = 'case_list'
 
-    @property
-    @memoized
-    def rendered_report_title(self):
-        self.name = _("%(report_name)s for %(worker_type)s") % {
-            "report_name": _(self.name),
-            "worker_type": _(SelectMobileWorkerFilter.get_default_text(self.user_filter))
-        }
-        return self.name
-
     def slugs(self):
         return [
             '_case',
