@@ -3,7 +3,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import JsonResource
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
-    DomainAdminAuthentication,
+    SuperuserAuthentication,
 )
 from corehq.apps.es.domains import DomainES
 
@@ -58,7 +58,7 @@ class DomainMetadataResource(JsonResource):
         return [self.obj_get(bundle, **kwargs)]
 
     class Meta(CustomResourceMeta):
-        authentication = DomainAdminAuthentication()
+        authentication = SuperuserAuthentication()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = Domain
