@@ -410,7 +410,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                         'monthly_limit': self.rate.monthly_limit,
                     }
         if self.rate.monthly_limit == 0:
-            return _("%(num_sms)d SMS Message(plural)s" % {
+            return _("%(num_sms)d SMS Message%(plural)s" % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
             })
