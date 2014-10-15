@@ -160,6 +160,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         ).first()
         if existing_indicator and not override:
             return False
+        if existing_indicator:
+            existing_indicator.delete()
         new_indicator = cls(domain=domain, **doc)
         new_indicator.last_modified = datetime.datetime.utcnow()
         new_indicator.save()
