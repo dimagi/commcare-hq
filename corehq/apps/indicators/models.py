@@ -141,12 +141,9 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         :param override: Whether to override the existing indicator
         :return: True if indicator was copied, False if not
         """
-        if '_id' in doc:
-            del doc['_id']
-        if '_rev' in doc:
-            del doc['_rev']
-        if 'last_modified' in doc:
-            del doc['last_modified']
+        for reserved in ['_id', '_rev', 'last_modified']:
+            if reserved in doc:
+                del doc[reserved]
 
         couch_key = cls._generate_couch_key(
             domain=domain,
