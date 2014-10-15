@@ -354,6 +354,199 @@ class SettingsForm(Form):
         label=ugettext_noop("Registration Submitter"),
     )
 
+    @property
+    def section_general(self):
+        fields = [
+            BootstrapMultiField(
+                _("Default SMS Response"),
+                InlineField(
+                    "use_default_sms_response",
+                    data_bind="value: use_default_sms_response",
+                ),
+                InlineField(
+                    "default_sms_response",
+                    css_class="input-xxlarge",
+                    placeholder=_("Enter Default Response"),
+                    data_bind="visible: showDefaultSMSResponse",
+                ),
+                help_bubble_text=_("Enable this option to provide a "
+                    "default response when a user's incoming SMS does not "
+                    "answer an open survey or match a known keyword."),
+                css_id="default-sms-response-group",
+            ),
+            FieldWithHelpBubble(
+                "use_restricted_sms_times",
+                data_bind="value: use_restricted_sms_times",
+                help_bubble_text=_("Use this option to limit the times "
+                    "that SMS messages can be sent to users. Messages that "
+                    "are sent outside these windows will remained queued "
+                    "and will go out as soon as another window opens up."),
+            ),
+            BootstrapMultiField(
+                "",
+                HiddenFieldWithErrors("restricted_sms_times_json",
+                    data_bind="value: restricted_sms_times_json"),
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'ko-template-restricted-sms-times', "
+                              " data: $data"
+                              "}",
+                ),
+                data_bind="visible: showRestrictedSMSTimes",
+            ),
+            FieldWithHelpBubble(
+                "send_to_duplicated_case_numbers",
+                help_bubble_text=_("Enabling this option will send "
+                    "outgoing-only messages to phone numbers registered "
+                    "with more than one mobile worker or case. SMS surveys "
+                    "and keywords will still only work for unique phone "
+                    "numbers in your project."),
+            ),
+        ]
+        return crispy.Fieldset(
+            _("General Settings"),
+            *fields
+        )
+
+    @property
+    def section_registration(self):
+        fields = [
+            FieldWithHelpBubble(
+                "sms_case_registration_enabled",
+                help_bubble_text=_("When this option is enabled, a person "
+                    "can send an SMS into the system saying 'join "
+                    "[project]', where [project] is your project "
+                    "space name, and the system will automatically "
+                    "create a case tied to that person's phone number."),
+                data_bind="value: sms_case_registration_enabled",
+            ),
+            crispy.Div(
+                FieldWithHelpBubble(
+                    "sms_case_registration_type",
+                    placeholder=_("Enter a Case Type"),
+                    help_bubble_text=_("Cases that self-register over SMS "
+                        "will be given this case type."),
+                ),
+                FieldWithHelpBubble(
+                    "sms_case_registration_owner_id",
+                    help_bubble_text=_("Cases that self-register over SMS "
+                        "will be owned by this user or user group."),
+                ),
+                FieldWithHelpBubble(
+                    "sms_case_registration_user_id",
+                    help_bubble_text=_("The form submission for a "
+                        "self-registration will belong to this user."),
+                ),
+                data_bind="visible: showRegistrationOptions",
+            ),
+        ]
+        return crispy.Fieldset(
+            _("Registration Settings"),
+            *fields
+        )
+
+    @property
+    def section_chat(self):
+        fields = [
+            BootstrapMultiField(
+                _("Case Name Display"),
+                InlineField(
+                    "use_custom_case_username",
+                    data_bind="value: use_custom_case_username",
+                ),
+                InlineField(
+                    "custom_case_username",
+                    css_class="input-large",
+                    data_bind="visible: showCustomCaseUsername",
+                ),
+                help_bubble_text=_("By default, when chatting with a case, "
+                    "the chat window will use the case's \"name\" case "
+                    "property when displaying the case's name. To use a "
+                    "different case property, specify it here."),
+                css_id="custom-case-username-group",
+            ),
+            BootstrapMultiField(
+                _("Counter Threshold"),
+                InlineField(
+                    "use_custom_message_count_threshold",
+                    data_bind="value: use_custom_message_count_threshold",
+                ),
+                InlineField(
+                    "custom_message_count_threshold",
+                    css_class="input-large",
+                    data_bind="visible: showCustomMessageCountThreshold",
+                ),
+                help_bubble_text=_("The chat window keeps track of how many "
+                    "messages are being sent and received, and will "
+                    "highlight the counter after it reaches 50. To use a "
+                    "different threshold than 50, enter it here."),
+                css_id="custom-message-count-threshold-group",
+            ),
+            FieldWithHelpBubble(
+                "use_sms_conversation_times",
+                data_bind="value: use_sms_conversation_times",
+                help_bubble_text=_("When this option is enabled, the system "
+                    "will not send automated SMS to chat recipients when "
+                    "those recipients are in the middle of a conversation."),
+            ),
+            BootstrapMultiField(
+                "",
+                HiddenFieldWithErrors("sms_conversation_times_json",
+                    data_bind="value: sms_conversation_times_json"),
+                crispy.Div(
+                    data_bind="template: {"
+                              " name: 'ko-template-sms-conversation-times', "
+                              " data: $data"
+                              "}",
+                ),
+                data_bind="visible: showSMSConversationTimes",
+            ),
+            crispy.Div(
+                FieldWithHelpBubble(
+                    "sms_conversation_length",
+                    help_bubble_text=_("The number of minutes to wait "
+                        "after receiving an incoming SMS from a chat "
+                        "recipient before resuming automated SMS to that "
+                        "recipient."),
+                ),
+                data_bind="visible: showSMSConversationTimes",
+            ),
+            FieldWithHelpBubble(
+                "survey_traffic_option",
+                help_bubble_text=_("This option allows you to hide a chat "
+                    "recipient's survey questions and responses from chat "
+                    "windows. There is also the option to show only invalid "
+                    "responses to questions in the chat window, which could "
+                    "be attempts to converse."),
+            ),
+            FieldWithHelpBubble(
+                "count_messages_as_read_by_anyone",
+                help_bubble_text=_("The chat window will mark unread "
+                    "messages to the user viewing them. Use this option to "
+                    "control whether a message counts as being read if it "
+                    "is read by anyone, or if it counts as being read only "
+                    "to the user who reads it."),
+            ),
+            BootstrapMultiField(
+                _("Chat Template"),
+                InlineField(
+                    "use_custom_chat_template",
+                    data_bind="value: use_custom_chat_template",
+                ),
+                InlineField(
+                    "custom_chat_template",
+                    data_bind="visible: showCustomChatTemplate",
+                ),
+                help_bubble_text=_("To use a custom template to render the "
+                    "chat window, enter it here."),
+                css_id="custom-chat-template-group",
+            ),
+        ]
+        return crispy.Fieldset(
+            _("Chat Settings"),
+            *fields
+        )
+
     def __init__(self, data=None, cchq_domain=None, *args, **kwargs):
         self._cchq_domain = cchq_domain
         super(SettingsForm, self).__init__(data, *args, **kwargs)
@@ -362,181 +555,9 @@ class SettingsForm(Form):
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("General Settings"),
-                BootstrapMultiField(
-                    _("Default SMS Response"),
-                    InlineField(
-                        "use_default_sms_response",
-                        data_bind="value: use_default_sms_response",
-                    ),
-                    InlineField(
-                        "default_sms_response",
-                        css_class="input-xxlarge",
-                        placeholder=_("Enter Default Response"),
-                        data_bind="visible: showDefaultSMSResponse",
-                    ),
-                    help_bubble_text=_("Enable this option to provide a "
-                        "default response when a user's incoming SMS does not "
-                        "answer an open survey or match a known keyword."),
-                    css_id="default-sms-response-group",
-                ),
-                FieldWithHelpBubble(
-                    "use_restricted_sms_times",
-                    data_bind="value: use_restricted_sms_times",
-                    help_bubble_text=_("Use this option to limit the times "
-                        "that SMS messages can be sent to users. Messages that "
-                        "are sent outside these windows will remained queued "
-                        "and will go out as soon as another window opens up."),
-                ),
-                BootstrapMultiField(
-                    "",
-                    HiddenFieldWithErrors("restricted_sms_times_json",
-                        data_bind="value: restricted_sms_times_json"),
-                    crispy.Div(
-                        data_bind="template: {"
-                                  " name: 'ko-template-restricted-sms-times', "
-                                  " data: $data"
-                                  "}",
-                    ),
-                    data_bind="visible: showRestrictedSMSTimes",
-                ),
-                FieldWithHelpBubble(
-                    "send_to_duplicated_case_numbers",
-                    help_bubble_text=_("Enabling this option will send "
-                        "outgoing-only messages to phone numbers registered "
-                        "with more than one mobile worker or case. SMS surveys "
-                        "and keywords will still only work for unique phone "
-                        "numbers in your project."),
-                ),
-            ),
-            crispy.Fieldset(
-                _("Registration Settings"),
-                FieldWithHelpBubble(
-                    "sms_case_registration_enabled",
-                    help_bubble_text=_("When this option is enabled, a person "
-                        "can send an SMS into the system saying 'join "
-                        "[project]', where [project] is your project "
-                        "space name, and the system will automatically "
-                        "create a case tied to that person's phone number."),
-                    data_bind="value: sms_case_registration_enabled",
-                ),
-                crispy.Div(
-                    FieldWithHelpBubble(
-                        "sms_case_registration_type",
-                        placeholder=_("Enter a Case Type"),
-                        help_bubble_text=_("Cases that self-register over SMS "
-                            "will be given this case type."),
-                    ),
-                    FieldWithHelpBubble(
-                        "sms_case_registration_owner_id",
-                        help_bubble_text=_("Cases that self-register over SMS "
-                            "will be owned by this user or user group."),
-                    ),
-                    FieldWithHelpBubble(
-                        "sms_case_registration_user_id",
-                        help_bubble_text=_("The form submission for a "
-                            "self-registration will belong to this user."),
-                    ),
-                    data_bind="visible: showRegistrationOptions",
-                ),
-            ),
-            crispy.Fieldset(
-                _("Chat Settings"),
-                BootstrapMultiField(
-                    _("Case Name Display"),
-                    InlineField(
-                        "use_custom_case_username",
-                        data_bind="value: use_custom_case_username",
-                    ),
-                    InlineField(
-                        "custom_case_username",
-                        css_class="input-large",
-                        data_bind="visible: showCustomCaseUsername",
-                    ),
-                    help_bubble_text=_("By default, when chatting with a case, "
-                        "the chat window will use the case's \"name\" case "
-                        "property when displaying the case's name. To use a "
-                        "different case property, specify it here."),
-                    css_id="custom-case-username-group",
-                ),
-                BootstrapMultiField(
-                    _("Counter Threshold"),
-                    InlineField(
-                        "use_custom_message_count_threshold",
-                        data_bind="value: use_custom_message_count_threshold",
-                    ),
-                    InlineField(
-                        "custom_message_count_threshold",
-                        css_class="input-large",
-                        data_bind="visible: showCustomMessageCountThreshold",
-                    ),
-                    help_bubble_text=_("The chat window keeps track of how many "
-                        "messages are being sent and received, and will "
-                        "highlight the counter after it reaches 50. To use a "
-                        "different threshold than 50, enter it here."),
-                    css_id="custom-message-count-threshold-group",
-                ),
-                FieldWithHelpBubble(
-                    "use_sms_conversation_times",
-                    data_bind="value: use_sms_conversation_times",
-                    help_bubble_text=_("When this option is enabled, the system "
-                        "will not send automated SMS to chat recipients when "
-                        "those recipients are in the middle of a conversation."),
-                ),
-                BootstrapMultiField(
-                    "",
-                    HiddenFieldWithErrors("sms_conversation_times_json",
-                        data_bind="value: sms_conversation_times_json"),
-                    crispy.Div(
-                        data_bind="template: {"
-                                  " name: 'ko-template-sms-conversation-times', "
-                                  " data: $data"
-                                  "}",
-                    ),
-                    data_bind="visible: showSMSConversationTimes",
-                ),
-                crispy.Div(
-                    FieldWithHelpBubble(
-                        "sms_conversation_length",
-                        help_bubble_text=_("The number of minutes to wait "
-                            "after receiving an incoming SMS from a chat "
-                            "recipient before resuming automated SMS to that "
-                            "recipient."),
-                    ),
-                    data_bind="visible: showSMSConversationTimes",
-                ),
-                FieldWithHelpBubble(
-                    "survey_traffic_option",
-                    help_bubble_text=_("This option allows you to hide a chat "
-                        "recipient's survey questions and responses from chat "
-                        "windows. There is also the option to show only invalid "
-                        "responses to questions in the chat window, which could "
-                        "be attempts to converse."),
-                ),
-                FieldWithHelpBubble(
-                    "count_messages_as_read_by_anyone",
-                    help_bubble_text=_("The chat window will mark unread "
-                        "messages to the user viewing them. Use this option to "
-                        "control whether a message counts as being read if it "
-                        "is read by anyone, or if it counts as being read only "
-                        "to the user who reads it."),
-                ),
-                BootstrapMultiField(
-                    _("Chat Template"),
-                    InlineField(
-                        "use_custom_chat_template",
-                        data_bind="value: use_custom_chat_template",
-                    ),
-                    InlineField(
-                        "custom_chat_template",
-                        data_bind="visible: showCustomChatTemplate",
-                    ),
-                    help_bubble_text=_("To use a custom template to render the "
-                        "chat window, enter it here."),
-                    css_id="custom-chat-template-group",
-                ),
-            ),
+            self.section_general,
+            self.section_registration,
+            self.section_chat,
             FormActions(
                 StrictButton(
                     _("Save"),
