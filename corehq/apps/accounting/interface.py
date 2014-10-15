@@ -68,6 +68,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Date Created"),
             DataTablesColumn("Account Type"),
             DataTablesColumn("Active Status"),
+            DataTablesColumn("Dimagi Contact"),
         )
 
     @property
@@ -113,6 +114,7 @@ class AccountingInterface(AddItemInterface):
                 account.date_created.date(),
                 account.account_type,
                 "Active" if account.is_active else "Inactive",
+                account.dimagi_contact,
             ])
         return rows
 
