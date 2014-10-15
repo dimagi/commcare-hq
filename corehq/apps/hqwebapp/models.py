@@ -1,3 +1,5 @@
+from urllib import urlencode
+
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
@@ -8,6 +10,11 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.hqadmin.reports import (
+    RealProjectSpacesReport,
+    CommConnectProjectSpacesReport,
+    CommTrackProjectSpacesReport,
+)
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -278,7 +285,8 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.couch_user
+        return (self.domain and self.project and not self.project.is_snapshot
+                and self.couch_user
                 and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
 
 
@@ -1218,7 +1226,21 @@ class AdminReportsTab(UITab):
                  'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
-            ]), (_('Administrative Operations'), admin_operations)]
+            ]),
+            (_('Administrative Operations'), admin_operations),
+            (_('CommCare Reports'), [
+                {
+                    'title': report.name,
+                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
+                                   args=(report.slug,)),
+                                   urlencode(report.default_params))
+                } for report in [
+                    RealProjectSpacesReport,
+                    CommConnectProjectSpacesReport,
+                    CommTrackProjectSpacesReport,
+                ]
+            ]),
+        ]
 
     @property
     def is_viewable(self):

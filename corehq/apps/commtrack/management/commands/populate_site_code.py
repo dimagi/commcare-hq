@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import Location
-from corehq.apps.locations.util import generate_site_code
+from corehq.apps.commtrack.util import generate_code
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -29,7 +29,7 @@ class Command(BaseCommand):
                         Location.site_codes_for_domain(loc['domain'])
                     )
 
-                loc['site_code'] = generate_site_code(
+                loc['site_code'] = generate_code(
                     loc['name'],
                     site_codes_by_domain[loc['domain']]
                 )

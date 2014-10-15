@@ -274,26 +274,24 @@ var AdvancedCase = (function () {
             return action;
         }));
 
-        self.actionOptions = ko.computed(function () {
-            var options = [];
-            options.push({
+        self.actionOptions = ko.observableArray([
+            {
                 display: 'Load / Update / Close a case',
                 value: 'load'
-            });
-            options.push({
+            },
+            {
                 display: 'Automatic Case Selection',
                 value: 'auto_select'
-            });
-            options.push({
+            },
+            {
                 display: '---',
                 value: 'separator'
-            });
-            options.push({
+            },
+            {
                 display: 'Open a Case',
                 value: 'open'
-            });
-            return options;
-        });
+            }
+        ]);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.open_cases();
@@ -348,6 +346,7 @@ var AdvancedCase = (function () {
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
+                    parent_reference_id: '',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -394,7 +393,18 @@ var AdvancedCase = (function () {
             if (action.actionType === 'open') {
                 self.open_cases.remove(action);
             } else if (action.actionType === 'load') {
+                var index = self.config.caseConfigViewModel.load_update_cases.indexOf(action),
+                    potential_child;
                 self.load_update_cases.remove(action);
+
+                // remove references to deleted action in other load actions
+                var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
+                for (var i = index; i < loadUpdateCases.length; i++) {
+                    potential_child = loadUpdateCases[i];
+                    if (potential_child.parent_tag() === action.case_tag()) {
+                        potential_child.parent_tag('');
+                    }
+                }
             }
         };
 
@@ -584,8 +594,9 @@ var AdvancedCase = (function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var parent = self.config.caseConfigViewModel.load_update_cases()[0];
-                        if (parent) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        if (index > 0) {
+                            var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
                             self.parent_tag(parent.case_tag());
                         }
                     } else {

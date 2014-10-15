@@ -17,7 +17,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter
+from sqlagg.filters import RawFilter, IN
 from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
@@ -41,26 +41,12 @@ from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 
-from .utils import BaseMixin, normal_format, format_percent
+from .utils import BaseMixin, normal_format, format_percent, date_from_request
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import HierarchyFilter, MetHierarchyFilter
+from .filters import HierarchyFilter, MetHierarchyFilter, SingleDateFilter
 from .constants import *
-
-
-DATE_FILTER = "date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    ) OR (
-    opened_on <= :enddate AND (
-        closed_on >= :startdate or closed_on <= :enddate
-        )
-    )
-"""
 
 
 def ret_val(value):
@@ -197,21 +183,24 @@ class VhndAvailabilitySqlData(SqlData):
 
 
 class OpmHealthStatusSqlData(SqlData):
+    DATE_FILTER = "date <= :enddate"
+    DATE_FILTER_EXTENDED = "opened_on <= :enddate"
+
+
 
     table_name = 'fluff_OpmHealthStatusAllInfoFluff'
 
-    def __init__(self, domain, user_id, datespan):
+    def __init__(self, domain, user_id, enddate):
         self.domain = domain
         self.user_id = user_id
-        self.datespan = datespan
+        self.enddate = enddate
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
             user_id=self.user_id,
-            startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date()),
+            enddate=str(self.enddate),
         )
 
     @property
@@ -227,11 +216,11 @@ class OpmHealthStatusSqlData(SqlData):
 
     @property
     def wrapped_sum_column_filters(self):
-        return self.wrapped_filters + [RawFilter(DATE_FILTER)]
+        return self.wrapped_filters + [RawFilter(self.DATE_FILTER)]
 
     @property
     def wrapped_sum_column_filters_extended(self):
-        return self.wrapped_filters + [RawFilter(DATE_FILTER_EXTENDED)]
+        return self.wrapped_filters + [RawFilter(self.DATE_FILTER_EXTENDED)]
 
     @property
     def columns(self):
@@ -451,16 +440,21 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
         if self.filter_data.get('block', []):
             subtitles.append("Blocks - %s" % ", ".join(self.blocks))
+        subtitles.extend(self._get_custom_subtitles())
+        datetime_format = "%Y-%m-%d %H:%M:%S"
+        subtitles.append("Generated {}".format(
+            datetime.datetime.utcnow().strftime(datetime_format)))
+        return subtitles
+
+    def _get_custom_subtitles(self):
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
         if startdate and enddate:
             sd = parser.parse(startdate)
             ed = parser.parse(enddate)
-            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
-        datetime_format = "%Y-%m-%d %H:%M:%S"
-        subtitles.append("Generated {}".format(
-            datetime.datetime.utcnow().strftime(datetime_format)))
-        return subtitles
+            return [" From %s to %s" % (str(sd.date()), str(ed.date()))]
+        else:
+            return []
 
     def filter(self, fn, filter_fields=None):
         """
@@ -668,7 +662,7 @@ class CaseReportMixin(object):
 
     @property
     def block(self):
-        block = self.request_params.get("block")
+        block = self.request_params.get("hierarchy_block")
         if block:
             return block
         else:
@@ -777,6 +771,34 @@ class MetReport(CaseReportMixin, BaseReport):
     def fixed_cols_spec(self):
         return dict(num=9, width=800)
 
+class UsersIdsData(SqlData):
+    table_name = "fluff_OpmUserFluff"
+    group_by = ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
+
+    @property
+    def filters(self):
+        if self.config.get('awc'):
+            return [IN('awc', 'awc')]
+        elif self.config.get('gp'):
+            return [IN('gp', 'gp')]
+        elif self.config.get('block'):
+            return [IN('block', 'block')]
+        return []
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('awc', SimpleColumn('awc')),
+            DatabaseColumn('awc_code', SimpleColumn('awc_code')),
+            DatabaseColumn('bank_name', SimpleColumn('bank_name')),
+            DatabaseColumn('ifs_code', SimpleColumn('ifs_code')),
+            DatabaseColumn('account_number', SimpleColumn('account_number')),
+            DatabaseColumn('gp', SimpleColumn('gp')),
+            DatabaseColumn('block', SimpleColumn('block')),
+            DatabaseColumn('village', SimpleColumn('village'))
+        ]
+
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
@@ -797,11 +819,18 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        return CommCareUser.by_domain(DOMAIN)
+        config={}
+        for lvl in ['awc', 'gp', 'block']:
+            req_prop = 'hierarchy_%s' % lvl
+            request_param = self.request.GET.getlist(req_prop, [])
+            if request_param and not request_param[0] == '0':
+                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
+                break
+        return UsersIdsData(config=config).get_data()
 
     def get_row_data(self, row):
-        case_sql_data = OpmCaseSqlData(DOMAIN, row._id, self.datespan)
-        form_sql_data = OpmFormSqlData(DOMAIN, row._id, self.datespan)
+        case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
+        form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
 
 def this_month_if_none(month, year):
@@ -889,7 +918,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     return Report()
 
 
-class HealthStatusReport(DatespanMixin, BaseReport):
+class HealthStatusReport(BaseReport):
 
     ajax_pagination = True
     asynchronous = True
@@ -907,7 +936,14 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, SelectOpenCloseFilter, SingleDateFilter]
+
+    @property
+    def enddate(self):
+        return date_from_request(self.request)
+
+    def _get_custom_subtitles(self):
+        return [_("Through: {}").format(str(self.enddate))]
 
     @property
     @memoized
@@ -944,21 +980,26 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 
-    def get_rows(self, dataspan):
+    def get_rows(self, datespan):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row):
+        def empty_health_status(row):
+            model = HealthStatus()
+            model.awc = row['_source']['user_data']['awc']
+            return model
+
         if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
-            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan)
+            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.enddate)
             if sql_data.data:
                 formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
                 data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
+                if row['_id'] not in data:
+                    return empty_health_status(row)
                 data[row['_id']].update({'awc': row['_source']['user_data']['awc']})
                 return HealthStatus(**data[row['_id']])
             else:
-                model = HealthStatus()
-                model.awc = row['_source']['user_data']['awc']
-                return model
+                return empty_health_status(row)
         else:
             raise InvalidRow
 
@@ -1058,9 +1099,9 @@ class HealthMapSource(HealthStatusReport):
         users = self.get_users
         mapping = {}
         for user in users:
-            user_src = user['_source']
-            aww_name = user_src['first_name'] + " " + user_src['last_name']
-            meta_data = user_src['user_data']
+            user_src = user.get('_source', {})
+            aww_name = user_src.get('first_name', "") + " " + user_src.get('last_name', "")
+            meta_data = user_src.get('user_data', {})
             awc = meta_data.get("awc", "")
             block = meta_data.get("block", "")
             gp = meta_data.get("gp", "")
@@ -1089,7 +1130,6 @@ class HealthMapSource(HealthStatusReport):
         for row in ret:
             awc = row[0]
             awc_map = gps_mapping.get(awc, None) or ""
-            gps = awc_map["gps"] if awc_map else "--"
             extra_columns = ["--"] * 4
             if awc_map:
                 extra_columns = []
@@ -1109,7 +1149,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [HierarchyFilter, SelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, SelectOpenCloseFilter, SingleDateFilter]
 
     data_source = {
         'adapter': 'legacyreport',

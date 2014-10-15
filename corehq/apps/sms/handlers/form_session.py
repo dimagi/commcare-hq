@@ -2,6 +2,7 @@ from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
     send_sms_to_verified_number,
+    log_sms_exception,
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list
@@ -40,8 +41,7 @@ def form_session_handler(v, text, msg):
             answer_next_question(v, text, msg, session)
         except Exception:
             # Catch any touchforms errors
-            msg_id = msg._id if msg else ""
-            logging.exception("Exception in form_session_handler for message id %s." % msg_id)
+            log_sms_exception(msg)
             send_sms_to_verified_number(v, get_message(MSG_TOUCHFORMS_DOWN, v))
         return True
     else:

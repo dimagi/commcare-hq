@@ -673,7 +673,7 @@ cloudCare.AppView = Backbone.View.extend({
             });
         };
         data.onerror = function (resp) {
-            showError(resp.message, $("#cloudcare-notifications"));
+            showError(resp.human_readable_message, $("#cloudcare-notifications"));
             cloudCare.dispatch.trigger("form:error", form, caseModel);
         };
         data.onload = function (adapter, resp) {
