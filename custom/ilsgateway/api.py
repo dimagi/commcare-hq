@@ -270,4 +270,4 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_productavailabilitydata(self, domain, facility, **kwargs):
         meta, productavailabilitydata = self.get_objects(self.productavailabilitydata_url, **kwargs)
         location_id = self._get_location_id(facility, domain)
-        return meta, [ProductAvailabilityData.wrap_from_json(pad, location_id) for pad in productavailabilitydata]
+        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain, location_id) for pad in productavailabilitydata]

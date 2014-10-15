@@ -200,7 +200,7 @@ class SupplyPointWarehouseRecord(models.Model):
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0) # 176
     average_lead_time_in_days = models.FloatField(default=0) # 28
-    external_id = models.PositiveIntegerField(db_index=True)
+    external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     def __unicode__(self):
         return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
@@ -292,9 +292,10 @@ class ProductAvailabilityData(ReportingModel):
     without_data = models.PositiveIntegerField(default=0)
 
     @classmethod
-    def wrap_from_json(cls, obj, location_id):
-        product = Product.get_by_code(location_id, obj['product'])
+    def wrap_from_json(cls, obj, domain, location_id):
+        product = Product.get_by_code(domain, obj['product'])
         obj['product'] = product._id
+        obj['supply_point'] = location_id
         del obj['id']
         return cls(**obj)
 
