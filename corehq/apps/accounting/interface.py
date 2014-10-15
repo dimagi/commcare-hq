@@ -48,6 +48,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
               'corehq.apps.accounting.interface.AccountTypeFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
+              'corehq.apps.accounting.interface.DimagiContactFilter',
               ]
     hide_filters = False
 
@@ -98,6 +99,11 @@ class AccountingInterface(AddItemInterface):
         if is_active is not None:
             filters.update(
                 is_active=is_active == ActiveStatusFilter.active,
+            )
+        dimagi_contact = DimagiContactFilter.get_value(self.request, self.domain)
+        if dimagi_contact is not None:
+            filters.update(
+                dimagi_contact=dimagi_contact,
             )
 
         for account in BillingAccount.objects.filter(**filters):
