@@ -26,8 +26,10 @@ class DomainMetadataResource(JsonResource):
             Subscription.get_subscribed_plan_by_domain(domain)
         )
         return {
-            "date_start": subscription.date_start,
-            "date_end": subscription.date_end,
+            "date_start": (subscription.date_start
+                           if subscription is not None else None),
+            "date_end": (subscription.date_end
+                         if subscription is not None else None),
             "plan_version": plan_version,
         }
 
