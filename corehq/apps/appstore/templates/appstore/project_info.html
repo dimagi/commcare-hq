@@ -300,7 +300,7 @@
                 {% else %}
                     {% blocktrans %}
                         Please <a href="{% url "login" DOMAIN_TYPE %}">sign in</a>
-                        or <a href="{% url "register_user" %}">register</a>
+                        or <a href="{% url "register_user" DOMAIN_TYPE %}">register</a>
                         to download an app from Exchange
                     {% endblocktrans %}
                 {% endif %}
