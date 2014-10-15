@@ -331,6 +331,14 @@ class Invisible(HideShortColumn):
     pass
 
 
+@register_format_type('filter')
+class Filter(HideShortColumn):
+
+    @property
+    def fields(self):
+        return []
+
+
 @register_format_type('calculate')
 class Calculate(FormattedDetailColumn):
 
