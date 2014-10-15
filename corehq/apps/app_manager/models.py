@@ -743,11 +743,11 @@ class FormBase(DocumentSchema):
         else:
             return False
 
-    def is_registration_form(self, case_type):
+    def is_registration_form(self, case_type=None):
         """
         Should return True if this form passes the following tests:
          * does not require a case
-         * registers a case of type 'case_type'
+         * registers a case of type 'case_type' if supplied
         """
         raise NotImplementedError()
 
@@ -918,7 +918,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def requires_referral(self):
         return self.requires == "referral"
 
-    def is_registration_form(self, case_type):
+    def is_registration_form(self, case_type=None):
         return not self.requires_case() and 'open_case' in self.active_actions() and \
             (not case_type or self.get_module().case_type == case_type)
 
@@ -1300,8 +1300,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_type=True,
                 needs_case_detail=True
             ))
-        if self.case_list_form:
-            form = self.get_form_by_unique_id(self.case_list_form)
+        if self.case_list_form.form_id:
+            form = self.get_form_by_unique_id(self.case_list_form.form_id)
             if form and not form.is_registration_form(self.case_type):
                 errors.append({
                     'type': 'bad case list form',
@@ -1529,10 +1529,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def requires(self):
         return 'case' if self.requires_case() else 'none'
 
-    def is_registration_form(self, case_type):
+    def is_registration_form(self, case_type=None):
         return not self.requires_case() and any(
             action for action in self.actions.open_cases
-            if not action.is_subcase and action.case_type == case_type)
+            if not action.is_subcase and (not case_type or action.case_type == case_type))
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -1892,7 +1892,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return parent_types, case_properties
 
-    def is_registration_form(self, case_type):
+    def is_registration_form(self, case_type=None):
         return self.mode == 'create' and (not case_type or self.case_type == case_type)
 
 
