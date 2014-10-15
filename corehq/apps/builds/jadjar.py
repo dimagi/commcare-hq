@@ -38,6 +38,7 @@ class JadDict(dict):
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
+
 def sign_jar(jad, jar):
     if not (hasattr(jad, 'update') and hasattr(jad, 'render')):
         jad = JadDict.from_jad(jad)
@@ -104,6 +105,7 @@ def sign_jar(jad, jar):
 
     return jad.render()
 
+
 class JadJar(object):
     def __init__(self, jad, jar, version=None, build_number=None, signed=False):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
@@ -143,7 +145,9 @@ class JadJar(object):
             if hasattr(settings, 'JAR_SIGN'):
                 jad = sign_jar(jad, jar)
                 signed = True
+            else:
+                jad = jad.render()
         else:
             jad = None
-            
+
         return JadJar(jad, jar, self.version, self.build_number, signed=signed)
