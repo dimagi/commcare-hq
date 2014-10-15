@@ -108,6 +108,13 @@ def print_one_way_merge_details(branch1, branch2, git):
     if commit:
         print '  * First conflicting commit on {0}:\n'.format(branch2)
         print _left_pad(' ' * 4, git.log('-n1', commit))
+        other_branches = [
+            b.strip() for b in git.branch('--contains', commit).splitlines()
+            if b.strip() != branch2
+        ]
+        if other_branches:
+            msg = 'This commit also appears on these branches: {0}\n'.format(other_branches)
+            print _left_pad(' ' * 4, msg)
     else:
         print '  * No conflicting commits on {0}'.format(branch2)
 
