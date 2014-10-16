@@ -1,8 +1,6 @@
 # encoding: utf-8
-import datetime
-from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -16,27 +14,27 @@ from corehq.apps.app_manager.xpath import dot_interpolate
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        if not settings.UNIT_TESTING:
+            application_ids = {r['id'] for r in Application.get_db().view(
+                'app_manager/applications',
+                reduce=False,
+            ).all()}
 
-        application_ids = {r['id'] for r in Application.get_db().view(
-            'app_manager/applications',
-            reduce=False,
-        ).all()}
+            for app_doc in iter_docs(Application.get_db(), application_ids):
 
-        for app_doc in iter_docs(Application.get_db(), application_ids):
+                if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+                    application = Application.wrap(app_doc)
 
-            if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                application = Application.wrap(app_doc)
+                    filter_combination_func = self.combine_and_interpolate_V2_filters
+                    if application.application_version == APP_V1:
+                        filter_combination_func = self.combine_and_interpolate_V1_filters
 
-                filter_combination_func = self.combine_and_interpolate_V2_filters
-                if application.application_version == APP_V1:
-                    filter_combination_func = self.combine_and_interpolate_V1_filters
+                    for module in application.get_modules():
+                        detail = module.case_details.short
+                        combined_filter_string = filter_combination_func(detail.get_columns(), application, module, detail)
+                        detail.filter = combined_filter_string
 
-                for module in application.get_modules():
-                    detail = module.case_details.short
-                    combined_filter_string = filter_combination_func(detail.get_columns(), application, module, detail)
-                    detail.filter = combined_filter_string
-
-                application.save()
+                    application.save()
 
     @classmethod
     def combine_and_interpolate_V1_filters(cls, columns, app, module, detail):
