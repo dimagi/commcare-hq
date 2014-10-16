@@ -4,7 +4,7 @@
 
         <div class="modal-header">
             <a class="close" data-dismiss="modal">×</a>
-            <h3>Wooooo</h3>
+            <h3 data-bind="text: 'Editting ' + graphDisplayName()"></h3>
         </div>
 
         <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
@@ -13,16 +13,85 @@
               <div class="control-group">
                 <label class="control-label" for="graphType">Graph Type</label>
                 <div class="controls">
-                    <select id="graphType">
-                      <option>1</option>
-                      <option>2</option>
-                      <option>3</option>
-                      <option>4</option>
-                      <option>5</option>
+                    <select id="graphType" data-bind="options: availableGraphTypes">
                     </select>
                 </div>
               </div>
             </form>
+
+            <div data-bind="bootstrapTabs: true">
+                <div class="tabbable">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a>Series</a></li>
+                        <li><a>Configuration</a></li>
+                        <li><a>Annotations</a></li>
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane">
+                        Motha
+                    </div>
+                    <div class="tab-pane">
+                        <form class="form-inline">
+                          <input type="text" class="input-small" placeholder="property">
+                          &rarr;
+                          <input type="text" class="input" placeholder="value">
+                          {# TODO: Make this button do something #}
+                          <a class="btn btn-small btn-danger" href="#">
+                            <i class="icon-remove"></i> Delete
+                          </a>
+                        </form>
+                        <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Property &rarr; Value mapping</a>
+                    </div>
+                    <div class="tab-pane annotations">
+                        {% comment %}
+                        <div class="controls controls-row">
+                          <input class="span1" type="text" placeholder=".span1">
+                          <input class="span1" type="text" placeholder=".span1">
+                          <input class="span5" type="text" placeholder=".span4">
+                          <button class="btn btn-small btn-primary" type="button">Small button</button>
+                        </div>
+
+                        <form class="form-inline">
+                          <input type="text" class="input-mini" placeholder="x">
+                          <input type="text" class="input-mini" placeholder="y">
+                          <input type="text" class="input" placeholder="Display Text">
+                          <button type="submit" class="btn">Sign in</button>
+                        </form>
+                        {% endcomment %}
+                        <table data-bind="if: annotations().length">
+                            <thead>
+                                <tr>
+                                  <th>x</th>
+                                  <th>y</th>
+                                  <th>Display Text</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                              <tr data-bind="foreach: annotations">
+                                <td>
+                                    <input type="text" class="input-mini" placeholder="x">
+                                </td>
+                                <td>
+                                    <input type="text" class="input-mini" placeholder="y">
+                                </td>
+                                <td>
+                                    <input type="text" class="input" placeholder="Display Text">
+                                </td>
+                                <td>
+                                    {# TODO: Make this button do something #}
+                                    <a class="btn btn-small btn-danger" href="#">
+                                        <i class="icon-remove"></i> Delete
+                                    </a>
+                                </td>
+                              </tr>
+                            </tbody>
+                        </table>
+                        {# TODO: Make this button do something #}
+                        <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Annotation</a>
+                    </div>
+                </div>
+            </div>
 
         </div>
         <div class="modal-footer">
