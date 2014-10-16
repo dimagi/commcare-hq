@@ -123,8 +123,9 @@ class CaseAPIHelper(object):
         if not self.ids_only or self.filters or self.footprint:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
-            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only) \
+            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
                             for case in self.iter_cases(case_id_list)]
+
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
 
@@ -205,12 +206,11 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
                        strip_history=True, include_children=False):
 
-    # for now, a filter value of None means don't filter
+    # a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
                            filters=filters, include_children=include_children)
-
     if user_id:
         return helper.get_owned(user_id)
     else:

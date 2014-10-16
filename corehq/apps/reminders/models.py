@@ -38,6 +38,28 @@ METHOD_CHOICES = [
     METHOD_EMAIL,
 ]
 
+# The Monday - Sunday constants are meant to match the result from
+# date.weekday()
+DAY_ANY = -1
+DAY_MON = 0
+DAY_TUE = 1
+DAY_WED = 2
+DAY_THU = 3
+DAY_FRI = 4
+DAY_SAT = 5
+DAY_SUN = 6
+
+DAY_OF_WEEK_CHOICES = [
+    DAY_ANY,
+    DAY_MON,
+    DAY_TUE,
+    DAY_WED,
+    DAY_THU,
+    DAY_FRI,
+    DAY_SAT,
+    DAY_SUN,
+]
+
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
 EVENT_AS_SCHEDULE = "SCHEDULE"
@@ -439,6 +461,8 @@ class CaseReminderHandler(Document):
     start_date = StringProperty()
     start_offset = IntegerProperty()
     start_match_type = StringProperty(choices=MATCH_TYPE_CHOICES)
+    start_day_of_week = IntegerProperty(choices=DAY_OF_WEEK_CHOICES,
+        default=DAY_ANY)
     
     # reminder schedule
     events = SchemaListProperty(CaseReminderEvent)
@@ -516,7 +540,14 @@ class CaseReminderHandler(Document):
             return [entry["id"] for entry in result]
         else:
             return result
-    
+
+    def get_day_of_week_offset(self, dt, day_of_week):
+        offset = 0
+        while dt.weekday() != day_of_week:
+            offset += 1
+            dt = dt + timedelta(days=1)
+        return offset
+
     # For use with event_interpretation = EVENT_AS_SCHEDULE
     def get_current_reminder_event_timestamp(self, reminder, recipient, case):
         event = self.events[reminder.current_event_sequence_num]
@@ -536,7 +567,14 @@ class CaseReminderHandler(Document):
             fire_time = DEFAULT_REMINDER_TIME
         
         day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + event.day_num
-        timestamp = datetime.combine(reminder.start_date, fire_time) + timedelta(days = day_offset) + timedelta(minutes=additional_minute_offset)
+        start_date = reminder.start_date + timedelta(days=day_offset)
+        day_of_week_offset = 0
+        if self.start_day_of_week != DAY_ANY:
+            day_of_week_offset = self.get_day_of_week_offset(start_date,
+                self.start_day_of_week)
+        timestamp = (datetime.combine(start_date, fire_time) +
+            timedelta(days=day_of_week_offset) +
+            timedelta(minutes=additional_minute_offset))
         return CaseReminderHandler.timestamp_to_utc(recipient, timestamp)
     
     def spawn_reminder(self, case, now, recipient=None):

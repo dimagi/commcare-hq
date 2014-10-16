@@ -38,7 +38,7 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 
 # Print emails to console so there is no danger of spamming, but you can still get registration URLs
-EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
@@ -77,14 +77,14 @@ BITLY_APIKEY = '*******'
 
 ####### Jar signing config ########
 
-_ROOT_DIR  = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = dict(
-    jad_tool = os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    key_store = os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
-    key_alias = "javarosakey",
-    store_pass = "*******",
-    key_pass = "*******",
-)
+_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+JAR_SIGN = {
+    'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
+    'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
+    'key_alias': "javarosakey",
+    'store_pass': "*******",
+    'key_pass': "*******",
+}
 
 ####### SMS Config ########
 
@@ -106,7 +106,7 @@ DOMAIN_SYNCS = {
         "transform": "corehq.apps.domainsync.transforms.deidentify_domain" 
     }
 }
-DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
+DOMAIN_SYNC_APP_NAME_MAP = {"app_name": "new_app_name"}
 
 ####### Touchforms config - for CloudCare #######
 
@@ -120,8 +120,8 @@ TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Misc / HQ-specific Config ########
 
-DEFAULT_PROTOCOL = "http" # or https
-OVERRIDE_LOCATION="https://www.commcarehq.org"
+DEFAULT_PROTOCOL = "http"  # or https
+OVERRIDE_LOCATION = "https://www.commcarehq.org"
 
 # Set to something like "192.168.1.5:8000" (with your IP address).
 # See corehq/apps/builds/README.md for more information.
@@ -172,7 +172,7 @@ SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
 # reports cache
-REPORT_CACHE = 'default' # or e.g. 'redis'
+REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 CACHES = {
     'default': {
@@ -186,8 +186,8 @@ CACHES = {
     },
 }
 
-ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be
-# localhost
+# on both a local and a distributed environment this should be localhost
+ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
 # our production logstash aggregation
@@ -201,8 +201,8 @@ LOCAL_PILLOWTOPS = {
 #    'and_more': []
 }
 
-#If there are existing doc_ids and case_ids you want to check directly - they are referenced
-#in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
+# If there are existing doc_ids and case_ids you want to check directly - they are referenced
+# in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
 ES_CASE_CHECK_DIRECT_DOC_ID = None
 ES_XFORM_CHECK_DIRECT_DOC_ID = None
 

@@ -48,6 +48,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
               'corehq.apps.accounting.interface.AccountTypeFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
+              'corehq.apps.accounting.interface.DimagiContactFilter',
               ]
     hide_filters = False
 
@@ -67,6 +68,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Date Created"),
             DataTablesColumn("Account Type"),
             DataTablesColumn("Active Status"),
+            DataTablesColumn("Dimagi Contact"),
         )
 
     @property
@@ -99,6 +101,11 @@ class AccountingInterface(AddItemInterface):
             filters.update(
                 is_active=is_active == ActiveStatusFilter.active,
             )
+        dimagi_contact = DimagiContactFilter.get_value(self.request, self.domain)
+        if dimagi_contact is not None:
+            filters.update(
+                dimagi_contact=dimagi_contact,
+            )
 
         for account in BillingAccount.objects.filter(**filters):
             rows.append([
@@ -107,6 +114,7 @@ class AccountingInterface(AddItemInterface):
                 account.date_created.date(),
                 account.account_type,
                 "Active" if account.is_active else "Inactive",
+                account.dimagi_contact,
             ])
         return rows
 

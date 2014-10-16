@@ -393,7 +393,18 @@ var AdvancedCase = (function () {
             if (action.actionType === 'open') {
                 self.open_cases.remove(action);
             } else if (action.actionType === 'load') {
+                var index = self.config.caseConfigViewModel.load_update_cases.indexOf(action),
+                    potential_child;
                 self.load_update_cases.remove(action);
+
+                // remove references to deleted action in other load actions
+                var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
+                for (var i = index; i < loadUpdateCases.length; i++) {
+                    potential_child = loadUpdateCases[i];
+                    if (potential_child.parent_tag() === action.case_tag()) {
+                        potential_child.parent_tag('');
+                    }
+                }
             }
         };
 
