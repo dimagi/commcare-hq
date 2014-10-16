@@ -21,7 +21,7 @@ class ProgramsTest(CommTrackTest):
         with self.assertRaises(Exception) as context:
             self.default_program.delete()
 
-        self.assertEqual(context.exception.message, 'You cannot delete the default product')
+        self.assertEqual(context.exception.message, 'You cannot delete the default program')
 
     def test_delete(self):
         # assign some product to the new program
