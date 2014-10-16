@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 try:
+    from corehq.apps.app_manager.tests.test_advanced_module import *
     from corehq.apps.app_manager.tests.test_app_manager import *
     from corehq.apps.app_manager.tests.test_xml_parsing import *
     from corehq.apps.app_manager.tests.test_xform_parsing import *
