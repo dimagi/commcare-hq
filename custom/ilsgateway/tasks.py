@@ -11,7 +11,8 @@ from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_locati
 
 
 #@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport
+from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, GroupSummary, \
+    ProductAvailabilityData
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -101,8 +102,7 @@ def supply_point_statuses_task(domain, endpoint):
                                                                  facility=facility)[1]
         for sps in supply_point_statuses:
             try:
-                SupplyPointStatus.objects.get(status_type=sps.status_type, status_value=sps.status_value,
-                                              status_date=sps.status_date, supply_point=sps.supply_point)
+                SupplyPointStatus.objects.get(external_id=sps.external_id)
             except SupplyPointStatus.DoesNotExist:
                 sps.save()
 
@@ -114,11 +114,7 @@ def delivery_group_reports_task(domain, endpoint):
                                                                    facility=facility)[1]
         for dgr in delivery_group_reports:
             try:
-                #TODO Avoid duplicating. Should be done better.
-                DeliveryGroupReport.objects.get(supply_point=dgr.supply_point,
-                                                quantity=dgr.quantity,
-                                                report_date=dgr.report_date,
-                                                delivery_group=dgr.delivery_group)
+                DeliveryGroupReport.objects.get(external_id=dgr.external_id)
             except DeliveryGroupReport.DoesNotExist:
                 dgr.save()
 
@@ -129,20 +125,10 @@ def groupsummary_task(domain, endpoint):
         group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility),
                                                     facility=facility)[1]
         for gs in group_summaries:
-            gs.save()
-
-
-#TODO Remove this task
-@task
-def temporary_task(domain):
-    ilsgateway_config = ILSGatewayConfig.for_domain(domain)
-    domain = ilsgateway_config.domain
-    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
-    for facility in FACILITIES:
-        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility),
-                                                    facility=facility)[1]
-        for gs in group_summaries:
-            gs.save()
+            try:
+                GroupSummary.objects.get(external_id=gs.external_id)
+            except GroupSummary.DoesNotExist:
+                gs.save()
 
 
 @task
@@ -151,7 +137,10 @@ def product_availability_task(domain, endpoint):
         product_availability = endpoint.get_productavailabilitydata(domain, filters=dict(supply_point=facility),
                                                                     facility=facility)[1]
         for pa in product_availability:
-            pa.save()
+            try:
+                ProductAvailabilityData.objects.get(external_id=pa.external_id)
+            except ProductAvailabilityData.DoesNotExist:
+                pa.save()
 
 
 @task
