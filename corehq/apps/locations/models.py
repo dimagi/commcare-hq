@@ -164,7 +164,10 @@ class Location(CachedCouchDocumentMixin, Document):
         self.save()
 
         sp = self.linked_supply_point()
-        if sp:
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
             close_case(sp._id, self.domain, COMMTRACK_USERNAME)
 
         for loc in self.descendants:
@@ -180,7 +183,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
         # reopen supply point case if needed
         sp = self.linked_supply_point()
-        if sp:
+        # sanity check that the supply point exists and is not open.
+        # this is important because if you unarchive a child, then try
+        # to unarchive the parent, we don't want to try to open again
+        if sp and sp.closed:
             for action in sp.actions:
                 if action.action_type == 'close':
                     action.xform.archive(user=COMMTRACK_USERNAME)
