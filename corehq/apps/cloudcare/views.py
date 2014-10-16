@@ -51,8 +51,8 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def cloudcare_main(request, domain, urlPath):
     try:
         preview = string_to_boolean(request.REQUEST.get("preview", "false"))
@@ -162,8 +162,8 @@ def cloudcare_main(request, domain, urlPath):
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
@@ -193,8 +193,8 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def view_case(request, domain, case_id=None):
     context = {}
     case_json = CommCareCase.get(case_id).get_json() if case_id else None
