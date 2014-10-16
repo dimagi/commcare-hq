@@ -1321,7 +1321,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     detail_type = params.get('type')
     short = params.get('short', None)
     long = params.get('long', None)
-    filter = params.get('filter', None)
+    filter = params.get('filter', ())
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
 
@@ -1341,19 +1341,13 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
     if short is not None:
-        #TODO: Filter might get erased!
-        #      If short is provided but filter is not, then the filter will be lost.
         detail.short.columns = map(DetailColumn.wrap, short)
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
-    if filter is not None and filter.get('filter_xpath', None):
-        # TODO: Might add multiple filters by mistake!
-        #       If short is not provided and there was already a filter in the short list,
-        #       then a second filter will be appended to the list.
-        # TODO: Filter should probably take a field and header as well?
-        column = DetailColumn.wrap(filter)
-        column.model = detail_type
-        detail.short.columns.append(column)
+    if filter is not ():
+        # Note that we use the empty tuple as the sentinel because a filter
+        # value of None represents clearing the filter.
+        detail.short.filter = filter
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:

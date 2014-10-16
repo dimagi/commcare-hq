@@ -196,12 +196,7 @@ var filterViewModel = function(filterText){
 
     self.serialize = function(){
         if (self.showing()) {
-            return {
-                filter_xpath: self.filterText(),
-                header: {"en": "super secret filter field"},
-                field: "super_secret_filter_field",
-                format: "filter"
-            };
+            return self.filterText();
         }
         return null;
     };
@@ -849,14 +844,8 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
 
-            //populate filter view model
-            // Assume that filters are only in the short list!
-            // Assume there is only one filter!!!
-            // (this might change depending on how the migration goes down)
-            var filterCol = _.find(spec.state.short.columns, function(col){
-                return col.format === "filter";
-            });
-            this.filter = new filterViewModel(filterCol ? filterCol.filter_xpath : null);
+            var filter_xpath = spec.state.short.filter;
+            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null);
 
             /**
              * Add a Screen to this DetailScreenConfig
