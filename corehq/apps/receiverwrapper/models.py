@@ -69,9 +69,12 @@ class GeneratorCollection():
 
     def add_new_format(self, format_name, format_label, generator_class, is_default=False):
         if is_default and self.default_format:
-            raise Exception("default format already exists for this repeater")
+            raise Exception("default format already exists for this repeater.")
         elif is_default:
             self.default_format = format_name
+        if self.format_generator_map[format_name] != {}:
+            raise Exception("There is already a Generator with this format name.")
+
         self.format_generator_map[format_name] = FormatInfo(
             name=format_name,
             label=format_label,
