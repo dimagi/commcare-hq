@@ -339,6 +339,7 @@ var DetailScreenConfig = (function () {
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
+            this.graph_extra = uiElement.graph_configuration(); // TODO: Make this right
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
@@ -370,6 +371,7 @@ var DetailScreenConfig = (function () {
                 'header',
                 'format',
                 'enum_extra',
+                'graph_extra',
                 'late_flag_extra',
                 'filter_xpath_extra',
                 'calc_xpath_extra',
@@ -388,6 +390,7 @@ var DetailScreenConfig = (function () {
                 // Prevent this from running on page load before init
                 if (that.format.ui.parent().length > 0) {
                     that.enum_extra.ui.detach();
+                    that.graph_extra.ui.detach();
                     that.late_flag_extra.ui.detach();
                     that.filter_xpath_extra.ui.detach();
                     that.calc_xpath_extra.ui.detach();
@@ -395,6 +398,10 @@ var DetailScreenConfig = (function () {
 
                     if (this.val() === "enum" || this.val() === "enum-image") {
                         that.format.ui.parent().append(that.enum_extra.ui);
+                    } else if (this.val() === "graph") {
+                        // Replace format select with edit button
+                        that.format.ui.parent().empty();
+                        that.format.ui.parent().append(that.graph_extra.ui);
                     } else if (this.val() === 'late-flag') {
                         that.format.ui.parent().append(that.late_flag_extra.ui);
                         var input = that.late_flag_extra.ui.find('input');
@@ -446,6 +453,7 @@ var DetailScreenConfig = (function () {
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
                 column['enum'] = this.enum_extra.getItems();
+                //TODO: Add graph_extra serialization
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
@@ -520,6 +528,7 @@ var DetailScreenConfig = (function () {
                 column.header.setEdit(that.edit);
                 column.format.setEdit(that.edit);
                 column.enum_extra.setEdit(that.edit);
+                column.graph_extra.edit(that.edit);
                 column.late_flag_extra.setEdit(that.edit);
                 column.filter_xpath_extra.setEdit(that.edit);
                 column.calc_xpath_extra.setEdit(that.edit);
@@ -733,7 +742,7 @@ var DetailScreenConfig = (function () {
                             </ul> \
                         </div> '
                     );
-                    var addItem = function(autocomplete) {
+                    var addItem = function(columnConfiguration) {
                         var col;
                         var redraw = false;
                         if (_.isEmpty(that.columns)) {
@@ -742,20 +751,34 @@ var DetailScreenConfig = (function () {
                             redraw = true;
                         }
                         col = that.initColumnAsColumn(
-                            Column.init({hasAutocomplete: autocomplete}, that)
+                            Column.init(columnConfiguration, that)
                         );
                         that.fire('add-column', col);
                         if (redraw) {
                             that.render();
                         }
+                        return col;
+                    };
+                    var addGraphItem = function() {
+                        addItem({
+                            hasAutocomplete: false,
+                            format: "graph"
+                        });
+                        var graphItem = that.columns[that.columns.length - 1];
+                        console.log(graphItem);
+
+                        //col.format.val("graph");
+                        //col.format.fire("change");
+                        //console.log(col);
                     };
                     $(".add-property-item", $addButton).click(function () {
-                        addItem(true);
+                        addItem({hasAutocomplete: true});
                     });
                     $(".add-calculation-item", $addButton).click(function () {
-                        addItem(false);
+                        addItem({hasAutocomplete: false});
                     });
                     $(".add-graph-item", $addButton).click(function() {
+                        //addGraphItem();
                         openGraphConfigurationModal();
                     });
 

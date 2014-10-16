@@ -4,7 +4,7 @@
 
         <div class="modal-header">
             <a class="close" data-dismiss="modal">×</a>
-            <h3 data-bind="text: 'Editting ' + graphDisplayName()"></h3>
+            <h3 data-bind="text: 'Editing ' + graphDisplayName()"></h3>
         </div>
 
         <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
@@ -13,7 +13,10 @@
               <div class="control-group">
                 <label class="control-label" for="graphType">Graph Type</label>
                 <div class="controls">
-                    <select id="graphType" data-bind="options: availableGraphTypes">
+                    <select id="graphType" data-bind="
+                        options: availableGraphTypes,
+                        value: selectedGraphType
+                    ">
                     </select>
                 </div>
               </div>
@@ -30,22 +33,76 @@
                 <div class="tab-content">
 
                     <div class="tab-pane">
-                        Wut
+
+                        <div data-bind="foreach: series">
+                            <form class="form-horizontal">
+                                <div class="control-group">
+                                    <label class="control-label">Source</label>
+                                    <div class="controls">
+                                        <select>
+                                            <option>1</option>
+                                            <option>2</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <label class="control-label">Data</label>
+                                    <div class="controls">
+                                        <input type="text" class="input-block-level">
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <label class="control-label">X</label>
+                                    <div class="controls">
+                                        <input type="text">
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <label class="control-label">Y</label>
+                                    <div class="controls">
+                                        <input type="text">
+                                    </div>
+                                </div>
+                                <div class="control-group"
+                                     data-bind=" if: 'radiusFunction' in $data,">
+                                    <label class="control-label">Radius</label>
+                                    <div class="controls">
+                                        <input type="text" data-bind="value: radiusFunction">
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <label class="control-label">Configuration</label>
+                                    <div class="controls">
+                                        <div data-bind="foreach: configPairs">
+                                            <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
+                                        </div>
+                                        <a class="btn btn-small" href="#" data-bind="click: function(){
+                                            addConfigPair();
+                                            console.log('wut');
+                                        }">
+                                            <i class="icon-plus"></i> Add Property &rarr; Value mapping
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        {# TODO: Don't forget to add an hr/border between series and button #}
+
+                        <a class="btn btn-success" href="#" data-bind="click: addSeries">
+                            <i class="icon-plus"></i> Add Series
+                        </a>
                     </div>
 
                     <div class="tab-pane configuration">
                         <div data-bind="foreach: configPairs">
                             <form class="form-inline">
-                              <input type="text" class="input-small" placeholder="property">
-                              &rarr;
-                              <input type="text" class="input" placeholder="value">
-                              {# TODO: Make this button do something #}
-                              <a class="btn btn-small btn-danger" href="#">
-                                <i class="icon-remove"></i> Delete
-                              </a>
+                              <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
                             </form>
                         </div>
-                        <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Property &rarr; Value mapping</a>
+                        <a class="btn btn-success" href="#" data-bind="click: addConfigPair">
+                            <i class="icon-plus"></i> Add Property &rarr; Value mapping
+                        </a>
                     </div>
 
                     <div class="tab-pane annotations">
@@ -69,16 +126,18 @@
                                     <input type="text" class="input" placeholder="Display Text">
                                 </td>
                                 <td>
-                                    {# TODO: Make this button do something #}
-                                    <a class="btn btn-small btn-danger" href="#">
+                                    <a class="btn btn-small btn-danger" href="#" data-bind="
+                                        click: $parent.removeAnnotation
+                                    ">
                                         <i class="icon-remove"></i> Delete
                                     </a>
                                 </td>
                               </tr>
                             </tbody>
                         </table>
-                        {# TODO: Make this button do something #}
-                        <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Annotation</a>
+                        <a class="btn btn-success" href="#" data-bind="click: addAnnotation">
+                            <i class="icon-plus"></i> Add Annotation
+                        </a>
                     </div>
 
                 </div>
@@ -91,4 +150,13 @@
         </div>
     </div>
 
+</div>
+
+<div id="graph_property_value_mapping_inputs" class="hide">
+    <input type="text" class="input-small" placeholder="property">
+    &rarr;
+    <input type="text" class="input" placeholder="value">
+    <a class="btn btn-small btn-danger" href="#" data-bind="click: $parent.removeConfigPair">
+        <i class="icon-remove"></i> Delete
+    </a>
 </div>
