@@ -28,37 +28,27 @@
                     </ul>
                 </div>
                 <div class="tab-content">
+
                     <div class="tab-pane">
-                        Motha
+                        Wut
                     </div>
-                    <div class="tab-pane">
-                        <form class="form-inline">
-                          <input type="text" class="input-small" placeholder="property">
-                          &rarr;
-                          <input type="text" class="input" placeholder="value">
-                          {# TODO: Make this button do something #}
-                          <a class="btn btn-small btn-danger" href="#">
-                            <i class="icon-remove"></i> Delete
-                          </a>
-                        </form>
+
+                    <div class="tab-pane configuration">
+                        <div data-bind="foreach: configPairs">
+                            <form class="form-inline">
+                              <input type="text" class="input-small" placeholder="property">
+                              &rarr;
+                              <input type="text" class="input" placeholder="value">
+                              {# TODO: Make this button do something #}
+                              <a class="btn btn-small btn-danger" href="#">
+                                <i class="icon-remove"></i> Delete
+                              </a>
+                            </form>
+                        </div>
                         <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Property &rarr; Value mapping</a>
                     </div>
-                    <div class="tab-pane annotations">
-                        {% comment %}
-                        <div class="controls controls-row">
-                          <input class="span1" type="text" placeholder=".span1">
-                          <input class="span1" type="text" placeholder=".span1">
-                          <input class="span5" type="text" placeholder=".span4">
-                          <button class="btn btn-small btn-primary" type="button">Small button</button>
-                        </div>
 
-                        <form class="form-inline">
-                          <input type="text" class="input-mini" placeholder="x">
-                          <input type="text" class="input-mini" placeholder="y">
-                          <input type="text" class="input" placeholder="Display Text">
-                          <button type="submit" class="btn">Sign in</button>
-                        </form>
-                        {% endcomment %}
+                    <div class="tab-pane annotations">
                         <table data-bind="if: annotations().length">
                             <thead>
                                 <tr>
@@ -67,8 +57,8 @@
                                   <th>Display Text</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                              <tr data-bind="foreach: annotations">
+                            <tbody data-bind="foreach: annotations">
+                              <tr>
                                 <td>
                                     <input type="text" class="input-mini" placeholder="x">
                                 </td>
@@ -90,6 +80,7 @@
                         {# TODO: Make this button do something #}
                         <a class="btn btn-success" href="#"><i class="icon-plus"></i> Add Annotation</a>
                     </div>
+
                 </div>
             </div>
 

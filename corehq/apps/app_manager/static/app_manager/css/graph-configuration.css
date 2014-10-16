@@ -9,6 +9,9 @@
 .annotations table .btn {
     margin-bottom: 9px;
 }
+.configuration form {
+    margin-bottom: 9px;
+}
 
 /*
 .graph-config .form-horizontal .control-label {

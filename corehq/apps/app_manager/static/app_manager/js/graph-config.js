@@ -16,13 +16,21 @@ var GraphViewModel = function(){
 
     self.graphDisplayName =  ko.observable("My Partograph");
     self.availableGraphTypes =  ko.observableArray(["xy", "line", "scatter", "bubble"]);
-    self.annotations = ko.observableArray([new Annotation()]);
+    self.annotations = ko.observableArray([new Annotation(), new Annotation()]);
+    self.configPairs = ko.observableArray([new ConfigPropertyValuePair(), new ConfigPropertyValuePair()]);
 };
 
 var Annotation = function(){
     var self = this;
 
-    self.x = ko.observable(0);
-    self.y = ko.observable(0);
-    self.displayText = ko.observable("");
+    self.x = ko.observable();
+    self.y = ko.observable();
+    self.displayText = ko.observable();
+};
+
+var ConfigPropertyValuePair = function(){
+    var self = this;
+
+    self.property = ko.observable("");
+    self.value = ko.observable("");
 };
