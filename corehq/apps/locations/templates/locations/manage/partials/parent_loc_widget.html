@@ -1,34 +1,30 @@
 {% load hq_shared_tags %}
 
-<div class="well span6">
-    <div class="drilldown">
+<div class="span6">
+  <div class="well">
 
-      <div data-bind="foreach: selected_path">
-        <div class="control-group">
-          <label class="control-label" data-bind="text: allowed_child_types"></label>
-          <div class="controls">
-            <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
-          </div>
+    <div data-bind="foreach: selected_path">
+      <div class="control-group">
+        <label class="control-label" data-bind="text: allowed_child_types"></label>
+        <div class="controls">
+          <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
         </div>
       </div>
-
-      <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
     </div>
+
+    <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+  </div>
 
   <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
 
 </div>
 
 <script type="text/javascript">
-
-$(function() {
-
-  var locs = {{ locations|JSON }};
-  var selected = '{{ value }}';
-  model.load(locs, selected);
-  model.orig_parent_id = model.selected_locid();
-
-});
-
+  $(function() {
+    var locs = {{ locations|JSON }};
+    var selected = '{{ value }}';
+    model.load(locs, selected);
+    model.orig_parent_id = model.selected_locid();
+  });
 </script>
 
