@@ -42,7 +42,9 @@ archive_loc = function(button, loc_id) {
         url: loc_archive_url(loc_id),
         dataType: 'json',
         error: 'error',
-        success: 'success'
+        success: function (response) {
+            remove_elements_after_action(button);
+        }
     });
 }
 
@@ -53,8 +55,14 @@ unarchive_loc = function(button, loc_id) {
         url: loc_unarchive_url(loc_id),
         dataType: 'json',
         error: 'error',
-        success: 'success'
+        success: function (response) {
+            remove_elements_after_action(button);
+        }
     });
+}
+
+remove_elements_after_action = function(button) {
+    $(button).closest('.loc_header').remove();
 }
 
 $(function() {
