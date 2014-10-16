@@ -114,6 +114,7 @@ class SupplyPointStatus(models.Model):
                                     choices=((c, c) for c in SupplyPointStatusValues.CHOICES))
     status_date = models.DateTimeField(default=datetime.utcnow)
     supply_point = models.CharField(max_length=100, db_index=True)
+    external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     def save(self, *args, **kwargs):
         if not SupplyPointStatusTypes.is_legal_combination(self.status_type, self.status_value):
@@ -131,6 +132,7 @@ class SupplyPointStatus(models.Model):
     @classmethod
     def wrap_from_json(cls, obj, location_id):
         obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
 
@@ -147,6 +149,7 @@ class DeliveryGroupReport(models.Model):
     report_date = models.DateTimeField(default=datetime.now())
     message = models.CharField(max_length=100, db_index=True)
     delivery_group = models.CharField(max_length=1)
+    external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     class Meta:
         ordering = ('-report_date',)
@@ -165,6 +168,7 @@ class BaseReportingModel(models.Model):
     supply_point = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)
+    external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -200,7 +204,6 @@ class SupplyPointWarehouseRecord(models.Model):
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0) # 176
     average_lead_time_in_days = models.FloatField(default=0) # 28
-    external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     def __unicode__(self):
         return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
@@ -217,6 +220,7 @@ class GroupSummary(models.Model):
     responded = models.PositiveIntegerField(default=0)
     on_time = models.PositiveIntegerField(default=0)
     complete = models.PositiveIntegerField(default=0) # "complete" = submitted or responded
+    external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     @classmethod
     def wrap_form_json(cls, obj, location_id):
@@ -231,6 +235,7 @@ class GroupSummary(models.Model):
             obj['org_summary'] = OrganizationSummary.objects.get(external_id=org_summary_id)
         except OrganizationSummary.DoesNotExist:
             obj['org_summary'] = OrganizationSummary.objects.create(**obj['org_summary'])
+        obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
 
@@ -296,6 +301,7 @@ class ProductAvailabilityData(ReportingModel):
         product = Product.get_by_code(domain, obj['product'])
         obj['product'] = product._id
         obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
 
