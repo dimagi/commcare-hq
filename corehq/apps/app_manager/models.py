@@ -386,6 +386,9 @@ class AdvancedFormActions(DocumentSchema):
     def get_action_from_tag(self, tag):
         return self.actions_meta_by_tag.get(tag, {}).get('action', None)
 
+    def non_autoselect_load_actions(self):
+        return (a for a in self.load_update_cases if not a.auto_select)
+
     @property
     def actions_meta_by_tag(self):
         return self._action_meta()['by_tag']
@@ -443,6 +446,7 @@ class AdvancedFormActions(DocumentSchema):
         add_actions('open', self.open_cases)
 
         return meta
+
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -817,10 +821,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
-
-    def all_other_forms_require_a_case(self):
-        m = self.get_module()
-        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def _get_active_actions(self, types):
         actions = {}
@@ -1273,6 +1273,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             ))
         return errors
 
+    def form_filtering_allowed(self):
+        return False
+
 
 class Module(ModuleBase):
     """
@@ -1448,6 +1451,9 @@ class Module(ModuleBase):
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
 
+    def form_filtering_allowed(self):
+        return not self.put_in_root and self.all_forms_require_a_case()
+
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
 
         module_info = self.get_module_info()
@@ -1488,10 +1494,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     @property
     def requires(self):
         return 'case' if self.actions.load_update_cases else 'none'
-
-    def all_other_forms_require_a_case(self):
-        m = self.get_module()
-        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def check_actions(self):
         errors = []
@@ -1757,6 +1759,16 @@ class AdvancedModule(ModuleBase):
 
     def all_forms_require_a_case(self):
         return all(form.requires == 'case' for form in self.forms)
+
+    def form_filtering_allowed(self):
+        try:
+            # form filtering uses the first non-autoloaded case
+            first_load_actions = [next(form.actions.non_autoselect_load_actions()) for form in self.get_forms()]
+        except StopIteration:
+            return False
+
+        all_case_tags_same = len(set(a.case_tag for a in first_load_actions)) == 1
+        return not self.put_in_root and self.all_forms_require_a_case() and all_case_tags_same
 
     def get_details(self):
         return (

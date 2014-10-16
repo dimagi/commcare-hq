@@ -168,14 +168,11 @@
 
             {% if app.application_version == '2.0' %}
                 {% if allow_form_filtering %}
-                var putInRoot = {{ module.put_in_root|BOOL }};
-                var formFilter = {{ form.form_filter|JSON }};
-                var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
                 var formFilterAllowed = ko.computed(function () {
-                    return allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot;
+                    return {{ module.form_filtering_allowed|BOOL }};
                 });
                 ko.applyBindings({
-                        formFilter: ko.observable(formFilter),
+                        formFilter: ko.observable({{ form.form_filter|JSON }}),
                         formFilterAllowed: formFilterAllowed
                     },
                     $('#form-filter').get(0)
@@ -331,7 +328,11 @@
                         css: {error: hasError()}">
 
                         {% if allow_form_filtering %}
-                            {% include "app_manager/partials/form_filter.html" %}
+                            {% if form.form_type == 'module_form' %}
+                                {% include "app_manager/partials/form_filter.html" %}
+                            {% else %}
+                                {% include "app_manager/partials/form_filter.html" with NOT_ALLOWED='To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then forms</em>, (2) all the forms in the module must update or close a case, which means registration forms must go in a separate module and (3) The first "load" action of each form must have the same case tag (excluding auto-load actions).' %}
+                            {% endif %}
                         {% endif %}
                         {% if allow_form_workflow %}
                             {% include "app_manager/partials/form_workflow.html" %}
