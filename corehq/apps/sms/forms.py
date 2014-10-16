@@ -527,28 +527,33 @@ class SettingsForm(Form):
                     "is read by anyone, or if it counts as being read only "
                     "to the user who reads it."),
             ),
-            BootstrapMultiField(
-                _("Chat Template"),
-                InlineField(
-                    "use_custom_chat_template",
-                    data_bind="value: use_custom_chat_template",
-                ),
-                InlineField(
-                    "custom_chat_template",
-                    data_bind="visible: showCustomChatTemplate",
-                ),
-                help_bubble_text=_("To use a custom template to render the "
-                    "chat window, enter it here."),
-                css_id="custom-chat-template-group",
-            ),
         ]
+        if self._cchq_is_previewer:
+            fields.append(
+                BootstrapMultiField(
+                    _("Chat Template"),
+                    InlineField(
+                        "use_custom_chat_template",
+                        data_bind="value: use_custom_chat_template",
+                    ),
+                    InlineField(
+                        "custom_chat_template",
+                        data_bind="visible: showCustomChatTemplate",
+                    ),
+                    help_bubble_text=_("To use a custom template to render the "
+                        "chat window, enter it here."),
+                    css_id="custom-chat-template-group",
+                )
+            )
         return crispy.Fieldset(
             _("Chat Settings"),
             *fields
         )
 
-    def __init__(self, data=None, cchq_domain=None, *args, **kwargs):
+    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
+        *args, **kwargs):
         self._cchq_domain = cchq_domain
+        self._cchq_is_previewer = cchq_is_previewer
         super(SettingsForm, self).__init__(data, *args, **kwargs)
         self.populate_dynamic_choices()
 
@@ -647,9 +652,13 @@ class SettingsForm(Form):
         return value
 
     def clean_use_custom_chat_template(self):
+        if not self._cchq_is_previewer:
+            return None
         return self.cleaned_data.get("use_custom_chat_template") == CUSTOM
 
     def clean_custom_chat_template(self):
+        if not self._cchq_is_previewer:
+            return None
         value = self._clean_dependent_field("use_custom_chat_template",
             "custom_chat_template")
         if value is not None and value not in settings.CUSTOM_CHAT_TEMPLATES:

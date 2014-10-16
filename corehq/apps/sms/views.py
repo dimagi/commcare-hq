@@ -1343,9 +1343,15 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @property
     @memoized
+    def previewer(self):
+        return self.request.couch_user.is_previewer()
+
+    @property
+    @memoized
     def form(self):
         if self.request.method == "POST":
-            form = SettingsForm(self.request.POST, cchq_domain=self.domain)
+            form = SettingsForm(self.request.POST, cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer)
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
             enabled_disabled = lambda b: (ENABLED if b else DISABLED)
@@ -1397,7 +1403,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                 "sms_case_registration_user_id":
                     domain_obj.sms_case_registration_user_id,
             }
-            form = SettingsForm(initial=initial, cchq_domain=self.domain)
+            form = SettingsForm(initial=initial, cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer)
         return form
 
     @property
@@ -1410,15 +1417,13 @@ class SMSSettingsView(BaseMessagingSectionView):
         form = self.form
         if form.is_valid():
             domain_obj = Domain.get_by_name(self.domain, strict=True)
-            for (model_field_name, form_field_name) in (
+            field_map = [
                 ("use_default_sms_response",
                  "use_default_sms_response"),
                 ("default_sms_response",
                  "default_sms_response"),
                 ("custom_case_username",
                  "custom_case_username"),
-                ("custom_chat_template",
-                 "custom_chat_template"),
                 ("send_to_duplicated_case_numbers",
                  "send_to_duplicated_case_numbers"),
                 ("sms_conversation_length",
@@ -1431,7 +1436,13 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "restricted_sms_times_json"),
                 ("sms_conversation_times",
                  "sms_conversation_times_json"),
-            ):
+            ]
+            if self.previewer:
+                field_map.append(
+                    ("custom_chat_template",
+                     "custom_chat_template")
+                )
+            for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
                     form.cleaned_data[form_field_name])
 
