@@ -104,7 +104,8 @@ class RegisterGenerator(object):
         self.is_default = is_default
 
     def __call__(self, generator_class):
-        RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
+        RegisterGenerator.generators[self.repeater_cls] = RegisterGenerator.generators.get(self.repeater_cls, 
+            GeneratorCollection(self.repeater_cls))
         RegisterGenerator.generators[self.repeater_cls].add_new_format(
             self.format_name,
             self.format_label,
@@ -120,7 +121,7 @@ class RegisterGenerator(object):
     @classmethod
     def all_formats_by_repeater(cls, repeater_class, for_domain=None):
         generator_collection = cls.generators[repeater_class]
-        return generator_collection.get_all_formats(for_domain=None)
+        return generator_collection.get_all_formats(for_domain=for_domain)
 
     @classmethod
     def default_format_by_repeater(cls, repeater_class):

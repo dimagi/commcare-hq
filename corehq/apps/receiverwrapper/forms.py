@@ -7,7 +7,6 @@ class GenericRepeaterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
-        self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
     url = forms.URLField(
@@ -26,9 +25,9 @@ class FormRepeaterForm(GenericRepeaterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.repeater_class = FormRepeater
         super(FormRepeaterForm, self).__init__(*args, **kwargs)
-
+        self.repeater_class = FormRepeater
+        self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
                 required=True,
