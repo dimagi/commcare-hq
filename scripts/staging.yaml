@@ -45,9 +45,9 @@ name: autostaging
 branches:
   - jsonobject-0.6.0b2  # danny 10/10
   - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
-  - master+schedule+schedule
-  - master+schedule # Nick P 9/11
-  - schedule # SK 7/17
+#  - master+schedule+schedule
+#  - master+schedule # Nick P 9/11
+#  - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - logos+master # tw
@@ -68,7 +68,8 @@ branches:
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
-  - domain-metadata # Nick P 10/8
+  - double-management # SK 10/15
+  - case-list-redesign # Noah 9/16
 submodules:
   submodules/couchlog-src:
     branches:

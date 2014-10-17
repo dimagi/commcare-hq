@@ -454,16 +454,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
                     "mobile workers. To use, all of your deployed applications "
                     "must be using secure submissions."),
     )
-    ota_restore_caching = BooleanField(
-        label=_("Enable Restore Caching (beta)"),
-        required=False,
-        help_text=_(
-            "Speed up phone restores. Useful if you have users with "
-            "large case lists and are getting timeouts during restore. "
-            "This feature is still in testing. Don't enable unless "
-            "you are an advanced user."
-        )
-    )
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),
         initial=None,
