@@ -6,6 +6,8 @@ from corehq.apps.accounting.decorators import requires_privilege_for_commcare_us
 from corehq.apps.app_manager.exceptions import FormNotFoundException, \
     ModuleNotFoundException
 from corehq.util.couch import get_document_or_404
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
@@ -168,7 +170,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
-
+    instance_id = request.GET.get('instance_id')
     try:
         form = app.get_module(module_id).get_form(form_id).name.values()[0]
     except (FormNotFoundException, ModuleNotFoundException):
@@ -182,11 +184,18 @@ def form_context(request, domain, app_id, module_id, form_id):
     if case_id:
         session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
 
+    root_context = {
+        'form_url': form_url,
+    }
+    if instance_id:
+        root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
+            instance_id, ATTACHMENT_NAME
+        )
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
     session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
     return json_response(session_helper.get_full_context(
-        {'form_url': form_url,},
+        root_context,
         {'session_name': session_name, 'app_id': app._id}
     ))
 

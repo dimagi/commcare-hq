@@ -6,6 +6,7 @@
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
 {% include "imports/fancy-code.html" %}
+{% include 'cloudcare/includes/touchforms-inline.html' %}
 <style media="print">
     header {
         display: none !important;
@@ -229,10 +230,14 @@ requires imports/proptable.html to be included in the main template
         </a>
     </li>
     {% endif %}
-    
     <li>
         <a href="#form-xml" data-toggle="tab">
             {% trans "Raw XML" %}
+        </a>
+    </li>
+    <li>
+        <a href="#edit-submission" data-toggle="tab">
+            {% trans "Edit Submission" %}
         </a>
     </li>
 </ul>
@@ -275,7 +280,6 @@ requires imports/proptable.html to be included in the main template
                    </button>
                 </form>
                 {% endif %}
-                <a id="edit-form" class="btn btn-primary" href="#todo">{% trans "Edit this form" %}</a>
             </p>
             {% endif %}
         </div>
@@ -380,14 +384,29 @@ requires imports/proptable.html to be included in the main template
         </ul>
     </div>
     {% endif %}
-
     <div class="tab-pane" id="form-xml">
         <p>
             <a class="btn" href="{% url "download_form" domain instance.get_id %}" target="_blank">
                 {% trans "Open XML in New Window" %}
             </a>
         </p>
-        <p>Double-click code below to select all:</p>
+        <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
+    </div>
+    <div class="tab-pane" id="edit-submission">
+        <p>
+            <a href="#" class="btn btn-primary touchforms-link"
+                data-target="#form_editor_container"
+                data-app-id="{{ form_meta.app.id }}"
+                data-module-id="{{ form_meta.module.id }}"
+                data-form-id="{{ form_meta.form.id  }}"
+                data-instance-id='{{ instance.get_id }}'
+                data-session-data='{{ edit_session_data|JSON }}'
+                data-submit-url-root='{% url "receiver_post" domain %}'
+                data-form-url-root='{% url "cloudcare_main" domain "" %}'>
+                <i class="icon-edit"></i> {% trans "Edit submission" %}
+            </a>
+        </p>
+        <div class="touchforms-inline" id="form_editor_container"></div>
     </div>
 </div>

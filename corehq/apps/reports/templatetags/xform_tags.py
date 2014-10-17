@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
 import pytz
-from django.utils.html import escape
+from django.utils.html import escape, escapejs
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -151,6 +151,10 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
+    if len(case_blocks) == 1 and case_blocks[0].get(case_id_attr):
+        edit_session_data = {"case_id": case_blocks[0].get(case_id_attr)}
+    else:
+        edit_session_data = {}
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
@@ -170,4 +174,5 @@ def render_form(form, domain, options):
         "user_info": user_info,
         "side_pane": side_pane,
         "user": user,
+        "edit_session_data": edit_session_data,
     })
