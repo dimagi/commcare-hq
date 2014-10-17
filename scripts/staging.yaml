@@ -44,7 +44,6 @@ trunk: master
 name: autostaging
 branches:
   - jsonobject-0.6.0b2  # danny 10/10
-  - archive-products+explicit_case_processing # tw 8/14
   - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
   - master+schedule+schedule
   - master+schedule # Nick P 9/11
@@ -54,8 +53,8 @@ branches:
   - logos+master # tw
   - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
-  - archive-products+custom_product_data # tw 8/14
-  - archive-programs # tw 9/30 (branched from archive-products)
+  - archive-programs+custom_product_data # tw
+  - archive-programs # tw 9/30
   - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - custom_user_data  # tw+Ethan 9/9
@@ -69,7 +68,7 @@ branches:
   - archive-products+explicit_case_processing+ota-restore-caching  # cory 10/3
   - ota-restore-caching  # cory 10/3
   - reduce-location_ # tw 10/6
-  - help-text # j$  10/8
+  - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
   - domain-metadata # Nick P 10/8
 submodules:
@@ -90,8 +89,3 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
-  submodules/dimagi-utils-src:
-    branches:
-      # Danny 8/12. If there's weird errors or issues in saving forms
-      # or saving apps, just remove this
-      - faster-lazy-attachments
