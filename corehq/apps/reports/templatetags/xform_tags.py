@@ -83,7 +83,6 @@ def render_form(form, domain, options):
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
-
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
@@ -155,6 +154,7 @@ def render_form(form, domain, options):
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
+        "form_meta": options.get('form_meta', {}),
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         'question_list_not_found': question_list_not_found,

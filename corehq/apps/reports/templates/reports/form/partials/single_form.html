@@ -2,7 +2,6 @@
 {% load proptable_tags %}
 {% load xform_tags %}
 {% load hq_shared_tags %}
-
 {% comment %}
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
@@ -27,6 +26,7 @@ requires imports/proptable.html to be included in the main template
     overflow: scroll;
 }
 </style>
+<script src="{% static 'cloudcare/js/util.js' %}"></script>
 <script>
     $(function () {
         var help_text = {
@@ -93,6 +93,18 @@ requires imports/proptable.html to be included in the main template
             }
         });
         showSkipped(false);
+
+        {% if form_meta %}
+        // unfortunately since cloudcare doesn't have reversible urls, this has to be done in javascript
+        // todo: this probably needs better error handling
+        var cloudCareUrl = getCloudCareUrl(
+            "{% url "cloudcare_main" domain '' %}",
+            "{{ form_meta.app.id }}",
+            "{{ form_meta.module.id }}",
+            "{{ form_meta.form.id }}"
+        ) + "?preview=true&instance={{ instance.get_id }}";
+        $("#edit-form").attr("href", cloudCareUrl);
+        {% endif %}
     });
 </script>
 <script type="text/javascript">
@@ -263,6 +275,7 @@ requires imports/proptable.html to be included in the main template
                    </button>
                 </form>
                 {% endif %}
+                <a id="edit-form" class="btn btn-primary" href="#todo">{% trans "Edit this form" %}</a>
             </p>
             {% endif %}
         </div>
