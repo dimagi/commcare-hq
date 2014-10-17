@@ -400,8 +400,9 @@ var DetailScreenConfig = (function () {
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === "graph") {
                         // Replace format select with edit button
-                        that.format.ui.parent().empty();
-                        that.format.ui.parent().append(that.graph_extra.ui);
+                        var parent = that.format.ui.parent();
+                        parent.empty();
+                        parent.append(that.graph_extra.ui);
                     } else if (this.val() === 'late-flag') {
                         that.format.ui.parent().append(that.late_flag_extra.ui);
                         var input = that.late_flag_extra.ui.find('input');
@@ -778,8 +779,8 @@ var DetailScreenConfig = (function () {
                         addItem({hasAutocomplete: false});
                     });
                     $(".add-graph-item", $addButton).click(function() {
-                        //addGraphItem();
-                        openGraphConfigurationModal();
+                        addGraphItem();
+                        //openGraphConfigurationModal();
                     });
 
                     if (! _.isEmpty(this.columns)) {
