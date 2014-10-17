@@ -25,7 +25,7 @@ def build_content_type(format, encoding='utf-8'):
 
 class JsonResourceMixin(object):
     """
-    This can be extended to default to json formatting. 
+    This can be extended to default to json formatting.
     """
     # This exists in addition to the mixin since the order of the class
     # definitions actually matters
@@ -73,7 +73,7 @@ class CorsResourceMixin(object):
             response['Allow'] = allows
             raise ImmediateHttpResponse(response=response)
 
-        if not request_method in allowed:
+        if request_method not in allowed:
             response = http.HttpMethodNotAllowed(allows)
             response['Allow'] = allows
             raise ImmediateHttpResponse(response=response)

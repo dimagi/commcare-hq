@@ -11,10 +11,11 @@ Implementation of the CommTrack APIs. For more information see:
 https://confluence.dimagi.com/display/lmis/API
 """
 
+
 class ProductResource(HqBaseResource):
 
     type = "product"
-    id  = fields.CharField(attribute='_id', readonly=True, unique=True)
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
     code = fields.CharField(attribute='code', readonly=True, unique=True)
     name = fields.CharField(attribute='name', readonly=True)
     unit = fields.CharField(attribute='unit', readonly=True, null=True)

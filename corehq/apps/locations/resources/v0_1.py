@@ -4,6 +4,7 @@ from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAut
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
 
+
 class LocationResource(HqBaseResource):
     type = "location"
     uuid = fields.CharField(attribute='_id', readonly=True, unique=True)

@@ -144,6 +144,7 @@ class CustomResourceMeta(object):
     throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
+
 class UserResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)

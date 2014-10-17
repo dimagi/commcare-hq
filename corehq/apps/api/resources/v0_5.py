@@ -25,6 +25,7 @@ from phonelog.models import DeviceReportEntry
 
 MOCK_BULK_USER_ES = None
 
+
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
