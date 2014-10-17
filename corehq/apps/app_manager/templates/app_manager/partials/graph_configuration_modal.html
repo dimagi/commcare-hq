@@ -32,7 +32,7 @@
                 </div>
                 <div class="tab-content">
 
-                    <div class="tab-pane">
+                    <div class="tab-pane series">
 
                         <div data-bind="foreach: series">
                             <form class="form-horizontal">
@@ -43,6 +43,11 @@
                                             <option>1</option>
                                             <option>2</option>
                                         </select>
+                                        <div class="pull-right">
+                                            <a class="btn btn-danger" data-bind="click: $parent.removeSeries">
+                                                <i class="icon-trash"></i> Delete Series
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="control-group">
@@ -144,6 +149,7 @@
             </div>
 
         </div>
+
         <div class="modal-footer">
             <button class="btn" data-dismiss="modal">Cancel</button>
             <button class="btn btn-primary" data-dismiss="modal">Save</button>
