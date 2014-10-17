@@ -93,12 +93,12 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     This adds some collection of default products, programs,
     SMS keywords, etc.
     """
-    def _has_commtrack_config(domain):
+    def _needs_commtrack_config(domain):
         return (domain and
                 domain.commtrack_enabled and
                 not CommtrackConfig.for_domain(domain.name))
 
-    if not _has_commtrack_config(domain):
+    if not _needs_commtrack_config(domain):
         return
 
     config = CommtrackConfig(
