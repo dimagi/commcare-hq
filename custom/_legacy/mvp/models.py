@@ -34,7 +34,7 @@ CLASS_PATH = "mvp.models"
 class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
     _class_path = CLASS_PATH
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         if datespan:
             enddate = datespan.enddate_utc
         else:
