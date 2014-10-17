@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.models import Program, Product
+from corehq.apps.commtrack.models import Program, Product, SQLProduct
 from corehq.apps.commtrack.util import make_program
 from couchdbkit import ResourceNotFound
 
@@ -41,6 +41,14 @@ class ProgramsTest(CommTrackTest):
             1,
             Product.by_program_id(self.domain.name, self.new_program._id).count()
         )
+        self.assertEqual(
+            self.new_program._id,
+            self.products[0].program_id
+        )
+        self.assertEqual(
+            self.new_program._id,
+            SQLProduct.objects.get(product_id=self.products[0]._id).program_id
+        )
 
         # stash the id before we delete
         new_program_id = self.new_program._id
@@ -56,4 +64,12 @@ class ProgramsTest(CommTrackTest):
         self.assertEqual(
             3,
             Product.by_program_id(self.domain.name, self.default_program._id).count()
+        )
+        self.assertEqual(
+            self.default_program._id,
+            Product.get(self.products[0]._id).program_id
+        )
+        self.assertEqual(
+            self.default_program._id,
+            SQLProduct.objects.get(product_id=self.products[0]._id).program_id
         )
