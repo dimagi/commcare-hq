@@ -326,6 +326,7 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
+    'custom.tdh',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -999,7 +1000,8 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2')
+    ('wvindia2', 'wvindia2'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1159,6 +1161,7 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+        'custom.tdh.models.TDHFluffPillow',
 
     ],
     'mvp': [
@@ -1262,6 +1265,7 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
