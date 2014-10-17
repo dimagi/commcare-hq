@@ -19,13 +19,14 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
-from . import JsonResource, DomainSpecificResourceMixin
+from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
 
-class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
+
+class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
@@ -372,7 +373,7 @@ class NoCountingPaginator(Paginator):
         return None
 
 
-class DeviceReportResource(JsonResource, ModelResource):
+class DeviceReportResource(HqBaseResource, ModelResource):
     class Meta:
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
