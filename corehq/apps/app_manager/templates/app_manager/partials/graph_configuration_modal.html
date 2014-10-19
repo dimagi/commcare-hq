@@ -70,18 +70,19 @@
                                         <input type="text" data-bind="value: yFunction">
                                     </div>
                                 </div>
-                                <div class="control-group"
-                                     data-bind=" if: 'radiusFunction' in $data,">
+                                <!-- ko if: 'radiusFunction' in $data -->
+                                <div class="control-group">
                                     <label class="control-label">Radius</label>
                                     <div class="controls">
                                         <input type="text" data-bind="value: radiusFunction">
                                     </div>
                                 </div>
+                                <!-- /ko -->
                                 <div class="control-group">
                                     <label class="control-label">Configuration</label>
                                     <div class="controls">
                                         <div data-bind="foreach: configPairs">
-                                            <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
+                                            <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
                                         </div>
                                         <a class="btn btn-small" href="#" data-bind="click: function(){
                                             addConfigPair();

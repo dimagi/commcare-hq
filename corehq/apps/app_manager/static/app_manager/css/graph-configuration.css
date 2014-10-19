@@ -12,3 +12,27 @@
 .configuration form {
     margin-bottom: 9px;
 }
+.config-controls {
+    margin-bottom: 9px;
+}
+
+.annotations td {
+    padding: 2px;
+}
+
+.modal.graph-config .form-horizontal .control-label {
+    /* This is the width of the widest label plus 16. Might make more sense to compute
+       this with js, or choose a slightly larger value. */
+    width: 94px;
+}
+.modal.graph-config .form-horizontal .controls {
+    /* This should be the width of .modal.graph-config .form-horizontal .control-label
+       plus 20. Again, probably makes more sense to use a less variable. */
+    margin-left: 114px;
+}
+.modal.graph-config .series .control-group:last-of-type {
+    border-bottom: 1px solid #e5e5e5;
+}
+.modal.graph-config .series .control-group:last-of-type .controls > a {
+    margin-bottom: 10px;
+}
