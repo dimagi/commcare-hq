@@ -35,15 +35,16 @@ var openGraphConfigurationModal = function(){
     });
 };
 
-var GraphConfiguration = function(){
+var PairConfiguration = function(){
     var self = this;
-    self.configPairs = ko.observableArray([new ConfigPropertyValuePair(), new ConfigPropertyValuePair()]);
+    self.configPairs = ko.observableArray([]);
+    self.configPropertyOptions = [];
+    self.configPropertyHints = {};
 
     self.removeConfigPair = function (configPair){
         self.configPairs.remove(configPair);
     };
     self.addConfigPair = function (){
-        console.log("Boom shaka laka");
         self.configPairs.push(new ConfigPropertyValuePair());
     }
 };
@@ -63,7 +64,52 @@ var GraphViewModel = function(){
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);
-    self.annotations = ko.observableArray([new Annotation(), new Annotation()]);
+    self.annotations = ko.observableArray([]);
+    self.configPropertyOptions = [
+        // Axis min and max:
+        'x-min',
+        'x-max',
+        'y-min',
+        'y-max',
+        'secondary-y-min',
+        'secondary-y-max',
+        // Axis titles:
+        'x-title',
+        'y-title',
+        'secondary-y-title',
+        // Axis labels:
+        'x-labels',
+        'y-labels',
+        'secondary-y-labels',
+        // other:
+        'show-grid',
+        'show-axes',
+        'zoom'
+    ];
+    // Note: I don't like repeating the list of property options in the hints map.
+    // I could use configPropertyHints.keys() to generate the options, but that
+    // doesn't guarantee order...
+    self.configPropertyHints = {
+        // Axis min and max:
+        'x-min': 'ex: 0',
+        'x-max': 'ex: 100',
+        'y-min': 'ex: 0',
+        'y-max': 'ex: 100',
+        'secondary-y-min': 'ex: 0',
+        'secondary-y-max': 'ex: 100',
+        // Axis titles:
+        'x-title': 'ex: days',
+        'y-title': 'ex: temperature',
+        'secondary-y-title': 'ex: temperature',
+        // Axis labels:
+        'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        // other:
+        'show-grid': 'true or false',
+        'show-axes': 'true or false',
+        'zoom': 'true or false'
+    };
 
     self.removeSeries = function (series){
         self.series.remove(series);
@@ -85,7 +131,7 @@ var GraphViewModel = function(){
         self.annotations.push(new Annotation());
     };
 };
-GraphViewModel.prototype = new GraphConfiguration();
+GraphViewModel.prototype = new PairConfiguration();
 
 var Annotation = function(){
     var self = this;
@@ -94,19 +140,39 @@ var Annotation = function(){
     self.y = ko.observable();
     self.displayText = ko.observable();
 };
-
-var XYGraphSeries = function(){
+var GraphSeries = function (){
     var self = this;
 
     self.source = ko.observableArray(["something", "da otherthing"]);
     self.dataPath = ko.observable("");
     self.xFunction = ko.observable("");
     self.yFunction = ko.observable("");
+    self.configPropertyOptions = [
+        'fill-above',
+        'fill-below',
+        'line-color',
+        'point-style'
+    ];
+    self.configPropertyHints = {
+        'fill-above': 'ex: #aarrggbb',
+        'fill-below': 'ex: #aarrggbb',
+        'line-color': 'ex: #aarrggbb',
+        'point-style': 'circle, x, or none'
+    };
 };
-XYGraphSeries.prototype = new GraphConfiguration();
+GraphSeries.prototype = new PairConfiguration();
+
+var XYGraphSeries = function(){
+    var self = this;
+    self.configPropertyOptions = self.configPropertyOptions.concat(['secondary-y']);
+    self.configPropertyHints['secondary-y'] = 'ex: false';
+};
+XYGraphSeries.prototype = new GraphSeries();
 
 var BubbleGraphSeries = function(){
     var self = this;
     self.radiusFunction = ko.observable("");
+    self.configPropertyOptions = self.configPropertyOptions.concat(['max-radius']);
+    self.configPropertyHints['max-radius'] = 'ex: 7';
 };
-BubbleGraphSeries.prototype = new XYGraphSeries();
+BubbleGraphSeries.prototype = new GraphSeries();

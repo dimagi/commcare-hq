@@ -779,8 +779,8 @@ var DetailScreenConfig = (function () {
                         addItem({hasAutocomplete: false});
                     });
                     $(".add-graph-item", $addButton).click(function() {
-                        addGraphItem();
-                        //openGraphConfigurationModal();
+                        //addGraphItem();
+                        openGraphConfigurationModal();
                     });
 
                     if (! _.isEmpty(this.columns)) {

@@ -159,9 +159,9 @@
 </div>
 
 <div id="graph_property_value_mapping_inputs" class="hide">
-    <input type="text" class="input-small" placeholder="property">
+    <input type="text" class="input-small" placeholder="property" data-bind="typeahead: $parent.configPropertyOptions, value: property">
     &rarr;
-    <input type="text" class="input" placeholder="value">
+    <input type="text" class="input" data-bind="value: value, attr: {placeholder: $parent.configPropertyHints[property()]}">
     <a class="btn btn-small btn-danger" href="#" data-bind="click: $parent.removeConfigPair">
         <i class="icon-remove"></i> Delete
     </a>
