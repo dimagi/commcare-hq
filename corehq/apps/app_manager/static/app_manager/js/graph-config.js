@@ -143,8 +143,10 @@ var Annotation = function(){
 var GraphSeries = function (){
     var self = this;
 
-    self.source = ko.observableArray(["something", "da otherthing"]);
+    self.sourceOptions = ko.observableArray(["child case type 1", "child case type 2", "custom"]);
+    self.selectedSource = ko.observable("child case type 1");
     self.dataPath = ko.observable("");
+    self.showDataPath = ko.observable(false);
     self.xFunction = ko.observable("");
     self.yFunction = ko.observable("");
     self.configPropertyOptions = [
@@ -159,6 +161,15 @@ var GraphSeries = function (){
         'line-color': 'ex: #aarrggbb',
         'point-style': 'circle, x, or none'
     };
+
+    self.toggleShowDataPath = function() {
+        self.showDataPath(!self.showDataPath())
+    };
+    self.selectedSource.subscribe(function(newValue) {
+        if (newValue == "custom") {
+            self.showDataPath(true);
+        }
+    });
 };
 GraphSeries.prototype = new PairConfiguration();
 
