@@ -832,6 +832,8 @@ def get_module_view_context_and_template(app, module):
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
+                    'child_case_types': list(module.get_child_case_types()),
+                    # TODO: Do I need to add child_case_types to AdvancedModule details etc?
                 },
             ],
         }

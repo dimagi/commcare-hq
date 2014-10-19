@@ -5,6 +5,7 @@
  */
 uiElement.GraphConfiguration = function(original) {
     var self = this;
+    original = original || {};
 
     //TODO: Put this in a template somewhere?
     var $editButtonDiv = $('\
@@ -22,7 +23,7 @@ uiElement.GraphConfiguration = function(original) {
     self.openModal = function (uiElementViewModel){
 
         // make a copy of the view model
-        var graphViewModelCopy = new GraphViewModel();
+        var graphViewModelCopy = new GraphViewModel(original);
         graphViewModelCopy.fromJS(ko.toJS(uiElementViewModel.graphViewModel));
         // Replace the original with the copy if save is clicked, otherwise discard it
         graphViewModelCopy.onSave = function(){
@@ -71,6 +72,7 @@ var ConfigPropertyValuePair = function(){
 
 var GraphViewModel = function(original){
     var self = this;
+    original = original || {};
 
     self.graphDisplayName = ko.observable("My Partograph");
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
@@ -122,27 +124,25 @@ var GraphViewModel = function(original){
         'show-axes': 'true or false',
         'zoom': 'true or false'
     };
+    self.childCaseTypes = original.childCaseTypes || []; // TODO: What happens with original might change
 
     self.fromJS = function(obj){
         self.graphDisplayName(obj.graphDisplayName);
         self.selectedGraphType(obj.selectedGraphType);
         self.series(_.map(obj.series, function(o){
-            var newSeries = new (self.getSeriesConstructor())();
-            newSeries.fromJS(o);
-            return newSeries;
+            return new (self.getSeriesConstructor())(o, self.childCaseTypes);
         }));
         self.annotations(_.map(obj.annotations, function(o){
-            var newAnnotation = new Annotation();
-            newAnnotation.fromJS(o);
-            return newAnnotation;
+            return new Annotation(o);
         }));
+        self.childCaseTypes = obj.childCaseTypes.slice(0)
     };
 
     self.removeSeries = function (series){
         self.series.remove(series);
     };
     self.addSeries = function (series){
-        self.series.push(new (self.getSeriesConstructor())());
+        self.series.push(new (self.getSeriesConstructor())({}, self.childCaseTypes));
     };
     /**
      * Return the proper Series object constructor based on the current state
@@ -167,28 +167,35 @@ var GraphViewModel = function(original){
 };
 GraphViewModel.prototype = new PairConfiguration();
 
-var Annotation = function(){
+var Annotation = function(original){
     var self = this;
+    original = original || {};
 
-    self.x = ko.observable();
-    self.y = ko.observable();
-    self.displayText = ko.observable();
+    self.x = ko.observable(original.x === undefined ? undefined : original.x);
+    self.y = ko.observable(original.y === undefined ? undefined : original.y);
+    self.displayText = ko.observable(original.displayText === "" ? undefined : original.displayText);
 
-    self.fromJS = function(obj){
-        self.x(obj.x);
-        self.y(obj.y);
-        self.displayText(obj.displayText);
-    };
 };
-var GraphSeries = function (){
+var GraphSeries = function (original, childCaseTypes){
     var self = this;
+    original = original || {};
+    childCaseTypes = childCaseTypes || [];
 
-    self.sourceOptions = ko.observableArray(["child case type 1", "child case type 2", "custom"]);
-    self.selectedSource = ko.observable("child case type 1");
-    self.dataPath = ko.observable("");
-    self.showDataPath = ko.observable(false);
-    self.xFunction = ko.observable("");
-    self.yFunction = ko.observable("");
+    function orig_or_default(prop, fallback){
+        return original.prop === undefined ? fallback : original.prop
+    }
+
+    self.sourceOptions = ko.observableArray(orig_or_default(
+        'sourceOptions',
+        _.map(childCaseTypes, function(s){
+            return "Child case: " + s;
+        }).concat(['custom'])
+    ));
+    self.selectedSource = ko.observable(orig_or_default('selectedSource', self.sourceOptions()[0]));
+    self.dataPath = ko.observable(orig_or_default('dataPath', ""));
+    self.showDataPath = ko.observable(orig_or_default('showDataPath', false));
+    self.xFunction = ko.observable(orig_or_default('xFunction',""));
+    self.yFunction = ko.observable(orig_or_default('yFunction',""));
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
@@ -202,16 +209,6 @@ var GraphSeries = function (){
         'point-style': 'circle, x, or none'
     };
 
-    self.fromJS = function(obj){
-        self.sourceOptions(obj.sourceOptions);
-        self.selectedSource(obj.selectedSource);
-        self.dataPath(obj.dataPath);
-        self.showDataPath(obj.showDataPath);
-        self.xFunction(obj.xFunction);
-        self.yFunction(obj.yFunction);
-        self.yFunction(obj.yFunction);
-    };
-
     self.toggleShowDataPath = function() {
         self.showDataPath(!self.showDataPath())
     };
@@ -222,23 +219,25 @@ var GraphSeries = function (){
     });
 };
 GraphSeries.prototype = new PairConfiguration();
+GraphSeries.prototype.constructor = GraphSeries;
 
-var XYGraphSeries = function(){
+var XYGraphSeries = function(original, childCaseTypes){
+    GraphSeries.apply(this, [original, childCaseTypes]);
     var self = this;
     self.configPropertyOptions = self.configPropertyOptions.concat(['secondary-y']);
     self.configPropertyHints['secondary-y'] = 'ex: false';
 };
 XYGraphSeries.prototype = new GraphSeries();
+XYGraphSeries.constructor = XYGraphSeries;
 
-var BubbleGraphSeries = function(){
+var BubbleGraphSeries = function(original, childCaseTypes){
+    GraphSeries.apply(this, [original, childCaseTypes]);
     var self = this;
-    self.radiusFunction = ko.observable("");
+
+    self.radiusFunction = ko.observable(original.radiusFunction === undefined ? "" : original.radiusFunction);
     self.configPropertyOptions = self.configPropertyOptions.concat(['max-radius']);
     self.configPropertyHints['max-radius'] = 'ex: 7';
 
-    self.fromJS = function(obj){
-        this.__proto__.fromJS(obj);
-        this.radiusFunction(obj.radiusFunction);
-    };
 };
 BubbleGraphSeries.prototype = new GraphSeries();
+BubbleGraphSeries.prototype.constructor = BubbleGraphSeries;

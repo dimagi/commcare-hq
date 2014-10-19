@@ -339,7 +339,10 @@ var DetailScreenConfig = (function () {
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
-            this.graph_extra = new uiElement.GraphConfiguration(); // TODO: pass an object to this constructor representing the original's graph configuration
+            // Note to self: We probably always want to set sourceOptions anew, even if it exists in the column we are loading
+            // because there might be new child case types since the last time the details page was loaded
+            // TODO: pass an object to this constructor representing the original's graph configuration
+            this.graph_extra = new uiElement.GraphConfiguration({childCaseTypes: this.screen.childCaseTypes});
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
@@ -506,6 +509,7 @@ var DetailScreenConfig = (function () {
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
+            this.childCaseTypes = options.childCaseTypes;
             // The column key is used to retreive the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
@@ -896,6 +900,7 @@ var DetailScreenConfig = (function () {
                         saveUrl: that.saveUrl,
                         $location: $location,
                         columnKey: columnType,
+                        childCaseTypes: spec.childCaseTypes,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short"
