@@ -1,38 +1,50 @@
 /**
- * Return a GraphViewModel with additional properties added for use as a ui element
- * Allows us to integrate the knockout elements with the jquery based part of the ui.
- * @returns {GraphViewModel}
+ * Create a view model that is bound to an "Edit graph" button. The ui property
+ * of this view model allows us to integrate the knockout elements with the
+ * jquery based part of the ui.
  */
-uiElement.graph_configuration = function() {
-    var graphViewModel = new GraphViewModel();
+uiElement.GraphConfiguration = function(original) {
+    var self = this;
 
+    //TODO: Put this in a template somewhere?
     var $editButtonDiv = $('\
         <div> \
             <button class="btn" data-bind="click: openModal, visible: $data.edit"> \
                 <i class="icon-pencil"></i> \
-                Edit \
+                Edit Graph\
             </button> \
         </div>\
     ');
-    graphViewModel.ui = $editButtonDiv;
 
-    eventize(graphViewModel);
-    // TODO: Fire change event on self when observables are edited
+    self.ui = $editButtonDiv;
+    self.graphViewModel = new GraphViewModel(original);
+    self.edit = ko.observable(true);
+    self.openModal = function (uiElementViewModel){
 
-    return graphViewModel;
-};
+        // make a copy of the view model
+        var graphViewModelCopy = new GraphViewModel(ko.toJSON(uiElementViewModel.graphViewModel));
+        // Replace the original with the copy if save is clicked, otherwise discard it
+        graphViewModelCopy.onSave = function(){
+            uiElementViewModel.graphViewModel = graphViewModelCopy;
+        };
 
-var openGraphConfigurationModal = function(){
-    var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
-    var myGraphViewModel = new GraphViewModel();
-    ko.applyBindings(myGraphViewModel, $modalDiv.get(0));
-    var $modal = $modalDiv.find('.modal');
+        // Load the modal with the copy
+        var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
 
-    $modal.appendTo('body');
-    $modal.modal('show');
-    $modal.on('hidden', function () {
-        $modal.remove();
-    });
+        ko.applyBindings(graphViewModelCopy, $modalDiv.get(0));
+
+        var $modal = $modalDiv.find('.modal');
+        $modal.appendTo('body');
+        $modal.modal('show');
+        $modal.on('hidden', function () {
+            $modal.remove();
+        });
+    };
+
+    ko.applyBindings(self, self.ui.get(0));
+    eventize(self);
+    // TODO: Fire change event on self when observables are edited (so that save button is activated) ?
+    //       see uiElement.key_value_mapping
 };
 
 var PairConfiguration = function(){
@@ -56,7 +68,8 @@ var ConfigPropertyValuePair = function(){
     self.value = ko.observable("");
 };
 
-var GraphViewModel = function(){
+var GraphViewModel = function(original){
+    //TODO: Load configuration from original
     var self = this;
     self.edit = ko.observable(true);
 

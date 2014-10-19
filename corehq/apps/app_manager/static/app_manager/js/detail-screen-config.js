@@ -339,7 +339,7 @@ var DetailScreenConfig = (function () {
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
-            this.graph_extra = uiElement.graph_configuration(); // TODO: Make this right
+            this.graph_extra = new uiElement.GraphConfiguration(); // TODO: pass an object to this constructor representing the original's graph configuration
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
@@ -779,8 +779,8 @@ var DetailScreenConfig = (function () {
                         addItem({hasAutocomplete: false});
                     });
                     $(".add-graph-item", $addButton).click(function() {
-                        //addGraphItem();
-                        openGraphConfigurationModal();
+                        addGraphItem();
+                        //openGraphConfigurationModal();
                     });
 
                     if (! _.isEmpty(this.columns)) {
