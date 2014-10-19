@@ -22,7 +22,8 @@ uiElement.GraphConfiguration = function(original) {
     self.openModal = function (uiElementViewModel){
 
         // make a copy of the view model
-        var graphViewModelCopy = new GraphViewModel(ko.toJSON(uiElementViewModel.graphViewModel));
+        var graphViewModelCopy = new GraphViewModel();
+        graphViewModelCopy.fromJS(ko.toJS(uiElementViewModel.graphViewModel));
         // Replace the original with the copy if save is clicked, otherwise discard it
         graphViewModelCopy.onSave = function(){
             uiElementViewModel.graphViewModel = graphViewModelCopy;
@@ -69,9 +70,7 @@ var ConfigPropertyValuePair = function(){
 };
 
 var GraphViewModel = function(original){
-    //TODO: Load configuration from original
     var self = this;
-    self.edit = ko.observable(true);
 
     self.graphDisplayName = ko.observable("My Partograph");
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
@@ -124,14 +123,36 @@ var GraphViewModel = function(original){
         'zoom': 'true or false'
     };
 
+    self.fromJS = function(obj){
+        self.graphDisplayName(obj.graphDisplayName);
+        self.selectedGraphType(obj.selectedGraphType);
+        self.series(_.map(obj.series, function(o){
+            var newSeries = new (self.getSeriesConstructor())();
+            newSeries.fromJS(o);
+            return newSeries;
+        }));
+        self.annotations(_.map(obj.annotations, function(o){
+            var newAnnotation = new Annotation();
+            newAnnotation.fromJS(o);
+            return newAnnotation;
+        }));
+    };
+
     self.removeSeries = function (series){
         self.series.remove(series);
     };
     self.addSeries = function (series){
+        self.series.push(new (self.getSeriesConstructor())());
+    };
+    /**
+     * Return the proper Series object constructor based on the current state
+     * of the view model.
+     */
+    self.getSeriesConstructor = function(){
         if (self.selectedGraphType() == "xy"){
-            self.series.push(new XYGraphSeries());
+            return XYGraphSeries
         } else if (self.selectedGraphType() == "bubble"){
-            self.series.push(new BubbleGraphSeries());
+            return BubbleGraphSeries
         } else {
             throw "Invalid selectedGraphType";
         }
@@ -152,6 +173,12 @@ var Annotation = function(){
     self.x = ko.observable();
     self.y = ko.observable();
     self.displayText = ko.observable();
+
+    self.fromJS = function(obj){
+        self.x(obj.x);
+        self.y(obj.y);
+        self.displayText(obj.displayText);
+    };
 };
 var GraphSeries = function (){
     var self = this;
@@ -173,6 +200,16 @@ var GraphSeries = function (){
         'fill-below': 'ex: #aarrggbb',
         'line-color': 'ex: #aarrggbb',
         'point-style': 'circle, x, or none'
+    };
+
+    self.fromJS = function(obj){
+        self.sourceOptions(obj.sourceOptions);
+        self.selectedSource(obj.selectedSource);
+        self.dataPath(obj.dataPath);
+        self.showDataPath(obj.showDataPath);
+        self.xFunction(obj.xFunction);
+        self.yFunction(obj.yFunction);
+        self.yFunction(obj.yFunction);
     };
 
     self.toggleShowDataPath = function() {
@@ -198,5 +235,10 @@ var BubbleGraphSeries = function(){
     self.radiusFunction = ko.observable("");
     self.configPropertyOptions = self.configPropertyOptions.concat(['max-radius']);
     self.configPropertyHints['max-radius'] = 'ex: 7';
+
+    self.fromJS = function(obj){
+        this.__proto__.fromJS(obj);
+        this.radiusFunction(obj.radiusFunction);
+    };
 };
 BubbleGraphSeries.prototype = new GraphSeries();
