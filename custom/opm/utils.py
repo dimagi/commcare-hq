@@ -1,6 +1,3 @@
-import datetime
-
-
 class BaseMixin(object):
 
     @property
@@ -43,13 +40,3 @@ def normal_format(value):
     if not value:
         value = 0
     return "<span style='display: block; text-align:center;'>%d<hr style='margin: 0;border-top: 0; border-color: black;'></span>" % value
-
-
-def date_from_request(request):
-    from_req = request.GET.get('date')
-    if from_req:
-        try:
-            return datetime.datetime.strptime(from_req, '%Y-%m-%d').date()
-        except ValueError:
-            pass
-    return datetime.date.today()
