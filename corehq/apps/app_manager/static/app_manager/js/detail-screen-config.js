@@ -342,7 +342,11 @@ var DetailScreenConfig = (function () {
             // Note to self: We probably always want to set sourceOptions anew, even if it exists in the column we are loading
             // because there might be new child case types since the last time the details page was loaded
             // TODO: pass an object to this constructor representing the original's graph configuration
-            this.graph_extra = new uiElement.GraphConfiguration({childCaseTypes: this.screen.childCaseTypes});
+            this.graph_extra = new uiElement.GraphConfiguration({
+                childCaseTypes: this.screen.childCaseTypes,
+                lang: this.lang,
+                langs: this.screen.langs
+            });
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
@@ -784,7 +788,6 @@ var DetailScreenConfig = (function () {
                     });
                     $(".add-graph-item", $addButton).click(function() {
                         addGraphItem();
-                        //openGraphConfigurationModal();
                     });
 
                     if (! _.isEmpty(this.columns)) {

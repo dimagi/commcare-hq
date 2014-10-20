@@ -63,22 +63,83 @@ var PairConfiguration = function(){
     }
 };
 
-var ConfigPropertyValuePair = function(){
+var ConfigPropertyValuePair = function(original){
     var self = this;
+    original = original || {};
 
-    self.property = ko.observable("");
-    self.value = ko.observable("");
+    self.property = ko.observable(original.property === undefined ? "" : original.property);
+    self.value = ko.observable(original.value === undefined ? "" : original.value);
+};
+
+var LocalizedConfigPropertyValuePair = function(original){
+    var self = this;
+    original = original || {};
+
+    // These value should always be provided
+    self.lang = original.lang;
+    self.langs = original.langs;
+    self.property = original.property;
+
+    self.values = original.values || {};
+    // Make the value for the current language observable:
+    self.values[self.lang] =
+        ko.observable(self.values[self.lang] === undefined ? null : ko.unwrap(
+            self.values[self.lang])
+        );
+
+    /**
+     * Return the backup value for self.lang.
+     * ex: self.values = {'en': 'foo', 'it': 'bar'}
+     *     self.langs = ['en', 'fra', 'it']
+     *
+     *     self.lang = 'fra'
+     *     self.getBackup() === 'foo'
+     *
+     *     self.lang = 'it'
+     *     self.getBackup() === 'bar'
+     *
+     * @returns {object}
+     */
+    self.getBackup = function(){
+        var backup = {'value':null, 'lang': null};
+        var modLangs = [self.lang].concat(self.langs);
+        for (var i=0; i < modLangs.length; i++) {
+            var possibleBackup = ko.unwrap(self.values[modLangs[i]]);
+            if (possibleBackup !== undefined && possibleBackup != null) {
+                backup = {
+                    'value': possibleBackup,
+                    'lang': modLangs[i]
+                };
+                break;
+            }
+        }
+        return backup;
+    };
+
 };
 
 var GraphViewModel = function(original){
     var self = this;
     original = original || {};
 
+    self.lang = original.lang;
+    self.langs = original.langs;
+
     self.graphDisplayName = ko.observable("My Partograph");
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);
     self.annotations = ko.observableArray([]);
+    self.axisTitleConfigurations = ko.observableArray(_.map(
+        ['x-axis-title', 'y-axis-title', 'secondary-y-title'],
+        function(s){return new LocalizedConfigPropertyValuePair({
+            'property': s,
+            //TODO: initialize these values
+            'lang': self.lang,
+            'langs': self.langs
+        })}
+    ));
+
     self.configPropertyOptions = [
         // Axis min and max:
         'x-min',
@@ -87,10 +148,6 @@ var GraphViewModel = function(original){
         'y-max',
         'secondary-y-min',
         'secondary-y-max',
-        // Axis titles:
-        'x-title',
-        'y-title',
-        'secondary-y-title',
         // Axis labels:
         'x-labels',
         'y-labels',
@@ -103,6 +160,8 @@ var GraphViewModel = function(original){
     // Note: I don't like repeating the list of property options in the hints map.
     // I could use configPropertyHints.keys() to generate the options, but that
     // doesn't guarantee order...
+    // I could make these be lists of lists and have the bindings be functions
+    // instead of just the name of the property
     self.configPropertyHints = {
         // Axis min and max:
         'x-min': 'ex: 0',
@@ -111,10 +170,6 @@ var GraphViewModel = function(original){
         'y-max': 'ex: 100',
         'secondary-y-min': 'ex: 0',
         'secondary-y-max': 'ex: 100',
-        // Axis titles:
-        'x-title': 'ex: days',
-        'y-title': 'ex: temperature',
-        'secondary-y-title': 'ex: temperature',
         // Axis labels:
         'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
@@ -134,6 +189,9 @@ var GraphViewModel = function(original){
         }));
         self.annotations(_.map(obj.annotations, function(o){
             return new Annotation(o);
+        }));
+        self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function(o){
+            return new LocalizedConfigPropertyValuePair(o);
         }));
         self.childCaseTypes = obj.childCaseTypes.slice(0)
     };

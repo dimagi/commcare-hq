@@ -36,3 +36,10 @@
 .modal.graph-config .series .control-group:last-of-type .controls > a {
     margin-bottom: 10px;
 }
+
+.configuration .property-name {
+    display: inline-block;
+    /* This width is intended to match the width+padding+border of the
+       input-small class. Surely there is a DRYer way to do this... */
+    width: 104px;
+}
