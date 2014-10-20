@@ -338,10 +338,6 @@ class Filter(HideShortColumn):
     def fields(self):
         return []
 
-    @property
-    def filter_xpath(self):
-        return dot_interpolate(self.column.filter_xpath, self.xpath)
-
 
 @register_format_type('calculate')
 class Calculate(FormattedDetailColumn):
