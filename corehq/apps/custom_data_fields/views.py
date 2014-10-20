@@ -61,18 +61,16 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
 
-    # def clean_label(self):
-        # return self.cleaned_data['label']
-
-    # def clean_slug(self):
-        # return self.cleaned_data['slug']
-
 
 class CustomDataFieldsMixin(object):
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
     entity_string = None  # User, Group, Location, Product...
+
+    @classmethod
+    def page_name(cls):
+        return "Edit {} Fields".format(cls.entity_string)
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
