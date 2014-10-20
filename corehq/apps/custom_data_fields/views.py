@@ -1,8 +1,9 @@
 import json
+import re
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug
+from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.core.urlresolvers import reverse
 from django import forms
@@ -47,12 +48,22 @@ class CustomDataFieldsForm(forms.Form):
         return data_fields
 
 
+class XmlSlugField(forms.SlugField):
+    default_validators = [
+        validate_slug,
+        RegexValidator(
+            re.compile(r'^(?!xml)', flags=re.IGNORECASE),
+            _('Properties cannot begin with "xml"'), 'invalid_xml'
+        )
+    ]
+
+
 class CustomDataFieldForm(forms.Form):
     label = forms.CharField(
         required=True,
         error_messages={'required': _('All fields are required')}
     )
-    slug = forms.SlugField(
+    slug = XmlSlugField(
         required=True,
         error_messages={
             'required': _('All fields are required'),
