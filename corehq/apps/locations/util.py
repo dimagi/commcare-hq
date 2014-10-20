@@ -49,7 +49,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
-                loc_to_json(loc) for loc in loc.get_children().filter(is_archived=False)
+                loc_to_json(loc) for loc in
+                loc.child_locations(include_archived_ancestors=include_archived)
             ]
             parent = this_loc
 
