@@ -45,7 +45,10 @@
                                             optionsText: 'text'
                                         ">
                                         </select>
-                                        <a href="#" data-bind="click: toggleShowDataPath">show path</a>
+                                        <a href="#" data-bind="
+                                            click: toggleShowDataPath,
+                                            text: showDataPath() ? 'hide path' : 'show path'
+                                            "></a>
                                         <div class="pull-right">
                                             <a class="btn btn-danger" data-bind="click: $parent.removeSeries">
                                                 <i class="icon-trash"></i> Delete Series
