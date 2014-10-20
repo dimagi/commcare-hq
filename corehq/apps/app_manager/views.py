@@ -345,6 +345,8 @@ def default(req, domain):
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
     """
+    if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
+        return HttpResponseRedirect(reverse('dashboard_default', args=[domain]))
     return view_app(req, domain)
 
 
