@@ -176,23 +176,42 @@ var Annotation = function(original){
     self.displayText = ko.observable(original.displayText === "" ? undefined : original.displayText);
 
 };
+
 var GraphSeries = function (original, childCaseTypes){
     var self = this;
     original = original || {};
     childCaseTypes = childCaseTypes || [];
 
     function orig_or_default(prop, fallback){
-        return original.prop === undefined ? fallback : original.prop
+        return original[prop] === undefined ? fallback : original[prop]
     }
+    /**
+     * Return the default value for the data path field based on the given source.
+     * This is used to change the data path field when a new source type is selected.
+     * @param source
+     * @returns {string}
+     */
+    self.getDefaultDataPath = function(source){
+        if (source == "custom"){
+             return "instance('name')/root/path-to-point/point";
+        } else {
+            //TODO: It puts the whole thing in there bad
+            return "instance('casedb')/casedb/case[@case_type='"+source+"'][index/parent=current()/@case_id][@status='open']";
+        }
+    };
+
 
     self.sourceOptions = ko.observableArray(orig_or_default(
         'sourceOptions',
         _.map(childCaseTypes, function(s){
-            return "Child case: " + s;
-        }).concat(['custom'])
+            return {
+                'text': "Child case: " + s,
+                'value' : s
+            };
+        }).concat([{'text':'custom', 'value':'custom'}])
     ));
     self.selectedSource = ko.observable(orig_or_default('selectedSource', self.sourceOptions()[0]));
-    self.dataPath = ko.observable(orig_or_default('dataPath', ""));
+    self.dataPath = ko.observable(orig_or_default('dataPath', self.getDefaultDataPath(self.selectedSource().value)));
     self.showDataPath = ko.observable(orig_or_default('showDataPath', false));
     self.xFunction = ko.observable(orig_or_default('xFunction',""));
     self.yFunction = ko.observable(orig_or_default('yFunction',""));
@@ -213,9 +232,10 @@ var GraphSeries = function (original, childCaseTypes){
         self.showDataPath(!self.showDataPath())
     };
     self.selectedSource.subscribe(function(newValue) {
-        if (newValue == "custom") {
+        if (newValue.value == "custom") {
             self.showDataPath(true);
         }
+        self.dataPath(self.getDefaultDataPath(newValue.value));
     });
 };
 GraphSeries.prototype = new PairConfiguration();
