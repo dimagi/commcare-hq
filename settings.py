@@ -184,6 +184,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djkombu',
+    'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',

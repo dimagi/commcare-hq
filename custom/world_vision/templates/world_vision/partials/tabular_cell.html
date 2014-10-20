@@ -1,0 +1,8 @@
+{% if not col.unwrap %}<td {% if not col or col.html != None and not col.html %} class="null-entry"{% endif %}>{% endif %}
+    {% if col.html != None %}
+        <span  data-toggle="tooltip" data-placement="top" data-original-title="{{ col.tooltip|safe }}" >{{ col.html|safe }}</span>
+    {% else %}
+        <span  data-toggle="tooltip" data-placement="top" data-original-title="{{ col.tooltip|safe }}" >{{ col|safe }}</span>
+    {% endif %}
+    <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
+{% if not col.unwrap %}</td>{% endif %}

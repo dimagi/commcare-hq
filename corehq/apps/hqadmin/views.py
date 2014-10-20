@@ -988,26 +988,25 @@ def doc_in_es(request):
         return render(request, "hqadmin/doc_in_es.html", {})
     try:
         couch_doc = get_db().get(doc_id)
-        doc_type = couch_doc.get('doc_type')
     except ResourceNotFound:
-        couch_doc = "NOT FOUND!"
-        doc_type = "Unknown"
+        couch_doc = {}
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
-    es_doc = "NOT FOUND!"
-    status = "NOT FOUND!"
+    es_doc = {}
     for url in ES_URLS.values():
         res = run_query(url, query)
         if res['hits']['total'] == 1:
-            status = "found"
             es_doc = res['hits']['hits'][0]['_source']
             break
+    doc_type = couch_doc.get('doc_type') or es_doc.get('doc_type', "Unknown")
+    def to_json(doc):
+        return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
     context = {
         "doc_id": doc_id,
-        "status": status,
+        "status": "found" if es_doc else "NOT FOUND!",
         "doc_type": doc_type,
-        "couch_doc": json.dumps(couch_doc, indent=4),
-        "es_doc": json.dumps(es_doc, indent=4),
+        "couch_doc": to_json(couch_doc),
+        "es_doc": to_json(es_doc),
     }
     return render(request, "hqadmin/doc_in_es.html", context)

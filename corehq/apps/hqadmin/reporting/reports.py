@@ -29,10 +29,11 @@ Common Output:
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
@@ -675,6 +676,32 @@ def get_other_stats(histo_type, domains, datespan, interval,
     return stats_data
 
 
+def get_products_stats_data(domains, datespan, interval,
+        datefield='created_at'):
+    """
+    Number of products by created time
+    """
+    # groups products by the interval and returns the time interval and count
+    ret = (SQLProduct.objects
+                     .filter(domain__in=domains,
+                             created_at__gte=datespan.startdate,
+                             created_at__lte=datespan.enddate)
+                     .extra({
+                         interval:
+                             "EXTRACT(EPOCH FROM date_trunc('%s', %s))*1000" %
+                             (interval, datefield)})
+                     .values(interval).annotate(Count('id')))
+
+    ret = [{"time": int(r[interval]), "count": r['id__count']} for r in ret]
+
+    initial = (SQLProduct.objects
+                     .filter(domain__in=domains,
+                             created_at__lt=datespan.startdate)
+                     .count())
+
+    return format_return_data(ret, initial, datespan)
+
+
 def get_user_ids(user_type_mobile):
     """
     Returns the set of mobile user IDs if user_type_mobile is True,
@@ -893,6 +920,7 @@ HISTO_TYPE_TO_FUNC = {
     "sms_only_domains": get_sms_only_domain_stats_data,
     "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
+    "total_products": get_products_stats_data,
     "users": get_user_stats,
     "users_all": get_users_all_stats,
 }

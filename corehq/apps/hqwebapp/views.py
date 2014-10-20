@@ -29,6 +29,7 @@ from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
+from corehq import toggles
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.announcements.models import Notification
@@ -190,7 +191,15 @@ def redirect_to_default(req, domain=None):
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
-                if req.couch_user.is_commcare_user():
+
+                if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
+                    url = reverse('dashboard_default', args=[domain])
+                    if (req.couch_user.is_commcare_user()
+                        and not is_mobile_worker_with_report_access(
+                            req.couch_user, domain)):
+                        url = reverse("cloudcare_main", args=[domain, ""])
+
+                elif req.couch_user.is_commcare_user():
                     if not is_mobile_worker_with_report_access(
                             req.couch_user, domain):
                         url = reverse("cloudcare_main", args=[domain, ""])

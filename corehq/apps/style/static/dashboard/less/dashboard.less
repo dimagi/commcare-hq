@@ -13,10 +13,23 @@
   background-position: 0px 0px;
 }
 
+.dashboard-icon-medium {
+  @icon-size: 189px;
+  width: @icon-size;
+  height: @icon-size;
+  margin: 0 auto;
+}
+
 .dashboard-button {
   background-color: transparent;
   border: none;
   padding: 0;
+  color: @link-color;
+  &:hover,
+  &:focus {
+    color: @link-hover-color;
+    text-decoration: underline;
+  }
 }
 
 .dashboard-link,
@@ -28,23 +41,58 @@
     .dashboard-icon {
       background-position: 0px -220px;
     }
+    .dashboard-icon-medium {
+      background-position: 0px -189px;
+    }
   }
 }
 
 .dashboard-icon-exchange {
   background-image: url('../img/icon-large-exchange.png');
+  &.dashboard-icon-medium {
+    background-image: url('../img/icon-med-exchange.png');
+  }
 }
 
 .dashboard-icon-applications {
   background-image: url('../img/icon-large-applications.png');
+  &.dashboard-icon-medium {
+    background-image: url('../img/icon-med-applications.png');
+  }
 }
 
 .dashboard-icon-help {
   background-image: url('../img/icon-large-help.png');
+  &.dashboard-icon-medium {
+    background-image: url('../img/icon-med-help.png');
+  }
 }
 
 .dashboard-icon-commtrack {
   background-image: url('../img/icon-large-commtrack.png');
+  &.dashboard-icon-medium {
+    background-image: url('../img/icon-med-commtrack.png');
+  }
+}
+
+.dashboard-icon-data {
+  background-image: url('../img/icon-med-data.png');
+}
+
+.dashboard-icon-report {
+  background-image: url('../img/icon-med-report.png');
+}
+
+.dashboard-icon-messaging {
+  background-image: url('../img/icon-med-messaging.png');
+}
+
+.dashboard-icon-settings {
+  background-image: url('../img/icon-med-settings.png');
+}
+
+.dashboard-icon-users {
+  background-image: url('../img/icon-med-users.png');
 }
 
 .panel-dashboard {
@@ -54,8 +102,39 @@
     font-weight: bold;
     font-size: @font-size-large;
   }
+}
 
-  .panel-body {
-    text-align: center;
+.panel-dashboard-medium {
+  height: 263px;
+  font-size: @font-size-small;
+  position: relative;
+
+  .list-group {
+    margin-bottom: 10px;
+    .list-group-item {
+      padding: 7px 10px;
+    }
+  }
+
+  .pagination {
+    margin: 0;
+    position: absolute;
+    bottom: 18px;
+    > li > a {
+      padding: 3px 7px;
+    }
+  }
+
+  .popover {
+    width: 300px;
+  }
+
+  .fa-spin {
+    position: absolute;
+    top: 100px;
+    left: 104px;
+    z-index: 500;
   }
 }
+
+

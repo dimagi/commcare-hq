@@ -20,8 +20,9 @@ class ProductResource(JsonResource):
     unit = fields.CharField(attribute='unit', readonly=True, null=True)
     description = fields.CharField(attribute='description', readonly=True, null=True)
     category = fields.CharField(attribute='category', readonly=True, null=True)
+    last_modified = fields.DateTimeField(attribute='last_modified', readonly=True, null=True)
     # TODO:
-    # price? last_modified?
+    # price?
 
     def obj_get(self, request, **kwargs):
         return get_object_or_not_exist(Product, kwargs['pk'], kwargs['domain'])

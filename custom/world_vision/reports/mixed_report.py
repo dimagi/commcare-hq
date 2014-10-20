@@ -13,10 +13,10 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class MixedTTCReport(TTCReport):
-    report_title = 'Mother/Child Report'
-    name = 'Mother/Child Report'
+    report_title = 'TTC Overview Report'
+    name = 'TTC Overview Report'
     slug = 'mother_child_report'
-    title = "Mother/Child Report"
+    title = "TTC Overview Report"
     fields = [WVDatespanFilter, LocationFilter]
     default_rows = 10
     exportable = True

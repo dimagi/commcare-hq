@@ -700,6 +700,7 @@ class GenericTabularReport(GenericReportView):
     ajax_pagination = False
     use_datatables = True
     charts_per_row = 1
+    bad_request_error_text = None
     
     # override old class properties
     report_template_path = "reports/async/tabular.html"
@@ -924,7 +925,8 @@ class GenericTabularReport(GenericReportView):
                 show_all_rows=self.show_all_rows,
                 pagination=pagination_spec,
                 left_col=left_col,
-                datatables=self.use_datatables
+                datatables=self.use_datatables,
+                bad_request_error_text=self.bad_request_error_text
             ),
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]

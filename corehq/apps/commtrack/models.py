@@ -118,12 +118,7 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
 
-    def save(self, *args, **kwargs):
-        """
-        Saving a couch version of Product will trigger
-        one way syncing to the SQLProduct version of this
-        product.
-        """
+    def _sync_product(self):
         properties_to_sync = [
             ('product_id', '_id'),
             'domain',
@@ -137,11 +132,6 @@ class Product(Document):
             ('units', 'unit'),
             'product_data',
         ]
-
-        # mark modified time stamp for selective syncing
-        self.last_modified = datetime.now()
-
-        result = super(Product, self).save(*args, **kwargs)
 
         # sync properties to SQL version
         sql_product, _ = SQLProduct.objects.get_or_create(
@@ -158,6 +148,30 @@ class Product(Document):
                 setattr(sql_product, sql_prop, getattr(self, couch_prop))
 
         sql_product.save()
+
+    def save(self, *args, **kwargs):
+        """
+        Saving a couch version of Product will trigger
+        one way syncing to the SQLProduct version of this
+        product.
+        """
+        # mark modified time stamp for selective syncing
+        self.last_modified = datetime.now()
+
+        # generate code if user didn't specify one
+        if not self.code:
+            from corehq.apps.commtrack.util import generate_code
+            self.code = generate_code(
+                self.name,
+                SQLProduct.objects
+                    .filter(domain=self.domain)
+                    .values_list('code', flat=True)
+                    .distinct()
+            )
+
+        result = super(Product, self).save(*args, **kwargs)
+
+        self._sync_product()
 
         return result
 
@@ -421,8 +435,11 @@ class CommtrackRequisitionConfig(DocumentSchema):
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
         sorted_types = [a.action for a in sorted_actions]
-        next_index = sorted_types.index(previous_action_type) + 1
-        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        if previous_action_type in sorted_types:
+            next_index = sorted_types.index(previous_action_type) + 1
+            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        else:
+            return None
 
 
 class ConsumptionConfig(DocumentSchema):
@@ -1347,6 +1364,8 @@ class SQLProduct(models.Model):
     product_data = json_field.JSONField(
         default={},
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (

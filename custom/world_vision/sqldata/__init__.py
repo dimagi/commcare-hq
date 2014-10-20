@@ -37,22 +37,20 @@ class BaseSqlData(SqlData):
     def percent_fn(self, x, y):
         return "%.2f%%" % (100 * float(y or 0) / (x or 1))
 
+    def get_tooltip(self, mapping, key):
+        return mapping.get(key, '')
+
     @property
     def filters(self):
         filters = None
-
-        if 'startdate' in self.config and 'enddate' in self.config:
-            filters = [BETWEEN("date", "startdate", "enddate")]
-        elif 'startdate' not in self.config and 'enddate' not in self.config:
-            filters =  []
-        elif 'startdate' in self.config and 'enddate' not in self.config:
-            filters = [BETWEEN("date", "startdate", "enddate")]
-        elif 'startdate' not in self.config and 'enddate' in self.config:
-            filters = [LTE("date", 'enddate')]
-
-        if 'enddate' not in self.config and len(filters) > 1:
+        if 'enddate' not in self.config:
             self.config['enddate'] = self.config['today']
             self.config['stred'] = self.config['today']
+
+        if 'startdate' in self.config:
+            filters = [BETWEEN("date", "startdate", "enddate")]
+        elif 'startdate' not in self.config:
+            filters = [LTE("date", 'enddate')]
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
