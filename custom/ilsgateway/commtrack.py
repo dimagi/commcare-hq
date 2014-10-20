@@ -239,12 +239,13 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
     return location
 
 
-def save_checkpoint(checkpoint, api, limit, offset, date):
+def save_checkpoint(checkpoint, api, limit, offset, date, commit=True):
     checkpoint.limit = limit
     checkpoint.offset = offset
     checkpoint.api = api
     checkpoint.date = date
-    checkpoint.save()
+    if commit:
+        checkpoint.save()
 
 
 def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
@@ -327,9 +328,15 @@ def bootstrap_domain(ilsgateway_config):
         date = checkpoint.date
         limit = checkpoint.limit
         offset = checkpoint.offset
+        if not checkpoint.start_date:
+            checkpoint.start_date = start_date
+            checkpoint.save()
+        else:
+            start_date = checkpoint.start_date
     except ILSMigrationCheckpoint.DoesNotExist:
         checkpoint = ILSMigrationCheckpoint()
         checkpoint.domain = domain
+        checkpoint.start_date = start_date
         api = 'product'
         date = None
         limit = 1000
@@ -337,7 +344,7 @@ def bootstrap_domain(ilsgateway_config):
         commtrack_settings_sync(domain)
 
     apis = [
-        ('product', partial(products_sync, domain, endpoint, checkpoint)),
+        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
                                       filters=dict(date_updated__gte=date, type='facility'))),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
@@ -354,11 +361,14 @@ def bootstrap_domain(ilsgateway_config):
         i = 0
         while apis[i][0] != api:
             i += 1
+
         for api in apis[i:]:
             api[1](limit=limit, offset=offset)
             limit = 1000
             offset = 0
 
-        save_checkpoint(checkpoint, 'product', 1000, 0, start_date)
+        save_checkpoint(checkpoint, 'product', 1000, 0, start_date, False)
+        checkpoint.start_date = None
+        checkpoint.save()
     except ConnectionError as e:
         logging.error(e)
