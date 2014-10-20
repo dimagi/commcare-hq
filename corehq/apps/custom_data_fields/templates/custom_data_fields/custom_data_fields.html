@@ -17,6 +17,16 @@
         var customDataFieldsModel = new CustomDataFieldsModel();
         customDataFieldsModel.init({{ custom_fields|JSON }});
         ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
+
+        $('form[id="custom-fields-form"]').on("change", null, null, function() {
+            $(":submit").prop("disabled", false);
+        }).on("input", null, null, function() {
+            $(":submit").prop("disabled", false);
+        })
+
+        $('.modal-footer button').on("click", function() {
+            $(":submit").prop("disabled", false);
+        })
     </script>
 {% endblock %}
 
@@ -128,6 +138,6 @@
             </div>
         </fieldset>
 
-        <div class="form-actions"><button id="save-custom-fields" class="btn btn-primary" type="submit">Save Fields</button></div>
+        <div class="form-actions"><button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit" disabled>Save Fields</button></div>
     </form>
 {% endblock %}
