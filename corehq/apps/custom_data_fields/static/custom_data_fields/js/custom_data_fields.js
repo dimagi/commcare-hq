@@ -15,7 +15,14 @@ function CustomDataFieldsModel () {
     }
 
     self.removeField = function (field) {
-        self.data_fields.remove(field)
+        self.data_fields.remove(field);
+    }
+
+    // Manually remove modal backrop because it is not part of the div
+    // we delete otherwise
+    self.removeFieldAndModal = function (field) {
+        self.removeField(field);
+        $(".modal-backdrop").remove();
     }
 
     self.init = function (initialFields) {
