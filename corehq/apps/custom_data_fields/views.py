@@ -227,7 +227,7 @@ class CustomDataEditor(object):
         ))
 
         return Fieldset(
-            _("Uncatagorized Information"),
+            _("Unrecognized Information"),
             Div(
                 HTML(msg),
                 css_class="alert alert-error",
