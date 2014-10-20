@@ -1,13 +1,11 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
-import json
 import urllib
 import urlparse
 
 from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
-from django.conf import settings
 import socket
 import hashlib
 
@@ -16,7 +14,6 @@ from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
@@ -61,18 +58,38 @@ FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
 
 class GeneratorCollection():
+    """Collection of format_name to Payload Generators for a Repeater class
+
+    args:
+        repeater_class: A valid child class of Repeater class
+    """
 
     def __init__(self, repeater_class):
         self.repeater_class = repeater_class
         self.default_format = ''
-        self.format_generator_map = defaultdict(dict)
+        self.format_generator_map = {}
 
     def add_new_format(self, format_name, format_label, generator_class, is_default=False):
+        """Adds a new format->generator mapping to the collection
+
+        args:
+            format_name: unique name to identify the format
+            format_label: label to be displayed to the user
+            generator_class: child class of .repeater_generators.BasePayloadGenerator
+
+        kwargs:
+            is_default: True if the format_name should be default format
+
+        exceptions:
+            raises Exception if format is added with is_default while other
+            default exists
+            raises Exception if format_name alread exists in the collection
+        """
         if is_default and self.default_format:
             raise Exception("default format already exists for this repeater.")
         elif is_default:
             self.default_format = format_name
-        if self.format_generator_map[format_name] != {}:
+        if format_name in self.format_generator_map:
             raise Exception("There is already a Generator with this format name.")
 
         self.format_generator_map[format_name] = FormatInfo(
@@ -82,20 +99,34 @@ class GeneratorCollection():
         )
 
     def get_default_format(self):
+        """returns default format"""
         return self.default_format
 
     def get_default_generator(self):
+        """returns generator class for the default format"""
         raise self.format_generator_map[self.default_format].generator_class
 
     def get_all_formats(self, for_domain=None):
+        """returns all the formats added to this repeater collection"""
         return [(name, format.label) for name, format in self.format_generator_map.iteritems()
                 if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
+        """returns generator class given a format"""
         return self.format_generator_map[format].generator_class
 
 
 class RegisterGenerator(object):
+    """Decorator to register new formats and Payload generators for Repeaters
+
+    args:
+        repeater_cls: A child class of Repeater for which the new format is being added
+        format_name: unique identifier for the format
+        format_label: description for the format
+
+    kwargs:
+        is_default: whether the format is default to the repeater_cls
+    """
 
     generators = {}
 
@@ -107,8 +138,8 @@ class RegisterGenerator(object):
         self.is_default = is_default
 
     def __call__(self, generator_class):
-        RegisterGenerator.generators[self.repeater_cls] = RegisterGenerator.generators.get(self.repeater_cls, 
-            GeneratorCollection(self.repeater_cls))
+        if not self.repeater_cls in RegisterGenerator.generators:
+            RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
         RegisterGenerator.generators[self.repeater_cls].add_new_format(
             self.format_name,
             self.format_label,
@@ -118,16 +149,19 @@ class RegisterGenerator(object):
 
     @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):
+        """Return generator class given a Repeater class and format_name"""
         generator_collection = cls.generators[repeater_class]
         return generator_collection.get_generator_by_format(format_name)
 
     @classmethod
     def all_formats_by_repeater(cls, repeater_class, for_domain=None):
+        """Return all formats for a given Repeater class"""
         generator_collection = cls.generators[repeater_class]
         return generator_collection.get_all_formats(for_domain=for_domain)
 
     @classmethod
     def default_format_by_repeater(cls, repeater_class):
+        """Return default format_name for a Repeater class"""
         generator_collection = cls.generators[repeater_class]
         return generator_collection.get_default_format()
 
@@ -297,9 +331,8 @@ class ShortFormRepeater(Repeater):
 
 @register_repeater_type
 class AppStructureRepeater(Repeater):
-    def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record, repeater=self)
+    def payload_doc(self, repeat_record):
+        return None
 
 
 class RepeatRecord(Document, LockableMixIn):
