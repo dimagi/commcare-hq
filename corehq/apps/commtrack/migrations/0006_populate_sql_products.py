@@ -31,7 +31,7 @@ class Migration(DataMigration):
         ).all()]
 
         for product in iter_docs(Product.get_db(), product_ids):
-            sql_product = SQLProduct()
+            sql_product = orm.SQLProduct()
 
             for prop in properties_to_sync:
                 if isinstance(prop, tuple):
@@ -46,22 +46,29 @@ class Migration(DataMigration):
 
         # now update stock states
 
-        for ss in StockState.include_archived.all():
-            ss.sql_product = SQLProduct.objects.get(product_id=ss.product_id)
+        for ss in orm.StockState.objects.all():
+            ss.sql_product = orm.SQLProduct.objects.get(product_id=ss.product_id)
             ss.save()
 
     def backwards(self, orm):
-        SQLProduct.objects.all().delete()
+        orm.SQLProduct.objects.all().delete()
 
 
     models = {
         u'commtrack.sqlproduct': {
             'Meta': {'object_name': 'SQLProduct'},
+            'category': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'code': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'cost': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '5'}),
+            'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
+            'units': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'product_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'product_data': ('json_field.fields.JSONField', [], {'default': '{}'}),
+            'product_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
+            'program_id': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'})
         },
         u'commtrack.stockstate': {
             'Meta': {'unique_together': "(('section_id', 'case_id', 'product_id'),)", 'object_name': 'StockState'},
