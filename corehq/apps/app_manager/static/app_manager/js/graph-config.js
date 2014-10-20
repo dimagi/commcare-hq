@@ -181,6 +181,13 @@ var GraphViewModel = function(original){
     };
     self.childCaseTypes = original.childCaseTypes || []; // TODO: What happens with original might change
 
+    self.selectedGraphType.subscribe(function(newValue) {
+        // Recreate the series objects to be of the correct type.
+        self.series(_.map(self.series(), function(series){
+            return new (self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes);
+        }));
+    });
+
     self.fromJS = function(obj){
         self.graphDisplayName(obj.graphDisplayName);
         self.selectedGraphType(obj.selectedGraphType);
