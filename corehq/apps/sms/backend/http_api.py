@@ -1,7 +1,8 @@
 import re
 from urllib import urlencode
 from urllib2 import urlopen
-from corehq.apps.sms.mixin import SMSBackend
+import sys
+from corehq.apps.sms.mixin import SMSBackend, BackendProcessingException
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.reminders.forms import RecordListField
 from django.forms.fields import *
@@ -130,12 +131,15 @@ class HttpBackend(SMSBackend):
             text = msg.text.encode("utf-8")
         params[self.message_param] = text
         params[self.number_param] = phone_number
-        
-        url_params = urlencode(params)
-        if self.method == "GET":
-            response = urlopen("%s?%s" % (self.url, url_params),
-                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-        else:
-            response = urlopen(self.url, url_params,
-                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
+        url_params = urlencode(params)
+        try:
+            if self.method == "GET":
+                response = urlopen("%s?%s" % (self.url, url_params),
+                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+            else:
+                response = urlopen(self.url, url_params,
+                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        except Exception as e:
+            msg = "Error sending message from backend: '{}'\n\n{}".format(self.name, str(e))
+            raise BackendProcessingException(msg), None, sys.exc_info()[2]

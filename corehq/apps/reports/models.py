@@ -423,8 +423,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                              get_url_base(), reverse(
                                  'saved_reports', args=[request.domain])),
                      }, None
-        except Exception as e:
-            notify_exception(None, "Error generating report")
+        except Exception:
+            notify_exception(None, "Error generating report", details={
+                'domain': self.domain,
+                'user': self.owner.username,
+                'report': self.report_slug
+            })
             return _("An error occurred while generating this report."), None
 
 
