@@ -37,7 +37,6 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
     if selected_loc_id:
-        # TODO should this filter archived?
         selected = SQLLocation.objects.get(
             domain=domain,
             location_id=selected_loc_id
@@ -49,7 +48,6 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
         for loc in lineage:
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
-            # TODO put this filter in .objects
             this_loc['children'] = [
                 loc_to_json(loc) for loc in loc.get_children().filter(is_archived=False)
             ]

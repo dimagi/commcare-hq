@@ -69,7 +69,6 @@ def _filter_for_archived(locations, include_archive_ancestors):
             if item.is_archived or item.archived_descendants()
         ]
     else:
-        # TODO bake this into default .objects filter
         return locations.filter(is_archived=False)
 
 

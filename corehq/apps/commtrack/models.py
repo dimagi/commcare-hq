@@ -1429,7 +1429,7 @@ class ActiveManager(models.Manager):
     def get_query_set(self):
         return super(ActiveManager, self).get_query_set() \
             .exclude(sql_product__is_archived=True) \
-            .exclude(sql_location__is_archived=True)  # TODO TEST THIS
+            .exclude(sql_location__is_archived=True)
 
 
 class StockState(models.Model):
