@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import logging
-from django.core.urlresolvers import reverse
 from corehq.apps.commtrack.models import Product, CommTrackUser
 from corehq.apps.locations.models import Location
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
@@ -183,7 +182,7 @@ def create_multilevel_alert(org, date, type, details):
 
 def create_alert(org, date, type, details):
     text = ''
-    url = ''
+    #url = ''
     date = datetime(date.year, date.month, 1)
     expyear, expmonth = add_months(date.year, date.month, 1)
     expires = datetime(expyear, expmonth, 1)
@@ -226,7 +225,7 @@ def create_alert(org, date, type, details):
 
 
 def default_start_date():
-    return datetime(2010, 11, 1)
+    return datetime(2014, 3, 1)
 
 
 def populate_report_data(start_date, end_date, domain=None):
@@ -525,24 +524,24 @@ def update_historical_data(domain=None):
 
 
 def _init_warehouse_model(cls, supply_point, date):
-    {
-        OrganizationSummary: _init_default,
-        ProductAvailabilityData: _init_with_product,
-        GroupSummary: _init_group_summary
-    }[cls](cls, supply_point, date)
+    if cls == OrganizationSummary:
+        _init_default(supply_point, date)
+    elif cls == ProductAvailabilityData:
+        _init_with_product(supply_point, date)
+    elif cls == GroupSummary:
+        _init_group_summary(supply_point, date)
 
 
-def _init_default(cls, supply_point, date):
-    cls.objects.get_or_create(supply_point=supply_point._id, date=date)
+def _init_default(supply_point, date):
+    OrganizationSummary.objects.get_or_create(supply_point=supply_point._id, date=date)
 
 
-def _init_with_product(cls, supply_point, date):
+def _init_with_product(supply_point, date):
     for p in Product.ids_by_domain(supply_point.domain):
-        cls.objects.get_or_create(supply_point=supply_point._id, date=date, product=p)
+        ProductAvailabilityData.objects.get_or_create(supply_point=supply_point._id, date=date, product=p)
 
 
-def _init_group_summary(cls, supply_point, date):
-    assert cls == GroupSummary
+def _init_group_summary(supply_point, date):
     org_summary = OrganizationSummary.objects.get(supply_point=supply_point._id, date=date)
     for title in NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
