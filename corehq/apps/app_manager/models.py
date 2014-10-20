@@ -1304,8 +1304,15 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             form = self.get_form_by_unique_id(self.case_list_form.form_id)
             if form and not form.is_registration_form(self.case_type):
                 errors.append({
-                    'type': 'bad case list form',
+                    'type': 'case list form not registration',
                     'module': self.get_module_info(),
+                    'form': form,
+                })
+            if form and form.post_form_workflow != WORKFLOW_DEFAULT:
+                errors.append({
+                    'type': 'case list form workflow',
+                    'module': self.get_module_info(),
+                    'form': form,
                 })
 
         return errors

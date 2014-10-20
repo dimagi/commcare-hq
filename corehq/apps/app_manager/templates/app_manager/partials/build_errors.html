@@ -65,12 +65,24 @@
                             uses cases but doesn't have a
                             case type defined.
                         {% endif %}
-                        {% if error.type == "bad case list form" %}
-                            {% url "view_module" domain app.id error.module.id  as module_url%}
-                            {% blocktrans with error.module.name|trans:langs as module_name %}
-                            The case list registration form for module
-                            <a href="{{ module_url }}">{{ module_name }}</a>
-                            is not a registration form. It should only register a case and should not update an existing case.
+                        {% if error.type == "case list form not registration" %}
+                            {% url "view_module" domain app.id error.module.id as module_url%}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with error.module.name|trans:langs as module_name error.form.name|trans:langs as form_name%}
+                            You have selected form <a href="{{ form_url }}">{{ form_name }}</a>
+                            as the case registration form for the <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            This form is not a registration form. You needs to select a form which opens a case and
+                            does not update an existing case. Please select a different form.
+                            {% endblocktrans %}
+                        {% endif %}
+                         {% if error.type == "case list form workflow" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with error.module.name|trans:langs as module_name error.form.name|trans:langs as form_name%}
+                            You have selected form <a href="{{ form_url }}">{{ form_name }}</a>
+                            as the case registration form for the <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            This form also has its end of form navigation set. These two settings are incompatible.
+                            Please disable one or the other.
                             {% endblocktrans %}
                         {% endif %}
                         {% if error.type == "invalid filter xpath" %}
