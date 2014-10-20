@@ -1,0 +1,4 @@
+[files]
+
+[tools]
+linters = pep8, jshint
