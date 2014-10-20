@@ -34,7 +34,6 @@
         <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
         {% crispy form %}
         {% if data_fields_form.fields %}
-            <legend>{% trans "Additional Information" %}</legend>
             {% crispy data_fields_form %}
         {% endif %}
         <div class="form-actions">
