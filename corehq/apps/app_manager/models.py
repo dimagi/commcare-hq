@@ -1385,9 +1385,9 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
-        if self.case_list_filter is not None:
+        if self.case_list_filter:
             try:
-                etree.XPath(self.case_list_filter or '')
+                etree.XPath(self.case_list_filter)
             except etree.XPathSyntaxError:
                 errors.append({
                     'type': 'invalid filter xpath',
