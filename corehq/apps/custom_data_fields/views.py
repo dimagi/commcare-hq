@@ -21,7 +21,7 @@ class CustomDataFieldsForm(forms.Form):
 
     def verify_no_duplicates(self, data_fields):
         errors = set()
-        slugs = [field['slug'].lower() for field in data_fields]
+        slugs = [field['slug'].lower() for field in data_fields if 'slug' in field]
         for slug in slugs:
             if slugs.count(slug) > 1:
                 errors.add(_("Key '{}' was duplicated, key names must be unique.".format(slug)))
@@ -61,11 +61,11 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
 
-    def clean_label(self):
-        return self.cleaned_data['label']
+    # def clean_label(self):
+        # return self.cleaned_data['label']
 
-    def clean_slug(self):
-        return self.cleaned_data['slug']
+    # def clean_slug(self):
+        # return self.cleaned_data['slug']
 
 
 class CustomDataFieldsMixin(object):
