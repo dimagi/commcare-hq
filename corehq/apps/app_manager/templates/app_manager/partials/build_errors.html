@@ -128,7 +128,7 @@
                         {% endif %}
                         {% if error.type == "path error" %}
                             {% if error.path %}
-                                The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
+                                The case management in form {% include "app_manager/partials/form_error_message.html" %}
                                 contains the invalid path "{{ error.path }}".
                             {% else %}
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}

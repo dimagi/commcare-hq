@@ -83,7 +83,7 @@
             <div class="span4">
                 <aside class="well">
                     <h3>Already have an account?</h3>
-                    <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
+                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
                 </aside>
             </div>
         {% endif %}

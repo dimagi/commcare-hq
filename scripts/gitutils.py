@@ -1,3 +1,4 @@
+import re
 import sh
 from sh_verbose import ShVerbose
 
@@ -104,10 +105,21 @@ def _left_pad(padding, text):
 
 
 def print_one_way_merge_details(branch1, branch2, git):
+    def format_branch(remote, branch):
+        return branch if remote == 'origin' else '{}/{}'.format(remote, branch)
+
     commit = git_bisect_merge_conflict(branch1, branch2, git)
     if commit:
         print '  * First conflicting commit on {0}:\n'.format(branch2)
         print _left_pad(' ' * 4, git.log('-n1', commit))
+        branches = git.branch('--remote', '--contains', commit)
+        other_branches = [
+            format_branch(*b) for b in re.findall('([a-zA-Z0-9-]*)/([\w+-]*)', str(branches))
+            if b[0] != 'origin' or (b[1] != branch2 and b[1] != 'HEAD')
+        ]
+        if other_branches:
+            msg = 'This commit also appears on these branches: {0}\n'.format(other_branches)
+            print _left_pad(' ' * 4, msg)
     else:
         print '  * No conflicting commits on {0}'.format(branch2)
 
