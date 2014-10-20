@@ -35,9 +35,13 @@ var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
     return url;
 };
 
-var getFormUrl = function(urlRoot, appId, moduleId, formId) {
+var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
     // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
+    var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
+    if (instanceId) {
+        url += '?instance_id=' + instanceId;
+    }
+    return url
 };
 
 var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {

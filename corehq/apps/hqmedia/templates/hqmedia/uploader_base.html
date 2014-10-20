@@ -16,6 +16,7 @@
                 '{{ uploader.slug }}',
                 '{{ uploader.media_type }}',
                 {
+                    allowCloseDuringUpload: true,
                     fileFilters: {{ uploader.supported_files|JSON }},
                     uploadURL: '{{ uploader.destination }}',
                     processingURL: '{{ uploader.processing_url }}',

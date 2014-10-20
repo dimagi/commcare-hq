@@ -1,7 +1,8 @@
 from django.core.urlresolvers import NoReverseMatch
 from django.http import HttpResponse
+from tastypie import http
 from tastypie.resources import Resource
-from tastypie.exceptions import InvalidSortError
+from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
 
 class dict_object(object):
@@ -21,9 +22,10 @@ def build_content_type(format, encoding='utf-8'):
 
     return "%s; charset=%s" % (format, encoding)
 
-class JsonResource(Resource):
+
+class JsonResourceMixin(object):
     """
-    This can be extended to default to json formatting. 
+    This can be extended to default to json formatting.
     """
     # This exists in addition to the mixin since the order of the class
     # definitions actually matters
@@ -36,7 +38,7 @@ class JsonResource(Resource):
         return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
 
     def determine_format(self, request):
-        format = super(JsonResource, self).determine_format(request)
+        format = super(JsonResourceMixin, self).determine_format(request)
 
         # Tastypie does _not_ support text/html but also does not raise the appropriate UnsupportedFormat exception
         # for all other unsupported formats, Tastypie has correct behavior, so we only hack around this one.
@@ -44,6 +46,46 @@ class JsonResource(Resource):
             format = 'application/json'
 
         return format
+
+
+class CorsResourceMixin(object):
+    """
+    Mixin implementing CORS
+    """
+    def create_response(self, *args, **kwargs):
+        response = super(CorsResourceMixin, self).create_response(*args, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+
+        return response
+
+    def method_check(self, request, allowed=None):
+        if allowed is None:
+            allowed = []
+
+        request_method = request.method.lower()
+        allows = ','.join(map(str.upper, allowed))
+
+        if request_method == 'options':
+            response = HttpResponse(allows)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response['Allow'] = allows
+            raise ImmediateHttpResponse(response=response)
+
+        if request_method not in allowed:
+            response = http.HttpMethodNotAllowed(allows)
+            response['Allow'] = allows
+            raise ImmediateHttpResponse(response=response)
+
+        return request_method
+
+
+class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
+    """
+    Convenience class to allow easy adjustment of API resource base classes.
+    """
+    pass
 
 
 class SimpleSortableResourceMixin(object):
