@@ -154,11 +154,13 @@ class Location(CachedCouchDocumentMixin, Document):
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self._id)
 
-    def archive(self):
+    def _archive_single_location(self):
         """
-        Mark a location and its dependants as archived.
-        This will cause it (and its data) to not show up in default
-        Couch and SQL views.
+        Archive a single location, caller is expected to handle
+        archiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `archive()`.
         """
         self.is_archived = True
         self.save()
@@ -170,13 +172,22 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and not sp.closed:
             close_case(sp._id, self.domain, COMMTRACK_USERNAME)
 
-        for loc in self.descendants:
-            loc.archive()
-
-    def unarchive(self):
+    def archive(self):
         """
-        Unarchive a location and reopen supply point case if it
-        exists.
+        Mark a location and its dependants as archived.
+        This will cause it (and its data) to not show up in default
+        Couch and SQL views.
+        """
+        for loc in [self] + self.descendants:
+            loc._archive_single_location()
+
+    def _unarchive_single_location(self):
+        """
+        Unarchive a single location, caller is expected to handle
+        unarchiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `unarchive()`.
         """
         self.is_archived = False
         self.save()
@@ -192,8 +203,13 @@ class Location(CachedCouchDocumentMixin, Document):
                     action.xform.archive(user=COMMTRACK_USERNAME)
                     break
 
-        for loc in self.descendants:
-            loc.unarchive()
+    def unarchive(self):
+        """
+        Unarchive a location and reopen supply point case if it
+        exists.
+        """
+        for loc in [self] + self.descendants:
+            loc._unarchive_single_location()
 
     def save(self, *args, **kwargs):
         """
