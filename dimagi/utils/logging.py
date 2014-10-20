@@ -24,12 +24,14 @@ def set_log_level(level):
 notify_logger = logging.getLogger('notify')
 
 
-def notify_exception(request, message=None):
-    notify_logger.error('Notify Exception: %s' % (message or request.path),
+def notify_exception(request, message=None, details=None):
+    notify_logger.error(
+        'Notify Exception: %s' % (message or request.path),
         exc_info=sys.exc_info(),
         extra={
             'status_code': 500,
-            'request':request
+            'request': request,
+            'details': details,
         }
     )
 
