@@ -4,7 +4,7 @@ from corehq.apps.commtrack.views import (
     ProductListView, FetchProductListView, NewProductView, EditProductView,
     ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,
     FetchProductForProgramListView, DefaultConsumptionView, UploadProductView,
-    ProductImportStatusView, SMSSettingsView, CommTrackSettingsView,
+    ProductImportStatusView, SMSSettingsView, CommTrackSettingsView, ProductFieldsView
 )
 
 urlpatterns = patterns('corehq.apps.commtrack.views',
@@ -16,6 +16,7 @@ settings_urls = patterns('corehq.apps.commtrack.views',
     url(r'^$', 'default', name="default_commtrack_setup"),
     url(r'^project_settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
     url(r'^products/$', ProductListView.as_view(), name=ProductListView.urlname),
+    url(r'^products/fields/$', ProductFieldsView.as_view(), name=ProductFieldsView.urlname),
     url(r'^products/list/$', FetchProductListView.as_view(), name=FetchProductListView.urlname),
     url(r'^products/new/$', NewProductView.as_view(), name=NewProductView.urlname),
     url(r'^products/upload/$', UploadProductView.as_view(), name=UploadProductView.urlname),
