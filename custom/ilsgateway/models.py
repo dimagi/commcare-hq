@@ -2,7 +2,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
-from corehq.apps.commtrack.models import SupplyPointCase, Product
+from corehq.apps.commtrack.models import SupplyPointCase, Product, SQLProduct
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -354,21 +354,21 @@ class DeliveryGroups(object):
         if not facs:
             facs = self.facs
         if not facs:
-            return None
+            return []
         return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('groups', []), facs)
 
     def processing(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
-            return None
+            return []
         return filter(lambda f: self.current_processing_group(month) in f.metadata.get('groups', []), facs)
 
     def submitting(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
-            return None
+            return []
         return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
 
 

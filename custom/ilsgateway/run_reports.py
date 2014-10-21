@@ -155,7 +155,7 @@ def update_product_availability_facility_data(org_summary):
 
 def populate_no_primary_alerts(org, date):
     # delete no primary alerts
-    alert = Alert.objects.filter(supply_point=org, date=date, type='no_primary_contact')
+    alert = Alert.objects.filter(supply_point=org._id, date=date, type='no_primary_contact')
     alert.delete()
     # create no primary alerts
 
@@ -348,12 +348,12 @@ def process_facility_statuses(facility, statuses, alerts=True):
                 if alerts:
                     if status.status_value == SupplyPointStatusValues.NOT_SUBMITTED \
                             and status.status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-                        create_alert(facility, status.status_date, 'rr_not_submitted',
+                        create_alert(facility._id, status.status_date, 'rr_not_submitted',
                                      {'number': 1})
 
                     if status.status_value == SupplyPointStatusValues.NOT_RECEIVED \
                             and status.status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-                        create_alert(facility, status.status_date, 'delivery_not_received',
+                        create_alert(facility._id, status.status_date, 'delivery_not_received',
                                      {'number': 1})
 
 
@@ -422,7 +422,7 @@ def process_facility_transactions(facility, transactions, default_to_previous=Tr
 
 
 def process_non_facility_warehouse_data(org, start_date, end_date, strict=True):
-    facs = list(org.children)
+    facs = filter(lambda o: o.location_type == 'FACILITY', org.children)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children" % (org.name, str(org._id), len(facs)))
     for year, month in months_between(start_date, end_date):
@@ -500,7 +500,7 @@ def process_non_facility_warehouse_data(org, start_date, end_date, strict=True):
 def aggregate_response_alerts(org, date, alerts, type):
     total = sum([s.number for s in alerts])
     if total > 0:
-        create_alert(org, date, type, {'number': total})
+        create_alert(org._id, date, type, {'number': total})
 
 
 def update_historical_data(domain=None):
