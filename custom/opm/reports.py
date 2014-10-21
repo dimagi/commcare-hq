@@ -779,7 +779,8 @@ class MetReport(CaseReportMixin, BaseReport):
 
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
-    group_by = ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
+    group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
+                'ifs_code', 'account_number', 'gp', 'block', 'village']
 
     @property
     def filters(self):
@@ -795,6 +796,7 @@ class UsersIdsData(SqlData):
     def columns(self):
         return [
             DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('name', SimpleColumn('name')),
             DatabaseColumn('awc', SimpleColumn('awc')),
             DatabaseColumn('awc_code', SimpleColumn('awc_code')),
             DatabaseColumn('bank_name', SimpleColumn('bank_name')),
@@ -825,7 +827,7 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        config={}
+        config = {}
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
