@@ -2,7 +2,8 @@ from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter)
 
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
@@ -134,3 +135,11 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
+
+
+class OPMSelectOpenCloseFilter(SelectOpenCloseFilter):
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "open"
