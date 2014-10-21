@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - jsonobject-0.6.0b2  # danny 10/10
   - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
 #  - master+schedule+schedule
 #  - master+schedule # Nick P 9/11
@@ -54,17 +53,13 @@ branches:
   - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
   - archive-programs+custom_product_data # tw
-  - archive-programs # tw 9/30
-  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
   - custom_user_data  # tw+Ethan 9/9
-  - custom_product_data  # tw+Ethan 10/1
   - lwyszomi:better_date_filters_improvment
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - bulk-app-translate # Noah 9/18
   - callcenter # SK 9/22
-  - fixture-prop # sravan 9/2e
   - reduce-location_ # tw 10/6
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
