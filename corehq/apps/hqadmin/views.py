@@ -994,10 +994,12 @@ def doc_in_es(request):
                 {"ids": {
                     "values": [doc_id]}}}
     es_doc = {}
-    for url in ES_URLS.values():
+    index_found = ''
+    for index, url in ES_URLS.items():
         res = run_query(url, query)
         if res['hits']['total'] == 1:
             es_doc = res['hits']['hits'][0]['_source']
+            index_found = index
             break
     doc_type = couch_doc.get('doc_type') or es_doc.get('doc_type', "Unknown")
     def to_json(doc):
@@ -1008,5 +1010,6 @@ def doc_in_es(request):
         "doc_type": doc_type,
         "couch_doc": to_json(couch_doc),
         "es_doc": to_json(es_doc),
+        "index": index_found
     }
     return render(request, "hqadmin/doc_in_es.html", context)
