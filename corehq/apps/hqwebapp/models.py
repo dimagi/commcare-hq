@@ -384,6 +384,7 @@ class CommTrackSetupTab(UITab):
             ProductListView,
             NewProductView,
             EditProductView,
+            ProductFieldsView,
             DefaultConsumptionView,
             ProgramListView,
             NewProgramView,
@@ -414,6 +415,10 @@ class CommTrackSetupTab(UITab):
                     {
                         'title': EditProductView.page_title,
                         'urlname': EditProductView.urlname,
+                    },
+                    {
+                        'title': ProductFieldsView.page_name(),
+                        'urlname': ProductFieldsView.urlname,
                     },
                 ]
             },

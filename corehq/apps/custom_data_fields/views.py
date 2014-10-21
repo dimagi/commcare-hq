@@ -4,7 +4,7 @@ import re
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django import forms
 
@@ -81,7 +81,7 @@ class CustomDataFieldsMixin(object):
 
     @classmethod
     def page_name(cls):
-        return "Edit {} Fields".format(cls.entity_string)
+        return _("Edit {} Fields").format(cls.entity_string)
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)

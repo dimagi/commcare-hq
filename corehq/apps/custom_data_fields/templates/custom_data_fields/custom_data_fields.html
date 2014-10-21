@@ -38,11 +38,7 @@
           class="form form-horizontal">
         {% csrf_token %}
         <fieldset>
-            <legend>
-                {% blocktrans with entity_string=view.entity_string %}
-                    Edit {{ entity_string }} Fields
-                {% endblocktrans %}
-            </legend>
+            <legend>{{ view.page_name }}</legend>
 
             {% if custom_fields_form.data_fields.errors %}
                 {% for error in custom_fields_form.data_fields.errors %}
