@@ -175,4 +175,5 @@ def render_form(form, domain, options):
         "side_pane": side_pane,
         "user": user,
         "edit_session_data": edit_session_data,
+        "request": options.get('request', None),  # needed for toggles
     })
