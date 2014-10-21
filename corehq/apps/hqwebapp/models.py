@@ -882,12 +882,20 @@ class MessagingTab(UITab):
                 ],
             })
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
-            settings_pages.extend([
-                {'title': ugettext_lazy("General Settings"),
-                 'url': reverse('sms_settings', args=[self.domain])},
+            if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
+                settings_pages.append(
+                    {'title': ugettext_lazy("General Settings"),
+                     'url': reverse('sms_settings_new', args=[self.domain])},
+                )
+            else:
+                settings_pages.append(
+                    {'title': ugettext_lazy("General Settings"),
+                     'url': reverse('sms_settings', args=[self.domain])},
+                )
+            settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
-                 'url': reverse('sms_languages', args=[self.domain])},
-            ])
+                 'url': reverse('sms_languages', args=[self.domain])}
+            )
         if settings_pages:
             items.append((_("Settings"), settings_pages))
 

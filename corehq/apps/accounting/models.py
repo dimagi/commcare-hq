@@ -791,7 +791,11 @@ class Subscription(models.Model):
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
         self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
+
         self.date_end = today
+        if self.date_start > today:
+            self.date_start = today
+
         self.is_active = False
         self.save()
 

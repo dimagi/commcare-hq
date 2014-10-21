@@ -314,7 +314,6 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
-    'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
@@ -770,7 +769,7 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
         },
         'sentry': {
             'level': 'ERROR',
@@ -987,7 +986,6 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
-    'trialconnect',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1169,9 +1167,6 @@ PILLOWTOPS = {
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
     ],
-    'trialconnect': [
-        'custom.trialconnect.smspillow.TCSMSPillow',
-    ],
 }
 
 for k, v in LOCAL_PILLOWTOPS.items():
@@ -1258,9 +1253,6 @@ DOMAIN_MODULE_MAP = {
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
-    'gc': 'custom.trialconnect',
-    'tc-test': 'custom.trialconnect',
-    'trialconnect': 'custom.trialconnect',
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
 

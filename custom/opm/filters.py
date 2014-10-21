@@ -1,31 +1,11 @@
-from datetime import date, datetime
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import (
-    BaseSingleOptionFilter, BaseDrilldownOptionFilter, BaseReportFilter)
+    BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter)
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from custom.opm.utils import date_from_request
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-
-
-class SingleDateFilter(BaseReportFilter):
-    """
-    A filter that returns a single date - used by the HSR
-    """
-    template = "opm/filters/date_selector.html"
-    label = ugettext_lazy("End Date")
-    slug = "date"
-
-    @property
-    def date(self):
-        return date_from_request(self.request)
-
-    @property
-    def filter_context(self):
-        return {
-            'date': self.date,
-        }
 
 
 class HierarchySqlData(SqlData):
@@ -155,3 +135,11 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
+
+
+class OPMSelectOpenCloseFilter(SelectOpenCloseFilter):
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "open"

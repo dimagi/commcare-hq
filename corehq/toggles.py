@@ -113,3 +113,8 @@ DASHBOARD_PREVIEW = StaticToggle(
     'dashboard_preview',
     'HQ Dashboard Preview'
 )
+
+EDIT_SUBMISSIONS = StaticToggle(
+    'edit_submissions',
+    'Submission Editing on HQ'
+)

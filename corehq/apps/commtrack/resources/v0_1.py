@@ -2,7 +2,7 @@ from tastypie import fields
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, DomainAdminAuthentication
 from corehq.apps.commtrack.models import Product
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import JsonResource
+from corehq.apps.api.resources import HqBaseResource
 
 
 """
@@ -11,10 +11,11 @@ Implementation of the CommTrack APIs. For more information see:
 https://confluence.dimagi.com/display/lmis/API
 """
 
-class ProductResource(JsonResource):
+
+class ProductResource(HqBaseResource):
 
     type = "product"
-    id  = fields.CharField(attribute='_id', readonly=True, unique=True)
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
     code = fields.CharField(attribute='code', readonly=True, unique=True)
     name = fields.CharField(attribute='name', readonly=True)
     unit = fields.CharField(attribute='unit', readonly=True, null=True)

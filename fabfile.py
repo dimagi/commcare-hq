@@ -1277,6 +1277,38 @@ def do_update_django_locales():
         )
         sudo(command)
 
+
+@task
+def reset_mvp_pillows():
+    _require_target()
+    mvp_pillows = [
+        'FormIndicatorPillow',
+        'CaseIndicatorPillow',
+    ]
+    for pillow in mvp_pillows:
+        reset_pillow(pillow)
+
+
+@roles(ROLES_PILLOWTOP)
+def reset_pillow(pillow):
+    _require_target()
+    prefix = 'commcare-hq-{}-pillowtop'.format(env.environment)
+    _supervisor_command('stop {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+    with cd(env.code_root):
+        command = '{virtualenv_root}/bin/python manage.py ptop_reset_checkpoint {pillow} --noinput'.format(
+            virtualenv_root=env.virtualenv_root,
+            pillow=pillow,
+        )
+        sudo(command)
+    _supervisor_command('start {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+
+
 # tests
 
 @task

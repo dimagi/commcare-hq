@@ -298,9 +298,11 @@
                     </div>
                     {% endif %}
                 {% else %}
+                    {% url "login" DOMAIN_TYPE as login_url %}
+                    {% url "register_user" DOMAIN_TYPE as register_url %}
                     {% blocktrans %}
-                        Please <a href="{% url "login" DOMAIN_TYPE %}">sign in</a>
-                        or <a href="{% url "register_user" %}">register</a>
+                        Please <a href="{{ login_url }}">sign in</a>
+                        or <a href="{{ register_url }}">register</a>
                         to download an app from Exchange
                     {% endblocktrans %}
                 {% endif %}

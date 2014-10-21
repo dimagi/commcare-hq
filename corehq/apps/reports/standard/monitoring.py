@@ -25,7 +25,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
@@ -1043,9 +1043,8 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
             return results[0]['_source']['form']['meta']['timeEnd'] if results else None
 
-        DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
         def convert_date(date):
-            return datetime.datetime.strptime(date, DATE_FORMAT).date() if date else None
+            return string_to_datetime(date).date() if date else None
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 

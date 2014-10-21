@@ -3,13 +3,13 @@ from corehq.apps.users.models import Permissions
 from dimagi.utils.web import json_request
 from django.core.exceptions import ObjectDoesNotExist
 from tastypie import fields
-from corehq.apps.api.resources import JsonResource
+from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 
 
-class ReportResource(JsonResource):
+class ReportResource(HqBaseResource):
     type = "report"
     slug = fields.CharField(attribute='slug', unique=True, readonly=True)
     results = fields.ListField(attribute='get_data', readonly=True, null=True)

@@ -48,7 +48,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.filters.dates.SubmitHistoryDatespanFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
