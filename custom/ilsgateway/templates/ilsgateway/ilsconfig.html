@@ -1,5 +1,12 @@
 {% extends 'locations/facility_sync.html' %}
 {% load i18n %}
+{% block main_column %}
+    {% if is_commtrack_enabled %}
+        {{ block.super }}
+    {% else %}
+        You have to enable commtrack in order to use ILSGateway migration.
+    {% endif %}
+{% endblock %}
 {% block enabled_section %}
     {% if checkpoint %}
         <table class="table table-bordered">

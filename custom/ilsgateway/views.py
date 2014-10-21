@@ -1,6 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, CommtrackConfig
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -75,7 +75,8 @@ class ILSConfigView(BaseCommTrackManageView):
             'settings': self.settings_context,
             'source': self.source,
             'sync_url': self.sync_urlname,
-            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username)
+            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username),
+            'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
 
     @property

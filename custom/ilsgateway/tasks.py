@@ -75,7 +75,7 @@ def stock_transaction_task(domain, endpoint):
         xform.save()
 
     for facility in FACILITIES:
-        stocktransactions = endpoint.get_stocktransactions(filters=(dict(supply_point=facility)))[1]
+        stocktransactions = endpoint.get_stocktransactions(filters=(dict(supply_point=facility, order_by='date')))[1]
         for stocktransaction in stocktransactions:
             case = SupplyPointCase.view('hqcase/by_domain_external_id',
                                         key=[domain, str(stocktransaction.supply_point_id)],

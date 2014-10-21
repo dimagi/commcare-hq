@@ -133,6 +133,7 @@ class SupplyPointStatus(models.Model):
     @classmethod
     def wrap_from_json(cls, obj, location_id):
         obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
 
@@ -157,6 +158,7 @@ class DeliveryGroupReport(models.Model):
     @classmethod
     def wrap_from_json(cls, obj, location_id):
         obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
 
