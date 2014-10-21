@@ -11,6 +11,7 @@ import hashlib
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -81,16 +82,16 @@ class GeneratorCollection():
             is_default: True if the format_name should be default format
 
         exceptions:
-            raises Exception if format is added with is_default while other
+            raises DuplicateFormatException if format is added with is_default while other
             default exists
-            raises Exception if format_name alread exists in the collection
+            raises DuplicateFormatException if format_name alread exists in the collection
         """
         if is_default and self.default_format:
-            raise Exception("default format already exists for this repeater.")
+            raise DuplicateFormatException("A default format already exists for this repeater.")
         elif is_default:
             self.default_format = format_name
         if format_name in self.format_generator_map:
-            raise Exception("There is already a Generator with this format name.")
+            raise DuplicateFormatException("There is already a Generator with this format name.")
 
         self.format_generator_map[format_name] = FormatInfo(
             name=format_name,
