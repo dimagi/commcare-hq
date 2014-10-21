@@ -88,10 +88,7 @@
                                         <div data-bind="foreach: configPairs">
                                             <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
                                         </div>
-                                        <a class="btn btn-small" href="#" data-bind="click: function(){
-                                            addConfigPair();
-                                            console.log('wut');
-                                        }">
+                                        <a class="btn btn-small" href="#" data-bind="click: addConfigPair">
                                             <i class="icon-plus"></i> Add Property &rarr; Value mapping
                                         </a>
                                     </div>

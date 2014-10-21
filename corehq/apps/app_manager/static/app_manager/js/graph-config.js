@@ -47,6 +47,67 @@ uiElement.GraphConfiguration = function(original) {
     eventize(self);
     // TODO: Fire change event on self when observables are edited (so that save button is activated) ?
     //       see uiElement.key_value_mapping
+
+    /**
+     * Return an object representing this graph configuration that is suitable
+     * for sending to and saving on the server.
+     * @returns {{}}
+     */
+    self.val = function(){
+        var graphViewModelAsPOJS = ko.toJS(self.graphViewModel);
+        var ret = {};
+
+        /**
+         * Convert objects like {'en': null, 'fra': 'baguette'} to {'fra': 'baguette'}
+         * @param obj
+         * @returns {{}}
+         */
+        var omit_nulls = function(obj){
+            var keys = _.keys(obj);
+            var ret = {};
+            for (var i=0; i < keys.length; i++){
+                if (obj[keys[i]] != null){
+                    ret[keys[i]] = obj[keys[i]];
+                }
+            }
+            return ret;
+        };
+
+        // TODO: We could have a helper function called pairListToObj to make
+        //       this a bit more readable
+
+        ret['graph_type'] = graphViewModelAsPOJS['graphType'];
+        ret['series'] = _.map(graphViewModelAsPOJS['series'], function(s){
+            var series = {};
+            // Only take the keys from the series that we care about
+            series['data_path'] = s['dataPath'];
+            series['x_function'] = s['xFunction'];
+            series['y_function'] = s['yFunction'];
+            // convert the list of config objects to a single object (since
+            // order no longer matters)
+            series['config'] = _.reduce(s['configPairs'], function(memo, pair){
+                memo[pair['property']] = pair['value'];
+                return memo;
+            }, {});
+            return series;
+        });
+        ret['annotations'] = _.map(graphViewModelAsPOJS['annotations'], function(obj){
+            obj['display_text'] = obj['displayText'];
+            delete obj['displayText'];
+            return obj;
+        });
+        ret['locale_specific_config'] = _.reduce(
+            graphViewModelAsPOJS['axisTitleConfigurations'], function(memo, conf){
+                memo[conf['property']] = omit_nulls(conf['values']);
+                return memo;
+        }, {});
+        ret['config'] = _.reduce(graphViewModelAsPOJS['configPairs'], function(memo, pair){
+            memo[pair['property']] = pair['value'];
+            return memo;
+        }, {});
+
+        return ret;
+    }
 };
 
 var PairConfiguration = function(){

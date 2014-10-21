@@ -461,7 +461,7 @@ var DetailScreenConfig = (function () {
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
                 column['enum'] = this.enum_extra.getItems();
-                //TODO: Add graph_extra serialization
+                column['graph_configuration'] = this.graph_extra.val();
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
@@ -774,11 +774,6 @@ var DetailScreenConfig = (function () {
                             format: "graph"
                         });
                         var graphItem = that.columns[that.columns.length - 1];
-                        console.log(graphItem);
-
-                        //col.format.val("graph");
-                        //col.format.fire("change");
-                        //console.log(col);
                     };
                     $(".add-property-item", $addButton).click(function () {
                         addItem({hasAutocomplete: true});
