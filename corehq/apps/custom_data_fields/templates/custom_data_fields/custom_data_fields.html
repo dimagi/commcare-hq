@@ -78,7 +78,7 @@
                             </tr>
                         </thead>
                         <tbody data-bind="sortable: data_fields">
-                            <tr>
+                            <tr data-bind="attr: {'data-order': _sortableOrder}">
                                 <td>
                                     <i class="icon-sort sortable-handle"></i>
                                 </td>
