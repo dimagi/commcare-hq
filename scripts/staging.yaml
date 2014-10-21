@@ -69,7 +69,7 @@ branches:
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
-  - case-list-redesign # Noah 9/16
+  - revert-4574-revert-4553-case-list-redesign # Noah 9/16
 submodules:
   submodules/couchlog-src:
     branches:
