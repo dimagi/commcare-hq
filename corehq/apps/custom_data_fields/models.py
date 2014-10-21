@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
-    BooleanProperty, SchemaListProperty)
+    BooleanProperty, SchemaListProperty, StringListProperty)
 from jsonobject import JsonObject
 from django.utils.translation import ugettext as _
 
@@ -11,6 +11,7 @@ class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
     label = StringProperty()
+    choices = StringListProperty()
 
 
 class CustomDataFieldsDefinition(Document):

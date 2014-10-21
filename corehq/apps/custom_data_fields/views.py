@@ -75,6 +75,16 @@ class CustomDataFieldForm(forms.Form):
         }
     )
     is_required = forms.BooleanField(required=False)
+    choices = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def __init__(self, raw, *args, **kwargs):
+        # Pull the raw_choices out here, because Django incorrectly
+        # serializes the list and you can't get it
+        self._raw_choices = filter(None, raw.get('choices', []))
+        super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
+
+    def clean_choices(self):
+        return self._raw_choices
 
 
 class CustomDataFieldsMixin(object):
@@ -122,6 +132,7 @@ class CustomDataFieldsMixin(object):
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
+            choices=field.get('choices'),
         )
 
     @property
