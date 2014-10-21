@@ -5,6 +5,7 @@ from corehq.apps.sms.views import (
     SubscribeSMSView,
     AddDomainGatewayView,
     EditDomainGatewayView,
+    SMSSettingsView,
 )
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -37,6 +38,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^api/history/$', 'api_history', name='api_history'),
     url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', 'sms_settings', name='sms_settings'),
+    url(r'^settings_new/$', SMSSettingsView.as_view(), name='sms_settings_new'),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
     url(r'^languages/$', 'sms_languages', name='sms_languages'),
     url(r'^languages/edit/$', 'edit_sms_languages', name='edit_sms_languages'),
