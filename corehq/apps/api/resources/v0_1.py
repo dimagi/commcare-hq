@@ -28,7 +28,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
+from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
 
 
 def determine_authtype(request):
@@ -144,7 +144,8 @@ class CustomResourceMeta(object):
     throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
-class UserResource(JsonResource, DomainSpecificResourceMixin):
+
+class UserResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -217,7 +218,7 @@ class WebUserResource(UserResource):
         return list(WebUser.by_domain(domain))
 
 
-class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
@@ -266,7 +267,7 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'case'
 
 
-class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 

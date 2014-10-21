@@ -1,0 +1,27 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'sms/ko/settings.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        var settingsViewModel = new SettingsViewModel(
+            {{ form.current_values|JSON }}
+        );
+        ko.applyBindings(settingsViewModel, $('#sms-settings-form').get(0));
+        settingsViewModel.init();
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <div id="sms-settings-form">
+        {% crispy form %}
+    </div>
+
+    {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
+    {% include "sms/partials/day_time_windows.html" with context=form.sms_conversation_times_widget_context only %}
+{% endblock %}

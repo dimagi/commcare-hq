@@ -2,9 +2,10 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.commtrack.util import get_or_make_def_program, all_sms_codes
+from django.views.decorators.http import require_POST
+from corehq.apps.commtrack.util import get_or_create_default_program, all_sms_codes
 
-from corehq.apps.domain.decorators import domain_admin_required, require_previewer, login_and_domain_required, \
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required, \
     cls_require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product, Program
@@ -12,13 +13,11 @@ from corehq.apps.commtrack.forms import ProductForm, ProgramForm, ConsumptionFor
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
-from corehq.toggles import IS_DEVELOPER
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from soil.util import expose_download, get_download_context
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.views.decorators.http import require_POST
 from corehq.apps.commtrack.tasks import import_products_async, recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
@@ -28,7 +27,7 @@ import copy
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
 from couchexport.models import Format
-
+from dimagi.utils.web import json_response
 
 
 @domain_admin_required
@@ -174,19 +173,32 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 
 @require_POST
 @domain_admin_required
+def delete_program(request, domain, prog_id):
+    program = Program.get(prog_id)
+    program.delete()
+    return json_response({
+        'success': True,
+        'message': _("Program '{program_name}' has successfully been deleted.").format(
+            program_name=program.name,
+        )
+    })
+
+
+@require_POST
+@domain_admin_required
 def archive_product(request, domain, prod_id, archive=True):
     """
     Archive product
     """
     product = Product.get(prod_id)
     product.archive()
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        message=_("Product '{product_name}' has successfully been {action}.").format(
+    return json_response({
+        'success': True,
+        'message': _("Product '{product_name}' has successfully been {action}.").format(
             product_name=product.name,
             action="archived",
         )
-    )))
+    })
 
 
 @require_POST
@@ -197,13 +209,13 @@ def unarchive_product(request, domain, prod_id, archive=True):
     """
     product = Product.get(prod_id)
     product.unarchive()
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        message=_("Product '{product_name}' has successfully been {action}.").format(
+    return json_response({
+        'success': True,
+        'message': _("Product '{product_name}' has successfully been {action}.").format(
             product_name=product.name,
             action="unarchived",
         )
-    )))
+    })
 
 
 class ProductListView(BaseCommTrackManageView):
@@ -283,7 +295,7 @@ class FetchProductListView(ProductListView):
             if p.program_id:
                 program = Program.get(p.program_id)
             else:
-                program = get_or_make_def_program(self.domain)
+                program = get_or_create_default_program(self.domain)
                 p.program_id = program.get_id
                 p.save()
 
@@ -575,7 +587,9 @@ class FetchProgramListView(ProgramListView):
         programs = Program.by_domain(self.domain)
         for p in programs:
             info = p._doc
+            info['is_default'] = info.pop('default')
             info['edit_url'] = reverse('commtrack_program_edit', kwargs={'domain': self.domain, 'prog_id': p._id})
+            info['delete_url'] = reverse('delete_program', kwargs={'domain': self.domain, 'prog_id': p._id})
             data.append(info)
         return data
 

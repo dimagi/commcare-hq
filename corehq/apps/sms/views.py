@@ -38,7 +38,10 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
-from corehq.apps.sms.forms import ForwardingRuleForm, BackendMapForm, InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm
+from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
+    InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm,
+    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
+    DEFAULT, CUSTOM)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
@@ -1323,6 +1326,156 @@ def upload_sms_translations(request, domain):
         messages.error(request, _("Update failed. We're looking into it."))
 
     return HttpResponseRedirect(reverse('sms_languages', args=[domain]))
+
+
+class SMSSettingsView(BaseMessagingSectionView):
+    urlname = "sms_settings_new"
+    template_name = "sms/settings_new.html"
+    page_title = ugettext_noop("SMS Settings")
+
+    @property
+    def page_name(self):
+        return _("SMS Settings")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    @memoized
+    def previewer(self):
+        return self.request.couch_user.is_previewer()
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == "POST":
+            form = SettingsForm(self.request.POST, cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer)
+        else:
+            domain_obj = Domain.get_by_name(self.domain, strict=True)
+            enabled_disabled = lambda b: (ENABLED if b else DISABLED)
+            default_custom = lambda b: (CUSTOM if b else DEFAULT)
+            initial = {
+                "use_default_sms_response":
+                    enabled_disabled(domain_obj.use_default_sms_response),
+                "default_sms_response":
+                    domain_obj.default_sms_response,
+                "use_restricted_sms_times":
+                    enabled_disabled(len(domain_obj.restricted_sms_times) > 0),
+                "restricted_sms_times_json":
+                    [w.to_json() for w in domain_obj.restricted_sms_times],
+                "send_to_duplicated_case_numbers":
+                    enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
+                "use_custom_case_username":
+                    default_custom(domain_obj.custom_case_username),
+                "custom_case_username":
+                    domain_obj.custom_case_username,
+                "use_custom_message_count_threshold":
+                    default_custom(
+                        domain_obj.chat_message_count_threshold is not None),
+                "custom_message_count_threshold":
+                    domain_obj.chat_message_count_threshold,
+                "use_sms_conversation_times":
+                    enabled_disabled(len(domain_obj.sms_conversation_times) > 0),
+                "sms_conversation_times_json":
+                    [w.to_json() for w in domain_obj.sms_conversation_times],
+                "sms_conversation_length":
+                    domain_obj.sms_conversation_length,
+                "survey_traffic_option":
+                    (SHOW_ALL
+                     if not domain_obj.filter_surveys_from_chat else
+                     SHOW_INVALID
+                     if domain_obj.show_invalid_survey_responses_in_chat else
+                     HIDE_ALL),
+                "count_messages_as_read_by_anyone":
+                    enabled_disabled(domain_obj.count_messages_as_read_by_anyone),
+                "use_custom_chat_template":
+                    default_custom(domain_obj.custom_chat_template),
+                "custom_chat_template":
+                    domain_obj.custom_chat_template,
+                "sms_case_registration_enabled":
+                    enabled_disabled(domain_obj.sms_case_registration_enabled),
+                "sms_case_registration_type":
+                    domain_obj.sms_case_registration_type,
+                "sms_case_registration_owner_id":
+                    domain_obj.sms_case_registration_owner_id,
+                "sms_case_registration_user_id":
+                    domain_obj.sms_case_registration_user_id,
+            }
+            form = SettingsForm(initial=initial, cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer)
+        return form
+
+    @property
+    def page_context(self):
+        return {
+            "form": self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if form.is_valid():
+            domain_obj = Domain.get_by_name(self.domain, strict=True)
+            field_map = [
+                ("use_default_sms_response",
+                 "use_default_sms_response"),
+                ("default_sms_response",
+                 "default_sms_response"),
+                ("custom_case_username",
+                 "custom_case_username"),
+                ("send_to_duplicated_case_numbers",
+                 "send_to_duplicated_case_numbers"),
+                ("sms_conversation_length",
+                 "sms_conversation_length"),
+                ("count_messages_as_read_by_anyone",
+                 "count_messages_as_read_by_anyone"),
+                ("chat_message_count_threshold",
+                 "custom_message_count_threshold"),
+                ("restricted_sms_times",
+                 "restricted_sms_times_json"),
+                ("sms_conversation_times",
+                 "sms_conversation_times_json"),
+            ]
+            if self.previewer:
+                field_map.append(
+                    ("custom_chat_template",
+                     "custom_chat_template")
+                )
+            for (model_field_name, form_field_name) in field_map:
+                setattr(domain_obj, model_field_name,
+                    form.cleaned_data[form_field_name])
+
+            survey_traffic_option = form.cleaned_data["survey_traffic_option"]
+            if survey_traffic_option == HIDE_ALL:
+                domain_obj.filter_surveys_from_chat = True
+                domain_obj.show_invalid_survey_responses_in_chat = False
+            elif survey_traffic_option == SHOW_INVALID:
+                domain_obj.filter_surveys_from_chat = True
+                domain_obj.show_invalid_survey_responses_in_chat = True
+            else:
+                domain_obj.filter_surveys_from_chat = False
+                domain_obj.show_invalid_survey_responses_in_chat = False
+
+            if form.cleaned_data["sms_case_registration_enabled"]:
+                domain_obj.sms_case_registration_enabled = True
+                domain_obj.sms_case_registration_type = form.cleaned_data[
+                    "sms_case_registration_type"]
+                domain_obj.sms_case_registration_owner_id = form.cleaned_data[
+                    "sms_case_registration_owner_id"]
+                domain_obj.sms_case_registration_user_id = form.cleaned_data[
+                    "sms_case_registration_user_id"]
+            else:
+                domain_obj.sms_case_registration_enabled = False
+
+            domain_obj.save()
+            messages.success(request, _("Changes Saved."))
+        return self.get(request, *args, **kwargs)
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
 
 @domain_admin_required
