@@ -1,7 +1,8 @@
 from collections import namedtuple
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, cache_key, CachedIndicators
+from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
+    cache_key, CachedIndicators
 from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
@@ -11,7 +12,6 @@ from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from django.core import cache
-from mock import patch
 
 locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
 

@@ -61,7 +61,8 @@ def add_case_action(case):
     )
 
 
-def load_data(domain, form_user_id, case_user_id=None, case_owner_id=None, case_opened_by=None, case_closed_by=None):
+def load_data(domain, form_user_id, case_user_id=None,
+              case_owner_id=None, case_opened_by=None, case_closed_by=None):
     form_data = [
         get_formdata(0, domain, form_user_id),
         get_formdata(3, domain, form_user_id),

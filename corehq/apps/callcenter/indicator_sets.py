@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, timedelta, datetime, time
+from datetime import timedelta, datetime
 from django.core.cache import cache
 from django.db.models.aggregates import Count, Avg
 from django.db.models.query_utils import Q
@@ -137,7 +137,7 @@ class CallCenterIndicators(object):
             ids.remove(None)
         except KeyError:
             pass
-        
+
         return ids
 
     @property
