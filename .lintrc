@@ -2,4 +2,7 @@
 [files]
 
 [tools]
-linters = pep8, jshint
+linters = flake8, jshint
+
+[tool_flake8]
+max-line-length = 115
