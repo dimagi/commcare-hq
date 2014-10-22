@@ -9,6 +9,10 @@ from corehq.elastic import es_query
 
 
 def sync_user_cases(commcare_user):
+    """
+    Each time a CommCareUser is saved this method gets called and creates or updates
+    a case associated with the user with the user's details.
+    """
     domain = commcare_user.project
     if not (domain and domain.call_center_config.enabled):
         return
