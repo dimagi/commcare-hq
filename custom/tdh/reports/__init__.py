@@ -1,24 +1,27 @@
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from dimagi.utils.decorators.memoized import memoized
 from custom.tdh.filters import TDHDateSpanFilter
 
+UNNECESSARY_FIELDS = ['doc_type', 'numerator', 'base_doc', 'save_direct_to_sql']
 
-class TDHReport(ProjectReportParametersMixin, CustomProjectReport, DatespanMixin, GenericTabularReport):
+class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    use_datatables = True
     emailable = False
     exportable = True
     export_format_override = 'csv'
-    report_template_path = "reports/async/tabular.html"
     fields = [ExpandedMobileWorkerFilter, TDHDateSpanFilter]
+    fix_left_col = True
 
     @property
     def report_config(self):
+        emw = [u.user_id for u in ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain, self.request, True, True).combined_users]
         config = dict(
             domain=self.domain,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
+            emw=tuple(emw)
         )
         return config
 
@@ -33,3 +36,7 @@ class TDHReport(ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
     @property
     def rows(self):
         return self.data_provider.rows
+
+    @property
+    def fixed_cols_spec(self):
+        return dict(num=2, width=200)

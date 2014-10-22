@@ -1161,8 +1161,9 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.tdh.models.TDHFluffPillow',
-
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
