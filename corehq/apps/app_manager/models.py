@@ -1011,6 +1011,7 @@ class DetailColumn(IndexedSchema):
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
+    graph_configuration = DictProperty()
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")

@@ -297,6 +297,7 @@ var DetailScreenConfig = (function () {
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
+            this.original.graph_configuration = this.original.graph_configuration || {};
             var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                            ? COMMCAREHQ.icons.PAPERCLIP : null);
 
@@ -339,14 +340,11 @@ var DetailScreenConfig = (function () {
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
-            // Note to self: We probably always want to set sourceOptions anew, even if it exists in the column we are loading
-            // because there might be new child case types since the last time the details page was loaded
-            // TODO: pass an object to this constructor representing the original's graph configuration
             this.graph_extra = new uiElement.GraphConfiguration({
                 childCaseTypes: this.screen.childCaseTypes,
                 lang: this.lang,
                 langs: this.screen.langs
-            });
+            }, this.original.graph_configuration);
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
@@ -461,7 +459,8 @@ var DetailScreenConfig = (function () {
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
                 column['enum'] = this.enum_extra.getItems();
-                column['graph_configuration'] = this.graph_extra.val();
+                column['graph_configuration'] =
+                        this.format.val() == "graph" ? this.graph_extra.val() : null;
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();

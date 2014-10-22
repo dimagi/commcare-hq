@@ -2,10 +2,19 @@
  * Create a view model that is bound to an "Edit graph" button. The ui property
  * of this view model allows us to integrate the knockout elements with the
  * jquery based part of the ui.
+ *
+ * @param moduleOptions
+ * A mapping of configuration options from the module. The following keys are required:
+ *      lang
+ *      langs
+ *      childCaseTypes
+ * @param serverRepresentationOfGraph
+ * Object corresponding to a graph configuration saved in couch.
+ * @constructor
  */
-uiElement.GraphConfiguration = function(original) {
+uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGraph) {
     var self = this;
-    original = original || {};
+    moduleOptions = moduleOptions || {};
 
     //TODO: Put this in a template somewhere?
     var $editButtonDiv = $('\
@@ -18,13 +27,15 @@ uiElement.GraphConfiguration = function(original) {
     ');
 
     self.ui = $editButtonDiv;
-    self.graphViewModel = new GraphViewModel(original);
+    self.graphViewModel = new GraphViewModel(moduleOptions);
+    self.graphViewModel.populate(getGraphViewModelJS(serverRepresentationOfGraph, moduleOptions));
+
     self.edit = ko.observable(true);
     self.openModal = function (uiElementViewModel){
 
         // make a copy of the view model
-        var graphViewModelCopy = new GraphViewModel(original);
-        graphViewModelCopy.fromJS(ko.toJS(uiElementViewModel.graphViewModel));
+        var graphViewModelCopy = new GraphViewModel(moduleOptions);
+        graphViewModelCopy.populate(ko.toJS(uiElementViewModel.graphViewModel));
         // Replace the original with the copy if save is clicked, otherwise discard it
         graphViewModelCopy.onSave = function(){
             uiElementViewModel.graphViewModel = graphViewModelCopy;
@@ -76,7 +87,7 @@ uiElement.GraphConfiguration = function(original) {
         // TODO: We could have a helper function called pairListToObj to make
         //       this a bit more readable
 
-        ret['graph_type'] = graphViewModelAsPOJS['graphType'];
+        ret['graph_type'] = graphViewModelAsPOJS['selectedGraphType'];
         ret['series'] = _.map(graphViewModelAsPOJS['series'], function(s){
             var series = {};
             // Only take the keys from the series that we care about
@@ -105,14 +116,80 @@ uiElement.GraphConfiguration = function(original) {
             memo[pair['property']] = pair['value'];
             return memo;
         }, {});
+        return ret;
+    };
+
+    /**
+     * Returns an object in in the same form as that returned by
+     * ko.toJS(GraphViewModel_instance).
+     * @param serverGraphObject
+     * An object in the form returned of that returned by self.val(). That is,
+     * in the same form as the the graph configuration saved in couch.
+     * @param moduleOptions
+     * Additional options that are derived from the module like lang, langs,
+     * and childCaseTypes.
+     * @returns {{}}
+     */
+    function getGraphViewModelJS(serverGraphObject, moduleOptions){
+        // This line is needed because old Columns that don't have a
+        // graph_configuration will still call:
+        //      this.graph_extra = new uiElement.GraphConfiguration(..., this.original.graph_configuration)
+        serverGraphObject = serverGraphObject || {};
+        var ret = {};
+
+        //TODO: Set the following?
+        // graphDisplayName
+        // series.showDataPath
+
+        ret['selectedGraphType'] = serverGraphObject['graph_type'];
+        ret['series'] = _.map(serverGraphObject['series'], function(s){
+            var series = {};
+
+            //TODO: This doesn't work
+            series['selectedSource'] = {'text':'custom', 'value':'custom'};
+            series['dataPath'] = s['data_path'];
+            series['xFunction'] = s['x_function'];
+            series['yFunction'] = s['y_function'];
+            series['configPairs'] = _.map(_.pairs(s['config']), function(pair){
+                return {
+                    'property': pair[0],
+                    'value': pair[1]
+                }
+            });
+            return series;
+        });
+        ret['annotations'] = _.map(serverGraphObject['annotations'], function(obj){
+            obj['displayText'] = obj['display_text'];
+            delete obj['display_text'];
+            return obj;
+        });
+        ret['axisTitleConfigurations'] = _.map(_.pairs(serverGraphObject['locale_specific_config']), function(pair){
+            return {
+                'lang': moduleOptions['lang'],
+                'langs': moduleOptions['langs'],
+                'property': pair[0],
+                'values': pair[1]
+            };
+        });
+        ret['configPairs'] = _.map(_.pairs(serverGraphObject['config']), function(pair){
+            return {
+                'property': pair[0],
+                'value': pair[1]
+            };
+        });
+        ret['childCaseTypes'] = moduleOptions['childCaseTypes'];
 
         return ret;
     }
 };
 
-var PairConfiguration = function(){
+var PairConfiguration = function(original){
     var self = this;
-    self.configPairs = ko.observableArray([]);
+    original = original || {};
+
+    self.configPairs = ko.observableArray(_.map(original['configPairs'] || [], function(pair){
+        return new ConfigPropertyValuePair(pair);
+    }));
     self.configPropertyOptions = [];
     self.configPropertyHints = {};
 
@@ -179,12 +256,13 @@ var LocalizedConfigPropertyValuePair = function(original){
 
 };
 
-var GraphViewModel = function(original){
+var GraphViewModel = function(moduleOptions){
+    PairConfiguration.apply(this);
     var self = this;
-    original = original || {};
+    moduleOptions = moduleOptions || {};
 
-    self.lang = original.lang;
-    self.langs = original.langs;
+    self.lang = moduleOptions.lang;
+    self.langs = moduleOptions.langs;
 
     self.graphDisplayName = ko.observable("My Partograph");
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
@@ -192,10 +270,10 @@ var GraphViewModel = function(original){
     self.series = ko.observableArray([]);
     self.annotations = ko.observableArray([]);
     self.axisTitleConfigurations = ko.observableArray(_.map(
+        // If you add to this list, don't forget to update theOrder in populate() (I know this is gross)
         ['x-axis-title', 'y-axis-title', 'secondary-y-title'],
         function(s){return new LocalizedConfigPropertyValuePair({
             'property': s,
-            //TODO: initialize these values
             'lang': self.lang,
             'langs': self.langs
         })}
@@ -240,7 +318,7 @@ var GraphViewModel = function(original){
         'show-axes': 'true or false',
         'zoom': 'true or false'
     };
-    self.childCaseTypes = original.childCaseTypes || []; // TODO: What happens with original might change
+    self.childCaseTypes = moduleOptions.childCaseTypes || [];
 
     self.selectedGraphType.subscribe(function(newValue) {
         // Recreate the series objects to be of the correct type.
@@ -249,7 +327,7 @@ var GraphViewModel = function(original){
         }));
     });
 
-    self.fromJS = function(obj){
+    self.populate = function(obj){
         self.graphDisplayName(obj.graphDisplayName);
         self.selectedGraphType(obj.selectedGraphType);
         self.series(_.map(obj.series, function(o){
@@ -258,9 +336,28 @@ var GraphViewModel = function(original){
         self.annotations(_.map(obj.annotations, function(o){
             return new Annotation(o);
         }));
-        self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function(o){
-            return new LocalizedConfigPropertyValuePair(o);
+
+        // TODO:
+        // There was a bug here where the axisTitleConfigurations list was overridden
+        // with an empty list. We should make sure there aren't prepopulated lists
+        // elsewhere that we are overwriting.
+
+        if (obj.axisTitleConfigurations.length != 0) {
+            self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function (o) {
+                return new LocalizedConfigPropertyValuePair(o);
+            }));
+        }
+        // This is dumb:
+        // might make more sense to sort this in getGraphViewModelJS. Either way it's annoying.
+        var theOrder = {'x-axis-title':0, 'y-axis-title':1, 'secondary-y-title': 2};
+        self.axisTitleConfigurations.sort(function(a, b){
+            return theOrder[a.property] - theOrder[b.property];
+        });
+
+        self.configPairs(_.map(obj.configPairs, function(pair){
+            return new ConfigPropertyValuePair(pair);
         }));
+
         self.childCaseTypes = obj.childCaseTypes.slice(0)
     };
 
@@ -304,11 +401,12 @@ var Annotation = function(original){
 };
 
 var GraphSeries = function (original, childCaseTypes){
+    PairConfiguration.apply(this, [original]);
     var self = this;
     original = original || {};
     childCaseTypes = childCaseTypes || [];
 
-    function orig_or_default(prop, fallback){
+    function origOrDefault(prop, fallback){
         return original[prop] === undefined ? fallback : original[prop]
     }
     /**
@@ -321,13 +419,11 @@ var GraphSeries = function (original, childCaseTypes){
         if (source == "custom"){
              return "instance('name')/root/path-to-point/point";
         } else {
-            //TODO: It puts the whole thing in there bad
             return "instance('casedb')/casedb/case[@case_type='"+source+"'][index/parent=current()/@case_id][@status='open']";
         }
     };
 
-
-    self.sourceOptions = ko.observableArray(orig_or_default(
+    self.sourceOptions = ko.observableArray(origOrDefault(
         'sourceOptions',
         _.map(childCaseTypes, function(s){
             return {
@@ -336,11 +432,22 @@ var GraphSeries = function (original, childCaseTypes){
             };
         }).concat([{'text':'custom', 'value':'custom'}])
     ));
-    self.selectedSource = ko.observable(orig_or_default('selectedSource', self.sourceOptions()[0]));
-    self.dataPath = ko.observable(orig_or_default('dataPath', self.getDefaultDataPath(self.selectedSource().value)));
-    self.showDataPath = ko.observable(orig_or_default('showDataPath', false));
-    self.xFunction = ko.observable(orig_or_default('xFunction',""));
-    self.yFunction = ko.observable(orig_or_default('yFunction',""));
+    self.selectedSource = ko.observable(origOrDefault('selectedSource', self.sourceOptions()[0]));
+    // Fix selectedSource reference:
+    //  (selectedSource has to be a reference to an object in sourceOptions.
+    //   Thus, when original specifies a selectedSource we must find the matching
+    //   object in sourceOptions.)
+    if (!_.contains(self.sourceOptions(), self.selectedSource())){
+        var curSource = self.selectedSource();
+        var source = _.find(self.sourceOptions(), function(opt){
+            return opt.text == curSource.text && opt.value == curSource.value;
+        });
+        self.selectedSource(source);
+    }
+    self.dataPath = ko.observable(origOrDefault('dataPath', self.getDefaultDataPath(self.selectedSource().value)));
+    self.showDataPath = ko.observable(origOrDefault('showDataPath', false));
+    self.xFunction = ko.observable(origOrDefault('xFunction',""));
+    self.yFunction = ko.observable(origOrDefault('yFunction',""));
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
