@@ -42,7 +42,7 @@
             "aggregation": "sum"
         }
     ],
-    "graphs": [
+    "configured_graphs": [
         {
             "type": "multibar",
             "display_name": "HIV Mismatch by Clinic",

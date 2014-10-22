@@ -8,7 +8,8 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec
+from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
+    MultibarAggregateChartSpec, ChartSpec, MultibarChartSpec
 
 
 def _build_date_filter(spec):
@@ -69,6 +70,18 @@ class ReportFactory(object):
             aggregation_columns=spec.aggregation_columns,
             columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
         )
+
+
+class GraphFactory(object):
+    object_map = {
+        'pie': PieChartSpec,
+        'multibar': MultibarChartSpec,
+        'multibar-aggregate': MultibarAggregateChartSpec,
+    }
+
+    @classmethod
+    def from_spec(cls, spec):
+        return cls.object_map[spec['type']].wrap(spec)
 
 
 class ReportFilter(JsonObject):

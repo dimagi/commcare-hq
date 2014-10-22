@@ -27,3 +27,28 @@ class FilterSpec(JsonObject):
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     choices = ListProperty(FilterChoice)
+
+
+class ChartSpec(JsonObject):
+    type = StringProperty(required=True)
+    display_name = StringProperty()
+
+
+class PieChartSpec(ChartSpec):
+    type = TypeProperty('pie')
+    aggregation_column = StringProperty()
+    value_column = StringProperty(required=True)
+
+
+class MultibarChartSpec(ChartSpec):
+    type = TypeProperty('multibar')
+    aggregation_column = StringProperty()
+    x_axis_column = StringProperty(required=True)
+    y_axis_columns = ListProperty(unicode)
+
+
+class MultibarAggregateChartSpec(ChartSpec):
+    type = TypeProperty('multibar-aggregate')
+    primary_aggregation = StringProperty(required=True)
+    secondary_aggregation = StringProperty(required=True)
+    value_column = StringProperty(required=True)

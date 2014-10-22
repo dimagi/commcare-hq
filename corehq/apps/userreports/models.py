@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, GraphFactory
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -107,7 +107,7 @@ class ReportConfiguration(Document):
     aggregation_columns = StringListProperty()
     filters = ListProperty()
     columns = ListProperty()
-    graphs = ListProperty()
+    configured_graphs = ListProperty()
 
     @property
     @memoized
@@ -118,13 +118,19 @@ class ReportConfiguration(Document):
             raise BadSpecError(_('The data source referenced by this report could not be found.'))
 
     @property
+    @memoized
+    def graphs(self):
+        return [GraphFactory.from_spec(g) for g in self.configured_graphs]
+
+    @property
     def table_id(self):
         return self.config.table_id
 
     def validate(self, required=True):
         super(ReportConfiguration, self).validate(required)
-        # this implicitly does validation
+        # these calls implicitly do validation
         ReportFactory.from_spec(self)
+        self.graphs
 
     @classmethod
     def by_domain(cls, domain):
