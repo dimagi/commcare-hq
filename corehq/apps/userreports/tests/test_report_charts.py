@@ -1,7 +1,6 @@
 from django.test import SimpleTestCase
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.factory import ReportFilterFactory, ChartFactory
+from corehq.apps.userreports.reports.factory import ChartFactory
 from corehq.apps.userreports.reports.specs import PieChartSpec, MultibarChartSpec, MultibarAggregateChartSpec
 
 

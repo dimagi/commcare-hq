@@ -1,5 +1,38 @@
 from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty
+from sqlagg import SumColumn
+from sqlagg.columns import SimpleColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from corehq.apps.userreports.specs import TypeProperty
+
+
+class ReportFilter(JsonObject):
+    type = StringProperty(required=True)
+    slug = StringProperty(required=True)
+    field = StringProperty(required=True)
+    display = StringProperty()
+
+    def create_filter_value(self, value):
+        return {
+            'date': DateFilterValue,
+            'choice_list': ChoiceListFilterValue,
+        }[self.type](self, value)
+
+
+class ReportColumn(JsonObject):
+    type = StringProperty(required=True)
+    display = StringProperty()
+    field = StringProperty(required=True)
+    aggregation = StringProperty(required=True)
+
+    def get_sql_column(self):
+        # todo: find a better home for this
+        sqlagg_column_map = {
+            'sum': SumColumn,
+            'simple': SimpleColumn,
+        }
+        return DatabaseColumn(self.display, sqlagg_column_map[self.aggregation](self.field),
+                              sortable=False, data_slug=self.field)
 
 
 class FilterChoice(JsonObject):
