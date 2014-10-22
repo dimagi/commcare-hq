@@ -104,7 +104,7 @@ def compute_consumption_or_default(case_id,
     value is real or just a default value
     """
     configuration = configuration or ConsumptionConfiguration()
-    consumption = compute_daily_consumption(
+    daily_consumption = compute_daily_consumption(
         case_id,
         product_id,
         window_end,
@@ -112,8 +112,8 @@ def compute_consumption_or_default(case_id,
         configuration
     )
 
-    if consumption:
-        return consumption
+    if daily_consumption:
+        return daily_consumption * 30.
     else:
         return compute_default_monthly_consumption(
             case_id,
