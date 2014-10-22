@@ -992,7 +992,7 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
-    ('userreports', 'userreports'),
+    ('userreports', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
