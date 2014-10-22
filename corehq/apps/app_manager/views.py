@@ -758,9 +758,7 @@ def get_module_view_context_and_template(app, module):
                 'unique_id': mod.unique_id,
                 'name': mod.name,
                 'is_parent': mod.unique_id in parent_module_ids,
-            } for mod in app.modules
-            if mod.case_type != case_type and mod.unique_id != module.unique_id
-            and isinstance(mod, Module)
+            } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id
         ]
 
     def get_sort_elements(details):
