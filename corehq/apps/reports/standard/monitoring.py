@@ -9,7 +9,7 @@ import numpy
 import operator
 import pytz
 from corehq.apps.es import filters
-from corehq.apps.es.cases import CaseES, is_closed
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
