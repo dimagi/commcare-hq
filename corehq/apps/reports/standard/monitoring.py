@@ -1102,27 +1102,34 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         form_data = self.es_form_submissions()
-        submissions_by_user = dict([(t["term"], t["count"]) for t in form_data.facet("form.meta.userID", "terms")])
+        submissions_by_user = {t["term"]: t["count"] for t in form_data.facet("form.meta.userID", "terms")}
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data.facet("form.meta.userID", "terms")])
+        avg_submissions_by_user = {t["term"]: t["count"] for t in avg_form_data.facet("form.meta.userID", "terms")}
 
         if self.view_by == 'groups':
-            active_users_by_group = dict([(g, len(filter(lambda u: submissions_by_user.get(u['user_id']), users)))
-                                          for g, users in self.users_by_group.iteritems()])
+            active_users_by_group = {
+                g: len(filter(lambda u: submissions_by_user.get(u['user_id']), users))
+                for g, users in self.users_by_group.iteritems()
+            }
         else:
             last_form_by_user = self.es_last_submissions()
 
         case_creation_data = self.es_case_queries('opened_on', 'opened_by')
-        creations_by_user = dict([(t["term"].lower(), t["count"])
-                                  for t in case_creation_data.facet("opened_by", "terms")])
+        creations_by_user = {
+            t["term"].lower(): t["count"]
+            for t in case_creation_data.facet("opened_by", "terms")
+        }
 
         case_closure_data = self.es_case_queries('closed_on', 'closed_by')
-        closures_by_user = dict([(t["term"].lower(), t["count"])
-                                 for t in case_closure_data.facet("closed_by", "terms")])
-
+        closures_by_user = {
+            t["term"].lower(): t["count"]
+            for t in case_closure_data.facet("closed_by", "terms")
+        }
         active_case_data = self.es_active_cases()
-        actives_by_owner = dict([(t["term"].lower(), t["count"])
-                                 for t in active_case_data["facets"]["owner_id"]["terms"]])
+        actives_by_owner = {
+            t["term"].lower(): t["count"]
+            for t in active_case_data["facets"]["owner_id"]["terms"]
+        }
 
         total_case_data = self.es_total_cases()
         totals_by_owner = {
