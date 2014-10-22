@@ -55,7 +55,7 @@ class FilterFactory(object):
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec)
-        except (AssertionError, BadValueError), e:
+        except (AssertionError, BadValueError) as e:
             raise BadSpecError(_('Problem creating filter from spec: {}, message is {}').format(
                 json.dumps(spec, indent=2),
                 str(e),

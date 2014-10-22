@@ -23,6 +23,21 @@ class FilterTestCase(SimpleTestCase):
                 "display": "Some display name"
             })
 
+    def test_missing_field(self):
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec({
+                "type": "date",
+                "slug": "some_slug",
+                "display": "Some display name"
+            })
+
+    def test_missing_slug(self):
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec({
+                "type": "date",
+                "field": "some_field",
+                "display": "Some display name"
+            })
 
 class DateFilterTestCase(SimpleTestCase):
 

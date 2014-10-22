@@ -1,4 +1,6 @@
+import json
 from jsonobject import JsonObject, StringProperty
+from jsonobject.exceptions import BadValueError
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
@@ -38,7 +40,14 @@ class ReportFilterFactory(object):
     @classmethod
     def from_spec(cls, spec):
         cls.validate_spec(spec)
-        return cls.constructor_map[spec['type']](spec)
+        try:
+            return cls.constructor_map[spec['type']](spec)
+        except (AssertionError, BadValueError) as e:
+            raise BadSpecError(_('Problem creating report filter from spec: {}, message is {}').format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
+
 
     @classmethod
     def validate_spec(self, spec):
