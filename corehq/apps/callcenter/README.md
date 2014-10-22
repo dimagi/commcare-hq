@@ -125,5 +125,5 @@ In order to provide backwards compatibility for existing applications the follow
 also included in the fixture output:
 
 * formsSubmitted{period_name} - the same values as forms_submitted_{period_name}
-* casesUpdated{preiod_name} - the same values as cases_active_{period_name}
+* casesUpdated{period_name} - the same values as cases_active_{period_name}
 * totalCases - the total number of open cases at time of generation where case.user_id = mobile_user.user_id
