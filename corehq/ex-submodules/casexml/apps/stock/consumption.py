@@ -1,5 +1,6 @@
 import collections
 import functools
+import json
 import math
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
@@ -40,6 +41,13 @@ class ConsumptionConfiguration(object):
     def test_config(cls):
         return cls(0, 0, 60)
 
+    def __repr__(self):
+        return json.dumps({
+            'min_periods': self.min_periods,
+            'min_window': self.min_window,
+            'max_window': self.max_window,
+            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function)
+        }, indent=2)
 
 def from_ts(dt):
     # damn this is ugly
@@ -81,7 +89,6 @@ def compute_consumption(case_id,
         window_start,
         window_end
     )
-
     return compute_consumption_from_transactions(
         transactions, window_start, configuration
     )
@@ -97,7 +104,6 @@ def compute_consumption_or_default(case_id,
     value is real or just a default value
     """
     configuration = configuration or ConsumptionConfiguration()
-
     consumption = compute_consumption(
         case_id,
         product_id,
@@ -223,7 +229,6 @@ def compute_consumption_from_transactions(transactions, window_start, configurat
     periods = filter(lambda period: period.normalized_length, periods)
     total_consumption = sum(period.normalized_consumption for period in periods)
     total_length = sum(period.normalized_length for period in periods)
-
     # check minimum statistical significance thresholds
     if len(periods) < configuration.min_periods or total_length < configuration.min_window:
         return None

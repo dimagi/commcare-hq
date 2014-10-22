@@ -49,8 +49,8 @@ branches:
 #  - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
-  - logos+master # tw
-  - logos # Nick P 5/28
+  # - logos+master # tw
+  # - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
   - archive-programs+custom_product_data # tw
   - subscription-no-contact-info # bb 8/4
@@ -65,6 +65,7 @@ branches:
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
+  - monitoring # SK 9/22
 submodules:
   submodules/couchlog-src:
     branches:
