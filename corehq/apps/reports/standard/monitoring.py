@@ -1016,7 +1016,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {
                             "form.meta.timeEnd": {
                                 "from": datespan.startdate_param,
-                                "to": datespan.enddate_param,
+                                "to": datespan.enddate_display,
                                 "include_upper": True}}}]}}}
         q["filter"] = {"and": ADD_TO_ES_FILTER["forms"][:]}
         facets = ['form.meta.userID']
@@ -1036,7 +1036,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                             {"range": {
                                 "form.meta.timeEnd": {
                                     "from": datespan.startdate_param,
-                                    "to": datespan.enddate_param,
+                                    "to": datespan.enddate_display,
                                     "include_upper": True}}}
                         ]}},
                 "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
@@ -1057,7 +1057,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {
                             date_field: {
                                 "from": datespan.startdate_param,
-                                "to": datespan.enddate_param,
+                                "to": datespan.enddate_display,
                                 "include_upper": True}}}
                     ]}}}
 
@@ -1082,7 +1082,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                                 "range": {
                                     "actions.date": {
                                         "from": datespan.startdate_param,
-                                        "to": datespan.enddate_param,
+                                        "to": datespan.enddate_display,
                                         "include_upper": True}}}}}]}}}
 
         if self.case_types_filter:
@@ -1097,7 +1097,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lte": datespan.enddate_param}}}],
+                        {"range": {"opened_on": {"lte": datespan.enddate_display}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
 
         if self.case_types_filter:
