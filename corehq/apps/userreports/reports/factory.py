@@ -43,7 +43,7 @@ class ReportFilterFactory(object):
         try:
             return cls.constructor_map[spec['type']](spec)
         except (AssertionError, BadValueError) as e:
-            raise BadSpecError(_('Problem creating report filter from spec: {}, message is {}').format(
+            raise BadSpecError(_('Problem creating report filter from spec: {}, message is: {}').format(
                 json.dumps(spec, indent=2),
                 str(e),
             ))
@@ -89,7 +89,7 @@ class ChartFactory(object):
         try:
             return cls.spec_map[spec['type']].wrap(spec)
         except BadValueError as e:
-            raise BadSpecError(_('Problem creating chart from spec: {}, message is {}').format(
+            raise BadSpecError(_('Problem creating chart from spec: {}, message is: {}').format(
                 json.dumps(spec, indent=2),
                 str(e),
             ))
