@@ -9,17 +9,16 @@ from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfigu
 class ReportConfigurationTest(SimpleTestCase):
 
     def setUp(self):
-        folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_report_config.json')
-        with open(sample_file) as f:
-            structure = json.loads(f.read())
-            self.config = ReportConfiguration.wrap(structure)
+        self.config = _get_sample_config()
 
-    def testMetadata(self):
+    def test_metadata(self):
         # metadata
         self.assertEqual('user-reports', self.config.domain)
         self.assertEqual('CommBugz', self.config.display_name)
         self.assertEqual('12345', self.config.config_id)
+
+    def test_sample_config_is_valid(self):
+        self.config.validate()
 
 
 class ReportConfigurationDbTest(TestCase):
@@ -67,3 +66,15 @@ class ReportConfigurationDbTest(TestCase):
     def testConfigMustExist(self):
         with self.assertRaises(BadSpecError):
             ReportConfiguration(domain='foo', config_id='notreal').save()
+
+    def testSampleConfigIsValid(self):
+        config = _get_sample_config()
+        config.validate()
+
+
+def _get_sample_config():
+    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
+    sample_file = os.path.join(folder, 'sample_report_config.json')
+    with open(sample_file) as f:
+        structure = json.loads(f.read())
+        return ReportConfiguration.wrap(structure)

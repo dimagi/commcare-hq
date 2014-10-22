@@ -6,7 +6,6 @@ from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec
@@ -62,10 +61,10 @@ class ReportFactory(object):
 
     @classmethod
     def from_spec(cls, spec):
-        # todo: validation and what not
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         return ConfigurableReportDataSource(
             domain=spec.domain,
-            table_id=spec.table_id,
+            config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
             columns=[ReportColumn.wrap(colspec) for colspec in spec.columns],
