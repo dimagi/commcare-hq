@@ -618,6 +618,16 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                //Only save if property names are valid
+                for (var i = 0; i < this.columns.length; i++){
+                    var column = this.columns[i];
+                    if (! field_val_re.test(column.field.val())){
+                        // column won't have format_warning showing if it's empty
+                        column.format_warning.show().parent().addClass('error');
+                        alert("There are errors in your property names");
+                        return;
+                    }
+                }
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
