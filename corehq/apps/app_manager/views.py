@@ -1310,10 +1310,18 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = req.POST.get('case_list_form_label')
     if should_edit('case_list_form_media_image'):
-        val = _process_media_attribute('case_list_form_media_image', resp, req.POST.get('case_list_form_media_image'))
+        val = _process_media_attribute(
+            'case_list_form_media_image',
+            resp,
+            req.POST.get('case_list_form_media_image')
+        )
         module.case_list_form.media_image = val
     if should_edit('case_list_form_media_audio'):
-        val = _process_media_attribute('case_list_form_media_audio', resp, req.POST.get('case_list_form_media_audio'))
+        val = _process_media_attribute(
+            'case_list_form_media_audio',
+            resp,
+            req.POST.get('case_list_form_media_audio')
+        )
         module.case_list_form.media_audio = val
 
     for attribute in ("name", "case_label", "referral_label"):
