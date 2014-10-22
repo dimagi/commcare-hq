@@ -754,10 +754,10 @@ def get_module_view_context_and_template(app, module):
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
         return [{
-                    'unique_id': mod.unique_id,
-                    'name': mod.name,
-                    'is_parent': mod.unique_id in parent_module_ids,
-                } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
+            'unique_id': mod.unique_id,
+            'name': mod.name,
+            'is_parent': mod.unique_id in parent_module_ids,
+        } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
     def get_sort_elements(details):
         return [prop.values() for prop in details.sort_elements]
