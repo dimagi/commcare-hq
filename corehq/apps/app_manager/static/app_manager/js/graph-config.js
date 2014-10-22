@@ -54,6 +54,9 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             $modal.remove();
         });
     };
+    self.setName = function(name){
+        self.graphViewModel.graphDisplayName(name);
+    };
 
     ko.applyBindings(self, self.ui.get(0));
     eventize(self);
@@ -88,6 +91,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         // TODO: We could have a helper function called pairListToObj to make
         //       this a bit more readable
 
+        ret['graph_name'] = graphViewModelAsPOJS['graphDisplayName'];
         ret['graph_type'] = graphViewModelAsPOJS['selectedGraphType'];
         ret['series'] = _.map(graphViewModelAsPOJS['series'], function(s){
             var series = {};
@@ -138,9 +142,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         serverGraphObject = serverGraphObject || {};
         var ret = {};
 
-        //TODO: Set graphDisplayName
-        ret['graphDisplayName'] = "??";
-
+        ret['graphDisplayName'] = serverRepresentationOfGraph['graph_name'];
         ret['selectedGraphType'] = serverGraphObject['graph_type'];
         ret['series'] = _.map(serverGraphObject['series'], function(s){
             var series = {};
@@ -264,7 +266,7 @@ var GraphViewModel = function(moduleOptions){
     self.lang = moduleOptions.lang;
     self.langs = moduleOptions.langs;
 
-    self.graphDisplayName = ko.observable("My Partograph");
+    self.graphDisplayName = ko.observable(moduleOptions.name || "Graph");
     self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);

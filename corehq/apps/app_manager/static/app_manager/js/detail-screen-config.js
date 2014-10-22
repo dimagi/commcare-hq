@@ -340,11 +340,18 @@ var DetailScreenConfig = (function () {
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
+
             this.graph_extra = new uiElement.GraphConfiguration({
                 childCaseTypes: this.screen.childCaseTypes,
                 lang: this.lang,
-                langs: this.screen.langs
+                langs: this.screen.langs,
+                name: this.header.val()
             }, this.original.graph_configuration);
+            this.header.on("change", function(){
+                // The graph should always have the same name as the Column
+                that.graph_extra.setName(that.header.val());
+            });
+
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.find('input').css('width', 'auto');
             this.late_flag_extra.ui.prepend(
