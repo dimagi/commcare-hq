@@ -37,13 +37,14 @@ class ReportFilterFactory(object):
 
     @classmethod
     def from_spec(cls, spec):
+        cls.validate_spec(spec)
         return cls.constructor_map[spec['type']](spec)
 
     @classmethod
     def validate_spec(self, spec):
-        if spec['type'] not in self.constructor_map:
-            raise BadSpecError(_('Illegal report filter type: "{0}", must be one of the following choice: ({1})'.format(
-                spec['type'],
+        if spec.get('type') not in self.constructor_map:
+            raise BadSpecError(_('Illegal report filter type: {0}, must be one of the following choice: ({1})'.format(
+                spec.get('type', _('(missing from spec)')),
                 ', '.join(self.constructor_map.keys())
             )))
 

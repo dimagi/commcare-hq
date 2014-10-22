@@ -1,6 +1,27 @@
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
+
+
+class FilterTestCase(SimpleTestCase):
+
+    def test_no_type(self):
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec({
+                "field": "some_field",
+                "slug": "some_slug",
+                "display": "Some display name"
+            })
+
+    def test_bad_type(self):
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec({
+                "type": "invalid_type",
+                "field": "some_field",
+                "slug": "some_slug",
+                "display": "Some display name"
+            })
 
 
 class DateFilterTestCase(SimpleTestCase):
