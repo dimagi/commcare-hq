@@ -65,6 +65,7 @@ branches:
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
+  - monitoring # SK 9/22
 submodules:
   submodules/couchlog-src:
     branches:
