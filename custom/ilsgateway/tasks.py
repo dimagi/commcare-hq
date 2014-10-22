@@ -1,7 +1,10 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 from celery import group
 from celery.task import task, periodic_task
 from couchdbkit.exceptions import ResourceNotFound
+from django.db import transaction
+from psycopg2._psycopg import DatabaseError
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
 from couchforms.models import XFormInstance
@@ -12,7 +15,9 @@ from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_locati
 
 #@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, GroupSummary, \
-    ProductAvailabilityData
+ProductAvailabilityData, ReportRun
+from custom.ilsgateway.run_reports import process_facility_warehouse_data, populate_report_data
+
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -159,4 +164,35 @@ def stock_data_task(domain):
           groupsummary_task.delay(domain, endpoint),
           product_availability_task.delay(domain, endpoint))
 
+
+#@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def report_run(domain):
+    last_run = ReportRun.last_success()
+    start_date = (datetime.min if not last_run else last_run.end)
+    end_date = datetime.utcnow()
+
+    running = ReportRun.objects.filter(complete=False)
+    if running.count() > 0:
+        raise Exception("Warehouse already running, will do nothing...")
+
+    # start new run
+    new_run = ReportRun.objects.create(start=start_date, end=end_date,
+                                       start_run=datetime.utcnow())
+    try:
+        populate_report_data(start_date, end_date, domain)
+    except Exception, e:
+        # just in case something funky happened in the DB
+        if isinstance(e, DatabaseError):
+            try:
+                transaction.rollback()
+            except:
+                pass
+        new_run.has_error = True
+        raise
+    finally:
+        # complete run
+        new_run.end_run = datetime.utcnow()
+        new_run.complete = True
+        new_run.save()
+        print "End time: %s" % datetime.now()
 
