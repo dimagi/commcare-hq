@@ -50,12 +50,12 @@ class ReportFilterFactory(object):
 
 
     @classmethod
-    def validate_spec(self, spec):
-        if spec.get('type') not in self.constructor_map:
-            raise BadSpecError(_('Illegal report filter type: {0}, must be one of the following choice: ({1})'.format(
+    def validate_spec(cls, spec):
+        if spec.get('type') not in cls.constructor_map:
+            raise BadSpecError(_('Illegal report filter type: {0}, must be one of the following choice: ({1})').format(
                 spec.get('type', _('(missing from spec)')),
-                ', '.join(self.constructor_map.keys())
-            )))
+                ', '.join(cls.constructor_map.keys())
+            ))
 
 
 class ReportFactory(object):
@@ -73,7 +73,7 @@ class ReportFactory(object):
 
 
 class ChartFactory(object):
-    object_map = {
+    spec_map = {
         'pie': PieChartSpec,
         'multibar': MultibarChartSpec,
         'multibar-aggregate': MultibarAggregateChartSpec,
@@ -81,7 +81,18 @@ class ChartFactory(object):
 
     @classmethod
     def from_spec(cls, spec):
-        return cls.object_map[spec['type']].wrap(spec)
+        if spec.get('type') not in cls.spec_map:
+            raise BadSpecError(_('Illegal chart type: {0}, must be one of the following choice: ({1})').format(
+                spec.get('type', _('(missing from spec)')),
+                ', '.join(cls.spec_map.keys())
+            ))
+        try:
+            return cls.spec_map[spec['type']].wrap(spec)
+        except BadValueError as e:
+            raise BadSpecError(_('Problem creating chart from spec: {}, message is {}').format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
 
 
 class ReportFilter(JsonObject):
