@@ -39,6 +39,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         // Replace the original with the copy if save is clicked, otherwise discard it
         graphViewModelCopy.onSave = function(){
             uiElementViewModel.graphViewModel = graphViewModelCopy;
+            self.fire("change");
         };
 
         // Load the modal with the copy
@@ -137,9 +138,8 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         serverGraphObject = serverGraphObject || {};
         var ret = {};
 
-        //TODO: Set the following?
-        // graphDisplayName
-        // series.showDataPath
+        //TODO: Set graphDisplayName
+        ret['graphDisplayName'] = "??";
 
         ret['selectedGraphType'] = serverGraphObject['graph_type'];
         ret['series'] = _.map(serverGraphObject['series'], function(s){
