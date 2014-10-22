@@ -4,6 +4,7 @@ import datetime
 from corehq.ext.datetime import UTCDateTime
 
 from corehq.ext.jsonobject import UTCDateTimeProperty, ISOMeta
+from corehq.ext.tests.utils import UTCDateTimeExactCorpus
 from corehq.ext.unittest import Corpus, CorpusMeta
 from jsonobject import JsonObject
 
@@ -11,7 +12,7 @@ from jsonobject import JsonObject
 class UTCDateTimePropertyTest(SimpleTestCase):
     __metaclass__ = CorpusMeta
 
-    wrap = Corpus(UTCDateTimeProperty().wrap, {
+    wrap = UTCDateTimeExactCorpus(UTCDateTimeProperty().wrap, {
         'positive_tz': (
             '2014-12-11T01:05:18+03:00',
             UTCDateTime(2014, 12, 10, 22, 5, 18,
@@ -25,7 +26,7 @@ class UTCDateTimePropertyTest(SimpleTestCase):
         ),
     })
 
-    unwrap = Corpus(UTCDateTimeProperty().unwrap, {
+    unwrap = UTCDateTimeExactCorpus(UTCDateTimeProperty().unwrap, {
         'positive_tz': (
             UTCDateTime(2014, 12, 10, 22, 5, 18,
                         original_offset=datetime.timedelta(hours=3)),
