@@ -26,8 +26,10 @@ class ConsumptionCaseTest(StockTestBase):
         self._stock_report(25, 5)
         self._stock_report(10, 0)
 
-        self.assertEqual(None, compute_daily_consumption(self.case_id, self.product_id,
-                                                   now, configuration=ConsumptionConfiguration(min_periods=4)))
+        self.assertEqual(None, compute_daily_consumption(
+            self.case_id, self.product_id,
+            now, configuration=ConsumptionConfiguration(min_periods=4))
+        )
         _ten = lambda case_id, product_id: 10
         self.assertAlmostEqual(10., compute_consumption_or_default(
             self.case_id,
