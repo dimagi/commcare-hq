@@ -86,7 +86,11 @@ class CallCenterUtilsTests(TestCase):
         self.user.user_data = {
             '': 'blank_key',
             'blank_val': '',
-            'ok': 'good'
+            'ok': 'good',
+            'name with spaces': 'ok',
+            '8starts_with_a_number': '0',
+            'xml_starts_with_xml': '0',
+            '._starts_with_punctuation': '0',
         }
         sync_user_cases(self.user)
         case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, include_docs=True)

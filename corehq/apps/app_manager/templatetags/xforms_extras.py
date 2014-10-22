@@ -13,8 +13,10 @@ def translate(t, lang, langs=[]):
         if lang in t:
             return t[lang]
 
+
 @register.filter
-def trans(name, langs=["default"], include_lang=True, use_delim=True):
+def trans(name, langs=None, include_lang=True, use_delim=True):
+    langs = langs or ["default"]
     if include_lang:
         if use_delim:
             suffix = lambda lang: ' [%s]' % lang
@@ -29,6 +31,7 @@ def trans(name, langs=["default"], include_lang=True, use_delim=True):
     for lang, n in sorted(name.items()):
         return n + suffix(lang)
     return ""
+
 
 @register.filter
 def html_trans(name, langs=["default"]):

@@ -511,7 +511,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1174,7 +1174,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)

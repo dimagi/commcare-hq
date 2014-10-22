@@ -9,7 +9,6 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
-from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -52,7 +51,6 @@ ES_URLS = {
     "apps": APP_INDEX + '/app/_search',
     "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
-    "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
     "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
 }
 
@@ -82,7 +80,6 @@ DATE_FIELDS = {
     "users": "created_on",
     "users_all": "created_on",
     "sms": 'date',
-    "tc_sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,

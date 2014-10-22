@@ -31,7 +31,7 @@ from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.select import SelectOpenCloseFilter, MonthFilter, YearFilter
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
@@ -41,13 +41,40 @@ from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 
-from .utils import BaseMixin, normal_format, format_percent, date_from_request
+from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import HierarchyFilter, MetHierarchyFilter, SingleDateFilter
+from .filters import HierarchyFilter, MetHierarchyFilter, OPMSelectOpenCloseFilter
 from .constants import *
 
+
+DATE_FILTER = "date between :startdate and :enddate"
+DATE_FILTER_EXTENDED = """(
+    opened_on <= :enddate AND (
+        closed_on >= :enddate OR
+        closed_on = ''
+        )
+    ) OR (
+    opened_on <= :enddate AND (
+        closed_on >= :startdate or closed_on <= :enddate
+        )
+    )
+"""
+DATE_FILTER_EXTENDED_OPENED = """(
+    opened_on <= :enddate AND (
+        closed_on >= :enddate OR
+        closed_on = ''
+        )
+    )
+"""
+DATE_FILTER_EXTENDED_CLOSED = """(
+    opened_on <= :enddate AND (
+        closed_on <= :enddate AND
+        closed_on != ''
+        )
+    )
+"""
 
 def ret_val(value):
     return value
@@ -183,25 +210,24 @@ class VhndAvailabilitySqlData(SqlData):
 
 
 class OpmHealthStatusSqlData(SqlData):
-    DATE_FILTER = "date <= :enddate"
-    DATE_FILTER_EXTENDED = "opened_on <= :enddate"
-
-
 
     table_name = 'fluff_OpmHealthStatusAllInfoFluff'
 
-    def __init__(self, domain, user_id, enddate):
+    def __init__(self, domain, user_id, datespan, case_status):
         self.domain = domain
         self.user_id = user_id
-        self.enddate = enddate
+        self.datespan = datespan
+        self.case_status = case_status
 
     @property
     def filter_values(self):
-        return dict(
+        filter = dict(
             domain=self.domain,
             user_id=self.user_id,
-            enddate=str(self.enddate),
+            startdate=str(self.datespan.startdate_utc.date()),
+            enddate=str(self.datespan.enddate_utc.date()),
         )
+        return filter
 
     @property
     def group_by(self):
@@ -216,11 +242,18 @@ class OpmHealthStatusSqlData(SqlData):
 
     @property
     def wrapped_sum_column_filters(self):
-        return self.wrapped_filters + [RawFilter(self.DATE_FILTER)]
+        return self.wrapped_filters + [RawFilter(DATE_FILTER)]
 
     @property
     def wrapped_sum_column_filters_extended(self):
-        return self.wrapped_filters + [RawFilter(self.DATE_FILTER_EXTENDED)]
+        filters = self.wrapped_filters
+        if self.case_status == 'open':
+            filters.extend([RawFilter(DATE_FILTER_EXTENDED_OPENED)])
+        elif self.case_status == 'closed':
+            filters.extend([RawFilter(DATE_FILTER_EXTENDED_CLOSED)])
+        else:
+            filters.extend([RawFilter(DATE_FILTER_EXTENDED)])
+        return filters
 
     @property
     def columns(self):
@@ -440,21 +473,16 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             subtitles.append("Gram Panchayat - %s" % ", ".join(self.gp))
         if self.filter_data.get('block', []):
             subtitles.append("Blocks - %s" % ", ".join(self.blocks))
-        subtitles.extend(self._get_custom_subtitles())
-        datetime_format = "%Y-%m-%d %H:%M:%S"
-        subtitles.append("Generated {}".format(
-            datetime.datetime.utcnow().strftime(datetime_format)))
-        return subtitles
-
-    def _get_custom_subtitles(self):
         startdate = self.datespan.startdate_param_utc
         enddate = self.datespan.enddate_param_utc
         if startdate and enddate:
             sd = parser.parse(startdate)
             ed = parser.parse(enddate)
-            return [" From %s to %s" % (str(sd.date()), str(ed.date()))]
-        else:
-            return []
+            subtitles.append(" From %s to %s" % (str(sd.date()), str(ed.date())))
+        datetime_format = "%Y-%m-%d %H:%M:%S"
+        subtitles.append("Generated {}".format(
+            datetime.datetime.utcnow().strftime(datetime_format)))
+        return subtitles
 
     def filter(self, fn, filter_fields=None):
         """
@@ -657,7 +685,7 @@ class CaseReportMixin(object):
             MetHierarchyFilter,
             MonthFilter,
             YearFilter,
-            SelectOpenCloseFilter,
+            OPMSelectOpenCloseFilter,
         ]
 
     @property
@@ -773,7 +801,8 @@ class MetReport(CaseReportMixin, BaseReport):
 
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
-    group_by = ['doc_id', 'awc', 'awc_code', 'bank_name', 'ifs_code', 'account_number', 'gp', 'block', 'village']
+    group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
+                'ifs_code', 'account_number', 'gp', 'block', 'village']
 
     @property
     def filters(self):
@@ -789,6 +818,7 @@ class UsersIdsData(SqlData):
     def columns(self):
         return [
             DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('name', SimpleColumn('name')),
             DatabaseColumn('awc', SimpleColumn('awc')),
             DatabaseColumn('awc_code', SimpleColumn('awc_code')),
             DatabaseColumn('bank_name', SimpleColumn('bank_name')),
@@ -819,7 +849,7 @@ class IncentivePaymentReport(BaseReport):
         return {'last_month_totals': self.last_month_totals}
 
     def get_rows(self, datespan):
-        config={}
+        config = {}
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
@@ -918,7 +948,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
     return Report()
 
 
-class HealthStatusReport(BaseReport):
+class HealthStatusReport(DatespanMixin, BaseReport):
 
     ajax_pagination = True
     asynchronous = True
@@ -936,14 +966,11 @@ class HealthStatusReport(BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, SelectOpenCloseFilter, SingleDateFilter]
+        return [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
 
     @property
-    def enddate(self):
-        return date_from_request(self.request)
-
-    def _get_custom_subtitles(self):
-        return [_("Through: {}").format(str(self.enddate))]
+    def case_status(self):
+        return self.request.GET['is_open']
 
     @property
     @memoized
@@ -980,7 +1007,7 @@ class HealthStatusReport(BaseReport):
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 
-    def get_rows(self, datespan):
+    def get_rows(self, dataspan):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row):
@@ -990,7 +1017,7 @@ class HealthStatusReport(BaseReport):
             return model
 
         if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
-            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.enddate)
+            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan, self.case_status)
             if sql_data.data:
                 formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
                 data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
@@ -1130,6 +1157,7 @@ class HealthMapSource(HealthStatusReport):
         for row in ret:
             awc = row[0]
             awc_map = gps_mapping.get(awc, None) or ""
+            gps = awc_map["gps"] if awc_map else "--"
             extra_columns = ["--"] * 4
             if awc_map:
                 extra_columns = []
@@ -1149,7 +1177,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [HierarchyFilter, SelectOpenCloseFilter, SingleDateFilter]
+    fields = [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
 
     data_source = {
         'adapter': 'legacyreport',

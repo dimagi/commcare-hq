@@ -18,8 +18,15 @@ def sync_user_cases(commcare_user):
     if not (domain and domain.call_center_config.enabled):
         return
 
-    # remove any blank fields
-    fields = {k: v for k, v in commcare_user.user_data.items() if k}
+    def valid_element_name(name):
+        try:
+            ElementTree.fromstring('<{}/>'.format(name))
+            return True
+        except ElementTree.ParseError:
+            return False
+
+    # remove any keys that aren't valid XML element names
+    fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)}
 
     # language or phone_number can be null and will break
     # case submission

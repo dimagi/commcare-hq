@@ -26,6 +26,7 @@ import pytz
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
 
 import couchexport
@@ -988,6 +989,7 @@ def _get_form_context(request, domain, instance_id):
         "timezone": timezone,
         "instance": instance,
         "user": request.couch_user,
+        "request": request,
     }
     context['form_render_options'] = context
     return context
@@ -1012,7 +1014,8 @@ def _get_form_or_404(id):
 @require_GET
 def form_data(request, domain, instance_id):
     context = _get_form_context(request, domain, instance_id)
-
+    instance = context['instance']
+    context['form_meta'] = FormType(domain, instance.xmlns, instance.app_id).metadata
     try:
         form_name = context['instance'].form["@name"]
     except KeyError:

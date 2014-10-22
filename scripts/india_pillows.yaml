@@ -25,7 +25,6 @@ pillow_blacklist:
   - custom.opm.models.OpmHealthStatusAllInfoFluffPillow
   - custom.opm.models.OpmUserFluffPillow
   - custom.intrahealth.models.RecapPassagePillow
-  - custom.trialconnect.smspillow.TCSMSPillow
   - custom.intrahealth.models.TauxDeRuptureFluffPillow
   - custom.intrahealth.models.TauxDeSatisfactionFluffPillow
   - custom.apps.cvsu.models.UnicefMalawiFluffPillow

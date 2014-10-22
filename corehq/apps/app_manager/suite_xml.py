@@ -845,7 +845,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_select_chain(self, module, include_self=True):
         select_chain = [module] if include_self else []
         current_module = module
-        while current_module.parent_select.active:
+        while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
             current_module = self.get_module_by_id(
                 current_module.parent_select.module_id
             )

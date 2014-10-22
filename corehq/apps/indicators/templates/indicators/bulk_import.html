@@ -1,0 +1,9 @@
+{% extends 'style/base_section.html' %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags_b3 %}
+
+{% block page_content %}
+<div class="container" id="hq-content">
+    {% crispy_b3 import_form %}
+</div>
+{% endblock page_content %}

@@ -37,7 +37,7 @@
                 {% endif %}
             </div>
             <div class="panel-body">
-                <form action="/a/biyeun/apps/new_app/" method="post"><p class="text-center">
+                <form action="{% url 'new_app' domain %}" method="post"><p class="text-center">
                     <input type="hidden" name="type" value="Application">
                     <input type="hidden" name="application_version" value="2.0">
                     <button href="#" type="submit" class="dashboard-button">

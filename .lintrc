@@ -1,0 +1,8 @@
+# See https://github.com/markstory/lint-review
+[files]
+
+[tools]
+linters = flake8, jshint
+
+[tool_flake8]
+max-line-length = 115
