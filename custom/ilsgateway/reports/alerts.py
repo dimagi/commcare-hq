@@ -9,7 +9,7 @@ from custom.ilsgateway.models import Alert
 
 class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     slug = 'alerts'
-    fields = [MonthFilter, YearFilter, AsyncLocationFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
     name = 'Alerts'
     default_rows = 25
 
