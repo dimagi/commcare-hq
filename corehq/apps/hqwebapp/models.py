@@ -1,3 +1,4 @@
+from collections import namedtuple
 from urllib import urlencode
 
 from django.template.loader import render_to_string
@@ -56,12 +57,24 @@ def format_second_level_context(title, url, menu):
     }
 
 
+class GaTracker(namedtuple('GaTracking', 'category action label')):
+    """
+    Info for tracking clicks using Google Analytics
+    see https://developers.google.com/analytics/devguides/collection/analyticsjs/events
+    """
+    def __new__(cls, category, action, label=None):
+        return super(GaTracker, cls).__new__(cls, category, action, label)
+
+
 class UITab(object):
     title = None
     view = None
     subtab_classes = None
 
     dispatcher = None
+
+    # must be instance of GaTracker
+    ga_tracker = None
 
     def __init__(self, request, current_url_name, domain=None, couch_user=None,
                  project=None, org=None):
@@ -619,6 +632,8 @@ class ApplicationsTab(UITab):
 class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
+
+    ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
 
     @property
     def is_viewable(self):
