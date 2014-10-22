@@ -6,7 +6,8 @@
 
 .row_chart_all {
     float: left;
-    width: 95%;
+    width: 90%;
+    margin: 20px;
 }
 
 .table {

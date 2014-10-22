@@ -40,49 +40,47 @@ class DistrictSummaryData(ILSData):
     @property
     def rows(self):
 
-        def prepare_processing_info(data):
-            numbers = {}
-            numbers['total'] = data[0] - (data[1].total + data[2].total)
-            numbers['complete'] = 0
-            return numbers
+        if self.config['org_summary']:
 
-        rows = []
-        org_summary = self.config['org_summary']
-        total = org_summary.total_orgs
-        avg_lead_time = org_summary.average_lead_time_in_days
-        if avg_lead_time:
-            avg_lead_time = "%.1f" % avg_lead_time
+            def prepare_processing_info(data):
+                numbers = {}
+                numbers['total'] = data[0] - (data[1].total + data[2].total)
+                numbers['complete'] = 0
+                return numbers
 
-        endmonth = self.config['enddate'].month
-        dg = DeliveryGroups(month=endmonth)
+            org_summary = self.config['org_summary']
+            total = org_summary.total_orgs
+            avg_lead_time = org_summary.average_lead_time_in_days
+            if avg_lead_time:
+                avg_lead_time = "%.1f" % avg_lead_time
 
-        soh_data = SohSubmissionData(config=self.config).rows
-        rr_data = RandRSubmissionData(config=self.config).rows
-        delivery_data = DeliverySubmissionData(config=self.config).rows
+            endmonth = self.config['enddate'].month
+            dg = DeliveryGroups(month=endmonth)
 
-        submitting_group = dg.current_submitting_group(month=endmonth)
-        processing_group = dg.current_processing_group(month=endmonth)
-        delivery_group = dg.current_delivering_group(month=endmonth)
+            rr_data = RandRSubmissionData(config=self.config).rows
+            delivery_data = DeliverySubmissionData(config=self.config).rows
 
-        processing_numbers = prepare_processing_info([total, rr_data, delivery_data])
+            submitting_group = dg.current_submitting_group(month=endmonth)
+            processing_group = dg.current_processing_group(month=endmonth)
+            delivery_group = dg.current_delivering_group(month=endmonth)
 
-        return {
-            "processing_total": processing_numbers['total'],
-            "processing_complete": processing_numbers['complete'],
-            "submitting_total": rr_data.total,
-            "submitting_complete": rr_data.complete,
-            "delivery_total": delivery_data.total,
-            "delivery_complete": delivery_data.complete,
-            "delivery_group": delivery_group,
-            "submitting_group": submitting_group,
-            "processing_group": processing_group,
-            "total": total,
-            "avg_lead_time": avg_lead_time,
-            "graph_width": 300, # used in pie_reporting_generic
-            "graph_height": 300,
-            "destination_url": "tz_dashboard"
-        }
+            processing_numbers = prepare_processing_info([total, rr_data, delivery_data])
 
+            return {
+                "processing_total": processing_numbers['total'],
+                "processing_complete": processing_numbers['complete'],
+                "submitting_total": rr_data.total,
+                "submitting_complete": rr_data.complete,
+                "delivery_total": delivery_data.total,
+                "delivery_complete": delivery_data.complete,
+                "delivery_group": delivery_group,
+                "submitting_group": submitting_group,
+                "processing_group": processing_group,
+                "total": total,
+                "avg_lead_time": avg_lead_time,
+            }
+        else:
+            return None
 
 
 class SohSubmissionData(ILSData):
@@ -153,16 +151,15 @@ class ProductAvailabilitySummary(ILSData):
                     elif k == 'Not Stocked out':
                         datalist.append([prd_code, product.with_stock])
                 ret_data.append({'color': chart_config.label_color[k], 'label': k, 'data': datalist})
+            return ret_data
 
-            chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
-            chart.rotateLabels = -45
-            chart.marginBottom = 120
-            chart.stacked = True
-            for row in ret_data:
-                chart.add_dataset(row['label'], [{'x': r[0], 'y': r[1]} for r in sorted(row['data'], key=lambda x: x[0])], color=row['color'])
-            return chart
-        if product_availability:
-            return [convert_product_data_to_stack_chart(product_availability, product_dashboard)]
+        chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+        chart.rotateLabels = -45
+        chart.marginBottom = 120
+        chart.stacked = True
+        for row in convert_product_data_to_stack_chart(product_availability, product_dashboard):
+            chart.add_dataset(row['label'], [{'x': r[0], 'y': r[1]} for r in sorted(row['data'], key=lambda x: x[0])], color=row['color'])
+        return [chart]
 
 
 class DashboardReport(MultiReport):

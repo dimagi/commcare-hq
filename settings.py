@@ -1258,7 +1258,7 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'ils-test': 'custom.ilsgateway',
+    'ilsgateway-test-1': 'custom.ilsgateway',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
