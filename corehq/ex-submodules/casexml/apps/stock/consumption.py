@@ -89,7 +89,7 @@ def compute_daily_consumption(case_id,
         window_start,
         window_end
     )
-    return compute_consumption_from_transactions(
+    return compute_daily_consumption_from_transactions(
         transactions, window_start, configuration
     )
 
@@ -170,7 +170,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, configuration=None):
+def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
