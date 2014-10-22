@@ -5,36 +5,37 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
+from corehq import toggles
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
 from corehq.util.couch import get_document_or_404
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def configurable_reports_home(request, domain):
+
     return render(request, 'userreports/configurable_reports_home.html', _shared_context(domain))
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
     return _edit_report_shared(request, domain, config)
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
     config.delete()
-    messages.success(request, _(u'Report "{}" deleted!').format(config.display_name))
+    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
@@ -43,7 +44,7 @@ def _edit_report_shared(request, domain, config):
         form = ConfigurableReportEditForm(domain, config, request.POST)
         if form.is_valid():
             form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(config.display_name))
+            messages.success(request, _(u'Report "{}" saved!').format(config.title))
             return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
         form = ConfigurableReportEditForm(domain, config)
@@ -55,13 +56,13 @@ def _edit_report_shared(request, domain, config):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     return _edit_data_source_shared(request, domain, config)
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source(request, domain):
     return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
 
@@ -82,7 +83,7 @@ def _edit_data_source_shared(request, domain, config):
     return render(request, "userreports/edit_data_source.html", context)
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
@@ -94,7 +95,7 @@ def delete_data_source(request, domain, config_id):
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
@@ -103,7 +104,7 @@ def rebuild_data_source(request, domain, config_id):
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
-@domain_admin_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     table = get_indicator_table(config)
