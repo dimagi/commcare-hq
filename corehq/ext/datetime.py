@@ -105,7 +105,14 @@ class UTCDateTime(datetime.datetime):
     def tz_string(self):
         return self.__tz_string
 
-    def __eq__(self, other):
+    def exact_equals(self, other):
+        """
+        Stricter equality than default __eq__
+
+        In addition to representing the same point in time,
+        the two UTCDateTimes must have the same original offset
+
+        """
         if not isinstance(other, type(self)):
             return False
         for attr in self.__ATTRS:

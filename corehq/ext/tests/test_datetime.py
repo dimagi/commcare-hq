@@ -2,7 +2,8 @@ import datetime
 from django.test import SimpleTestCase
 from pytz import FixedOffset
 from corehq.ext.datetime import UTCDateTime
-from corehq.ext.unittest import CorpusMeta, Corpus, Raise, Call
+from corehq.ext.unittest import CorpusMeta, Raise, Call
+from corehq.ext.tests import UTCDateTimeExactCorpus as Corpus
 
 
 class UTCDateTimeTest(SimpleTestCase):
@@ -82,20 +83,30 @@ class UTCDateTimeTest(SimpleTestCase):
             ),
             False
         ),
+        # offset is _not_ factored into UTCDateTime equality
+        # (in analogy with timezone-aware datetimes)
+        # for that, you can use UTCDateTime.exact_equals
         'offset_not_equal': (
             Call(
                 UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
                 UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+01:00')
             ),
-            False
+            True
         ),
-        'different_init_styles_not_equal': (
+        'different_init_styles_offset_not_equal': (
             Call(
                 UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
                 UTCDateTime(2014, 12, 10, 19, 5, 18,
                             original_offset=datetime.timedelta(hours=1))
             ),
-            False
+            True
+        ),
+        'datetime': (
+            Call(
+                UTCDateTime(2014, 12, 10, 19, 5, 18, original_offset='+03:00'),
+                datetime.datetime(2014, 12, 10, 19, 5, 18)
+            ),
+            True
         ),
     })
 

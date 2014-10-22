@@ -34,20 +34,31 @@ class Corpus(object):
         A class (subclassing object) with one method per item in corpus.
 
     """
-    def __init__(self, fn, corpus):
+    def __init__(self, fn, corpus, override_equals=None):
         self.fn = fn
         self.corpus = corpus
+        self.override_equals = override_equals or {}
 
     def get_test_functions(self):
         dct = {}
-        fn = self.fn
 
         def _make_test(input_call, call_result):
-            def _test(self):
-                call_result.check(self, input_call, fn)
+            corpus_self = self
 
-            _test.__doc__ = ('call {}{!r}, expected outcome is {!r}'
-                             .format(fn.__name__, input_call, call_result))
+            def _test(self):
+                original_eq = {}
+                for cls, eq in corpus_self.override_equals.items():
+                    original_eq[cls] = cls.__eq__
+                    cls.__eq__ = eq
+                try:
+                    call_result.check(self, input_call, corpus_self.fn)
+                finally:
+                    for cls, eq in original_eq.items():
+                        cls.__eq__ = eq
+
+            # it's important to set the docstring because
+            # unittest shows this as the description when the test fails
+            _test.__doc__ = self._format_docstring(input_call, call_result)
             return _test
 
         for name, (input_call, call_result) in self.corpus.items():
@@ -58,6 +69,34 @@ class Corpus(object):
             dct[name] = _make_test(input_call, call_result)
 
         return dct
+
+    @staticmethod
+    def _format_function(fn):
+        if hasattr(fn, 'im_class'):
+            return '{}.{}'.format(fn.im_class.__name__, fn.__name__)
+        else:
+            return fn.__name__
+
+    def _format_docstring(self, input_call, call_result):
+        if self.override_equals:
+            doc_template = (
+                'call {fn}{call!r}, expected outcome is {result!r} '
+                '(with equals overrides: {override_equals})'
+            )
+        else:
+            doc_template = (
+                'call {fn}{call!r}, expected outcome is {result!r}'
+            )
+
+        return doc_template.format(
+            fn=self._format_function(self.fn),
+            call=input_call,
+            result=call_result,
+            override_equals=', '.join(
+                ['{} => {}'.format(cls.__name__, self._format_function(eq))
+                 for cls, eq in self.override_equals.items()]
+            )
+        )
 
 
 class CorpusMeta(type):
