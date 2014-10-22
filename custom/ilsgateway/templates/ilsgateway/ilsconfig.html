@@ -50,6 +50,16 @@
                 </div>
             </div>
         </div>
+
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="run_reports">
+                        {% trans "Run reports generation" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -77,6 +87,12 @@
 
         $("#sync_stock_data").click(function() {
             var url = '{% url 'sync_stock_data' domain %}';
+            var successMessage = "{% trans "Sync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#run_reports").click(function() {
+            var url = '{% url 'run_reports' domain %}';
             var successMessage = "{% trans "Sync started" %}";
             _post(this, url, {success: successMessage});
         });

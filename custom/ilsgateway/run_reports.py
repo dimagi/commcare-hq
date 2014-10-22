@@ -421,8 +421,16 @@ def process_facility_transactions(facility, transactions, default_to_previous=Tr
         product_data.save()
 
 
+def get_nested_children(org):
+    children = []
+    if not org.children:
+        return [org]
+    for child in org.children:
+        children.extend(get_nested_children(child))
+    return children
+
 def process_non_facility_warehouse_data(org, start_date, end_date, strict=True):
-    facs = filter(lambda o: o.location_type == 'FACILITY', org.children)
+    facs = get_nested_children(org)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children" % (org.name, str(org._id), len(facs)))
     for year, month in months_between(start_date, end_date):

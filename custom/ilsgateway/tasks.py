@@ -160,12 +160,11 @@ def stock_data_task(domain):
     group(product_stock_task.delay(domain, endpoint),
           stock_transaction_task.delay(domain, endpoint),
           supply_point_statuses_task.delay(domain, endpoint),
-          delivery_group_reports_task.delay(domain, endpoint),
-          groupsummary_task.delay(domain, endpoint),
-          product_availability_task.delay(domain, endpoint))
+          delivery_group_reports_task.delay(domain, endpoint))
 
 
 #@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@task
 def report_run(domain):
     last_run = ReportRun.last_success()
     start_date = (datetime.min if not last_run else last_run.end)
