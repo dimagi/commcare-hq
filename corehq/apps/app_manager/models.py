@@ -989,6 +989,25 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
 
+class GraphAnnotations(DocumentSchema):
+    display_text = StringProperty()
+    x = StringProperty()
+    y = StringProperty()
+
+
+class GraphSeries(DocumentSchema):
+    config = DictProperty()
+    data_path = StringProperty()
+    x_function = StringProperty()
+    y_function = StringProperty()
+
+
+class GraphConfiguration(DocumentSchema):
+    annotations = SchemaListProperty(GraphAnnotations)
+    graph_type = StringProperty()
+    series = SchemaListProperty(GraphSeries)
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -1011,7 +1030,7 @@ class DetailColumn(IndexedSchema):
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
-    graph_configuration = DictProperty()
+    graph_configuration = SchemaProperty(GraphConfiguration)
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
