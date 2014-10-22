@@ -261,11 +261,6 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
-    # mostly get tho
-    user_data_model = CustomDataFieldsDefinition.get_or_create(
-        domain,
-        UserFieldsView.field_type
-    )
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
     def _set_progress(progress):
@@ -365,9 +360,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if name:
                         user.set_full_name(name)
                     if data:
-                        # validate custom data
-                        validate_data_model(data)
-                        log["errors"].append("banana")
                         user.user_data.update(data)
                     if uncategorized_data:
                         user.user_data.update(uncategorized_data)

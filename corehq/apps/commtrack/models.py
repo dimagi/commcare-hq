@@ -399,7 +399,6 @@ class Product(Document):
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
         p.product_data = row.get('data', {})
-        # validate product_data here
         p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
