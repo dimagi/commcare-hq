@@ -261,6 +261,10 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+    user_data_model = CustomDataFieldsDefinition.get_or_create(
+        domain,
+        UserFieldsView.field_type
+    )
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
     def _set_progress(progress):
@@ -360,6 +364,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if name:
                         user.set_full_name(name)
                     if data:
+                        errors = user_data_model.validate_custom_fields(data)
+                        if errors['missing_keys']:
+                            raise UserUploadError(_(
+                                "Cannot create or update a user without "
+                                "the required field(s): {fields}"
+                            ).format(
+                                fields=', '.join(errors['missing_keys'])
+                            ))
                         user.user_data.update(data)
                     if uncategorized_data:
                         user.user_data.update(uncategorized_data)

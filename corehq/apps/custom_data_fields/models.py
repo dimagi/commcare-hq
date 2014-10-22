@@ -35,3 +35,21 @@ class CustomDataFieldsDefinition(Document):
             new = cls(domain=domain, field_type=field_type)
             new.save()
             return new
+
+    def validate_custom_fields(self, custom_fields):
+        """
+        Returns a dict with a list of keys that have
+        any of the various error possibilities:
+
+        Example:
+        {
+            'missing_keys': ['dob']
+            'invalid_choice': ['gender']
+        }
+        """
+        errors = {'missing_keys': []}
+        for field in self.fields:
+            if field.is_required and not custom_fields.get(field.slug, None):
+                errors['missing_keys'].append(field.slug)
+
+        return errors
