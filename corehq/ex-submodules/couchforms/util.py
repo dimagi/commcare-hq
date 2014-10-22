@@ -138,8 +138,8 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
         # for is_timezone_aware to be set to True without
         # the code actually being timezone aware
         from couchforms.models import DateTimeProperty
-        from corehq.ext.couchdbkit import ISO8601Property
-        assert DateTimeProperty is ISO8601Property
+        from corehq.ext.couchdbkit import UTCDateTimeProperty
+        assert DateTimeProperty is UTCDateTimeProperty
         xform.is_timezone_aware = True
     except Exception:
         # if there's any problem with process just save what we had before

@@ -41,7 +41,7 @@ from dimagi.utils.couch import (
     LooselyEqualDocumentSchema,
 )
 from corehq.ext.couchdbkit import (
-    ISO8601Property as DateTimeProperty,
+    UTCDateTimeProperty as DateTimeProperty,
     ISOSafeSaveDocument as SafeSaveDocument,
     ISODocumentSchema as DocumentSchema,
     ISODocument as Document,
