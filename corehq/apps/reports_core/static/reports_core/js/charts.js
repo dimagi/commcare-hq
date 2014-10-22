@@ -148,7 +148,7 @@ var charts = (function() {
     var chartMap = {
         'pie': renderPie,
         'multibar': renderMultibar,
-        'multibar-aggregate': renderMultibarAggregate,
+        'multibar-aggregate': renderMultibarAggregate
     };
 
     fn.render = function (configs, data, chartContainer) {
