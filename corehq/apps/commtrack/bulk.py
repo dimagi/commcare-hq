@@ -1,4 +1,5 @@
 from corehq.apps.commtrack.models import *
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from django.utils.translation import ugettext as _
 
 
@@ -9,14 +10,20 @@ def set_error(row, msg, override=False):
 
 
 def import_products(domain, importer):
+    from .views import ProductFieldsView
     messages = []
     to_save = []
     product_count = 0
     seen_product_ids = set()
 
+    product_data_model = CustomDataFieldsDefinition.get_or_create(
+        domain,
+        ProductFieldsView.field_type
+    )
+
     for row in importer.worksheet:
         try:
-            p = Product.from_excel(row)
+            p = Product.from_excel(row, product_data_model)
         except Exception, e:
             messages.append(
                 _(u'Failed to import product {name}: {ex}'.format(

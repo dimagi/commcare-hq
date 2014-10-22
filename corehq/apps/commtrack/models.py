@@ -369,7 +369,7 @@ class Product(Document):
         self.save()
 
     @classmethod
-    def from_excel(cls, row):
+    def from_excel(cls, row, custom_data_model):
         if not row:
             return None
 
@@ -398,7 +398,17 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        p.product_data = row.get('data', {})
+        custom_data = row.get('data', {})
+        errors = custom_data_model.validate_custom_fields(custom_data)
+        if errors['missing_keys']:
+            raise InvalidProductException(_(
+                "Cannot create or update a product without "
+                "the required field(s): {fields}"
+            ).format(
+                fields=', '.join(errors['missing_keys'])
+            ))
+
+        p.product_data = custom_data
         p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
