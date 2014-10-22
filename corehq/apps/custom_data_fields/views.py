@@ -80,6 +80,11 @@ class CustomDataFieldsMixin(object):
     entity_string = None  # User, Group, Location, Product...
 
     @classmethod
+    def get_validator(cls, domain):
+        data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+        return data_model.get_validator(cls)
+
+    @classmethod
     def page_name(cls):
         return _("Edit {} Fields").format(cls.entity_string)
 

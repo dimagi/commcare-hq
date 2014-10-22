@@ -16,14 +16,11 @@ def import_products(domain, importer):
     product_count = 0
     seen_product_ids = set()
 
-    product_data_model = CustomDataFieldsDefinition.get_or_create(
-        domain,
-        ProductFieldsView.field_type
-    )
+    custom_data_validator = ProductFieldsView.get_validator(domain)
 
     for row in importer.worksheet:
         try:
-            p = Product.from_excel(row, product_data_model)
+            p = Product.from_excel(row, custom_data_validator)
         except Exception, e:
             messages.append(
                 _(u'Failed to import product {name}: {ex}'.format(

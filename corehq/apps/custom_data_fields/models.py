@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
     BooleanProperty, SchemaListProperty)
 from jsonobject import JsonObject
+from django.utils.translation import ugettext as _
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -36,20 +37,22 @@ class CustomDataFieldsDefinition(Document):
             new.save()
             return new
 
-    def validate_custom_fields(self, custom_fields):
-        """
-        Returns a dict with a list of keys that have
-        any of the various error possibilities:
 
-        Example:
-        {
-            'missing_keys': ['dob']
-            'invalid_choice': ['gender']
-        }
-        """
-        errors = {'missing_keys': []}
-        for field in self.fields:
-            if field.is_required and not custom_fields.get(field.slug, None):
-                errors['missing_keys'].append(field.slug)
+    def get_validator(self, data_field_class):
+        def validate_custom_fields(custom_fields):
+            errors = []
+            missing_keys = []
+            for field in self.fields:
+                if field.is_required and not custom_fields.get(field.slug, None):
+                    missing_keys.append(field.slug)
+            if missing_keys:
+                errors.append(_(
+                    "Cannot create or update a {entity} without "
+                    "the required field(s): {fields}."
+                ).format(
+                    entity=data_field_class.entity_string,
+                    fields=', '.join(missing_keys)
+                ))
+            return ' '.join(errors)
 
-        return errors
+        return validate_custom_fields
