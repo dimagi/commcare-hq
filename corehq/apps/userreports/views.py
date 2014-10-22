@@ -100,7 +100,10 @@ def delete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     messages.success(request,
-                     _('Table "{}" is now being rebuilt. Data should start showing up soon'.format(config.display_name)))
+                     _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+                         config.display_name
+                     )
+    )
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 

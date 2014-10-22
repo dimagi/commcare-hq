@@ -155,10 +155,13 @@ class IndicatorFactory(object):
         if 'type' not in spec:
             raise BadSpecError(_('Indicator specification must include a root level type field.'))
         elif spec['type'] not in self.constructor_map:
-            raise BadSpecError(_('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
-                spec['type'],
-                ', '.join(self.constructor_map.keys())
-            )))
+            raise BadSpecError(
+                _('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
+                    spec['type'],
+                    ', '.join(self.constructor_map.keys())
+                ))
+            )
+
 
 def _validate_required_fields(spec, fields):
     for key in fields:

@@ -18,6 +18,7 @@ class Command(LabelCommand):
                     default=False,
                     help='Also rebuild indicator tables (has no affect for reports).'),
     )
+
     @log_exception()
     def handle(self, *args, **options):
         if len(args) < 1:

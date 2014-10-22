@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
-from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 
 

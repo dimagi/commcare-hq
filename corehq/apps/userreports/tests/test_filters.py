@@ -73,7 +73,7 @@ class PropertyMatchFilterTest(SimpleTestCase):
     def testFilterPathNoMatch(self):
         self.assertFalse(self.get_path_filter().filter({'path': {'to': {'foo': 'not bar'}}}))
 
-    def testFilterMissing(self):
+    def testPathFilterMissing(self):
         self.assertFalse(self.get_path_filter().filter({'path': {'to': {'not_foo': 'bar'}}}))
         self.assertFalse(self.get_path_filter().filter({'foo': 'bar'}))
 
@@ -113,6 +113,7 @@ class ConfigurableANDFilterTest(SimpleTestCase):
     def testFilterMissingAll(self):
         self.assertFalse(self.filter.filter(dict(notfoo='not bar')))
 
+
 class ConfigurableORFilterTest(SimpleTestCase):
 
     def setUp(self):
@@ -147,6 +148,7 @@ class ConfigurableORFilterTest(SimpleTestCase):
 
     def testFilterMissingAll(self):
         self.assertFalse(self.filter.filter(dict(notfoo='not bar')))
+
 
 class ComplexFilterTest(SimpleTestCase):
 

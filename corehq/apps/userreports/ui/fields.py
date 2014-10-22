@@ -42,6 +42,5 @@ class JsonField(forms.CharField):
         if self.expected_type and not isinstance(value, self.expected_type):
             raise forms.ValidationError(_(u'Expected {} but was {}'.format(self.expected_type, type(value))))
 
-
     def clean(self, value):
         return json.loads(super(JsonField, self).clean(value))

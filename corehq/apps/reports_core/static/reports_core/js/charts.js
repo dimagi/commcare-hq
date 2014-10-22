@@ -34,7 +34,7 @@ var charts = (function() {
             ;
             nv.utils.windowResize(chart.update);
             return chart;
-        }
+        };
     };
 
     var renderMultibarAggregate = function (config, data, svgSelector) {
@@ -81,7 +81,7 @@ var charts = (function() {
                             record.values.push({
                                 'x': secondary,
                                 'y': value
-                            })
+                            });
                         }
                     }
                 }
@@ -166,7 +166,7 @@ var charts = (function() {
                 nv.addGraph(chartMap[config.type](config, data, '#' + id));
             }
         }
-    }
+    };
     return fn;
 
 })();

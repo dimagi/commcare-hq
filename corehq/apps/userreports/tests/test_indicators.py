@@ -11,7 +11,6 @@ class SingleIndicatorTestBase(SimpleTestCase):
         self.assertEqual(value, result.value)
 
 
-
 class BooleanIndicatorTest(SingleIndicatorTestBase):
 
     def setUp(self):

@@ -37,7 +37,9 @@ class IndicatorPillowTest(TestCase):
         for document in not_matching:
             self.assertTrue(self.pillow.python_filter(document))
 
-        self.assertTrue(self.pillow.python_filter(dict(doc_type="CommCareCase", domain='user-reports', type='ticket')))
+        self.assertTrue(self.pillow.python_filter(
+            dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
+        ))
 
     def testChangeTransport(self):
         # indicators

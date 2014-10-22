@@ -39,6 +39,7 @@ class FilterTestCase(SimpleTestCase):
                 "display": "Some display name"
             })
 
+
 class DateFilterTestCase(SimpleTestCase):
 
     def test_date_filter(self):

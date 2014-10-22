@@ -8,7 +8,6 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 
 class DataSourceConfigurationTest(SimpleTestCase):
 
-
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
         sample_file = os.path.join(folder, 'sample_indicator_config.json')
@@ -34,7 +33,9 @@ class DataSourceConfigurationTest(SimpleTestCase):
             self.assertFalse(self.config.filter.filter(document))
             self.assertEqual([], self.config.get_values(document))
 
-        self.assertTrue(self.config.filter.filter(dict(doc_type="CommCareCase", domain='user-reports', type='ticket')))
+        self.assertTrue(self.config.filter.filter(
+            dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
+        ))
 
     def testColumns(self):
         # columns
@@ -117,12 +118,12 @@ class DataSourceConfigurationDbTest(TestCase):
     def testDomainIsRequired(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(table_id='table',
-                                   referenced_doc_type='doc').save()
+                                    referenced_doc_type='doc').save()
 
     def testTableIdIsRequired(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain',
-                                   referenced_doc_type='doc').save()
+                                    referenced_doc_type='doc').save()
 
     def testDocTypeIsRequired(self):
         with self.assertRaises(BadValueError):

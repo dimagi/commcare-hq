@@ -17,6 +17,7 @@ from corehq.apps.reports_core.filters import DatespanFilter, FilterException
 
 Column = namedtuple("Column", ["slug", "display_name", "sortable"])
 
+
 class TestReportData(ReportDataSource):
     title = "Test Report"
     slug = "test_report"
@@ -92,8 +93,10 @@ class TestReport(JSONResponseMixin, TemplateView):
     @property
     def headers(self):
         data = self.data_model()
+
         def make_column(col):
-            return DataTablesColumn(col.display_name, data_slug=col.slug, sortable=col.sortable) 
+            return DataTablesColumn(col.display_name, data_slug=col.slug, sortable=col.sortable)
+
         columns = map(make_column, data.columns())
         return DataTablesHeader(*columns)
 
@@ -148,12 +151,14 @@ class TestReport(JSONResponseMixin, TemplateView):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
+
         pattern = r'^{slug}/$'.format(slug=cls.data_model.slug)
         return url(pattern, cls.as_view(), name=cls.data_model.slug)
 
 
 OrderedColumn = namedtuple("OrderedColumn", ["slug", "desc"])
 PaginationSpec = namedtuple("PaginationSpec", ["start", "limit", "offset"])
+
 
 def datatables_ordering(request_dict, columns):
     try:
@@ -177,10 +182,10 @@ def datatables_ordering(request_dict, columns):
 
     return ordering
 
+
 def datatables_paging(request_dict):
     limit = int(request_dict.get('iDisplayLength', 10))
     start = int(request_dict.get('iDisplayStart', 0))
     offset = start + limit
 
     return PaginationSpec(start=start, limit=limit, offset=offset)
-

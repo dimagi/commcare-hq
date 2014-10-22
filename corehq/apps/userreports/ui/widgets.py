@@ -1,6 +1,7 @@
 import json
 from django import forms
 
+
 class JsonWidget(forms.Textarea):
 
     def render(self, name, value, attrs=None):

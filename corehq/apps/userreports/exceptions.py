@@ -1,6 +1,5 @@
 
 
-
 class UserReportsError(Exception):
     pass
 

@@ -13,6 +13,7 @@ class FilterValue(object):
     def to_sql_values(self):
         raise NotImplementedError()
 
+
 class DateFilterValue(FilterValue):
 
     def __init__(self, filter, value):

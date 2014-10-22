@@ -1,6 +1,5 @@
 
 
-
 class Getter(object):
 
     def get_value(self, item):

@@ -19,6 +19,7 @@ class FilterValueException(FilterException):
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
+
 class BaseFilter(object):
     """
     Base object for filters. These objects deal with data only are not concerned with being
