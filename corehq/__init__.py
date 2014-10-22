@@ -110,6 +110,7 @@ def dynamic_reports(project):
     for reportset in project.dynamic_reports:
         yield (reportset.section_title, filter(None, (make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
 
+
 def configurable_reports(project):
     """
     User configurable reports

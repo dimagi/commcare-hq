@@ -43,7 +43,6 @@ class ReportFilterFactory(object):
                 str(e),
             ))
 
-
     @classmethod
     def validate_spec(cls, spec):
         if spec.get('type') not in cls.constructor_map:

@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty, JsonProperty
+from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.getters import DictGetter, NestedDictGetter

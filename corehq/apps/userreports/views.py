@@ -15,7 +15,6 @@ from corehq.util.couch import get_document_or_404
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def configurable_reports_home(request, domain):
-
     return render(request, 'userreports/configurable_reports_home.html', _shared_context(domain))
 
 
@@ -99,13 +98,15 @@ def delete_data_source(request, domain, config_id):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    messages.success(request,
-                     _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
-                         config.display_name
-                     )
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
     )
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
