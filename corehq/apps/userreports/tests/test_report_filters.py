@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
+from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 
