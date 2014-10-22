@@ -31,7 +31,7 @@ class ChoiceListFilterSpec(FilterSpec):
 
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)
-    display_name = StringProperty()
+    title = StringProperty()
 
 
 class PieChartSpec(ChartSpec):

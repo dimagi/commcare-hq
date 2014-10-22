@@ -126,7 +126,7 @@ def configurable_reports(project):
                 return reverse(ConfigurableReport.slug, args=[domain, config._id])
 
             return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
-                'name': config.display_name,
+                'name': config.title,
                 'description': config.description,
                 'get_url': get_url,
             })

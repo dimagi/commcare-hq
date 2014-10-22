@@ -1,7 +1,7 @@
 {
     "domain": "user-reports",
     "doc_type": "ReportConfiguration",
-    "display_name": "CommBugz",
+    "title": "CommBugz",
     "config_id": "12345",
     "filters": [
         {

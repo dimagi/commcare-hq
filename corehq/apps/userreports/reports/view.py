@@ -23,6 +23,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return get_document_or_404(ReportConfiguration, self.domain, self.report_config_id)
 
     @property
+    def title(self):
+        return self.spec.title
+
+    @property
     @memoized
     def data_source(self):
         return ReportFactory.from_spec(self.spec)

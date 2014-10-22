@@ -1,7 +1,7 @@
 {
     "domain": "gsid",
     "doc_type": "ReportConfiguration",
-    "display_name": "HIV Mismatch by Clinic",
+    "title": "HIV Mismatch by Clinic",
     "config_id": "c7f10caeafbe25bb787440133dec0d28",
     "filters": [
         {
@@ -45,7 +45,7 @@
     "configured_charts": [
         {
             "type": "multibar",
-            "display_name": "HIV Mismatch by Clinic",
+            "title": "HIV Mismatch by Clinic",
             "x_axis_column": "clinic",
             "y_axis_columns": [
                 "diagnoses_match_no",

@@ -14,7 +14,7 @@ class ReportConfigurationTest(SimpleTestCase):
     def test_metadata(self):
         # metadata
         self.assertEqual('user-reports', self.config.domain)
-        self.assertEqual('CommBugz', self.config.display_name)
+        self.assertEqual('CommBugz', self.config.title)
         self.assertEqual('12345', self.config.config_id)
 
     def test_sample_config_is_valid(self):

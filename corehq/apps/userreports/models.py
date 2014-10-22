@@ -102,7 +102,7 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
 class ReportConfiguration(Document):
     domain = StringProperty(required=True)
     config_id = StringProperty(required=True)
-    display_name = StringProperty()
+    title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
     filters = ListProperty()
@@ -136,7 +136,7 @@ class ReportConfiguration(Document):
     def by_domain(cls, domain):
         return sorted(
             cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True),
-            key=lambda report: report.display_name,
+            key=lambda report: report.title,
         )
 
     @classmethod
