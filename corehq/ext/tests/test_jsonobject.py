@@ -9,6 +9,16 @@ from corehq.ext.unittest import Corpus, CorpusMeta
 from jsonobject import JsonObject
 
 
+def _round_trip(string):
+    return UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(string))[1]
+
+
+def _double_round_trip(string):
+    return UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(
+        UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(string))[1]
+    ))[1]
+
+
 class UTCDateTimePropertyTest(SimpleTestCase):
     __metaclass__ = CorpusMeta
 
@@ -70,18 +80,9 @@ class UTCDateTimePropertyTest(SimpleTestCase):
 
     }
 
-    round_trip = Corpus(
-        lambda string: UTCDateTimeProperty().unwrap(
-            UTCDateTimeProperty().wrap(string))[1],
-        ROUND_TRIP_CASES,
-    )
+    round_trip = Corpus(_round_trip, ROUND_TRIP_CASES)
 
-    double_round_trip = Corpus(
-        lambda string: UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(
-            UTCDateTimeProperty().unwrap(UTCDateTimeProperty().wrap(string))[1]
-        ))[1],
-        ROUND_TRIP_CASES,
-    )
+    double_round_trip = Corpus(_double_round_trip, ROUND_TRIP_CASES)
 
 
 class TestISOMeta(SimpleTestCase):
