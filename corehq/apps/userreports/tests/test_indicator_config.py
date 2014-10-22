@@ -3,10 +3,10 @@ import os
 from datetime import date
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 
-class IndicatorConfigurationTest(SimpleTestCase):
+class DataSourceConfigurationTest(SimpleTestCase):
 
 
     def setUp(self):
@@ -14,7 +14,7 @@ class IndicatorConfigurationTest(SimpleTestCase):
         sample_file = os.path.join(folder, 'sample_indicator_config.json')
         with open(sample_file) as f:
             structure = json.loads(f.read())
-            self.config = IndicatorConfiguration.wrap(structure)
+            self.config = DataSourceConfiguration.wrap(structure)
 
     def testMetadata(self):
         # metadata
@@ -89,51 +89,51 @@ def get_sample_doc_and_indicators():
     return sample_doc, expected_indicators
 
 
-class IndicatorConfigurationDbTest(TestCase):
+class DataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        IndicatorConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
-        IndicatorConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
-        IndicatorConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
+        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
+        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
+        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
 
     @classmethod
     def tearDownClass(cls):
-        for config in IndicatorConfiguration.all():
+        for config in DataSourceConfiguration.all():
             config.delete()
 
     def testGetByDomain(self):
-        results = IndicatorConfiguration.by_domain('foo')
+        results = DataSourceConfiguration.by_domain('foo')
         self.assertEqual(2, len(results))
         for item in results:
             self.assertTrue(item.table_id in ('foo1', 'foo2'))
 
-        results = IndicatorConfiguration.by_domain('not-foo')
+        results = DataSourceConfiguration.by_domain('not-foo')
         self.assertEqual(0, len(results))
 
     def testGetAll(self):
-        self.assertEqual(3, len(list(IndicatorConfiguration.all())))
+        self.assertEqual(3, len(list(DataSourceConfiguration.all())))
 
     def testDomainIsRequired(self):
         with self.assertRaises(BadValueError):
-            IndicatorConfiguration(table_id='table',
+            DataSourceConfiguration(table_id='table',
                                    referenced_doc_type='doc').save()
 
     def testTableIdIsRequired(self):
         with self.assertRaises(BadValueError):
-            IndicatorConfiguration(domain='domain',
+            DataSourceConfiguration(domain='domain',
                                    referenced_doc_type='doc').save()
 
     def testDocTypeIsRequired(self):
         with self.assertRaises(BadValueError):
-            IndicatorConfiguration(domain='domain', table_id='table').save()
+            DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
 class IndicatorNamedFilterTest(SimpleTestCase):
     def setUp(self):
-        self.indicator_configuration = IndicatorConfiguration.wrap({
+        self.indicator_configuration = DataSourceConfiguration.wrap({
             'display_name': 'Mother Indicators',
-            'doc_type': 'IndicatorConfiguration',
+            'doc_type': 'DataSourceConfiguration',
             'domain': 'test',
             'referenced_doc_type': 'CommCareCase',
             'table_id': 'mother_indicators',

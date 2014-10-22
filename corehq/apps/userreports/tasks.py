@@ -1,7 +1,7 @@
 from celery.task import task
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.utils import get_doc_ids
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -9,7 +9,7 @@ from dimagi.utils.couch.database import iter_docs
 
 @task
 def rebuild_indicators(indicator_config_id):
-    config = IndicatorConfiguration.get(indicator_config_id)
+    config = DataSourceConfiguration.get(indicator_config_id)
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.rebuild_table()
 

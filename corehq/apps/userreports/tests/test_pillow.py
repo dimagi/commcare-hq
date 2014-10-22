@@ -2,7 +2,7 @@ import json
 import os
 from django.test import TestCase
 import sqlalchemy
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tests import get_sample_doc_and_indicators
@@ -17,7 +17,7 @@ class IndicatorPillowTest(TestCase):
         self.engine = self.pillow.get_sql_engine()
         with open(sample_file) as f:
             structure = json.loads(f.read())
-            self.config = IndicatorConfiguration.wrap(structure)
+            self.config = DataSourceConfiguration.wrap(structure)
             self.pillow.bootstrap(configs=[self.config])
 
         self.adapter = IndicatorSqlAdapter(self.engine, self.config)

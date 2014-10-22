@@ -2,8 +2,7 @@ import json
 import os
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import ReportConfiguration, IndicatorConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 
 
 class ReportConfigurationTest(SimpleTestCase):
@@ -31,7 +30,7 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for config in IndicatorConfiguration.all():
+        for config in DataSourceConfiguration.all():
             config.delete()
         for config in ReportConfiguration.all():
             config.delete()

@@ -1,5 +1,5 @@
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
@@ -29,7 +29,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def bootstrap(self, configs=None):
         # sets up the initial stuff
         if configs is None:
-            configs = IndicatorConfiguration.all()
+            configs = DataSourceConfiguration.all()
 
         self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
         self.bootstrapped = True

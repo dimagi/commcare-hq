@@ -14,7 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 from fluff.filters import ANDFilter
 
 
-class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
+class DataSourceConfiguration(ConfigurableIndicatorMixIn, Document):
 
     domain = StringProperty(required=True)
     referenced_doc_type = StringProperty(required=True)
@@ -80,7 +80,7 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
             return []
 
     def validate(self, required=True):
-        super(IndicatorConfiguration, self).validate(required)
+        super(DataSourceConfiguration, self).validate(required)
         # these two functions implicitly call other validation
         self.filter
         self.indicators
@@ -88,13 +88,13 @@ class IndicatorConfiguration(ConfigurableIndicatorMixIn, Document):
     @classmethod
     def by_domain(cls, domain):
         return sorted(
-            cls.view('userreports/indicator_configs_by_domain', key=domain, reduce=False, include_docs=True),
+            cls.view('userreports/data_sources_by_domain', key=domain, reduce=False, include_docs=True),
             key=lambda config: config.display_name
         )
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/indicator_configs_by_domain', reduce=False, include_docs=False)]
+        ids = [res['id'] for res in cls.view('userreports/data_sources_by_domain', reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 
@@ -113,7 +113,7 @@ class ReportConfiguration(Document):
     @memoized
     def config(self):
         try:
-            return IndicatorConfiguration.get(self.config_id)
+            return DataSourceConfiguration.get(self.config_id)
         except ResourceNotFound:
             raise BadSpecError(_('The data source referenced by this report could not be found.'))
 

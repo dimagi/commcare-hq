@@ -1,7 +1,7 @@
 import json
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
 
 
@@ -9,7 +9,7 @@ class ReportDataSourceField(forms.ChoiceField):
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
-        available_data_sources = IndicatorConfiguration.by_domain(self.domain)
+        available_data_sources = DataSourceConfiguration.by_domain(self.domain)
         super(ReportDataSourceField, self).__init__(
             choices=[(src._id, src.display_name) for src in available_data_sources],
             *args, **kwargs

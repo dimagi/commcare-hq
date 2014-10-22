@@ -1,5 +1,5 @@
 from corehq.apps.reports.sqlreport import SqlData
-from corehq.apps.userreports.models import IndicatorConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 
@@ -8,7 +8,7 @@ class ConfigurableReportDataSource(SqlData):
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
         self.domain = domain
-        if isinstance(config_or_config_id, IndicatorConfiguration):
+        if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
             self._config_id = self._config._id
         else:
@@ -24,7 +24,7 @@ class ConfigurableReportDataSource(SqlData):
     @property
     def config(self):
         if self._config is None:
-            self._config = IndicatorConfiguration.get(self._config_id)
+            self._config = DataSourceConfiguration.get(self._config_id)
         return self._config
 
     @property

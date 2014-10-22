@@ -2,7 +2,7 @@ import json
 from optparse import make_option
 from couchdbkit import ResourceNotFound
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.userreports.models import IndicatorConfiguration, ReportConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.decorators.log_exception import log_exception
 
@@ -29,7 +29,7 @@ class Command(LabelCommand):
 
             # intentionally fails hard if bad or missing doc_type
             cls = {
-                'IndicatorConfiguration': IndicatorConfiguration,
+                'DataSourceConfiguration': DataSourceConfiguration,
                 'ReportConfiguration': ReportConfiguration,
             }[body['doc_type']]
 
@@ -44,7 +44,7 @@ class Command(LabelCommand):
             to_save.save()
 
             print 'updated {}: "{}"'.format(to_save.doc_type, to_save.title)
-            if options['rebuild'] and isinstance(to_save, IndicatorConfiguration):
+            if options['rebuild'] and isinstance(to_save, DataSourceConfiguration):
                 print 'rebuilding table...'
                 rebuild_indicators(to_save._id)
                 print '...done!'
