@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
-from corehq.apps.userreports.reports.factory import ReportFactory, GraphFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -107,7 +107,7 @@ class ReportConfiguration(Document):
     aggregation_columns = StringListProperty()
     filters = ListProperty()
     columns = ListProperty()
-    configured_graphs = ListProperty()
+    configured_charts = ListProperty()
 
     @property
     @memoized
@@ -119,8 +119,8 @@ class ReportConfiguration(Document):
 
     @property
     @memoized
-    def graphs(self):
-        return [GraphFactory.from_spec(g) for g in self.configured_graphs]
+    def charts(self):
+        return [ChartFactory.from_spec(g) for g in self.configured_charts]
 
     @property
     def table_id(self):
@@ -130,7 +130,7 @@ class ReportConfiguration(Document):
         super(ReportConfiguration, self).validate(required)
         # these calls implicitly do validation
         ReportFactory.from_spec(self)
-        self.graphs
+        self.charts
 
     @classmethod
     def by_domain(cls, domain):

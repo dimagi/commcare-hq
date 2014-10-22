@@ -72,7 +72,7 @@ class ReportFactory(object):
         )
 
 
-class GraphFactory(object):
+class ChartFactory(object):
     object_map = {
         'pie': PieChartSpec,
         'multibar': MultibarChartSpec,

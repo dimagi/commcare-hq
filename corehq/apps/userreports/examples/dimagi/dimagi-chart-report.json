@@ -26,7 +26,7 @@
             "aggregation": "sum"
         }
     ],
-    "configured_graphs": [
+    "configured_charts": [
         {
             "type": "pie",
             "display_name": "Remote status",
