@@ -35,12 +35,12 @@ class DocumentFormBase(forms.Form):
 class ConfigurableReportEditForm(DocumentFormBase):
 
     config_id = forms.ChoiceField()  # gets overridden on instantiation
-    display_name = forms.CharField()
+    title = forms.CharField()
     description = forms.CharField(required=False)
     aggregation_columns = JsonField(expected_type=list)
     filters = JsonField(expected_type=list)
     columns = JsonField(expected_type=list)
-    graphs = JsonField(expected_type=list)
+    configured_charts = JsonField(expected_type=list)
 
     def __init__(self, domain, instance=None, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)

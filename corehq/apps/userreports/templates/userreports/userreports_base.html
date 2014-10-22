@@ -7,7 +7,7 @@
         <li class="nav-header">{% trans "Edit Reports" %}</li>
 {% for report in reports %}
         <li>
-            <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.display_name }}</a>
+            <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
         </li>
 {% endfor %}
         <li>
