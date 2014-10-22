@@ -973,7 +973,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
-        return sorted([(key, value) for key, value in self.dynamic_properties().items() if re.search(r'^[a-zA-Z]', key)])
+        json = self.to_json()
+        return sorted([(key, json[key]) for key in self.dynamic_properties()
+                       if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
