@@ -1,3 +1,4 @@
+import hashlib
 import sqlalchemy
 from django.conf import settings
 from dimagi.utils.decorators.memoized import memoized
@@ -71,4 +72,7 @@ def rebuild_table(engine, table):
 
 
 def get_table_name(domain, table_id):
-    return 'configurable_indicators_{0}_{1}'.format(domain, table_id)
+    def _hash(domain, table_id):
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
+
+    return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
