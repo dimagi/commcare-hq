@@ -194,6 +194,7 @@ def get_case_updates(user, last_sync):
     """
     return CaseSyncOperation(user, last_sync)
 
+
 def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
     # this function is pretty ugly and is heavily optimized to reduce the number
     # of queries to couch.
@@ -225,9 +226,15 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             #   'value': '2012-08-22T08:55:14Z', (most recent date updated)
             #   'key': ['[case id]', '[sync token id]']
             # }
-            if row['value']:
+            dt_string = row['value']
+            if dt_string:
+                try:
+                    dt = datetime.strptime(dt_string, '%Y-%m-%dT%H:%M:%SZ')
+                except ValueError as e:
+                    assert 'does not match format' in unicode(e)
+                    dt = datetime.strptime(dt_string, '%Y-%m-%dT%H:%M:%S.%f')
                 all_case_updates_by_sync_token[row['key'][0]].append(
-                    {'token': row['key'][1], 'date': datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')}
+                    {'token': row['key'][1], 'date': dt}
                 )
 
         def case_modified_elsewhere_since_sync(case):
