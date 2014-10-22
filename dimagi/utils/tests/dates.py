@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, date
+from urllib import urlencode
 import pytz
 from dimagi.utils.dates import DateSpan, add_months_to_date
 from django.test import SimpleTestCase
+from django.http import HttpRequest, QueryDict
+from dimagi.utils.decorators.datespan import datespan_in_request
+
 
 class DateSpanSinceTest(SimpleTestCase):
     def test_since(self):
@@ -73,3 +77,34 @@ class AddToMonthTest(SimpleTestCase):
     def test_time_preserved_end_of_month(self):
         self.assertEqual(datetime(2014, 2, 28, 10, 30, 11),
                          add_months_to_date(datetime(2014, 1, 31, 10, 30, 11), 1))
+
+
+class DateSpanInRequestTest(SimpleTestCase):
+    def setUp(self):
+        self.datespan_decorator = datespan_in_request(
+            from_param="startdate",
+            to_param="enddate",
+            default_days=7,
+            format_string='%Y-%m-%dT%H:%M:%S'
+        )
+
+    def test_from_request(self):
+        start_date = datetime(2013, 7, 21, 0, 0, 0)
+        end_date = datetime(2013, 7, 15, 0, 0, 0)
+        request = HttpRequest()
+        query_string = urlencode({
+            'startdate': start_date.isoformat(),
+            'enddate': end_date.isoformat()}
+        )
+        request.GET = QueryDict(query_string)
+        datespan_in_request()
+
+        @self.datespan_decorator
+        def dummy(req):
+            return getattr(req, 'datespan', None)
+
+        datespan = dummy(request)
+        self.assertIsNotNone(datespan)
+        self.assertIsInstance(datespan, DateSpan)
+        self.assertEqual(datespan.enddate, end_date)
+        self.assertEqual(datespan.startdate, start_date)

@@ -27,13 +27,14 @@ def datespan_in_request(from_param="from", to_param="to",
             # values, checking first the args and then the kwargs
             req = request_from_args_or_kwargs(*args, **kwargs)
             if req:
+                req_dict = req.POST if req.method == "POST" else req.GET
                 def date_or_nothing(param):
-                    date = req.REQUEST.get(param, None)
+                    date = req_dict.get(param, None)
                     return datetime.strptime(date, format_string) if date else None
                 try:
                     startdate = date_or_nothing(from_param)
                     enddate = date_or_nothing(to_param)
-                except ValueError, e:
+                except ValueError as e:
                     return HttpResponseBadRequest(unicode(e))
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, format_string)
