@@ -8,6 +8,8 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import numpy
 import operator
 import pytz
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES, is_closed
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -1009,38 +1011,28 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     def es_form_submissions(self, datespan=None, dict_only=False):
         datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            "form.meta.timeEnd": {
-                                "from": datespan.startdate_param,
-                                "to": datespan.enddate_display,
-                                "include_upper": True}}}]}}}
-        q["filter"] = {"and": ADD_TO_ES_FILTER["forms"][:]}
-        facets = ['form.meta.userID']
-        return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
+        form_query = FormES() \
+            .domain(self.domain) \
+            .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
+            .terms_facet('form.meta.userID', 'form.meta.userID', size=100000) \
+            .size(1)
+
+        return form_query.run()
 
     def es_last_submissions(self, datespan=None, dict_only=False):
         """
             Creates a dict of userid => date of last submission
         """
         datespan = datespan or self.datespan
+
         def es_q(user_id):
-            q = {"query": {
-                    "bool": {
-                        "must": [
-                            {"match": {"domain.exact": self.domain}},
-                            {"match": {"form.meta.userID": user_id}},
-                            {"range": {
-                                "form.meta.timeEnd": {
-                                    "from": datespan.startdate_param,
-                                    "to": datespan.enddate_display,
-                                    "include_upper": True}}}
-                        ]}},
-                "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
-            results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
+            form_query = FormES() \
+                .domain(self.domain) \
+                .user_id([user_id]) \
+                .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
+                .sort("form.meta.timeEnd", desc=True) \
+                .size(1)
+            results = form_query.run().raw_hits
             return results[0]['_source']['form']['meta']['timeEnd'] if results else None
 
         def convert_date(date):
@@ -1048,24 +1040,18 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 
-    def es_case_queries(self, date_field, user_field='user_id', datespan=None, dict_only=False):
+    def es_case_queries(self, date_field, user_field='user_id', datespan=None):
         datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            date_field: {
-                                "from": datespan.startdate_param,
-                                "to": datespan.enddate_display,
-                                "include_upper": True}}}
-                    ]}}}
+        case_query = CaseES() \
+            .domain(self.domain) \
+            .filter(filters.date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())) \
+            .terms_facet(user_field, user_field, size=100000) \
+            .size(1)
 
         if self.case_types_filter:
-            q["query"]["bool"]["must"].append(self.case_types_filter)
+            case_query = case_query.filter(self.case_types_filter)
 
-        facets = [user_field]
-        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+        return case_query.run()
 
     def es_active_cases(self, datespan=None, dict_only=False):
         """
@@ -1106,7 +1092,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
-
     @property
     def rows(self):
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
@@ -1117,9 +1102,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         form_data = self.es_form_submissions()
-        submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
+        submissions_by_user = dict([(t["term"], t["count"]) for t in form_data.facet("form.meta.userID", "terms")])
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data["facets"]["form.meta.userID"]["terms"]])
+        avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data.facet("form.meta.userID", "terms")])
 
         if self.view_by == 'groups':
             active_users_by_group = dict([(g, len(filter(lambda u: submissions_by_user.get(u['user_id']), users)))
@@ -1129,19 +1114,21 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         case_creation_data = self.es_case_queries('opened_on', 'opened_by')
         creations_by_user = dict([(t["term"].lower(), t["count"])
-                                  for t in case_creation_data["facets"]["opened_by"]["terms"]])
+                                  for t in case_creation_data.facet("opened_by", "terms")])
 
         case_closure_data = self.es_case_queries('closed_on', 'closed_by')
         closures_by_user = dict([(t["term"].lower(), t["count"])
-                                 for t in case_closure_data["facets"]["closed_by"]["terms"]])
+                                 for t in case_closure_data.facet("closed_by", "terms")])
 
         active_case_data = self.es_active_cases()
         actives_by_owner = dict([(t["term"].lower(), t["count"])
                                  for t in active_case_data["facets"]["owner_id"]["terms"]])
 
         total_case_data = self.es_total_cases()
-        totals_by_owner = dict([(t["term"].lower(), t["count"])
-                                for t in total_case_data["facets"]["owner_id"]["terms"]])
+        totals_by_owner = {
+            t["term"].lower(): t["count"]
+            for t in total_case_data["facets"]["owner_id"]["terms"]
+        }
 
         def dates_for_linked_reports(case_list=False):
             start_date = self.datespan.startdate_param
