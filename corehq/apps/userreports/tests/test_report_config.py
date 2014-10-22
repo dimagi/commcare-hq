@@ -25,13 +25,6 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        shared_kwargs = {
-            'referenced_doc_type': 'doc',
-            'table_id': 'table',
-        }
-        IndicatorConfiguration(domain='foo', _id='foo1', **shared_kwargs).save()
-        IndicatorConfiguration(domain='foo', _id='foo2', **shared_kwargs).save()
-        IndicatorConfiguration(domain='bar', _id='bar1', **shared_kwargs).save()
         ReportConfiguration(domain='foo', config_id='foo1').save()
         ReportConfiguration(domain='foo', config_id='foo2').save()
         ReportConfiguration(domain='bar', config_id='bar1').save()
@@ -62,10 +55,6 @@ class ReportConfigurationDbTest(TestCase):
     def testConfigIdIsRequired(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(domain='foo').save()
-
-    def testConfigMustExist(self):
-        with self.assertRaises(BadSpecError):
-            ReportConfiguration(domain='foo', config_id='notreal').save()
 
     def testSampleConfigIsValid(self):
         config = _get_sample_config()
