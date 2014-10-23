@@ -1,10 +1,12 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.models import WORKFLOW_DEFAULT
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
+from corehq.apps.sms.filters import MessageTypeFilter
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
@@ -18,6 +20,13 @@ import pytz
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.sms.models import (
+    WORKFLOW_REMINDER,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_BROADCAST,
+    WORKFLOW_CALLBACK,
+)
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -175,8 +184,31 @@ the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number
 class MessageLogReport(BaseCommConnectLogReport):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
-    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.sms.filters.MessageTypeFilter',
+    ]
     exportable = True
+
+    def get_correct_message_type_filter(self):
+        relevant_workflows = [
+            WORKFLOW_REMINDER,
+            WORKFLOW_KEYWORD,
+            WORKFLOW_BROADCAST,
+            WORKFLOW_CALLBACK,
+            WORKFLOW_DEFAULT,
+        ]
+        message_type = MessageTypeFilter.get_value(self.request, self.domain)
+        if message_type is MessageTypeFilter.OPTION_SURVEY:
+            return lambda message: message.xforms_session_couch_id is not None
+        if message_type is MessageTypeFilter.OPTION_OTHER:
+            return lambda message: (
+                message.xforms_session_couch_id is None
+                and message.workflow not in relevant_workflows
+            )
+        if message_type in relevant_workflows:
+            return lambda message: message.workflow == message_type
+        return lambda message: True
 
     @property
     def headers(self):
@@ -211,6 +243,10 @@ class MessageLogReport(BaseCommConnectLogReport):
 
         for message in data:
             if message.direction == OUTGOING and not message.processed:
+                continue
+
+            is_relevant_message = self.get_correct_message_type_filter()
+            if not is_relevant_message(message):
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
