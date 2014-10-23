@@ -1266,6 +1266,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             ))
         return errors
 
+    @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this module has a form that
+        opens a new child case of that type.
+        :return:
+        '''
+        child_case_types = set()
+        for form in self.get_forms():
+            if hasattr(form, 'get_child_case_types'):
+                child_case_types.update(form.get_child_case_types())
+        return child_case_types
+
 
 class Module(ModuleBase):
     """
@@ -1483,18 +1496,6 @@ class Module(ModuleBase):
                 'type': 'no ref detail',
                 'module': module_info,
             }
-
-    @memoized
-    def get_child_case_types(self):
-        '''
-        Return a list of each case type for which this module has a form that
-        opens a new child case of that type.
-        :return:
-        '''
-        child_case_types = set()
-        for form in self.get_forms():
-            child_case_types.update(form.get_child_case_types())
-        return child_case_types
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
