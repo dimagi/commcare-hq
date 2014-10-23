@@ -16,7 +16,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
     var self = this;
     moduleOptions = moduleOptions || {};
 
-    //TODO: Put this in a template somewhere?
     var $editButtonDiv = $('\
         <div> \
             <button class="btn" data-bind="click: openModal, visible: $data.edit"> \
@@ -60,8 +59,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
 
     ko.applyBindings(self, self.ui.get(0));
     eventize(self);
-    // TODO: Fire change event on self when observables are edited (so that save button is activated) ?
-    //       see uiElement.key_value_mapping
 
     /**
      * Return an object representing this graph configuration that is suitable
@@ -77,7 +74,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
          * @param obj
          * @returns {{}}
          */
-        var omit_nulls = function(obj){
+        var omitNulls = function(obj){
             var keys = _.keys(obj);
             var ret = {};
             for (var i=0; i < keys.length; i++){
@@ -87,9 +84,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             }
             return ret;
         };
-
-        // TODO: We could have a helper function called pairListToObj to make
-        //       this a bit more readable
 
         ret['graph_name'] = graphViewModelAsPOJS['graphDisplayName'];
         ret['graph_type'] = graphViewModelAsPOJS['selectedGraphType'];
@@ -114,7 +108,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         });
         ret['locale_specific_config'] = _.reduce(
             graphViewModelAsPOJS['axisTitleConfigurations'], function(memo, conf){
-                memo[conf['property']] = omit_nulls(conf['values']);
+                memo[conf['property']] = omitNulls(conf['values']);
                 return memo;
         }, {});
         ret['config'] = _.reduce(graphViewModelAsPOJS['configPairs'], function(memo, pair){
@@ -147,7 +141,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         ret['series'] = _.map(serverGraphObject['series'], function(s){
             var series = {};
 
-            //TODO: This doesn't work
             series['selectedSource'] = {'text':'custom', 'value':'custom'};
             series['dataPath'] = s['data_path'];
             series['xFunction'] = s['x_function'];
@@ -338,11 +331,6 @@ var GraphViewModel = function(moduleOptions){
         self.annotations(_.map(obj.annotations, function(o){
             return new Annotation(o);
         }));
-
-        // TODO:
-        // There was a bug here where the axisTitleConfigurations list was overridden
-        // with an empty list. We should make sure there aren't prepopulated lists
-        // elsewhere that we are overwriting.
 
         if (obj.axisTitleConfigurations.length != 0) {
             self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function (o) {

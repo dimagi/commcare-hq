@@ -1,6 +1,5 @@
 (function () {
 
-// A view model
 function MapList(o) {
     var self = this;
     self.lang = o.lang;
