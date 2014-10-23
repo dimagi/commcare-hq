@@ -1,4 +1,5 @@
 from decimal import Decimal
+from casexml.apps.stock.models import StockTransaction
 
 
 def months_of_stock_remaining(stock, daily_consumption):
@@ -38,3 +39,32 @@ def state_stock_category(state):
         state.get_daily_consumption(),
         state.get_domain()
     )
+
+
+def get_current_ledger_transactions(case_id):
+    """
+    Given a case returns a dict of all current ledger data of the following format:
+    {
+        "section_id": {
+             "product_id": StockTransaction,
+             "product_id": StockTransaction,
+             ...
+        },
+        ...
+    }
+    Where you get one stock transaction per product/section which is the last one seen.
+    """
+    relevant_sections = sorted(StockTransaction.objects.filter(
+        case_id=case_id,
+    ).values_list('section_id', flat=True).distinct())
+    ret = {}
+    for section_id in relevant_sections:
+        relevant_reports = StockTransaction.objects.filter(
+            case_id=case_id,
+            section_id=section_id,
+        )
+        product_ids = relevant_reports.values_list('product_id', flat=True).distinct()
+        transactions = {p: StockTransaction.latest(case_id, section_id, p) for p in product_ids}
+        ret[section_id] = transactions
+
+    return ret

@@ -176,7 +176,8 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
         domain=domain,
         tag=data_tag,
         is_global=is_global,
-        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches]
+        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
+        item_attributes=[],
     )
     transaction.save(data_type)
     return data_type
@@ -250,6 +251,7 @@ def download_item_lists(request, domain, html_response=False):
         return ["" for x in range(0, length)]
 
     max_fields = 0
+    max_item_attributes = 0
     """
         - Helper to generate headers like "field 2: property 1"
         - Captures max_num_of_properties for any field of any type at the list-index.
@@ -272,6 +274,8 @@ def download_item_lists(request, domain, html_response=False):
         data_types_book.append(data_type)
         if len(data_type.fields) > max_fields:
             max_fields = len(data_type.fields)
+        if len(data_type.item_attributes) > max_item_attributes:
+            max_item_attributes = len(data_type.item_attributes)
         for index, field in enumerate(data_type.fields):
             if len(field_prop_count) <= index:
                 field_prop_count.append(len(field.properties))
@@ -311,6 +315,7 @@ def download_item_lists(request, domain, html_response=False):
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
     types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
+    types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
         if prop_num > 0:
@@ -322,11 +327,12 @@ def download_item_lists(request, domain, html_response=False):
     for data_type in data_types_book:
         common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
         field_vals = [field.field_name for field in data_type.fields] + empty_padding_list(max_fields - len(data_type.fields))
+        item_att_vals = data_type.item_attributes + empty_padding_list(max_item_attributes - len(data_type.item_attributes))
         prop_vals = []
         if type_field_properties.has_key(data_type.tag):
             props = type_field_properties.get(data_type.tag)
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
-        row = tuple(common_vals[2 if html_response else 0:] + field_vals + prop_vals)
+        row = tuple(common_vals[2 if html_response else 0:] + field_vals + item_att_vals + prop_vals)
         types_sheet["rows"].append(row)
 
     types_sheet["rows"] = tuple(types_sheet["rows"])
@@ -344,6 +350,7 @@ def download_item_lists(request, domain, html_response=False):
         user_headers = ["user %d" % x for x in range(1, max_users + 1)]
         group_headers = ["group %d" % x for x in range(1, max_groups + 1)]
         field_headers = []
+        item_att_headers = ["property: " + attribute for attribute in data_type.item_attributes]
         for field in data_type.fields:
             if len(field.properties) == 0:
                 field_headers.append("field: " + field.field_name)
@@ -362,7 +369,7 @@ def download_item_lists(request, domain, html_response=False):
                     })
                 field_headers.extend(prop_headers)
         item_sheet["headers"] = tuple(
-            common_headers[2 if html_response else 0:] + field_headers + user_headers + group_headers
+            common_headers[2 if html_response else 0:] + field_headers + item_att_headers + user_headers + group_headers
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
@@ -370,6 +377,7 @@ def download_item_lists(request, domain, html_response=False):
             user_vals = [user.raw_username for user in item_row.users] + empty_padding_list(max_users - len(item_row.users))
             group_vals = [group.name for group in item_row.groups] + empty_padding_list(max_groups - len(item_row.groups))
             field_vals = []
+            item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
                 if len(field.properties) == 0:
                     if any(item_row.fields.get(field.field_name).field_list):
@@ -390,7 +398,7 @@ def download_item_lists(request, domain, html_response=False):
                     # import pdb; pdb.set_trace();
                     field_vals.extend(field_prop_vals)
             row = tuple(
-                common_vals[2 if html_response else 0:] + field_vals + user_vals + group_vals
+                common_vals[2 if html_response else 0:] + field_vals + item_att_vals + user_vals + group_vals
             )
             item_sheet["rows"].append(row)
         item_sheet["rows"] = tuple(item_sheet["rows"])

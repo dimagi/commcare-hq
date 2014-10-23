@@ -4,6 +4,7 @@ from .test_child_conditions import *
 from .test_child_condition_four import *
 from .test_multiple_children import *
 from .test_preg_conditions import *
+from .test_regressions import *
 from .test_snapshot import *
 from .test_status import *
 from .test_vhnd import *

@@ -1,7 +1,6 @@
 from __future__ import print_function
 import sys
 import logging
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.db.models import signals
 from requests.exceptions import RequestException
@@ -28,6 +27,9 @@ commcare_domain_post_save.connect(bootstrap_callcenter_domain_signal)
 
 _module = __name__.rsplit('.', 1)[0]
 def catch_signal(app, **kwargs):
+    if settings.UNIT_TESTING:
+        return
+
     app_name = app.__name__.rsplit('.', 1)[0]
     if app_name == _module:
         def _log(msg):

@@ -16,6 +16,7 @@ class FormES(HQESQuery):
             app,
             submitted,
             completed,
+            user_id,
         ] + super(FormES, self).builtin_filters
 
     def user_facet(self):
@@ -36,3 +37,7 @@ def submitted(gt=None, gte=None, lt=None, lte=None):
 
 def completed(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('form.meta.timeEnd', gt, gte, lt, lte)
+
+
+def user_id(user_ids):
+    return filters.term('form.meta.userID', list(user_ids))

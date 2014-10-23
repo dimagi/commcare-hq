@@ -15,6 +15,9 @@
         chart.donut(chart_config.donut);
         chart.tooltips(chart_config.tooltips);
         chart.margin(chart_config.margin);
+        if (chart_config.color.length !== 0) {
+            chart.color(chart_config.color);
+        }
 
         d3.select(chart_id + ' svg')
                 .datum(chart_data)

@@ -1,5 +1,7 @@
+from datetime import datetime
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from dateutil.relativedelta import relativedelta
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
@@ -14,7 +16,7 @@ from django.views.generic import TemplateView
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import Invitation, CouchUser, WebUser
+from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +91,9 @@ class InvitationView():
         try:
             invitation = self.inv_type.get(invitation_id)
         except ResourceNotFound:
-            messages.error(request, _("Sorry, we couldn't find that invitation. Please double check "
-                                      "the invitation link you received and try again."))
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or request a "
+                                      "project administrator to send you the invitation again."))
             return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
@@ -99,6 +102,9 @@ class InvitationView():
             return HttpResponseRedirect(reverse("login"))
 
         self.validate_invitation(invitation)
+
+        if invitation.invited_on.date() + relativedelta(months=1) < datetime.now().date()  and isinstance(invitation, DomainInvitation):
+            return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()

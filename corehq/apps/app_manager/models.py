@@ -377,7 +377,7 @@ class AdvancedFormActions(DocumentSchema):
             else:
                 parent = self.actions_meta_by_tag[action.parent_tag]['action']
                 if parent.case_type == parent_case_type:
-                    yield parent
+                    yield action
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -1099,7 +1099,6 @@ class Detail(IndexedSchema):
     get_columns = IndexedSchema.Getter('columns')
 
     sort_elements = SchemaListProperty(SortElement)
-    filter = StringProperty()
 
     @parse_int([1])
     def get_column(self, i):
@@ -1108,6 +1107,18 @@ class Detail(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
+    def filter_xpath(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                value = dot_interpolate(
+                    column.filter_xpath,
+                    '%s_%s_%s' % (column.model, column.field, i + 1)
+                )
+                filters.append("(%s)" % value)
+        xpath = ' and '.join(filters)
+        return partial_escape(xpath)
 
 
 class CaseList(IndexedSchema):
@@ -1227,6 +1238,15 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                             'key': key,
                             'module': self.get_module_info(),
                         }
+            elif column.format == 'filter':
+                try:
+                    etree.XPath(column.filter_xpath or '')
+                except etree.XPathSyntaxError:
+                    yield {
+                        'type': 'invalid filter xpath',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
             elif column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
@@ -1367,13 +1387,6 @@ class Module(ModuleBase):
         except Exception:
             return []
 
-    @property
-    def case_list_filter(self):
-        try:
-            return self.case_details.short.filter
-        except AttributeError:
-            return None
-
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
         for sort_element in self.detail_sort_elements:
@@ -1384,15 +1397,6 @@ class Module(ModuleBase):
                     'type': 'invalid sort field',
                     'field': sort_element.field,
                     'module': self.get_module_info(),
-                })
-        if self.case_list_filter:
-            try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
                 })
         if self.parent_select.active and not self.parent_select.module_id:
             errors.append({
@@ -1596,7 +1600,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     subcase.case_properties.keys()
                 )
                 parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                if parent:
+                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -2510,13 +2515,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            for form in self.get_forms():
-                if form.has_fixtures:
-                    raise PermissionDenied(_(
-                        "Usage of lookup tables is not supported by your "
-                        "current subscription. Please upgrade your "
-                        "subscription before using this feature."
-                    ))
+            # remote apps don't support get_forms yet.
+            # for now they can circumvent the fixture limitation. sneaky bastards.
+            if hasattr(self, 'get_forms'):
+                for form in self.get_forms():
+                    if form.has_fixtures:
+                        raise PermissionDenied(_(
+                            "Usage of lookup tables is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
 
     def validate_jar_path(self):
         build = self.get_build()

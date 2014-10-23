@@ -71,13 +71,21 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
+    @property
+    @memoized
+    def archived_products(self):
+        return self.request.GET.get('archived_products', False)
+
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+    ]
     exportable = True
     emailable = True
 
@@ -128,12 +136,18 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.objects.filter(
+        stock_states = StockState.include_archived.filter(
             case_id__in=sp_ids,
             last_modified_date__lte=self.datespan.enddate_utc,
             last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
-        ).order_by('product_id')
+        )
+        if not self.archived_products:
+            stock_states = stock_states.exclude(
+                sql_product__is_archived=True
+            )
+
+        stock_states = stock_states.order_by('product_id')
 
         if self.program_id:
             stock_states = stock_states.filter(
@@ -204,12 +218,16 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart.data = self.get_data_for_graph()
             return [chart]
 
+
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+    ]
     exportable = True
     emailable = True
 
@@ -249,6 +267,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                 'program_id': self.request.GET.get('program'),
                 'startdate': self.datespan.startdate_utc,
                 'enddate': self.datespan.enddate_utc,
+                'archived_products': self.archived_products,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
@@ -281,9 +300,11 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
     exportable = True
     emailable = True
 

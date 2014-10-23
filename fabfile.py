@@ -43,8 +43,11 @@ ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
-PROD_PROXIES = ['hqproxy0.internal.commcarehq.org',
-                'hqproxy2.internal.commcarehq.org']
+PROD_PROXIES = [
+    'hqproxy0.internal.commcarehq.org',
+    'hqproxy3.internal.commcarehq.org',
+]
+
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
@@ -1273,6 +1276,38 @@ def do_update_django_locales():
             virtualenv_root=env.virtualenv_root,
         )
         sudo(command)
+
+
+@task
+def reset_mvp_pillows():
+    _require_target()
+    mvp_pillows = [
+        'FormIndicatorPillow',
+        'CaseIndicatorPillow',
+    ]
+    for pillow in mvp_pillows:
+        reset_pillow(pillow)
+
+
+@roles(ROLES_PILLOWTOP)
+def reset_pillow(pillow):
+    _require_target()
+    prefix = 'commcare-hq-{}-pillowtop'.format(env.environment)
+    _supervisor_command('stop {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+    with cd(env.code_root):
+        command = '{virtualenv_root}/bin/python manage.py ptop_reset_checkpoint {pillow} --noinput'.format(
+            virtualenv_root=env.virtualenv_root,
+            pillow=pillow,
+        )
+        sudo(command)
+    _supervisor_command('start {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+
 
 # tests
 

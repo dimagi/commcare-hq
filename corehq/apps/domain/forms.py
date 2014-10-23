@@ -304,6 +304,14 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
+
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -372,7 +380,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
                     user.save()
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in ApplicationBase.by_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
             domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -427,16 +446,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
-    )
-    ota_restore_caching = BooleanField(
-        label=_("Enable Restore Caching (beta)"),
-        required=False,
-        help_text=_(
-            "Speed up phone restores. Useful if you have users with "
-            "large case lists and are getting timeouts during restore. "
-            "This feature is still in testing. Don't enable unless "
-            "you are an advanced user."
-        )
     )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
@@ -519,22 +528,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-            domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
                 domain.cloudcare_releases = cloudcare_releases
-            secure_submissions = self.cleaned_data.get('secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception, e:
             logging.exception("couldn't save project settings - error is %s" % e)
@@ -543,7 +541,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
 class DomainDeploymentForm(forms.Form):
     city = CharField(label=ugettext_noop("City"), required=False)
-    country = CharField(label=ugettext_noop("Country"), required=False)
+    countries = forms.MultipleChoiceField(label=ugettext_noop("Countries"),
+            choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
@@ -553,7 +552,7 @@ class DomainDeploymentForm(forms.Form):
     def save(self, domain):
         try:
             domain.update_deployment(city=self.cleaned_data['city'],
-                country=self.cleaned_data['country'],
+                countries=self.cleaned_data['countries'],
                 region=self.cleaned_data['region'],
                 date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
                 description=self.cleaned_data['description'],
@@ -597,6 +596,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
+    commconnect_domain = BooleanField(label=ugettext_noop("Commconnect domain?"), required=False)
+    commtrack_domain = BooleanField(label=ugettext_noop("Commtrack domain?"), required=False)
 
     def save(self, domain):
         kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -620,6 +621,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             phone_model=self.cleaned_data['phone_model'],
             goal_time_period=self.cleaned_data['goal_time_period'],
             goal_followup_rate=self.cleaned_data['goal_followup_rate'],
+            commconnect_domain=self.cleaned_data['commconnect_domain'],
+            commtrack_domain=self.cleaned_data['commtrack_domain'],
             **kw
         )
 

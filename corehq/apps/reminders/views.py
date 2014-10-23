@@ -622,41 +622,69 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def search_case_type_response(self):
-        filtered_case_types = self._filter_by_term(self.available_case_types)
-        return self._format_response(filtered_case_types)
+        return list(self.available_case_types)
+
+    def clean_dict_list(self, dict_list):
+        """
+        Takes a dict of {string: list} and returns the same result, only
+        removing any duplicate entries in each of the lists.
+        """
+        result = {}
+        for key in dict_list:
+            result[key] = list(set(dict_list[key]))
+        return result
 
     @property
     def search_case_property_response(self):
-        if not self.case_type:
-            return []
-        case_properties = ['name']
+        """
+        Returns a dict of {case type: [case properties...]}
+        """
+        result = {}
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
-            for properties in get_case_properties(app, [self.case_type]).values():
-                case_properties.extend(properties)
-        case_properties = self._filter_by_term(set(case_properties))
-        return self._format_response(case_properties)
+            case_types = list(set([m.case_type for m in app.modules]))
+            for case_type in case_types:
+                if case_type not in result:
+                    result[case_type] = ['name']
+                for properties in get_case_properties(app, [case_type]).values():
+                    result[case_type].extend(properties)
+        return self.clean_dict_list(result)
 
-    @property
-    def search_subcase_property_response(self):
-        if not self.case_type:
-            return []
-        subcase_properties = ['name']
+    def get_parent_child_types(self):
+        """
+        Returns a dict of {parent case type: [subcase types...]}
+        """
+        parent_child_types = {}
         for app_doc in iter_docs(Application.get_db(), self.app_ids):
             app = Application.wrap(app_doc)
             for module in app.get_modules():
+                case_type = module.case_type
+                if case_type not in parent_child_types:
+                    parent_child_types[case_type] = []
                 if module.module_type == 'basic':
-                    if not module.case_type == self.case_type:
-                        continue
                     for form in module.get_forms():
                         for subcase in form.actions.subcases:
-                            subcase_properties.extend(subcase.case_properties.keys())
+                            parent_child_types[case_type].append(subcase.case_type)
                 elif module.module_type == 'advanced':
                     for form in module.get_forms():
-                        for subcase in form.actions.get_open_subcase_actions(self.case_type):
-                            subcase_properties.extend(subcase.case_properties.keys())
-        subcase_properties = self._filter_by_term(set(subcase_properties))
-        return self._format_response(subcase_properties)
+                        for subcase in form.actions.get_open_subcase_actions(case_type):
+                            parent_child_types[case_type].append(subcase.case_type)
+        return self.clean_dict_list(parent_child_types)
+
+    @property
+    def search_subcase_property_response(self):
+        """
+        Returns a dict of {parent case type: [subcase properties]}
+        """
+        result = {}
+        parent_child_types = self.get_parent_child_types()
+        all_case_properties = self.search_case_property_response
+
+        for parent_type in parent_child_types:
+            result[parent_type] = []
+            for subcase_type in parent_child_types[parent_type]:
+                result[parent_type].extend(all_case_properties[subcase_type])
+        return self.clean_dict_list(result)
 
     @property
     def search_forms_response(self):

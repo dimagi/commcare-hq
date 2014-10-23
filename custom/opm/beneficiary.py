@@ -95,12 +95,18 @@ class OPMCaseRow(object):
     @property
     @memoized
     def dod(self):
-        return self.case_property('dod')
+        dod = self.case_property('dod')
+        if dod and not isinstance(dod, datetime.date):
+            raise InvalidRow('Delivery date must be a date!')
+        return dod
 
     @property
     @memoized
     def edd(self):
-        return self.case_property('edd')
+        edd = self.case_property('edd')
+        if edd and not isinstance(edd, datetime.date):
+            raise InvalidRow('EDD must be a date!')
+        return edd
 
     @property
     @memoized
@@ -231,6 +237,12 @@ class OPMCaseRow(object):
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
             raise InvalidRow
+
+    @property
+    def closed_date(self):
+        if not self.closed:
+            return EMPTY_FIELD
+        return str(self.case_property('closed_on', EMPTY_FIELD))
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -588,7 +600,9 @@ class ConditionsMet(OPMCaseRow):
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner Id"), False),
-        ('closed', _('Closed'), False)
+        ('closed', _('Closed'), False),
+        ('closed_date', _("Closed On"), True),
+        ('village', _("Village Name"), False),
     ]
 
     def __init__(self, case, report, child_index=1):
@@ -651,6 +665,7 @@ class Beneficiary(OPMCaseRow):
         ('total', _("Amount to be paid to beneficiary"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
+        ('closed_date', _("Closed On"), True),
     ]
 
     def __init__(self, case, report, child_index=1):

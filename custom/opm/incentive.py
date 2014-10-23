@@ -29,33 +29,14 @@ class Worker(object):
 
     def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
 
-        # make sure worker passes the filters
-        filter_by = []
-        if hasattr(report, 'request'):
-            if report.awcs:
-                filter_by = [('awc_name', 'awcs')]
-            elif report.gp:
-                filter_by = [('owner_id', 'gp')]
-            elif report.block:
-                filter_by = [('block', 'blocks')]
-
-        report.filter(
-            lambda key: worker.user_data.get(key),
-            # user.awc, user.block
-            filter_by
-        )
-
-        def user_data(property):
-            return worker.user_data.get(property)
-
-        self.name = worker.name
-        self.awc_name = user_data('awc')
-        self.awc_code = user_data('awc_code')
-        self.bank_name = user_data('bank_name')
-        self.ifs_code = user_data('ifs_code')
-        self.account_number = user_data('account_number')
-        self.block = user_data('block')
-        self.owner_id = worker._id
+        self.name = worker.get('name')
+        self.awc_name = worker.get('awc')
+        self.awc_code = worker.get('awc_code')
+        self.bank_name = worker.get('bank_name')
+        self.ifs_code = worker.get('ifs_code')
+        self.account_number = worker.get('account_number')
+        self.block = worker.get('block')
+        self.owner_id = worker.get('doc_id')
 
         if case_sql_data:
             self.women_registered = str(case_sql_data.get('women_registered_total', None))

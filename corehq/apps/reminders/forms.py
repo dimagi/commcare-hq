@@ -59,6 +59,14 @@ from .models import (
     UI_SIMPLE_FIXED,
     UI_COMPLEX,
     RECIPIENT_ALL_SUBCASES,
+    DAY_MON,
+    DAY_TUE,
+    DAY_WED,
+    DAY_THU,
+    DAY_FRI,
+    DAY_SAT,
+    DAY_SUN,
+    DAY_ANY,
 )
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
@@ -722,6 +730,7 @@ MATCH_TYPE_CHOICES = (
 START_REMINDER_ALL_CASES = 'start_all_cases'
 START_REMINDER_ON_CASE_DATE = 'case_date'
 START_REMINDER_ON_CASE_PROPERTY = 'case_property'
+START_REMINDER_ON_DAY_OF_WEEK = 'day_of_week'
 
 START_DATE_OFFSET_BEFORE = 'offset_before'
 START_DATE_OFFSET_AFTER = 'offset_after'
@@ -758,12 +767,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
         label=ugettext_noop("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label=ugettext_noop("Send Reminder To"),
+        label=ugettext_noop("Send Reminder For"),
         required=False,
         choices=(
             (START_REMINDER_ALL_CASES, ugettext_noop("All Cases")),
             (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("Only Cases in Following State")),
-            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Cases Based on Date in Case")),
         ),
     )
     ## send options > start_reminder_on = case_date
@@ -786,6 +794,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
         choices=(
             (START_PROPERTY_OFFSET_IMMEDIATE, ugettext_noop("Immediately")),
             (START_PROPERTY_OFFSET_DELAY, ugettext_noop("Delay By")),
+            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Date in Case")),
+            (START_REMINDER_ON_DAY_OF_WEEK, ugettext_noop("Specific Day of Week")),
         )
     )
     # becomes start_offset
@@ -796,13 +806,25 @@ class BaseScheduleCaseReminderForm(forms.Form):
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
         required=False,
-        label=ugettext_noop("Case Property"),
+        label=ugettext_noop("Enter a Case Property"),
     )
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
             (START_DATE_OFFSET_BEFORE, ugettext_noop("Before Date By")),
             (START_DATE_OFFSET_AFTER, ugettext_noop("After Date By")),
+        )
+    )
+    start_day_of_week = forms.ChoiceField(
+        required=False,
+        choices=(
+            (DAY_SUN, ugettext_noop("Sunday")),
+            (DAY_MON, ugettext_noop("Monday")),
+            (DAY_TUE, ugettext_noop("Tuesday")),
+            (DAY_WED, ugettext_noop("Wednesday")),
+            (DAY_THU, ugettext_noop("Thursday")),
+            (DAY_FRI, ugettext_noop("Friday")),
+            (DAY_SAT, ugettext_noop("Saturday")),
         )
     )
     # becomes start_offset
@@ -825,7 +847,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
-        label=ugettext_noop("Case Property"),
+        label=ugettext_noop("Enter a Case Property"),
         required=False
     )
     recipient_case_match_type = forms.ChoiceField(
@@ -1042,8 +1064,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
-                data_bind="value: case_type",
-                data_placeholder=_("Enter a Case Type"),
+                data_bind="value: case_type, typeahead: available_case_types",
+                placeholder=_("Enter a Case Type"),
                 help_bubble_text=_(
                     "Choose which case type this reminder will be "
                     "sent out for."
@@ -1063,6 +1085,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'start_property',
                         css_class="input-xlarge",
+                        data_bind="typeahead: getAvailableCaseProperties",
                     ),
                     InlineField(
                         'start_match_type',
@@ -1074,8 +1097,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         data_bind="visible: isStartMatchValueVisible",
                     ),
                 ),
+                data_bind="visible: isStartReminderCaseProperty",
+            ),
+            crispy.Div(
                 BootstrapMultiField(
-                    _("Begin Sending"),
+                    _("Day of Reminder"),
                     InlineField(
                         'start_property_offset_type',
                         data_bind="value: start_property_offset_type",
@@ -1092,14 +1118,19 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         css_class="help-inline",
                         data_bind="visible: isStartPropertyOffsetVisible",
                     ),
+                    InlineField(
+                        'start_day_of_week',
+                        css_class='input-medium',
+                        data_bind="visible: isStartDayOfWeekVisible",
+                    ),
                 ),
-                data_bind="visible: isStartReminderCaseProperty"
             ),
             crispy.Div(
                 crispy.Field(
                     'start_date',
-                    data_placeholder="Enter a Case Property",
+                    placeholder=_("Enter Case Property"),
                     css_class="input-xlarge",
+                    data_bind="typeahead: getAvailableCaseProperties",
                 ),
                 BootstrapMultiField(
                     "",
@@ -1138,8 +1169,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 _("When Case Property"),
                 InlineField(
                     'recipient_case_match_property',
-                    placeholder="Enter a Case Property",
                     css_class="input-xlarge",
+                    data_bind="typeahead: getAvailableSubcaseProperties",
                 ),
                 InlineField(
                     'recipient_case_match_type',
@@ -1249,6 +1280,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'until',
                         css_class="input-large",
+                        data_bind="typeahead: getAvailableCaseProperties",
                     ),
                     css_class="help-inline",
                     data_bind="visible: isUntilVisible",
@@ -1342,28 +1374,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return current_values
 
     @property
-    def select2_fields(self):
-        case_properties = [
-            'start_property',
-            'start_date',
-            'until',
-            'fire_time_aux',
-        ]
-        subcase_properties = [
-            'recipient_case_match_property',
-        ]
-
-        _fmt_field = lambda name, action: {'name': name, 'action': action}
-        return ([_fmt_field('case_type', 'search_case_type')] +
-                [_fmt_field(cp, 'search_case_property') for cp in case_properties] +
-                [_fmt_field(sp, 'search_subcase_property') for sp in subcase_properties])
-
-    @property
     def relevant_choices(self):
         return {
             'MATCH_ANY_VALUE': MATCH_ANY_VALUE,
             'START_REMINDER_ON_CASE_PROPERTY': START_REMINDER_ON_CASE_PROPERTY,
             'START_REMINDER_ON_CASE_DATE': START_REMINDER_ON_CASE_DATE,
+            'START_REMINDER_ON_DAY_OF_WEEK': START_REMINDER_ON_DAY_OF_WEEK,
             'RECIPIENT_CASE': RECIPIENT_CASE,
             'RECIPIENT_SUBCASE': RECIPIENT_SUBCASE,
             'RECIPIENT_USER_GROUP': RECIPIENT_USER_GROUP,
@@ -1444,6 +1460,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 raise ValidationError(_("Please enter a positive number."))
             return start_property_offset
         return None
+
+    def clean_start_day_of_week(self):
+        if self.cleaned_data['start_property_offset_type'] == START_REMINDER_ON_DAY_OF_WEEK:
+            day_of_week = self.cleaned_data['start_day_of_week']
+            try:
+                day_of_week = int(day_of_week)
+                assert day_of_week >= 0 and day_of_week <= 6
+                return day_of_week
+            except (ValueError, TypeError, AssertionError):
+                raise ValidationError(_("Please choose a day of the week."))
+        return DAY_ANY
 
     def clean_start_date(self):
         if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
@@ -1702,6 +1729,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'start_match_type',
             'start_value',
             'start_date',
+            'start_day_of_week',
             'recipient',
             'user_group_id',
             'recipient_case_match_property',
@@ -1792,6 +1820,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             start_reminder_on = START_REMINDER_ON_CASE_DATE
             initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
                                                  else START_DATE_OFFSET_AFTER)
+
+        if reminder_handler.start_day_of_week != DAY_ANY:
+            initial['start_property_offset_type'] = START_REMINDER_ON_DAY_OF_WEEK
 
         start_offset = abs(reminder_handler.start_offset or 0)
 

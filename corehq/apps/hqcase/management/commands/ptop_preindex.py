@@ -1,9 +1,12 @@
+# Don't monkey-patch threads; can't share a db connection across threads
+import thread; reload(thread)
+from gevent import monkey; monkey.patch_all(thread=False)
+
 from datetime import datetime
 from optparse import make_option
 from django.core.mail import mail_admins
 from pillowtop import get_all_pillows
 from corehq.pillows.user import add_demo_user_to_user_index
-from gevent import monkey; monkey.patch_all()
 import gevent
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
@@ -30,7 +33,6 @@ def get_reindex_commands(pillow_class_name):
         'AppPillow': ['ptop_fast_reindex_apps'],
         'GroupPillow': ['ptop_fast_reindex_groups'],
         'SMSPillow': ['ptop_fast_reindex_smslogs'],
-        'TCSMSPillow': ['ptop_fast_reindex_tc_smslogs'],
         'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
         'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
     }

@@ -13,6 +13,7 @@ from datetime import datetime
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
+
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
     'WeeklyNotification',
@@ -36,6 +37,11 @@ class Command(BaseCommand):
                     dest='doc_types_exclude',
                     default='',
                     help='Comma-separated list of Document Types to NOT copy.'),
+        make_option('--exclude-attachments',
+                    action='store_true',
+                    dest='exclude_attachments',
+                    default=False,
+                    help="Don't copy document attachments, just the docs themselves."),
         make_option('--since',
                     action='store',
                     dest='since',
@@ -78,6 +84,7 @@ class Command(BaseCommand):
         sourcedb = Database(args[0])
         domain = args[1].strip()
         simulate = options['simulate']
+        exclude_attachments = options['exclude_attachments']
 
         since = datetime.strptime(options['since'], '%Y-%m-%d').isoformat() if options['since'] else None
 
@@ -104,7 +111,7 @@ class Command(BaseCommand):
                 startkey = [x for x in [domain, type, since] if x is not None]
                 endkey = [x for x in [domain, type, {}] if x is not None]
                 self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since,
-                               postgres_db=options['postgres_db'])
+                               postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
         elif options['id_file']:
             path = options['id_file']
             if not os.path.isfile(path):
@@ -118,13 +125,14 @@ class Command(BaseCommand):
                 print "Path '%s' does not contain any document ID's" % path
                 sys.exit(1)
 
-            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'])
+            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'],
+                           exclude_attachments=exclude_attachments)
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
             self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
-                           postgres_db=options['postgres_db'])
+                           postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
 
     def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -142,7 +150,7 @@ class Command(BaseCommand):
                 print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
-                  type=None, since=None, exclude_types=None, postgres_db=None):
+                  type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
 
         if not doc_ids:
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
@@ -158,7 +166,7 @@ class Command(BaseCommand):
 
         queue = Queue(150)
         for i in range(NUM_PROCESSES):
-            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log).start()
+            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log, exclude_attachments).start()
 
         for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
             count += 1
@@ -227,12 +235,13 @@ class Command(BaseCommand):
 
 class Worker(Process):
 
-    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log):
+    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log, exclude_attachments):
         super(Worker, self).__init__()
         self.queue = queue
         self.sourcedb = sourcedb
         self.targetdb = targetdb
         self.exclude_types = exclude_types
+        self.exclude_attachments = exclude_attachments
         self.total = total
         self.simulate = simulate
         self.err_log = err_log
@@ -245,7 +254,7 @@ class Worker(Process):
                           (doc["doc_type"], count, self.total, doc["doc_type"], doc["_id"])
                 else:
                     if not self.simulate:
-                        dt = DocumentTransform(doc, self.sourcedb)
+                        dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
                         save(dt, self.targetdb)
                     print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:

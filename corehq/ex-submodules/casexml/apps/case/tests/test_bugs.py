@@ -202,6 +202,9 @@ class CaseBugTest(TestCase):
 
 class TestCaseHierarchy(TestCase):
 
+    def setUp(self):
+        delete_all_cases()
+
     def test_normal_index(self):
         cp = CommCareCase(
             _id='parent',
@@ -233,3 +236,46 @@ class TestCaseHierarchy(TestCase):
         # this call used to fail with infinite recursion
         hierarchy = get_case_hierarchy(c, {})
         self.assertEqual(1, len(hierarchy['case_list']))
+
+    def test_complex_index(self):
+        cp = CommCareCase(
+            _id='parent',
+            name='parent',
+            type='parent',
+        )
+        cp.save()
+
+        # cases processed according to ID order so ensure that this case is
+        # processed after the task case by making its ID sort after task ID
+        cc = CommCareCase(
+            _id='z_goal',
+            name='goal',
+            type='goal',
+            indices=[CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')],
+        )
+        cc.save()
+
+        cc = CommCareCase(
+            _id='task1',
+            name='task1',
+            type='task',
+            indices=[
+                CommCareCaseIndex(identifier='goal', referenced_type='goal', referenced_id='z_goal'),
+                CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')
+            ],
+        )
+        cc.save()
+
+        # with 'ignore_relationship_types' if a case got processed along the ignored relationship first
+        # then it got marked as 'seen' and would be not be processed again when it came to the correct relationship
+        type_info = {
+            'task': {
+                'ignore_relationship_types': ['parent']
+            },
+        }
+
+        hierarchy = get_case_hierarchy(cp, type_info)
+        self.assertEqual(3, len(hierarchy['case_list']))
+        self.assertEqual(1, len(hierarchy['child_cases']))
+        self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
+        self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))

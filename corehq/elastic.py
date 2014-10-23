@@ -2,13 +2,13 @@ import copy
 from urllib import unquote
 import rawes
 from django.conf import settings
+from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX
-from corehq.pillows.mappings.tc_sms_mapping import TCSMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -17,20 +17,40 @@ def get_es(timeout=30):
     """
     Get a handle to the configured elastic search DB
     """
-    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST, 
+    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
                                     settings.ELASTICSEARCH_PORT),
                          timeout=timeout)
+
+def send_to_elasticsearch(index, doc, delete=False):
+    """
+    Utility method to update the doc in elasticsearch.
+    Duplicates the functionality of pillowtop but can be called directly.
+    """
+    doc_id = doc['_id']
+    path = ES_URLS[index].replace('_search', doc_id)
+    doc_exists = get_es().head(path)
+    return send_to_es(
+        path=path,
+        es_getter=get_es,
+        name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
+                                  send_to_elasticsearch.__name__, index),
+        data=doc,
+        except_on_failure=True,
+        update=doc_exists,
+        delete=delete,
+    )
 
 
 ES_URLS = {
     "forms": XFORM_INDEX + '/xform/_search',
     "cases": CASE_INDEX + '/case/_search',
+    "active_cases": CASE_INDEX + '/case/_search',
     "users": USER_INDEX + '/user/_search',
+    "users_all": USER_INDEX + '/user/_search',
     "domains": DOMAIN_INDEX + '/hqdomain/_search',
     "apps": APP_INDEX + '/app/_search',
     "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
-    "tc_sms": TCSMS_INDEX + '/tc_sms/_search',
     "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
 }
 
@@ -45,14 +65,21 @@ ADD_TO_ES_FILTER = {
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
+    "users_all": [
+        {"term": {"base_doc": "couchuser"}},
+    ],
+    "active_cases": [
+        {"term": {"closed": False}},
+    ],
 }
 
 DATE_FIELDS = {
     "forms": "received_on",
     "cases": "opened_on",
+    "active_cases": "modified_on",
     "users": "created_on",
+    "users_all": "created_on",
     "sms": 'date',
-    "tc_sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -67,35 +94,8 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def get_stats_data(domains, histo_type, datespan, interval="day"):
-    histo_data = dict([(d['display_name'],
-                        es_histogram(histo_type, d["names"], datespan.startdate_display, datespan.enddate_display, interval=interval))
-                        for d in domains])
-
-    def _total_until_date(histo_type, doms=None):
-        query = {"in": {"domain.exact": doms}} if doms is not None else {"match_all": {}}
-        q = {
-            "query": query,
-            "filter": {
-                "and": [
-                    {"range": {DATE_FIELDS[histo_type]: {"lt": datespan.startdate_display}}},
-                ],
-            },
-        }
-        q["filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, [])[:])
-
-        return es_query(q=q, es_url=ES_URLS[histo_type], size=0)["hits"]["total"]
-
-    return {
-        'histo_data': histo_data,
-        'initial_values': dict([(dom["display_name"],
-                                 _total_until_date(histo_type, dom["names"])) for dom in domains]),
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None, interval="day", q=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None,
+        interval="day", q=None, filters=[]):
     q = q or {"query": {"match_all":{}}}
 
     if domains is not None:
@@ -123,6 +123,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
 
+    q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
 
     es = get_es()
@@ -299,12 +300,16 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
-def stream_esquery(esquery, chunksize=100):
+def stream_esquery(esquery, chunksize=SIZE_LIMIT):
     size = esquery._size if esquery._size is not None else SIZE_LIMIT
     start = esquery._start if esquery._start is not None else 0
     for chunk_start in range(start, start + size, chunksize):
-        for hit in esquery.size(chunksize).start(chunk_start).run().raw_hits:
-            yield hit
+        es_query_set = esquery.size(chunksize).start(chunk_start).run()
+        if not es_query_set.raw_hits:
+            break
+        else:
+            for hit in es_query_set.raw_hits:
+                yield hit
 
 
 def parse_args_for_es(request, prefix=None):

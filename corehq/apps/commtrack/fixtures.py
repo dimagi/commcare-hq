@@ -22,6 +22,11 @@ def _simple_fixture_generator(user, name, fields, data_fn, last_sync=None):
     list_elem = ElementTree.Element(name_plural)
     root.append(list_elem)
     for data_item in data:
+        # don't add archived items to the restore (these are left
+        # in to determine if the fixture needs to be synced)
+        if hasattr(data_item, 'is_archived') and data_item.is_archived:
+            continue
+
         item_elem = ElementTree.Element(name, {'id': data_item.get_id})
         list_elem.append(item_elem)
         for field_name in fields:
@@ -73,7 +78,7 @@ def product_fixture_generator(user, version, last_sync):
         'cost',
         'product_data'
     ]
-    data_fn = lambda: Product.by_domain(user.domain)
+    data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
     return _simple_fixture_generator(user, "product", fields, data_fn, last_sync)
 
 

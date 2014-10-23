@@ -10,10 +10,10 @@ from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
-                                               FormAliasIndicatorAdminCRUDManager,
-                                               FormLabelIndicatorAdminCRUDManager, CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager, BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
+        FormAliasIndicatorAdminCRUDManager, FormLabelIndicatorAdminCRUDManager,
+        CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager,
+        BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
@@ -95,6 +95,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         """
         If an indicator with the same namespace, domain, and version exists, create a new indicator with the
         version number incremented.
+        # todo, this feels a bit buggy, so replace bulk copy indicators with
+        # copy to domain at some point
         """
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -128,6 +130,42 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
 
         new_indicator.save()
         return new_indicator
+
+    @classmethod
+    def copy_to_domain(cls, domain, doc, override=False):
+        """
+        This copies an indicator doc to the current domain. Intended to be used
+        by the export indicators feature.
+        :param domain: the name of the domain the indicator should be copied to
+        :param doc: the dictionary of kwargs to create the indicator
+        :param override: Whether to override the existing indicator
+        :return: True if indicator was copied, False if not
+        """
+        for reserved in ['_id', '_rev', 'last_modified']:
+            if reserved in doc:
+                del doc[reserved]
+
+        couch_key = cls._generate_couch_key(
+            domain=domain,
+            reverse=True,
+            **doc
+        )
+        existing_indicator = cls.view(
+            cls.indicator_list_view(),
+            reduce=False,
+            include_docs=False,
+            descending=True,
+            limit=1,
+            **couch_key
+        ).first()
+        if existing_indicator and not override:
+            return False
+        if existing_indicator:
+            existing_indicator.delete()
+        new_indicator = cls(domain=domain, **doc)
+        new_indicator.last_modified = datetime.datetime.utcnow()
+        new_indicator.save()
+        return True
 
     @classmethod
     @memoized
@@ -256,8 +294,10 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         startdate = self.get_last_day_of_month(start_year, start_month)
 
         months = months_between(startdate, enddate)
+        if num_previous_months == 0:
+            months = [(enddate.year, enddate.month)]
 
-        month_dates = list()
+        month_dates = []
         for year, month in months:
             if as_datespans:
                 month_dates.append(self.get_month_datespan((year, month)))
@@ -271,10 +311,20 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         return month_dates, datespan
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None,
-                                  num_previous_months=12, return_only_dates=False):
+                                  num_previous_months=12, return_only_dates=False,
+                                  is_debug=False):
+        """
+        :param user_ids: List of CommCareUser Ids contributing to this indicator
+        :param current_month: integer of the current month
+        :param num_previous_months: number of months to be subtracted from the
+        current month to get the full retrospective
+        :param return_only_dates:
+        :param is_debug: True if debugging the view
+        :return: list of dictionaries with retrospective data
+        """
         raise NotImplementedError
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         raise NotImplementedError
 
 
@@ -384,9 +434,13 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             results.extend(self.get_results_with_key(key, user_id, datespan, date_group_level, reduce))
         return results
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
+        results = self.get_raw_results(user_ids, datespan, reduce=not is_debug)
+        if is_debug:
+            contributing_ids = [r['id'] for r in results]
+            value = len(contributing_ids)
+            return value, contributing_ids
         value = 0
-        results = self.get_raw_results(user_ids, datespan, reduce=True)
         for result in results:
             value += self._get_value_from_result(result)
         return value
@@ -440,31 +494,37 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
         return totals
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None,
-                                  num_previous_months=12, return_only_dates=False):
+                                  num_previous_months=12, return_only_dates=False,
+                                  is_debug=False):
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
-        retro_months, datespan = self.get_first_days(current_month, num_previous_months,
-            as_datespans=not self.group_results_in_retrospective)
+        results_are_grouped = self.group_results_in_retrospective and not is_debug
 
+        retro_months, datespan = self.get_first_days(current_month, num_previous_months,
+            as_datespans=not results_are_grouped)
         monthly_totals = {}
-        if self.group_results_in_retrospective and not return_only_dates:
+        if results_are_grouped and not return_only_dates:
             monthly_totals = self.get_values_by_month(user_ids, datespan)
 
-        retrospective = list()
+        retrospective = []
         for i, this_month in enumerate(retro_months):
-            startdate = this_month if self.group_results_in_retrospective else this_month.startdate
+            startdate = this_month if results_are_grouped else this_month.startdate
             y = str(startdate.year)
             m = str(startdate.month)
             if return_only_dates:
                 month_value = 0
-            elif self.group_results_in_retrospective:
+            elif results_are_grouped:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
             else:
-                month_value = self.get_value(user_ids, this_month)
-            retrospective.append(dict(
-                date=startdate,
-                value=month_value
-            ))
+                month_value = self.get_value(user_ids, this_month, is_debug=is_debug)
+            monthly_result = {
+                'date': startdate,
+            }
+            if isinstance(month_value, tuple):
+                monthly_result['debug_data'] = month_value[1]
+                month_value = month_value[0]
+            monthly_result['value'] = month_value
+            retrospective.append(monthly_result)
         return retrospective
 
     @classmethod
@@ -494,7 +554,7 @@ class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     def group_results_in_retrospective(self):
         return False
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         raise NotImplementedError("You must override the parent's get_value. "
                                   "Reduce / group will not work here.")
 
@@ -504,11 +564,12 @@ class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         Use this indicator to count the # of unique emitted values.
     """
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
         all_emitted_values = [r['value'] for r in results]
         all_emitted_values = set(all_emitted_values)
-        return len(all_emitted_values)
+        value = len(all_emitted_values)
+        return (value, all_emitted_values) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):
@@ -520,10 +581,13 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         Get the median value of what is emitted. Assumes that emits are numbers.
     """
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
-        values = [item.get('value', 0) for item in results if item.get('value')]
-        return numpy.median(values) if values else None
+        data = dict([(r['id'], r['value']) for r in results])
+        value = numpy.median(data.values()) if data.values() else None
+        if is_debug:
+            return value, data
+        return value
 
     @classmethod
     def get_nice_name(cls):
@@ -540,13 +604,14 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         It then finds the sum of all the last emitted unique values.
     """
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
         unique_values = {}
         for item in results:
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
-        return sum(unique_values.values())
+        value = sum(unique_values.values())
+        return (value, unique_values.keys()) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):
@@ -569,34 +634,60 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     def denominator(self):
         return self.get_current(self.namespace, self.domain, self.denominator_slug)
 
-    def get_value(self, user_ids, datespan=None):
-        numerator = self.numerator.get_value(user_ids, datespan)
-        denominator = self.denominator.get_value(user_ids, datespan)
+    def get_value(self, user_ids, datespan=None, is_debug=False):
+        numerator = self.numerator.get_value(user_ids, datespan, is_debug=is_debug)
+        denominator = self.denominator.get_value(user_ids, datespan, is_debug=is_debug)
+
+        debug_data = {}
+        if isinstance(denominator, tuple):
+            debug_data["denominator"] = denominator[1]
+            denominator = denominator[0]
+        if isinstance(numerator, tuple):
+            debug_data["numerator"] = numerator[1]
+            numerator = numerator[0]
+
         ratio = float(numerator)/float(denominator) if denominator > 0 else None
-        return dict(
-            numerator=numerator,
-            denominator=denominator,
-            ratio=ratio
-        )
+        value = {
+            'numerator': numerator,
+            'denominator': denominator,
+            'ratio': ratio,
+        }
+        if is_debug:
+            value['contributing_ids'] = debug_data
+        return value
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None,
-                                  num_previous_months=12, return_only_dates=False):
-        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
-            return_only_dates)
-        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
-            return_only_dates)
-        combined_retro = list()
+                                  num_previous_months=12, return_only_dates=False,
+                                  is_debug=False):
+        numerator_retro = self.numerator.get_monthly_retrospective(
+            user_ids, current_month, num_previous_months,
+            return_only_dates, is_debug=is_debug)
+        denominator_retro = self.denominator.get_monthly_retrospective(
+            user_ids, current_month, num_previous_months,
+            return_only_dates, is_debug=is_debug)
+        combined_retro = []
         for i, denominator in enumerate(denominator_retro):
             numerator = numerator_retro[i]
             n_val = numerator.get('value', 0)
             d_val = denominator.get('value', 0)
             ratio = float(n_val)/float(d_val) if d_val else None
-            combined_retro.append(dict(
-                date=denominator.get('date'),
-                numerator=n_val,
-                denominator=d_val,
-                ratio=ratio
-            ))
+
+            monthly_combined = {
+                'date': denominator.get('date'),
+                'numerator': n_val,
+                'denominator': d_val,
+                'ratio': ratio,
+            }
+
+            if is_debug:
+                monthly_combined.update({
+                    'contributing_ids': {
+                        'numerator': numerator.get('contributing_ids'),
+                        'denominator': denominator.get('contributing_ids'),
+                    },
+                })
+
+            combined_retro.append(monthly_combined)
         return combined_retro
 
     @classmethod

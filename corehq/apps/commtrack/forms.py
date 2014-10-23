@@ -25,7 +25,7 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10)
+    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10, required=False)
     description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
     unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
     program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
@@ -33,12 +33,21 @@ class ProductForm(forms.Form):
 
     def __init__(self, product, *args, **kwargs):
         self.product = product
+
         kwargs['initial'] = self.product._doc
         kwargs['initial']['code'] = self.product.code
+
         super(ProductForm, self).__init__(*args, **kwargs)
+
         programs = Program.by_domain(self.product.domain, wrap=False)
         self.fields['program_id'].choices = tuple((prog['_id'], prog['name']) for prog in programs)
 
+        # make sure to select default program if
+        # this is a new product
+        if not product._id:
+            self.initial['program_id'] = Program.default_for_domain(
+                self.product.domain
+            )._id
 
     def clean_name(self):
         name = self.cleaned_data['name']
@@ -215,14 +224,24 @@ class ProgramForm(forms.Form):
 
     def __init__(self, program, *args, **kwargs):
         self.program = program
+
         kwargs['initial'] = self.program._doc
         super(ProgramForm, self).__init__(*args, **kwargs)
+
+        # don't let users rename the uncategorized
+        # program
+        if program.default:
+            self.fields['name'].required = False
+            self.fields['name'].widget.attrs['readonly'] = True
 
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        other_programs = [p for p in Program.by_domain(self.program.domain) if p._id != self.program._id]
-        if name in [p.name for p in other_programs]:
+        other_program_names = [
+            p['name'] for p in Program.by_domain(self.program.domain, wrap=False)
+            if p['_id'] != self.program._id
+        ]
+        if name in other_program_names:
             raise forms.ValidationError(_('Name already in use'))
 
         return name

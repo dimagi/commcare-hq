@@ -1,4 +1,5 @@
 from urllib import urlencode
+from StringIO import StringIO
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
@@ -18,12 +19,14 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import (
     Subscription, Invoice, BillingAccount, BillingAccountType,
-)
+    SubscriptionAdjustment, SubscriptionAdjustmentReason,
+    SubscriptionAdjustmentMethod)
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
 )
 from corehq.apps.users.models import FakeUser, WebUser
+from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
@@ -92,17 +95,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "domain %s: %s" % (domain.name, e)
                 )
             except BillingContactInfoError as e:
-                subject = "[%s] Invoice Generation Issue" % domain.name
-                email_content = render_to_string(
-                    'accounting/invoice_error_email.html', {
-                        'project': domain.name,
-                        'error_msg': 'BillingContactInfoError: %s' % e,
-                    }
-                )
-                send_HTML_email(
-                    subject, settings.BILLING_EMAIL, email_content,
-                    email_from="Dimagi Billing Bot <%s>" % settings.DEFAULT_FROM_EMAIL
-                )
+                logger.info("BillingContactInfoError: %s" % e)
             except InvoiceError as e:
                 logger.error(
                     "[BILLING] Could not create invoice for domain %s: %s" % (
@@ -211,7 +204,9 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     if exclude_trials:
         ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
-        subscription.send_ending_reminder_email()
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            subscription.send_ending_reminder_email()
 
 
 @task
@@ -256,22 +251,58 @@ def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
 
-    from corehq.apps.accounting.interface import SubscriptionInterface
-    request = HttpRequest()
-    params = urlencode((
-        ('report_filter_end_date_use_filter', 'on'),
-        ('end_date_startdate', today.isoformat()),
-        ('end_date_enddate', in_forty_days.isoformat()),
-        ('active_status', 'Active'),
-        (filters.TrialStatusFilter.slug, filters.TrialStatusFilter.NON_TRIAL),
-    ))
-    request.GET = QueryDict(params)
-    request.couch_user = FakeUser(
-        domain="hqadmin",
-        username="admin@dimagi.com",
+    ending_in_forty_days = filter(
+        lambda sub: not sub.is_renewed,
+        Subscription.objects.filter(
+            date_end__lte=in_forty_days,
+            date_end__gte=today,
+            is_active=True,
+            is_trial=False,
+        ))
+
+    if not ending_in_forty_days:
+        logger.info(
+            "[Billing] Did not send summary of ending subscriptions because "
+            "there are none."
+        )
+        return
+
+    table = [[
+        "Project Space", "Account", "Plan", "Salesforce Contract ID",
+        "Dimagi Contact", "Start Date", "End Date", "Receives Invoice",
+        "Created By",
+    ]]
+
+    def _fmt_row(sub):
+        try:
+            created_by_adj = SubscriptionAdjustment.objects.filter(
+                subscription=sub,
+                reason=SubscriptionAdjustmentReason.CREATE
+            ).order_by('date_created')[0]
+            created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
+                created_by_adj.method, "Unknown")
+        except (IndexError, SubscriptionAdjustment.DoesNotExist):
+            created_by = "Unknown"
+        return [
+            sub.subscriber.domain,
+            "%s (%s)" % (sub.account.name, sub.account.id),
+            sub.plan_version.plan.name,
+            sub.salesforce_contract_id,
+            sub.account.dimagi_contact,
+            sub.date_start,
+            sub.date_end,
+            "No" if sub.do_not_invoice else "YES",
+            created_by,
+        ]
+
+    table.extend([_fmt_row(sub) for sub in ending_in_forty_days])
+
+    file_to_attach = StringIO()
+    export_from_tables(
+        [['End in 40 Days', table]],
+        file_to_attach,
+        Format.XLS_2007
     )
-    subs = SubscriptionInterface(request)
-    subs.is_rendered_as_email = True
 
     email_context = {
         'today': today.isoformat(),
@@ -282,14 +313,14 @@ def weekly_digest():
     email_content_plaintext = render_to_string(
         'accounting/digest_email.txt', email_context)
 
-    format_dict = Format.FORMAT_DICT[Format.CSV]
-    excel_attachment = {
-        'title': 'Subscriptions_%(start)s_%(end)s.csv' % {
+    format_dict = Format.FORMAT_DICT[Format.XLS_2007]
+    file_attachment = {
+        'title': 'Subscriptions_%(start)s_%(end)s.xls' % {
             'start': today.isoformat(),
             'end': in_forty_days.isoformat(),
         },
         'mimetype': format_dict['mimetype'],
-        'file_obj': subs.excel_response,
+        'file_obj': file_to_attach,
     }
     from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
     send_HTML_email(
@@ -298,37 +329,10 @@ def weekly_digest():
         email_content,
         email_from=from_email,
         text_content=email_content_plaintext,
-        file_attachments=[excel_attachment],
+        file_attachments=[file_attachment],
     )
 
     logger.info(
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
-
-
-# Email this out every Tuesday morning
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=2))
-def blank_contact_emails_digest():
-    all_billing_accounts_no_emails = BillingAccount.objects.filter(
-        models.Q(billingcontactinfo=None) |
-        models.Q(billingcontactinfo__emails=None)
-    ).exclude(account_type=BillingAccountType.TRIAL)
-    if all_billing_accounts_no_emails.count() > 0:
-        email_content = render_to_string(
-            'accounting/account_emails_digest.html', {
-                'accounts': all_billing_accounts_no_emails,
-                'base_url': Site.objects.get_current().domain,
-            }
-        )
-        from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
-        send_HTML_email(
-            "Accounts Without Contact Emails: %d needing attention" % all_billing_accounts_no_emails.count(),
-            settings.INVOICING_CONTACT_EMAIL,
-            email_content,
-            email_from=from_email,
-        )
-        logger.info(
-            "[BILLING] Sent summary of accounts without contact emails"
-        )
-

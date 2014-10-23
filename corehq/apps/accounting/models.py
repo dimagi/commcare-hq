@@ -40,6 +40,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
 )
+from corehq.apps.domain.models import Domain
 
 logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -745,6 +746,18 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def save(self, *args, **kwargs):
+        """
+        Overloaded to update domain pillow with subscription information
+        """
+        super(Subscription, self).save(*args, **kwargs)
+        try:
+            Domain.get_by_name(self.subscriber.domain).save()
+        except Exception as e:
+            # If a subscriber doesn't have a valid domain associated with it 
+            # we don't care the pillow won't be updated
+            pass
+
     @property
     def allowed_attr_changes(self):
         """
@@ -778,7 +791,11 @@ class Subscription(models.Model):
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
         self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
+
         self.date_end = today
+        if self.date_start > today:
+            self.date_start = today
+
         self.is_active = False
         self.save()
 
@@ -1157,13 +1174,13 @@ class Subscription(models.Model):
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
             raise NewSubscriptionError(_(
-                "There is already a subscription '%s' that has an end date "
+                "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %s - %s." % (
-                    future_subscriptions.latest('date_created'),
-                    date_start,
-                    date_end
-                )
+                "subscription %(start)s - %(end)s." % {
+                    'sub': future_subscriptions.latest('date_created'),
+                    'start': date_start,
+                    'end': date_end
+                }
             ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
@@ -1299,14 +1316,14 @@ class Invoice(models.Model):
             admins = WebUser.get_admins_by_domain(
                 self.subscription.subscriber.domain
             )
+            contact_emails = [a.email if a.email else a.username for a in admins]
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
                 "email to for the domain %s. Sending to domain admins instead: "
                 "%s." %
-                (self.subscription.subscriber.domain, ', '.join(admins))
+                (self.subscription.subscriber.domain, ', '.join(contact_emails))
             )
-            contact_emails = [a.email if a.email else a.username for a in admins]
         return contact_emails
 
 

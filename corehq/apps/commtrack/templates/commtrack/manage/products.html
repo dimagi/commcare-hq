@@ -4,6 +4,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
     <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
 {% endblock %}
 
@@ -11,8 +12,7 @@
     <script type="text/javascript">
         $(function(){
             var help_text = {
-                "Archive Product": "",
-                "Delete Product": ""
+                "Archive Product": "{{ archive_help_text }}",
             };
 
             $('.help_popover').popover({
@@ -29,7 +29,7 @@
                 start_page: {{ data_list.page }},
                 limit: {{ data_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}'
+                list_url: '{% url "commtrack_product_fetch" domain %}',
             });
         });
     </script>
@@ -48,6 +48,17 @@
             </p>
             {% endif %}
          </div>
+        <div class="span4">
+            {% if not show_inactive %}
+                <a class="btn btn-inverse pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+                    {% trans "Show Archived Products" %}
+                </a>
+            {% else %}
+                <a class="btn pull-right" href="?" style="margin-right: 2.5em;">
+                    {% trans "Show Active Products" %}
+                </a>
+            {% endif %}
+        </div>
     </div>
 </header>
 
@@ -99,8 +110,8 @@
                         {% blocktrans %}There are no products for this project yet.{% endblocktrans %}
                     {% endif %}
                 </div>
-                <table data-bind="visible: data_list().length" class="table table-striped table-bordered" style="margin-bottom:0">
-                    <thead>
+                <table data-bind="visible: data_list().length + archive_action_items().length > 0" class="table table-striped table-bordered" style="margin-bottom:0">
+                    <thead data-bind="visible: data_list().length > 0">
                         <tr>
                             <th></th>
                             <th>{% trans "Product" %}</th>
@@ -108,17 +119,67 @@
                             <th>{% trans "Program" %}</th>
                             <th>{% trans "Description" %}</th>
                             <th>{% trans "Units" %}</th>
+                            <th class="help_popover" data-help-key="Archive Product">
+                                <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
+                            </th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: data_list">
                         <tr>
-                            <td data-bind="text: $parent.get_user_index($index)"></td>
+                            <td data-bind="text: $parent.get_data_index($index)"></td>
                             <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
                             <td data-bind="text: code_"></td>
                             <td data-bind="text: program"></td>
                             <td data-bind="text: description"></td>
                             <td data-bind="text: unit"></td>
+                            <td>
+                                <a data-bind="attr: {href: '#'+_id}, text: archive_action_text"
+                                   class="btn {% if not show_inactive %}btn-inverse{% endif %}"
+                                   data-toggle="modal"></a>
+
+                                <div class="modal hide fade" data-bind="attr: {id: _id}">
+                                    <div class="modal-header">
+                                        <a class="close" data-dismiss="modal">&times;</a>
+                                        <h4>
+                                            {% trans "Are you sure you want to" %}
+                                            <strong data-bind="text: archive_action_text"></strong>
+                                            '<span data-bind="text: name"></span>'?</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p data-bind="text: archive_action_desc"></p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="#" class="btn btn-warning"
+                                           data-unsuccessful-text="{% if show_inactive %}Un-Archive{% else %}Archive{% endif %} unsuccessful. Try Again?"
+                                           data-loading-text="{% if show_inactive %}Un-Archiving Product...{% else %}Archiving Product...{% endif %}"
+                                           data-bind="text: archive_action_text, click: function (data, event) { $parent.take_archive_action(archive_url, event.currentTarget, $index) }"></a>
+                                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                                    </div>
+                                </div>
+                            </a></td>
                         </tr>
+                    </tbody>
+                    <tbody data-bind="fadeVisible: archive_action_items().length > 0">
+                        <tr>
+                            <th data-bind="attr: {colspan: colspan()}">
+                                {% if show_inactive %}
+                                    {% trans "Re-Activated / Un-Archived Products" %}
+                                {% else %}
+                                    {% trans "Archived Products" %}
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </tbody>
+                    <tbody data-bind="foreach: archive_action_items, fadeVisible: archive_action_items().length">
+                    <tr>
+                        <td data-bind="text: $index()+1"></td>
+                        <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
+                        <td data-bind="text: code_"></td>
+                        <td data-bind="text: program"></td>
+                        <td data-bind="text: description"></td>
+                        <td data-bind="text: unit"></td>
+                        <td>{% if show_inactive %}Un-Archived{% else %}Archived{% endif %}</td>
+                    </tr>
                     </tbody>
                 </table>
                 {% include 'commtrack/manage/partials/pagination.html' %}

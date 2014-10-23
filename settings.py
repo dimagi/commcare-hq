@@ -17,6 +17,10 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
+# Enable LESS_WATCH if you want less.js to constantly recompile.
+# Useful if you're making changes to the less files and don't want to refresh
+# your page.
+LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -180,6 +184,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djkombu',
+    'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
@@ -308,7 +313,6 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
-    'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
@@ -321,6 +325,8 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
+
     'custom.care_pathways',
     'bootstrap3_crispy',
 )
@@ -978,7 +984,6 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
-    'trialconnect',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -994,6 +999,7 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('wvindia2', 'wvindia2')
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1149,14 +1155,15 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow'
+        'custom.care_pathways.models.FarmerRecordFluffPillow',
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
-    ],
-    'trialconnect': [
-        'custom.trialconnect.smspillow.TCSMSPillow',
     ],
 }
 
@@ -1244,9 +1251,6 @@ DOMAIN_MODULE_MAP = {
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
-    'gc': 'custom.trialconnect',
-    'tc-test': 'custom.trialconnect',
-    'trialconnect': 'custom.trialconnect',
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
 
@@ -1255,6 +1259,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
+    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
 }
@@ -1292,4 +1297,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
+    'less_watch': LESS_WATCH,
 }

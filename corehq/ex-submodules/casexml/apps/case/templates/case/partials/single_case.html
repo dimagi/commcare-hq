@@ -31,6 +31,9 @@
     {% if case.case_attachments %}
         <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
     {% endif %}
+    {% if ledgers %}
+        <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
+    {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -105,6 +108,29 @@
             {% endfor %}
             </table>
         </div> <!-- end case-attachments tab -->
+    {% endif %}
+    {% if ledgers %}
+        <div class="tab-pane" id="case-ledgers">
+        {% for section_id, product_map in ledgers.items %}
+            <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
+            <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Product" %}</th>
+                    <th>{% trans "Balance" %}</th>
+                    <th>{% trans "Last Updated" %}</th>
+                </tr>
+            </thead>
+            {% for product_name, transaction in product_map %}
+            <tr>
+                <td>{{ product_name }}</td>
+                <td>{{ transaction.stock_on_hand }}</td>
+                <td><a href="{% url 'render_form_data' case.domain transaction.report.form_id %}">{{ transaction.report.date }}</a></td>
+            </tr>
+            {% endfor %}
+            </table>
+        {% endfor %}
+        </div> <!-- end case-ledgers tab -->
     {% endif %}
     <div class="tab-pane {% if not dynamic_properties %}active{% endif %}" id="history" class="row-fluid">
         <div class="span5">
