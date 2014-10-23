@@ -33,7 +33,7 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def filters(self):
-        return [fv.to_sql_filter() for _, fv in self._filter_values.items()]
+        return [fv.to_sql_filter() for fv in self._filter_values.values()]
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
@@ -41,7 +41,7 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def filter_values(self):
-        return {k: v for _, fv in self._filter_values.items() for k, v in fv.to_sql_values().items()}
+        return {k: v for fv in self._filter_values.values() for k, v in fv.to_sql_values().items()}
 
     @property
     def group_by(self):

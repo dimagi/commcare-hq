@@ -109,6 +109,7 @@ class DatespanFilter(BaseFilter):
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
     def default_value(self):
+        # default to a week's worth of data.
         return DateSpan.since(7)
 
     def filter_context(self):
@@ -139,7 +140,7 @@ class ChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         choice = kwargs[self.name]
-        return [choice_obj for choice_obj in self.choices if choice_obj.value == choice][0]
+        return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
 
     def default_value(self):
         return self.choices[0]

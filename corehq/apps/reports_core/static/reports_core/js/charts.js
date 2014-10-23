@@ -88,11 +88,11 @@ var charts = (function() {
                 transformedData.push(record);
             }
             var chart = nv.models.multiBarChart()
-              .transitionDuration(350)
-              .reduceXTicks(true)
-              .rotateLabels(0)
-              .showControls(true)
-              .groupSpacing(0.1)
+                .transitionDuration(350)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .showControls(true)
+                .groupSpacing(0.1)
             ;
 
             d3.select(svgSelector)
@@ -129,12 +129,12 @@ var charts = (function() {
                 }
             }
             var chart = nv.models.multiBarChart()
-              .transitionDuration(350)
-              .reduceXTicks(true)
-              .rotateLabels(0)
-              .showControls(true)
-              .groupSpacing(0.1)
-              .stacked(true)
+                .transitionDuration(350)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .showControls(true)
+                .groupSpacing(0.1)
+                .stacked(true)
             ;
 
             d3.select(svgSelector)

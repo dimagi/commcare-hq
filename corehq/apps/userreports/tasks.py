@@ -23,9 +23,11 @@ def rebuild_indicators(indicator_config_id):
 
 
 def _get_db(doc_type):
-    # This is intentionally not using magic to introspect the class from the name, though it could
-    doc_type_mapping = {
-        'XFormInstance': XFormInstance,
-        'CommCareCase': CommCareCase,
-    }
-    return doc_type_mapping.get(doc_type, CommCareCase).get_db()
+    return _DOC_TYPE_MAPPING.get(doc_type, CommCareCase).get_db()
+
+
+# This is intentionally not using magic to introspect the class from the name, though it could
+_DOC_TYPE_MAPPING = {
+    'XFormInstance': XFormInstance,
+    'CommCareCase': CommCareCase,
+}

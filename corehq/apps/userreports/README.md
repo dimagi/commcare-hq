@@ -37,7 +37,7 @@ The tests are also a good source of documentation for the various filter and ind
 Inspecting database tables
 --------------------------
 
-The easiest way to inspect the database tables is to us the sql command line utility.
+The easiest way to inspect the database tables is to use the sql command line utility.
 This can be done by runnning `./manage.py dbshell` or using `psql`.
-The naming convention for tables is: `configurable_indicators_[domain name]_[table id]`.
+The naming convention for tables is: `configurable_indicators_[domain name]_[table id]_[hash]`.
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.

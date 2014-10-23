@@ -78,10 +78,10 @@ class BaseFilterSpec(JsonObject):
 
 def _getter_from_property_reference(spec):
     if spec.property_name:
-        assert not spec.property_path
+        assert not spec.property_path, spec.property_name
         return DictGetter(property_name=spec.property_name)
     else:
-        assert spec.property_path
+        assert spec.property_path, spec.property_name
         return NestedDictGetter(property_path=spec.property_path)
 
 

@@ -93,7 +93,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         data.set_filter_values(self.filter_values)
         total_records = data.get_total_records()
         return self.render_json_response({
-            'data_keys': data.slugs(),
             'aaData': list(data.get_data()),
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,

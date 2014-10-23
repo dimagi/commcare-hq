@@ -81,7 +81,7 @@ class DataSourceConfiguration(ConfigurableIndicatorMixIn, Document):
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
-        # these two functions implicitly call other validation
+        # these two properties implicitly call other validation
         self.filter
         self.indicators
 

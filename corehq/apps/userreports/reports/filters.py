@@ -20,6 +20,7 @@ class DateFilterValue(FilterValue):
         assert filter.type == 'date'
         # todo: might want some better way to set defaults
         if value is None:
+            # default to one week
             value = DateSpan.since(7)
         assert isinstance(value, DateSpan)
         super(DateFilterValue, self).__init__(filter, value)
