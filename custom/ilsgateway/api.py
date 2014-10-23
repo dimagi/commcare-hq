@@ -96,10 +96,10 @@ class SMSUser(object):
 
 
 class Location(object):
-    def __init__(self, id, name, type, parent, latitude, longitude, code, groups):
+    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups):
         self.id = id
         self.name = name
-        self.type = type
+        self.location_type = location_type
         self.parent = parent
         self.latitude = latitude
         self.longitude = longitude
@@ -111,7 +111,7 @@ class Location(object):
         return cls(
             id=json_rep['id'],
             name=json_rep['name'],
-            type=json_rep['type'],
+            location_type=json_rep['location_type'],
             parent=json_rep['parent_id'],
             latitude=json_rep['latitude'],
             longitude=json_rep['longitude'],
