@@ -225,7 +225,7 @@ def create_alert(org, date, type, details):
 
 
 def default_start_date():
-    return datetime(2014, 3, 1)
+    return datetime(2010, 11, 1)
 
 
 def populate_report_data(start_date, end_date, domain=None):
