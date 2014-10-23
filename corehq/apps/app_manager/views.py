@@ -1738,7 +1738,8 @@ def get_app_translations(request, domain):
     translations = Translation.get_translations(lang, key, one)
     if isinstance(translations, dict):
         translations = {k: v for k, v in translations.items()
-                        if not id_strings.is_custom_app_string(k)}
+                        if not id_strings.is_custom_app_string(k)
+                        and '=' not in k}
     return json_response(translations)
 
 
