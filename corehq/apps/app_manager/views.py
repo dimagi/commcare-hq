@@ -2643,34 +2643,35 @@ def download_bulk_app_translations(request, domain, app_id):
 
         # Populate module sheet
         rows[module_string] = []
-        case_properties = lcsMerge(
-            list(module.case_details.short.get_columns()),
-            list(module.case_details.long.get_columns()),
-            lambda x, y: x.to_json() == y.to_json()
-        )
 
-        for property in case_properties:
-            detail = property['token']
+        for list_or_detail, case_properties in [
+            ("list", module.case_details.short.get_columns()),
+            ("detail", module.case_details.long.get_columns())
+        ]:
+            for detail in case_properties:
 
-            field_name = detail.field
-            if detail.format == "enum":
-                field_name += " (ID Mapping Text)"
+                field_name = detail.field
+                if detail.format == "enum":
+                    field_name += " (ID Mapping Text)"
 
-            # Add a row for this case detail
-            rows[module_string].append(
-                (field_name,) +
-                tuple(detail.header.get(lang, "") for lang in app.langs)
-            )
+                # Add a row for this case detail
+                rows[module_string].append(
+                    (field_name, list_or_detail) +
+                    tuple(detail.header.get(lang, "") for lang in app.langs)
+                )
 
-            # Add a row for any mapping pairs
-            if detail.format == "enum":
-                for mapping in detail.enum:
-                    rows[module_string].append(
-                        (mapping.key + " (ID Mapping Value)",) +
-                        tuple(
-                            mapping.value.get(lang, "") for lang in app.langs
+                # Add a row for any mapping pairs
+                if detail.format == "enum":
+                    for mapping in detail.enum:
+                        rows[module_string].append(
+                            (
+                                mapping.key + " (ID Mapping Value)",
+                                list_or_detail
+                            ) + tuple(
+                                mapping.value.get(lang, "")
+                                for lang in app.langs
+                            )
                         )
-                    )
 
         for form_index, form in enumerate(module.get_forms()):
             form_string = module_string + "_form" + str(form_index+1)

@@ -77,12 +77,23 @@ def process_bulk_app_translation_upload(app, f):
                     'Skipping sheet "%s", could not find "%s" column' %
                     (sheet.worksheet.title, expected_columns[1])
                 ))
+                continue
+        elif expected_columns[0] == "case_property":
+            # It's a module sheet
+            if (expected_columns[0] not in sheet.headers
+                    or expected_columns[1] not in sheet.headers):
+                msgs.append((
+                    messages.error,
+                    'Skipping sheet "%s", could not find case_property'
+                    ' or list_or_detail column.' % sheet.worksheet.title
+                ))
+                continue
         else:
+            # It's a form sheet
             if expected_columns[0] not in sheet.headers:
                 msgs.append((
                     messages.error,
-                    'Skipping sheet "%s", could not find label' +
-                    ' or case_property column.' %
+                    'Skipping sheet "%s", could not find label columns' %
                     sheet.worksheet.title
                 ))
                 continue
@@ -166,7 +177,7 @@ def expected_bulk_app_sheet_headers(app):
     for mod_index, module in enumerate(app.get_modules()):
 
         module_string = "module" + str(mod_index + 1)
-        headers.append([module_string, ['case_property'] + languages_list])
+        headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
             form_string = module_string + "_form" + str(form_index+1)
@@ -350,9 +361,9 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
 def update_case_list_translations(sheet, rows, app):
     """
-    Modify the translations of a module case list display properties given
-    a sheet of translation data. The properties in the sheet must be in the
-    exact same order that they appear in the bulk app translation download.
+    Modify the translations of a module case list and detail display properties
+    given a sheet of translation data. The properties in the sheet must be in
+    the exact same order that they appear in the bulk app translation download.
     This function does not save the modified app to the database.
 
     :param sheet:
@@ -362,13 +373,9 @@ def update_case_list_translations(sheet, rows, app):
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
-    # The spreadsheet contains a list of case properties. These are in the same
-    # order as the bulk download and the HQ "Display Properties" page. This
-    # list is formed by merging two other lists. These lists also might contain
-    # DetailColumn instances in them that have exactly the same attributes
-    # (but are in different positions). Therefore, a little bit of work needs
-    # to be done to figure out which instance(s) in which list corresponds to
-    # each row in the sheet.
+    # The list might contain DetailColumn instances in them that have exactly
+    # the same attributes (but are in different positions). Therefore we must
+    # match sheet rows to DetailColumns by position.
     msgs = []
 
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
@@ -399,44 +406,19 @@ def update_case_list_translations(sheet, rows, app):
             condensed_rows.append(rows[i])
             i += 1
 
+    list_rows = [
+        row for row in condensed_rows if row['list_or_detail'] == 'list'
+    ]
+    detail_rows = [
+        row for row in condensed_rows if row['list_or_detail'] == 'detail'
+    ]
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
-    merged_case_properties = lcsMerge(
-        short_details,
-        long_details,
-        lambda x, y: x.to_json() == y.to_json()
-    )
-
-    # Build two lists, short_index_lookup and long_index_lookup with the
-    # following properties:
-    # short_index_lookup[i] is the index into module.case_properties.short of
-    # the DetailColumn corresponding to the DetailColumn at merged_case_properties[i].
-    # long_index_lookup is defined analogously.
-
-    short_index_lookup = []
-    long_index_lookup = []
-    last_short = 0
-    last_long = 0
-    for prop in merged_case_properties:
-        if prop['x']:
-            short_index_lookup.append(last_short)
-            last_short += 1
-        else:
-            short_index_lookup.append(None)
-        if prop['y']:
-            long_index_lookup.append(last_long)
-            last_long += 1
-        else:
-            long_index_lookup.append(None)
 
     # Update the translations
-    for i in range(len(merged_case_properties)):
-        row = condensed_rows[i]
-        detail_objs_to_modify = []
-        if short_index_lookup[i] is not None:
-            detail_objs_to_modify.append(short_details[short_index_lookup[i]])
-        if long_index_lookup[i] is not None:
-            detail_objs_to_modify.append(long_details[long_index_lookup[i]])
+
+    for row, detail in \
+            zip(list_rows, short_details) + zip(detail_rows, long_details):
 
         # The logic for updating a mapping and updating a MappingItem and a
         # DetailColumn is almost the same. So, we smush the two together.
@@ -446,18 +428,17 @@ def update_case_list_translations(sheet, rows, app):
             if ok_to_delete_translations:
                 for lang in app.langs:
                     translation = translation_row['default_%s' % lang]
-                    for detail in detail_objs_to_modify:
-                        if index == 0:
-                            # For DetailColumns
-                            language_dict = detail.header
-                        else:
-                            # For MappingItems
-                            language_dict = detail['enum'][index-1].value
+                    if index == 0:
+                        # For DetailColumns
+                        language_dict = detail.header
+                    else:
+                        # For MappingItems
+                        language_dict = detail['enum'][index-1].value
 
-                        if translation:
-                            language_dict[lang] = translation
-                        else:
-                            language_dict.pop(lang, None)
+                    if translation:
+                        language_dict[lang] = translation
+                    else:
+                        language_dict.pop(lang, None)
             else:
                 msgs.append((
                     messages.error,
