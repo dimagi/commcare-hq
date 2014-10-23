@@ -154,7 +154,7 @@ def delivery_group_reports_task(domain, endpoint):
         has_next = True
         next_url = ""
         while has_next:
-            delivery_group_reports, meta = endpoint.get_deliverygroupreports(domain,
+            meta, delivery_group_reports = endpoint.get_deliverygroupreports(domain,
                                                                              next_url_params=next_url,
                                                                              filters=dict(supply_point=facility),
                                                                              facility=facility)
@@ -171,30 +171,6 @@ def delivery_group_reports_task(domain, endpoint):
 
 
 @task
-def groupsummary_task(domain, endpoint):
-    for facility in FACILITIES:
-        group_summaries = endpoint.get_groupsummary(domain, filters=dict(org_summary__supply_point=facility),
-                                                    facility=facility)[1]
-        for gs in group_summaries:
-            try:
-                GroupSummary.objects.get(external_id=gs.external_id)
-            except GroupSummary.DoesNotExist:
-                gs.save()
-
-
-@task
-def product_availability_task(domain, endpoint):
-    for facility in FACILITIES:
-        product_availability = endpoint.get_productavailabilitydata(domain, filters=dict(supply_point=facility),
-                                                                    facility=facility)[1]
-        for pa in product_availability:
-            try:
-                ProductAvailabilityData.objects.get(external_id=pa.external_id)
-            except ProductAvailabilityData.DoesNotExist:
-                pa.save()
-
-
-@task
 def stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
@@ -203,10 +179,10 @@ def stock_data_task(domain):
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint)
-    group(product_stock_task.delay(domain, endpoint),
-          stock_transaction_task.delay(domain, endpoint),
-          supply_point_statuses_task.delay(domain, endpoint),
-          delivery_group_reports_task.delay(domain, endpoint))
+    product_stock_task.delay(domain, endpoint)
+    stock_transaction_task.delay(domain, endpoint)
+    supply_point_statuses_task.delay(domain, endpoint)
+    delivery_group_reports_task.delay(domain, endpoint)
 
 
 #@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

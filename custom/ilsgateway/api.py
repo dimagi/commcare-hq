@@ -186,8 +186,6 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
         self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus/')
         self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
-        self.groupsummary_url = self._urlcombine(self.base_uri, '/groupsummary/')
-        self.productavailabilitydata_url = self._urlcombine(self.base_uri, '/productavailabilitydata/')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -264,14 +262,3 @@ class ILSGatewayEndpoint(EndpointMixin):
         location_id = self._get_location_id(facility, domain)
         return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
                       for deliverygroupreport in deliverygroupreports]
-
-    def get_groupsummary(self, domain, facility, **kwargs):
-        meta, groupsummaries = self.get_objects(self.groupsummary_url, **kwargs)
-        location_id = self._get_location_id(facility, domain)
-        return meta, [GroupSummary.wrap_form_json(gs, location_id) for gs in groupsummaries]
-
-    def get_productavailabilitydata(self, domain, facility, **kwargs):
-        meta, productavailabilitydata = self.get_objects(self.productavailabilitydata_url, **kwargs)
-        location_id = self._get_location_id(facility, domain)
-        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain, location_id)
-                      for pad in productavailabilitydata]
