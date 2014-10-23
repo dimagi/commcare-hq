@@ -215,4 +215,3 @@ def report_run(domain):
         new_run.complete = True
         new_run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.now())
-

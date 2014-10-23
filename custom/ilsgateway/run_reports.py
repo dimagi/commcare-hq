@@ -550,4 +550,3 @@ def _init_group_summary(supply_point, date):
     for title in NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
                                            title=title)
-

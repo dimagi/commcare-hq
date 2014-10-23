@@ -44,7 +44,7 @@ class ILSData(object):
     vals_config = {
         SupplyPointStatusTypes.SOH_FACILITY: ['on_time', 'late', 'not_submitted', 'not_responding'],
         SupplyPointStatusTypes.DELIVERY_FACILITY: ['del_received', 'del_not_received', 'not_responding'],
-        SupplyPointStatusTypes.R_AND_R_FACILITY:  ['on_time', 'late', 'not_submitted', 'not_responding'],
+        SupplyPointStatusTypes.R_AND_R_FACILITY: ['on_time', 'late', 'not_submitted', 'not_responding'],
         SupplyPointStatusTypes.SUPERVISION_FACILITY: ['sup_received', 'sup_not_received', 'not_responding']
     }
 

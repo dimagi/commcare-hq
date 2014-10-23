@@ -123,4 +123,3 @@ def sync_stock_data(request, domain):
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
     return HttpResponse('OK')
-
