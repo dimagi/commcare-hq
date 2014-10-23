@@ -170,6 +170,7 @@ def expected_bulk_app_sheet_headers(app):
     headers.append(
         ["Modules_and_forms",
             ['Type', 'sheet_name'] + languages_list +
+            ['label_for_cases_%s' % l for l in app.langs] +
             ['icon_filepath', 'audio_filepath', 'unique_id']
         ]
     )
@@ -241,9 +242,18 @@ def process_modules_and_forms_sheet(rows, app):
             for lang in app.langs:
                 translation = row['default_%s' % lang]
                 if translation:
-                    document.name[lang] = row['default_%s' % lang]
+                    document.name[lang] = translation
                 else:
                     document.name.pop(lang, None)
+
+        if (has_at_least_one_translation(row, 'label_for_cases', app.langs)
+                and hasattr(document, 'case_label')):
+            for lang in app.langs:
+                translation = row['label_for_cases_%s' % lang]
+                if translation:
+                    document.case_label[lang] = translation
+                else:
+                    document.case_label.pop(lang, None)
 
         image = row.get('icon_filepath', None)
         audio = row.get('audio_filepath', None)
