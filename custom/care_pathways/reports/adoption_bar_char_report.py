@@ -53,6 +53,9 @@ class AdoptionBarChartReport(CareBaseReport):
             TAG_RE = re.compile(r'<[^>]+>')
             return TAG_RE.sub('', text)
 
+        if self.request.GET.get('group_by', '') == 'domain':
+            rows = sorted(rows, key=lambda k: strip_html(k[0]))
+
         if rows:
             charts = [[], [], []]
             for row in rows:
@@ -60,8 +63,8 @@ class AdoptionBarChartReport(CareBaseReport):
                 for ix, column in enumerate(row[1:]):
                     charts[ix].append({'x': group_name, 'y': p2f(column)})
 
-            chart.add_dataset('All', charts[0], "blue")
-            chart.add_dataset('Some', charts[1], "green")
+            chart.add_dataset('All', charts[0], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('None', charts[2], "red")
 
     @property

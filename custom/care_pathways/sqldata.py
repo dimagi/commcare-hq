@@ -321,7 +321,7 @@ class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
     title = ''
     fix_left_col = False
     show_charts = True
-    chart_x_label = 'Practices'
+    chart_x_label = ''
     chart_y_label = 'Percentages'
 
     def headers(self, data):

@@ -67,6 +67,8 @@ class AdoptionDisaggregatedReport(CareBaseReport):
     def get_chart(self, rows, x_label, y_label):
         chunks = _chunks(list(rows), self.chunk_size+1)
         charts = []
+        if self.request.GET.get('group_by', '') == 'domain':
+            chunks = sorted(chunks, key=lambda k: k[0][0])
         for chunk in chunks:
 
             chart = MultiBarChart(chunk[0][0], x_axis=Axis(x_label), y_axis=Axis(y_label))
@@ -90,8 +92,8 @@ class AdoptionDisaggregatedReport(CareBaseReport):
                 for ix, column in enumerate(row[1:]):
                     charts[ix].append({'x': group_name, 'y': column})
 
-            chart.add_dataset('All', charts[0], "blue")
-            chart.add_dataset('Some', charts[1], "green")
+            chart.add_dataset('All', charts[0], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('None', charts[2], "red")
 
     @property
