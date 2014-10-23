@@ -3,11 +3,17 @@ from south.v2 import DataMigration
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.commtrack.models import SupplyPointCase
 from dimagi.utils.couch.database import iter_docs
+import corehq.apps.locations.models as location_models
+from dimagi.utils.couch import sync_docs
 
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # hack: manually force sync Location design docs before
+        # we try to load from them
+        sync_docs.sync(location_models, verbosity=2)
+
         properties_to_sync = [
             ('location_id', '_id'),
             'domain',
