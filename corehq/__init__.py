@@ -105,34 +105,11 @@ def REPORTS(project):
 
     return reports
 
+
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
         yield (reportset.section_title, filter(None, (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
-
-
-def _get_configurable_reports(project):
-    """
-    User configurable reports
-    """
-    configs = ReportConfiguration.by_domain(project.name)
-    if configs:
-        def _make_report_class(config):
-            from corehq.apps.reports.generic import GenericReportView
-
-            # this is really annoying.
-            # the report metadata should really be pulled outside of the report classes
-            @classmethod
-            def get_url(cls, domain):
-                return reverse(ConfigurableReport.slug, args=[domain, config._id])
-
-            return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
-                'name': config.title,
-                'description': config.description,
-                'get_url': get_url,
-            })
-
-        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
 
 
 def _make_dynamic_report(report_config, keyprefix):
@@ -160,6 +137,30 @@ def _make_dynamic_report(report_config, keyprefix):
 
     # dynamically create a report class
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
+
+
+def _get_configurable_reports(project):
+    """
+    User configurable reports
+    """
+    configs = ReportConfiguration.by_domain(project.name)
+    if configs:
+        def _make_report_class(config):
+            from corehq.apps.reports.generic import GenericReportView
+
+            # this is really annoying.
+            # the report metadata should really be pulled outside of the report classes
+            @classmethod
+            def get_url(cls, domain):
+                return reverse(ConfigurableReport.slug, args=[domain, config._id])
+
+            return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
+                'name': config.title,
+                'description': config.description,
+                'get_url': get_url,
+            })
+
+        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
 
 
 
