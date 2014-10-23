@@ -100,18 +100,18 @@ def REPORTS(project):
     else:
         reports.append(messaging)
 
-    reports.extend(dynamic_reports(project))
-    reports.extend(configurable_reports(project))
+    reports.extend(_get_dynamic_reports(project))
+    reports.extend(_get_configurable_reports(project))
 
     return reports
 
-def dynamic_reports(project):
+def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
-        yield (reportset.section_title, filter(None, (make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
+        yield (reportset.section_title, filter(None, (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
 
 
-def configurable_reports(project):
+def _get_configurable_reports(project):
     """
     User configurable reports
     """
@@ -135,7 +135,7 @@ def configurable_reports(project):
         yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
 
 
-def make_dynamic_report(report_config, keyprefix):
+def _make_dynamic_report(report_config, keyprefix):
     """create a report class the descends from a generic report class but has specific parameters set"""
     # a unique key to distinguish this particular configuration of the generic report
     report_key = keyprefix + [report_config.report, report_config.name]
