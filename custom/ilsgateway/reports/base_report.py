@@ -21,8 +21,10 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMi
 
     @property
     def report_config(self):
-        org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate, self.datespan.enddate),
-                                                         supply_point=self.request.GET.get('location_id'))
+        org_summary = OrganizationSummary.objects.filter(
+            date__range=(self.datespan.startdate, self.datespan.enddate),
+            supply_point=self.request.GET.get('location_id')
+        )
         return dict(
             domain=self.domain,
             org_summary=org_summary[0] if len(org_summary) > 0 else None,

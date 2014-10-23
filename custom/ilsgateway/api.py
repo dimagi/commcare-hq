@@ -31,7 +31,8 @@ class Product(object):
 
 
 class ILSUser(object):
-    def __init__(self, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login,
+    def __init__(self, username, first_name, last_name, email,
+                 password, is_staff, is_active, is_superuser, last_login,
                  date_joined, location, supply_point):
         self.username = username
         self.first_name = first_name
@@ -77,7 +78,6 @@ class SMSUser(object):
         self.email = email
         self.phone_numbers = phone_numbers
         self.backend = backend
-
 
     @classmethod
     def from_json(cls, json_rep):
@@ -147,7 +147,8 @@ class ProductStock(object):
 
 
 class StockTransaction(object):
-    def __init__(self, beginning_balance, date, ending_balance, product_code, quantity, report_type, supply_point_id):
+    def __init__(self, beginning_balance, date, ending_balance, product_code, quantity, report_type,
+                 supply_point_id):
         self.beginning_balance = beginning_balance
         self.date = date
         self.ending_balance = ending_balance
@@ -255,12 +256,14 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_supplypointstatuses(self, domain, facility, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
         location_id = self._get_location_id(facility, domain)
-        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in supplypointstatuses]
+        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
+                      supplypointstatuses]
 
     def get_deliverygroupreports(self, domain, facility, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
         location_id = self._get_location_id(facility, domain)
-        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id) for deliverygroupreport in deliverygroupreports]
+        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
+                      for deliverygroupreport in deliverygroupreports]
 
     def get_groupsummary(self, domain, facility, **kwargs):
         meta, groupsummaries = self.get_objects(self.groupsummary_url, **kwargs)
@@ -270,4 +273,5 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_productavailabilitydata(self, domain, facility, **kwargs):
         meta, productavailabilitydata = self.get_objects(self.productavailabilitydata_url, **kwargs)
         location_id = self._get_location_id(facility, domain)
-        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain, location_id) for pad in productavailabilitydata]
+        return meta, [ProductAvailabilityData.wrap_from_json(pad, domain, location_id)
+                      for pad in productavailabilitydata]

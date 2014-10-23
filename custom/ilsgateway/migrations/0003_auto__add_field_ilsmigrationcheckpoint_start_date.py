@@ -4,19 +4,19 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
         # Adding field 'ILSMigrationCheckpoint.start_date'
-        db.add_column(u'ilsgateway_ilsmigrationcheckpoint', 'start_date', self.gf('django.db.models.fields.DateTimeField')(null=True), keep_default=False)
-
+        db.add_column(u'ilsgateway_ilsmigrationcheckpoint', 'start_date',
+                      self.gf('django.db.models.fields.DateTimeField')(null=True), keep_default=False)
 
     def backwards(self, orm):
         
         # Deleting field 'ILSMigrationCheckpoint.start_date'
         db.delete_column(u'ilsgateway_ilsmigrationcheckpoint', 'start_date')
-
 
     models = {
         u'ilsgateway.deliverygroupreport': {
@@ -25,7 +25,9 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'quantity': ('django.db.models.fields.IntegerField', [], {}),
-            'report_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 10, 20, 6, 29, 28, 283536)', 'auto_now_add': 'True', 'blank': 'True'}),
+            'report_date': ('django.db.models.fields.DateTimeField', [],
+                            {'default': 'datetime.datetime(2014, 10, 20, 6, 29, 28, 283536)',
+                             'auto_now_add': 'True', 'blank': 'True'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'ilsgateway.ilsmigrationcheckpoint': {

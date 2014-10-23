@@ -38,16 +38,16 @@ class GlobalStats(BaseDomainView):
 
         main_context = super(GlobalStats, self).main_context
         context = {
-            'supply_points':  len(list(Location.by_domain(self.domain))),
+            'supply_points': len(list(Location.by_domain(self.domain))),
             'facilities': facilities,
-            'contacts':  contacts[0]['value'] if contacts else 0,
+            'contacts': contacts[0]['value'] if contacts else 0,
             'web_users': web_users[0]['value'] if web_users else 0,
-            'products':  products,
+            'products': products,
             #TODO add next after the enlargement ILS migration
-            'product_stocks':  0,
-            'stock_transactions':  0,
-            'inbound_messages':  0,
-            'outbound_messages':  0
+            'product_stocks': 0,
+            'stock_transactions': 0,
+            'inbound_messages': 0,
+            'outbound_messages': 0
         }
         main_context.update(context)
         return main_context

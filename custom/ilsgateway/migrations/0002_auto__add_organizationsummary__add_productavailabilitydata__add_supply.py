@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -64,7 +65,8 @@ class Migration(SchemaMigration):
         # Adding model 'GroupSummary'
         db.create_table(u'ilsgateway_groupsummary', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('org_summary', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['ilsgateway.OrganizationSummary'])),
+            ('org_summary',
+             self.gf('django.db.models.fields.related.ForeignKey')(to=orm['ilsgateway.OrganizationSummary'])),
             ('title', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
             ('total', self.gf('django.db.models.fields.PositiveIntegerField')(default=0)),
             ('responded', self.gf('django.db.models.fields.PositiveIntegerField')(default=0)),
@@ -75,14 +77,18 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'ilsgateway', ['GroupSummary'])
 
         # Adding field 'DeliveryGroupReport.external_id'
-        db.add_column(u'ilsgateway_deliverygroupreport', 'external_id', self.gf('django.db.models.fields.PositiveIntegerField')(null=True, db_index=True), keep_default=False)
+        db.add_column(u'ilsgateway_deliverygroupreport', 'external_id',
+                      self.gf('django.db.models.fields.PositiveIntegerField')(null=True, db_index=True),
+                      keep_default=False)
 
         # Changing field 'DeliveryGroupReport.report_date'
-        db.alter_column(u'ilsgateway_deliverygroupreport', 'report_date', self.gf('django.db.models.fields.DateTimeField')())
+        db.alter_column(u'ilsgateway_deliverygroupreport', 'report_date',
+                        self.gf('django.db.models.fields.DateTimeField')())
 
         # Adding field 'SupplyPointStatus.external_id'
-        db.add_column(u'ilsgateway_supplypointstatus', 'external_id', self.gf('django.db.models.fields.PositiveIntegerField')(null=True, db_index=True), keep_default=False)
-
+        db.add_column(u'ilsgateway_supplypointstatus', 'external_id',
+                      self.gf('django.db.models.fields.PositiveIntegerField')(null=True, db_index=True),
+                      keep_default=False)
 
     def backwards(self, orm):
         
@@ -105,11 +111,11 @@ class Migration(SchemaMigration):
         db.delete_column(u'ilsgateway_deliverygroupreport', 'external_id')
 
         # Changing field 'DeliveryGroupReport.report_date'
-        db.alter_column(u'ilsgateway_deliverygroupreport', 'report_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True))
+        db.alter_column(u'ilsgateway_deliverygroupreport', 'report_date',
+                        self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True))
 
         # Deleting field 'SupplyPointStatus.external_id'
         db.delete_column(u'ilsgateway_supplypointstatus', 'external_id')
-
 
     models = {
         u'ilsgateway.alert': {
@@ -117,34 +123,42 @@ class Migration(SchemaMigration):
             'create_date': ('django.db.models.fields.DateTimeField', [], {}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
             'expires': ('django.db.models.fields.DateTimeField', [], {}),
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'number': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'text': ('django.db.models.fields.TextField', [], {}),
-            'type': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'type': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True',
+                                                               'blank': 'True'}),
             'update_date': ('django.db.models.fields.DateTimeField', [], {}),
-            'url': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'})
+            'url': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True',
+                                                              'blank': 'True'})
         },
         u'ilsgateway.deliverygroupreport': {
             'Meta': {'ordering': "('-report_date',)", 'object_name': 'DeliveryGroupReport'},
             'delivery_group': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'quantity': ('django.db.models.fields.IntegerField', [], {}),
-            'report_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 10, 16, 9, 25, 21, 907582)'}),
+            'report_date': ('django.db.models.fields.DateTimeField', [],
+                            {'default': 'datetime.datetime(2014, 10, 16, 9, 25, 21, 907582)'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'ilsgateway.groupsummary': {
             'Meta': {'object_name': 'GroupSummary'},
             'complete': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'on_time': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'org_summary': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['ilsgateway.OrganizationSummary']"}),
+            'org_summary': ('django.db.models.fields.related.ForeignKey', [],
+                            {'to': u"orm['ilsgateway.OrganizationSummary']"}),
             'responded': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True',
+                                                                'blank': 'True'}),
             'total': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
         },
         u'ilsgateway.ilsmigrationcheckpoint': {
@@ -161,7 +175,8 @@ class Migration(SchemaMigration):
             'average_lead_time_in_days': ('django.db.models.fields.FloatField', [], {'default': '0'}),
             'create_date': ('django.db.models.fields.DateTimeField', [], {}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'total_orgs': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
@@ -171,7 +186,8 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ProductAvailabilityData'},
             'create_date': ('django.db.models.fields.DateTimeField', [], {}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'product': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
@@ -183,7 +199,8 @@ class Migration(SchemaMigration):
         },
         u'ilsgateway.supplypointstatus': {
             'Meta': {'ordering': "('-status_date',)", 'object_name': 'SupplyPointStatus'},
-            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'external_id': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True',
+                                                                                 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'status_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
             'status_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),

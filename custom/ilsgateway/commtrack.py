@@ -90,7 +90,8 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
     if user is None:
         try:
             user = WebUser.create(domain=None, username=username,
-                                  password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
+                                  password=ilsgateway_webuser.password, email=ilsgateway_webuser.email,
+                                  **user_dict)
             user.add_domain_membership(domain, is_admin=False, role_id=role_id, location_id=location_id)
             user.save()
         except Exception as e:
@@ -159,11 +160,13 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
             if "phone_numbers" in user_dict:
                 user.set_default_phone_number(user_dict["phone_numbers"][0])
                 try:
-                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True,
+                                              ilsgateway_smsuser.backend)
                 except PhoneNumberInUseException as e:
                     v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
                     v.delete()
-                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True,
+                                              ilsgateway_smsuser.backend)
             dm = user.get_domain_membership(domain)
             dm.location_id = location_id
             user.save()

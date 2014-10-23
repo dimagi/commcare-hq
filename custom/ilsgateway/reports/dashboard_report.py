@@ -2,8 +2,8 @@ from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
-from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, ProductAvailabilityData, \
-    ProductAvailabilityDashboardChart
+from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, \
+    ProductAvailabilityData, ProductAvailabilityDashboardChart
 from custom.ilsgateway.reports import ILSData
 from custom.ilsgateway.reports.base_report import MultiReport
 from dimagi.utils.decorators.memoized import memoized
@@ -35,7 +35,6 @@ class DistrictSummaryData(ILSData):
     @property
     def headers(self):
         return []
-
 
     @property
     def rows(self):
@@ -99,6 +98,7 @@ class SohSubmissionData(ILSData):
                                            org_summary=self.config['org_summary'])
         return soh_data
 
+
 class DeliverySubmissionData(ILSData):
     title = 'Delivery Submission'
     slug = 'delivery_submission'
@@ -129,8 +129,10 @@ class ProductAvailabilitySummary(ILSData):
     def rows(self):
         product_availability = []
         if self.config['org_summary']:
-            product_availability = ProductAvailabilityData.objects.filter(date__range=(self.config['startdate'],self.config['enddate']),
-                                                                          supply_point=self.config['org_summary'].supply_point)
+            product_availability = ProductAvailabilityData.objects.filter(
+                date__range=(self.config['startdate'], self.config['enddate']),
+                supply_point=self.config['org_summary'].supply_point
+            )
         return product_availability
 
     @property
@@ -158,7 +160,8 @@ class ProductAvailabilitySummary(ILSData):
         chart.marginBottom = 120
         chart.stacked = True
         for row in convert_product_data_to_stack_chart(product_availability, product_dashboard):
-            chart.add_dataset(row['label'], [{'x': r[0], 'y': r[1]} for r in sorted(row['data'], key=lambda x: x[0])], color=row['color'])
+            chart.add_dataset(row['label'], [{'x': r[0], 'y': r[1]}
+                                             for r in sorted(row['data'], key=lambda x: x[0])], color=row['color'])
         return [chart]
 
 

@@ -95,8 +95,12 @@ class SupplyPointStatusTypes(object):
         SUPERVISION_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Supervision Reminder Sent",
                                SupplyPointStatusValues.RECEIVED: "Supervision Received",
                                SupplyPointStatusValues.NOT_RECEIVED: "Supervision Not Received"},
-        LOSS_ADJUSTMENT_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Lost/Adjusted Reminder sent to Facility"},
-        DELINQUENT_DELIVERIES: {SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"},
+        LOSS_ADJUSTMENT_FACILITY: {
+            SupplyPointStatusValues.REMINDER_SENT: "Lost/Adjusted Reminder sent to Facility"
+        },
+        DELINQUENT_DELIVERIES: {
+            SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"
+        },
     }
 
     @classmethod
@@ -119,7 +123,7 @@ class SupplyPointStatus(models.Model):
 
     def save(self, *args, **kwargs):
         if not SupplyPointStatusTypes.is_legal_combination(self.status_type, self.status_value):
-            raise ValueError("%s and %s is not a legal value combination" % \
+            raise ValueError("%s and %s is not a legal value combination" %
                              (self.status_type, self.status_value))
         super(SupplyPointStatus, self).save(*args, **kwargs)
 
@@ -204,8 +208,8 @@ class SupplyPointWarehouseRecord(models.Model):
 
 
 class OrganizationSummary(ReportingModel):
-    total_orgs = models.PositiveIntegerField(default=0) # 176
-    average_lead_time_in_days = models.FloatField(default=0) # 28
+    total_orgs = models.PositiveIntegerField(default=0)
+    average_lead_time_in_days = models.FloatField(default=0)
 
     def __unicode__(self):
         return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
@@ -217,11 +221,11 @@ class GroupSummary(models.Model):
     (e.g. stock on hand summary)
     """
     org_summary = models.ForeignKey('OrganizationSummary')
-    title = models.CharField(max_length=50, blank=True, null=True) # SOH
+    title = models.CharField(max_length=50, blank=True, null=True)  # SOH
     total = models.PositiveIntegerField(default=0)
     responded = models.PositiveIntegerField(default=0)
     on_time = models.PositiveIntegerField(default=0)
-    complete = models.PositiveIntegerField(default=0) # "complete" = submitted or responded
+    complete = models.PositiveIntegerField(default=0)  # "complete" = submitted or responded
     external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     @classmethod
@@ -309,10 +313,11 @@ class ProductAvailabilityData(ReportingModel):
 
 
 class ProductAvailabilityDashboardChart(object):
-    label_color = { "Stocked out" : "#a30808",
-                    "Not Stocked out" : "#7aaa7a",
-                    "No Stock Data" : "#efde7f"
-                  }
+    label_color = {
+        "Stocked out": "#a30808",
+        "Not Stocked out": "#7aaa7a",
+        "No Stock Data": "#efde7f"
+    }
     width = 900
     height = 300
     div = "product_availability_summary_plot_placeholder"
@@ -332,7 +337,7 @@ class Alert(ReportingModel):
 class DeliveryGroups(object):
     GROUPS = ('A', 'B', 'C')
 
-    def __init__(self, month=None, facs = None):
+    def __init__(self, month=None, facs=None):
         self.month = month if month else datetime.utcnow().month
         self.facs = facs
 
@@ -346,11 +351,11 @@ class DeliveryGroups(object):
 
     def current_processing_group(self, month=None):
         month = month if month else self.month
-        return self.current_submitting_group(month=(month+2))
+        return self.current_submitting_group(month=(month + 2))
 
     def current_delivering_group(self, month=None):
         month = month if month else self.month
-        return self.current_submitting_group(month=(month+1))
+        return self.current_submitting_group(month=(month + 1))
 
     def delivering(self, facs=None, month=None):
         if not facs:
@@ -378,10 +383,10 @@ class ReportRun(models.Model):
     """
     Log of whenever the warehouse models get updated.
     """
-    start = models.DateTimeField() # the start of the period covered (from a data perspective)
+    start = models.DateTimeField()  # the start of the period covered (from a data perspective)
     end = models.DateTimeField()   # the end of the period covered (from a data perspective)
     start_run = models.DateTimeField()        # when this started
-    end_run = models.DateTimeField(null=True) # when this finished
+    end_run = models.DateTimeField(null=True)  # when this finished
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
 
