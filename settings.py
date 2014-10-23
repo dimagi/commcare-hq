@@ -342,7 +342,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
     'corehq.apps.megamobile',

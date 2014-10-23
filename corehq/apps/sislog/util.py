@@ -264,6 +264,7 @@ GSM_03_38_POR_EXTENSION = {
 }
 
 
+# These are characters that shouldn't be in a properly decoded string
 UNRECOGNIZED_CHAR_CODES = {
     0x00: True,
     0x01: True,
@@ -310,6 +311,13 @@ def looks_like_gsm(text):
 
 
 def gsm_to_unicode(text):
+    """
+      Converts each character in text to it's equivalent GSM-decoded
+    character. If the character is anything other than ESCAPE_CHAR,
+    then it's decoded with GSM_03_38_POR_BASIC.
+      If a character is the ESCAPE_CHAR, then it is skipped and the
+    next character is decoded with GSM_03_38_POR_EXTENSION.
+    """
     result = u""
     is_escape = False
     for char in text:
@@ -317,18 +325,23 @@ def gsm_to_unicode(text):
         if gsm_char_code == ESCAPE_CHAR:
             is_escape = True
         elif is_escape:
-            ext_char = GSM_03_38_POR_EXTENSION[gsm_char_code]
+            ext_char = GSM_03_38_POR_EXTENSION.get(gsm_char_code, "")
             if ext_char:
                 result += ext_char
             else:
-                result += " %s" % GSM_03_38_POR_BASIC[gsm_char_code]
+                result += " %s" % GSM_03_38_POR_BASIC.get(gsm_char_code, "")
             is_escape = False
         else:
-            result += GSM_03_38_POR_BASIC[gsm_char_code]
+            result += GSM_03_38_POR_BASIC.get(gsm_char_code, "")
     return result
 
 
 def convert_raw_string(text):
+    """
+    Unfortunately, it's not possible to tell whether we'll get a message
+    that's encoded with GSM or not. So all we can do is decode
+    messages that look like they are encoded with GSM.
+    """
     if looks_like_gsm(text):
         return gsm_to_unicode(text)
     else:
