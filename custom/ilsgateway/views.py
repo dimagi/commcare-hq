@@ -11,7 +11,7 @@ from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig
-from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task, product_stock_task, \
+from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task, \
     stock_data_task, report_run
 
 
@@ -123,3 +123,4 @@ def sync_stock_data(request, domain):
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
     return HttpResponse('OK')
+

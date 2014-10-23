@@ -1,7 +1,7 @@
 from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, \
     ProductAvailabilityData, ProductAvailabilityDashboardChart
 from custom.ilsgateway.reports import ILSData
@@ -22,7 +22,7 @@ class RandRSubmissionData(ILSData):
         rr_data = []
         if self.config['org_summary']:
             rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                           org_summary=self.config['org_summary'])
+                                               org_summary=self.config['org_summary'])
         return rr_data
 
 
@@ -95,7 +95,7 @@ class SohSubmissionData(ILSData):
         soh_data = []
         if self.config['org_summary']:
             soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                           org_summary=self.config['org_summary'])
+                                                org_summary=self.config['org_summary'])
         return soh_data
 
 
@@ -112,7 +112,7 @@ class DeliverySubmissionData(ILSData):
         del_data = []
         if self.config['org_summary']:
             del_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                           org_summary=self.config['org_summary'])
+                                                org_summary=self.config['org_summary'])
         return del_data
 
 

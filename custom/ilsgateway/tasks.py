@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from celery import group
+import logging
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from django.db import transaction
@@ -12,14 +12,13 @@ from custom.ilsgateway.api import ILSGatewayEndpoint, Location
 from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
     sync_ilsgateway_product
 
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, GroupSummary, \
-    ProductAvailabilityData, ReportRun
+from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.run_reports import populate_report_data
 
 from dimagi.utils.dates import force_to_datetime
 
 
-#@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
@@ -185,7 +184,7 @@ def stock_data_task(domain):
     delivery_group_reports_task.delay(domain, endpoint)
 
 
-#@periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
 def report_run(domain):
     last_run = ReportRun.last_success()
@@ -216,3 +215,4 @@ def report_run(domain):
         new_run.complete = True
         new_run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.now())
+

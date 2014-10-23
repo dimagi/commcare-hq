@@ -1,7 +1,7 @@
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
-from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, GroupSummary, ProductAvailabilityData
+from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport
 
 
 class MigrationException(Exception):

@@ -1,4 +1,3 @@
-from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
 from custom.ilsgateway.models import OrganizationSummary
 from dimagi.utils.decorators.memoized import memoized

@@ -189,7 +189,7 @@ def create_alert(org, date, type, details):
     expyear, expmonth = add_months(date.year, date.month, 1)
     expires = datetime(expyear, expmonth, 1)
 
-    number = 0 if not 'number' is details else details['number']
+    number = 0 if 'number' not in details else details['number']
 
     if type in ['product_stockout', 'no_primary_contact']:
         if type == 'product_stockout':
@@ -217,12 +217,10 @@ def create_alert(org, date, type, details):
         elif type == 'soh_not_responding':
             text = '%s have not reported their stock levels for last month.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-            #url = reverse('facilities_index')
 
         alert, created = Alert.objects.get_or_create(supply_point=org, date=date, type=type, expires=expires)
         alert.number = number
         alert.text = text
-        #alert.url = url
         alert.save()
 
 
@@ -239,9 +237,9 @@ def populate_report_data(start_date, end_date, domain=None):
         process_facility_warehouse_data(fac, start_date, end_date)
 
     # then populate everything above a facility off a warehouse table
-    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT')) + \
-                     list(Location.filter_by_type(domain, 'MOHSW')) + \
-                     list(Location.filter_by_type(domain, 'REGION'))
+    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
+    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
     for org in non_facilities:
         process_non_facility_warehouse_data(org, start_date, end_date)
 
@@ -491,8 +489,8 @@ def process_non_facility_warehouse_data(org, start_date, end_date, strict=True):
                 expected = len(dg.delivering())
             elif type == SupplyPointStatusTypes.R_AND_R_FACILITY:
                 expected = len(dg.submitting())
-            elif type == SupplyPointStatusTypes.SOH_FACILITY or \
-                 type == SupplyPointStatusTypes.SUPERVISION_FACILITY:
+            elif type == SupplyPointStatusTypes.SOH_FACILITY \
+                    or type == SupplyPointStatusTypes.SUPERVISION_FACILITY:
                 expected = len(facs)
             if gsum.total != expected:
                 logging.info("expected %s but was %s for %s" % (expected, gsum.total, gsum))
@@ -552,3 +550,4 @@ def _init_group_summary(supply_point, date):
     for title in NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
                                            title=title)
+

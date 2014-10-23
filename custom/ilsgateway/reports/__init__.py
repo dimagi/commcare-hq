@@ -42,14 +42,10 @@ class ILSData(object):
         },
     }
     vals_config = {
-        SupplyPointStatusTypes.SOH_FACILITY:
-            ['on_time', 'late', 'not_submitted', 'not_responding'],
-        SupplyPointStatusTypes.DELIVERY_FACILITY:
-            ['del_received', 'del_not_received', 'not_responding'],
-        SupplyPointStatusTypes.R_AND_R_FACILITY:
-            ['on_time', 'late', 'not_submitted', 'not_responding'],
-        SupplyPointStatusTypes.SUPERVISION_FACILITY:
-            ['sup_received', 'sup_not_received', 'not_responding']
+        SupplyPointStatusTypes.SOH_FACILITY: ['on_time', 'late', 'not_submitted', 'not_responding'],
+        SupplyPointStatusTypes.DELIVERY_FACILITY: ['del_received', 'del_not_received', 'not_responding'],
+        SupplyPointStatusTypes.R_AND_R_FACILITY:  ['on_time', 'late', 'not_submitted', 'not_responding'],
+        SupplyPointStatusTypes.SUPERVISION_FACILITY: ['sup_received', 'sup_not_received', 'not_responding']
     }
 
     def __init__(self, config=None):
@@ -81,7 +77,8 @@ class ILSData(object):
                     colors.append(self.chart_config[key]['color'])
                     entry['label'] = self.chart_config[key]['display']
                     entry['description'] = "%.2f%% (%d) %s (%s)" % \
-                        (entry['value'], getattr(data, key), entry['label'], self.config['startdate'].strftime("%b %Y"))
+                        (entry['value'], getattr(data, key), entry['label'],
+                         self.config['startdate'].strftime("%b %Y"))
 
                     ret.append(entry)
         return [PieChart('', '', ret, color=colors)]
