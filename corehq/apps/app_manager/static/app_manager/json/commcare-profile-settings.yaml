@@ -264,3 +264,14 @@
   values_txt: "This will determine how images you select for your questions will be resized to fit the screen. Horizontal will stretch/compress the image to fit perfectly horizontally while scaling to height to maintain the aspect ratio. Full Resize will try to be clever and find the ideal vertical/horizontal scaling for the screen."
   since: "2.11"
 
+- name: "Fuzzy Search"
+  description: "Whether searches on the phone will match similar strings. IE: 'Jhon' will match 'John'"
+  id: "cc-fuzzy-search-enabled"
+  values: ["yes", "no"]
+  value_names: ["Yes", "No"]
+  default: "yes"
+  disabled_default: "no"
+  values_txt: "Whether searches can match similar strings"
+  since: "2.15"
+  preview: true
+

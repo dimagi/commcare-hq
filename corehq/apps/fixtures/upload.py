@@ -31,7 +31,7 @@ FAILURE_MESSAGES = {
     ),
     "wrong_property_syntax": ugettext_noop(
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
-        "'{prop_key}' for field '{field}' is not correctly formatted"
+        "'{prop_key}' is not correctly formatted"
     ),
     "sheet_has_no_property": ugettext_noop(
         "Excel-sheet '{tag}' does not contain property "
@@ -89,23 +89,25 @@ class FixtureTableDefinitition(object):
         if field_names is None:
             raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
 
-        def _get_field_properties(field, prop_key):
+        def _get_field_properties(prop_key):
             if row_dict.has_key(prop_key):
                 try:
-                    return row_dict[prop_key]["property"]
-                except KeyError:
+                    properties = row_dict[prop_key]["property"]
+                    assert isinstance(properties, list)
+                except (KeyError, AssertionError):
                     error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
                         prop_key=prop_key,
-                        field=field
                     )
                     raise ExcelMalformatException(error_message)
+                else:
+                    return properties
             else:
                 return []
 
         fields = [
             FixtureTypeField(
                 field_name=field,
-                properties=_get_field_properties(field, 'field {count}'.format(count=i + 1))
+                properties=_get_field_properties('field {count}'.format(count=i + 1))
             ) for i, field in enumerate(field_names)
         ]
         return FixtureTableDefinitition(

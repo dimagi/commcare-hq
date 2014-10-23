@@ -1,0 +1,24 @@
+// Other variables to override specifically for docs
+@navbar-height: 30px;
+
+body, .docs-content {
+  position: relative;
+}
+
+.navbar-docs {
+  min-height: @navbar-height;
+  .navbar-brand {
+    height: @navbar-height;
+    line-height: 0;
+  }
+  .navbar-nav > li > a {
+    line-height: 0;
+  }
+}
+
+.docs-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #cccccc;
+  text-align: center;
+}

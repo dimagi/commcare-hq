@@ -1,0 +1,29 @@
+{% extends 'locations/facility_sync.html' %}
+
+{% block enabled_section %}
+    {% if checkpoint %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>API Name</th>
+                    <th>Date</th>
+                    <th>Checkpoint</th>
+                </tr>
+            </thead>
+            <tr>
+                <td>{{ checkpoint.api }}</td>
+                <td>
+                    {% if checkpoint.date %}
+                        {{ checkpoint.date }}
+                    {% else %}
+                        initial migration
+                    {% endif %}
+
+                </td>
+                <td>{{ checkpoint.offset }}</td>
+            </tr>
+
+        </table>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

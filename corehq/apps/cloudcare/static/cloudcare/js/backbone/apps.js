@@ -1034,7 +1034,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                 // Why make a new instance of this object?
                 var caseModel = new cloudCare.Case(self.initialCase);
 
-                if (module.get("parent_select").module_id) {
+                if (module.get("parent_select").active) {
                     if (self.initialParent){
 
                         var parentModuleId = module.get("parent_select").module_id;

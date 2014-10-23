@@ -574,7 +574,12 @@ class NewStockReport(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(form_id=self.form_id, date=self.timestamp, type=self.tag)
+        report = DbStockReport.objects.create(
+            form_id=self.form_id,
+            date=self.timestamp,
+            type=self.tag,
+            domain=self._form.domain,
+        )
         for txn in self.transactions:
             db_txn = DbStockTransaction(
                 report=report,

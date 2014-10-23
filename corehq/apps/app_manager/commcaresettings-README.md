@@ -29,6 +29,7 @@ with each element containing the following properties:
 * `since` - The CommCare version in which this property was introduced. E.g. `2.1`.
 * `type` - Less common. To render as a "feature" set this to `"features"`.
 * `commcare_default` - The default used by CommCare, if it differs from the default we want it to have on HQ.
+* `disabled_default` - The default to be used if the app's build version is less than the `since` parameter. `contingent_default` takes precedence over this setting.
 * `values_txt` - Extra help text describing what values can be entered
 * `group` - Presentational; defines how the properties get grouped on HQ 
 * `disabled` - Set to `true` for deprecated values we don't want to show up in the UI anymore

@@ -149,14 +149,23 @@
     <div id="cloudcare-main" style="position:relative;">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
-            <p>
-                {% blocktrans %}
+            {% blocktrans %}
+                <p>
                     Sorry, it doesn't look like you have any CloudCare apps
                     available. To learn more about how to enable and use
                     CloudCare, please check out our
                     <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
+                </p>
+            {% endblocktrans %}
+            {% if use_cloudcare_releases %}
+                {% blocktrans %}
+                <p>
+                    CloudCare displays the latest starred version of the
+                    application. Make sure you have enabled CloudCare and
+                    starred a version of your application.
+                </p>
                 {% endblocktrans %}
-            </p>
+            {% endif %}
         {% endif %}
         <section id="cloudcare-notifications"></section>
         <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">

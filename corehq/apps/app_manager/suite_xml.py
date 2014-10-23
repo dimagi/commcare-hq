@@ -780,17 +780,11 @@ class SuiteGenerator(SuiteGeneratorBase):
         return r
 
     def get_filter_xpath(self, module, delegation=False):
-        from corehq.apps.app_manager.detail_screen import Filter
-        short_detail = module.case_details.short
-        filters = []
-        for column in short_detail.get_columns():
-            if column.format == 'filter':
-                filters.append("(%s)" % Filter(self.app, module, short_detail, column).filter_xpath)
-        if filters:
-            xpath = '[%s]' % (' and '.join(filters))
+        filter = module.case_details.short.filter
+        if filter:
+            xpath = '[%s]' % filter
         else:
             xpath = ''
-
         if delegation:
             xpath += "[index/parent/@case_type = '%s']" % module.case_type
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"

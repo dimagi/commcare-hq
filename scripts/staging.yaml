@@ -50,6 +50,7 @@ branches:
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   - refactor-domain-copy2  # Brian 5/20
+  - logos+master # tw
   - logos # Nick P 5/28
   - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
@@ -60,11 +61,14 @@ branches:
   - fix-timeout # Nick P 8/26
   - custom_user_data # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
+  - master+uservoice-pending-invitations # Nick P 9/24
   - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - caseindex # SK 9/16
   - bulk-app-translate # Noah 9/18
+  - callcenter # SK 9/22
+  - fixture-prop # sravan 9/2e
+  - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
 submodules:
   submodules/couchlog-src:
     branches:
@@ -92,6 +96,11 @@ submodules:
       # Danny 8/12. If there's weird errors or issues in saving forms
       # or saving apps, just remove this
       - faster-lazy-attachments
-  # submodules/pillowtop-src:
-    # branches:
-      # - request_timeout  # Ethan 9/12
+  submodules/pillowtop-src:
+   branches:
+      - request_timeout+save-to-es  # Ethan 9/25
+      - request_timeout  # Ethan 9/24
+      - save-to-es  # Ethan 9/24
+  # corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+  #   branches:
+  #     - allowclose # SK 9/23

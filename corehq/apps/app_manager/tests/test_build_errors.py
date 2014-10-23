@@ -33,3 +33,15 @@ class BuildErrorsTest(TestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
+    def test_parent_cycle_in_app(self):
+        cycle_error = {
+            'type': 'parent cycle',
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'cyclical-app.json')) as f:
+            source = json.load(f)
+
+            app = Application.wrap(source)
+            errors = app.validate_app()
+
+            self.assertIn(cycle_error, errors)

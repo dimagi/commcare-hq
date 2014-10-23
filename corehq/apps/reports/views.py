@@ -103,6 +103,9 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
 def default(request, domain):
+    module = Domain.get_module_by_name(domain)
+    if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+        return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
 
 @login_and_domain_required
@@ -548,7 +551,7 @@ def normalize_hour(hour):
     if hour < 0:
         day_change = -1
         hour += 24
-    elif hour > 24:
+    elif hour >= 24:
         day_change = 1
         hour -= 24
 

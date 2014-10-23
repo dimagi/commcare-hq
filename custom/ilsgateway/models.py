@@ -4,9 +4,12 @@ from datetime import datetime
 from django.db import models
 
 
-class MigrationCheckpoint(models.Model):
-     domain = models.CharField(max_length=100)
-     date = models.DateTimeField()
+class ILSMigrationCheckpoint(models.Model):
+    domain = models.CharField(max_length=100)
+    date = models.DateTimeField(null=True)
+    api = models.CharField(max_length=100)
+    limit = models.PositiveIntegerField()
+    offset = models.PositiveIntegerField()
 
 
 class ILSGatewayConfig(Document):
