@@ -66,7 +66,7 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(case_id,
+def compute_daily_consumption(case_id,
                         product_id,
                         window_end,
                         section_id=const.SECTION_TYPE_STOCK,
@@ -89,7 +89,7 @@ def compute_consumption(case_id,
         window_start,
         window_end
     )
-    return compute_consumption_from_transactions(
+    return compute_daily_consumption_from_transactions(
         transactions, window_start, configuration
     )
 
@@ -104,7 +104,7 @@ def compute_consumption_or_default(case_id,
     value is real or just a default value
     """
     configuration = configuration or ConsumptionConfiguration()
-    consumption = compute_consumption(
+    daily_consumption = compute_daily_consumption(
         case_id,
         product_id,
         window_end,
@@ -112,8 +112,8 @@ def compute_consumption_or_default(case_id,
         configuration
     )
 
-    if consumption:
-        return consumption
+    if daily_consumption:
+        return daily_consumption * 30.
     else:
         return compute_default_monthly_consumption(
             case_id,
@@ -170,7 +170,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, configuration=None):
+def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
