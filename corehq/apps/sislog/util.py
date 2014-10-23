@@ -31,7 +31,7 @@ GSM_03_38_POR_BASIC = {
     0x1b: u"",
     0x1c: u"\u00c2",
     0x1d: u"\u00e2",
-    0x1e: u"\u00c1",
+    0x1e: u"\u00ca",
     0x1f: u"\u00c9",
     0x20: u" ",
     0x21: u"!",
