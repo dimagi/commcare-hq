@@ -20,6 +20,10 @@ function SavedApp(o, r) {
         return false;
     });
 
+    self.get_short_odk_url_phonetic = ko.computed(function () {
+        return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
+    });
+
     self.allow_media_install = ko.computed(function(){
         return self.doc_type() !== "RemoteApp";  // remote apps don't support multimedia
     });

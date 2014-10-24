@@ -8,6 +8,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -380,6 +381,10 @@
                                                     <span class="text-warning" data-bind="visible: !get_short_odk_url()">
                                                         {% trans "No short code available; try making another version." %}
                                                     </span>
+                                                </p>
+                                                <p data-bind="visible: get_short_odk_url()">
+                                                    {% trans 'Above Code Reads' %}:
+                                                    <strong data-bind="text: get_short_odk_url_phonetic()"></strong>
                                                 </p>
                                                 <p>
                                                     {% trans "Or" %}
