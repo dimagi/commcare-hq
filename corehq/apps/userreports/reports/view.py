@@ -5,6 +5,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportFilterFactory
 from corehq.util.couch import get_document_or_404
+from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.web import json_request
@@ -92,8 +93,13 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         data = self.data_source
         data.set_filter_values(self.filter_values)
         total_records = data.get_total_records()
+
+        # todo: this is ghetto pagination - still doing a lot of work in the database
+        datatables_params = DatatablesParams.from_request_dict(request.GET)
+        end = min(datatables_params.start + datatables_params.count, total_records)
+        page = list(data.get_data())[datatables_params.start:end]
         return self.render_json_response({
-            'aaData': list(data.get_data()),
+            'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
