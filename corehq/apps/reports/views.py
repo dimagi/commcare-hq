@@ -989,6 +989,7 @@ def _get_form_context(request, domain, instance_id):
         "timezone": timezone,
         "instance": instance,
         "user": request.couch_user,
+        "request": request,
     }
     context['form_render_options'] = context
     return context

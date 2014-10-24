@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
-    compute_consumption)
+    compute_daily_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -1613,7 +1613,7 @@ def update_stock_state_for_transaction(instance):
     else:
         consumption_calc = None
 
-    state.daily_consumption = compute_consumption(
+    state.daily_consumption = compute_daily_consumption(
         instance.case_id,
         instance.product_id,
         instance.report.date,

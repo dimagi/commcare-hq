@@ -1,6 +1,6 @@
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
-from casexml.apps.stock.consumption import compute_consumption_from_transactions, ConsumptionConfiguration
+from casexml.apps.stock.consumption import compute_daily_consumption_from_transactions, ConsumptionConfiguration
 import collections
 
 to_ts = dateparse.json_format_datetime
@@ -20,7 +20,7 @@ def mock_consumption(txdata, window, params=None):
     params = params or {}
     default_params.update(params)
     config = ConsumptionConfiguration(**default_params)
-    return compute_consumption_from_transactions(
+    return compute_daily_consumption_from_transactions(
         txdata,
         ago(window),
         config,

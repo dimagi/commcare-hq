@@ -126,41 +126,72 @@ ko.bindingHandlers.langcode = {
     update: ko.bindingHandlers.editableString.update
 };
 ko.bindingHandlers.sortable = {
+    updateSortableList: function (itemList) {
+        _(itemList()).each(function (item, index) {
+            if (item._sortableOrder === undefined) {
+                item._sortableOrder = ko.observable(index);
+            } else {
+                item._sortableOrder(index);
+            }
+        });
+    },
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+        // note: although by this point we've deviated from that solution quite a bit
         var list = valueAccessor();
+        var forceUpdate = function () {
+            ko.bindingHandlers.sortable.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        };
+        list.subscribe(forceUpdate);
         $(element).sortable({
             handle: '.sortable-handle',
             update: function(event, ui) {
-                var parent = ui.item.parent();
-                var oldPosition = parseInt(ui.item.data('order'), 10);
-                var newPosition = ko.utils.arrayIndexOf(parent.children(), ui.item.get(0));
-                var item = list()[oldPosition];
-                // this is voodoo to me, but I have to remove the ui item from its new position
-                // and *not replace* it in its original position for all the foreach mechanisms to work correctly
-                // I found this by trial and error
-                ui.item.detach();
-                //remove the item and add it back in the right spot
-                if (newPosition >= 0) {
-                    list.remove(item);
-                    list.splice(newPosition, 0, item);
-                    // Knockout 2.3 fix: refresh all of the `data-order`s
-                    // this is an O(n) operation, so if experiencing slowness
-                    // start here
-                    parent.children().each(function (i) {
-                        $(this).data('order', i);
-                    });
+                var parent = ui.item.parent(),
+                    oldPosition = ui.item.data('order');
+                if (oldPosition === undefined) {
+                    console.warn(
+                        "NOT UPDATING THE SORT OF THE ACTUAL LIST! " +
+                        "Did you forget to add `attr: {'data-order': _sortableOrder}` " +
+                        "to the data-bind attribute of your main sorting " +
+                        "element?"
+                    );
+                    return;
+                }
+                oldPosition = parseInt(oldPosition);
+                var newPosition = ko.utils.arrayIndexOf(parent.children(), ui.item.get(0)),
+                    item = list()[oldPosition];
+
+                if (item === undefined) {
+                    forceUpdate();
+                    console.warn('Fetched an undefined item. Check your code.');
+                    return;
+                }
+
+                if (item !== undefined) {
+                    // this is voodoo to me, but I have to remove the ui item from its new position
+                    // and *not replace* it in its original position for all the foreach mechanisms to work correctly
+                    // I found this by trial and error
+                    ui.item.detach();
+                    //remove the item and add it back in the right spot
+                    if (newPosition >= 0) {
+                        list.remove(item);
+                        list.splice(newPosition, 0, item);
+                        // Knockout 2.3 fix: refresh all of the `data-order`s
+                        // this is an O(n) operation, so if experiencing slowness
+                        // start here
+                        parent.children().each(function (i) {
+                            $(this).data('order', i);
+                        });
+                    }
                 }
             }
         });
         return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var ret = ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        $(element).children().each(function (i) {
-            $(this).data('order', "" + i);
-        });
-        return ret;
+        var list = valueAccessor();
+        ko.bindingHandlers.sortable.updateSortableList(list);
+        return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     }
 };
 
