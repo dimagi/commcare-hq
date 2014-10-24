@@ -123,24 +123,39 @@ class ChildrenDeaths(BaseSqlData):
     title = 'Children Death Details'
     total_row_name = "Total Deaths"
     show_total = True
-    show_charts = True
+    show_charts = False
     chart_x_label = ''
     chart_y_label = ''
+    custom_total_calculate = True
 
-    @property
-    def group_by(self):
-        return ['type_of_child_death']
+    def calculate_total_row(self, rows):
+        total_row = []
+        if len(rows) > 0:
+            num_cols = len(rows[0])
+            for i in range(num_cols):
+                colrows = [cr[i] for cr in rows[1:] if isinstance(cr[i], dict)]
+                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                if len(columns):
+                    total_row.append(reduce(lambda x, y: x + y, columns, 0))
+                else:
+                    total_row.append('')
+
+        return total_row
 
     @property
     def rows(self):
-        from custom.world_vision import CHILD_DEATH_TYPE
-        return self._get_rows(CHILD_DEATH_TYPE, super(ChildrenDeaths, self).rows)
+        result = []
+        total = self.data['total_births']
+        for idx, column in enumerate(self.columns):
+            if idx == 0:
+                percent = 'n/a'
+            else:
+                percent = self.percent_fn(total, self.data[column.slug])
+            result.append([{'sort_key': column.header, 'html': column.header, 'html': column.header},
+                           {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
+                           {'sort_key': 'percentage', 'html': percent}])
+        return result
 
-    @property
-    def filters(self):
-        filter = super(ChildrenDeaths, self).filters
-        filter.append(EQ('reason_for_child_closure', 'death'))
-        return filter
 
     @property
     def headers(self):
@@ -149,9 +164,21 @@ class ChildrenDeaths(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("Reason", SimpleColumn('type_of_child_death')),
-            DatabaseColumn("Number", CountUniqueColumn('doc_id'))
+            DatabaseColumn("Total births", CountUniqueColumn('doc_id', alias="total_births")),
+            DatabaseColumn("Newborn deaths (< 1 month)",
+                           CountUniqueColumn('doc_id', filters=self.filters + [AND(
+                               [EQ('reason_for_child_closure', 'death'),
+                                EQ('type_of_child_death', 'newborn_death')])], alias='newborn_death')),
+            DatabaseColumn("Infant deaths (< 1 year)",
+                           CountUniqueColumn('doc_id', filters=self.filters + [AND(
+                               [EQ('reason_for_child_closure', 'death'),
+                                EQ('type_of_child_death', 'infant_death')])], alias='infant_death')),
+            DatabaseColumn("Child deaths (> 1yr)",
+                           CountUniqueColumn('doc_id', filters=self.filters + [AND(
+                               [EQ('reason_for_child_closure', 'death'),
+                                EQ('type_of_child_death', 'child_death')])], alias='child_death')),
         ]
+
 
 class ChildrenDeathDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
@@ -283,7 +310,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
     def rows(self):
         result = []
         for idx, column in enumerate(self.columns):
-            if idx == 0:
+            if idx == 0 or idx == 1:
                 percent = 'n/a'
             else:
                 percent = self.percent_fn(self.data['total_birthweight_known'], self.data[column.slug])
@@ -299,12 +326,12 @@ class NutritionBirthWeightDetails(BaseSqlData):
     def columns(self):
         columns = [
             DatabaseColumn("Total children with with birthweight known",
-                CountUniqueColumn('doc_id',
-                    alias="total_birthweight_known",
-                    filters=self.filters + [NOTEQ('weight_birth', 'empty')]
-                )
+                           CountUniqueColumn('doc_id', alias="total_birthweight_known",
+                                             filters=self.filters + [NOTEQ('weight_birth', 'empty')])
             ),
-        ]
+            DatabaseColumn("Total births",
+                           CountUniqueColumn('doc_id', alias="total_births", filters=self.filters))]
+
         columns.extend([
             DatabaseColumn("Birthweight < 2.5 kg",
                 CountUniqueColumn('doc_id',
@@ -350,13 +377,13 @@ class NutritionFeedingDetails(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("Colostrum feeding",
+            DatabaseColumn("Early initiation of breastfeeding",
                 CountUniqueColumn('doc_id',
                     alias="colostrum_feeding",
                     filters=self.filters + [EQ('breastfeed_1_hour', 'yes')]
                 )
             ),
-            DatabaseColumn("Colostrum feeding Total Eligible",
+            DatabaseColumn("Early initiation of breastfeeding Total Eligible",
                 CountUniqueColumn('doc_id',
                     alias="colostrum_feeding_total_eligible",
                     filters=self.filters + [NOTEQ('breastfeed_1_hour', 'empty')]
@@ -429,20 +456,28 @@ class ChildHealthIndicators(BaseSqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn("Total child ill", CountUniqueColumn('doc_id', alias="total_child_ill",
+                                                                filters=self.filters + [OR(
+                                                                    [EQ('pneumonia_since_last_visit', 'yes'),
+                                                                     EQ('pneumonia_since_last_visit', 'yes')])])),
             DatabaseColumn("ARI (Pneumonia) cases",
-                CountUniqueColumn('doc_id', alias="ari_cases", filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])
+                           CountUniqueColumn('doc_id', alias="ari_cases",
+                                             filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])
             ),
             DatabaseColumn("Diarrhea cases",
-                CountUniqueColumn('doc_id', alias="diarrhea_cases", filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])
+                           CountUniqueColumn('doc_id', alias="diarrhea_cases",
+                                             filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])
             ),
             DatabaseColumn("ORS given during diarrhea",
-                CountUniqueColumn('doc_id', alias="ors",
-                                  filters=self.filters + [AND([EQ('dairrhea_treated_with_ors', 'yes'), EQ('has_diarrhea_since_last_visit', 'yes')])])
-            ),
+                           CountUniqueColumn('doc_id', alias="ors",
+                                             filters=self.filters + [AND([EQ('dairrhea_treated_with_ors', 'yes'),
+                                                                          EQ('has_diarrhea_since_last_visit',
+                                                                             'yes')])])),
             DatabaseColumn("Zinc given during diarrhea",
-                CountUniqueColumn('doc_id', alias="zinc",
-                                  filters=self.filters + [AND([EQ('dairrhea_treated_with_zinc', 'yes'), EQ('has_diarrhea_since_last_visit', 'yes')])])
-            )
+                           CountUniqueColumn('doc_id', alias="zinc",
+                                             filters=self.filters + [AND(
+                                                 [EQ('dairrhea_treated_with_zinc', 'yes'),
+                                                  EQ('has_diarrhea_since_last_visit', 'yes')])]))
         ]
 
 
