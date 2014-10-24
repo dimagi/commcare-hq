@@ -123,7 +123,7 @@ class CareSqlData(SqlData):
 
     @property
     def filters(self):
-        filters = [EQ("ppt_year", "ppt_year")]
+        filters = [EQ("domain", "domain"), EQ("ppt_year", "ppt_year")]
         for k, v in self.geography_config.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
                 filters.append(IN(k, v['prop']))
