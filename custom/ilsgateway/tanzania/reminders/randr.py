@@ -1,10 +1,12 @@
 from functools import partial
+
 from celery.schedules import crontab
 from celery.task import periodic_task
+
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.reminders import REMINDER_R_AND_R_FACILITY, update_statuses, \
+from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, update_statuses, \
     REMINDER_R_AND_R_DISTRICT
 from custom.ilsgateway.utils import get_current_group, send_for_day, get_groups
 import settings

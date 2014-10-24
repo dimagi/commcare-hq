@@ -1,8 +1,7 @@
 from datetime import datetime
-from custom.ilsgateway.reminders import randr
+
 from custom.ilsgateway.utils import supply_points_with_latest_status_by_datespan, get_current_group
-from dimagi.utils.dates import DateSpan, get_business_day_of_month_before
-from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues
+from dimagi.utils.dates import DateSpan
 
 
 def _construct_status_dict(status_type, status_values, supply_points, datespan):

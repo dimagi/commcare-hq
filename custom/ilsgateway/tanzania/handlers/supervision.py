@@ -1,9 +1,10 @@
 from datetime import datetime
 import re
-from custom.ilsgateway.handlers import get_location
-from custom.ilsgateway.handlers.keyword import KeywordHandler
+
+from custom.ilsgateway.tanzania.handlers import get_location
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatus, SupplyPointStatusTypes
-from custom.ilsgateway.reminders import SUPERVISION_HELP
+from custom.ilsgateway.tanzania.reminders import SUPERVISION_HELP
 
 
 class SupervisionHandler(KeywordHandler):

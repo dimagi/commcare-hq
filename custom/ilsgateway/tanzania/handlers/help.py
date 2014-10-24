@@ -1,5 +1,5 @@
-from custom.ilsgateway.handlers.keyword import KeywordHandler
-from custom.ilsgateway.reminders import HELP_REGISTERED, HELP_UNREGISTERED
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.reminders import HELP_REGISTERED, HELP_UNREGISTERED
 
 
 class HelpHandler(KeywordHandler):

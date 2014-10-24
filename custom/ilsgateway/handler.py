@@ -1,17 +1,18 @@
 import re
-from custom.ilsgateway.handlers.arrived import ArrivedHandler
-from custom.ilsgateway.handlers.delivered import DeliveredHandler
-from custom.ilsgateway.handlers.help import HelpHandler
-from custom.ilsgateway.handlers.language import LanguageHandler
-from custom.ilsgateway.handlers.messageinitiator import MessageInitiatior
-from custom.ilsgateway.handlers.notdelivered import NotDeliveredHandler
-from custom.ilsgateway.handlers.notsubmitted import NotSubmittedHandler
-from custom.ilsgateway.handlers.register import RegisterHandler
-from custom.ilsgateway.handlers.soh import SOHHandler
-from custom.ilsgateway.handlers.stop import StopHandler
-from custom.ilsgateway.handlers.supervision import SupervisionHandler
-from custom.ilsgateway.handlers.randr import RandrHandler
-from custom.ilsgateway.handlers.yes import YesHandler
+
+from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
+from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
+from custom.ilsgateway.tanzania.handlers.help import HelpHandler
+from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
+from custom.ilsgateway.tanzania.handlers.messageinitiator import MessageInitiatior
+from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
+from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
+from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
+from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
+from custom.ilsgateway.tanzania.handlers.stop import StopHandler
+from custom.ilsgateway.tanzania.handlers.supervision import SupervisionHandler
+from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
+from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 
 

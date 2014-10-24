@@ -8,9 +8,9 @@ from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
-from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
     CommtrackActionConfig
+from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from dimagi.utils.dates import force_to_datetime
 from custom.ilsgateway.models import ILSMigrationCheckpoint
 from requests.exceptions import ConnectionError
@@ -324,7 +324,7 @@ def commtrack_settings_sync(project):
 def bootstrap_domain(ilsgateway_config):
     domain = ilsgateway_config.domain
     start_date = datetime.today()
-    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
     try:
         checkpoint = ILSMigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api

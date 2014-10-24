@@ -1,6 +1,7 @@
 from datetime import datetime
-from custom.ilsgateway.handlers import get_location
-from custom.ilsgateway.handlers.keyword import KeywordHandler
+
+from custom.ilsgateway.tanzania.handlers import get_location
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 
 

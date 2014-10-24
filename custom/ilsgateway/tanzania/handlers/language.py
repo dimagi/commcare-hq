@@ -1,5 +1,5 @@
-from custom.ilsgateway.handlers.keyword import KeywordHandler
-from custom.ilsgateway.reminders import LANGUAGE_HELP, LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, LANGUAGE_CONTACT_REQUIRED
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.reminders import LANGUAGE_HELP, LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, LANGUAGE_CONTACT_REQUIRED
 import settings
 
 

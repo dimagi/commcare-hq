@@ -1,5 +1,5 @@
-from custom.ilsgateway.handlers.keyword import KeywordHandler
-from custom.ilsgateway.reminders import YES_HELP
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.reminders import YES_HELP
 
 
 class YesHandler(KeywordHandler):

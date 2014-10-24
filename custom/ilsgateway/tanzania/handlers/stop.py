@@ -1,5 +1,5 @@
-from custom.ilsgateway.handlers.keyword import KeywordHandler
-from custom.ilsgateway.reminders import STOP_CONFIRM
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.reminders import STOP_CONFIRM
 
 
 class StopHandler(KeywordHandler):

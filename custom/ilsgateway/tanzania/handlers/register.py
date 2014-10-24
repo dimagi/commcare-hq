@@ -1,15 +1,18 @@
-import logging
-from django.contrib.auth.models import User
 import re
+
+from django.contrib.auth.models import User
+
 from corehq.apps.locations.models import Location
+
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.commtrack import add_location
-from custom.ilsgateway.handlers import get_location
-from custom.ilsgateway.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.handlers import get_location
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.reminders import REGISTER_HELP, REGISTER_UNKNOWN_DISTRICT, Languages, \
-    REGISTRATION_CONFIRM_DISTRICT, REGISTER_UNKNOWN_CODE, REGISTRATION_CONFIRM, Roles
+from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, Languages, \
+    REGISTRATION_CONFIRM_DISTRICT, REGISTRATION_CONFIRM, Roles
+
 
 DISTRICT_PREFIXES = ['d', 'm', 'tb', 'tg', 'dm', 'mz', 'mt', 'mb', 'ir', 'tb', 'ms']
 

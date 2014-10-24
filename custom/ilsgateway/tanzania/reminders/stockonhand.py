@@ -1,10 +1,12 @@
 import datetime
+
 from celery.schedules import crontab
 from celery.task import periodic_task
+
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusTypes
-from custom.ilsgateway.reminders import REMINDER_STOCKONHAND, update_statuses
+from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND, update_statuses
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.dates import get_business_day_of_month
 from custom.ilsgateway.utils import send_for_all_domains

@@ -1,9 +1,9 @@
 from datetime import datetime
-from corehq.apps.sms.api import send_sms_to_verified_number
-from custom.ilsgateway.handlers import get_location
-from custom.ilsgateway.handlers.keyword import KeywordHandler
+
+from custom.ilsgateway.tanzania.handlers import get_location
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.reminders import SOH_HELP_MESSAGE
+from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 
 
 class SOHHandler(KeywordHandler):

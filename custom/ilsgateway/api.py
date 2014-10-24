@@ -1,8 +1,6 @@
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
-from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport
-
 
 class MigrationException(Exception):
     pass
@@ -174,6 +172,16 @@ class StockTransaction(object):
 
 
 class ILSGatewayEndpoint(EndpointMixin):
+
+    models_map = {
+        'product': Product,
+        'webuser': ILSUser,
+        'smsuser': SMSUser,
+        'location': Location,
+        'product_stock': ProductStock,
+        'stock_transaction': StockTransaction
+    }
+
     def __init__(self, base_uri, username, password):
         self.base_uri = base_uri.rstrip('/')
         self.username = username
@@ -184,8 +192,6 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.locations_url = self._urlcombine(self.base_uri, '/locations/')
         self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
-        self.supplypointstatuses_url = self._urlcombine(self.base_uri, '/supplypointstatus/')
-        self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
@@ -224,16 +230,16 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_products(self, **kwargs):
         meta, products = self.get_objects(self.products_url, **kwargs)
         for product in products:
-            yield Product.from_json(product)
+            yield self.models_map['product'].from_json(product)
 
     def get_webusers(self, **kwargs):
         meta, users = self.get_objects(self.webusers_url, **kwargs)
         for user in users:
-            yield ILSUser.from_json(user)
+            yield self.models_map['webuser'].from_json(user)
 
     def get_smsusers(self, **kwargs):
         meta, users = self.get_objects(self.smsusers_url, **kwargs)
-        return meta, [SMSUser.from_json(user) for user in users]
+        return meta, [self.models_map['smsuser'].from_json(user) for user in users]
 
     def get_location(self, id):
         response = requests.get(self.locations_url + str(id) + "/", auth=self._auth())
@@ -241,24 +247,13 @@ class ILSGatewayEndpoint(EndpointMixin):
 
     def get_locations(self, **kwargs):
         meta, locations = self.get_objects(self.locations_url, **kwargs)
-        return meta, [Location.from_json(location) for location in locations]
+        return meta, [self.models_map['location'].from_json(location) for location in locations]
 
     def get_productstocks(self, **kwargs):
         meta, product_stocks = self.get_objects(self.productstock_url, **kwargs)
-        return meta, [ProductStock.from_json(product_stock) for product_stock in product_stocks]
+        return meta, [self.models_map['product_stock'].from_json(product_stock) for product_stock in product_stocks]
 
     def get_stocktransactions(self, **kwargs):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
-        return meta, [StockTransaction.from_json(stock_transaction) for stock_transaction in stock_transactions]
-
-    def get_supplypointstatuses(self, domain, facility, **kwargs):
-        meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        location_id = self._get_location_id(facility, domain)
-        return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
-                      supplypointstatuses]
-
-    def get_deliverygroupreports(self, domain, facility, **kwargs):
-        meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        location_id = self._get_location_id(facility, domain)
-        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
-                      for deliverygroupreport in deliverygroupreports]
+        return meta, [self.models_map['stock_transaction'].from_json(stock_transaction)
+                      for stock_transaction in stock_transactions]

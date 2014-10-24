@@ -4,8 +4,8 @@ from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, \
     ProductAvailabilityData, ProductAvailabilityDashboardChart
-from custom.ilsgateway.reports import ILSData
-from custom.ilsgateway.reports.base_report import MultiReport
+from custom.ilsgateway.tanzania.reports import ILSData
+from custom.ilsgateway.tanzania.reports.base_report import MultiReport
 from dimagi.utils.decorators.memoized import memoized
 
 

@@ -1,13 +1,12 @@
 from datetime import datetime
+
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.apps.users.models import CouchUser
-
-from custom.ilsgateway.handlers import get_location
+from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     DeliveryGroupReport
-from custom.ilsgateway.handlers.keyword import KeywordHandler
-from custom.ilsgateway.reminders import SUBMITTED_NOTIFICATION_MSD
+from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ilsgateway.tanzania.reminders import SUBMITTED_NOTIFICATION_MSD
 
 
 class RandrHandler(KeywordHandler):

@@ -1,21 +1,23 @@
 from datetime import datetime
 from decimal import Decimal
 import logging
+
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
+
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
 from couchforms.models import XFormInstance
-from custom.ilsgateway.api import ILSGatewayEndpoint, Location
+from custom.ilsgateway.api import Location
 from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
     sync_ilsgateway_product
-
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.run_reports import populate_report_data
-
+from custom.ilsgateway.tanzania.run_reports import populate_report_data
+from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from dimagi.utils.dates import force_to_datetime
+
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -173,7 +175,7 @@ def delivery_group_reports_task(domain, endpoint):
 def stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
-    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
     commtrack_settings_sync(domain)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
