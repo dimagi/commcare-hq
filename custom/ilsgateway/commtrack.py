@@ -214,7 +214,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             location.latitude = float(ilsgateway_location.latitude)
         if ilsgateway_location.longitude:
             location.longitude = float(ilsgateway_location.longitude)
-        location.location_type = ilsgateway_location.type
+        location.location_type = ilsgateway_location.location_type
         location.site_code = ilsgateway_location.code
         location.external_id = str(ilsgateway_location.id)
         location.save()
@@ -225,7 +225,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             'name': ilsgateway_location.name,
             'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,
             'longitude': float(ilsgateway_location.longitude) if ilsgateway_location.longitude else None,
-            'type': ilsgateway_location.type,
+            'location_type': ilsgateway_location.location_type,
             'site_code': ilsgateway_location.code.lower(),
             'external_id': str(ilsgateway_location.id),
         }
@@ -284,7 +284,7 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
 
     while has_next:
         meta, locations = endpoint.get_locations(next_url_params=next_url, **kwargs)
-        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['type'],
+        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['location_type'],
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:
@@ -339,11 +339,11 @@ def bootstrap_domain(ilsgateway_config):
     apis = [
         ('product', partial(products_sync, domain, endpoint, checkpoint)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, type='facility'))),
+                                      filters=dict(date_updated__gte=date, location_type='facility'))),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, type='district'))),
+                                      filters=dict(date_updated__gte=date, location_type='district'))),
         ('location_region', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                    filters=dict(date_updated__gte=date, type='region'))),
+                                    filters=dict(date_updated__gte=date, location_type='region'))),
         ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date,
                             filters=dict(user__date_joined__gte=date))),
         ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date,

@@ -52,7 +52,7 @@ class ProductApiTest(TestCase):
             location = Location.from_json(json.loads(f.read()))
         self.assertEqual(location.id, 1)
         self.assertEqual(location.name, "MOHSW")
-        self.assertEqual(location.type, "MOHSW")
+        self.assertEqual(location.location_type, "MOHSW")
         self.assertEqual(location.parent, None)
         self.assertEqual(location.latitude, -10.6676087700)
         self.assertEqual(location.longitude, 39.1621900200)

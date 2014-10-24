@@ -22,7 +22,7 @@ class LocationSyncTest(TestCase):
 
         ilsgateway_location = sync_ilsgateway_location(TEST_DOMAIN, None, location)
         self.assertEqual(ilsgateway_location.name, location.name)
-        self.assertEqual(ilsgateway_location.location_type, location.type)
+        self.assertEqual(ilsgateway_location.location_type, location.location_type)
         self.assertEqual(ilsgateway_location.longitude, location.longitude)
         self.assertEqual(ilsgateway_location.latitude, location.latitude)
         self.assertEqual(ilsgateway_location.parent, location.parent)

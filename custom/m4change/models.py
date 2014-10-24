@@ -1,4 +1,5 @@
 from datetime import date
+import logging
 import operator
 from operator import contains, eq
 
@@ -288,7 +289,13 @@ ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
 
 def _get_form_mother_id(form):
     case_id = form.form.get("case", {}).get("@case_id", None)
-    case = CommCareCase.get(case_id)
+    case = None
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        logging.info('Resource %s Not Found' % case_id)
+    if not case:
+        return case
     if hasattr(case, "parent") and case.parent is not None:
         return case.parent._id
     else:

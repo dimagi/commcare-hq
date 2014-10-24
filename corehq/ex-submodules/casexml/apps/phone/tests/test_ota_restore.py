@@ -197,7 +197,7 @@ class OtaRestoreTest(TestCase):
        <request_name>ME</request_name>
        <request_rank>staff_nurse</request_rank>
        <request_reason></request_reason>
-       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <request_timestamp>2011-02-19T16:46:28Z</request_timestamp>
        <ringing></ringing>
        <seizures></seizures>
        <short_name>SIEGEL, ROBERT</short_name>
@@ -275,7 +275,7 @@ class OtaRestoreTest(TestCase):
        <request_name>ME</request_name>
        <request_rank>staff_nurse</request_rank>
        <request_reason></request_reason>
-       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <request_timestamp>2011-02-19T16:46:28Z</request_timestamp>
        <ringing></ringing>
        <seizures></seizures>
        <short_name>SIEGEL, ROBERT</short_name>

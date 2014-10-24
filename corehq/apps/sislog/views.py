@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from corehq.apps.sms.api import incoming as incoming_sms
+from corehq.apps.sislog.util import convert_raw_string
 
 def sms_in(request):
     """
@@ -13,6 +14,7 @@ def sms_in(request):
     if sender is None or msgdata is None:
         return HttpResponse(status=400)
     else:
-        incoming_sms(sender, msgdata, "SISLOG")
+        cleaned_text = convert_raw_string(msgdata)
+        incoming_sms(sender, cleaned_text, "SISLOG", raw_text=msgdata)
         return HttpResponse()
 
