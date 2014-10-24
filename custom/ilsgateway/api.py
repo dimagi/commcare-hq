@@ -111,7 +111,7 @@ class Location(object):
         return cls(
             id=json_rep['id'],
             name=json_rep['name'],
-            location_type=json_rep['location_type'],
+            location_type=json_rep['type'],
             parent=json_rep['parent_id'],
             latitude=json_rep['latitude'],
             longitude=json_rep['longitude'],
