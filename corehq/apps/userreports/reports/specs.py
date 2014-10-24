@@ -59,6 +59,7 @@ class FilterSpec(JsonObject):
 
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
+    show_all = BooleanProperty(default=True)
     choices = ListProperty(FilterChoice)
 
 

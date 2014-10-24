@@ -3,6 +3,7 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn
 
@@ -18,11 +19,14 @@ def _build_date_filter(spec):
 
 def _build_choice_list_filter(spec):
     wrapped = ChoiceListFilterSpec.wrap(spec)
+    choices = [Choice(fc.value, fc.get_display()) for fc in wrapped.choices]
+    if wrapped.show_all:
+        choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
         name=wrapped.slug,
         label=wrapped.display,
         required=wrapped.required,
-        choices=[Choice(fc.value, fc.get_display()) for fc in wrapped.choices]
+        choices=choices,
     )
 
 
