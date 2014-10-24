@@ -1164,6 +1164,10 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHEnrollChildFluffPillow',
         'custom.tdh.models.TDHInfantClassificationFluffPillow',
         'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',

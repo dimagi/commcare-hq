@@ -1,4 +1,5 @@
 from custom.tdh.reports import TDHReport
+from custom.tdh.sqldata import ChildConsultationHistory
 
 
 class CompleteChildConsultationHistoryReport(TDHReport):
@@ -7,4 +8,4 @@ class CompleteChildConsultationHistoryReport(TDHReport):
 
     @property
     def data_provider(self):
-        return None
+        return ChildConsultationHistory(config=self.report_config)

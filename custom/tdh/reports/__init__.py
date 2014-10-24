@@ -5,6 +5,7 @@ from custom.tdh.filters import TDHDateSpanFilter
 
 UNNECESSARY_FIELDS = ['doc_type', 'numerator', 'base_doc', 'save_direct_to_sql']
 
+
 class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     use_datatables = True
     emailable = False
