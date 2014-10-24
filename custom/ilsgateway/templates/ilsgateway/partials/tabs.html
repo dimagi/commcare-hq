@@ -1,0 +1,32 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+<div class="span11">
+    {% block report-content-tabs %}
+        <ul class="nav nav-pills">
+            {% block report-tab %}
+                {% if report_stockonhand_url != '' %}
+                <li {% if view_mode == "stockonhand" %}class="active"{% endif %}>
+                    <a href="{{ report_stockonhand_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Stock On Hand" %}</a></li>
+                {% endif %}
+                {% if report_rand_url != '' %}
+                <li {% if view_mode == "ror" %}class="active"{% endif %}>
+                    <a href="{{ report_rand_url }}{% if notabs %}&notabs{% endif %}" >{% trans "R&R" %}</a></li>
+                {% endif %}
+                {% if report_supervision_url != '' %}
+                <li {% if view_mode == "supervision" %}class="active"{% endif %}>
+                    <a href="{{ report_interactions_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Supervision" %}</a></li>
+                {% endif %}
+                {% if report_delivery_url != '' %}
+                <li {% if view_mode == "delivery" %}class="active"{% endif %}>
+                    <a href="{{ report_delivery_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Delivery" %}</a></li>
+                {% endif %}
+                {% if report_unrecognizedmessages_url != '' %}
+                <li {% if view_mode == "recognizedmessages" %}class="active"{% endif %}>
+                    <a href="{{ report_unrecognized_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Unrecognized SMS" %}</a></li>
+                {% endif %}
+            {% endblock report-tab %}
+        </ul>
+    {% endblock report-content-tabs %}
+</div>

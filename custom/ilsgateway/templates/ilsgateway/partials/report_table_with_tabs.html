@@ -1,0 +1,93 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+
+{% if report.needs_filters %}
+    {% include 'reports/standard/partials/description.html' %}
+{% else %}
+    <div style="float: left;">
+        <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable"  {% if pagination.filter %} data-filter="true"{% endif %}>
+            <thead>
+                <tr>
+                    {% for header in report_table.headers %}
+                        <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                            <i class="icon-white"></i>
+                            {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                            {% if header.help_text %}
+                                <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                            {% endif %}
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% block tabular-body %}
+                {% for row in report_table.rows %}
+                    <tr>
+                        {% for col in row %}
+                            {% include 'reports/async/partials/tabular_cell.html' %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+
+        {% if report_table and report_table.datatables and thisreport.show_table %}
+            var reportTables = new HQReportDataTables({
+                dataTableElem: '#report_table_{{ report_table.slug }}',
+                defaultRows: {{ report_table.default_rows|default:10 }},
+                startAtRowNum: {{ report_table.start_at_row|default:0 }},
+                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+
+                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
+                autoWidth: {{ report_table.headers.auto_width|JSON }},
+                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
+
+                {% if report_table.pagination.is_on %}
+                    ajaxSource: '{{ report_table.pagination.source }}',
+                    ajaxParams: {{ report_table.pagination.params|JSON }},
+                {% endif %}
+
+                {% if report_table.bad_request_error_text %}
+                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}",
+                {% endif %}
+
+                {% if report_table.left_col.is_fixed %}
+                    fixColumns: true,
+                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
+                    fixColsWidth: {{ report_table.left_col.fixed.width }},
+                {% endif %}
+            });
+            if (typeof standardHQReport !== 'undefined') {
+                standardHQReport.handleTabularReportCookies(reportTables);
+            }
+            reportTables.render();
+
+        {% endif %}
+
+        $(function() {
+            $('.header-popover').popout({
+                trigger: 'hover',
+                placement: 'bottom'
+            });
+        });
+
+        $(function() {
+            $('#nav-tabs').prependTo("#hq-report-filters");
+        });
+    </script>
+
+    {% for chart in thisreport.charts %}
+        {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
+        {% endwith %}
+    {% endfor %}
+
+{% endblock %}
