@@ -30,15 +30,6 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
-def delete_report(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
-    config.delete()
-    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
-    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
-
-
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, request.POST)
@@ -54,6 +45,15 @@ def _edit_report_shared(request, domain, config):
         'report': config,
     })
     return render(request, "userreports/edit_report_config.html", context)
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def delete_report(request, domain, report_id):
+    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config.delete()
+    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
