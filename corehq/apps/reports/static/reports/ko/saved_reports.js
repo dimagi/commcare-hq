@@ -3,6 +3,8 @@ var ReportConfig = function (data) {
         'copy': ['filters']
     });
 
+    self.error = ko.observable(false);
+
     self.isNew = ko.computed(function () {
         return typeof self._id === "undefined";
     });
@@ -11,6 +13,26 @@ var ReportConfig = function (data) {
         return (self.isNew() ? 'New' : 'Edit') + ' Saved Report' +
             (self.name() ? ': ' + self.name() : '');
     });
+
+    self.validate = function() {
+        var date_range = self.date_range(),
+            error = false;
+
+        if (_.isEmpty(self.name())) {
+            error = true;
+        }else if (date_range === 'lastn') {
+            var days = parseInt(self.days());
+            if (!_.isNumber(days) || _.isNaN(days)) {
+                error = true;
+            }
+        } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(self.start_date())) {
+            error = true;
+        } else if (date_range === 'range' && _.isEmpty(self.end_date())) {
+            error = true;
+        }
+        self.error(error);
+        return !error;
+    };
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
@@ -199,6 +221,10 @@ var ReportConfigsViewModel = function (options) {
         self.configBeingEdited(undefined);
     };
 
+    self.validate = function() {
+        return self.configBeingEdited().validate();
+    };
+
     self.modalSaveButton = {
         state: ko.observable(),
         saveOptions: function () {
@@ -226,6 +252,12 @@ var ReportConfigsViewModel = function (options) {
                 success: function (data) {
                     self.addOrReplaceConfig(data);
                     self.unsetConfigBeingEdited();
+                },
+                beforeSend: function(jqXHR) {
+                    var valid = self.validate();
+                    if (!valid) {
+                        jqXHR.abort();
+                    }
                 }
             };
         }
