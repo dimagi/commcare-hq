@@ -11,6 +11,7 @@ from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
 from corehq.util.couch import get_document_or_404
+from dimagi.utils.web import json_response
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -53,6 +54,13 @@ def _edit_report_shared(request, domain, config):
         'report': config,
     })
     return render(request, "userreports/edit_report_config.html", context)
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def report_source_json(request, domain, report_id):
+    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    del config._doc['_rev']
+    return json_response(config)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
