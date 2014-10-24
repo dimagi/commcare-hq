@@ -57,7 +57,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def filters(self):
-        return [ReportFilterFactory.from_spec(f) for f in self.spec['filters']]
+        return self.spec.ui_filters
 
     @cls_to_view_login_and_domain
     def dispatch(self, request, domain, report_config_id, **kwargs):

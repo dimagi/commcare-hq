@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.logic import EQUAL
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -120,6 +120,11 @@ class ReportConfiguration(Document):
 
     @property
     @memoized
+    def ui_filters(self):
+        return [ReportFilterFactory.from_spec(f) for f in self.filters]
+
+    @property
+    @memoized
     def charts(self):
         return [ChartFactory.from_spec(g) for g in self.configured_charts]
 
@@ -131,6 +136,7 @@ class ReportConfiguration(Document):
         super(ReportConfiguration, self).validate(required)
         # these calls implicitly do validation
         ReportFactory.from_spec(self)
+        self.ui_filters
         self.charts
 
     @classmethod
