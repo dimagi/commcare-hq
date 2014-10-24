@@ -22,8 +22,7 @@ FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
 class BaseFilter(object):
     """
-    Base object for filters. These objects deal with data only are not concerned with being
-    rendered on a view.
+    Base object for filters.
     """
 
     def __init__(self, name, required=False, params=None):
@@ -50,8 +49,8 @@ class BaseFilter(object):
     def value(self, **kwargs):
         """
         Override this and return the value. This method will only be called if all required
-         parameters are present in the filter context. All the parameters present in the context
-         will be passed in as keyword arguments.
+        parameters are present in the filter context. All the parameters present in the context
+        will be passed in as keyword arguments.
 
         If any of the parameters are invalid a FilterValueException should be raised.
 
@@ -61,11 +60,15 @@ class BaseFilter(object):
 
     def default_value(self):
         """
-        If the filter is not required this value will be used if self.value returns None
+        If the filter is not marked as required and the user does not supply any / all necessary parameters
+        this value will be used instead.
         """
         return None
 
     def context(self, value):
+        """
+        Context for rendering the filter.
+        """
         context = {
             'label': self.label,
             'css_id': self.css_id,
@@ -75,6 +78,9 @@ class BaseFilter(object):
         return context
 
     def filter_context(self):
+        """
+        Override to supply additional context.
+        """
         return {}
 
 
