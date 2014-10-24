@@ -187,17 +187,17 @@ def stock_data_task(domain):
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
 def report_run(domain):
-    last_run = ReportRun.last_success()
+    last_run = ReportRun.last_success(domain)
     start_date = (datetime.min if not last_run else last_run.end)
     end_date = datetime.utcnow()
 
-    running = ReportRun.objects.filter(complete=False)
+    running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
         raise Exception("Warehouse already running, will do nothing...")
 
     # start new run
     new_run = ReportRun.objects.create(start=start_date, end=end_date,
-                                       start_run=datetime.utcnow())
+                                       start_run=datetime.utcnow(), domain=domain)
     try:
         populate_report_data(start_date, end_date, domain)
     except Exception, e:

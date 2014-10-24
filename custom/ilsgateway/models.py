@@ -389,11 +389,12 @@ class ReportRun(models.Model):
     end_run = models.DateTimeField(null=True)  # when this finished
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
+    domain = models.CharField(max_length=60)
 
     @classmethod
-    def last_success(cls):
+    def last_success(cls, domain):
         """
         The last successful execution of a report, or None if no records found.
         """
-        qs = cls.objects.filter(complete=True, has_error=False)
+        qs = cls.objects.filter(complete=True, has_error=False, domain=domain)
         return qs.order_by("-start_run")[0] if qs.count() else None

@@ -43,7 +43,7 @@ class GlobalStats(BaseDomainView):
             'contacts': contacts[0]['value'] if contacts else 0,
             'web_users': web_users[0]['value'] if web_users else 0,
             'products': products,
-            #TODO add next after the enlargement ILS migration
+            # TODO add next after the enlargement ILS migration
             'product_stocks': 0,
             'stock_transactions': 0,
             'inbound_messages': 0,

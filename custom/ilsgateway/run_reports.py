@@ -512,7 +512,10 @@ def update_historical_data(domain=None):
     If we don't have a record of this supply point being updated, run
     through all historical data and just fill in with zeros.
     """
-    start_date = OrganizationSummary.objects.order_by('date')[0].date
+    org_summaries = OrganizationSummary.objects.order_by('date')
+    if org_summaries.count() == 0:
+        return
+    start_date = org_summaries[0].date
     for sp in Location.by_domain(domain):
         try:
             SupplyPointWarehouseRecord.objects.get(supply_point=sp._id)
