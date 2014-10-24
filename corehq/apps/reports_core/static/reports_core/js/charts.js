@@ -159,7 +159,9 @@ var charts = (function() {
             if (chartMap[config.type] === undefined) {
                 console.error("Bad chart configuration: " + config.type);
             } else {
-                $('<h2 />').text(config.title).appendTo(chartContainer);
+                if (config.title) {
+                    $('<h2 />').text(config.title).appendTo(chartContainer);
+                }
                 var $svg = d3.select(chartContainer[0]).append("svg");
                 var id = 'chart-' + i;
                 $svg.attr({id: id, width: "50%", height: "200"});
