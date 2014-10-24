@@ -5,6 +5,9 @@
             <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
             <h3 data-bind="text: modalTitle"></h3>
         </div>
+        <div class="alert alert-error" data-bind="visible: error">
+            {% trans "Some required fields are missing. Please complete them before saving." %}
+        </div>
         <form class="form-horizontal">
             <div class="modal-body">
                 <div class="control-group">
